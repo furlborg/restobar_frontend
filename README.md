@@ -1,4 +1,4 @@
-# restobar_frontend
+# Restobar Frontend
 
 ## Project setup
 ```
