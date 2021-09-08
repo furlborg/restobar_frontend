@@ -1,6 +1,6 @@
 <template>
   <n-card title="Clientes" :bordered="false" :segmented="{ content: 'hard' }">
-    <n-collapse arrow-placement="right">
+    <n-collapse class="mb-3" arrow-placement="right">
       <n-collapse-item title="Búsqueda" name="1">
         <template #header-extra>
           <n-button type="primary" @click="">
@@ -20,8 +20,9 @@
                 <n-grid-item>
                   <n-form-item label="Tipo Documento">
                     <n-radio-group name="docTypeGroup">
-                      <n-radio-button key="doc_type" value="DNI">DNI</n-radio-button>
-                      <n-radio-button key="doc_type" value="RUC">RUC</n-radio-button>
+                      <n-radio-button key="doc_type" :value="1">DNI</n-radio-button>
+                      <n-radio-button key="doc_type" :value="2">RUC</n-radio-button>
+                      <n-radio-button key="doc_type" :value="3">S/D</n-radio-button>
                     </n-radio-group>
                   </n-form-item>
                 </n-grid-item>
@@ -70,6 +71,8 @@
         </n-form>
       </n-collapse-item>
     </n-collapse>
+    <!-- Customer Data Table -->
+    <n-data-table :loading="tableIsLoading" :columns="columns" :data="data" :pagination="pagination" />
   </n-card>
 </template>
 
