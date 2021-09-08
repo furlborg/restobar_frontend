@@ -67,7 +67,14 @@ import {
     NTree,
     NSpin,
     NDynamicInput,
-} from 'naive-ui';
+    NText,
+    NH1,
+    NH2,
+    NH3,
+    NH4,
+    NH5,
+    NH6,
+} from 'naive-ui'
 
 export const naive = create({
     components: [
@@ -138,5 +145,12 @@ export const naive = create({
         NTree,
         NSpin,
         NDynamicInput,
+        NText,
+        NH1,
+        NH2,
+        NH3,
+        NH4,
+        NH5,
+        NH6,
     ],
-});
+})

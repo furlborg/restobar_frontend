@@ -5,7 +5,7 @@
       :theme="getDarkTheme"
       :theme-overrides="getThemeOverrides"
   >
-    <Application>
+    <app-provider>
       <n-layout class="layout" position="absolute" has-sider>
         <n-layout-sider
             class="layout-sider"
@@ -33,7 +33,7 @@
           </n-layout-content>
         </n-layout>
       </n-layout>
-    </Application>
+    </app-provider>
   </n-config-provider>
 </template>
 
@@ -41,7 +41,7 @@
 import {computed, defineComponent, onMounted, ref} from "vue"
 import {createTheme, inputDark, datePickerDark, darkTheme} from 'naive-ui'
 import {commonEsPE, dateEsPE} from '@/locale'
-import Application from '@/components/Application'
+import AppProvider from '@/components/Application'
 import Logo from '@/layout/Logo'
 import AsideMenu from '@/layout/AsideMenu'
 import PageHeader from '@/layout/PageHeader'
@@ -51,7 +51,7 @@ import {lighten} from "@/utils"
 export default defineComponent({
   name: 'App',
   components: {
-    Application,
+    AppProvider,
     Logo,
     AsideMenu,
     PageHeader,
@@ -76,7 +76,7 @@ export default defineComponent({
 
     const getThemeOverrides = computed(() => {
       const appTheme = designStore.appTheme;
-      const lightenStr = lighten(designStore.appTheme, 6);
+      const lightenStr = lighten(designStore.appTheme, 6)
       return {
         common: {
           primaryColor: appTheme,

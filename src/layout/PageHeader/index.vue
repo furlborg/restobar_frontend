@@ -5,10 +5,10 @@
            @click="() => $emit('update:collapsed', !collapsed)"
       >
         <n-icon size="18" v-if="collapsed">
-          <v-icon name="ri-menu-unfold-line"/>
+          <v-icon name="oi-sidebar-expand" flip="horizontal"/>
         </n-icon>
         <n-icon size="18" v-else>
-          <v-icon name="ri-menu-fold-line"/>
+          <v-icon name="oi-sidebar-collapse" flip="horizontal"/>
         </n-icon>
       </div>
     </div>
