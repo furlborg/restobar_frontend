@@ -1,6 +1,6 @@
 <template>
-  <n-drawer v-model:show="isDrawer" :width="width" :placement="placement" :native-scrollbar="false">
-    <n-drawer-content :title="title">
+  <n-drawer v-model:show="isDrawer" :width="280" placement="right" :native-scrollbar="false">
+    <n-drawer-content title="Personalización de la Aplicación">
       <div class="drawer">
         <n-divider title-placement="center">Tema</n-divider>
 
@@ -49,38 +49,23 @@
     components: {
     "v-icon": OhVueIcon
     },
-    props: {
-      title: {
-        type: String,
-        default: 'Configuración de la Aplicación',
-      },
-      width: {
-        type: Number,
-        default: 280,
-      },
-    },
-    setup(props) {
-      const designStore = useDesignSettingStore();
+    setup() {
+      const designStore = useDesignSettingStore()
       const state = reactive({
-        width: props.width,
-        title: props.title,
         isDrawer: false,
-        placement: 'right',
-        alertText:
-          '该功能主要实时预览各种布局效果，更多完整配置在 projectSetting.ts 中设置，建议在生产环境关闭该布局预览功能。',
         appThemeList: designStore.appThemeList,
-      });
+      })
 
       function openDrawer() {
-        state.isDrawer = true;
+        state.isDrawer = true
       }
 
       function closeDrawer() {
-        state.isDrawer = false;
+        state.isDrawer = false
       }
 
       function togTheme(color) {
-        designStore.appTheme = color;
+        designStore.appTheme = color
       }
 
       return {
@@ -90,9 +75,9 @@
         darkTheme,
         openDrawer,
         closeDrawer,
-      };
+      }
     },
-  });
+  })
 </script>
 
 <style lang="scss" scoped>
