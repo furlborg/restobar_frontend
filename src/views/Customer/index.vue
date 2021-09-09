@@ -20,9 +20,7 @@
                 <n-grid-item>
                   <n-form-item label="Tipo Documento">
                     <n-radio-group name="docTypeGroup">
-                      <n-radio-button key="doc_type" :value="1">DNI</n-radio-button>
-                      <n-radio-button key="doc_type" :value="2">RUC</n-radio-button>
-                      <n-radio-button key="doc_type" :value="3">S/D</n-radio-button>
+                      <n-select style="width: 150px;" :options="documentOptions" placeholder="" />
                     </n-radio-group>
                   </n-form-item>
                 </n-grid-item>
@@ -72,13 +70,15 @@
       </n-collapse-item>
     </n-collapse>
     <!-- Customer Data Table -->
-    <n-data-table :loading="tableIsLoading" :columns="columns" :data="data" :pagination="pagination" />
+    <n-data-table :columns="tableColumns" :data="data" :pagination="pagination" />
   </n-card>
 </template>
 
 <script>
-import {defineComponent} from "vue"
+import {defineComponent, ref} from "vue"
 import {OhVueIcon} from "@/plugins/icon"
+import {documentOptions, createCostumerColumns} from "@/utils/constants";
+import {useMessage} from "naive-ui";
 
 export default defineComponent({
   name: "Customer",
@@ -86,7 +86,21 @@ export default defineComponent({
     'v-icon': OhVueIcon
   },
   setup() {
-    return {}
+    const message = useMessage()
+    const idCostumer = ref(0)
+
+    return {
+      documentOptions,
+      tableColumns: createCostumerColumns({
+        editCustomer(rowData) {
+          idCostumer.value = rowData.id
+          // openCustomerModal()
+        },
+        deleteCustomer(rowData) {
+          message.error('Eliminando cliente ' + rowData.name)
+        }
+      }),
+    }
   }
 })
 </script>
