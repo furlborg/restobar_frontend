@@ -7,7 +7,7 @@
         <div class="drawer-setting-item justify-center dark-switch">
           <n-tooltip placement="bottom">
             <template #trigger>
-              <n-switch size="large" v-model:value="designStore.darkTheme" @change="designStore.toggleDarkTheme">
+              <n-switch size="large" v-model:value="designStore.darkTheme" @on-update:value="designStore.toggleDarkTheme">
                 <template #checked>
                   <v-icon name="md-darkmode-twotone" />
                 </template>
