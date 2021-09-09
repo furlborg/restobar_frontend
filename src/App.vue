@@ -60,10 +60,10 @@ export default defineComponent({
     const collapsed = ref(false)
 
     const watchWidth = () => {
-      const Width = document.body.clientWidth;
+      const Width = document.body.clientWidth
       if (Width <= 950) {
-        collapsed.value = true;
-      } else collapsed.value = false;
+        collapsed.value = true
+      } else collapsed.value = false
     }
 
     onMounted(() => {
@@ -73,6 +73,8 @@ export default defineComponent({
     })
 
     const designStore = useDesignSettingStore()
+
+    designStore.initializeStore()
 
     const getThemeOverrides = computed(() => {
       const appTheme = designStore.appTheme;

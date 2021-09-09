@@ -34,6 +34,13 @@ export const useDesignSettingStore = defineStore('app-design-setting',{
               localStorage.setItem('app-theme', this.appTheme)
           }
         },
+        setAppTheme(appTheme) {
+            this.appTheme = appTheme
+            localStorage.setItem('app-theme', appTheme)
+        },
+        toggleDarkTheme() {
+            localStorage.setItem('dark-theme', this.darkTheme)
+        },
     },
 })
 

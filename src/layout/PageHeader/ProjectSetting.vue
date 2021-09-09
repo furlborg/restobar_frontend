@@ -2,12 +2,12 @@
   <n-drawer v-model:show="isDrawer" :width="280" placement="right" :native-scrollbar="false">
     <n-drawer-content title="Personalización de la Aplicación">
       <div class="drawer">
-        <n-divider title-placement="center">Tema</n-divider>
+        <n-divider title-placement="center">Tema Oscuro</n-divider>
 
         <div class="drawer-setting-item justify-center dark-switch">
           <n-tooltip placement="bottom">
             <template #trigger>
-              <n-switch v-model:value="designStore.darkTheme" size="large">
+              <n-switch size="large" v-model:value="designStore.darkTheme" @change="designStore.toggleDarkTheme">
                 <template #checked>
                   <v-icon name="md-darkmode-twotone" />
                 </template>
@@ -20,7 +20,7 @@
           </n-tooltip>
         </div>
 
-        <n-divider title-placement="center">Tema del sistema</n-divider>
+        <n-divider title-placement="center">Tema del Sistema</n-divider>
 
         <div class="drawer-setting-item align-items-top">
           <span
@@ -28,7 +28,7 @@
             v-for="(item, index) in appThemeList"
             :key="index"
             :style="{ 'background-color': item }"
-            @click="togTheme(item)"
+            @click="designStore.setAppTheme(item)"
           >
             <v-icon name="bi-check2" inverse v-if="item === designStore.appTheme" />
           </span>
@@ -64,14 +64,9 @@
         state.isDrawer = false
       }
 
-      function togTheme(color) {
-        designStore.appTheme = color
-      }
-
       return {
         ...toRefs(state),
         designStore,
-        togTheme,
         darkTheme,
         openDrawer,
         closeDrawer,
