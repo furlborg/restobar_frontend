@@ -75,7 +75,7 @@
 </template>
 
 <script>
-import {defineComponent, ref} from "vue"
+import {defineComponent, onMounted, ref} from "vue"
 import {OhVueIcon} from "@/plugins/icon"
 import {documentOptions, createCostumerColumns} from "@/utils/constants";
 import {useMessage} from "naive-ui";
@@ -88,7 +88,9 @@ export default defineComponent({
   setup() {
     const message = useMessage()
     const idCostumer = ref(0)
-
+    onMounted(() => {
+      document.title = 'Clientes | App'
+    })
     return {
       documentOptions,
       tableColumns: createCostumerColumns({
