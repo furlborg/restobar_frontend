@@ -15,7 +15,7 @@ export const getDocTypeByNumber = (v) => {
         case 7:
             return 'PASAPORTE'
         default:
-            console.log('Error: Tipo de Documento invalido')
+            console.log('Error: Tipo de Documento inválido')
             break
     }
 }

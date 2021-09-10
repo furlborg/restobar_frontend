@@ -61,9 +61,7 @@ export default defineComponent({
 
     const watchWidth = () => {
       const Width = document.body.clientWidth
-      if (Width <= 950) {
-        collapsed.value = true
-      } else collapsed.value = false
+      collapsed.value = Width <= 950
     }
 
     onMounted(() => {
