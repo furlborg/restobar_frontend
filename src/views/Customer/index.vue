@@ -14,14 +14,12 @@
         </template>
         <!-- Search Customer Form -->
         <n-form>
-          <n-grid cols="2 s:2 m:3 l:3 xl:5 2xl:5" :x-gap="12" responsive="screen">
+          <n-grid cols="1 s:1 m:3 l:3 xl:5 2xl:5" :x-gap="12" responsive="screen">
             <n-grid-item>
               <n-grid x-gap="12" :cols="2" >
                 <n-grid-item>
                   <n-form-item label="Tipo Documento">
-                    <n-radio-group name="docTypeGroup">
-                      <n-select style="width: 150px;" :options="documentOptions" placeholder="" />
-                    </n-radio-group>
+                    <n-select :options="documentOptions" placeholder="" />
                   </n-form-item>
                 </n-grid-item>
                 <n-grid-item>
