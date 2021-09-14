@@ -55,9 +55,19 @@ export default defineComponent({
   setup() {
     const message = useMessage()
     const idCostumer = ref(0)
+
     onMounted(() => {
       document.title = 'Clientes | App'
     })
+
+    /*const showData = () => {
+      http
+          .get('customers/')
+          .then(response => {
+            console.log(response.data)
+          })
+    }*/
+
     return {
       documentOptions,
       tableColumns: createCostumerColumns({
