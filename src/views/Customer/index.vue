@@ -48,8 +48,8 @@
 <script>
 import {defineComponent, onMounted, ref} from "vue"
 import {OhVueIcon} from "@/plugins/icon"
-import {documentOptions, createCostumerColumns} from "@/utils/constants";
-import {useMessage} from "naive-ui";
+import {documentOptions, createCostumerColumns} from "@/utils/constants"
+import {useMessage} from "naive-ui"
 
 export default defineComponent({
   name: "Customer",

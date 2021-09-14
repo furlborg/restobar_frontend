@@ -5,7 +5,7 @@ export const appThemeList = [
     '#8400ff',
     '#2e0062',
     '#00ffea',
-    '#00795d',
+    '#008d6b',
     '#08ff00',
     '#087200',
     '#fff200',
