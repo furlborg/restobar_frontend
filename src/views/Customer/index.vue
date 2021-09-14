@@ -47,15 +47,11 @@
 
 <script>
 import {defineComponent, onMounted, ref} from "vue"
-import {OhVueIcon} from "@/plugins/icon"
 import {documentOptions, createCostumerColumns} from "@/utils/constants"
 import {useMessage} from "naive-ui"
 
 export default defineComponent({
   name: "Customer",
-  components: {
-    'v-icon': OhVueIcon
-  },
   setup() {
     const message = useMessage()
     const idCostumer = ref(0)

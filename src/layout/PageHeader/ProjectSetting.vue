@@ -41,14 +41,10 @@
 <script>
   import { defineComponent, reactive, toRefs } from 'vue'
   import { useDesignSettingStore } from '@/store/modules/designSetting'
-  import { OhVueIcon } from '@/plugins/icon'
   import { darkTheme } from 'naive-ui'
 
   export default defineComponent({
     name: 'ProjectSetting',
-    components: {
-    "v-icon": OhVueIcon
-    },
     setup() {
       const designStore = useDesignSettingStore()
       const state = reactive({

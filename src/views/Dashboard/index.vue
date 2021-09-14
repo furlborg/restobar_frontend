@@ -71,13 +71,9 @@
 
 <script>
 import {defineComponent} from "vue"
-import {OhVueIcon} from "@/plugins/icon"
 
 export default defineComponent({
   name: "Dashboard",
-  components: {
-    'v-icon': OhVueIcon,
-  },
   setup() {
     return {}
   }

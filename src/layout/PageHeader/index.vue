@@ -51,7 +51,6 @@
 
 <script>
 import {defineComponent, reactive, ref, toRefs} from "vue"
-import {OhVueIcon} from "@/plugins/icon"
 import {useDialog, useMessage} from "naive-ui"
 import ProjectSetting from './ProjectSetting'
 
@@ -59,7 +58,6 @@ export default defineComponent({
   name: "PageHeader",
   components: {
     ProjectSetting,
-    'v-icon': OhVueIcon,
   },
   props: {
     collapsed: {
