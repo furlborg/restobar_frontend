@@ -1,7 +1,7 @@
 <template>
   <n-card title="Clientes" :bordered="false" :segmented="{ content: 'hard' }">
     <template #header-extra>
-      <n-button type="primary" @click="">
+      <n-button type="primary" @click="showModal=!showModal">
         <template #icon>
           <n-icon>
             <v-icon name="la-user-plus-solid" />
@@ -43,7 +43,7 @@
     <!-- Customer Data Table -->
     <n-data-table :columns="tableColumns" :data="costumers" :pagination="pagination" :loading="costumerStore.isTableLoading" />
   </n-card>
-  <customer-modal :show="showCustomerModal" :customer-id="customerID" />
+  <customer-modal v-model:show="showModal" />
 </template>
 
 <script>
@@ -52,14 +52,24 @@ import {documentOptions, createCostumerColumns} from "@/utils/constants"
 import {useMessage} from "naive-ui"
 import {http} from '@/api'
 import {useCostumerStore} from "@/store/modules/costumer"
+import CustomerModal from "./components/CustomerModal"
 
 export default defineComponent({
   name: "Customer",
+  components: {
+    CustomerModal,
+  },
   setup() {
     const message = useMessage()
     const costumerStore = useCostumerStore()
     const idCostumer = ref(0)
     const costumers = ref([])
+    const showModal = ref(false)
+    const pagination = ref({
+      Page: 1,
+      pageCount: 1,
+      pageSize: 10
+    })
 
     onMounted(() => {
       document.title = 'Clientes | App'
@@ -70,6 +80,7 @@ export default defineComponent({
       costumerStore.toggleLoadingTable()
       http.get('customers/')
           .then(response => {
+            console.log(response.data)
             costumers.value = response.data.results
           })
           .catch(error => {
@@ -80,7 +91,11 @@ export default defineComponent({
           })
     }
 
+
+
     return {
+      showModal,
+      pagination,
       costumers,
       costumerStore,
       documentOptions,

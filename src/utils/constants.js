@@ -49,10 +49,6 @@ export const createCostumerColumns = ({ editCustomer, deleteCustomer }) => {
             key: 'id'
         },
         {
-            title: 'Nombre',
-            key: 'names'
-        },
-        {
             title: 'Documento',
             key: 'doc_num'
         },
@@ -63,17 +59,25 @@ export const createCostumerColumns = ({ editCustomer, deleteCustomer }) => {
                 return getDocTypeByNumber(row.doc_type)
             }
         },
+        {
+            title: 'Nombre',
+            key: 'names'
+        },
         /*{
             title: 'Dirección',
             key: 'address'
         },*/
         {
-            title: 'Celular',
-            key: 'phone'
+            title: 'Género',
+            key: 'gender'
         },
         {
             title: 'F. Nacimiento',
             key: 'birthdate'
+        },
+        {
+            title: 'Celular',
+            key: 'phone'
         },
         {
             title: 'Correo',

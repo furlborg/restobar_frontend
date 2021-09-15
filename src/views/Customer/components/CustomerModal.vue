@@ -1,5 +1,7 @@
 <template>
-  <n-modal preset="card" :mask-closable="false" >
+  <n-modal class="w-75" preset="card" title="Nuevo Cliente" :mask-closable="false" :show="show" :on-close="() => $emit('update:show', !show)">
+    <n-grid>
+    </n-grid>
   </n-modal>
 </template>
 
@@ -8,11 +10,10 @@ import {defineComponent} from "vue"
 
 export default defineComponent({
   name: "CustomerModal",
+  emits: [
+    'update:show',
+  ],
   props: {
-    title: {
-      type: String,
-      default: 'Nuevo Cliente',
-    },
     show : {
       type: Boolean,
       default: false,
