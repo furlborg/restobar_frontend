@@ -43,6 +43,7 @@
     <!-- Customer Data Table -->
     <n-data-table :columns="tableColumns" :data="costumers" :pagination="pagination" :loading="costumerStore.isTableLoading" />
   </n-card>
+  <customer-modal :show="showCustomerModal" :customer-id="customerID" />
 </template>
 
 <script>
