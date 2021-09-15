@@ -58,12 +58,15 @@ export const createCostumerColumns = ({ editCustomer, deleteCustomer }) => {
         },
         {
             title: 'Tipo',
-            key: 'doc_type'
+            key: 'doc_type',
+            render(row) {
+                return getDocTypeByNumber(row.doc_type)
+            }
         },
-        {
+        /*{
             title: 'Dirección',
             key: 'address'
-        },
+        },*/
         {
             title: 'Celular',
             key: 'phone'
@@ -78,16 +81,15 @@ export const createCostumerColumns = ({ editCustomer, deleteCustomer }) => {
         },
         {
             title: 'Estado',
-            key: 'status',
+            key: 'isDisabled',
             render (row) {
                 let type, text
-                if (row.status) {
-                    type="info"
-                    text="Activo"
-                }
-                else {
+                if (row.isDisabled) {
                     type="error"
                     text="Inactivo"
+                } else {
+                    type="info"
+                    text="Activo"
                 }
 
                 return h(

@@ -41,20 +41,22 @@
       </n-collapse-item>
     </n-collapse>
     <!-- Customer Data Table -->
-    <n-data-table :columns="tableColumns" :data="costumers" :pagination="pagination" />
+    <n-data-table :columns="tableColumns" :data="costumers" :pagination="pagination" :loading="costumerStore.isTableLoading" />
   </n-card>
 </template>
 
 <script>
 import {defineComponent, onMounted, ref} from "vue"
-import {documentOptions, createCostumerColumns, getDocTypeByNumber} from "@/utils/constants"
+import {documentOptions, createCostumerColumns} from "@/utils/constants"
 import {useMessage} from "naive-ui"
 import {http} from '@/api'
+import {useCostumerStore} from "@/store/modules/costumer"
 
 export default defineComponent({
   name: "Customer",
   setup() {
     const message = useMessage()
+    const costumerStore = useCostumerStore()
     const idCostumer = ref(0)
     const costumers = ref([])
 
@@ -64,27 +66,22 @@ export default defineComponent({
     })
 
     const getCostumers = () => {
-      http.get('customers/', {
-        transformResponse: [
-          function (data) {
-            if (data) {
-              data = JSON.parse(data)
-              data.results.map(function(obj) {
-                obj.doc_type = getDocTypeByNumber(obj.doc_type)
-              })
-            }
-            return data
-          }
-        ]
-      }).then(response => {
-        costumers.value = response.data.results
-      }).catch(error => {
-        console.error(error)
-      })
+      costumerStore.toggleLoadingTable()
+      http.get('customers/')
+          .then(response => {
+            costumers.value = response.data.results
+          })
+          .catch(error => {
+            console.error(error)
+          })
+          .finally(() => {
+            costumerStore.toggleLoadingTable()
+          })
     }
 
     return {
       costumers,
+      costumerStore,
       documentOptions,
       tableColumns: createCostumerColumns({
         editCustomer(rowData) {
@@ -92,7 +89,7 @@ export default defineComponent({
           // openCustomerModal()
         },
         deleteCustomer(rowData) {
-          message.error('Eliminando cliente ' + rowData.name)
+          message.error('Eliminando cliente ' + rowData.names)
         }
       }),
     }

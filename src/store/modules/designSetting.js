@@ -24,7 +24,7 @@ export const useDesignSettingStore = defineStore('app-design-setting',{
     actions: {
         initializeStore() {
           if (localStorage.getItem('dark-theme')) {
-              this.darkTheme = localStorage.getItem('dark-theme')
+              this.darkTheme = (localStorage.getItem('dark-theme') === 'true')
           } else {
               localStorage.setItem('dark-theme', this.darkTheme)
           }
