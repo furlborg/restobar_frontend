@@ -4,18 +4,18 @@ import {renderIcon} from "@/utils"
 
 export const getDocTypeByNumber = (v) => {
     switch (v) {
-        case 0:
+        case "0":
             return 'SIN DOCUMENTO'
-        case 1:
+        case "1":
             return 'L.E / DNI'
-        case 4:
+        case "4":
             return 'CARNET EXT.'
-        case 6:
+        case "6":
             return 'RUC'
-        case 7:
+        case "7":
             return 'PASAPORTE'
         default:
-            console.log('Error: Tipo de Documento inválido')
+            console.error('Error: Tipo de Documento inválido')
             break
     }
 }

@@ -41,34 +41,50 @@
       </n-collapse-item>
     </n-collapse>
     <!-- Customer Data Table -->
-    <n-data-table :columns="tableColumns" :data="data" :pagination="pagination" />
+    <n-data-table :columns="tableColumns" :data="costumers" :pagination="pagination" />
   </n-card>
 </template>
 
 <script>
 import {defineComponent, onMounted, ref} from "vue"
-import {documentOptions, createCostumerColumns} from "@/utils/constants"
+import {documentOptions, createCostumerColumns, getDocTypeByNumber} from "@/utils/constants"
 import {useMessage} from "naive-ui"
+import {http} from '@/api'
 
 export default defineComponent({
   name: "Customer",
   setup() {
     const message = useMessage()
     const idCostumer = ref(0)
+    const costumers = ref([])
 
     onMounted(() => {
       document.title = 'Clientes | App'
+      getCostumers()
     })
 
-    /*const showData = () => {
-      http
-          .get('customers/')
-          .then(response => {
-            console.log(response.data)
-          })
-    }*/
+    const getCostumers = () => {
+      http.get('customers/', {
+        transformResponse: [
+          function (data) {
+            if (data) {
+              data = JSON.parse(data)
+              data.results.map(function(obj) {
+                obj.doc_type = getDocTypeByNumber(obj.doc_type)
+              })
+            }
+            return data
+          }
+        ]
+      }).then(response => {
+        costumers.value = response.data.results
+      }).catch(error => {
+        console.error(error)
+      })
+    }
 
     return {
+      costumers,
       documentOptions,
       tableColumns: createCostumerColumns({
         editCustomer(rowData) {
