@@ -41,17 +41,17 @@
       </n-collapse-item>
     </n-collapse>
     <!-- Customer Data Table -->
-    <n-data-table :columns="tableColumns" :data="costumers" :pagination="pagination" :loading="costumerStore.isTableLoading" />
+    <n-data-table :columns="tableColumns" :data="customers" :pagination="pagination" :loading="customerStore.isTableLoading" />
   </n-card>
-  <customer-modal v-model:show="showModal" :id-costumer="idCostumer" @update:show="idCostumer=0" />
+  <customer-modal v-model:show="showModal" :id-customer="idCustomer" @update:show="idCustomer=0" />
 </template>
 
 <script>
 import {defineComponent, onMounted, ref} from "vue"
-import {documentOptions, createCostumerColumns} from "@/utils/constants"
+import {documentOptions, createCustomerColumns} from "@/utils/constants"
 import {useMessage} from "naive-ui"
 import {http} from '@/api'
-import {useCostumerStore} from "@/store/modules/costumer"
+import {useCustomerStore} from "@/store/modules/customer"
 import CustomerModal from "./components/CustomerModal"
 
 export default defineComponent({
@@ -61,9 +61,9 @@ export default defineComponent({
   },
   setup() {
     const message = useMessage()
-    const costumerStore = useCostumerStore()
-    const idCostumer = ref(0)
-    const costumers = ref([])
+    const customerStore = useCustomerStore()
+    const idCustomer = ref(0)
+    const customers = ref([])
     const showModal = ref(false)
     const pagination = ref({
       Page: 1,
@@ -73,21 +73,20 @@ export default defineComponent({
 
     onMounted(() => {
       document.title = 'Clientes | App'
-      getCostumers()
+      getCustomers()
     })
 
-    const getCostumers = () => {
-      costumerStore.toggleLoadingTable()
+    const getCustomers = () => {
+      customerStore.toggleLoadingTable()
       http.get('customers/')
           .then(response => {
-            console.log(response.data)
-            costumers.value = response.data.results
+            customers.value = response.data.results
           })
           .catch(error => {
             console.error(error)
           })
           .finally(() => {
-            costumerStore.toggleLoadingTable()
+            customerStore.toggleLoadingTable()
           })
     }
 
@@ -96,13 +95,13 @@ export default defineComponent({
     return {
       showModal,
       pagination,
-      costumers,
-      idCostumer,
-      costumerStore,
+      customers,
+      idCustomer,
+      customerStore,
       documentOptions,
-      tableColumns: createCostumerColumns({
+      tableColumns: createCustomerColumns({
         editCustomer(rowData) {
-          idCostumer.value = rowData.id
+          idCustomer.value = rowData.id
           showModal.value = true
         },
         deleteCustomer(rowData) {

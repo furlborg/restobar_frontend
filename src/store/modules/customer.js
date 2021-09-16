@@ -1,6 +1,6 @@
 import {defineStore} from "pinia";
 
-export const useCostumerStore = defineStore('customer', {
+export const useCustomerStore = defineStore('customer', {
     state: () => ({
         isTableLoading: false,
     }),

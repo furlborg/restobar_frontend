@@ -42,7 +42,7 @@ export const documentOptions = [
         value: 7
     },
 ]
-export const createCostumerColumns = ({ editCustomer, deleteCustomer }) => {
+export const createCustomerColumns = ({ editCustomer, deleteCustomer }) => {
     return [
         {
             title: 'ID',

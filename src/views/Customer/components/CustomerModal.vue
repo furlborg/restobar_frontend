@@ -2,7 +2,7 @@
   <n-modal
       class="w-50"
       preset="card"
-      title="Nuevo Cliente"
+      :title="modalTitle"
       :mask-closable="false"
       :show="show"
       :on-close="() => $emit('update:show', !show)"
@@ -13,28 +13,28 @@
           <n-tab-pane name="info" tab="Información General">
             <n-grid responsive="screen" cols="6 s:6 m:12 l:24 xl:24 2xl:24" :x-gap="12">
               <n-form-item-gi label="Nombres" :span="12">
-                <n-input v-model:value="costumer.names" placeholder="" />
+                <n-input v-model:value="customer.names" placeholder="" />
               </n-form-item-gi>
               <n-form-item-gi label="Tipo Documento" :span="4">
-                <n-select v-model:value="costumer.doc_type" :options="documentOptions" placeholder="" />
+                <n-select v-model:value="customer.doc_type" :options="documentOptions" placeholder="" />
               </n-form-item-gi>
               <n-form-item-gi label="Nº Documento" :span="4">
-                <n-input-number v-model:value="costumer.doc_num" :show-button="false" placeholder="" />
+                <n-input-number v-model:value="customer.doc_num" :show-button="false" placeholder="" />
               </n-form-item-gi>
               <n-form-item-gi label="Género" :span="4">
-                <n-radio-group v-model:value="costumer.gender" name="genderGroup">
+                <n-radio-group v-model:value="customer.gender" name="genderGroup">
                   <n-radio-button key="gender" value="F">F</n-radio-button>
                   <n-radio-button key="gender" value="M">M</n-radio-button>
                 </n-radio-group>
               </n-form-item-gi>
               <n-form-item-gi label="Correo" :span="12">
-                <n-input v-model:value="costumer.email" placeholder="" />
+                <n-input v-model:value="customer.email" placeholder="" />
               </n-form-item-gi>
               <n-form-item-gi label="Fecha de Nacimiento" :span="6">
-                <n-date-picker type="date" placeholder="" clearable></n-date-picker>
+                <n-date-picker v-model:value="customer.birthdate" type="date" placeholder="" clearable></n-date-picker>
               </n-form-item-gi>
               <n-form-item-gi label="Celular" :span="6">
-                <n-input-number  v-model:value="costumer.phone" :show-button="false" placeholder="" />
+                <n-input-number  v-model:value="customer.phone" :show-button="false" placeholder="" />
               </n-form-item-gi>
             </n-grid>
           </n-tab-pane>
@@ -60,6 +60,7 @@
 import {defineComponent, ref, toRefs, watch} from "vue"
 import {http} from "@/api"
 import {documentOptions} from "@/utils/constants"
+import {toTimestamp} from "@/utils/dates";
 
 export default defineComponent({
   name: "CustomerModal",
@@ -71,14 +72,15 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
-    idCostumer: {
+    idCustomer: {
       type: Number,
       default: 0,
     },
   },
   setup(props) {
-    const {idCostumer} = toRefs(props)
-    const costumer = ref({
+    const {idCustomer} = toRefs(props)
+    const modalTitle = ref('Registrar Cliente')
+    const customer = ref({
       names: null,
       doc_type: null,
       doc_num: null,
@@ -89,20 +91,31 @@ export default defineComponent({
     })
     const isLoadingData = ref(false)
 
-    watch(idCostumer, () => {
-      if (idCostumer.value !== 0) {
+    watch(idCustomer, () => {
+      if (idCustomer.value !== 0) {
         isLoadingData.value = true
-        http.get(`customers/${idCostumer.value}`)
-            .then(response => {
-              costumer.value=response.data
-            })
-            .catch(error => {
-            })
-            .finally(() => {
-              isLoadingData.value = false
-            })
+        modalTitle.value = 'Modificar Cliente'
+        http.get(`customers/${idCustomer.value}`, {
+          transformResponse: [
+            function (data) {
+              if (data) {
+                data = JSON.parse(data)
+                data.doc_num = Number(data.doc_num)
+                data.phone = Number(data.phone)
+                data.birthdate = toTimestamp(data.birthdate)
+              }
+              return data
+            }
+          ]
+        }).then(response => {
+          customer.value=response.data
+        }).catch(error => {
+          console.error(error)
+        }).finally(() => {
+          isLoadingData.value = false
+         })
       } else {
-        costumer.value = {
+        customer.value = {
           names: null,
           doc_type: null,
           doc_num: null,
@@ -115,7 +128,8 @@ export default defineComponent({
     })
 
     return {
-      costumer,
+      modalTitle,
+      customer,
       documentOptions,
       isLoadingData,
     }
