@@ -18,7 +18,7 @@
             <n-form-item-gi label="Tipo Documento" :span="3">
               <n-select :options="documentOptions" placeholder="" />
             </n-form-item-gi>
-            <n-form-item-gi label="Documento" :span="3">
+            <n-form-item-gi label="Nº Documento" :span="3">
               <n-input-number :show-button="false" placeholder="" />
             </n-form-item-gi>
             <n-form-item-gi label="Nombre" :span="6">
