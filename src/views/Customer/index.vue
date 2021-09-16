@@ -43,7 +43,7 @@
     <!-- Customer Data Table -->
     <n-data-table :columns="tableColumns" :data="costumers" :pagination="pagination" :loading="costumerStore.isTableLoading" />
   </n-card>
-  <customer-modal v-model:show="showModal" />
+  <customer-modal v-model:show="showModal" :id-costumer="idCostumer" @update:show="idCostumer=0" />
 </template>
 
 <script>
@@ -97,12 +97,13 @@ export default defineComponent({
       showModal,
       pagination,
       costumers,
+      idCostumer,
       costumerStore,
       documentOptions,
       tableColumns: createCostumerColumns({
         editCustomer(rowData) {
           idCostumer.value = rowData.id
-          // openCustomerModal()
+          showModal.value = true
         },
         deleteCustomer(rowData) {
           message.error('Eliminando cliente ' + rowData.names)
