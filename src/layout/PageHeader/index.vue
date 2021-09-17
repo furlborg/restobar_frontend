@@ -45,8 +45,8 @@
         </n-dropdown>
       </div>
     </div>
+    <ProjectSetting ref="drawerSetting" />
   </div>
-  <ProjectSetting ref="drawerSetting" />
 </template>
 
 <script>

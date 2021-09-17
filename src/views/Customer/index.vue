@@ -42,8 +42,8 @@
     </n-collapse>
     <!-- Customer Data Table -->
     <n-data-table :columns="tableColumns" :data="customers" :pagination="pagination" :loading="customerStore.isTableLoading" />
+    <customer-modal v-model:show="showModal" :id-customer="idCustomer" @update:show="idCustomer=0" />
   </n-card>
-  <customer-modal v-model:show="showModal" :id-customer="idCustomer" @update:show="idCustomer=0" />
 </template>
 
 <script>
