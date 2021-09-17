@@ -58,9 +58,9 @@
 
 <script>
 import {defineComponent, ref, toRefs, watch} from "vue"
-import {http} from "@/api"
 import {documentOptions} from "@/utils/constants"
-import {toTimestamp} from "@/utils/dates";
+import {retrieveCustomer} from "@/api/modules/customer"
+import {useMessage} from "naive-ui"
 
 export default defineComponent({
   name: "CustomerModal",
@@ -78,6 +78,7 @@ export default defineComponent({
     },
   },
   setup(props) {
+    const message = useMessage()
     const {idCustomer} = toRefs(props)
     const modalTitle = ref('Registrar Cliente')
     const customer = ref({
@@ -95,25 +96,17 @@ export default defineComponent({
       if (idCustomer.value !== 0) {
         isLoadingData.value = true
         modalTitle.value = 'Modificar Cliente'
-        http.get(`customers/${idCustomer.value}`, {
-          transformResponse: [
-            function (data) {
-              if (data) {
-                data = JSON.parse(data)
-                data.doc_num = Number(data.doc_num)
-                data.phone = Number(data.phone)
-                data.birthdate = toTimestamp(data.birthdate)
-              }
-              return data
-            }
-          ]
-        }).then(response => {
-          customer.value=response.data
-        }).catch(error => {
-          console.error(error)
-        }).finally(() => {
-          isLoadingData.value = false
-         })
+        retrieveCustomer(idCustomer.value)
+          .then(response => {
+            customer.value=response.data
+          })
+          .catch(error => {
+            console.error(error)
+            message.error('Algo salió mal...')
+          })
+          .finally(() => {
+            isLoadingData.value = false
+          })
       } else {
         customer.value = {
           names: null,

@@ -50,7 +50,7 @@
 import {defineComponent, onMounted, ref} from "vue"
 import {documentOptions, createCustomerColumns} from "@/utils/constants"
 import {useMessage} from "naive-ui"
-import {http} from '@/api'
+import {getCustomers} from "@/api/modules/customer"
 import {useCustomerStore} from "@/store/modules/customer"
 import CustomerModal from "./components/CustomerModal"
 
@@ -73,12 +73,8 @@ export default defineComponent({
 
     onMounted(() => {
       document.title = 'Clientes | App'
-      getCustomers()
-    })
-
-    const getCustomers = () => {
       customerStore.toggleLoadingTable()
-      http.get('customers/')
+      getCustomers()
           .then(response => {
             customers.value = response.data.results
           })
@@ -88,9 +84,7 @@ export default defineComponent({
           .finally(() => {
             customerStore.toggleLoadingTable()
           })
-    }
-
-
+    })
 
     return {
       showModal,
@@ -113,6 +107,6 @@ export default defineComponent({
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 
 </style>

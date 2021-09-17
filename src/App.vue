@@ -16,16 +16,19 @@
             collapse-mode="width"
             :width="200"
             :native-scrollbar="false"
+            bordered
         >
           <Logo :collapsed="collapsed" />
           <AsideMenu v-model:collapsed="collapsed" />
         </n-layout-sider>
-        <n-layout>
+        <n-layout :native-scrollbar="false">
           <n-layout-header position="absolute" bordered>
             <PageHeader v-model:collapsed="collapsed" />
           </n-layout-header>
-          <n-layout-content class="layout-content"
-                            :class="{ 'layout-default-background': getDarkTheme === undefined }"
+          <n-layout-content
+              class="layout-content"
+              :class="{ 'layout-default-background': getDarkTheme === undefined }"
+              :native-scrollbar="false"
           >
             <div class="layout-content-main">
               <router-view />
