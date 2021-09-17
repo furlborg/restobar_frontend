@@ -20,3 +20,12 @@ export async function retrieveCustomer(id) {
         ]
     })
 }
+
+export async function getCustomersByPageNumber(pageLimit, pageOffset) {
+    return await http.get('customers/', {
+        params: {
+            limit: pageLimit,
+            offset: pageOffset,
+        }
+    })
+}

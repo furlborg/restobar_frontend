@@ -41,18 +41,20 @@
       </n-collapse-item>
     </n-collapse>
     <!-- Customer Data Table -->
-    <n-data-table :columns="tableColumns" :data="customers" :pagination="pagination" :loading="customerStore.isTableLoading" />
+    <n-data-table :columns="tableColumns" :data="customers" :pagination="pagination" :loading="customerStore.isTableLoading" remote />
+    <!-- Customer Modal -->
     <customer-modal v-model:show="showModal" :id-customer="idCustomer" @update:show="idCustomer=0" />
   </n-card>
 </template>
 
 <script>
-import {defineComponent, onMounted, ref} from "vue"
+import {defineComponent, onMounted, ref, h} from "vue"
 import {documentOptions, createCustomerColumns} from "@/utils/constants"
-import {useMessage} from "naive-ui"
-import {getCustomers} from "@/api/modules/customer"
+import {useMessage, NButton} from "naive-ui"
+import {getCustomers, getCustomersByPageNumber} from "@/api/modules/customer"
 import {useCustomerStore} from "@/store/modules/customer"
 import CustomerModal from "./components/CustomerModal"
+import {renderIcon} from "@/utils"
 
 export default defineComponent({
   name: "Customer",
@@ -66,16 +68,39 @@ export default defineComponent({
     const customers = ref([])
     const showModal = ref(false)
     const pagination = ref({
-      Page: 1,
+      previusPage: null,
+      offset: 0,
+      page: 1,
       pageCount: 1,
-      pageSize: 10
-    })
-
-    onMounted(() => {
-      document.title = 'Clientes | App'
-      customerStore.toggleLoadingTable()
-      getCustomers()
+      pageSize: 10,
+      showSizePicker: true,
+      pageSizes: [10, 25, 50, 100],
+      next: () => {
+        return h(
+          NButton,
+          {
+            bordered: false,
+          },
+          () => 'Siguiente'
+          )
+      },
+      prev: () => {
+        return h(
+          NButton,
+          {
+            bordered: false,
+          },
+          () => 'Anterior'
+          )
+      },
+      onChange: (page) => {
+        console.log(page)
+        customerStore.toggleLoadingTable()
+        pagination.value.page = page
+        pagination.value.offset = (page * pagination.value.pageSize) - pagination.value.pageSize
+        getCustomersByPageNumber(pagination.value.pageSize, pagination.value.offset)
           .then(response => {
+            pagination.value.pageCount = Number(response.data.count) / pagination.value.pageSize
             customers.value = response.data.results
           })
           .catch(error => {
@@ -84,6 +109,41 @@ export default defineComponent({
           .finally(() => {
             customerStore.toggleLoadingTable()
           })
+      },
+      onPageSizeChange: (pageSize) => {
+        customerStore.toggleLoadingTable()
+        pagination.value.offset = 0
+        pagination.value.page = 1
+        pagination.value.pageSize = pageSize
+        getCustomersByPageNumber(pageSize, pagination.value.offset)
+          .then(response => {
+            pagination.value.pageCount = Number(response.data.count) / pagination.value.pageSize
+            customers.value = response.data.results
+          })
+          .catch(error => {
+            console.error(error)
+          })
+          .finally(() => {
+            customerStore.toggleLoadingTable()
+          })
+      }
+    })
+
+    onMounted(() => {
+      document.title = 'Clientes | App'
+      customerStore.toggleLoadingTable()
+      pagination.value.offset = 0
+      getCustomers()
+        .then(response => {
+          pagination.value.pageCount = Number(response.data.count) / pagination.value.pageSize
+          customers.value = response.data.results
+        })
+        .catch(error => {
+          console.error(error)
+        })
+        .finally(() => {
+          customerStore.toggleLoadingTable()
+        })
     })
 
     return {
