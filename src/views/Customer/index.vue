@@ -54,7 +54,6 @@ import {useMessage, NButton} from "naive-ui"
 import {getCustomers, getCustomersByPageNumber} from "@/api/modules/customer"
 import {useCustomerStore} from "@/store/modules/customer"
 import CustomerModal from "./components/CustomerModal"
-import {renderIcon} from "@/utils"
 
 export default defineComponent({
   name: "Customer",
@@ -94,10 +93,9 @@ export default defineComponent({
           )
       },
       onChange: (page) => {
-        console.log(page)
         customerStore.toggleLoadingTable()
         pagination.value.page = page
-        pagination.value.offset = (page * pagination.value.pageSize) - pagination.value.pageSize
+        pagination.value.offset = --page * pagination.value.pageSize
         getCustomersByPageNumber(pagination.value.pageSize, pagination.value.offset)
           .then(response => {
             pagination.value.pageCount = Number(response.data.count) / pagination.value.pageSize
@@ -145,7 +143,6 @@ export default defineComponent({
           customerStore.toggleLoadingTable()
         })
     })
-
     return {
       showModal,
       pagination,
