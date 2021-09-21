@@ -80,6 +80,7 @@ export default defineComponent({
     const pagination = ref({
       pageSearchParams: null,
       previusPage: null,
+      total: 0,
       offset: 0,
       page: 1,
       pageCount: 1,
@@ -110,6 +111,7 @@ export default defineComponent({
         pagination.value.offset = --page * pagination.value.pageSize
         getCustomersByPageNumber(pagination.value.pageSearchParams, pagination.value.pageSize, pagination.value.offset)
           .then(response => {
+            pagination.value.total = response.data.count
             pagination.value.pageCount = Math.trunc(Number(response.data.count) / pagination.value.pageSize)
             if  (Number(response.data.count) % pagination.value.pageSize !== 0 ) {
               ++pagination.value.pageCount
@@ -130,6 +132,7 @@ export default defineComponent({
         pagination.value.pageSize = pageSize
         getCustomersByPageNumber(pagination.value.pageSearchParams, pageSize, pagination.value.offset)
           .then(response => {
+            pagination.value.total = response.data.count
             pagination.value.pageCount = Math.trunc(Number(response.data.count) / pagination.value.pageSize)
             if  (Number(response.data.count) % pagination.value.pageSize !== 0 ) {
               ++pagination.value.pageCount
@@ -151,6 +154,7 @@ export default defineComponent({
       pagination.value.page = 1
       getCustomers()
         .then(response => {
+          pagination.value.total = response.data.count
           pagination.value.pageCount = Math.trunc(Number(response.data.count) / pagination.value.pageSize)
           if  (Number(response.data.count) % pagination.value.pageSize !== 0 ) {
             ++pagination.value.pageCount
@@ -172,6 +176,7 @@ export default defineComponent({
       pagination.value.page = 1
       searchCustomers(pagination.value.pageSearchParams, pagination.value.pageSize, pagination.value.offset)
         .then(response => {
+          pagination.value.total = response.data.count
           pagination.value.pageCount = Math.trunc(Number(response.data.count) / pagination.value.pageSize)
           if  (Number(response.data.count) % pagination.value.pageSize !== 0 ) {
             ++pagination.value.pageCount
@@ -208,8 +213,8 @@ export default defineComponent({
       documentOptions,
       tableColumns: createCustomerColumns({
         editCustomer(rowData) {
-          idCustomer.value = rowData.id
           showModal.value = true
+          idCustomer.value = rowData.id
         },
         deleteCustomer(rowData) {
           message.error('Eliminando cliente ' + rowData.names)

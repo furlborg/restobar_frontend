@@ -55,3 +55,29 @@ export async function searchCustomers(searchParams,pageLimit, pageOffset) {
         }
     })
 }
+
+export async function createCustomer(customer) {
+    let date = new Date(customer.birthdate)
+    date = `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}`
+    return await http.post('customers/', {
+        names: customer.names,
+        doc_type: customer.doc_type,
+        doc_num: customer.doc_num,
+        gender: customer.gender,
+        birthdate: date,
+        phone: customer.phone,
+        email: customer.email,
+    })
+}
+/* 
+export async function createCustomer(customer) {
+    return await http.post('customers/', customer, {
+        transformRequest: [
+            function (data, headers) {
+                let date = new Date(data.birthdate)
+                data.birthdate= `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}`
+                return JSON.stringify(data)
+            }
+        ]
+    })
+} */

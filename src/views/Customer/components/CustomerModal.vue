@@ -50,7 +50,7 @@
     </n-spin>
     <template #action>
       <n-space justify="end">
-        <n-button type="success" @click="">Registrar</n-button>
+        <n-button type="success" @click="performCreate">Registrar</n-button>
       </n-space>
     </template>
   </n-modal>
@@ -59,13 +59,14 @@
 <script>
 import {defineComponent, ref, toRefs, watch} from "vue"
 import {documentOptions} from "@/utils/constants"
-import {retrieveCustomer} from "@/api/modules/customer"
+import {retrieveCustomer, createCustomer} from "@/api/modules/customer"
 import {useMessage} from "naive-ui"
 
 export default defineComponent({
   name: "CustomerModal",
   emits: [
     'update:show',
+    'on-success',
   ],
   props: {
     show : {
@@ -120,9 +121,26 @@ export default defineComponent({
       }
     })
 
+    const performCreate = () => {
+      createCustomer(customer.value)
+        .then(response => {
+          if (response.status===201) {
+            message.success('Cliente registrado!')
+          }
+        })
+        .catch(error => {
+          console.error(error)
+          message.error('Algo salió mal...')
+        })
+        .finally(() => {
+
+        })
+    }
+
     return {
       modalTitle,
       customer,
+      performCreate,
       documentOptions,
       isLoadingData,
     }
