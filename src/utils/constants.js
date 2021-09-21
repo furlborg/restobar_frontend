@@ -23,23 +23,23 @@ export const getDocTypeByNumber = (v) => {
 export const documentOptions = [
     {
         label: 'SIN DOCUMENTO',
-        value: 0
+        value: "0"
     },
     {
         label: 'L.E / DNI',
-        value: 1
+        value: "1"
     },
     {
         label: 'CARNET EXT.',
-        value: 4
+        value: "4"
     },
     {
         label: 'RUC',
-        value: 6
+        value: "6"
     },
     {
         label: 'PASAPORTE',
-        value: 7
+        value: "7"
     },
 ]
 export const createCustomerColumns = ({ editCustomer, deleteCustomer }) => {

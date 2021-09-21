@@ -21,9 +21,35 @@ export async function retrieveCustomer(id) {
     })
 }
 
-export async function getCustomersByPageNumber(pageLimit, pageOffset) {
+export async function getCustomersByPageNumber(searchParams, pageLimit, pageOffset) {
+    if (searchParams) {
+        return await http.get('customers/', {
+            params: {
+                doc_type: searchParams.doc_type,
+                doc_num__icontains: searchParams.doc_num,
+                names__icontains: searchParams.names,
+                phone__icontains: searchParams.phone,
+                limit: pageLimit,
+                offset: pageOffset,
+            }
+        })
+    } else {
+        return await http.get('customers/', {
+            params: {
+                limit: pageLimit,
+                offset: pageOffset,
+            }
+        })
+    }
+}
+
+export async function searchCustomers(searchParams,pageLimit, pageOffset) {
     return await http.get('customers/', {
         params: {
+            doc_type: searchParams.doc_type,
+            doc_num__icontains: searchParams.doc_num,
+            names__icontains: searchParams.names,
+            phone__icontains: searchParams.phone,
             limit: pageLimit,
             offset: pageOffset,
         }

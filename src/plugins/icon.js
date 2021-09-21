@@ -25,6 +25,7 @@ import {
     MdDeleteforever,
     MdLightmodeTwotone,
     MdDarkmodeTwotone,
+    HiSolidRefresh,
 } from "oh-vue-icons/icons";
 OhVueIcon.add(
     MdSpacedashboardTwotone,
@@ -52,5 +53,6 @@ OhVueIcon.add(
     MdDeleteforever,
     MdLightmodeTwotone,
     MdDarkmodeTwotone,
+    HiSolidRefresh,
 );
 export { OhVueIcon }
