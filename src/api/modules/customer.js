@@ -1,5 +1,5 @@
 import {http} from "@/api"
-import {toTimestamp} from "@/utils/dates"
+import {toTimestamp, toDate} from "@/utils/dates"
 
 export async function getCustomers() {
     return await http.get('customers/')
@@ -57,14 +57,24 @@ export async function searchCustomers(searchParams,pageLimit, pageOffset) {
 }
 
 export async function createCustomer(customer) {
-    let date = new Date(customer.birthdate)
-    date = `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}`
     return await http.post('customers/', {
         names: customer.names,
         doc_type: customer.doc_type,
         doc_num: customer.doc_num,
         gender: customer.gender,
-        birthdate: date,
+        birthdate: toDate(customer.birthdate),
+        phone: customer.phone,
+        email: customer.email,
+    })
+}
+
+export async function updateCustomer(idCustomer, customer) {
+    return await http.put(`customers/${idCustomer}/`, {
+        names: customer.names,
+        doc_type: customer.doc_type,
+        doc_num: customer.doc_num,
+        gender: customer.gender,
+        birthdate: toDate(customer.birthdate),
         phone: customer.phone,
         email: customer.email,
     })

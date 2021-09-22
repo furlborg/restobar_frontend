@@ -5,7 +5,7 @@
       :title="modalTitle"
       :mask-closable="false"
       :show="show"
-      :on-close="() => $emit('update:show', !show)"
+      :on-close="() => $emit('update:show')"
   >
     <n-spin :show="isLoadingData">
       <n-form>
@@ -50,7 +50,8 @@
     </n-spin>
     <template #action>
       <n-space justify="end">
-        <n-button type="success" @click="performCreate">Registrar</n-button>
+        <n-button v-if="idCustomer===0" type="primary" :loading="isLoadingData" :disabled="isLoadingData" @click="performCreate">Registrar</n-button>
+        <n-button v-else type="warning" :loading="isLoadingData" :disabled="isLoadingData" @click="performUpdate">Modificar</n-button>
       </n-space>
     </template>
   </n-modal>
@@ -59,7 +60,7 @@
 <script>
 import {defineComponent, ref, toRefs, watch} from "vue"
 import {documentOptions} from "@/utils/constants"
-import {retrieveCustomer, createCustomer} from "@/api/modules/customer"
+import {retrieveCustomer, createCustomer, updateCustomer} from "@/api/modules/customer"
 import {useMessage} from "naive-ui"
 
 export default defineComponent({
@@ -78,10 +79,11 @@ export default defineComponent({
       default: 0,
     },
   },
-  setup(props) {
+  setup(props, {emit}) {
     const message = useMessage()
-    const {idCustomer} = toRefs(props)
+    const {idCustomer, show} = toRefs(props)
     const modalTitle = ref('Registrar Cliente')
+    const isLoadingData = ref(false)
     const customer = ref({
       names: null,
       doc_type: null,
@@ -91,12 +93,12 @@ export default defineComponent({
       birthdate: null,
       gender: null,
     })
-    const isLoadingData = ref(false)
 
-    watch(idCustomer, () => {
-      if (idCustomer.value !== 0) {
-        isLoadingData.value = true
+    watch(show, () => {
+      if (show.value===true&&idCustomer.value!==0) {
+        document.title = 'Modificar Cliente | App'
         modalTitle.value = 'Modificar Cliente'
+        isLoadingData.value = true
         retrieveCustomer(idCustomer.value)
           .then(response => {
             customer.value=response.data
@@ -108,7 +110,9 @@ export default defineComponent({
           .finally(() => {
             isLoadingData.value = false
           })
-      } else {
+      } else if (show.value===true&&idCustomer.value===0) {
+        document.title = 'Registrar Cliente | App'
+        modalTitle.value = 'Registrar Cliente'
         customer.value = {
           names: null,
           doc_type: null,
@@ -122,10 +126,12 @@ export default defineComponent({
     })
 
     const performCreate = () => {
+      isLoadingData.value = true
       createCustomer(customer.value)
         .then(response => {
           if (response.status===201) {
             message.success('Cliente registrado!')
+            emit('on-success')
           }
         })
         .catch(error => {
@@ -133,7 +139,21 @@ export default defineComponent({
           message.error('Algo salió mal...')
         })
         .finally(() => {
+          isLoadingData.value = false
+        })
+    }
 
+    const performUpdate = () => {
+      isLoadingData.value = true
+      updateCustomer(idCustomer.value, customer.value)
+        .then(response => {
+          console.log(response.data)
+        })
+        .catch(error => {
+          console.error(error)
+        })
+        .finally(() => {
+          isLoadingData.value = false
         })
     }
 
@@ -141,6 +161,7 @@ export default defineComponent({
       modalTitle,
       customer,
       performCreate,
+      performUpdate,
       documentOptions,
       isLoadingData,
     }

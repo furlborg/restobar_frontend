@@ -48,7 +48,7 @@
     <!-- Customer Data Table -->
     <n-data-table :columns="tableColumns" :data="customers" :pagination="pagination" :loading="isTableLoading" remote />
     <!-- Customer Modal -->
-    <customer-modal v-model:show="showModal" :id-customer="idCustomer" @update:show="idCustomer=0" />
+    <customer-modal v-model:show="showModal" :id-customer="idCustomer" @update:show="onCloseModal" @on-success="onSuccess" />
   </n-card>
 </template>
 
@@ -196,6 +196,17 @@ export default defineComponent({
       loadCustomersData()
     }
 
+    const onCloseModal = () => {
+      document.title = 'Clientes | App'
+      idCustomer.value = 0
+    }
+
+    const onSuccess = () => {
+      showModal.value = false
+      onCloseModal()
+      loadCustomersData()
+    }
+
     onMounted(() => {
       document.title = 'Clientes | App'
       loadCustomersData()
@@ -210,6 +221,8 @@ export default defineComponent({
       idCustomer,
       performSearch,
       refreshTable,
+      onCloseModal,
+      onSuccess,
       documentOptions,
       tableColumns: createCustomerColumns({
         editCustomer(rowData) {
