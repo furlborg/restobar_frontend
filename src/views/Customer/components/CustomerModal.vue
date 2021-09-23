@@ -39,11 +39,18 @@
             </n-grid>
           </n-tab-pane>
           <n-tab-pane name="addresses" tab="Direcciones">
-            <n-grid responsive="screen" cols="6 s:6 m:12 l:12 xl:12 2xl:12" :x-gap="12">
-              <n-form-item-gi label="Direcciones" :span="12">
-                <n-input placeholder=""></n-input>
+            <n-h3>Registro de direcciones</n-h3>
+            <n-grid responsive="screen" cols="6 s:6 m:12 l:24 xl:24 2xl:24" :x-gap="12">
+              <n-form-item-gi v-for="address, index in customer.addresses" :key="index" :label="`Dirección #${++index}`" :span="24">
+                <n-input-group>
+                  <n-input v-model:value="address.description" placeholder="" />
+                  <n-button v-if="index>1" type="error">
+                    <v-icon name="md-deletesweep-round" />
+                  </n-button>
+                </n-input-group>
               </n-form-item-gi>
             </n-grid>
+            <n-button class="w-100" type="info" dashed @click="addAddress">Agregar dirección</n-button>
           </n-tab-pane>
         </n-tabs>
       </n-form>
@@ -92,6 +99,11 @@ export default defineComponent({
       phone: null,
       birthdate: null,
       gender: null,
+      addresses: [
+        {
+          description: '',
+        }
+      ]
     })
 
     watch(show, () => {
@@ -121,6 +133,12 @@ export default defineComponent({
           phone: null,
           birthdate: null,
           gender: null,
+          addresses: [
+            {
+              id: 0,
+              description: '',
+            }
+          ]
         }
       }
     })
@@ -157,9 +175,16 @@ export default defineComponent({
         })
     }
 
+    const addAddress = () => {
+      customer.value.addresses.push({
+        description: ''
+      })
+    }
+
     return {
       modalTitle,
       customer,
+      addAddress,
       performCreate,
       performUpdate,
       documentOptions,

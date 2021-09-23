@@ -63,10 +63,13 @@ export const createCustomerColumns = ({ editCustomer, deleteCustomer }) => {
             title: 'Nombre',
             key: 'names'
         },
-        /*{
+        {
             title: 'Dirección',
-            key: 'address'
-        },*/
+            key: 'addresses',
+            render(row) {
+                return row.addresses[0].description
+            }
+        },
         {
             title: 'Género',
             key: 'gender'
