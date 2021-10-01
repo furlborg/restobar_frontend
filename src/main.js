@@ -5,6 +5,6 @@ import {store} from './store'
 import {naive} from './plugins/naive'
 import {OhVueIcon} from "@/plugins/icon"
 import '@/style/bootstrap-utilities.min.css'
-import 'vfonts/FiraSans.css'
+import 'vfonts/Lato.css'
 
 createApp(App).use(router).use(store).use(naive).component("v-icon", OhVueIcon).mount('#app')

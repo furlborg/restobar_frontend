@@ -65,6 +65,7 @@ export async function createCustomer(customer) {
         birthdate: toDate(customer.birthdate),
         phone: customer.phone,
         email: customer.email,
+        addresses: customer.addresses,
     })
 }
 
@@ -79,15 +80,13 @@ export async function updateCustomer(idCustomer, customer) {
         email: customer.email,
     })
 }
-/* 
-export async function createCustomer(customer) {
-    return await http.post('customers/', customer, {
-        transformRequest: [
-            function (data, headers) {
-                let date = new Date(data.birthdate)
-                data.birthdate= `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}`
-                return JSON.stringify(data)
-            }
-        ]
+
+export async function requestCustomerData(document) {
+    return await http.post('customers/request_data/', {
+        document: document,
     })
-} */
+}
+
+export async function getUbigee(){
+    return await http.get('customers/ubigee/')
+}

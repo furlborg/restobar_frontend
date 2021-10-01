@@ -21,12 +21,14 @@ import {
     HiUser,
     LaUserPlusSolid,
     LaUserEditSolid,
+    LaUserSlashSolid,
     LaUserTimesSolid,
     MdDeleteforever,
     MdLightmodeTwotone,
     MdDarkmodeTwotone,
     HiSolidRefresh,
     MdDeletesweepRound,
+    MdPersonsearchRound,
 } from "oh-vue-icons/icons";
 OhVueIcon.add(
     MdSpacedashboardTwotone,
@@ -50,11 +52,13 @@ OhVueIcon.add(
     HiUser,
     LaUserPlusSolid,
     LaUserEditSolid,
+    LaUserSlashSolid,
     LaUserTimesSolid,
     MdDeleteforever,
     MdLightmodeTwotone,
     MdDarkmodeTwotone,
     HiSolidRefresh,
     MdDeletesweepRound,
+    MdPersonsearchRound,
 );
 export { OhVueIcon }

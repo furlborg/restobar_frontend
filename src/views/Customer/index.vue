@@ -1,7 +1,7 @@
 <template>
   <n-card title="Clientes" :bordered="false" :segmented="{ content: 'hard' }">
     <template #header-extra>
-      <n-button type="primary" @click="showModal=!showModal">
+      <n-button :disabled="isTableLoading" type="primary" @click="showModal=!showModal">
         <template #icon>
           <n-icon>
             <v-icon name="la-user-plus-solid" />
@@ -41,7 +41,7 @@
       </n-collapse-item>
     </n-collapse>
     <n-space class="mb-2" justify="end">
-      <n-button type="info" @click="refreshTable">
+      <n-button type="info" @click="refreshTable" :disabled="isTableLoading">
         <v-icon name="hi-solid-refresh" />
       </n-button>
     </n-space>

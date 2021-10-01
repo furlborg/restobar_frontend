@@ -44,6 +44,7 @@
 import {computed, defineComponent, onMounted, ref} from "vue"
 import {createTheme, inputDark, datePickerDark, darkTheme} from 'naive-ui'
 import {commonEsPE, dateEsPE} from '@/locale'
+import {useCustomerStore} from '@/store/modules/customer'
 import AppProvider from '@/components/Application'
 import Logo from '@/layout/Logo'
 import AsideMenu from '@/layout/AsideMenu'
@@ -76,6 +77,10 @@ export default defineComponent({
     const designStore = useDesignSettingStore()
 
     designStore.initializeStore()
+
+    const customerStore = useCustomerStore()
+
+    customerStore.initializeStore()
 
     const getThemeOverrides = computed(() => {
       const appTheme = designStore.appTheme;

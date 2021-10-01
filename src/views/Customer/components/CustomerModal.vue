@@ -8,47 +8,71 @@
       :on-close="() => $emit('update:show')"
   >
     <n-spin :show="isLoadingData">
-      <n-form>
+      <n-form :rules="customerRules" :model="customer" ref="customerRef">
         <n-tabs type="line">
           <n-tab-pane name="info" tab="Información General">
             <n-grid responsive="screen" cols="6 s:6 m:12 l:24 xl:24 2xl:24" :x-gap="12">
-              <n-form-item-gi label="Nombres" :span="12">
+              <n-form-item-gi label="Nombres" path="names" :span="12">
                 <n-input v-model:value="customer.names" placeholder="" />
               </n-form-item-gi>
-              <n-form-item-gi label="Tipo Documento" :span="4">
-                <n-select v-model:value="customer.doc_type" :options="documentOptions" placeholder="" />
+              <n-form-item-gi label="Tipo Documento" path="doc_type" :span="5">
+                <n-select v-model:value="customer.doc_type" :options="documentOptions" placeholder="" @update:value="changeDocMax"/>
               </n-form-item-gi>
-              <n-form-item-gi label="Nº Documento" :span="4">
-                <n-input-number v-model:value="customer.doc_num" :show-button="false" placeholder="" />
-              </n-form-item-gi>
-              <n-form-item-gi label="Género" :span="4">
-                <n-radio-group v-model:value="customer.gender" name="genderGroup">
-                  <n-radio-button key="gender" value="F">F</n-radio-button>
-                  <n-radio-button key="gender" value="M">M</n-radio-button>
-                </n-radio-group>
+              <n-form-item-gi label="Nº Documento" path="doc_num" :span="7">
+                <n-input-group>
+                  <n-input v-model:value="customer.doc_num" :maxlength="docMaxLength" placeholder="" show-count @keypress="isNumber($event)" />
+                  <n-popover placement="top-end" trigger="hover" :delay="750" :duration="500">
+                    <template #trigger>
+                      <n-button type="primary" dashed @click="performSearchByDoc">
+                        <n-icon>
+                          <v-icon name="md-personsearch-round"/>
+                        </n-icon>
+                      </n-button>
+                    </template>
+                    <span>Consultar DNI/RUC</span>
+                  </n-popover>
+                </n-input-group>
               </n-form-item-gi>
               <n-form-item-gi label="Correo" :span="12">
                 <n-input v-model:value="customer.email" placeholder="" />
               </n-form-item-gi>
-              <n-form-item-gi label="Fecha de Nacimiento" :span="6">
+              <n-form-item-gi label="Fecha de Nacimiento" path="birthdate" :span="4">
                 <n-date-picker v-model:value="customer.birthdate" type="date" placeholder="" clearable></n-date-picker>
               </n-form-item-gi>
-              <n-form-item-gi label="Celular" :span="6">
-                <n-input-number  v-model:value="customer.phone" :show-button="false" placeholder="" />
+              <n-form-item-gi label="Celular" :span="4">
+                <n-input v-model:value="customer.phone" :maxlength="12" placeholder="" @keypress="isNumber($event)" />
+              </n-form-item-gi>
+              <n-form-item-gi label="Género" path="gender" :span="4">
+                <n-radio-group v-model:value="customer.gender" name="genderGroup">
+                  <n-radio-button key="gender" value="F">F</n-radio-button>
+                  <n-radio-button key="gender" value="M">M</n-radio-button>
+                </n-radio-group>
               </n-form-item-gi>
             </n-grid>
           </n-tab-pane>
           <n-tab-pane name="addresses" tab="Direcciones">
             <n-h3>Registro de direcciones</n-h3>
             <n-grid responsive="screen" cols="6 s:6 m:12 l:24 xl:24 2xl:24" :x-gap="12">
-              <n-form-item-gi v-for="address, index in customer.addresses" :key="index" :label="`Dirección #${++index}`" :span="24">
-                <n-input-group>
-                  <n-input v-model:value="address.description" placeholder="" />
-                  <n-button v-if="index>1" type="error">
-                    <v-icon name="md-deletesweep-round" />
-                  </n-button>
-                </n-input-group>
-              </n-form-item-gi>
+              <template v-for="address, index in customer.addresses">
+                <n-form-item-gi v-if="address.isDisabled===false" :key="index" label="Dirección" :span="24">
+                  <n-input-group>
+                    <n-select style="width: 200px;" :options="countriesOptions" v-model:value="address.country" default-value="PE" disabled></n-select>
+                    <n-cascader separator=" ⏵ " :options="ubigeeOptions" v-model:value="address.district" check-strategy="child"/>
+                    <n-input v-model:value="address.description" placeholder="" />
+                    <n-popconfirm v-if="index>0">
+                      <template #trigger>
+                        <n-button type="error" >
+                          <v-icon name="md-deletesweep-round" />
+                        </n-button>
+                      </template>
+                      ¿Está seguro?
+                      <template #action>
+                        <n-button type="error" size="small" @click="(address.id) ? address.isDisabled = true : popAddress(index)"> Sí </n-button>
+                      </template>
+                    </n-popconfirm>
+                  </n-input-group>
+                </n-form-item-gi>
+              </template>
             </n-grid>
             <n-button class="w-100" type="info" dashed @click="addAddress">Agregar dirección</n-button>
           </n-tab-pane>
@@ -65,10 +89,13 @@
 </template>
 
 <script>
-import {defineComponent, ref, toRefs, watch} from "vue"
-import {documentOptions} from "@/utils/constants"
-import {retrieveCustomer, createCustomer, updateCustomer} from "@/api/modules/customer"
+import {defineComponent, ref, toRefs, watch, computed} from "vue"
+import {isNumber} from "@/utils"
+import {toTimestamp} from "@/utils/dates"
+import {documentOptions, customerRules} from "@/utils/constants"
+import {retrieveCustomer, createCustomer, updateCustomer, requestCustomerData} from "@/api/modules/customer"
 import {useMessage} from "naive-ui"
+import {useCustomerStore} from "@/store/modules/customer"
 
 export default defineComponent({
   name: "CustomerModal",
@@ -88,9 +115,12 @@ export default defineComponent({
   },
   setup(props, {emit}) {
     const message = useMessage()
+    const requestMessage =ref(null)
+    const customerStore = useCustomerStore()
     const {idCustomer, show} = toRefs(props)
     const modalTitle = ref('Registrar Cliente')
     const isLoadingData = ref(false)
+    const customerRef = ref(null)
     const customer = ref({
       names: null,
       doc_type: null,
@@ -102,8 +132,18 @@ export default defineComponent({
       addresses: [
         {
           description: '',
+          country: 'PE',
+          district: null,
+          isDisabled: false,
         }
       ]
+    })
+    const docMaxLength = ref(20)
+    const countriesOptions = computed(() => (
+      customerStore.countries
+    ))
+    const ubigeeOptions = computed(() => {
+      return customerStore.ubigee
     })
 
     watch(show, () => {
@@ -135,29 +175,39 @@ export default defineComponent({
           gender: null,
           addresses: [
             {
-              id: 0,
               description: '',
+              country: 'PE',
+              district: null,
+              isDisabled: false,
             }
           ]
         }
       }
     })
 
-    const performCreate = () => {
-      isLoadingData.value = true
-      createCustomer(customer.value)
-        .then(response => {
-          if (response.status===201) {
-            message.success('Cliente registrado!')
-            emit('on-success')
+    const performCreate = (e) => {
+      e.preventDefault()
+        customerRef.value.validate((errors) => {
+          if (!errors) {
+            isLoadingData.value = true
+            createCustomer(customer.value)
+              .then(response => {
+                if (response.status===201) {
+                  message.success('Cliente registrado!')
+                  emit('on-success')
+                }
+              })
+              .catch(error => {
+                console.error(error)
+                message.error('Algo salió mal...')
+              })
+              .finally(() => {
+                isLoadingData.value = false
+              })
+          } else {
+            console.log(errors)
+            message.error('Datos incorrectos')
           }
-        })
-        .catch(error => {
-          console.error(error)
-          message.error('Algo salió mal...')
-        })
-        .finally(() => {
-          isLoadingData.value = false
         })
     }
 
@@ -169,26 +219,107 @@ export default defineComponent({
         })
         .catch(error => {
           console.error(error)
+          message.error('Algo salió mal...')
         })
         .finally(() => {
           isLoadingData.value = false
         })
     }
 
+    const performSearchByDoc = () => {
+      if (customer.value.doc_num) {
+        if (customer.value.doc_num.length===8 || customer.value.doc_num.length===11) {
+          requestMessage.value = message.loading('Consultando documento...', {duration:0})
+          requestCustomerData(customer.value.doc_num)
+            .then(response => {
+              if (response.status===200) {
+                message.success('Éxito')
+                if (customer.value.doc_num.length===8) {
+                  customer.value.names = response.data.data.nombre_completo
+                  customer.value.birthdate = toTimestamp(response.data.data.fecha_nacimiento)
+                  if (response.data.data.sexo==='FEMENINO') {
+                    customer.value.gender = 'F'
+                  } else if (response.data.data.sexo==='MASCULINO') {
+                    customer.value.gender = 'M'
+                  }
+                } else if (customer.value.doc_num.length===11) {
+                  customer.value.names = response.data.data.nombre_o_razon_social
+                  customer.value.addresses[0].district = Number(response.data.data.ubigeo[2])
+                  customer.value.addresses[0].description = response.data.data.direccion
+                }
+              } else if (response.status===404) {
+                message.error('Documento no encontrado')
+              } else {
+                message.error('Algo salió mal...')
+              }
+            })
+            .catch(error => {
+              console.error(error)
+              message.error('Algo salió mal...')
+            })
+            .finally(() => {
+              requestMessage.value.destroy()
+            })
+        } else {
+          message.error('Documento inválido')
+        }
+      } else {
+          message.error('Documento inválido')
+        }
+    }
+
     const addAddress = () => {
       customer.value.addresses.push({
-        description: ''
+        description: '',
+        country: 'PE',
+        district: null,
+        isDisabled: false,
       })
+    }
+    const popAddress = (address) => {
+      customer.value.addresses.splice(address, 1)
+    }
+
+    const changeDocMax = () => {
+      switch(customer.value.doc_type) {
+        case "0":
+            docMaxLength.value = 20
+            break
+        case "1":
+            docMaxLength.value = 8
+            break
+        case "4":
+            docMaxLength.value = 12
+            break
+        case "6":
+            docMaxLength.value = 11
+            break
+        case "7":
+            docMaxLength.value = 12
+            break
+        default:
+            console.error('Error: Tipo de Documento inválido')
+            break
+      }
     }
 
     return {
+      isLoadingData,
       modalTitle,
       customer,
+      customerRef,
+      customerRules,
+      documentOptions,
+      countriesOptions,
+      ubigeeOptions,
       addAddress,
+      popAddress,
       performCreate,
       performUpdate,
-      documentOptions,
-      isLoadingData,
+      performSearchByDoc,
+      isNumber,
+      changeDocMax,
+      docMaxLength,
     }
   }
 })

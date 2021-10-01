@@ -132,10 +132,28 @@ export const createCustomerColumns = ({ editCustomer, deleteCustomer }) => {
                             type: 'error',
                             onClick: () => deleteCustomer(row)
                         },
-                        renderIcon('md-deleteforever')
+                        renderIcon('la-user-slash-solid')
                     )
                 ]
             }
         }
     ]
+}
+
+export const customerRules = {
+    names: {
+        required: true,
+        trigger: ['blur', 'input'],
+        message: 'Nombres requeridos'
+    },
+    doc_type: {
+        required: true,
+        trigger: ['blur', 'change'],
+        message: 'Tipo documento requerido'
+    },
+    doc_num: {
+        required: true,
+        trigger: ['blur','input'],
+        message: 'Número documento requerido'
+    },
 }

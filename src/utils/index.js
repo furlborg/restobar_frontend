@@ -25,3 +25,12 @@ export function lighten(color, amount) {
         amount
     )}${addLight(color.substring(4, 6), amount)}`
 }
+
+export function isNumber(e) {
+    let char = String.fromCharCode(e.keyCode)
+    if (/^[0-9]+$/.test(char)) {
+        return true
+    } else {
+        e.preventDefault()
+    }
+  }
