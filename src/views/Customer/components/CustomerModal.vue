@@ -198,8 +198,13 @@ export default defineComponent({
                 }
               })
               .catch(error => {
-                console.error(error)
+                console.log(error)
                 message.error('Algo salió mal...')
+                for (const property in error.response.data) {
+                  for (let msg of error.response.data[property]) {
+                    message.error(msg)
+                  }
+                }
               })
               .finally(() => {
                 isLoadingData.value = false
@@ -211,18 +216,34 @@ export default defineComponent({
         })
     }
 
-    const performUpdate = () => {
-      isLoadingData.value = true
-      updateCustomer(idCustomer.value, customer.value)
-        .then(response => {
-          console.log(response.data)
-        })
-        .catch(error => {
-          console.error(error)
-          message.error('Algo salió mal...')
-        })
-        .finally(() => {
-          isLoadingData.value = false
+    const performUpdate = (e) => {
+      e.preventDefault()
+        customerRef.value.validate((errors) => {
+          if (!errors) {
+            isLoadingData.value = true
+            updateCustomer(idCustomer.value, customer.value)
+              .then(response => {
+                if (response.status===202) {
+                  message.success('Cliente actualizado!')
+                  emit('on-success')
+                }
+              })
+              .catch(error => {
+                console.log(error)
+                message.error('Algo salió mal...')
+                for (const property in error.response.data) {
+                  for (let msg of error.response.data[property]) {
+                    message.error(msg)
+                  }
+                }
+              })
+              .finally(() => {
+                isLoadingData.value = false
+              })
+          } else {
+            console.log(errors)
+            message.error('Datos incorrectos')
+          }
         })
     }
 

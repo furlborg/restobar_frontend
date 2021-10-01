@@ -24,15 +24,15 @@
             <n-form-item-gi label="Nombre" :span="6">
               <n-input v-model:value="searchParams.names" placeholder="" />
             </n-form-item-gi>
-            <n-form-item-gi label="Dirección" :span="6">
-              <n-input placeholder="" />
+            <n-form-item-gi label="Email" :span="6">
+              <n-input v-model:value="searchParams.email" placeholder="" />
             </n-form-item-gi>
             <n-form-item-gi label="Celular" :span="3">
               <n-input-number v-model:value="searchParams.phone" :show-button="false" placeholder="" />
             </n-form-item-gi>
-            <n-form-item-gi label="Fecha" :span="3">
+            <!-- <n-form-item-gi label="Fecha" :span="3">
               <n-date-picker  type="date" placeholder="" clearable />
-            </n-form-item-gi>
+            </n-form-item-gi> -->
             <n-gi :span="6">
               <n-button type="primary" @click="performSearch">Buscar</n-button>
             </n-gi>
@@ -55,8 +55,8 @@
 <script>
 import {defineComponent, onMounted, ref, h} from "vue"
 import {documentOptions, createCustomerColumns} from "@/utils/constants"
-import {useMessage, NButton} from "naive-ui"
-import {getCustomers, getCustomersByPageNumber, searchCustomers} from "@/api/modules/customer"
+import {useMessage, useDialog, NButton} from "naive-ui"
+import {getCustomers, getCustomersByPageNumber, searchCustomers, disableCustomer} from "@/api/modules/customer"
 import CustomerModal from "./components/CustomerModal"
 
 export default defineComponent({
@@ -66,6 +66,7 @@ export default defineComponent({
   },
   setup() {
     const message = useMessage()
+    const dialog = useDialog()
     const isTableLoading = ref(false)
     const showModal = ref(false)
     const idCustomer = ref(0)
@@ -75,7 +76,8 @@ export default defineComponent({
       doc_num: null,
       names: null,
       address: null,
-      phone: null
+      email: null,
+      phone: null,
     })
     const pagination = ref({
       pageSearchParams: null,
@@ -106,7 +108,7 @@ export default defineComponent({
           )
       },
       onChange: (page) => {
-        isTableLoading.value = !isTableLoading.value
+        isTableLoading.value = true
         pagination.value.page = page
         pagination.value.offset = --page * pagination.value.pageSize
         getCustomersByPageNumber(pagination.value.pageSearchParams, pagination.value.pageSize, pagination.value.offset)
@@ -120,13 +122,14 @@ export default defineComponent({
           })
           .catch(error => {
             console.error(error)
+            message.error('Algo salió mal...')
           })
           .finally(() => {
-            isTableLoading.value = !isTableLoading.value
+            isTableLoading.value = false
           })
       },
       onPageSizeChange: (pageSize) => {
-        isTableLoading.value = !isTableLoading.value
+        isTableLoading.value = true
         pagination.value.offset = 0
         pagination.value.page = 1
         pagination.value.pageSize = pageSize
@@ -141,15 +144,16 @@ export default defineComponent({
           })
           .catch(error => {
             console.error(error)
+            message.error('Algo salió mal...')
           })
           .finally(() => {
-            isTableLoading.value = !isTableLoading.value
+            isTableLoading.value = false
           })
       }
     })
 
     const loadCustomersData = () => {
-      isTableLoading.value = !isTableLoading.value
+      isTableLoading.value = true
       pagination.value.offset = 0
       pagination.value.page = 1
       getCustomers()
@@ -163,14 +167,15 @@ export default defineComponent({
         })
         .catch(error => {
           console.error(error)
+          message.error('Algo salió mal...')
         })
         .finally(() => {
-          isTableLoading.value = !isTableLoading.value
+          isTableLoading.value = false
         })
     }
 
     const performSearch = () => {
-      isTableLoading.value = !isTableLoading.value
+      isTableLoading.value = true
       pagination.value.pageSearchParams = searchParams.value
       pagination.value.offset = 0
       pagination.value.page = 1
@@ -185,9 +190,27 @@ export default defineComponent({
         })
         .catch(error => {
           console.error(error)
+          message.error('Algo salió mal...')
         })
         .finally(() => {
-          isTableLoading.value = !isTableLoading.value
+          isTableLoading.value = false
+        })
+    }
+
+    const performDisableCustomer = (id) => {
+      isTableLoading.value = true
+      disableCustomer(id)
+        .then(response => {
+          if (response.status === 202) {
+            message.success('Cliente deshabilitado con éxito!')
+          }
+        })
+        .catch(error => {
+          console.error(error)
+        })
+        .finally(() => {
+          isTableLoading.value = false
+          refreshTable()
         })
     }
 
@@ -230,7 +253,14 @@ export default defineComponent({
           idCustomer.value = rowData.id
         },
         deleteCustomer(rowData) {
-          message.error('Eliminando cliente ' + rowData.names)
+          dialog.error({
+            title: 'Deshabilitando cliente',
+            content: '¿Está seguro?',
+            positiveText: 'Sí',
+            onPositiveClick: () => {
+              performDisableCustomer(rowData.id)
+            }
+          })
         }
       }),
     }

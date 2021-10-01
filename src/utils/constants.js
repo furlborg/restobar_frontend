@@ -1,5 +1,5 @@
 import {h} from "vue"
-import {NButton, NTag} from "naive-ui"
+import {NButton, NPopconfirm, NTag} from "naive-ui"
 import {renderIcon} from "@/utils"
 
 export const getDocTypeByNumber = (v) => {
@@ -95,14 +95,16 @@ export const createCustomerColumns = ({ editCustomer, deleteCustomer }) => {
                     type="error"
                     text="Inactivo"
                 } else {
-                    type="info"
+                    type="success"
                     text="Activo"
                 }
 
                 return h(
                     NTag,
                     {
-                        type: type
+                        size: 'small',
+                        type: type,
+                        round: true
                     },
                     {
                         default: () => text

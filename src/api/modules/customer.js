@@ -11,8 +11,6 @@ export async function retrieveCustomer(id) {
             function (data) {
                 if (data) {
                     data = JSON.parse(data)
-                    data.doc_num = Number(data.doc_num)
-                    data.phone = Number(data.phone)
                     data.birthdate = toTimestamp(data.birthdate)
                 }
                 return data
@@ -28,6 +26,7 @@ export async function getCustomersByPageNumber(searchParams, pageLimit, pageOffs
                 doc_type: searchParams.doc_type,
                 doc_num__icontains: searchParams.doc_num,
                 names__icontains: searchParams.names,
+                email__icontains: searchParams.email,
                 phone__icontains: searchParams.phone,
                 limit: pageLimit,
                 offset: pageOffset,
@@ -49,6 +48,7 @@ export async function searchCustomers(searchParams,pageLimit, pageOffset) {
             doc_type: searchParams.doc_type,
             doc_num__icontains: searchParams.doc_num,
             names__icontains: searchParams.names,
+            email__icontains: searchParams.email,
             phone__icontains: searchParams.phone,
             limit: pageLimit,
             offset: pageOffset,
@@ -78,7 +78,12 @@ export async function updateCustomer(idCustomer, customer) {
         birthdate: toDate(customer.birthdate),
         phone: customer.phone,
         email: customer.email,
+        addresses: customer.addresses,
     })
+}
+
+export async function disableCustomer(id) {
+    return await http.delete(`customers/${id}/`)
 }
 
 export async function requestCustomerData(document) {
