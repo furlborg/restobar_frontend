@@ -45,6 +45,8 @@ import {computed, defineComponent, onMounted, ref} from "vue"
 import {createTheme, inputDark, datePickerDark, darkTheme} from 'naive-ui'
 import {commonEsPE, dateEsPE} from '@/locale'
 import {useCustomerStore} from '@/store/modules/customer'
+import {useGenericsStore} from '@/store/modules/generics'
+import {useTableStore} from '@/store/modules/table'
 import AppProvider from '@/components/Application'
 import Logo from '@/layout/Logo'
 import AsideMenu from '@/layout/AsideMenu'
@@ -63,17 +65,6 @@ export default defineComponent({
   setup() {
     const collapsed = ref(false)
 
-    const watchWidth = () => {
-      const Width = document.body.clientWidth
-      collapsed.value = Width <= 950
-    }
-
-    onMounted(() => {
-      window.addEventListener('resize', watchWidth)
-      // window['$loading'] = useLoadingBar()
-      // window['$loading'].finish()
-    })
-
     const designStore = useDesignSettingStore()
 
     designStore.initializeStore()
@@ -81,6 +72,26 @@ export default defineComponent({
     const customerStore = useCustomerStore()
 
     customerStore.initializeStore()
+
+    const tableStore = useTableStore()
+
+    tableStore.initializeStore()
+
+    const genericsStore = useGenericsStore()
+
+    genericsStore.initializeStore()
+
+    const watchWidth = () => {
+      const Width = document.body.clientWidth
+      collapsed.value = Width <= 950
+      genericsStore.updateDevice()
+    }
+
+    onMounted(() => {
+      window.addEventListener('resize', watchWidth)
+      // window['$loading'] = useLoadingBar()
+      // window['$loading'].finish()
+    })
 
     const getThemeOverrides = computed(() => {
       const appTheme = designStore.appTheme;

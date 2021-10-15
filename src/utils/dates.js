@@ -1,5 +1,5 @@
 export function toTimestamp(strDate) {
-    return new Date(strDate).getTime()
+    return (new Date(strDate).getTime()) + 86400000
 }
 
 export function calcAge(dateString) {

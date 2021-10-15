@@ -37,9 +37,7 @@
         <n-dropdown trigger="hover" placement="bottom-end" @select="avatarSelect" :options="avatarOptions">
           <div class="avatar">
             <n-avatar>
-              <n-icon>
-                <v-icon name="hi-user" />
-              </n-icon>
+              <v-icon name="hi-user" />
             </n-avatar>
           </div>
         </n-dropdown>

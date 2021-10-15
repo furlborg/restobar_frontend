@@ -1,6 +1,6 @@
 <template>
   <n-modal
-      class="w-50"
+      :class="{ 'w-100': genericsStore.device === 'mobile', 'w-75': genericsStore.device === 'tablet','w-50': genericsStore.device === 'desktop' }"
       preset="card"
       :title="modalTitle"
       :mask-closable="false"
@@ -96,6 +96,7 @@ import {documentOptions, customerRules} from "@/utils/constants"
 import {retrieveCustomer, createCustomer, updateCustomer, requestCustomerData} from "@/api/modules/customer"
 import {useMessage} from "naive-ui"
 import {useCustomerStore} from "@/store/modules/customer"
+import {useGenericsStore} from '@/store/modules/generics'
 
 export default defineComponent({
   name: "CustomerModal",
@@ -117,6 +118,7 @@ export default defineComponent({
     const message = useMessage()
     const requestMessage =ref(null)
     const customerStore = useCustomerStore()
+    const genericsStore = useGenericsStore()
     const {idCustomer, show} = toRefs(props)
     const modalTitle = ref('Registrar Cliente')
     const isLoadingData = ref(false)
@@ -325,6 +327,7 @@ export default defineComponent({
     }
 
     return {
+      genericsStore,
       isLoadingData,
       modalTitle,
       customer,

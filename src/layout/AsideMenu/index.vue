@@ -9,7 +9,7 @@
 
 <script>
 import {defineComponent, h} from "vue"
-import {useRouter, RouterLink} from "vue-router"
+import {RouterLink} from "vue-router"
 import {renderIcon} from "@/utils"
 
 export default defineComponent({
@@ -20,31 +20,62 @@ export default defineComponent({
     },
   },
   setup() {
-    const router = useRouter()
-    const routes = router.getRoutes()
-
+    // console.log(routes)
     const menuOptions = [
       {
         label: () => h(
             RouterLink,
             {
-              to: routes[0].path,
+              to: { name: "Dashboard"},
             },
             () => h('span', 'Dashboard')
         ),
-        key: routes[0].name,
+        key: 'Dashboard',
         icon: renderIcon('md-spacedashboard-twotone')
       },
       {
         label: () => h(
             RouterLink,
             {
-              to: routes[1].path,
+              to: { name: "Table"},
             },
-            () => h('span', 'Customer')
+            () => h('span', 'Mesas')
         ),
-        key: routes[1].name,
+        key: "Table",
+        icon: renderIcon('md-dining-twotone'),
+      },
+      {
+        label: () => h(
+            RouterLink,
+            {
+              to: { name: "Product"},
+            },
+            () => h('span', 'Productos')
+        ),
+        key: "Product",
+        icon: renderIcon('md-fastfood-twotone'),
+      },
+      {
+        label: () => h(
+            RouterLink,
+            {
+              to: { name: "Customer"},
+            },
+            () => h('span', 'Clientes')
+        ),
+        key: "Customer",
         icon: renderIcon('md-supervisedusercircle-twotone'),
+      },
+      {
+        label: () => h(
+            RouterLink,
+            {
+              to: { name: "Settings"},
+            },
+            () => h('span', 'Configuración')
+        ),
+        key: "Settings",
+        icon: renderIcon('md-settings-twotone'),
       }
     ]
     return {

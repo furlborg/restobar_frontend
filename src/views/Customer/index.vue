@@ -1,7 +1,7 @@
 <template>
   <n-card title="Clientes" :bordered="false" :segmented="{ content: 'hard' }">
     <template #header-extra>
-      <n-button :disabled="isTableLoading" type="primary" @click="showModal=!showModal">
+      <n-button :disabled="isTableLoading" type="primary" @click="showModal=true">
         <template #icon>
           <n-icon>
             <v-icon name="la-user-plus-solid" />
@@ -30,9 +30,6 @@
             <n-form-item-gi label="Celular" :span="3">
               <n-input-number v-model:value="searchParams.phone" :show-button="false" placeholder="" />
             </n-form-item-gi>
-            <!-- <n-form-item-gi label="Fecha" :span="3">
-              <n-date-picker  type="date" placeholder="" clearable />
-            </n-form-item-gi> -->
             <n-gi :span="6">
               <n-button type="primary" @click="performSearch">Buscar</n-button>
             </n-gi>
