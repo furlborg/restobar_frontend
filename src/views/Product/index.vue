@@ -6,15 +6,17 @@
             </template>
             <n-space justify="space-between">
                 <n-input-group>
-                    <n-input placeholder="" />
-                    <n-button type="primary">Buscar</n-button>
+                    <n-input placeholder="Buscar..." />
+                    <n-button type="primary">
+                        <v-icon name="md-search-round" />
+                    </n-button>
                 </n-input-group>
                 <n-radio-group v-model:value="listType" name="listType" size="small">
-                    <n-radio-button value="list" key="list">
-                        <v-icon name="md-list-round" />
+                    <n-radio-button class="p-0" value="list" key="list">
+                        <v-icon class="m-1" name="md-list-round" />
                     </n-radio-button>
-                    <n-radio-button value="grid" key="grid">
-                        <v-icon name="md-gridview-round" />
+                    <n-radio-button class="p-0" value="grid" key="grid">
+                        <v-icon class="m-1" name="md-gridview-round" />
                     </n-radio-button>
                 </n-radio-group>
             </n-space>
@@ -69,7 +71,7 @@
                 <n-pagination :page="1" :page-count="10" />
             </template>
       </n-card>
-      <!-- Customer Modal -->
+    <!-- Customer Modal -->
     <product-modal v-model:show="showModal" @update:show="onCloseModal" @on-success="onSuccess" />
   </div>
 </template>
@@ -103,7 +105,7 @@ export default defineComponent({
         ]
 
         const onCloseModal = () => {
-            document.title = 'Clientes | App'
+            document.title = 'Productos | App'
             // idProduct.value = 0
         }
 

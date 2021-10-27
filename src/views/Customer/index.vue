@@ -37,13 +37,13 @@
         </n-form>
       </n-collapse-item>
     </n-collapse>
-    <n-space class="mb-2" justify="end">
-      <n-button type="info" @click="refreshTable" :disabled="isTableLoading">
+    <n-space justify="end">
+      <n-button type="info" @click="refreshTable" :disabled="isTableLoading" size="small">
         <v-icon name="hi-solid-refresh" />
       </n-button>
     </n-space>
     <!-- Customer Data Table -->
-    <n-data-table :columns="tableColumns" :data="customers" :pagination="pagination" :loading="isTableLoading" remote />
+    <n-data-table :columns="tableColumns" :data="customers" :pagination="pagination" :loading="isTableLoading" :scroll-x="1500" remote />
     <!-- Customer Modal -->
     <customer-modal v-model:show="showModal" :id-customer="idCustomer" @update:show="onCloseModal" @on-success="onSuccess" />
   </n-card>
@@ -82,11 +82,12 @@ export default defineComponent({
       total: 0,
       offset: 0,
       page: 1,
+      pageSlot: 6,
       pageCount: 1,
       pageSize: 10,
       showSizePicker: true,
       pageSizes: [10, 25, 50, 100],
-      next: () => {
+      /* next: () => {
         return h(
           NButton,
           {
@@ -103,7 +104,7 @@ export default defineComponent({
           },
           () => 'Anterior'
           )
-      },
+      }, */
       onChange: (page) => {
         isTableLoading.value = true
         pagination.value.page = page

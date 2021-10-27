@@ -47,6 +47,11 @@
                 </n-grid>
             </n-form>
         </n-spin>
+        <template #action>
+            <n-space justify="end">
+                <n-button type="primary">Registrar</n-button>
+            </n-space>
+        </template>
     </n-modal>
 </template>
 

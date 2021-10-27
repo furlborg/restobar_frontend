@@ -31,7 +31,11 @@
               :native-scrollbar="false"
           >
             <div class="layout-content-main">
-              <router-view />
+              <router-view v-slot="{ Component }">
+                <transition name="zoom-fade" mode="out-in" appear>
+                  <component :is="Component" />
+                </transition>
+              </router-view>
             </div>
           </n-layout-content>
         </n-layout>
@@ -170,5 +174,21 @@ export default defineComponent({
 .layout-content-main {
   margin: 10px 25px 25px;
   position: relative;
+}
+
+/* router view transition */
+.zoom-fade-enter-active,
+.zoom-fade-leave-active {
+  transition: transform 0.35s, opacity 0.28s ease-in-out;
+}
+
+.zoom-fade-enter-from {
+  opacity: 0;
+  transform: scale(0.97);
+}
+
+.zoom-fade-leave-to {
+  opacity: 0;
+  transform: scale(1.03);
 }
 </style>

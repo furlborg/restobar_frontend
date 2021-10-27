@@ -2,10 +2,10 @@
   <div id="BusinessSettings">
         <n-page-header class="mb-2" @back="handleBack">
             <template #title>
-                <n-h1 class="m-0">Configuración de Empresa</n-h1>
+                <n-text class="fs-2">Configuración de Empresa</n-text>
             </template>
         </n-page-header>
-        <n-grid responsive="screen" cols="12 s:12 m:12 l:12 xl:24 2xl:24" :x-gap="12">
+        <n-grid responsive="screen" cols="12 s:12 m:12 l:12 xl:24 2xl:24" :x-gap="12" :y-gap="12">
             <n-gi :span="12">
                 <n-card title="Información de la empresa" :segmented="{content:'hard'}">
                     <n-form>
@@ -81,6 +81,69 @@
                                     <n-button type="warning">Guardar</n-button>
                                 </n-space>
                             </n-form>
+                            <n-card class="mt-2" :bordered="false" embedded>
+                                <n-space align="center">
+                                    <n-text class="fs-5">Series Documentos</n-text>
+                                    <n-button class="text-decoration-underline" type="info" text @click="(collapsed2 === false) ? collapsed2 = true : collapsed2 = false">Mostrar</n-button>
+                                </n-space>
+                                <n-collapse-transition :show="collapsed2">
+                                    <n-table class="mt-2" :bordered="false">
+                                        <thead>
+                                            <tr>
+                                                <th>Serie</th>
+                                                <th>Tipo de Documento</th>
+                                                <th>Sucursal</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>F001</td>
+                                                <td>FACTURA ELECTRÓNICA</td>
+                                                <td>Sucursal 1</td>
+                                                <td><n-button class="float-end" type="error" text><v-icon name="md-disabledbydefault-round" scale="1.25" /></n-button></td>
+                                            </tr>
+                                            <tr>
+                                                <td>B001</td>
+                                                <td>BOLETA DE VENTA ELECTRÓNICA</td>
+                                                <td>Sucursal 2</td>
+                                                <td><n-button class="float-end" type="error" text><v-icon name="md-disabledbydefault-round" scale="1.25" /></n-button></td>
+                                            </tr>
+                                            <tr>
+                                                <td>NC001</td>
+                                                <td>NOTA DE CRÉDITO</td>
+                                                <td>Sucursal 1</td>
+                                                <td><n-button class="float-end" type="error" text><v-icon name="md-disabledbydefault-round" scale="1.25" /></n-button></td>
+                                            </tr>
+                                            <tr>
+                                                <td>ND001</td>
+                                                <td>NOTA DE DÉBITO</td>
+                                                <td>Sucursal 2</td>
+                                                <td><n-button class="float-end" type="error" text><v-icon name="md-disabledbydefault-round" scale="1.25" /></n-button></td>
+                                            </tr>
+                                            <tr>
+                                                <td>NV001</td>
+                                                <td>NOTA DE VENTA</td>
+                                                <td>Sucursal 1</td>
+                                                <td><n-button class="float-end" type="error" text><v-icon name="md-disabledbydefault-round" scale="1.25" /></n-button></td>
+                                            </tr>
+                                        </tbody>
+                                    </n-table>
+                                    <n-form class="mt-2">
+                                        <n-grid responsive="screen" cols="6 s:6 m:12 l:12 xl:18 2xl:18" :x-gap="12">
+                                            <n-form-item-gi label="Tipo Documento" :span="6">
+                                                <n-select :options="saleDocumentOptions" />
+                                            </n-form-item-gi>
+                                            <n-form-item-gi label="Serie" :span="6">
+                                                <n-input />
+                                            </n-form-item-gi>
+                                            <n-form-item-gi :span="6">
+                                                <n-button type="success" block>Crear serie</n-button>
+                                            </n-form-item-gi>
+                                        </n-grid>
+                                    </n-form>
+                                </n-collapse-transition>
+                            </n-card>
                         </n-collapse-item>
                         <n-collapse-item title="Sucursal 2">
                             <n-form>
@@ -111,6 +174,69 @@
                                     <n-button type="warning">Guardar</n-button>
                                 </n-space>
                             </n-form>
+                            <n-card class="mt-2" :bordered="false" embedded>
+                                <n-space align="center">
+                                    <n-text class="fs-5">Series Documentos</n-text>
+                                    <n-button class="text-decoration-underline" type="info" text @click="(collapsed2 === false) ? collapsed2 = true : collapsed2 = false">Mostrar</n-button>
+                                </n-space>
+                                <n-collapse-transition :show="collapsed2">
+                                    <n-table class="mt-2" :bordered="false">
+                                        <thead>
+                                            <tr>
+                                                <th>Serie</th>
+                                                <th>Tipo de Documento</th>
+                                                <th>Sucursal</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>F001</td>
+                                                <td>FACTURA ELECTRÓNICA</td>
+                                                <td>Sucursal 1</td>
+                                                <td><n-button class="float-end" type="error" text><v-icon name="md-disabledbydefault-round" scale="1.25" /></n-button></td>
+                                            </tr>
+                                            <tr>
+                                                <td>B001</td>
+                                                <td>BOLETA DE VENTA ELECTRÓNICA</td>
+                                                <td>Sucursal 2</td>
+                                                <td><n-button class="float-end" type="error" text><v-icon name="md-disabledbydefault-round" scale="1.25" /></n-button></td>
+                                            </tr>
+                                            <tr>
+                                                <td>NC001</td>
+                                                <td>NOTA DE CRÉDITO</td>
+                                                <td>Sucursal 1</td>
+                                                <td><n-button class="float-end" type="error" text><v-icon name="md-disabledbydefault-round" scale="1.25" /></n-button></td>
+                                            </tr>
+                                            <tr>
+                                                <td>ND001</td>
+                                                <td>NOTA DE DÉBITO</td>
+                                                <td>Sucursal 2</td>
+                                                <td><n-button class="float-end" type="error" text><v-icon name="md-disabledbydefault-round" scale="1.25" /></n-button></td>
+                                            </tr>
+                                            <tr>
+                                                <td>NV001</td>
+                                                <td>NOTA DE VENTA</td>
+                                                <td>Sucursal 1</td>
+                                                <td><n-button class="float-end" type="error" text><v-icon name="md-disabledbydefault-round" scale="1.25" /></n-button></td>
+                                            </tr>
+                                        </tbody>
+                                    </n-table>
+                                    <n-form class="mt-2">
+                                        <n-grid responsive="screen" cols="6 s:6 m:12 l:12 xl:18 2xl:18" :x-gap="12">
+                                            <n-form-item-gi label="Tipo Documento" :span="6">
+                                                <n-select :options="saleDocumentOptions" />
+                                            </n-form-item-gi>
+                                            <n-form-item-gi label="Serie" :span="6">
+                                                <n-input />
+                                            </n-form-item-gi>
+                                            <n-form-item-gi :span="6">
+                                                <n-button type="success" block>Crear serie</n-button>
+                                            </n-form-item-gi>
+                                        </n-grid>
+                                    </n-form>
+                                </n-collapse-transition>
+                            </n-card>
                         </n-collapse-item>
                     </n-collapse>
                 </n-card>
@@ -120,13 +246,16 @@
 </template>
 
 <script>
-import { defineComponent } from "vue"
+import { defineComponent, ref } from "vue"
 import { useRouter } from "vue-router"
+import { saleDocumentOptions } from "@/utils/constants"
 
 export default defineComponent({
     name: "BusinessSettings",
     setup() {
         const router = useRouter()
+        const collapsed = ref(false)
+        const collapsed2 = ref(false)
 
         const handleBack = () => {
             router.push({ name: "HomeSettings" })
@@ -134,6 +263,9 @@ export default defineComponent({
 
         return {
             handleBack,
+            collapsed,
+            collapsed2,
+            saleDocumentOptions,
         }
     }
 })

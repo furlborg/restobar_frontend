@@ -1,5 +1,5 @@
 <template>
-  <n-grid cols="1 s:2 m:3 l:3 xl:6 2xl:6" responsive="screen" :x-gap="12" :y-gap="8" :cols="6">
+  <n-grid cols="1 s:2 m:3 l:3 xl:6 2xl:6" responsive="screen" :x-gap="12" :y-gap="8">
     <n-grid-item>
       <n-card size="small" :bordered="false" hoverable>
         <n-space align="center" vertical>

@@ -48,6 +48,17 @@ export default defineComponent({
         label: () => h(
             RouterLink,
             {
+              to: { name: "Till"},
+            },
+            () => h('span', 'Caja')
+        ),
+        key: "Till",
+        icon: renderIcon('md-pointofsale-twotone'),
+      },
+      {
+        label: () => h(
+            RouterLink,
+            {
               to: { name: "Product"},
             },
             () => h('span', 'Productos')

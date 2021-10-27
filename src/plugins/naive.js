@@ -31,6 +31,7 @@ import {
     NCol,
     NCollapse,
     NCollapseItem,
+    NCollapseTransition,
     NDrawer,
     NDrawerContent,
     NDivider,
@@ -79,6 +80,7 @@ import {
     NH4,
     NH5,
     NH6,
+    NScrollbar,
 } from 'naive-ui'
 
 export const naive = create({
@@ -114,6 +116,7 @@ export const naive = create({
         NCol,
         NCollapse,
         NCollapseItem,
+        NCollapseTransition,
         NDrawer,
         NDrawerContent,
         NDivider,
@@ -162,5 +165,6 @@ export const naive = create({
         NH4,
         NH5,
         NH6,
+        NScrollbar,
     ],
 })

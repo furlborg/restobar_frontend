@@ -9,15 +9,53 @@ const routes = [
   {
     path: '/customer',
     name: 'Customer',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
     component: () => import(/* webpackChunkName: "customer" */ '@/views/Customer')
+  },
+  {
+    path: '/till',
+    name: 'Till',
+    component: () => import(/* webpackChunkName: "till" */ '@/views/Till')
+  },
+  {
+    path: '/till-list',
+    name: 'TillList',
+    component: () => import(/* webpackChunkName: "till-list" */ '@/views/Till/TillList')
   },
   {
     path: '/table',
     name: 'Table',
-    component: () => import(/* webpackChunkName: "table" */ '@/views/Table')
+    redirect: { name: "TableHome"},
+    component: () => import(/* webpackChunkName: "table" */ '@/views/Table'),
+    children: [
+      {
+        name: "TableHome",
+        path: '',
+        component: () => import(/* webpackChunkName: "table-home" */ '@/views/Table/components/TableHome'),
+      },
+      {
+        name: "TableOrder",
+        path: ":table",
+        redirect: { name: "ProductCategories"},
+        component: () => import(/* webpackChunkName: "table-order" */ '@/views/Table/components/TableOrder'),
+        children: [
+          {
+            name: "ProductCategories",
+            path: "product-categories",
+            component: () => import(/* webpackChunkName: "table-order" */ '@/views/Table/components/CategoriesList'),
+          },
+          {
+            name: "CategoriesItems",
+            path: "product-categories/:category",
+            component: () => import(/* webpackChunkName: "table-order" */ '@/views/Table/components/CategoriesItems'),
+          },
+          {
+            name:"TablePayment",
+            path:"payment",
+            component: () => import(/* webpackChunkName: "table-payment" */ '@/views/Table/components/TablePayment'),
+          }
+        ]
+      },
+    ]
   },
   {
     path: '/product',
@@ -33,7 +71,7 @@ const routes = [
       {
         name: 'HomeSettings',
         path: '',
-        component: () => import(/* webpackChunkName: "general-settings" */ '@/views/Settings/components/HomeSettings')
+        component: () => import(/* webpackChunkName: "home-settings" */ '@/views/Settings/components/HomeSettings')
       },
       {
         name: 'GeneralSettings',
@@ -43,7 +81,12 @@ const routes = [
       {
         name: 'BusinessSettings',
         path: 'business-settings',
-        component: () => import(/* webpackChunkName: "general-settings" */ '@/views/Settings/components/BusinessSettings')
+        component: () => import(/* webpackChunkName: "business-settings" */ '@/views/Settings/components/BusinessSettings')
+      },
+      {
+        name: 'UserSettings',
+        path: 'user-settings',
+        component: () => import(/* webpackChunkName: "User-settings" */ '@/views/Settings/components/UserSettings')
       }
     ]
   }

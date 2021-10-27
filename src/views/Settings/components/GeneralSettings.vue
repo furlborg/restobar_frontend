@@ -2,7 +2,7 @@
   <div id="GeneralSettings">
     <n-page-header class="mb-2" @back="handleBack">
         <template #title>
-            <n-h1 class="m-0">General Settings</n-h1>
+            <n-text class="fs-2">Configuración General</n-text>
         </template>
     </n-page-header>
     <n-card>
