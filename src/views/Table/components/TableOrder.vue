@@ -2,60 +2,77 @@
   <div id="TableOrder">
     <n-page-header class="mb-2" @back="handleBack">
         <template #title>
-            <n-text class="fs-2">Mesa {{table}}</n-text>
+            <n-space justify="space-between">
+                <n-text class="fs-2">Mesa {{table}}</n-text>
+            </n-space>
         </template>
     </n-page-header>
     <n-card>
-        <n-grid responsive="screen" cols="1 s:1 m:3 l:3 xl:3 2xl:3" :x-gap="12">
-            <n-gi :span="2">
+        <n-grid responsive="screen" cols="5 s:5 m:5 l:5 xl:5 2xl:5" :x-gap="12">
+            <n-gi :span="3">
                 <router-view />
             </n-gi>
-            <n-gi span="1">
+            <n-gi span="2">
                 <n-card class="h-100" title="Pedidos" :bordered="false" embedded>
+                    <template #header-extra>
+                        <n-text>Por consumo <n-switch size="small" /></n-text>
+                    </template>
                     <n-table>
                         <thead>
                             <tr>
-                                <th class="bg-white" width="25%">Cantidad</th>
                                 <th class="bg-white" width="50%">Producto</th>
+                                <th class="bg-white" width="25%">Cantidad</th>
                                 <th class="bg-white" width="25%">SubTotal</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <th class="bg-white">
+                                <td class="bg-white">Product</td>
+                                <td class="bg-white">
                                     <n-input-number class="border-top-0" :value="1" />
-                                </th>
-                                <th class="bg-white">Product</th>
-                                <th class="bg-white">S/. 10.00</th>
+                                </td>
+                                <td class="bg-white">S/. 10.00</td>
                             </tr>
                             <tr>
-                                <th class="bg-white">
+                                <td class="bg-white">Product</td>
+                                <td class="bg-white">
                                     <n-input-number class="border-top-0" :value="3" />
-                                </th>
-                                <th class="bg-white">Product</th>
-                                <th class="bg-white">S/. 30.00</th>
+                                </td>
+                                <td class="bg-white">S/. 30.00</td>
                             </tr>
                             <tr>
-                                <th class="bg-white">
+                                <td class="bg-white">Product</td>
+                                <td class="bg-white">
                                     <n-input-number class="border-top-0" :value="2" />
-                                </th>
-                                <th class="bg-white">Product</th>
-                                <th class="bg-white">S/. 20.00</th>
+                                </td>
+                                <td class="bg-white">S/. 20.00</td>
                             </tr>
                         </tbody>
                         <tfoot>
                             <tr>
-                                <th class="bg-white" colspan="2">
+                                <td class="bg-white" colspan="2">
                                     <router-link class="text-decoration-none" :to="{ name: 'TablePayment', params: { table: $route.params.table } }">
                                         <n-button type="success" text block>
                                             <v-icon class="me-2" name="gi-money-stack" scale="2" />
                                             <span class="fs-4">Cobrar</span>
                                         </n-button>
                                     </router-link>
-                                </th>
-                                <!-- <th class="bg-white"><n-space justify="end">Total:</n-space></th> -->
-                                <th class="bg-white fs-4">S/. 50.00</th>
+                                </td>
+                                <!-- <td class="bg-white fs-6 fw-bold">TOTAL</td> -->
+                                <td class="bg-white fs-6 fw-bold">S/. 50.00</td>
                             </tr>
+                            <!-- <tr>
+                                <td class="bg-white fs-6 fw-bold">ICBPER</td>
+                                <td class="bg-white fs-6 fw-bold">S/. 0.00</td>
+                            </tr>
+                            <tr>
+                                <td class="bg-white fs-6 fw-bold">IGV</td>
+                                <td class="bg-white fs-6 fw-bold">S/. 9.00</td>
+                            </tr>
+                            <tr>
+                                <td class="bg-white fs-6 fw-bold">TOTAL</td>
+                                <td class="bg-white fs-6 fw-bold">S/. 50.00</td>
+                            </tr> -->
                         </tfoot>
                     </n-table>
                 </n-card>

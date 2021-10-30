@@ -59,6 +59,7 @@ import {
     MdFilteraltRound,
     MdLockRound,
     MdInsertchartOutlined,
+    MdArrowdropdownRound,
 } from "oh-vue-icons/icons";
     OhVueIcon.add(
     BiThreeDots,
@@ -120,5 +121,6 @@ import {
     MdFilteraltRound,
     MdLockRound,
     MdInsertchartOutlined,
+    MdArrowdropdownRound,
 );
 export { OhVueIcon }
