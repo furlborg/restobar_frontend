@@ -70,6 +70,39 @@ export default defineComponent({
         label: () => h(
             RouterLink,
             {
+              to: { name: "Shopping"},
+            },
+            () => h('span', 'Compras')
+        ),
+        key: "Shopping",
+        icon: renderIcon('md-shoppingcart-twotone'),
+      },
+      {
+        label: () => h(
+            RouterLink,
+            {
+              to: { name: "Supplier"},
+            },
+            () => h('span', 'Proveedores')
+        ),
+        key: "Supplier",
+        icon: renderIcon('md-villa-twotone'),
+      },
+      {
+        label: () => h(
+            RouterLink,
+            {
+              to: { name: "Supplies"},
+            },
+            () => h('span', 'Insumos')
+        ),
+        key: "Supplies",
+        icon: renderIcon('md-kitchen-twotone'),
+      },
+      {
+        label: () => h(
+            RouterLink,
+            {
               to: { name: "Customer"},
             },
             () => h('span', 'Clientes')

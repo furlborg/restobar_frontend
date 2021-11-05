@@ -60,6 +60,9 @@ import {
     MdLockRound,
     MdInsertchartOutlined,
     MdArrowdropdownRound,
+    MdShoppingcartTwotone,
+    MdVillaTwotone,
+    MdKitchenTwotone,
 } from "oh-vue-icons/icons";
     OhVueIcon.add(
     BiThreeDots,
@@ -122,5 +125,8 @@ import {
     MdLockRound,
     MdInsertchartOutlined,
     MdArrowdropdownRound,
+    MdShoppingcartTwotone,
+    MdVillaTwotone,
+    MdKitchenTwotone,
 );
 export { OhVueIcon }

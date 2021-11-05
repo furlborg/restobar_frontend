@@ -63,6 +63,21 @@ const routes = [
     component: () => import(/* webpackChunkName: "product" */ '@/views/Product')
   },
   {
+    path: '/shopping',
+    name: 'Shopping',
+    component: () => import(/* webpackChunkName: "shopping" */ '@/views/Shopping'),
+  },
+  {
+    path: '/supplier',
+    name: 'Supplier',
+    component: () => import(/* webpackChunkName: "supplier" */ '@/views/Supplier'),
+  },
+  {
+    path: '/supplies',
+    name: 'Supplies',
+    component: () => import(/* webpackChunkName: "supplies" */ '@/views/Supplies'),
+  },
+  {
     path: '/settings',
     name: 'Settings',
     redirect: { name: "HomeSettings"},

@@ -477,3 +477,218 @@ export const createMovementsColumns = ({ editMovement, deleteMovement }) => {
         }
     ]
 }
+
+export const createSuppliesColumns = ({ removeSupply }) => {
+    return [
+        {
+            title: 'Código',
+            key: 'code'
+        },
+        {
+            title: 'Cantidad',
+            key: 'quantity'
+        },
+        {
+            title: 'Descripción',
+            key: 'description'
+        },
+        {
+            title: 'Precio Unitario',
+            key: 'unit_price',
+            render(row) {
+                return row.unit_price.toFixed(2)
+            }
+        },
+        {
+            title: 'SubTotal',
+            key: 'subtotal',
+            render(row) {
+                return row.subtotal.toFixed(2)
+            }
+        },
+        {
+            title: 'Acciones',
+            key: 'actions',
+            render (row) {
+                return h(
+                    NButton,
+                    {
+                        size: 'small',
+                        type: 'error',
+                        onClick: () => removeSupply(row)
+                    },
+                    renderIcon('md-close-round')
+                )
+            }
+        }
+    ]
+}
+
+export const createSuppliersColumns = ({ editSupplier, deleteSupplier }) => {
+    return [
+        {
+            title: 'Código',
+            key: 'code',
+        },
+        {
+            title: 'RUC',
+            key: 'ruc'
+        },
+        {
+            title: 'Nombres',
+            key: 'names'
+        },
+        {
+            title: 'Representante',
+            key: 'legal_representative'
+        },
+        {
+            title: 'Dirección',
+            key: 'address'
+        },
+        {
+            title: 'Email',
+            key: 'email'
+        },
+        {
+            title: 'Teléfono',
+            key: 'phone'
+        },
+        {
+            title: 'Estado',
+            key: 'status',
+            render (row) {
+                let type, text
+                if (row.status===true) {
+                    type="success"
+                    text="Activo"
+                } else if (row.status===false) {
+                    type="error"
+                    text="Inactivo"
+                }
+
+                return h(
+                    NTag,
+                    {
+                        size: 'small',
+                        type: type,
+                        round: true
+                    },
+                    {
+                        default: () => text
+                    }
+                )
+            }
+        },
+        {
+            title: 'Acciones',
+            key: 'actions',
+            render (row) {
+                return [
+                    h(
+                        NButton,
+                        {
+                            class: 'me-2',
+                            size: 'small',
+                            type: 'warning',
+                            onClick: () => editSupplier(row)
+                        },
+                        renderIcon('la-user-edit-solid')
+                    ),
+                    h(
+                        NButton,
+                        {
+                            size: 'small',
+                            type: 'error',
+                            onClick: () => deleteSupplier(row)
+                        },
+                        renderIcon('la-user-slash-solid')
+                    )
+                ]
+            }
+        }
+    ]
+}
+
+export const createSupplyColumns = ({ editSupply, deleteSupply }) => {
+    return [
+        {
+            title: 'Código',
+            key: 'code',
+            align: 'center'
+        },
+        {
+            title: 'Descripción',
+            key: 'description',
+            align: 'center'
+        },
+        {
+            title: 'Precio',
+            key: 'price',
+            align: 'center',
+            render (row) {
+                return `S/. ${row.price.toFixed(2)}`
+            }
+        },
+        {
+            title: 'Stock',
+            key: 'stock',
+            align: 'center'
+        },
+        {
+            title: 'Estado',
+            key: 'status',
+            align: 'center',
+            render (row) {
+                let type, text
+                if (row.status===true) {
+                    type="success"
+                    text="Activo"
+                } else if (row.status===false) {
+                    type="error"
+                    text="Inactivo"
+                }
+
+                return h(
+                    NTag,
+                    {
+                        size: 'small',
+                        type: type,
+                        round: true
+                    },
+                    {
+                        default: () => text
+                    }
+                )
+            }
+        },
+        {
+            title: 'Acciones',
+            key: 'actions',
+            align: 'center',
+            render (row) {
+                return [
+                    h(
+                        NButton,
+                        {
+                            class: 'me-2',
+                            size: 'small',
+                            type: 'warning',
+                            onClick: () => editSupply(row)
+                        },
+                        renderIcon('la-user-edit-solid')
+                    ),
+                    h(
+                        NButton,
+                        {
+                            size: 'small',
+                            type: 'error',
+                            onClick: () => deleteSupply(row)
+                        },
+                        renderIcon('la-user-slash-solid')
+                    )
+                ]
+            }
+        }
+    ]
+}
