@@ -1,6 +1,7 @@
 import {h} from "vue"
 import {NButton, NTag} from "naive-ui"
 import {renderIcon} from "@/utils"
+import { OhVueIcon } from '@/plugins/icon'
 
 export const getDocTypeByNumber = (v) => {
     switch (v) {
@@ -610,7 +611,56 @@ export const createSuppliersColumns = ({ editSupplier, deleteSupplier }) => {
     ]
 }
 
-export const createSupplyColumns = ({ editSupply, deleteSupply }) => {
+export const createSupplyColumns = () => {
+    return [
+        {
+            title: 'Fecha',
+            key: 'date',
+            align: 'center'
+        },
+        {
+            title: 'Descripción',
+            key: 'description',
+            align: 'center'
+        },
+        {
+            title: 'Documento',
+            key: 'document',
+            align: 'center',
+        },
+        {
+            title: 'Entrada',
+            key: 'input',
+            align: 'center',
+            render (row) {
+                if (row.input) {
+                    return row.input
+                } else {
+                    return '-'
+                }
+            }
+        },
+        {
+            title: 'Salida',
+            key: 'output',
+            align: 'center',
+            render (row) {
+                if (row.output) {
+                    return row.output
+                } else {
+                    return '-'
+                }
+            }
+        },
+        {
+            title: 'Stock',
+            key: 'stock',
+            align: 'center'
+        },
+    ]
+}
+
+export const createKardexColumns = () => {
     return [
         {
             title: 'Código',
@@ -660,34 +710,6 @@ export const createSupplyColumns = ({ editSupply, deleteSupply }) => {
                         default: () => text
                     }
                 )
-            }
-        },
-        {
-            title: 'Acciones',
-            key: 'actions',
-            align: 'center',
-            render (row) {
-                return [
-                    h(
-                        NButton,
-                        {
-                            class: 'me-2',
-                            size: 'small',
-                            type: 'warning',
-                            onClick: () => editSupply(row)
-                        },
-                        renderIcon('la-user-edit-solid')
-                    ),
-                    h(
-                        NButton,
-                        {
-                            size: 'small',
-                            type: 'error',
-                            onClick: () => deleteSupply(row)
-                        },
-                        renderIcon('la-user-slash-solid')
-                    )
-                ]
             }
         }
     ]

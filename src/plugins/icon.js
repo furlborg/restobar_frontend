@@ -60,9 +60,15 @@ import {
     MdLockRound,
     MdInsertchartOutlined,
     MdArrowdropdownRound,
+    MdArrowdropupRound,
+    MdArrowdropdown,
+    MdArrowdropup,
     MdShoppingcartTwotone,
     MdVillaTwotone,
     MdKitchenTwotone,
+    ViFileTypeExcel,
+    ViFileTypePdf2,
+    MdDownloadRound,
 } from "oh-vue-icons/icons";
     OhVueIcon.add(
     BiThreeDots,
@@ -125,8 +131,14 @@ import {
     MdLockRound,
     MdInsertchartOutlined,
     MdArrowdropdownRound,
+    MdArrowdropupRound,
+    MdArrowdropdown,
+    MdArrowdropup,
     MdShoppingcartTwotone,
     MdVillaTwotone,
     MdKitchenTwotone,
+    ViFileTypeExcel,
+    ViFileTypePdf2,
+    MdDownloadRound,
 );
 export { OhVueIcon }

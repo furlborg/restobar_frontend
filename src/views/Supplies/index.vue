@@ -1,72 +1,110 @@
 <template>
   <div id="Supplies">
       <n-card title="Insumos" :segmented="{content: 'hard'}">
-        <template #header-extra>
+        <!-- <template #header-extra>
           <n-button type="info" text>Ver movimientos</n-button>
-        </template>
-        <n-form>
-          <n-input-group class="w-25">
-            <n-input placeholder="Buscar..." />
-            <n-button type="info">
-              <v-icon name="md-search-round" />
-            </n-button>
-          </n-input-group>
-        </n-form>
-        <n-data-table class="mt-2" :columns="columns" :data="supplies" />
+        </template> -->
+        <n-grid class="mt-2" responsive="screen" cols="10 s:10 m:10 l:10 xl:10 2xl:10" :x-gap="12">
+          <n-gi :span="3">
+            <n-card title="Productos" :bordered="false" embedded>
+              <n-form>
+                <n-input-group>
+                  <n-input placeholder="Buscar..." />
+                  <n-button type="info">
+                    <v-icon name="md-search-round" />
+                  </n-button>
+                </n-input-group>
+              </n-form>
+              <n-scrollbar class="mt-2 pe-3" style="height: 625px;">
+                <n-list class="mt-0">
+                  <n-list-item v-for="index in 100" :key="index">
+                    <template #prefix>
+                      <n-text>{{index}}</n-text>
+                    </template>
+                    <template #suffix>
+                      <n-text>Stock:10</n-text>
+                    </template>
+                    <n-text>Producto #{{index}}</n-text>
+                  </n-list-item>
+                </n-list>
+              </n-scrollbar>
+            </n-card>
+          </n-gi>
+          <n-gi :span="7">
+            <n-card title="Kardex">
+              <n-data-table :columns="columns" :data="supplies" :pagination="pagination" />
+            </n-card>
+          </n-gi>
+        </n-grid>
+        <supply-kardex v-model:show="showModal" @update:show="onCloseModal" @on-success="onSuccess" />
       </n-card>
   </div>
 </template>
 
 <script>
-import { defineComponent, ref } from "vue"
+import { defineComponent, ref, onMounted } from "vue"
 import {createSupplyColumns} from "@/utils/constants"
+import SupplyKardex from './components/SupplyKardex'
 
 export default defineComponent({
   name: 'Supplies',
+  components: {
+    SupplyKardex,
+  },
   setup() {
+    const showModal = ref(false)
     const supplies = ref([
       {
-        code: 'PROD001',
-        description: 'Producto 1',
-        price: 2.00,
-        stock: 10,
-        status: true,
-      },
-      {
-        code: 'PROD002',
-        description: 'Producto 2',
-        price: 3.00,
+        type: 'ingress',
+        date: '2021-01-01',
+        description: 'Actualizar stock',
+        document: 'BO01',
+        input: 10,
         stock: 20,
-        status: true,
       },
       {
-        code: 'PROD003',
-        description: 'Producto 3',
-        price: 5.00,
-        stock: 15,
-        status: true,
+        type: 'egress',
+        date: '2021-01-01',
+        description: 'Actualizar stock',
+        document: 'BO02',
+        output: 10,
+        stock: 10,
+      },
+      {
+        type: 'ingress',
+        date: '2021-01-01',
+        description: 'Actualizar stock',
+        document: 'BO03',
+        input: 10,
+        stock: 20,
       }
     ])
+    const pagination = ref({
+        page: 1,
+    })
+
+    const onCloseModal = () => {
+        document.title = 'Productos | App'
+        // idProduct.value = 0
+    }
+
+    const onSuccess = () => {
+        showModal.value = false
+        onCloseModal()
+        // loadProductsData()
+    }
+
+    onMounted(() => {
+        document.title = 'Proveedores | App'
+    })
+
     return {
       supplies,
-      columns: createSupplyColumns({
-        editSupply(rowData) {
-          console.log(rowData)
-          /* showModal.value = true
-          idCustomer.value = rowData.id */
-        },
-        deleteSupply(rowData) {
-          console.log(rowData)
-          /* dialog.error({
-              title: 'Deshabilitando cliente',
-              content: '¿Está seguro?',
-              positiveText: 'Sí',
-              onPositiveClick: () => {
-              performDisableCustomer(rowData.id)
-              }
-          }) */
-        }
-      })
+      showModal,
+      onCloseModal,
+      onSuccess,
+      pagination,
+      columns: createSupplyColumns()
     }
   }
 })
