@@ -11,21 +11,17 @@ export const useCustomerStore = defineStore('customer', {
         initializeStore() {
             getUbigee()
                 .then(response => {
-                    this.countries = response.data.ubigee.countries.map(country => ({
+                    /* this.countries = response.data.ubigee.countries.map(country => ({
                         label: country.description,
                         value: country.id,
-                      }))
-                    this.ubigee = response.data.ubigee.departments.map(department => ({
+                      })) */
+                    this.ubigee = response.data.map(department => ({
                         label: department.description,
                         value: department.id,
-                        children: response.data.ubigee.provinces.filter(province => (
-                            province.departament == department.id
-                        )).map(province => ({
+                        children: department.provinces.map(province => ({
                             label: province.description,
                             value: province.id,
-                            children: response.data.ubigee.districts.filter(district => (
-                                district.province == province.id
-                            )).map(district => ({
+                            children: province.districts.map(district => ({
                                 label: district.description,
                                 value: district.id,
                             })),

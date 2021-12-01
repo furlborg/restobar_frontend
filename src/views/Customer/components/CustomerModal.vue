@@ -53,11 +53,11 @@
           <n-tab-pane name="addresses" tab="Direcciones">
             <n-h3>Registro de direcciones</n-h3>
             <n-grid responsive="screen" cols="6 s:6 m:12 l:24 xl:24 2xl:24" :x-gap="12">
-              <template v-for="address, index in customer.addresses">
-                <n-form-item-gi v-if="address.isDisabled===false" :key="index" label="Dirección" :span="24">
+              <template v-for="address, index in customer.addresses" :key="index">
+                <n-form-item-gi label="Dirección" :span="24">
                   <n-input-group>
-                    <n-select style="width: 200px;" :options="countriesOptions" v-model:value="address.country" default-value="PE" disabled></n-select>
-                    <n-cascader separator=" ⏵ " :options="ubigeeOptions" v-model:value="address.district" check-strategy="child"/>
+                    <n-select style="width: 200px;" :options="countriesOptions" default-value="PE" disabled></n-select>
+                    <n-cascader separator=" ⏵ " :options="ubigeeOptions" v-model:value="address.ubigeo" check-strategy="child"/>
                     <n-input v-model:value="address.description" placeholder="" />
                     <n-popconfirm v-if="index>0">
                       <template #trigger>
@@ -125,7 +125,7 @@ export default defineComponent({
     const customerRef = ref(null)
     const customer = ref({
       names: null,
-      doc_type: null,
+      doc_type: '0',
       doc_num: null,
       email: null,
       phone: null,
@@ -134,8 +134,7 @@ export default defineComponent({
       addresses: [
         {
           description: '',
-          country: 'PE',
-          district: null,
+          ubigeo: null,
           isDisabled: false,
         }
       ]
@@ -169,7 +168,7 @@ export default defineComponent({
         modalTitle.value = 'Registrar Cliente'
         customer.value = {
           names: null,
-          doc_type: null,
+          doc_type: '0',
           doc_num: null,
           email: null,
           phone: null,
@@ -178,8 +177,7 @@ export default defineComponent({
           addresses: [
             {
               description: '',
-              country: 'PE',
-              district: null,
+              ubigeo: null,
               isDisabled: false,
             }
           ]
@@ -189,64 +187,56 @@ export default defineComponent({
 
     const performCreate = (e) => {
       e.preventDefault()
-        customerRef.value.validate((errors) => {
-          if (!errors) {
-            isLoadingData.value = true
-            createCustomer(customer.value)
-              .then(response => {
-                if (response.status===201) {
-                  message.success('Cliente registrado!')
-                  emit('on-success')
-                }
-              })
-              .catch(error => {
-                console.log(error)
-                message.error('Algo salió mal...')
-                for (const property in error.response.data) {
-                  for (let msg of error.response.data[property]) {
-                    message.error(msg)
-                  }
-                }
-              })
-              .finally(() => {
-                isLoadingData.value = false
-              })
-          } else {
-            console.log(errors)
-            message.error('Datos incorrectos')
-          }
-        })
+      customerRef.value.validate((errors) => {
+        if (!errors) {
+          isLoadingData.value = true
+          customer.value.addresses.forEach(address => address.description.toUpperCase())
+          createCustomer(customer.value)
+            .then(response => {
+              if (response.status===201) {
+                message.success('Cliente registrado!')
+                emit('on-success')
+              }
+            })
+            .catch(error => {
+              console.error(error.response.data)
+              message.error('Algo salió mal...')
+            })
+            .finally(() => {
+              isLoadingData.value = false
+            })
+        } else {
+          console.log(errors)
+          message.error('Datos incorrectos')
+        }
+      })
     }
 
     const performUpdate = (e) => {
       e.preventDefault()
-        customerRef.value.validate((errors) => {
-          if (!errors) {
-            isLoadingData.value = true
-            updateCustomer(idCustomer.value, customer.value)
-              .then(response => {
-                if (response.status===202) {
-                  message.success('Cliente actualizado!')
-                  emit('on-success')
-                }
-              })
-              .catch(error => {
-                console.log(error)
-                message.error('Algo salió mal...')
-                for (const property in error.response.data) {
-                  for (let msg of error.response.data[property]) {
-                    message.error(msg)
-                  }
-                }
-              })
-              .finally(() => {
-                isLoadingData.value = false
-              })
-          } else {
-            console.log(errors)
-            message.error('Datos incorrectos')
-          }
-        })
+      customerRef.value.validate((errors) => {
+        if (!errors) {
+          isLoadingData.value = true
+          customer.value.addresses.forEach(address => address.description.toUpperCase())
+          updateCustomer(idCustomer.value, customer.value)
+            .then(response => {
+              if (response.status===202) {
+                message.success('Cliente actualizado!')
+                emit('on-success')
+              }
+            })
+            .catch(error => {
+              console.log(error)
+              message.error('Algo salió mal...')
+            })
+            .finally(() => {
+              isLoadingData.value = false
+            })
+        } else {
+          console.log(errors)
+          message.error('Datos incorrectos')
+        }
+      })
     }
 
     const performSearchByDoc = () => {
@@ -258,17 +248,17 @@ export default defineComponent({
               if (response.status===200) {
                 message.success('Éxito')
                 if (customer.value.doc_num.length===8) {
-                  customer.value.names = response.data.data.nombre_completo
-                  customer.value.birthdate = toTimestamp(response.data.data.fecha_nacimiento)
-                  if (response.data.data.sexo==='FEMENINO') {
+                  customer.value.names = response.data.nombre_completo
+                  customer.value.birthdate = toTimestamp(response.data.fecha_nacimiento)
+                  if (response.data.sexo==='FEMENINO') {
                     customer.value.gender = 'F'
-                  } else if (response.data.data.sexo==='MASCULINO') {
+                  } else if (response.data.sexo==='MASCULINO') {
                     customer.value.gender = 'M'
                   }
                 } else if (customer.value.doc_num.length===11) {
-                  customer.value.names = response.data.data.nombre_o_razon_social
-                  customer.value.addresses[0].district = Number(response.data.data.ubigeo[2])
-                  customer.value.addresses[0].description = response.data.data.direccion
+                  customer.value.names = response.data.nombre_o_razon_social
+                  customer.value.addresses[0].ubigeo = Number(response.data.district)
+                  customer.value.addresses[0].description = response.data.direccion
                 }
               } else if (response.status===404) {
                 message.error('Documento no encontrado')
@@ -294,8 +284,7 @@ export default defineComponent({
     const addAddress = () => {
       customer.value.addresses.push({
         description: '',
-        country: 'PE',
-        district: null,
+        ubigeo: null,
         isDisabled: false,
       })
     }

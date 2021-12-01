@@ -51,6 +51,7 @@
 import {defineComponent, reactive, ref, toRefs} from "vue"
 import {useDialog, useMessage} from "naive-ui"
 import ProjectSetting from './ProjectSetting'
+import { useRouter } from "vue-router"
 
 export default defineComponent({
   name: "PageHeader",
@@ -63,6 +64,7 @@ export default defineComponent({
     },
   },
   setup() {
+    const router = useRouter()
     const message = useMessage()
     const dialog = useDialog()
     const drawerSetting = ref()
@@ -89,6 +91,10 @@ export default defineComponent({
 
     const avatarOptions = [
       {
+        label: 'Modo Mozo',
+        key: 0,
+      },
+      {
         label: 'Configuraciones personales',
         key: 1,
       },
@@ -100,6 +106,9 @@ export default defineComponent({
 
     const avatarSelect = (key) => {
       switch (key) {
+        case 0:
+          router.push({name: 'WaiterMode'})
+          break;
         case 1:
           console.log('option 1')
           break;

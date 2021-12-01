@@ -43,7 +43,7 @@
       </n-button>
     </n-space>
     <!-- Customer Data Table -->
-    <n-data-table :columns="tableColumns" :data="customers" :pagination="pagination" :loading="isTableLoading" :scroll-x="1500" remote />
+    <n-data-table :columns="tableColumns" :data="customers" :pagination="(customers.length>10) ? pagination : {}" :loading="isTableLoading" :scroll-x="1500" remote />
     <!-- Customer Modal -->
     <customer-modal v-model:show="showModal" :id-customer="idCustomer" @update:show="onCloseModal" @on-success="onSuccess" />
   </n-card>

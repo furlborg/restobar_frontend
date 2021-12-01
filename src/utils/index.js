@@ -6,7 +6,7 @@ export function renderIcon(icon) {
     return () => h(NIcon, null, { default: () => h(OhVueIcon, { name: icon }), })
 }
 
-export function sleep(ms = 1000) {
+export function sleep(ms = 400) {
     // console.log('Kindly remember to remove `sleep`');
     return new Promise((resolve) => setTimeout(resolve, ms));
 }

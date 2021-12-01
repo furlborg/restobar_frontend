@@ -69,8 +69,10 @@ import {
     ViFileTypeExcel,
     ViFileTypePdf2,
     MdDownloadRound,
+    MdMenuRound,
+    MdSaveRound,
 } from "oh-vue-icons/icons";
-    OhVueIcon.add(
+OhVueIcon.add(
     BiThreeDots,
     BiThreeDotsVertical,
     MdSpacedashboardTwotone,
@@ -140,5 +142,7 @@ import {
     ViFileTypeExcel,
     ViFileTypePdf2,
     MdDownloadRound,
+    MdMenuRound,
+    MdSaveRound,
 );
 export { OhVueIcon }

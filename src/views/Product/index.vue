@@ -1,137 +1,349 @@
 <template>
   <div id="Product">
-      <n-card title="Productos" :segmented="{content:'hard'}" >
-            <template #header-extra>
-                <n-button type="success" @click=" showModal=true">Agregar</n-button>
-            </template>
-            <n-space justify="space-between">
-                <n-input-group>
-                    <n-input placeholder="Buscar..." />
-                    <n-button type="primary">
-                        <v-icon name="md-search-round" />
+    <n-card title="Productos" :segmented="{ content: 'hard' }">
+      <template #header-extra>
+        <n-button type="success" @click="showModal = true">Agregar</n-button>
+      </template>
+      <n-space justify="space-between">
+        <n-input-group>
+          <n-input
+            v-model:value="search"
+            @keypress.enter="performSearch"
+            placeholder="Buscar..."
+            clearable
+          />
+          <n-button type="primary" @click="performSearch">
+            <v-icon name="md-search-round" />
+          </n-button>
+        </n-input-group>
+        <n-radio-group v-model:value="listType" name="listType" size="small">
+          <n-radio-button class="p-0" value="list" key="list">
+            <v-icon class="m-1" name="md-list-round" />
+          </n-radio-button>
+          <n-radio-button class="p-0" value="grid" key="grid">
+            <v-icon class="m-1" name="md-gridview-round" />
+          </n-radio-button>
+        </n-radio-group>
+      </n-space>
+      <n-spin class="mt-2" :show="isLoadingData">
+        <n-scrollbar style="max-height: 650px; min-height: 650px">
+          <!-- Products List -->
+          <n-list v-if="listType === 'list'" class="px-3">
+            <n-list-item
+              v-for="product in products"
+              :key="product.id"
+              @mouseover="product.showButtons = true"
+              @mouseleave="product.showButtons = false"
+            >
+              <template #prefix>
+                <img
+                  src="~@/assets/images/default-food-image.jpg"
+                  alt
+                  width="90"
+                  height="90"
+                />
+              </template>
+              <n-thing>
+                <template #header>
+                  <n-text class="fs-4">{{ product.name }}</n-text>
+                </template>
+                <template #description>
+                  <n-text class="fs-6" type="success"
+                    >S/. {{ Number(product.prices).toFixed(2) }}</n-text
+                  >
+                </template>
+                <n-text>{{ product.description }}</n-text>
+              </n-thing>
+              <template #suffix>
+                <transition name="fade">
+                  <n-button-group v-if="product.showButtons">
+                    <n-button
+                      class="p-4"
+                      type="warning"
+                      tertiary
+                      @click="editProduct(product.id)"
+                    >
+                      <v-icon name="ri-edit-fill" scale="1.5" />
                     </n-button>
-                </n-input-group>
-                <n-radio-group v-model:value="listType" name="listType" size="small">
-                    <n-radio-button class="p-0" value="list" key="list">
-                        <v-icon class="m-1" name="md-list-round" />
-                    </n-radio-button>
-                    <n-radio-button class="p-0" value="grid" key="grid">
-                        <v-icon class="m-1" name="md-gridview-round" />
-                    </n-radio-button>
-                </n-radio-group>
-            </n-space>
-            <n-list v-if="listType==='list'">
-                <n-list-item v-for="index in 10" :key="index">
-                    <template #prefix>
-                        <img src="~@/assets/images/default-food-image.jpg" alt="" width="90" height="90" />
-                    </template>
-                    <n-thing>
-                        <template #header>
-                            <n-text class="fs-4">Product</n-text>
-                        </template>
-                        <template #description>
-                            <n-text class="fs-6" type="success">S/. 10.00</n-text>
-                        </template>
-                        <n-text>Lorem ipsum dolor sit, amet consectetur adipisicing elit.</n-text>
-                    </n-thing>
-                    <template #suffix>
-                        <n-button-group vertical>
-                            <n-button type="warning" text>
-                                <v-icon name="ri-edit-fill" scale="1.5" />
-                            </n-button>
-                            <n-button type="error" text>
-                                <v-icon name="ri-delete-bin-2-fill" scale="1.5" />
-                            </n-button>
-                        </n-button-group>
-                    </template>
-                </n-list-item>
-            </n-list>
-            <n-grid v-if="listType==='grid'" class="mt-2" responsive="screen" cols="4 s:4 m:12 l:12 xl:24 2xl:24" :x-gap="12" :y-gap="12">
-                <n-gi :span="4" v-for="index in 10" :key="index">
-                    <n-card>
-                        <template #header>
-                            <n-h2 class="mb-0">Product</n-h2>
-                            <n-text type="success">S/. 10.00</n-text>
-                        </template>
-                        <template #header-extra>
-                            <n-dropdown :options="productOptions" placement="left-start" size="small">
-                                <n-button text size="small">
-                                    <v-icon name="bi-three-dots-vertical" />
-                                </n-button>
-                            </n-dropdown>
-                        </template>
-                        <template #cover>
-                            <img src="~@/assets/images/default-food-image.jpg" alt="" />
-                        </template>
-                        <n-text>Lorem ipsum dolor sit, amet consectetur adipisicing elit.</n-text>
-                    </n-card>
-                </n-gi>
-            </n-grid>
-            <template #footer>
-                <n-pagination :page="1" :page-count="10" />
-            </template>
-      </n-card>
-    <!-- Customer Modal -->
-    <product-modal v-model:show="showModal" @update:show="onCloseModal" @on-success="onSuccess" />
+                    <n-button class="p-4" type="error" tertiary>
+                      <v-icon name="ri-delete-bin-2-fill" scale="1.5" />
+                    </n-button>
+                  </n-button-group>
+                </transition>
+              </template>
+            </n-list-item>
+          </n-list>
+          <!-- Products Grid -->
+          <n-grid
+            v-if="listType === 'grid'"
+            class="mt-2"
+            responsive="screen"
+            cols="4 s:4 m:12 l:12 xl:24 2xl:24"
+            :x-gap="12"
+            :y-gap="12"
+          >
+            <n-gi :span="4" v-for="product in products" :key="product.id">
+              <n-card>
+                <template #header>
+                  <n-h2 class="mb-0">{{ product.name }}</n-h2>
+                  <n-text type="success"
+                    >S/. {{ Number(product.prices).toFixed(2) }}</n-text
+                  >
+                </template>
+                <template #header-extra>
+                  <n-dropdown
+                    :options="productOptions"
+                    placement="left-start"
+                    size="small"
+                  >
+                    <n-button text size="small">
+                      <v-icon name="bi-three-dots-vertical" />
+                    </n-button>
+                  </n-dropdown>
+                </template>
+                <template #cover>
+                  <img src="~@/assets/images/default-food-image.jpg" alt />
+                </template>
+                <n-text>{{ product.description }}</n-text>
+              </n-card>
+            </n-gi>
+          </n-grid>
+        </n-scrollbar>
+      </n-spin>
+      <template #footer>
+        <n-space justify="end">
+          <!-- Products Paginator -->
+          <n-pagination
+            :page="pagination.page"
+            :page-count="pagination.pageCount"
+            :page-size="pagination.pageSize"
+            :page-sizes="pagination.pageSizes"
+            :on-update:page="pagination.onChange"
+            :on-update:page-size="pagination.onPageSizeChange"
+            show-size-picker
+          />
+        </n-space>
+      </template>
+    </n-card>
+    <!-- Product Modal -->
+    <product-modal
+      v-model:show="showModal"
+      :id-product="idProduct"
+      @update:show="onCloseModal"
+      @on-success="onSuccess"
+    />
   </div>
 </template>
 
 <script>
-import { defineComponent, ref, onMounted } from "vue"
-import {renderIcon} from "@/utils"
-import ProductModal from "./components/ProductModal"
+import { defineComponent, ref, onMounted } from "vue";
+import { useMessage } from "naive-ui";
+import { renderIcon } from "@/utils";
+import ProductModal from "./components/ProductModal";
+import { getProducts, searchProduct } from "@/api/modules/products";
 
 export default defineComponent({
-    name: "Product",
-    components: {
-        ProductModal,
-    },
-    setup() {
-        const listType = ref('list')
-        const showModal = ref(false)
-        // const idProduct = ref(0)
-        // const products = ref([])
-        const productOptions = [
-            {
-                label: 'Editar',
-                key: 'edit',
-                icon: renderIcon('ri-edit-fill'),
-            },
-            {
-                label: 'Eliminar',
-                key: 'delete',
-                icon: renderIcon('ri-delete-bin-2-fill'),
+  name: "Product",
+  components: {
+    ProductModal,
+  },
+  setup() {
+    const isLoadingData = ref(false);
+    const message = useMessage();
+    const listType = ref("list");
+    const showModal = ref(false);
+    const showButtons = ref(false);
+    const search = ref(null);
+    const idProduct = ref(0);
+    const products = ref([]);
+    const productOptions = [
+      {
+        label: "Editar",
+        key: "edit",
+        icon: renderIcon("ri-edit-fill"),
+      },
+      {
+        label: "Eliminar",
+        key: "delete",
+        icon: renderIcon("ri-delete-bin-2-fill"),
+      },
+    ];
+    const pagination = ref({
+      search: null,
+      total: 0,
+      offset: 0,
+      page: 1,
+      pageCount: 1,
+      pageSize: 10,
+      showSizePicker: true,
+      pageSizes: [10, 25, 50, 100],
+      onChange: (page) => {
+        isLoadingData.value = true;
+        pagination.value.page = page;
+        pagination.value.offset = --page * pagination.value.pageSize;
+        searchProduct(
+          pagination.value.search,
+          pagination.value.pageSize,
+          pagination.value.offset
+        )
+          .then((response) => {
+            pagination.value.total = response.data.count;
+            pagination.value.pageCount = Math.trunc(
+              Number(response.data.count) / pagination.value.pageSize
+            );
+            if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+              ++pagination.value.pageCount;
             }
-        ]
+            products.value = response.data.results;
+          })
+          .catch((error) => {
+            console.error(error);
+            message.error("Algo salió mal...");
+          })
+          .finally(() => {
+            isLoadingData.value = false;
+          });
+      },
+      onPageSizeChange: (pageSize) => {
+        isLoadingData.value = true;
+        pagination.value.offset = 0;
+        pagination.value.page = 1;
+        pagination.value.pageSize = pageSize;
+        searchProduct(
+          pagination.value.search,
+          pageSize,
+          pagination.value.offset
+        )
+          .then((response) => {
+            pagination.value.total = response.data.count;
+            pagination.value.pageCount = Math.trunc(
+              Number(response.data.count) / pagination.value.pageSize
+            );
+            if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+              ++pagination.value.pageCount;
+            }
+            products.value = response.data.results;
+          })
+          .catch((error) => {
+            console.error(error);
+            message.error("Algo salió mal...");
+          })
+          .finally(() => {
+            isLoadingData.value = false;
+          });
+      },
+    });
 
-        const onCloseModal = () => {
-            document.title = 'Productos | App'
-            // idProduct.value = 0
-        }
-
-        const onSuccess = () => {
-            showModal.value = false
-            onCloseModal()
-            // loadProductsData()
-        }
-
-        onMounted(() => {
-            document.title = 'Productos | App'
+    const loadProductsData = () => {
+      isLoadingData.value = true;
+      pagination.value.offset = 0;
+      pagination.value.page = 1;
+      getProducts()
+        .then((response) => {
+          pagination.value.total = response.data.count;
+          pagination.value.pageCount = Math.trunc(
+            Number(response.data.count) / pagination.value.pageSize
+          );
+          if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+            ++pagination.value.pageCount;
+          }
+          products.value = response.data.results;
         })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          isLoadingData.value = false;
+        });
+    };
 
-        return {
-            listType,
-            showModal,
-            productOptions,
-            onCloseModal,
-            onSuccess,
-            // products,
-            // idProduct,
-        }
-    }
-})
+    const editProduct = (id) => {
+      showModal.value = true;
+      idProduct.value = id;
+    };
+
+    const performSearch = () => {
+      isLoadingData.value = true;
+      pagination.value.search = search.value;
+      pagination.value.offset = 0;
+      pagination.value.page = 1;
+      searchProduct(
+        pagination.value.search,
+        pagination.value.pageSize,
+        pagination.value.offset
+      )
+        .then((response) => {
+          pagination.value.total = response.data.count;
+          pagination.value.pageCount = Math.trunc(
+            Number(response.data.count) / pagination.value.pageSize
+          );
+          if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+            ++pagination.value.pageCount;
+          }
+          products.value = response.data.results;
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          isLoadingData.value = false;
+        });
+    };
+    const refreshProducts = () => {
+      pagination.value.search = null;
+      loadProductsData();
+    };
+
+    onMounted(() => {
+      document.title = "Productos | App";
+      loadProductsData();
+    });
+
+    const onCloseModal = () => {
+      document.title = "Productos | App";
+      idProduct.value = 0;
+    };
+
+    const onSuccess = () => {
+      showModal.value = false;
+      onCloseModal();
+      loadProductsData();
+    };
+
+    onMounted(() => {
+      document.title = "Productos | App";
+    });
+
+    return {
+      isLoadingData,
+      listType,
+      showModal,
+      showButtons,
+      productOptions,
+      onCloseModal,
+      onSuccess,
+      pagination,
+      search,
+      products,
+      idProduct,
+      refreshProducts,
+      editProduct,
+      performSearch,
+    };
+  },
+});
 </script>
 
-<style>
+<style lang="scss">
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s ease;
+}
 
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 </style>

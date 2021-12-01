@@ -8,9 +8,9 @@
     <template #header>
         <n-text class="fs-2">Kardex</n-text>
         <n-dropdown trigger="click" :options="options" placement="bottom-end" :show-arrow="true">
-                <n-button type="info" text>
-                    <v-icon name="md-download-round" />
-                </n-button>
+            <n-button type="info" text>
+                <v-icon name="md-download-round" />
+            </n-button>
         </n-dropdown>
     </template>
     <n-data-table :columns="columns" />

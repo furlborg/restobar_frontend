@@ -1,9 +1,9 @@
 <template>
   <div id="Shopping">
-      <n-card title="Compras">
-          <template #header-extra>
+      <n-card title="Compras" :segmented="{content: 'hard'}">
+          <!-- <template #header-extra>
               <n-button type="primary">Ver Proveedores</n-button>
-          </template>
+          </template> -->
           <n-form>
               <n-grid responsive="screen" cols="12 s:12 m:12 l:12 xl:12 2xl:12" :x-gap="12">
                   <n-form-item-gi :span="2" label="RUC">
