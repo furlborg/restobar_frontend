@@ -1,5 +1,5 @@
-import {defineStore} from "pinia"
-import {getTables} from '@/api/modules/tables'
+import { defineStore } from "pinia"
+import { getAreasTables } from '@/api/modules/tables'
 
 export const useTableStore = defineStore('table', {
     state: () => ({
@@ -15,12 +15,20 @@ export const useTableStore = defineStore('table', {
     },
     actions: {
         initializeStore() {
-            getTables()
+            getAreasTables()
                 .then(response => {
                     this.areas = response.data
                 }).catch(error => {
                     console.error(error)
                 })
         },
+        refreshData() {
+            return getAreasTables()
+                .then(response => {
+                    this.areas = response.data
+                }).catch(error => {
+                    console.error(error)
+                })
+        }
     }
 })

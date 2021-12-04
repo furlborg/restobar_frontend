@@ -12,7 +12,11 @@
         </div>
       </n-space>
     </n-layout-header>
-    <n-layout-content position="absolute" style="top: 48px">
+    <n-layout-content
+      position="absolute"
+      style="top: 48px"
+      :native-scrollbar="false"
+    >
       <router-view v-slot="{ Component }">
         <transition name="zoom-fade" mode="out-in" appear>
           <component :is="Component" />
@@ -43,11 +47,15 @@
 
 <script>
 import { defineComponent, ref } from "vue";
+import { useTableStore } from "@/store/modules/table";
 
 export default defineComponent({
   name: "WaiterMode",
   setup() {
     const active = ref(false);
+
+    const tableStore = useTableStore();
+    tableStore.initializeStore();
 
     return {
       active,

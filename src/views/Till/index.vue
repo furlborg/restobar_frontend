@@ -1,6 +1,11 @@
 <template>
   <div id="Till">
-    <n-grid cols="5 s:5 m:10 l:20 xl:20 2xl:20" responsive="screen" :x-gap="12" :y-gap="12">
+    <n-grid
+      cols="5 s:5 m:10 l:20 xl:20 2xl:20"
+      responsive="screen"
+      :x-gap="12"
+      :y-gap="12"
+    >
       <n-gi :span="5">
         <n-card hoverable>
           <n-space justify="space-between" align="center">
@@ -8,7 +13,7 @@
               <v-icon name="md-trendingup-round" scale="2" fill="LimeGreen" />
               <n-text class="fs-5">Ingresos</n-text>
             </n-space>
-            <n-button type="success" text @click="showModal=true">
+            <n-button type="success" text @click="showModal = true">
               <v-icon name="bi-pencil-square" scale="1.25" />
             </n-button>
           </n-space>
@@ -21,7 +26,12 @@
         <n-card hoverable>
           <n-space justify="space-between" align="center">
             <n-space align="center" vertical>
-              <v-icon name="md-trendingdown-round" scale="2" fill="red" flip="horizontal" />
+              <v-icon
+                name="md-trendingdown-round"
+                scale="2"
+                fill="red"
+                flip="horizontal"
+              />
               <n-text class="fs-5">Egresos</n-text>
             </n-space>
             <n-button type="error" text>
@@ -37,7 +47,11 @@
         <n-card hoverable>
           <n-space justify="space-between" align="center">
             <n-space align="center" vertical>
-              <v-icon name="md-attachmoney-round" scale="2" fill="deepskyblue" />
+              <v-icon
+                name="md-attachmoney-round"
+                scale="2"
+                fill="deepskyblue"
+              />
               <n-text class="fs-5">Ventas</n-text>
             </n-space>
           </n-space>
@@ -60,11 +74,20 @@
         </n-card>
       </n-gi>
     </n-grid>
-    <n-card class="mt-2" :segmented="{content:'hard'}">
+    <n-card class="mt-2" :segmented="{ content: 'hard' }">
       <template #header>
         <n-space align="end">
           <n-text class="fs-3">Movimientos</n-text>
-          <n-button class="ms-2" type="info" text @click="(showFilters===false) ? showFilters = true : showFilters = false">
+          <n-button
+            class="ms-2"
+            type="info"
+            text
+            @click="
+              showFilters === false
+                ? (showFilters = true)
+                : (showFilters = false)
+            "
+          >
             <v-icon name="md-filteralt-round" />
             Filtrar
           </n-button>
@@ -78,7 +101,11 @@
       </template>
       <n-collapse-transition :show="showFilters">
         <n-form>
-          <n-grid responsive="screen" cols="6 s:6 m:12 l:12 xl:24 2xl:24" :x-gap="12">
+          <n-grid
+            responsive="screen"
+            cols="6 s:6 m:12 l:12 xl:24 2xl:24"
+            :x-gap="12"
+          >
             <n-form-item-gi label="Descripción" :span="3">
               <n-input />
             </n-form-item-gi>
@@ -102,98 +129,101 @@
       </n-collapse-transition>
       <n-data-table :columns="tableColumns" :data="movements" />
     </n-card>
-    <till-modal v-model:show="showModal" concept="ingress" @update:show="onCloseModal" @on-success="onSuccess" />
+    <till-modal
+      v-model:show="showModal"
+      concept="ingress"
+      @update:show="onCloseModal"
+      @on-success="onSuccess"
+    />
   </div>
 </template>
 
 <script>
-import { defineComponent, ref, onMounted } from "vue"
-import {useMessage, useDialog, NButton} from "naive-ui"
-import { createMovementsColumns } from "@/utils/constants"
-import TillModal from "./components/TillModal"
+import { defineComponent, ref, onMounted } from "vue";
+import { useMessage, useDialog, NButton } from "naive-ui";
+import { createMovementsColumns } from "@/utils/constants";
+import TillModal from "./components/TillModal";
 
 export default defineComponent({
-    name: "Till",
-    components: {
-        TillModal,
-    },
-    setup() {
-        const message = useMessage()
-        const dialog = useDialog()
-        const showModal = ref(false)
-        const showFilters = ref(false)
-        const movements = ref([
-          {
-            id: 1,
-            document: 'B01',
-            user: 'admin',
-            sucursal: 'Sucursal 1',
-            description: 'Buffet presidencial',
-            payment_method: 'Tarjeta',
-            amount: 'S/. 1000.00',
-            concept: 'Venta',
-            concept_type: 1,
-            date: '2021-01-01'
-          },
-          {
-            id: 2,
-            document: 'B02',
-            user: 'admin',
-            sucursal: 'Sucursal 1',
-            description: 'Pago recibo luz',
-            payment_method: 'Efectivo',
-            amount: 'S/. 100.00',
-            concept: 'Otros',
-            concept_type: 2,
-            date: '2021-01-01'
-          },
-        ])
+  name: "Till",
+  components: {
+    TillModal,
+  },
+  setup() {
+    const message = useMessage();
+    const dialog = useDialog();
+    const showModal = ref(false);
+    const showFilters = ref(false);
+    const movements = ref([
+      {
+        id: 1,
+        document: "B01",
+        user: "admin",
+        sucursal: "Sucursal 1",
+        description: "Buffet presidencial",
+        payment_method: "Tarjeta",
+        amount: "S/. 1000.00",
+        concept: "Venta",
+        concept_type: 1,
+        date: "2021-01-01",
+      },
+      {
+        id: 2,
+        document: "B02",
+        user: "admin",
+        sucursal: "Sucursal 1",
+        description: "Pago recibo luz",
+        payment_method: "Efectivo",
+        amount: "S/. 100.00",
+        concept: "Otros",
+        concept_type: 2,
+        date: "2021-01-01",
+      },
+    ]);
 
-        onMounted(() => {
-            document.title = 'Movimientos de Caja | App'
-        })
+    onMounted(() => {
+      document.title = "Movimientos de Caja | App";
+    });
 
-        const onCloseModal = () => {
-            document.title = 'Movimientos de Caja | App'
-            // idProduct.value = 0
-        }
+    const onCloseModal = () => {
+      document.title = "Movimientos de Caja | App";
+      // idProduct.value = 0
+    };
 
-        const onSuccess = () => {
-            showModal.value = false
-            onCloseModal()
-            // loadProductsData()
-        }
+    const onSuccess = () => {
+      showModal.value = false;
+      onCloseModal();
+      // loadProductsData()
+    };
 
-        return {
-          showModal,
-          showFilters,
-          onCloseModal,
-          onSuccess,
-          movements,
-          tableColumns: createMovementsColumns({
-            editMovement(rowData) {
-              message.info('Editar registro ' + rowData.id)
-              /* showModal.value = true
+    return {
+      showModal,
+      showFilters,
+      onCloseModal,
+      onSuccess,
+      movements,
+      tableColumns: createMovementsColumns({
+        editMovement(rowData) {
+          message.info("Editar registro " + rowData.id);
+          /* showModal.value = true
               idCustomer.value = rowData.id */
+        },
+        deleteMovement(rowData) {
+          dialog.error({
+            title: "Eliminando registro",
+            content: "¿Está seguro?",
+            positiveText: "Sí",
+            onPositiveClick: () => {
+              message.success("Usuario " + rowData.id + " eliminado");
+              /* performDisableCustomer(rowData.id) */
             },
-            deleteMovement(rowData) {
-              dialog.error({
-                  title: 'Eliminando registro',
-                  content: '¿Está seguro?',
-                  positiveText: 'Sí',
-                  onPositiveClick: () => {
-                      message.success('Usuario ' + rowData.id + ' eliminado')
-                      /* performDisableCustomer(rowData.id) */
-                  }
-                })
-            }
-          })
-        }
-    }
-
-})
+          });
+        },
+      }),
+    };
+  },
+});
 </script>
 
 <style>
-
 </style>
