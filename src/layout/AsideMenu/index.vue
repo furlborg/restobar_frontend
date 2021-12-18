@@ -1,16 +1,16 @@
 <template>
   <n-menu
-      :collapsed-width=64
-      :collapsed-icon-size=22
-      :options="menuOptions"
-      :collapsed="collapsed"
+    :collapsed-width="64"
+    :collapsed-icon-size="22"
+    :options="menuOptions"
+    :collapsed="collapsed"
   />
 </template>
 
 <script>
-import {defineComponent, h} from "vue"
-import {RouterLink} from "vue-router"
-import {renderIcon} from "@/utils"
+import { defineComponent, h } from "vue";
+import { RouterLink } from "vue-router";
+import { renderIcon } from "@/utils";
 
 export default defineComponent({
   name: "AsideMenu",
@@ -20,115 +20,122 @@ export default defineComponent({
     },
   },
   setup() {
-    // console.log(routes)
     const menuOptions = [
       {
-        label: () => h(
+        label: () =>
+          h(
             RouterLink,
             {
-              to: { name: "Dashboard"},
+              to: { name: "Dashboard" },
             },
-            () => h('span', 'Dashboard')
-        ),
-        key: 'Dashboard',
-        icon: renderIcon('md-spacedashboard-twotone')
+            () => h("span", "Dashboard")
+          ),
+        key: "Dashboard",
+        icon: renderIcon("md-spacedashboard-twotone"),
       },
       {
-        label: () => h(
+        label: () =>
+          h(
             RouterLink,
             {
-              to: { name: "Table"},
+              to: { name: "Table" },
             },
-            () => h('span', 'Mesas')
-        ),
+            () => h("span", "Mesas")
+          ),
         key: "Table",
-        icon: renderIcon('md-dining-twotone'),
+        icon: renderIcon("md-dining-twotone"),
       },
       {
-        label: () => h(
+        label: () =>
+          h(
             RouterLink,
             {
-              to: { name: "Till"},
+              to: { name: "Till" },
             },
-            () => h('span', 'Caja')
-        ),
+            () => h("span", "Caja")
+          ),
         key: "Till",
-        icon: renderIcon('md-pointofsale-twotone'),
+        icon: renderIcon("md-pointofsale-twotone"),
       },
       {
-        label: () => h(
+        label: () =>
+          h(
             RouterLink,
             {
-              to: { name: "Product"},
+              to: { name: "Product" },
             },
-            () => h('span', 'Productos')
-        ),
+            () => h("span", "Productos")
+          ),
         key: "Product",
-        icon: renderIcon('md-fastfood-twotone'),
+        icon: renderIcon("md-fastfood-twotone"),
       },
       {
-        label: () => h(
+        label: () =>
+          h(
             RouterLink,
             {
-              to: { name: "Shopping"},
+              to: { name: "Shopping" },
             },
-            () => h('span', 'Compras')
-        ),
+            () => h("span", "Compras")
+          ),
         key: "Shopping",
-        icon: renderIcon('md-shoppingcart-twotone'),
+        icon: renderIcon("md-shoppingcart-twotone"),
       },
       {
-        label: () => h(
+        label: () =>
+          h(
             RouterLink,
             {
-              to: { name: "Supplier"},
+              to: { name: "Supplier" },
             },
-            () => h('span', 'Proveedores')
-        ),
+            () => h("span", "Proveedores")
+          ),
         key: "Supplier",
-        icon: renderIcon('md-villa-twotone'),
+        icon: renderIcon("md-villa-twotone"),
       },
       {
-        label: () => h(
+        label: () =>
+          h(
             RouterLink,
             {
-              to: { name: "Supplies"},
+              to: { name: "Supplies" },
             },
-            () => h('span', 'Insumos')
-        ),
+            () => h("span", "Insumos")
+          ),
         key: "Supplies",
-        icon: renderIcon('md-kitchen-twotone'),
+        icon: renderIcon("md-kitchen-twotone"),
       },
       {
-        label: () => h(
+        label: () =>
+          h(
             RouterLink,
             {
-              to: { name: "Customer"},
+              to: { name: "Customer" },
             },
-            () => h('span', 'Clientes')
-        ),
+            () => h("span", "Clientes")
+          ),
         key: "Customer",
-        icon: renderIcon('md-supervisedusercircle-twotone'),
+        icon: renderIcon("md-supervisedusercircle-twotone"),
       },
       {
-        label: () => h(
+        label: () =>
+          h(
             RouterLink,
             {
-              to: { name: "Settings"},
+              to: { name: "Settings" },
             },
-            () => h('span', 'Configuración')
-        ),
+            () => h("span", "Configuración")
+          ),
         key: "Settings",
-        icon: renderIcon('md-settings-twotone'),
-      }
-    ]
+        icon: renderIcon("md-settings-twotone"),
+      },
+    ];
     return {
       menuOptions,
-    }
-  }
-})
+    };
+  },
+});
 </script>
 
 <style scoped>
-
 </style>

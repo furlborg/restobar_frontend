@@ -332,7 +332,7 @@ export default defineComponent({
               isLoadingData.value = false;
             });
         } else {
-          console.log(errors);
+          console.error(errors);
           message.error("Datos incorrectos");
         }
       });
@@ -354,14 +354,14 @@ export default defineComponent({
               }
             })
             .catch((error) => {
-              console.log(error);
+              console.error(error);
               message.error("Algo salió mal...");
             })
             .finally(() => {
               isLoadingData.value = false;
             });
         } else {
-          console.log(errors);
+          console.error(errors);
           message.error("Datos incorrectos");
         }
       });

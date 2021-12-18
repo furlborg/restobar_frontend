@@ -30,7 +30,11 @@
                   <n-input v-model:value="table.description" placeholder="" />
                 </n-form-item-gi>
                 <n-form-item-gi :span="4">
-                  <n-button type="info" secondary @click="performCreateTable"
+                  <n-button
+                    type="info"
+                    :disabled="!(table.code && table.description)"
+                    secondary
+                    @click="performCreateTable"
                     >Agregar</n-button
                   >
                 </n-form-item-gi>
@@ -104,8 +108,9 @@ export default defineComponent({
       isLoadingData.value = true;
       createTable(area.value, table.value)
         .then((response) => {
-          console.log(response.status);
-          tableStore.refreshData();
+          if (response.status === 201) {
+            tableStore.refreshData();
+          }
         })
         .catch((error) => {
           console.error(error.response.data);

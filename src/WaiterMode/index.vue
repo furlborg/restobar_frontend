@@ -6,7 +6,7 @@
         <div
           class="menuBtn"
           :class="{ act: active === true }"
-          @click="active === false ? (active = true) : (active = false)"
+          @click="active ? (active = false) : (active = true)"
         >
           <span class="lines"></span>
         </div>

@@ -1,5 +1,5 @@
 import { h } from 'vue';
-import {NIcon} from "naive-ui";
+import { NIcon } from "naive-ui";
 import { OhVueIcon } from '@/plugins/icon'
 
 export function renderIcon(icon) {
@@ -33,7 +33,7 @@ export function isNumber(e) {
     } else {
         e.preventDefault()
     }
-  }
+}
 
 export function getDeviceType() {
     const ua = navigator.userAgent
@@ -42,10 +42,12 @@ export function getDeviceType() {
     }
     if (
         /Mobile|iP(hone|od)|Android|BlackBerry|IEMobile|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(
-        ua
+            ua
         )
     ) {
         return "mobile"
     }
     return "desktop"
 }
+
+export const cloneDeep = require('clone-deep');

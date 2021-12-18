@@ -85,7 +85,6 @@ export async function createProductCategory(categorie) {
 }
 
 export async function updateProductCategory(idCategorie, description) {
-    console.log(idCategorie)
     return await http.put(`api/v1/products-categories/${idCategorie}/`, {
         description: description,
     })

@@ -21,6 +21,8 @@ import {
     FaCommentDots,
     MdDeliverydining,
     RiShoppingBag2Fill,
+    IoBagCheck,
+    IoBag,
     HiUser,
     LaUserPlusSolid,
     LaUserEditSolid,
@@ -63,6 +65,7 @@ import {
     MdArrowdropupRound,
     MdArrowdropdown,
     MdArrowdropup,
+    MdShoppingcartRound,
     MdShoppingcartTwotone,
     MdVillaTwotone,
     MdKitchenTwotone,
@@ -71,6 +74,7 @@ import {
     MdDownloadRound,
     MdMenuRound,
     MdSaveRound,
+    MdArrowbackRound,
 } from "oh-vue-icons/icons";
 OhVueIcon.add(
     BiThreeDots,
@@ -94,6 +98,8 @@ OhVueIcon.add(
     FaCommentDots,
     MdDeliverydining,
     RiShoppingBag2Fill,
+    IoBagCheck,
+    IoBag,
     HiUser,
     LaUserPlusSolid,
     LaUserEditSolid,
@@ -136,6 +142,7 @@ OhVueIcon.add(
     MdArrowdropupRound,
     MdArrowdropdown,
     MdArrowdropup,
+    MdShoppingcartRound,
     MdShoppingcartTwotone,
     MdVillaTwotone,
     MdKitchenTwotone,
@@ -144,5 +151,6 @@ OhVueIcon.add(
     MdDownloadRound,
     MdMenuRound,
     MdSaveRound,
+    MdArrowbackRound,
 );
 export { OhVueIcon }

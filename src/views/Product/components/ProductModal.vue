@@ -270,7 +270,7 @@ export default defineComponent({
               isLoadingData.value = false;
             });
         } else {
-          console.log(errors);
+          console.error(errors);
           message.error("Datos incorrectos");
         }
       });

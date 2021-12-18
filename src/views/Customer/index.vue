@@ -16,7 +16,6 @@
     </template>
     <n-space justify="space-between">
       <n-button
-        class="ms-2"
         type="info"
         text
         @click="

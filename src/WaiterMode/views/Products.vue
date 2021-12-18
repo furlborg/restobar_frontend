@@ -8,27 +8,39 @@
         <n-text class="fs-4">{{ $route.params.category }}</n-text>
       </template>
     </n-page-header>
+
     <n-list class="m-0 px-2">
-      <n-list-item v-for="index in 20" :key="index">
+      <n-list-item v-for="(product, index) in products" :key="product.id">
         <n-space vertical>
-          <n-space justify="space-between" @click="addProduct(index)">
-            <n-text>Product {{ index }}</n-text>
-            <n-text>S/. 10.00</n-text>
-            <!-- <n-button type="info" @click="findProduct(index)">test</n-button> -->
+          <n-space
+            justify="space-between"
+            @click="product.quantity ? null : (product.quantity = 1)"
+          >
+            <n-text>{{ product.title }}</n-text>
+            <n-text>S/. {{ product.price.toFixed(2) }}</n-text>
           </n-space>
-          <n-collapse-transition :show="findProduct(index)">
+          <n-collapse-transition :show="product.quantity > 0">
             <n-space justify="space-between">
-              <n-button type="info" text>Indicaciones</n-button>
+              <n-button
+                type="info"
+                text
+                @click="
+                  productIndex = index;
+                  orderItemIndex = null;
+                  showModal = true;
+                "
+                >Indicaciones</n-button
+              >
               <n-input-group>
                 <n-button
                   type="warning"
                   size="small"
-                  @click="decrementQuantity(index)"
+                  @click="product.quantity--"
                 >
                   <v-icon name="md-remove-round" />
                 </n-button>
                 <n-input
-                  :value="productQuantity(index)"
+                  :value="product.quantity.toString()"
                   style="width: 50px"
                   size="small"
                   placeholder=""
@@ -37,7 +49,7 @@
                 <n-button
                   type="warning"
                   size="small"
-                  @click="incrementQuantity(index)"
+                  @click="product.quantity++"
                 >
                   <v-icon name="md-add-round" />
                 </n-button>
@@ -47,69 +59,299 @@
         </n-space>
       </n-list-item>
     </n-list>
+    <ProductIndications
+      v-model:show="showModal"
+      preset="card"
+      title="Indicaciones"
+      :product="
+        productIndex !== null
+          ? products[productIndex]
+          : preOrderList[orderItemIndex]
+      "
+      @success="showModal = false"
+    ></ProductIndications>
+    <teleport to="body">
+      <n-space
+        class="position-absolute bottom-0 start-50 translate-middle-x mb-3"
+        align="center"
+        vertical
+      >
+        <transition name="slide-fade">
+          <n-button
+            v-if="products.some((product) => product.quantity > 0)"
+            type="success"
+            round
+            @click="addToList"
+            ><v-icon class="me-1" name="md-add-round" /> Agregar</n-button
+          >
+        </transition>
+        <n-button
+          type="info"
+          :disabled="!(preOrderList.length > 0)"
+          round
+          @click="activeDrawer = true"
+          ><v-icon class="me-1" name="md-shoppingcart-round" />Ver
+          pedido</n-button
+        >
+      </n-space>
+    </teleport>
+    <n-drawer height="auto" v-model:show="activeDrawer" placement="bottom">
+      <n-drawer-content title="Pedidos" closable>
+        <n-list>
+          <n-list-item v-for="(orderItem, index) in preOrderList" :key="index">
+            <n-thing
+              :title="`${orderItem.quantity} - ${orderItem.title}`"
+              :title-extra="`S/. ${
+                orderItem.quantity * orderItem.price.toFixed(2)
+              }`"
+              ><n-button
+                type="info"
+                text
+                @click="
+                  productIndex = null;
+                  orderItemIndex = index;
+                  showModal = true;
+                "
+                >Indicaciones</n-button
+              ></n-thing
+            >
+          </n-list-item>
+        </n-list>
+        <template #footer>
+          <n-space class="w-100" justify="center">
+            <n-button type="error" secondary>Cancelar pedido</n-button>
+            <n-button type="info" secondary @click="saveOrder"
+              >Realizar pedido</n-button
+            >
+          </n-space>
+        </template>
+      </n-drawer-content>
+    </n-drawer>
   </div>
 </template>
 
 <script>
 import { defineComponent, ref } from "vue";
+import ProductIndications from "./ProductIndications";
+import { useWaiterStore } from "@/store/modules/waiter";
+import { cloneDeep } from "@/utils";
 
 export default defineComponent({
   name: "WProducts",
+  components: {
+    ProductIndications,
+  },
   setup() {
-    const showExtra = ref(false);
-    const orderList = ref([]);
-    const openExtra = () => {
-      showExtra.value = true;
-    };
-    const addProduct = (item) => {
-      if (!findProduct(item)) {
-        orderList.value.push({
-          product: item,
-          quantity: 1,
-          price: 10.0,
-          subtotal: 10.0,
-        });
-      }
-    };
-    const findProduct = (item) => {
-      return orderList.value.some((val) => val.product === item);
-    };
-    const productQuantity = (item) => {
-      let found = orderList.value.find((val) => val.product === item);
-      return found.quantity.toString();
-    };
-    const incrementQuantity = (item) => {
-      orderList.value.map((val) => {
-        if (val.product === item) {
-          val.quantity++;
-        }
-      });
-    };
-    const decrementQuantity = (item) => {
-      orderList.value.map((val) => {
-        if (val.product === item) {
-          val.quantity--;
-        }
-        if (val.quantity === 0) {
-          let index = orderList.value.findIndex((val) => val.product === item);
-          orderList.value.splice(index, 1);
+    const waiterStore = useWaiterStore();
+    const activeDrawer = ref(false);
+    const showModal = ref(false);
+    const preOrderList = ref([]);
+    const productIndex = ref(null);
+    const orderItemIndex = ref(null);
+    const products = ref([
+      {
+        id: 0,
+        title: "Product 1",
+        price: 10.0,
+        quantity: 0,
+        indications: [],
+      },
+      {
+        id: 1,
+        title: "Product 2",
+        price: 10.0,
+        quantity: 0,
+        indications: [],
+      },
+      {
+        id: 2,
+        title: "Product 3",
+        price: 10.0,
+        quantity: 0,
+        indications: [],
+      },
+      {
+        id: 3,
+        title: "Product 4",
+        price: 10.0,
+        quantity: 0,
+        indications: [],
+      },
+      {
+        id: 4,
+        title: "Product 5",
+        price: 10.0,
+        quantity: 0,
+        indications: [],
+      },
+      {
+        id: 5,
+        title: "Product 6",
+        price: 10.0,
+        quantity: 0,
+        indications: [],
+      },
+      {
+        id: 6,
+        title: "Product 7",
+        price: 10.0,
+        quantity: 0,
+        indications: [],
+      },
+      {
+        id: 7,
+        title: "Product 8",
+        price: 10.0,
+        quantity: 0,
+        indications: [],
+      },
+      {
+        id: 8,
+        title: "Product 9",
+        price: 10.0,
+        quantity: 0,
+        indications: [],
+      },
+      {
+        id: 9,
+        title: "Product 10",
+        price: 10.0,
+        quantity: 0,
+        indications: [],
+      },
+      {
+        id: 10,
+        title: "Product 11",
+        price: 10.0,
+        quantity: 0,
+        indications: [],
+      },
+      {
+        id: 11,
+        title: "Product 12",
+        price: 10.0,
+        quantity: 0,
+        indications: [],
+      },
+      {
+        id: 12,
+        title: "Product 13",
+        price: 10.0,
+        quantity: 0,
+        indications: [],
+      },
+      {
+        id: 13,
+        title: "Product 14",
+        price: 10.0,
+        quantity: 0,
+        indications: [],
+      },
+      {
+        id: 14,
+        title: "Product 15",
+        price: 10.0,
+        quantity: 0,
+        indications: [],
+      },
+      {
+        id: 15,
+        title: "Product 16",
+        price: 10.0,
+        quantity: 0,
+        indications: [],
+      },
+      {
+        id: 16,
+        title: "Product 17",
+        price: 10.0,
+        quantity: 0,
+        indications: [],
+      },
+      {
+        id: 17,
+        title: "Product 18",
+        price: 10.0,
+        quantity: 0,
+        indications: [],
+      },
+      {
+        id: 18,
+        title: "Product 19",
+        price: 10.0,
+        quantity: 0,
+        indications: [],
+      },
+      {
+        id: 19,
+        title: "Product 20",
+        price: 10.0,
+        quantity: 0,
+        indications: [],
+      },
+    ]);
+
+    const addToList = () => {
+      products.value.forEach((product) => {
+        if (product.quantity > 0) {
+          const existence = preOrderList.value.find(
+            (item) => item.id === product.id
+          );
+          if (typeof existence !== "undefined") {
+            existence.quantity += product.quantity;
+            if (
+              product.indications.length > 0 &&
+              existence.indications.length > 0
+            ) {
+              product.indications.forEach((indication) => {
+                existence.indications.push(cloneDeep(indication));
+              });
+            }
+          } else {
+            preOrderList.value.push(cloneDeep(product));
+          }
+          product.quantity = 0;
+          product.indications = [];
         }
       });
     };
 
+    const saveOrder = () => {
+      if (waiterStore.orderList.length === 0) {
+        waiterStore.saveOrders(cloneDeep(preOrderList.value));
+      } else {
+        waiterStore.addOrders(cloneDeep(preOrderList.value));
+      }
+      preOrderList.value = [];
+      activeDrawer.value = false;
+    };
+
     return {
-      orderList,
-      showExtra,
-      openExtra,
-      findProduct,
-      addProduct,
-      productQuantity,
-      incrementQuantity,
-      decrementQuantity,
+      activeDrawer,
+      showModal,
+      productIndex,
+      orderItemIndex,
+      products,
+      preOrderList,
+      addToList,
+      saveOrder,
     };
   },
 });
 </script>
 
 <style lang="scss" scoped>
+.slide-fade-enter-active {
+  transition: all 0.25s ease-out;
+}
+
+.slide-fade-leave-active {
+  transition: all 0.25s cubic-bezier(1, 0.5, 0.8, 1);
+}
+
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  transform: translateY(25px);
+  opacity: 0;
+}
 </style>
