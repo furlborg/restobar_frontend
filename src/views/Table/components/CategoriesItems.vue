@@ -23,13 +23,11 @@
     <n-scrollbar style="max-height: 700px">
       <n-list v-if="listType === 'list'" class="me-2">
         <n-list-item
+          class="w-100 p-0"
           v-for="(product, index) in products"
           :key="index"
-          @click="
-            orderStore.orders.some((p) => p.id === product.id)
-              ? null
-              : orderStore.orders.push(product)
-          "
+          @click="orderStore.addOrder(product)"
+          style="cursor: pointer"
         >
           <template #prefix>
             <img

@@ -86,7 +86,11 @@
             </transition>
           </n-form-item-gi>
           <n-form-item-gi label="Precio" path="prices" :span="3">
-            <n-input v-model:value="product.prices" placeholder="" />
+            <n-input
+              v-model:value="product.prices"
+              placeholder=""
+              @keypress="isDecimal($event)"
+            />
           </n-form-item-gi>
           <n-form-item-gi label="Stock" path="stock" :span="3">
             <n-input v-model:value="product.stock" placeholder="" />
@@ -138,6 +142,7 @@
           :loading="isLoadingData"
           :disabled="isLoadingData"
           @click="performCreate"
+          secondary
           >Registrar</n-button
         >
         <n-button
@@ -146,6 +151,7 @@
           :loading="isLoadingData"
           :disabled="isLoadingData"
           @click="performUpdate"
+          secondary
           >Modificar</n-button
         >
       </n-space>
@@ -166,6 +172,7 @@ import {
 import { useProductStore } from "@/store/modules/product";
 import { useMessage } from "naive-ui";
 import { productRules } from "@/utils/constants";
+import { isDecimal } from "@/utils";
 
 export default defineComponent({
   name: "ProductModal",
@@ -361,6 +368,7 @@ export default defineComponent({
       performUpdate,
       performUpdateProductCategory,
       performCreateProductCategory,
+      isDecimal,
     };
   },
 });

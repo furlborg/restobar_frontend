@@ -1,8 +1,8 @@
 import axios from "axios"
-import {sleep} from "@/utils"
+import { sleep } from "@/utils"
 
 export const http = axios.create({
-    baseURL: 'http://192.168.1.123:8000/',
+    baseURL: 'http://127.0.0.1.:8000/api/v1/',
 })
 
 http.interceptors.response.use(async (response) => {

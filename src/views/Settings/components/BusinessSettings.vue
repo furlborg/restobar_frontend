@@ -54,7 +54,7 @@
           </n-form>
           <template #action>
             <n-space justify="end">
-              <n-button type="warning">Guardar</n-button>
+              <n-button type="warning" secondary>Guardar</n-button>
             </n-space>
           </template>
         </n-card>
@@ -62,7 +62,7 @@
       <n-gi :span="12">
         <n-card title="Sucursales" :segmented="{ content: 'hard' }">
           <template #header-extra>
-            <n-button type="success">Agregar</n-button>
+            <n-button type="info" secondary>Agregar</n-button>
           </template>
           <n-collapse accordion>
             <n-collapse-item title="Sucursal 1">
@@ -95,7 +95,7 @@
                   </n-form-item-gi>
                 </n-grid>
                 <n-space justify="end">
-                  <n-button type="warning">Guardar</n-button>
+                  <n-button type="warning" secondary>Guardar</n-button>
                 </n-space>
               </n-form>
               <n-card class="mt-2" :bordered="false" embedded>
@@ -110,7 +110,7 @@
                         ? (collapsed = true)
                         : (collapsed = false)
                     "
-                    >{{collapsed === false ? 'Mostrar' : 'Ocultar'}}</n-button
+                    >{{ collapsed === false ? "Mostrar" : "Ocultar" }}</n-button
                   >
                 </n-space>
                 <n-collapse-transition :show="collapsed">
@@ -204,7 +204,9 @@
                         <n-input />
                       </n-form-item-gi>
                       <n-form-item-gi :span="6">
-                        <n-button type="success" block>Crear serie</n-button>
+                        <n-button type="info" block secondary
+                          >Crear serie</n-button
+                        >
                       </n-form-item-gi>
                     </n-grid>
                   </n-form>
@@ -241,7 +243,7 @@
                   </n-form-item-gi>
                 </n-grid>
                 <n-space justify="end">
-                  <n-button type="warning">Guardar</n-button>
+                  <n-button type="warning" secondary>Guardar</n-button>
                 </n-space>
               </n-form>
               <n-card class="mt-2" :bordered="false" embedded>
@@ -256,7 +258,9 @@
                         ? (collapsed2 = true)
                         : (collapsed2 = false)
                     "
-                    >{{collapsed2 === false ? 'Mostrar' : 'Ocultar'}}</n-button
+                    >{{
+                      collapsed2 === false ? "Mostrar" : "Ocultar"
+                    }}</n-button
                   >
                 </n-space>
                 <n-collapse-transition :show="collapsed2">
@@ -350,7 +354,9 @@
                         <n-input />
                       </n-form-item-gi>
                       <n-form-item-gi :span="6">
-                        <n-button type="success" block>Crear serie</n-button>
+                        <n-button type="info" block secondary
+                          >Crear serie</n-button
+                        >
                       </n-form-item-gi>
                     </n-grid>
                   </n-form>

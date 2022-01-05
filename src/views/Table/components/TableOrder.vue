@@ -20,37 +20,45 @@
             <n-table>
               <thead>
                 <tr>
-                  <th width="50%">Producto</th>
+                  <th width="10%"></th>
+                  <th width="40%">Producto</th>
                   <th width="25%">Cantidad</th>
                   <th width="25%">SubTotal</th>
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>Product</td>
+                <tr v-for="(order, index) in orderStore.orderList" :key="index">
                   <td>
-                    <n-input-number class="border-top-0" :value="1" />
+                    <n-button
+                      type="info"
+                      text
+                      @click="
+                        itemIndex = index;
+                        showModal = true;
+                      "
+                      ><v-icon name="md-listalt-round"
+                    /></n-button>
                   </td>
-                  <td>S/. 10.00</td>
-                </tr>
-                <tr>
-                  <td>Product</td>
                   <td>
-                    <n-input-number class="border-top-0" :value="3" />
+                    {{ order.title }}
                   </td>
-                  <td>S/. 30.00</td>
-                </tr>
-                <tr>
-                  <td>Product</td>
                   <td>
-                    <n-input-number class="border-top-0" :value="2" />
+                    <n-input-number
+                      class="border-top-0"
+                      v-model:value="order.quantity"
+                      @update:value="
+                        order.quantity === 0
+                          ? orderStore.orders.splice(index, 1)
+                          : null
+                      "
+                    />
                   </td>
-                  <td class>S/. 20.00</td>
+                  <td>S/. {{ order.subTotal }}</td>
                 </tr>
               </tbody>
               <tfoot>
                 <tr>
-                  <td colspan="2">
+                  <td colspan="3">
                     <router-link
                       class="text-decoration-none"
                       :to="{
@@ -64,26 +72,22 @@
                       </n-button>
                     </router-link>
                   </td>
-                  <!-- <td class="bg-white fs-6 fw-bold">TOTAL</td> -->
-                  <td class="fs-6 fw-bold">S/. 50.00</td>
+                  <td class="fs-6 fw-bold">
+                    TOTAL S/. {{ orderStore.orderTotal }}
+                  </td>
                 </tr>
-                <!-- <tr>
-                    <td class="bg-white fs-6 fw-bold">ICBPER</td>
-                    <td class="bg-white fs-6 fw-bold">S/. 0.00</td>
-                </tr>
-                <tr>
-                    <td class="bg-white fs-6 fw-bold">IGV</td>
-                    <td class="bg-white fs-6 fw-bold">S/. 9.00</td>
-                </tr>
-                <tr>
-                    <td class="bg-white fs-6 fw-bold">TOTAL</td>
-                    <td class="bg-white fs-6 fw-bold">S/. 50.00</td>
-                </tr> -->
               </tfoot>
             </n-table>
           </n-card>
         </n-gi>
       </n-grid>
+      <OrderIndications
+        v-model:show="showModal"
+        preset="card"
+        title="Indicaciones"
+        :product="orderStore.orderList[itemIndex]"
+        @success="showModal = false"
+      ></OrderIndications>
     </n-card>
   </div>
 </template>
@@ -92,15 +96,23 @@
 import { defineComponent, ref } from "vue";
 import { useRoute } from "vue-router";
 import { useRouter } from "vue-router";
+import OrderIndications from "./OrderIndications";
 import { renderIcon } from "@/utils";
+import { useOrderStore } from "@/store/modules/order";
 
 export default defineComponent({
   name: "TableOrder",
+  components: {
+    OrderIndications,
+  },
   setup() {
     const route = useRoute();
     const router = useRouter();
     const table = route.params.table;
+    const orderStore = useOrderStore();
     const listType = ref("grid");
+    const showModal = ref(false);
+    const itemIndex = ref(null);
 
     const productOptions = [
       {
@@ -120,10 +132,13 @@ export default defineComponent({
     };
 
     return {
+      showModal,
+      itemIndex,
       table,
       handleBack,
       listType,
       productOptions,
+      orderStore,
     };
   },
 });

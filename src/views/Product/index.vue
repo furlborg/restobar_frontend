@@ -2,7 +2,9 @@
   <div id="Product">
     <n-card title="Productos" :segmented="{ content: 'hard' }">
       <template #header-extra>
-        <n-button type="success" @click="showModal = true">Agregar</n-button>
+        <n-button type="info" @click="showModal = true" secondary
+          >Agregar</n-button
+        >
       </template>
       <n-space justify="space-between">
         <n-input-group>
@@ -12,7 +14,7 @@
             placeholder="Buscar..."
             clearable
           />
-          <n-button type="primary" @click="performSearch">
+          <n-button type="primary" @click="performSearch" secondary>
             <v-icon name="md-search-round" />
           </n-button>
         </n-input-group>

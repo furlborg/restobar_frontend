@@ -1,12 +1,12 @@
-import {http} from "@/api"
-import {toTimestamp, toDate} from "@/utils/dates"
+import { http } from "@/api"
+import { toTimestamp, toDate } from "@/utils/dates"
 
 export async function getCustomers() {
-    return await http.get('api/v1/customers/')
+    return await http.get('customers/')
 }
 
 export async function retrieveCustomer(id) {
-    return await http.get(`api/v1/customers/${id}/`, {
+    return await http.get(`customers/${id}/`, {
         transformResponse: [
             function (data) {
                 if (data) {
@@ -21,7 +21,7 @@ export async function retrieveCustomer(id) {
 
 export async function getCustomersByPageNumber(searchParams, pageLimit, pageOffset) {
     if (searchParams) {
-        return await http.get('api/v1/customers/', {
+        return await http.get('customers/', {
             params: {
                 doc_type: searchParams.doc_type,
                 doc_num__icontains: searchParams.doc_num,
@@ -33,7 +33,7 @@ export async function getCustomersByPageNumber(searchParams, pageLimit, pageOffs
             }
         })
     } else {
-        return await http.get('api/v1/customers/', {
+        return await http.get('customers/', {
             params: {
                 limit: pageLimit,
                 offset: pageOffset,
@@ -42,8 +42,8 @@ export async function getCustomersByPageNumber(searchParams, pageLimit, pageOffs
     }
 }
 
-export async function searchCustomers(searchParams,pageLimit, pageOffset) {
-    return await http.get('api/v1/customers/', {
+export async function searchCustomers(searchParams, pageLimit, pageOffset) {
+    return await http.get('customers/', {
         params: {
             doc_type: searchParams.doc_type,
             doc_num__icontains: searchParams.doc_num,
@@ -57,7 +57,7 @@ export async function searchCustomers(searchParams,pageLimit, pageOffset) {
 }
 
 export async function createCustomer(customer) {
-    return await http.post('api/v1/customers/', {
+    return await http.post('customers/', {
         names: customer.names.toUpperCase(),
         doc_type: customer.doc_type,
         doc_num: customer.doc_num,
@@ -70,7 +70,7 @@ export async function createCustomer(customer) {
 }
 
 export async function updateCustomer(idCustomer, customer) {
-    return await http.put(`api/v1/customers/${idCustomer}/`, {
+    return await http.put(`customers/${idCustomer}/`, {
         names: customer.names.toUpperCase(),
         doc_type: customer.doc_type,
         doc_num: customer.doc_num,
@@ -83,15 +83,15 @@ export async function updateCustomer(idCustomer, customer) {
 }
 
 export async function disableCustomer(id) {
-    return await http.delete(`api/v1/customers/${id}/`)
+    return await http.delete(`customers/${id}/`)
 }
 
 export async function requestCustomerData(document) {
-    return await http.post('search-document/', {
+    return await http.post('customers/request_data/', {
         document: document,
     })
 }
 
-export async function getUbigee(){
-    return await http.get('ubigee/')
+export async function getUbigee() {
+    return await http.get('customers/ubigee/')
 }

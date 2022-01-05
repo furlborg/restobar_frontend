@@ -1,8 +1,7 @@
 <template>
   <n-layout position="absolute">
     <n-layout-header style="height: 48px" position="absolute" bordered>
-      <n-space justify="space-between">
-        <n-text class="fs-6">MOZO 01</n-text>
+      <n-space justify="end">
         <div
           class="menuBtn"
           :class="{ act: active === true }"
@@ -26,7 +25,14 @@
     <div class="mainMenu" :class="{ act: active === true }">
       <ul>
         <li>
-          <a href="#">Intro</a>
+          <a
+            v-if="$route.name === 'WHome'"
+            @click="
+              waiterStore.groupMode = true;
+              active = false;
+            "
+            >Unir Mesas</a
+          >
         </li>
         <li>
           <a href="#">Services</a>
@@ -48,17 +54,19 @@
 <script>
 import { defineComponent, ref } from "vue";
 import { useTableStore } from "@/store/modules/table";
+import { useWaiterStore } from "@/store/modules/waiter";
 
 export default defineComponent({
   name: "WaiterMode",
   setup() {
     const active = ref(false);
-
+    const waiterStore = useWaiterStore();
     const tableStore = useTableStore();
     tableStore.initializeStore();
 
     return {
       active,
+      waiterStore,
     };
   },
 });
@@ -210,7 +218,7 @@ header {
 /* router view transition */
 .zoom-fade-enter-active,
 .zoom-fade-leave-active {
-  transition: transform 0.35s, opacity 0.28s ease-in-out;
+  transition: transform 0.15s, opacity 0.28s ease-in-out;
 }
 
 .zoom-fade-enter-from {

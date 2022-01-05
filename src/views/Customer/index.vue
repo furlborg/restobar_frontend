@@ -5,6 +5,7 @@
         :disabled="isTableLoading"
         type="primary"
         @click="showModal = true"
+        secondary
       >
         <template #icon>
           <n-icon>
@@ -72,7 +73,9 @@
             />
           </n-form-item-gi>
           <n-form-item-gi :span="3">
-            <n-button type="primary" @click="performSearch">Buscar</n-button>
+            <n-button type="primary" @click="performSearch" secondary
+              >Buscar</n-button
+            >
           </n-form-item-gi>
         </n-grid>
       </n-form>

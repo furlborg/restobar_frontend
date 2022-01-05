@@ -134,9 +134,9 @@ export const createCustomerColumns = ({ editCustomer, deleteCustomer }) => {
             key: 'addresses',
             render(row) {
                 if (row.addresses.length > 0) {
-                    return row.addresses[0].description
+                    return !row.addresses[0].description ? '-----' : row.addresses[0].description
                 }
-                return '-'
+                return '-----'
             }
         },
         {
@@ -192,7 +192,8 @@ export const createCustomerColumns = ({ editCustomer, deleteCustomer }) => {
                             class: 'me-2',
                             size: 'small',
                             type: 'warning',
-                            onClick: () => editCustomer(row)
+                            secondary: true,
+                            onClick: () => editCustomer(row),
                         },
                         renderIcon('la-user-edit-solid')
                     ),
@@ -201,6 +202,7 @@ export const createCustomerColumns = ({ editCustomer, deleteCustomer }) => {
                         {
                             size: 'small',
                             type: 'error',
+                            secondary: true,
                             onClick: () => deleteCustomer(row)
                         },
                         renderIcon('la-user-slash-solid')
@@ -323,6 +325,7 @@ export const createUserColumns = ({ editUser, deleteUser }) => {
                             class: 'me-2',
                             size: 'small',
                             type: 'warning',
+                            secondary: true,
                             onClick: () => editUser(row)
                         },
                         renderIcon('la-user-edit-solid')
@@ -332,6 +335,7 @@ export const createUserColumns = ({ editUser, deleteUser }) => {
                         {
                             size: 'small',
                             type: 'error',
+                            secondary: true,
                             onClick: () => deleteUser(row)
                         },
                         renderIcon('la-user-slash-solid')
@@ -577,6 +581,7 @@ export const createSuppliesColumns = ({ removeSupply }) => {
                     {
                         size: 'small',
                         type: 'error',
+                        secondary: true,
                         onClick: () => removeSupply(row)
                     },
                     renderIcon('md-close-round')

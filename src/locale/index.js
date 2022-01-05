@@ -24,6 +24,8 @@ const commonEsPE = {
         yearFormat: 'yyyy',
         monthFormat: 'MMM',
         dayFormat: 'eeeeee',
+        dateFormat: 'yyyy-MM-dd',
+        dateTimeFormat: 'yyyy-MM-dd hh:mm:ss',
         clear: 'Limpiar',
         now: 'Ahora',
         confirm: 'Confirmar',

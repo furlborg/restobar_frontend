@@ -35,6 +35,25 @@ export function isNumber(e) {
     }
 }
 
+export function isDecimal(e) {
+    let char = String.fromCharCode(e.keyCode)
+    if (/^[0-9.]+$/.test(char)) {
+        /* console.log(e.target.textContent) */
+        return true
+    } else {
+        e.preventDefault()
+    }
+}
+
+export function isLetter(e) {
+    let char = String.fromCharCode(e.keyCode)
+    if (/^[A-Za-zÀ-ÖØ-öø-ÿ\s]+$/.test(char)) {
+        return true
+    } else {
+        e.preventDefault()
+    }
+}
+
 export function getDeviceType() {
     const ua = navigator.userAgent
     if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {

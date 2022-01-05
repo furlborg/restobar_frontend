@@ -20,7 +20,12 @@
               cols="6 s:6 m:12 l:24 xl:24 2xl:24"
               :x-gap="12"
             >
-              <n-form-item-gi label="Nombres" path="names" :span="12">
+              <n-form-item-gi
+                label="Nombres"
+                path="names"
+                :span="12"
+                @keypress="isLetter($event)"
+              >
                 <n-input v-model:value="customer.names" placeholder="" />
               </n-form-item-gi>
               <n-form-item-gi label="Tipo Documento" path="doc_type" :span="5">
@@ -133,7 +138,7 @@
                     />
                     <n-popconfirm v-if="index > 0">
                       <template #trigger>
-                        <n-button type="error">
+                        <n-button type="error" secondary>
                           <v-icon name="md-deletesweep-round" />
                         </n-button>
                       </template>
@@ -144,7 +149,7 @@
                           size="small"
                           @click="
                             address.id
-                              ? (address.isDisabled = true)
+                              ? (address.is_disabled = true)
                               : popAddress(index)
                           "
                         >
@@ -171,6 +176,7 @@
           :loading="isLoadingData"
           :disabled="isLoadingData"
           @click="performCreate"
+          secondary
           >Registrar</n-button
         >
         <n-button
@@ -179,6 +185,7 @@
           :loading="isLoadingData"
           :disabled="isLoadingData"
           @click="performUpdate"
+          secondary
           >Modificar</n-button
         >
       </n-space>
@@ -188,7 +195,7 @@
 
 <script>
 import { defineComponent, ref, toRefs, watch, computed } from "vue";
-import { isNumber } from "@/utils";
+import { isNumber, isLetter } from "@/utils";
 import { toTimestamp } from "@/utils/dates";
 import { documentOptions, customerRules } from "@/utils/constants";
 import {
@@ -236,7 +243,7 @@ export default defineComponent({
         {
           description: "",
           ubigeo: null,
-          isDisabled: false,
+          is_disabled: false,
         },
       ],
     });
@@ -277,7 +284,7 @@ export default defineComponent({
             {
               description: "",
               ubigeo: null,
-              isDisabled: false,
+              is_disabled: false,
             },
           ],
         };
@@ -379,6 +386,7 @@ export default defineComponent({
           isSearchingDoc.value = true;
           requestCustomerData(customer.value.doc_num)
             .then((response) => {
+              console.log(response.data);
               if (response.status === 200) {
                 message.success("Éxito");
                 if (customer.value.doc_num.length === 8) {
@@ -425,7 +433,7 @@ export default defineComponent({
       customer.value.addresses.push({
         description: "",
         ubigeo: null,
-        isDisabled: false,
+        is_disabled: false,
       });
     };
     const popAddress = (address) => {
@@ -459,6 +467,8 @@ export default defineComponent({
       genericsStore,
       isLoadingData,
       isSearchingDoc,
+      isNumber,
+      isLetter,
       modalTitle,
       customer,
       customerRef,
@@ -471,7 +481,6 @@ export default defineComponent({
       performCreate,
       performUpdate,
       performSearchByDoc,
-      isNumber,
       changeDocMax,
       docMaxLength,
     };

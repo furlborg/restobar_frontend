@@ -43,11 +43,13 @@ import {
     MdRemoveRound,
     MdCloseRound,
     GiMoneyStack,
+    BiCoin,
     MdFoodbankRound,
     GiTable,
     IoBusiness,
     MdFastfoodTwotone,
     MdListRound,
+    MdListaltRound,
     MdGridviewRound,
     RiEditFill,
     RiDeleteBin2Fill,
@@ -75,6 +77,7 @@ import {
     MdMenuRound,
     MdSaveRound,
     MdArrowbackRound,
+    RiForbidLine,
 } from "oh-vue-icons/icons";
 OhVueIcon.add(
     BiThreeDots,
@@ -120,11 +123,13 @@ OhVueIcon.add(
     MdRemoveRound,
     MdCloseRound,
     GiMoneyStack,
+    BiCoin,
     MdFoodbankRound,
     GiTable,
     IoBusiness,
     MdFastfoodTwotone,
     MdListRound,
+    MdListaltRound,
     MdGridviewRound,
     RiEditFill,
     RiDeleteBin2Fill,
@@ -152,5 +157,6 @@ OhVueIcon.add(
     MdMenuRound,
     MdSaveRound,
     MdArrowbackRound,
+    RiForbidLine,
 );
 export { OhVueIcon }

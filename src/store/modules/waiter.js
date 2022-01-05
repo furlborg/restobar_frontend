@@ -4,6 +4,7 @@ import { cloneDeep } from "@/utils";
 export const useWaiterStore = defineStore('waiter', {
     state: () => ({
         orderList: [],
+        groupMode: false,
     }),
     actions: {
         initializeStore() {

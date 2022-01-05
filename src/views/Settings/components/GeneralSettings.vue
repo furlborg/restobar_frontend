@@ -15,7 +15,7 @@
                 cols="24 s:24 m:24 l:24 xl:24 2xl:24"
                 :x-gap="12"
               >
-                <n-form-item-gi :span="4" label="Lugar Preparación">
+                <n-form-item-gi :span="4" label="Area">
                   <n-select
                     class="mb-2"
                     v-model:value="area"
@@ -47,11 +47,6 @@
                 :x-gap="12"
                 :y-gap="12"
               >
-                <!-- <n-gi :span="2">
-                <n-button class="w-100 h-100" type="success" dashed>
-                  <v-icon name="md-add-round" scale="2" />
-                </n-button>
-              </n-gi> -->
                 <n-gi v-for="table in tables" :key="table.id" :span="2">
                   <n-card :bordered="false" hoverable>
                     <n-space align="center" vertical>
@@ -67,6 +62,13 @@
             </n-spin>
           </n-card>
         </n-tab-pane>
+        <n-tab-pane name="PreparationPlaces" tab="Lugares de Preparación">
+          <n-card
+            title="Editar Lugares de Preparación"
+            :bordered="false"
+            embedded
+          ></n-card
+        ></n-tab-pane>
       </n-tabs>
     </n-card>
   </div>

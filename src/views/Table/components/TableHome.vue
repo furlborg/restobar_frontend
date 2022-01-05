@@ -1,5 +1,29 @@
 <template>
   <n-card title="Mesas" :bordered="false" :segmented="{ content: 'hard' }">
+    <template #header-extra>
+      <n-button
+        v-if="!groupMode"
+        type="info"
+        secondary
+        @click="groupMode = true"
+        >Agrupar</n-button
+      >
+      <n-space v-else justify="space-between">
+        <n-button type="success" secondary @click="saveGroup"
+          >Confirmar</n-button
+        >
+        <n-button
+          type="error"
+          secondary
+          @click="
+            groupMode = false;
+            currentGroup = [];
+            currentTableGrouping = null;
+          "
+          >Cancelar</n-button
+        >
+      </n-space>
+    </template>
     <n-spin :show="isLoading">
       <n-card
         class="my-2"
@@ -16,40 +40,144 @@
         >
           <n-gi v-for="table in area.tables" :key="table.id" :span="3">
             <n-card
-              :title="String(table.id)"
+              :id="`table-${table.id}`"
+              class="position-relative overflow-hidden table"
               size="small"
-              footer-style="padding: 0px;"
+              @click="
+                groupMode
+                  ? currentTableGrouping === table.id ||
+                    tableGroups.some((g) => g.some((t) => t.id === table.id))
+                    ? null
+                    : !currentGroup.some((t) => t.id == table.id)
+                    ? addToGroup(table)
+                    : removeFromGroup(table)
+                  : $router.push({
+                      name: 'TableOrder',
+                      params: { table: table.id },
+                    })
+              "
+              style="cursor: pointer"
             >
-              <template #header-extra>
-                <n-button text size="small">
-                  <v-icon name="bi-three-dots-vertical" />
-                </n-button>
-              </template>
+              <n-checkbox
+                v-if="groupMode"
+                :checked="currentGroup.some((t) => t.id === table.id)"
+                :disabled="
+                  tableGroups.some((g) => g.some((t) => t.id === table.id)) ||
+                  currentTableGrouping === table.id
+                "
+                size="large"
+                class="position-absolute top-0 start-0 m-2"
+              />
+              <div
+                class="position-absolute top-50 start-50 translate-middle fs-4"
+              >
+                {{ "MESA " + String(table.id) }}
+              </div>
+              <n-button
+                @click.stop="openOptions.push(table.id)"
+                class="position-absolute top-0 end-0"
+                quaternary
+                size="small"
+              >
+                <v-icon name="bi-three-dots-vertical" />
+              </n-button>
+              <v-icon
+                v-if="
+                  groupMode === true &&
+                  tableGroups.some((g) => g.some((t) => t.id === table.id))
+                "
+                class="position-absolute top-50 start-50 translate-middle fs-4"
+                name="ri-forbid-line"
+                scale="8"
+                fill="#FA8072"
+              />
               <n-space justify="center">
-                <router-link
+                <!-- <router-link
                   :to="{ name: 'TableOrder', params: { table: table.id } }"
-                >
-                  <img
-                    src="~@/assets/images/default-table-2.png"
-                    alt=""
-                    width="128"
-                    height="128"
-                  />
-                </router-link>
+                > -->
+                <img
+                  src="~@/assets/images/default-table.png"
+                  alt=""
+                  width="128"
+                  height="128"
+                />
+                <!-- </router-link> -->
               </n-space>
-              <template #footer>
-                <n-space justify="center">
-                  <router-link
-                    class="text-decoration-none"
-                    :to="{ name: 'TablePayment', params: { table: table.id } }"
+              <n-drawer
+                :show="
+                  groupMode
+                    ? ((openOptions = []), false)
+                    : openOptions.some((t) => t === table.id)
+                "
+                height="100%"
+                placement="top"
+                :to="`#table-${table.id}`"
+                @maskClick.stop
+              >
+                <n-drawer-content @click.stop>
+                  <n-button
+                    class="mb-1"
+                    type="success"
+                    size="small"
+                    block
+                    secondary
+                    @click="
+                      $router.push({
+                        name: 'TablePayment',
+                        params: { table: table.id },
+                      })
+                    "
                   >
-                    <n-button type="success" text>
-                      <v-icon class="me-2" name="gi-money-stack" scale="2" />
-                      <span class="fs-5">S/. 1000.00</span>
+                    Cobrar pedido
+                    <!-- <v-icon name="bi-coin"/> -->
+                  </n-button>
+                  <n-button
+                    class="mb-1"
+                    type="warning"
+                    size="small"
+                    block
+                    secondary
+                    @click="
+                      currentTableGrouping = table.id;
+                      addToGroup(table);
+                      groupMode = true;
+                      openOptions.splice(
+                        openOptions.findIndex((i) => i === table.id),
+                        1
+                      );
+                    "
+                  >
+                    Unir mesa
+                    <!-- <v-icon name="md-search-round"/> -->
+                  </n-button>
+                  <n-button
+                    class="mb-1"
+                    type="error"
+                    size="small"
+                    block
+                    secondary
+                  >
+                    Anular pedido
+                    <!-- <v-icon name="md-search-round"/> -->
+                  </n-button>
+                  <n-space vertical align="center">
+                    <n-button
+                      type="error"
+                      size="small"
+                      tertiary
+                      circle
+                      @click="
+                        openOptions.splice(
+                          openOptions.findIndex((i) => i === table.id),
+                          1
+                        )
+                      "
+                    >
+                      <v-icon name="md-close-round" />
                     </n-button>
-                  </router-link>
-                </n-space>
-              </template>
+                  </n-space>
+                </n-drawer-content>
+              </n-drawer>
             </n-card>
           </n-gi>
         </n-grid>
@@ -61,15 +189,21 @@
 <script>
 import { defineComponent, ref, onMounted } from "vue";
 import { useMessage } from "naive-ui";
-import { getTables } from "@/api/modules/tables";
 import { useTableStore } from "@/store/modules/table";
+import { cloneDeep } from "@/utils";
 
 export default defineComponent({
   name: "Tables",
   setup() {
+    const groupMode = ref(false);
     const isLoading = ref(false);
     const message = useMessage();
+    const openOptions = ref([]);
+    const tableGroups = ref([]);
+    const currentTableGrouping = ref(null);
+    const currentGroup = ref([]);
     const tableStore = useTableStore();
+
     const loadTablesData = () => {
       isLoading.value = true;
       tableStore.refreshData().then(() => {
@@ -77,16 +211,49 @@ export default defineComponent({
       });
     };
 
+    const addToGroup = (table) => {
+      currentGroup.value.push(cloneDeep(table));
+    };
+
+    const removeFromGroup = (table) => {
+      let index = currentGroup.value.findIndex((t) => t.id === table.id);
+      currentGroup.value.splice(index, 1);
+    };
+
+    const saveGroup = () => {
+      tableGroups.value.push(cloneDeep(currentGroup.value));
+      groupMode.value = false;
+      currentGroup.value = [];
+      currentTableGrouping.value = null;
+    };
+
     onMounted(() => {
       loadTablesData();
     });
+
     return {
       isLoading,
+      openOptions,
       tableStore,
+      groupMode,
+      currentGroup,
+      addToGroup,
+      removeFromGroup,
+      saveGroup,
+      tableGroups,
+      currentTableGrouping,
     };
   },
 });
 </script>
 
 <style lang="scss" scoped>
+.table img {
+  opacity: 0.15;
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-drag: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
 </style>
