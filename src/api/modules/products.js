@@ -75,23 +75,23 @@ export async function searchProduct(search, pageLimit, pageOffset) {
 }
 
 export async function getProductCategories() {
-    return await http.get('products-categories/')
+    return await http.get('product-categories/')
 }
 
 export async function createProductCategory(categorie) {
-    return await http.post('products-categories/', {
-        description: categorie.description,
+    return await http.post('product-categories/', {
+        description: categorie,
     })
 }
 
 export async function updateProductCategory(idCategorie, description) {
-    return await http.put(`products-categories/${idCategorie}/`, {
+    return await http.put(`product-categories/${idCategorie}/`, {
         description: description,
     })
 }
 
 export async function disableProductCategory(id) {
-    return await http.delete(`products-categories/${id}/`)
+    return await http.delete(`product-categories/${id}/`)
 }
 
 export async function getProductPlaces() {
@@ -100,13 +100,13 @@ export async function getProductPlaces() {
 
 export async function createProductPlace(place) {
     return await http.post('preparation-places/', {
-        description: place.description,
+        description: place,
     })
 }
 
 export async function updateProductPlace(idPlace, place) {
     return await http.put(`preparation-places/${idPlace}/`, {
-        description: place.description,
+        description: place,
     })
 }
 

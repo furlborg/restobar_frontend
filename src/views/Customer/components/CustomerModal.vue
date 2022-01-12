@@ -386,7 +386,6 @@ export default defineComponent({
           isSearchingDoc.value = true;
           requestCustomerData(customer.value.doc_num)
             .then((response) => {
-              console.log(response.data);
               if (response.status === 200) {
                 message.success("Éxito");
                 if (customer.value.doc_num.length === 8) {

@@ -73,10 +73,10 @@ export const getSaleDocumentByNumber = (v) => {
             return 'FACTURA ELECTRÓNICA'
         case "3":
             return 'BOLETA DE VENTA ELECTRÓNICA'
-        case "7":
+        /* case "7":
             return 'NOTA DE CRÉDITO'
         case "8":
-            return 'NOTA DE DÉBITO'
+            return 'NOTA DE DÉBITO' */
         case "80":
             return 'NOTA DE VENTA'
         default:
@@ -94,14 +94,14 @@ export const saleDocumentOptions = [
         label: 'BOLETA DE VENTA ELECTRÓNICA',
         value: "3"
     },
-    {
+    /* {
         label: 'NOTA DE CRÉDITO',
         value: "7"
     },
     {
         label: 'NOTA DE DÉBITO',
         value: "8"
-    },
+    }, */
     {
         label: 'NOTA DE VENTA',
         value: "80"
@@ -240,9 +240,9 @@ export const productRules = {
     prices: {
         required: true,
         trigger: ['blur', 'input'],
-        message: 'Tipo documento requerido'
+        message: 'Precio requerido'
     },
-    measure_unit: {
+    /* measure_unit: {
         required: true,
         trigger: ['blur', 'change'],
         message: 'Número documento requerido'
@@ -263,7 +263,7 @@ export const productRules = {
         required: true,
         trigger: ['blur', 'input'],
         message: 'Número documento requerido'
-    },
+    }, */
 }
 
 export const createUserColumns = ({ editUser, deleteUser }) => {

@@ -29,6 +29,10 @@ export const useTableStore = defineStore('table', {
                 }).catch(error => {
                     console.error(error)
                 })
+        },
+        getAreaByID(id) {
+            let area = this.areas.find(area => area.id === id)
+            return area ? area.description : null
         }
     }
 })

@@ -1,22 +1,22 @@
 <template>
   <n-config-provider
-      :locale="commonEsPE"
-      :date-locale="dateEsPE"
-      :theme="getDarkTheme"
-      :theme-overrides="getThemeOverrides"
+    :locale="commonEsPE"
+    :date-locale="dateEsPE"
+    :theme="getDarkTheme"
+    :theme-overrides="getThemeOverrides"
   >
     <app-provider>
       <n-layout class="layout" position="absolute" has-sider>
         <n-layout-sider
-            class="layout-sider"
-            @collapse="collapsed = true"
-            @expand="collapsed = false"
-            :collapsed="collapsed"
-            :collapsed-width="64"
-            collapse-mode="width"
-            :width="200"
-            :native-scrollbar="false"
-            bordered
+          class="layout-sider"
+          @collapse="collapsed = true"
+          @expand="collapsed = false"
+          :collapsed="collapsed"
+          :collapsed-width="64"
+          collapse-mode="width"
+          :width="200"
+          :native-scrollbar="false"
+          bordered
         >
           <Logo :collapsed="collapsed" />
           <AsideMenu v-model:collapsed="collapsed" />
@@ -26,9 +26,9 @@
             <PageHeader v-model:collapsed="collapsed" />
           </n-layout-header>
           <n-layout-content
-              class="layout-content"
-              :class="{ 'layout-default-background': getDarkTheme === undefined }"
-              :native-scrollbar="false"
+            class="layout-content"
+            :class="{ 'layout-default-background': getDarkTheme === undefined }"
+            :native-scrollbar="false"
           >
             <div class="layout-content-main">
               <router-view v-slot="{ Component }">
@@ -45,22 +45,23 @@
 </template>
 
 <script>
-import {computed, defineComponent, onMounted, ref} from "vue"
-import {createTheme, inputDark, datePickerDark, darkTheme} from 'naive-ui'
-import {commonEsPE, dateEsPE} from '@/locale'
-import {useCustomerStore} from '@/store/modules/customer'
-import {useGenericsStore} from '@/store/modules/generics'
-import {useTableStore} from '@/store/modules/table'
-import {useProductStore} from '@/store/modules/product'
-import AppProvider from '@/components/Application'
-import Logo from '@/layout/Logo'
-import AsideMenu from '@/layout/AsideMenu'
-import PageHeader from '@/layout/PageHeader'
-import { useDesignSettingStore } from '@/store/modules/designSetting'
-import {lighten} from "@/utils"
+import { computed, defineComponent, onMounted, ref } from "vue";
+import { createTheme, inputDark, datePickerDark, darkTheme } from "naive-ui";
+import { commonEsPE, dateEsPE } from "@/locale";
+import { useBusinessStore } from "@/store/modules/business";
+import { useCustomerStore } from "@/store/modules/customer";
+import { useGenericsStore } from "@/store/modules/generics";
+import { useTableStore } from "@/store/modules/table";
+import { useProductStore } from "@/store/modules/product";
+import AppProvider from "@/components/Application";
+import Logo from "@/layout/Logo";
+import AsideMenu from "@/layout/AsideMenu";
+import PageHeader from "@/layout/PageHeader";
+import { useDesignSettingStore } from "@/store/modules/designSetting";
+import { lighten } from "@/utils";
 
 export default defineComponent({
-  name: 'Layout',
+  name: "Layout",
   components: {
     AppProvider,
     Logo,
@@ -68,43 +69,47 @@ export default defineComponent({
     PageHeader,
   },
   setup() {
-    const collapsed = ref(false)
+    const collapsed = ref(false);
 
-    const designStore = useDesignSettingStore()
+    const designStore = useDesignSettingStore();
 
-    designStore.initializeStore()
+    designStore.initializeStore();
 
-    const customerStore = useCustomerStore()
+    const businessStore = useBusinessStore();
 
-    customerStore.initializeStore()
+    businessStore.initializeStore();
 
-    const tableStore = useTableStore()
+    const customerStore = useCustomerStore();
 
-    tableStore.initializeStore()
+    customerStore.initializeStore();
 
-    const productStore = useProductStore()
+    const tableStore = useTableStore();
 
-    productStore.initializeStore()
+    tableStore.initializeStore();
 
-    const genericsStore = useGenericsStore()
+    const productStore = useProductStore();
 
-    genericsStore.initializeStore()
+    productStore.initializeStore();
+
+    const genericsStore = useGenericsStore();
+
+    genericsStore.initializeStore();
 
     const watchWidth = () => {
-      const Width = document.body.clientWidth
-      collapsed.value = Width <= 950
-      genericsStore.updateDevice()
-    }
+      const Width = document.body.clientWidth;
+      collapsed.value = Width <= 950;
+      genericsStore.updateDevice();
+    };
 
     onMounted(() => {
-      window.addEventListener('resize', watchWidth)
+      window.addEventListener("resize", watchWidth);
       // window['$loading'] = useLoadingBar()
       // window['$loading'].finish()
-    })
+    });
 
     const getThemeOverrides = computed(() => {
       const appTheme = designStore.appTheme;
-      const lightenStr = lighten(designStore.appTheme, 6)
+      const lightenStr = lighten(designStore.appTheme, 6);
       return {
         common: {
           primaryColor: appTheme,
@@ -114,10 +119,12 @@ export default defineComponent({
         LoadingBar: {
           colorLoading: appTheme,
         },
-      }
-    })
+      };
+    });
 
-    const getDarkTheme = computed(() => (designStore.darkTheme ? darkTheme : undefined))
+    const getDarkTheme = computed(() =>
+      designStore.darkTheme ? darkTheme : undefined
+    );
 
     return {
       commonEsPE,
@@ -126,9 +133,9 @@ export default defineComponent({
       getDarkTheme,
       darkTheme: createTheme([inputDark, datePickerDark]),
       collapsed,
-    }
-  }
-})
+    };
+  },
+});
 </script>
 <style lang="scss">
 .layout {

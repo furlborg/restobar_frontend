@@ -17,8 +17,17 @@
           cols="6 s:6 m:12 l:24 xl:24 2xl:24"
           :x-gap="12"
         >
-          <n-form-item-gi label="Nombre" path="name" :span="12">
+          <n-form-item-gi label="Nombre" path="name" :span="9">
             <n-input v-model:value="product.name" placeholder="" />
+          </n-form-item-gi>
+          <n-form-item-gi label="Precio" path="prices" :span="3">
+            <n-input-number
+              v-model:value="product.prices"
+              placeholder=""
+              :min="0"
+              :show-button="false"
+              @keypress="isDecimal($event)"
+            />
           </n-form-item-gi>
           <n-form-item-gi label="Description" path="description" :span="12">
             <n-input v-model:value="product.description" placeholder="" />
@@ -38,9 +47,9 @@
                       : false
                   "
                   @click="
-                    categorie.id
-                      ? performUpdateProductCategory()
-                      : performCreateProductCategory()
+                    !categorie.id
+                      ? performCreateProductCategory()
+                      : performUpdateProductCategory()
                   "
                 >
                   <v-icon name="md-save-round" />
@@ -85,24 +94,6 @@
               </n-input-group>
             </transition>
           </n-form-item-gi>
-          <n-form-item-gi label="Precio" path="prices" :span="3">
-            <n-input
-              v-model:value="product.prices"
-              placeholder=""
-              @keypress="isDecimal($event)"
-            />
-          </n-form-item-gi>
-          <n-form-item-gi label="Stock" path="stock" :span="3">
-            <n-input v-model:value="product.stock" placeholder="" />
-          </n-form-item-gi>
-          <n-form-item-gi path="control_stock" :span="3">
-            <n-checkbox v-model:checked="product.control_stock"
-              >Controlar</n-checkbox
-            >
-          </n-form-item-gi>
-          <n-form-item-gi path="icbper" :span="3">
-            <n-checkbox v-model:checked="product.icbper">ICBPER</n-checkbox>
-          </n-form-item-gi>
           <n-form-item-gi
             label="Lugar Preparación"
             path="preparation_place"
@@ -114,22 +105,48 @@
               placeholder=""
             />
           </n-form-item-gi>
-          <n-form-item-gi label="Nº Puntos" path="number_points" :span="3">
-            <n-input-number
-              v-model:value="product.number_points"
-              placeholder=""
-            />
-          </n-form-item-gi>
-          <n-form-item-gi label="Puntos canje" path="redeem_points" :span="3">
-            <n-input-number
-              v-model:value="product.redeem_points"
-              placeholder=""
-            />
-          </n-form-item-gi>
-          <n-form-item-gi label="Imagen" :span="6">
+          <n-form-item-gi label="Imagen" :span="4">
             <n-upload list-type="image" ref="uploadRef">
               <n-button>Seleccionar Imagen</n-button>
             </n-upload>
+          </n-form-item-gi>
+          <n-form-item-gi label="Nº Puntos" path="number_points" :span="4">
+            <n-input-number
+              v-model:value="product.number_points"
+              placeholder=""
+              :min="0"
+              :show-button="false"
+              @keypress="isNumber($event)"
+            />
+          </n-form-item-gi>
+          <n-form-item-gi label="Puntos canje" path="redeem_points" :span="4">
+            <n-input-number
+              v-model:value="product.redeem_points"
+              placeholder=""
+              :min="0"
+              :show-button="false"
+              @keypress="isNumber($event)"
+            />
+          </n-form-item-gi>
+          <n-form-item-gi path="control_stock" :span="4">
+            <n-checkbox
+              v-model:checked="product.control_stock"
+              @update:checked="product.stock = null"
+              >Controlar Stock:</n-checkbox
+            >
+          </n-form-item-gi>
+          <n-form-item-gi label="Stock" path="stock" :span="4">
+            <n-input-number
+              v-model:value="product.stock"
+              placeholder=""
+              :min="0"
+              :show-button="false"
+              :disabled="!product.control_stock"
+              @keypress="isNumber($event)"
+            />
+          </n-form-item-gi>
+          <n-form-item-gi path="icbper" :span="4">
+            <n-checkbox v-model:checked="product.icbper">ICBPER</n-checkbox>
           </n-form-item-gi>
         </n-grid>
       </n-form>
@@ -172,7 +189,7 @@ import {
 import { useProductStore } from "@/store/modules/product";
 import { useMessage } from "naive-ui";
 import { productRules } from "@/utils/constants";
-import { isDecimal } from "@/utils";
+import { isDecimal, isNumber } from "@/utils";
 
 export default defineComponent({
   name: "ProductModal",
@@ -316,7 +333,7 @@ export default defineComponent({
     });
 
     const performCreateProductCategory = () => {
-      createProductCategory(categorie.value)
+      createProductCategory(categorie.value.description)
         .then((response) => {
           if (response.status === 201) {
             productStore.refreshCategories().then(() => {
@@ -338,7 +355,7 @@ export default defineComponent({
     const performUpdateProductCategory = () => {
       updateProductCategory(categorie.value.id, categorie.value.description)
         .then((response) => {
-          if (response.status === 200) {
+          if (response.status === 202) {
             productStore.refreshCategories();
           }
         })
@@ -369,6 +386,7 @@ export default defineComponent({
       performUpdateProductCategory,
       performCreateProductCategory,
       isDecimal,
+      isNumber,
     };
   },
 });

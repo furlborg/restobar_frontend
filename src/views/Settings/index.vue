@@ -1,19 +1,18 @@
 <template>
-    <router-view></router-view>
+  <router-view></router-view>
 </template>
 
 <script>
-import { defineComponent } from "vue"
+import { defineComponent, onMounted } from "vue";
 
 export default defineComponent({
-    name: "Settings",
-    setup() {
-        return {
-        }
-    }
-})
+  name: "Settings",
+  setup() {
+    onMounted(() => (document.title = "Configuración | App"));
+    return {};
+  },
+});
 </script>
 
 <style>
-
 </style>

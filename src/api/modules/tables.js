@@ -1,7 +1,21 @@
 import { http } from "@/api"
 
-export async function getAreasTables() {
-    return await http.get('areas-tables/')
+export async function getAreas() {
+    return await http.get('areas/')
+}
+
+export async function createArea(area) {
+    return await http.post('areas/', {
+        description: area.description,
+        branch: 1,
+    })
+}
+
+export async function updateArea(idArea, area) {
+    return await http.put(`areas/${idArea}/`, {
+        description: area.description,
+        branch: 1,
+    })
 }
 
 export async function getTables() {
@@ -27,4 +41,8 @@ export async function updateTable(areaID, table) {
 
 export async function disableTable(id) {
     return await http.delete(`tables/${id}`)
+}
+
+export async function getAreasTables() {
+    return await http.get('areas/areas_tables/')
 }
