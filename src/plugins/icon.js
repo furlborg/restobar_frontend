@@ -78,6 +78,8 @@ import {
     MdSaveRound,
     MdArrowbackRound,
     RiForbidLine,
+    MdPrintRound,
+    MdNotinterestedRound,
 } from "oh-vue-icons/icons";
 OhVueIcon.add(
     BiThreeDots,
@@ -158,5 +160,7 @@ OhVueIcon.add(
     MdSaveRound,
     MdArrowbackRound,
     RiForbidLine,
+    MdPrintRound,
+    MdNotinterestedRound,
 );
 export { OhVueIcon }

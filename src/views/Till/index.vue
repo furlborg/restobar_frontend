@@ -74,32 +74,32 @@
         </n-card>
       </n-gi>
     </n-grid>
-    <n-card class="mt-2" :segmented="{ content: 'hard' }">
-      <template #header>
-        <n-space align="end">
-          <n-text class="fs-3">Movimientos</n-text>
-          <n-button
-            class="ms-2"
-            type="info"
-            text
-            @click="
-              showFilters === false
-                ? (showFilters = true)
-                : (showFilters = false)
-            "
-          >
-            <v-icon name="md-filteralt-round" />
-            Filtrar
-          </n-button>
-        </n-space>
-      </template>
+    <n-card class="mt-2" title="Movimientos" :segmented="{ content: 'hard' }">
       <template #header-extra>
+        <n-button
+          type="info"
+          secondary
+          @click="$router.push({ name: 'TillList' })"
+          >Lista de Cajas</n-button
+        >
+      </template>
+      <n-space justify="space-between">
+        <n-button
+          type="info"
+          text
+          @click="
+            showFilters === false ? (showFilters = true) : (showFilters = false)
+          "
+        >
+          <v-icon name="md-filteralt-round" />
+          {{ showFilters ? "Ocultar Filtros" : "Mostrar filtros" }}
+        </n-button>
         <n-button type="info" text>
           <v-icon name="hi-solid-refresh" />
           Recargar
         </n-button>
-      </template>
-      <n-collapse-transition :show="showFilters">
+      </n-space>
+      <n-collapse-transition class="mt-2" :show="showFilters">
         <n-form>
           <n-grid
             responsive="screen"
@@ -127,7 +127,7 @@
           </n-grid>
         </n-form>
       </n-collapse-transition>
-      <n-data-table :columns="tableColumns" :data="movements" />
+      <n-data-table class="mt-2" :columns="tableColumns" :data="movements" />
     </n-card>
     <till-modal
       v-model:show="showModal"

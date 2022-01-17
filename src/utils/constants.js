@@ -348,29 +348,55 @@ export const createUserColumns = ({ editUser, deleteUser }) => {
 
 export const createTillColumns = ({ generateReport, deleteMovement }) => {
     return [
-        {
+        /* {
             title: 'Usuario',
             key: 'user'
-        },
+        }, */
         {
             title: 'Sucursal',
-            key: 'sucursal'
+            key: 'branch'
+        },
+        {
+            title: 'Responsable Apertura',
+            key: 'opening_responsable',
+            render(row) {
+                return !row.opening_responsable ? '-----' : row.opening_responsable
+            }
         },
         {
             title: 'Apertura',
-            key: 'opening',
-        },
-        {
-            title: 'Cierre',
-            key: 'closing',
+            key: 'created',
+            render(row) {
+                return !row.created ? '----/--/-- --:--:--' : row.created
+            }
         },
         {
             title: 'Saldo inicial',
             key: 'opening_amount',
+            render(row) {
+                return !row.opening_amount ? 'S/. --.--' : `S/. ${row.opening_amount}`
+            }
+        },
+        {
+            title: 'Responsable Cierre',
+            key: 'closing_responsable',
+            render(row) {
+                return !row.closing_responsable ? '-----' : row.closing_responsable
+            }
+        },
+        {
+            title: 'Cierre',
+            key: 'closing_date',
+            render(row) {
+                return !row.closing_date ? '----/--/-- --:--:--' : row.closing_date
+            }
         },
         {
             title: 'Saldo final',
             key: 'closing_amount',
+            render(row) {
+                return !row.closing_amount ? 'S/. --.--' : `S/. ${row.closing_amount}`
+            }
         },
         {
             title: 'Estado',
@@ -409,6 +435,7 @@ export const createTillColumns = ({ generateReport, deleteMovement }) => {
                             class: 'me-2',
                             size: 'small',
                             type: 'warning',
+                            secondary: true,
                             onClick: () => generateReport(row)
                         },
                         renderIcon('md-insertchart-outlined')
@@ -418,6 +445,7 @@ export const createTillColumns = ({ generateReport, deleteMovement }) => {
                         {
                             size: 'small',
                             type: 'error',
+                            secondary: true,
                             onClick: () => deleteMovement(row)
                         },
                         renderIcon('md-lock-round')
@@ -488,32 +516,6 @@ export const createMovementsColumns = ({ editMovement, deleteMovement }) => {
             title: 'Fecha',
             key: 'date',
         },
-        /* {
-            title: 'Estado',
-            key: 'isDisabled',
-            render (row) {
-                let type, text
-                if (row.isDisabled) {
-                    type="error"
-                    text="Inactivo"
-                } else {
-                    type="success"
-                    text="Activo"
-                }
-
-                return h(
-                    NTag,
-                    {
-                        size: 'small',
-                        type: type,
-                        round: true
-                    },
-                    {
-                        default: () => text
-                    }
-                )
-            }
-        }, */
         {
             title: 'Acciones',
             key: 'actions',
@@ -524,19 +526,21 @@ export const createMovementsColumns = ({ editMovement, deleteMovement }) => {
                         {
                             class: 'me-2',
                             size: 'small',
-                            type: 'warning',
+                            type: 'info',
+                            secondary: true,
                             onClick: () => editMovement(row)
                         },
-                        renderIcon('la-user-edit-solid')
+                        renderIcon('md-print-round')
                     ),
                     h(
                         NButton,
                         {
                             size: 'small',
                             type: 'error',
+                            secondary: true,
                             onClick: () => deleteMovement(row)
                         },
-                        renderIcon('la-user-slash-solid')
+                        renderIcon('md-notinterested-round')
                     )
                 ]
             }
