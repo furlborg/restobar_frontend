@@ -5,6 +5,18 @@ export const useTillStore = defineStore('till', {
     state: () => ({
         concepts: []
     }),
+    getters: {
+        getIncomeConceptsOptions() {
+            return this.concepts
+                .filter(concept => concept.concept_type === '0')
+                .map(concept => ({ label: concept.description, value: concept.id }))
+        },
+        getOutcomeConceptsOptions() {
+            return this.concepts
+                .filter(concept => concept.concept_type === '1')
+                .map(concept => ({ label: concept.description, value: concept.id }))
+        }
+    },
     actions: {
         initializeStore() {
             getConcepts()
@@ -15,8 +27,5 @@ export const useTillStore = defineStore('till', {
                     console.error(error)
                 })
         },
-        getConceptsOptions(concept_type) {
-            return this.concepts.filter(concept => concept.concept_type === concept_type).map(concept => ({ label: concept.description, value: concept.id }))
-        }
     }
 })

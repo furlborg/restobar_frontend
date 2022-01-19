@@ -14,7 +14,7 @@
       <n-form-item label="Concepto">
         <n-input-group>
           <n-select />
-          <n-button type="info" @click="showConceptModal = true">
+          <n-button type="info">
             <v-icon name="ri-edit-fill" />
           </n-button>
         </n-input-group>
@@ -34,24 +34,15 @@
         <n-button type="success">Registrar</n-button>
       </n-space>
     </template>
-    <till-concept-modal
-      v-model:show="showConceptModal"
-      @update:show="onCloseModal"
-      @on-success="onSuccess"
-    />
   </n-modal>
 </template>
 
 <script>
 import { defineComponent, ref } from "vue";
 import { useGenericsStore } from "@/store/modules/generics";
-import TillConceptModal from "./TillConceptModal";
 
 export default defineComponent({
   name: "TillModal",
-  components: {
-    TillConceptModal,
-  },
   emits: ["update:show", "on-success"],
   props: {
     show: {
@@ -64,24 +55,9 @@ export default defineComponent({
   },
   setup() {
     const genericsStore = useGenericsStore();
-    const showConceptModal = ref(false);
-
-    const onCloseModal = () => {
-      document.title = "Registrar ingreso | App";
-      // idProduct.value = 0
-    };
-
-    const onSuccess = () => {
-      showConceptModal.value = false;
-      onCloseModal();
-      // loadProductsData()
-    };
 
     return {
       genericsStore,
-      showConceptModal,
-      onCloseModal,
-      onSuccess,
     };
   },
 });

@@ -10,21 +10,23 @@ export async function retrieveTill(id) {
 
 export async function createTill(till) {
     return await http.post('tills/', {
-        branch: till.branch,
+        branch: 1,
         opening_responsable: till.opening_responsable,
-        closing_responsable: till.closing_responsable,
+        closing_responsable: '',
         opening_amount: till.opening_amount,
-        closing_amount: till.closing_amount,
+        closing_amount: '',
         opening_observations: till.opening_observations,
-        closing_observations: till.closing_observations,
+        closing_observations: '',
+        status: true,
     })
 }
 
 export async function updateTill(idTill, till) {
-    return await http.patch('tills/', {
+    return await http.patch(`tills/${idTill}/`, {
         closing_responsable: till.closing_responsable,
         closing_amount: till.closing_amount,
         closing_observations: till.closing_observations,
+        status: false,
     })
 }
 

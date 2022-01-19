@@ -6,7 +6,7 @@
           type="success"
           :disabled="tills.some((till) => till.status === true)"
           secondary
-          @click="showModal = true"
+          @click="showApertureModal = true"
           >Aperturar</n-button
         >
       </template>
@@ -62,10 +62,17 @@
       />
     </n-card>
     <till-aperture-modal
-      v-model:show="showModal"
+      v-model:show="showApertureModal"
       concept="ingress"
       @update:show="onCloseModal"
-      @on-success="onSuccess"
+      @on-success="onApertureSuccess"
+    />
+    <till-closure-modal
+      v-model:show="showClosureModal"
+      concept="ingress"
+      :id-till="idTill"
+      @update:show="onCloseModal"
+      @on-success="onClosureSuccess"
     />
   </div>
 </template>
@@ -73,6 +80,7 @@
 <script>
 import { defineComponent, ref, onMounted } from "vue";
 import TillApertureModal from "./components/TillApertureModal";
+import TillClosureModal from "./components/TillClosureModal";
 import { createTillColumns } from "@/utils/constants";
 import { getTills } from "@/api/modules/tills";
 import { useMessage } from "naive-ui";
@@ -81,12 +89,15 @@ export default defineComponent({
   name: "TillList",
   components: {
     TillApertureModal,
+    TillClosureModal,
   },
   setup() {
     const message = useMessage();
     const isTableLoading = ref(false);
-    const showModal = ref(false);
+    const showApertureModal = ref(false);
+    const showClosureModal = ref(false);
     const showFilters = ref(false);
+    const idTill = ref(0);
     const tills = ref([]);
 
     const loadTills = () => {
@@ -116,25 +127,37 @@ export default defineComponent({
       // idProduct.value = 0
     };
 
-    const onSuccess = () => {
-      showModal.value = false;
+    const onApertureSuccess = () => {
+      showApertureModal.value = false;
       onCloseModal();
+      loadTills();
+      // loadProductsData()
+    };
+
+    const onClosureSuccess = () => {
+      showClosureModal.value = false;
+      onCloseModal();
+      loadTills();
       // loadProductsData()
     };
 
     return {
-      showModal,
       onCloseModal,
-      onSuccess,
+      showApertureModal,
+      showClosureModal,
+      onApertureSuccess,
+      onClosureSuccess,
       showFilters,
       isTableLoading,
       tills,
+      idTill,
       tableColumns: createTillColumns({
         generateReport() {
           message.success("Opcion 1!");
         },
-        deleteMovement() {
-          message.success("Opcion 2!");
+        deleteMovement(row) {
+          idTill.value = row.id;
+          showClosureModal.value = true;
         },
       }),
     };

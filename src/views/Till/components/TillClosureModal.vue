@@ -13,61 +13,66 @@
     <n-spin :show="isLoading">
       <n-form>
         <n-form-item label="Responsable">
-          <n-input v-model:value="till.opening_responsable" />
+          <n-input v-model:value="till.closing_responsable" />
         </n-form-item>
-        <n-form-item label="Monto Inicial">
-          <n-input v-model:value="till.opening_amount" />
+        <n-form-item label="Monto Final">
+          <n-input v-model:value="till.closing_amount" />
         </n-form-item>
         <n-form-item label="Observaciones">
-          <n-input v-model:value="till.opening_observations" type="textarea" />
+          <n-input v-model:value="till.closing_observations" type="textarea" />
         </n-form-item>
       </n-form>
     </n-spin>
     <template #action>
       <n-button
-        type="success"
+        type="error"
         :disabled="isLoading"
         :loading="isLoading"
         block
         secondary
-        @click="apertureTill"
-        >Aperturar Caja</n-button
+        @click="closureTill"
+        >Cerrar Caja</n-button
       >
     </template>
   </n-modal>
 </template>
 
 <script>
-import { defineComponent, ref } from "vue";
+import { defineComponent, ref, toRefs } from "vue";
 import { useMessage } from "naive-ui";
 import { useGenericsStore } from "@/store/modules/generics";
-import { createTill } from "@/api/modules/tills";
+import { updateTill } from "@/api/modules/tills";
 
 export default defineComponent({
-  name: "TillApertureModal",
+  name: "TillClosureModal",
   emits: ["update:show", "on-success"],
   props: {
     show: {
       type: Boolean,
       default: false,
     },
+    idTill: {
+      type: Number,
+      default: 0,
+    },
   },
   setup(props, { emit }) {
+    const { show, idTill } = toRefs(props);
     const genericsStore = useGenericsStore();
     const message = useMessage();
     const isLoading = ref(false);
     const till = ref({
-      opening_responsable: "",
-      opening_amount: 0.0,
-      opening_observations: "",
+      closing_responsable: "",
+      closing_amount: 0.0,
+      closing_observations: "",
     });
 
-    const apertureTill = () => {
+    const closureTill = () => {
       isLoading.value = true;
-      createTill(till.value)
+      updateTill(idTill.value, till.value)
         .then((response) => {
-          if (response.status === 201) {
-            message.success("Caja aperturada!");
+          if (response.status === 202) {
+            message.success("Caja cerrada!");
             emit("on-success");
           }
         })
@@ -84,7 +89,7 @@ export default defineComponent({
       genericsStore,
       isLoading,
       till,
-      apertureTill,
+      closureTill,
     };
   },
 });
