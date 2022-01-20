@@ -13,7 +13,7 @@
               <v-icon name="md-trendingup-round" scale="2" fill="LimeGreen" />
               <n-text class="fs-5">Ingresos</n-text>
             </n-space>
-            <n-button type="success" text @click="showModal = true">
+            <n-button type="success" tertiary circle @click="showModal = true">
               <v-icon name="bi-pencil-square" scale="1.25" />
             </n-button>
           </n-space>
@@ -34,7 +34,7 @@
               />
               <n-text class="fs-5">Egresos</n-text>
             </n-space>
-            <n-button type="error" text>
+            <n-button type="error" tertiary circle>
               <v-icon name="bi-pencil-square" scale="1.25" />
             </n-button>
           </n-space>
@@ -127,9 +127,14 @@
           </n-grid>
         </n-form>
       </n-collapse-transition>
-      <n-data-table class="mt-2" :columns="tableColumns" :data="movements" />
+      <n-data-table
+        class="mt-2"
+        :columns="tableColumns"
+        :data="movements"
+        :loading="isLoading"
+      />
     </n-card>
-    <till-modal
+    <income-modal
       v-model:show="showModal"
       concept="ingress"
       @update:show="onCloseModal"
@@ -140,49 +145,46 @@
 
 <script>
 import { defineComponent, ref, onMounted } from "vue";
+import { useTillStore } from "@/store/modules/till";
 import { useMessage, useDialog, NButton } from "naive-ui";
 import { createMovementsColumns } from "@/utils/constants";
-import TillModal from "./components/TillModal";
+import IncomeModal from "./components/IncomeModal";
+import { getCurrentTillDetails } from "@/api/modules/tills";
 
 export default defineComponent({
   name: "Till",
   components: {
-    TillModal,
+    IncomeModal,
   },
   setup() {
     const message = useMessage();
+    const tillStore = useTillStore();
     const dialog = useDialog();
     const showModal = ref(false);
     const showFilters = ref(false);
-    const movements = ref([
-      {
-        id: 1,
-        document: "B01",
-        user: "admin",
-        sucursal: "Sucursal 1",
-        description: "Buffet presidencial",
-        payment_method: "Tarjeta",
-        amount: "S/. 1000.00",
-        concept: "Venta",
-        concept_type: 1,
-        date: "2021-01-01",
-      },
-      {
-        id: 2,
-        document: "B02",
-        user: "admin",
-        sucursal: "Sucursal 1",
-        description: "Pago recibo luz",
-        payment_method: "Efectivo",
-        amount: "S/. 100.00",
-        concept: "Otros",
-        concept_type: 2,
-        date: "2021-01-01",
-      },
-    ]);
+    const isLoading = ref(false);
+    const movements = ref([]);
+
+    const loadMovements = () => {
+      isLoading.value = true;
+      getCurrentTillDetails(tillStore.currentTillID)
+        .then((response) => {
+          if (response.status === 200) {
+            movements.value = response.data;
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          isLoading.value = false;
+        });
+    };
 
     onMounted(() => {
       document.title = "Movimientos de Caja | App";
+      loadMovements();
     });
 
     const onCloseModal = () => {
@@ -192,11 +194,13 @@ export default defineComponent({
 
     const onSuccess = () => {
       showModal.value = false;
+      loadMovements();
       onCloseModal();
       // loadProductsData()
     };
 
     return {
+      isLoading,
       showModal,
       showFilters,
       onCloseModal,

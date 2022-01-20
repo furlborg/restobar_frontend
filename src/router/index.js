@@ -1,4 +1,6 @@
+import { useTillStore } from "@/store/modules/till";
 import { createRouter, createWebHistory } from 'vue-router'
+import { retrieveCurrentTill } from '@/api/modules/tills'
 
 const routes = [
   {
@@ -20,7 +22,23 @@ const routes = [
       {
         path: '/till',
         name: 'Till',
-        component: () => import(/* webpackChunkName: "till" */ '@/views/Till')
+        component: () => import(/* webpackChunkName: "till" */ '@/views/Till'),
+        beforeEnter: async (to, from, next) => {
+          const tillStore = useTillStore()
+          await retrieveCurrentTill()
+            .then(response => {
+              if (response.status === 200) {
+                tillStore.currentTillID = response.data
+              }
+            })
+            .catch(error => {
+              if (error.response.status !== 404) {
+                console.error('Algo salió mal...')
+                tillStore.currentTillID = null
+              }
+            })
+          tillStore.currentTillID !== null ? next() : next({ name: 'TillList' })
+        }
       },
       {
         path: '/till-list',

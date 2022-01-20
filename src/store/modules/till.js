@@ -1,8 +1,9 @@
 import { defineStore } from "pinia"
-import { getConcepts } from "@/api/modules/tills"
+import { getConcepts, retrieveCurrentTill } from "@/api/modules/tills"
 
 export const useTillStore = defineStore('till', {
     state: () => ({
+        currentTillID: null,
         concepts: []
     }),
     getters: {
@@ -19,6 +20,17 @@ export const useTillStore = defineStore('till', {
     },
     actions: {
         initializeStore() {
+            retrieveCurrentTill()
+                .then(response => {
+                    if (response.status === 200) {
+                        this.currentTillID = response.data
+                    }
+                })
+                .catch(error => {
+                    if (error.response.status === 404) {
+                        this.currentTillID = null
+                    }
+                })
             getConcepts()
                 .then(response => {
                     this.concepts = response.data
@@ -27,5 +39,21 @@ export const useTillStore = defineStore('till', {
                     console.error(error)
                 })
         },
+        getConceptID(description) {
+            const concept = this.concepts.find(concept => concept.description === description)
+            if (concept) {
+                return concept.id
+            } else {
+                return null
+            }
+        },
+        getConceptDescription(id) {
+            const concept = this.concepts.find(concept => concept.id === id)
+            if (concept) {
+                return concept.description
+            } else {
+                return null
+            }
+        }
     }
 })

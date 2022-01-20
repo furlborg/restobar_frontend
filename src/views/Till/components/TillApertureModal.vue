@@ -41,6 +41,7 @@
 import { defineComponent, ref } from "vue";
 import { useMessage } from "naive-ui";
 import { useGenericsStore } from "@/store/modules/generics";
+import { useTillStore } from "@/store/modules/till";
 import { createTill } from "@/api/modules/tills";
 
 export default defineComponent({
@@ -54,6 +55,7 @@ export default defineComponent({
   },
   setup(props, { emit }) {
     const genericsStore = useGenericsStore();
+    const tillStore = useTillStore();
     const message = useMessage();
     const isLoading = ref(false);
     const till = ref({
@@ -69,6 +71,7 @@ export default defineComponent({
           if (response.status === 201) {
             message.success("Caja aperturada!");
             emit("on-success");
+            tillStore.currentTillID = response.data.id;
           }
         })
         .catch((error) => {

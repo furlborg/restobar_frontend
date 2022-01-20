@@ -79,6 +79,7 @@
 
 <script>
 import { defineComponent, ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import TillApertureModal from "./components/TillApertureModal";
 import TillClosureModal from "./components/TillClosureModal";
 import { createTillColumns } from "@/utils/constants";
@@ -93,6 +94,7 @@ export default defineComponent({
   },
   setup() {
     const message = useMessage();
+    const router = useRouter();
     const isTableLoading = ref(false);
     const showApertureModal = ref(false);
     const showClosureModal = ref(false);
@@ -129,8 +131,7 @@ export default defineComponent({
 
     const onApertureSuccess = () => {
       showApertureModal.value = false;
-      onCloseModal();
-      loadTills();
+      router.push({ name: "Till" });
       // loadProductsData()
     };
 

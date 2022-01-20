@@ -52,6 +52,8 @@ import { useBusinessStore } from "@/store/modules/business";
 import { useCustomerStore } from "@/store/modules/customer";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useTableStore } from "@/store/modules/table";
+import { useTillStore } from "@/store/modules/till";
+import { useSaleStore } from "@/store/modules/sale";
 import { useProductStore } from "@/store/modules/product";
 import AppProvider from "@/components/Application";
 import Logo from "@/layout/Logo";
@@ -90,6 +92,14 @@ export default defineComponent({
     const productStore = useProductStore();
 
     productStore.initializeStore();
+
+    const tillStore = useTillStore();
+
+    tillStore.initializeStore();
+
+    const saleStore = useSaleStore();
+
+    saleStore.initializeStore();
 
     const genericsStore = useGenericsStore();
 
