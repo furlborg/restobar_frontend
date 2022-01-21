@@ -22,6 +22,14 @@ export const useSaleStore = defineStore('sale', {
                     console.error(error)
                 })
         },
+        refreshPaymentMethods() {
+            return getPaymentMethods()
+                .then(response => {
+                    this.payment_methods = response.data
+                }).catch(error => {
+                    console.error(error)
+                })
+        },
         getPaymentMethodID(description) {
             const payment = this.payment_methods.find(payment => payment.description === description)
             if (payment) {

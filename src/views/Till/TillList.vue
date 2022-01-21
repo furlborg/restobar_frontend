@@ -4,7 +4,9 @@
       <template #header-extra>
         <n-button
           type="success"
-          :disabled="tills.some((till) => till.status === true)"
+          :disabled="
+            isTableLoading || tills.some((till) => till.status === true)
+          "
           secondary
           @click="showApertureModal = true"
           >Aperturar</n-button

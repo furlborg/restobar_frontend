@@ -69,3 +69,17 @@ export async function updateTillDetails(idTill, till) {
 export async function getConcepts() {
     return await http.get('concepts/')
 }
+
+export async function createConcept(concept) {
+    return await http.post('concepts/', {
+        description: concept.description,
+        concept_type: concept.concept_type,
+    })
+}
+
+export async function updateConcept(idConcept, concept) {
+    return await http.put(`concepts/${idConcept}/`, {
+        description: concept.description,
+        concept_type: concept.concept_type,
+    })
+}

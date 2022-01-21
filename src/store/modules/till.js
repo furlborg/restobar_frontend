@@ -39,6 +39,15 @@ export const useTillStore = defineStore('till', {
                     console.error(error)
                 })
         },
+        refreshConcepts() {
+            return getConcepts()
+                .then(response => {
+                    this.concepts = response.data
+                })
+                .catch(error => {
+                    console.error(error)
+                })
+        },
         getConceptID(description) {
             const concept = this.concepts.find(concept => concept.description === description)
             if (concept) {
@@ -51,6 +60,14 @@ export const useTillStore = defineStore('till', {
             const concept = this.concepts.find(concept => concept.id === id)
             if (concept) {
                 return concept.description
+            } else {
+                return null
+            }
+        },
+        getConceptType(id) {
+            const concept = this.concepts.find(concept => concept.id === id)
+            if (concept) {
+                return concept.concept_type
             } else {
                 return null
             }

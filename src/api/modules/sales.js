@@ -5,13 +5,13 @@ export async function getPaymentMethods() {
 }
 
 export async function createPaymentMethod(payment_method) {
-    return await http.post('payment_methods', {
+    return await http.post('payment_methods/', {
         description: payment_method.description,
     })
 }
 
-export async function updatePaymentMethod(id, payment_method) {
-    return await http.put(`payment_methods/${id}/`, {
+export async function updatePaymentMethod(idPayment, payment_method) {
+    return await http.put(`payment_methods/${idPayment}/`, {
         description: payment_method.description,
     })
 }

@@ -2,6 +2,12 @@ import { h } from "vue"
 import { NButton, NTag } from "naive-ui"
 import { renderIcon } from "@/utils"
 import { OhVueIcon } from '@/plugins/icon'
+import { useSaleStore } from '@/store/modules/sale';
+import { useTillStore } from '@/store/modules/till';
+
+const tillStore = useTillStore()
+
+const saleStore = useSaleStore()
 
 export const getDocTypeByNumber = (v) => {
     switch (v) {
@@ -351,11 +357,11 @@ export const createTillColumns = ({ generateReport, deleteMovement }) => {
         /* {
             title: 'Usuario',
             key: 'user'
-        }, */
+        },
         {
             title: 'Sucursal',
             key: 'branch'
-        },
+        }, */
         {
             title: 'Responsable Apertura',
             key: 'opening_responsable',
@@ -367,7 +373,7 @@ export const createTillColumns = ({ generateReport, deleteMovement }) => {
             title: 'Apertura',
             key: 'created',
             render(row) {
-                return !row.created ? '----/--/-- --:--:--' : row.created
+                return !row.created ? '--/--/---- --:--:--' : row.created
             }
         },
         {
@@ -386,9 +392,9 @@ export const createTillColumns = ({ generateReport, deleteMovement }) => {
         },
         {
             title: 'Cierre',
-            key: 'closing_date',
+            key: 'modified',
             render(row) {
-                return !row.closing_date ? '----/--/-- --:--:--' : row.closing_date
+                return row.modified === row.created ? '--/--/---- --:--:--' : row.modified
             }
         },
         {
@@ -456,20 +462,43 @@ export const createTillColumns = ({ generateReport, deleteMovement }) => {
     ]
 }
 
+export const movementRules = {
+    description: {
+        required: true,
+        trigger: ['blur', 'input'],
+        message: 'Este campo es requerido'
+    },
+    payment_method: {
+        required: true,
+        trigger: ['blur', 'input'],
+        message: 'Este campo es requerido'
+    },
+    amount: {
+        required: true,
+        trigger: ['blur', 'input'],
+        message: 'Este campo es requerido'
+    },
+    concept: {
+        required: true,
+        trigger: ['blur', 'input'],
+        message: 'Este campo es requerido'
+    },
+}
+
 export const createMovementsColumns = ({ editMovement, deleteMovement }) => {
     return [
         {
             title: 'Documento',
             key: 'document'
         },
-        {
+        /* {
             title: 'Usuario',
             key: 'user'
         },
         {
             title: 'Sucursal',
             key: 'sucursal'
-        },
+        }, */
         {
             title: 'Descripción',
             key: 'description',
@@ -477,6 +506,9 @@ export const createMovementsColumns = ({ editMovement, deleteMovement }) => {
         {
             title: 'Método Pago',
             key: 'payment_method',
+            render(row) {
+                return saleStore.getPaymentMethodDescription(row.payment_method)
+            }
         },
         {
             title: 'Monto',
@@ -485,36 +517,32 @@ export const createMovementsColumns = ({ editMovement, deleteMovement }) => {
         {
             title: 'Concepto',
             key: 'concept',
+            render(row) {
+                return tillStore.getConceptDescription(row.concept)
+            }
         },
         {
             title: 'Tipo',
             key: 'concept_type',
             render(row) {
-                let type, text
-                if (row.concept_type === 1) {
-                    type = "success"
-                    text = "Ingreso"
-                } else if (row.concept_type === 2) {
-                    type = "error"
-                    text = "Egreso"
-                }
+                let concept_type = tillStore.getConceptType(row.concept)
 
                 return h(
                     NTag,
                     {
                         size: 'small',
-                        type: type,
+                        type: concept_type == '0' ? 'success' : 'error',
                         round: true
                     },
                     {
-                        default: () => text
+                        default: () => concept_type == '0' ? 'INGRESO' : 'EGRESO'
                     }
                 )
             }
         },
         {
             title: 'Fecha',
-            key: 'date',
+            key: 'created',
         },
         {
             title: 'Acciones',

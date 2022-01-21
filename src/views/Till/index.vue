@@ -13,7 +13,12 @@
               <v-icon name="md-trendingup-round" scale="2" fill="LimeGreen" />
               <n-text class="fs-5">Ingresos</n-text>
             </n-space>
-            <n-button type="success" tertiary circle @click="showModal = true">
+            <n-button
+              type="success"
+              tertiary
+              circle
+              @click="(movementType = '0'), (showModal = true)"
+            >
               <v-icon name="bi-pencil-square" scale="1.25" />
             </n-button>
           </n-space>
@@ -34,7 +39,12 @@
               />
               <n-text class="fs-5">Egresos</n-text>
             </n-space>
-            <n-button type="error" tertiary circle>
+            <n-button
+              type="error"
+              tertiary
+              circle
+              @click="(movementType = '1'), (showModal = true)"
+            >
               <v-icon name="bi-pencil-square" scale="1.25" />
             </n-button>
           </n-space>
@@ -134,9 +144,9 @@
         :loading="isLoading"
       />
     </n-card>
-    <income-modal
+    <movement-modal
       v-model:show="showModal"
-      concept="ingress"
+      :movement-type="movementType"
       @update:show="onCloseModal"
       @on-success="onSuccess"
     />
@@ -148,19 +158,20 @@ import { defineComponent, ref, onMounted } from "vue";
 import { useTillStore } from "@/store/modules/till";
 import { useMessage, useDialog, NButton } from "naive-ui";
 import { createMovementsColumns } from "@/utils/constants";
-import IncomeModal from "./components/IncomeModal";
+import MovementModal from "./components/MovementModal";
 import { getCurrentTillDetails } from "@/api/modules/tills";
 
 export default defineComponent({
   name: "Till",
   components: {
-    IncomeModal,
+    MovementModal,
   },
   setup() {
     const message = useMessage();
     const tillStore = useTillStore();
     const dialog = useDialog();
     const showModal = ref(false);
+    const movementType = ref(null);
     const showFilters = ref(false);
     const isLoading = ref(false);
     const movements = ref([]);
@@ -202,6 +213,7 @@ export default defineComponent({
     return {
       isLoading,
       showModal,
+      movementType,
       showFilters,
       onCloseModal,
       onSuccess,

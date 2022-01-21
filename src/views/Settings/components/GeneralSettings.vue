@@ -251,6 +251,69 @@
             </n-grid>
           </n-card>
         </n-tab-pane>
+        <n-tab-pane name="PaymentMethods" tab="Métodos de Pago">
+          <n-card title="Editar Métodos de Pago" :bordered="false" embedded>
+            <n-grid responsive="screen" cols="12" :x-gap="12">
+              <n-gi :span="3">
+                <n-list class="bg-white m-0" bordered>
+                  <template #header
+                    ><n-text class="fs-5"
+                      >Lista de Métodos de Pago</n-text
+                    ></template
+                  >
+                  <n-list-item
+                    v-for="payment in paymentMethods"
+                    :class="{ 'bg-selected': selectedPayment === payment.id }"
+                    :key="payment.id"
+                    @click="selectPaymentMethod(payment)"
+                  >
+                    <!-- <template #suffix v-if="selectedCategory === category.id">
+                      <n-button type="error" text>
+                        <v-icon name="md-disabledbydefault-round" />
+                      </n-button>
+                    </template> -->
+                    {{ payment.description }}
+                  </n-list-item>
+                </n-list>
+              </n-gi>
+              <n-gi :span="9">
+                <n-form class="mt-2">
+                  <n-grid responsive="screen" cols="24" :x-gap="12">
+                    <n-form-item-gi :span="4" label="Descripción">
+                      <n-input v-model:value="paymentMethod" placeholder="" />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="4">
+                      <n-button
+                        class="me-2"
+                        :type="!selectedPayment ? 'info' : 'warning'"
+                        :disabled="!paymentMethod"
+                        @click="
+                          !selectedPayment
+                            ? performCreatePaymentMethod()
+                            : performUpdatePaymentMethod()
+                        "
+                        secondary
+                        >{{
+                          !selectedPayment ? "Agregar" : "Guardar"
+                        }}</n-button
+                      >
+                      <n-button
+                        type="error"
+                        secondary
+                        :disabled="!paymentMethod"
+                        @click="
+                          selectedPayment = null;
+                          paymentMethod = null;
+                        "
+                        >Cancelar</n-button
+                      >
+                    </n-form-item-gi>
+                  </n-grid>
+                </n-form>
+              </n-gi>
+            </n-grid>
+          </n-card>
+        </n-tab-pane>
       </n-tabs>
     </n-card>
   </div>
@@ -263,6 +326,11 @@ import { useMessage } from "naive-ui";
 import { cloneDeep } from "@/utils";
 import { useTableStore } from "@/store/modules/table";
 import { createArea, updateArea, createTable } from "@/api/modules/tables";
+import {
+  getPaymentMethods,
+  createPaymentMethod,
+  updatePaymentMethod,
+} from "@/api/modules/sales";
 import {
   getProductPlaces,
   createProductPlace,
@@ -522,10 +590,76 @@ export default defineComponent({
         });
     };
 
+    const paymentMethods = ref([]);
+    const paymentMethod = ref(null);
+    const selectedPayment = ref(null);
+
+    const selectPaymentMethod = (payment) => {
+      if (!selectedCategory) {
+        selectedPayment.value = payment.id;
+        paymentMethod.value = cloneDeep(payment.description);
+      } else {
+        if (selectedPayment.value === payment.id) {
+          selectedPayment.value = null;
+          paymentMethod.value = null;
+        } else {
+          selectedPayment.value = payment.id;
+          paymentMethod.value = cloneDeep(payment.description);
+        }
+      }
+    };
+
+    const loadPaymentMethods = () => {
+      getPaymentMethods()
+        .then((response) => {
+          if (response.status === 200) {
+            paymentMethods.value = response.data;
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        });
+    };
+
+    const performCreatePaymentMethod = () => {
+      createPaymentMethod(paymentMethod.value)
+        .then((response) => {
+          if (response.status === 201) {
+            loadPaymentMethods();
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          paymentMethod.value = null;
+        });
+    };
+
+    const performUpdatePaymentMethod = () => {
+      updatePaymentMethod(selectedPayment.value, paymentMethod.value)
+        .then((response) => {
+          if (response.status === 202) {
+            loadPaymentMethods();
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          selectedPayment.value = null;
+          paymentMethod.value = null;
+        });
+    };
+
     onMounted(() => {
       tableStore.refreshData();
       loadPreparationPlaces();
       loadProductCategories();
+      loadPaymentMethods();
     });
 
     const handleBack = () => {
@@ -558,6 +692,12 @@ export default defineComponent({
       selectCategory,
       performCreateProductCategory,
       performUpdateProductCategory,
+      paymentMethods,
+      paymentMethod,
+      selectedPayment,
+      selectPaymentMethod,
+      performCreatePaymentMethod,
+      performUpdatePaymentMethod,
     };
   },
 });

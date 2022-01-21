@@ -6,13 +6,13 @@
       'w-25': genericsStore.device === 'desktop',
     }"
     preset="card"
-    title="Registrar Ingreso"
+    :title="movementType === '0' ? 'Registrar Ingreso' : 'Registrar Egreso'"
     :show="show"
     :on-close="() => ($emit('update:show'), cleanDetail())"
   >
     <n-spin :show="isLoading">
-      <n-form>
-        <n-form-item label="Concepto">
+      <n-form :rules="movementRules" :model="detail" ref="detailRef">
+        <n-form-item label="Concepto" path="concept">
           <transition name="mode-fade" mode="out-in">
             <n-input-group v-if="conceptForm">
               <n-input v-model:value="concept.description" placeholder="" />
@@ -50,7 +50,11 @@
               </n-button>
               <n-select
                 v-model:value="detail.concept"
-                :options="tillStore.getIncomeConceptsOptions"
+                :options="
+                  movementType === '0'
+                    ? tillStore.getIncomeConceptsOptions
+                    : tillStore.getOutcomeConceptsOptions
+                "
                 placeholder=""
                 clearable
               />
@@ -71,7 +75,7 @@
             </n-input-group>
           </transition>
         </n-form-item>
-        <n-form-item label="Método Pago">
+        <n-form-item label="Método Pago" path="payment_method">
           <transition name="mode-fade" mode="out-in">
             <n-input-group v-if="paymentForm">
               <n-input v-model:value="payment.description" placeholder="" />
@@ -86,7 +90,7 @@
                     : false
                 "
                 @click="
-                  !payment.id ? performCreateConcept() : performUpdateConcept()
+                  !payment.id ? performCreatePayment() : performUpdatePayment()
                 "
               >
                 <v-icon name="md-save-round" />
@@ -130,30 +134,35 @@
             </n-input-group>
           </transition>
         </n-form-item>
-        <n-form-item label="Descripción">
+        <n-form-item label="Descripción" path="description">
           <n-input v-model:value="detail.description" />
         </n-form-item>
-        <n-form-item label="Monto">
+        <n-form-item label="Monto" path="amount">
           <n-input v-model:value="detail.amount" />
         </n-form-item>
       </n-form>
     </n-spin>
     <template #action>
-      <n-space justify="end">
-        <n-button type="success" @click="performCreateDetail"
-          >Registrar</n-button
-        >
-      </n-space>
+      <n-button type="success" block @click="performCreateDetail"
+        >Registrar {{ movementType === "0" ? "Ingreso" : "Egreso" }}</n-button
+      >
     </template>
   </n-modal>
 </template>
 
 <script>
-import { defineComponent, ref } from "vue";
+import { defineComponent, ref, toRefs } from "vue";
+import { useMessage } from "naive-ui";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useTillStore } from "@/store/modules/till";
 import { useSaleStore } from "@/store/modules/sale";
-import { createTillDetails } from "@/api/modules/tills";
+import {
+  createTillDetails,
+  createConcept,
+  updateConcept,
+} from "@/api/modules/tills";
+import { createPaymentMethod, updatePaymentMethod } from "@/api/modules/sales";
+import { movementRules } from "@/utils/constants";
 
 export default defineComponent({
   name: "TillModal",
@@ -163,13 +172,21 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    movementType: {
+      type: String,
+      default: null,
+    },
   },
   setup(props, { emit }) {
+    const { show, movementType } = toRefs(props);
     const genericsStore = useGenericsStore();
+    const message = useMessage();
     const tillStore = useTillStore();
     const saleStore = useSaleStore();
 
     const isLoading = ref(false);
+
+    const detailRef = ref(null);
 
     const detail = ref({
       till: tillStore.currentTillID,
@@ -192,19 +209,26 @@ export default defineComponent({
     };
 
     const performCreateDetail = () => {
-      isLoading.value = true;
-      createTillDetails(detail.value)
-        .then((response) => {
-          if (response.status === 201) {
-            emit("on-success");
-          }
-        })
-        .catch((error) => {
-          console.error(error.response.data);
-        })
-        .finally(() => {
-          isLoading.value = false;
-        });
+      detailRef.value.validate((errors) => {
+        if (!errors) {
+          isLoading.value = true;
+          createTillDetails(detail.value)
+            .then((response) => {
+              if (response.status === 201) {
+                emit("on-success");
+              }
+            })
+            .catch((error) => {
+              console.error(error.response.data);
+            })
+            .finally(() => {
+              isLoading.value = false;
+            });
+        } else {
+          console.error(errors);
+          message.error("Datos incorrectos");
+        }
+      });
     };
 
     const conceptForm = ref(false);
@@ -212,28 +236,107 @@ export default defineComponent({
     const concept = ref({
       id: null,
       description: null,
+      concept_type: movementType.value,
     });
+
+    const performCreateConcept = () => {
+      concept.value.concept_type = movementType.value;
+      createConcept(concept.value)
+        .then((response) => {
+          if (response.status === 201) {
+            tillStore.refreshConcepts().then(() => {
+              detail.value.concept = tillStore.getConceptID(
+                concept.value.description
+              );
+            });
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          conceptForm.value = false;
+        });
+    };
+
+    const performUpdateConcept = () => {
+      updateConcept(concept.value.id, concept.value)
+        .then((response) => {
+          if (response.status === 202) {
+            tillStore.refreshConcepts();
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          conceptForm.value = false;
+        });
+    };
 
     const paymentForm = ref(false);
 
     const payment = ref({
       id: null,
       description: null,
-      concept_type: 0,
     });
+
+    const performCreatePayment = () => {
+      createPaymentMethod(payment.value)
+        .then((response) => {
+          if (response.status === 201) {
+            saleStore.refreshPaymentMethods().then(() => {
+              detail.value.payment_method = saleStore.getPaymentMethodID(
+                payment.value.description
+              );
+            });
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          paymentForm.value = false;
+        });
+    };
+
+    const performUpdatePayment = () => {
+      updatePaymentMethod(payment.value.id, payment.value)
+        .then((response) => {
+          if (response.status === 202) {
+            saleStore.refreshPaymentMethods();
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          paymentForm.value = false;
+        });
+    };
 
     return {
       genericsStore,
       tillStore,
+      saleStore,
       isLoading,
+      movementRules,
+      detailRef,
       cleanDetail,
       detail,
+      performCreateDetail,
       conceptForm,
       concept,
-      performCreateDetail,
-      saleStore,
+      performCreateConcept,
+      performUpdateConcept,
       paymentForm,
       payment,
+      performCreatePayment,
+      performUpdatePayment,
     };
   },
 });
