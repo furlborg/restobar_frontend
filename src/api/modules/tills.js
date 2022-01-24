@@ -4,6 +4,47 @@ export async function getTills() {
     return await http.get('tills/')
 }
 
+export async function getTillsByPageNumber(page, filterParams) {
+    if (filterParams) {
+        return await http.get('tills/', {
+            params: {
+                opening_responsable__icontains: filterParams.opening_responsable,
+                closing_responsable__icontains: filterParams.closing_responsable,
+                opening_amount__icontains: filterParams.opening_amount,
+                closing_amount__icontains: filterParams.closing_amount,
+                created__lte: filterParams.created ? filterParams.created[0] : null,
+                created__gte: filterParams.created ? filterParams.created[1] : null,
+                modified__lte: filterParams.modified ? filterParams.modified[0] : null,
+                modified__gte: filterParams.modified ? filterParams.modified[1] : null,
+                page: page
+            }
+        })
+    } else {
+        return await http.get('tills/', {
+            params: {
+                page: page
+            }
+        })
+    }
+}
+
+export async function filterTills(page, filterParams) {
+    /* console.log(filterParams.created[0], filterParams.created[1]) */
+    return await http.get('tills/', {
+        params: {
+            opening_responsable__icontains: filterParams.opening_responsable,
+            closing_responsable__icontains: filterParams.closing_responsable,
+            opening_amount__icontains: filterParams.opening_amount,
+            closing_amount__icontains: filterParams.closing_amount,
+            created__gte: filterParams.created !== null ? filterParams.created[0] : null,
+            created__lte: filterParams.created !== null ? filterParams.created[1] : null,
+            modified__gte: filterParams.modified !== null ? filterParams.modified[0] : null,
+            modified__lte: filterParams.modified !== null ? filterParams.modified[1] : null,
+            page: page
+        }
+    })
+}
+
 export async function retrieveCurrentTill() {
     return await http.get('tills/current/')
 }

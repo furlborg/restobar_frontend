@@ -23,7 +23,7 @@
           <v-icon name="md-filteralt-round" />
           {{ showFilters ? "Ocultar Filtros" : "Mostrar filtros" }}
         </n-button>
-        <n-button type="info" text>
+        <n-button type="info" text @click="refreshTable">
           <v-icon name="hi-solid-refresh" />
           Recargar
         </n-button>
@@ -35,24 +35,50 @@
             cols="6 s:6 m:12 l:12 xl:24 2xl:24"
             :x-gap="12"
           >
-            <n-form-item-gi label="Usuario" :span="3">
+            <n-form-item-gi label="Responsable Apertura" :span="3">
+              <n-input v-model:value="filterParams.opening_responsable" />
+            </n-form-item-gi>
+            <n-form-item-gi label="Responsable Cierre" :span="3">
+              <n-input v-model:value="filterParams.closing_responsable" />
+            </n-form-item-gi>
+            <n-form-item-gi label="Saldo inicial" :span="3">
+              <n-input-number
+                class="w-100"
+                v-model:value="filterParams.opening_amount"
+                :show-button="false"
+              />
+            </n-form-item-gi>
+            <n-form-item-gi label="Saldo final" :span="3">
+              <n-input-number
+                class="w-100"
+                v-model:value="filterParams.closing_amount"
+                :show-button="false"
+              />
+            </n-form-item-gi>
+            <n-form-item-gi label="Apertura" :span="6">
+              <n-date-picker
+                type="daterange"
+                v-model:formatted-value="filterParams.created"
+                format="dd/MM/yyyy"
+                clearable
+              />
+            </n-form-item-gi>
+            <n-form-item-gi label="Cierre" :span="6">
+              <n-date-picker
+                type="daterange"
+                v-model:formatted-value="filterParams.modified"
+                format="dd/MM/yyyy"
+                clearable
+              />
+            </n-form-item-gi>
+            <!-- <n-form-item-gi label="Sucursal" :span="3">
               <n-select />
-            </n-form-item-gi>
-            <n-form-item-gi label="Fecha" :span="6">
-              <n-date-picker type="daterange" clearable />
-            </n-form-item-gi>
-            <n-form-item-gi label="Sucursal" :span="3">
-              <n-select />
-            </n-form-item-gi>
-            <n-form-item-gi label="Método Pago" :span="3">
-              <n-input />
-            </n-form-item-gi>
-            <n-form-item-gi label="Sucursal" :span="3">
-              <n-input />
-            </n-form-item-gi>
-            <n-form-item-gi :span="6">
-              <n-button type="info" secondary>Buscar</n-button>
-            </n-form-item-gi>
+            </n-form-item-gi> -->
+            <n-gi :span="6">
+              <n-button type="info" secondary @click="performFilter"
+                >Buscar</n-button
+              >
+            </n-gi>
           </n-grid>
         </n-form>
       </n-collapse-transition>
@@ -61,6 +87,8 @@
         :columns="tableColumns"
         :data="tills"
         :loading="isTableLoading"
+        :pagination="pagination"
+        remote
       />
     </n-card>
     <till-aperture-modal
@@ -82,11 +110,15 @@
 <script>
 import { defineComponent, ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { useMessage } from "naive-ui";
 import TillApertureModal from "./components/TillApertureModal";
 import TillClosureModal from "./components/TillClosureModal";
 import { createTillColumns } from "@/utils/constants";
-import { getTills } from "@/api/modules/tills";
-import { useMessage } from "naive-ui";
+import {
+  getTills,
+  getTillsByPageNumber,
+  filterTills,
+} from "@/api/modules/tills";
 
 export default defineComponent({
   name: "TillList",
@@ -103,13 +135,61 @@ export default defineComponent({
     const showFilters = ref(false);
     const idTill = ref(0);
     const tills = ref([]);
+    const filterParams = ref({
+      opening_responsable: null,
+      closing_responsable: null,
+      opening_amount: null,
+      closing_amount: null,
+      created: null,
+      modified: null,
+    });
+    const pagination = ref({
+      filterParams: null,
+      page: 1,
+      pageCount: 1,
+      pageSize: 20,
+      total: 0,
+      onChange: (page) => {
+        isTableLoading.value = true;
+        pagination.value.page = page;
+        getTillsByPageNumber(
+          pagination.value.page,
+          pagination.value.filterParams
+        )
+          .then((response) => {
+            pagination.value.total = response.data.count;
+            pagination.value.pageCount = Math.trunc(
+              Number(response.data.count) / pagination.value.pageSize
+            );
+            if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+              ++pagination.value.pageCount;
+            }
+            tills.value = response.data.results;
+          })
+          .catch((error) => {
+            console.error(error);
+            message.error("Algo salió mal...");
+          })
+          .finally(() => {
+            isTableLoading.value = false;
+          });
+      },
+    });
 
     const loadTills = () => {
       isTableLoading.value = true;
+      pagination.value.page = 1;
       getTills()
         .then((response) => {
           if (response.status === 200) {
-            tills.value = response.data;
+            pagination.value.total = response.data.count;
+            pagination.value.pageCount = Math.trunc(
+              Number(response.data.count) / pagination.value.pageSize
+            );
+            if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+              ++pagination.value.pageCount;
+            }
+            tills.value = response.data.results;
           }
         })
         .catch((error) => {
@@ -119,6 +199,44 @@ export default defineComponent({
         .finally(() => {
           isTableLoading.value = false;
         });
+    };
+
+    const performFilter = () => {
+      isTableLoading.value = true;
+      pagination.value.filterParams = filterParams.value;
+      pagination.value.page = 1;
+      filterTills(pagination.value.page, pagination.value.filterParams)
+        .then((response) => {
+          console.log(response.data);
+          pagination.value.total = response.data.count;
+          pagination.value.pageCount = Math.trunc(
+            Number(response.data.count) / pagination.value.pageSize
+          );
+          if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+            ++pagination.value.pageCount;
+          }
+          tills.value = response.data.results;
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          isTableLoading.value = false;
+        });
+    };
+
+    const refreshTable = () => {
+      filterParams.value = {
+        opening_responsable: null,
+        closing_responsable: null,
+        opening_amount: null,
+        closing_amount: null,
+        created: null,
+        modified: null,
+      };
+      pagination.value.filterParams = null;
+      loadTills();
     };
 
     onMounted(() => {
@@ -151,7 +269,11 @@ export default defineComponent({
       onApertureSuccess,
       onClosureSuccess,
       showFilters,
+      filterParams,
+      performFilter,
+      refreshTable,
       isTableLoading,
+      pagination,
       tills,
       idTill,
       tableColumns: createTillColumns({

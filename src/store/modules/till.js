@@ -16,6 +16,10 @@ export const useTillStore = defineStore('till', {
             return this.concepts
                 .filter(concept => concept.concept_type === '1')
                 .map(concept => ({ label: concept.description, value: concept.id }))
+        },
+        getConceptsOptions() {
+            return this.concepts
+                .map(concept => ({ label: concept.description, value: concept.id }))
         }
     },
     actions: {

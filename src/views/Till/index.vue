@@ -116,24 +116,36 @@
             cols="6 s:6 m:12 l:12 xl:24 2xl:24"
             :x-gap="12"
           >
+            <n-form-item-gi label="Documento" :span="3">
+              <n-input />
+            </n-form-item-gi>
             <n-form-item-gi label="Descripción" :span="3">
               <n-input />
             </n-form-item-gi>
+            <n-form-item-gi label="Monto" :span="3">
+              <n-input-number :show-button="false" />
+            </n-form-item-gi>
             <n-form-item-gi label="Tipo" :span="3">
-              <n-select />
+              <n-select :options="conceptTypeOptions" clearable />
             </n-form-item-gi>
             <n-form-item-gi label="Concepto" :span="3">
-              <n-select />
+              <n-select :options="tillStore.getConceptsOptions" clearable />
             </n-form-item-gi>
             <n-form-item-gi label="Método Pago" :span="3">
-              <n-select />
+              <n-select
+                :options="saleStore.getPaymentMethodsOptions"
+                clearable
+              />
             </n-form-item-gi>
-            <n-form-item-gi label="Sucursal" :span="3">
-              <n-select />
+            <n-form-item-gi label="Cierre" :span="6">
+              <n-date-picker type="daterange" format="dd/MM/yyyy" clearable />
             </n-form-item-gi>
-            <n-form-item-gi :span="6">
-              <n-button type="primary">Buscar</n-button>
-            </n-form-item-gi>
+            <!-- <n-form-item-gi label="Sucursal" :span="3">
+              <n-select clearable />
+            </n-form-item-gi> -->
+            <n-gi :span="3">
+              <n-button type="info" secondary>Buscar</n-button>
+            </n-gi>
           </n-grid>
         </n-form>
       </n-collapse-transition>
@@ -155,10 +167,11 @@
 
 <script>
 import { defineComponent, ref, onMounted } from "vue";
-import { useTillStore } from "@/store/modules/till";
-import { useMessage, useDialog, NButton } from "naive-ui";
-import { createMovementsColumns } from "@/utils/constants";
+import { useMessage, useDialog } from "naive-ui";
 import MovementModal from "./components/MovementModal";
+import { createMovementsColumns } from "@/utils/constants";
+import { useTillStore } from "@/store/modules/till";
+import { useSaleStore } from "@/store/modules/sale";
 import { getCurrentTillDetails } from "@/api/modules/tills";
 
 export default defineComponent({
@@ -169,6 +182,7 @@ export default defineComponent({
   setup() {
     const message = useMessage();
     const tillStore = useTillStore();
+    const saleStore = useSaleStore();
     const dialog = useDialog();
     const showModal = ref(false);
     const movementType = ref(null);
@@ -193,6 +207,17 @@ export default defineComponent({
         });
     };
 
+    const conceptTypeOptions = [
+      {
+        label: "Ingreso",
+        value: "0",
+      },
+      {
+        label: "Egreso",
+        value: "1",
+      },
+    ];
+
     onMounted(() => {
       document.title = "Movimientos de Caja | App";
       loadMovements();
@@ -215,6 +240,9 @@ export default defineComponent({
       showModal,
       movementType,
       showFilters,
+      tillStore,
+      saleStore,
+      conceptTypeOptions,
       onCloseModal,
       onSuccess,
       movements,

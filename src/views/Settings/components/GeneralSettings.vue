@@ -314,6 +314,99 @@
             </n-grid>
           </n-card>
         </n-tab-pane>
+        <n-tab-pane name="Concepts" tab="Conceptos">
+          <n-card title="Editar Conceptos" :bordered="false" embedded>
+            <n-grid responsive="screen" cols="12" :x-gap="12">
+              <n-gi :span="3">
+                <n-list class="bg-white m-0" bordered>
+                  <template #header
+                    ><n-text class="fs-5">Lista de Conceptos</n-text></template
+                  >
+                  <n-list-item
+                    v-for="single_concept in concepts"
+                    :class="{
+                      'bg-selected': selectedConcept === single_concept.id,
+                    }"
+                    :key="single_concept.id"
+                    @click="selectConcept(single_concept)"
+                  >
+                    <!-- <template #suffix v-if="selectedCategory === category.id">
+                      <n-button type="error" text>
+                        <v-icon name="md-disabledbydefault-round" />
+                      </n-button>
+                    </template> -->
+                    <n-space justify="space-between">
+                      {{ single_concept.description }}
+                      <n-tag
+                        :type="
+                          single_concept.concept_type === '0'
+                            ? 'success'
+                            : 'error'
+                        "
+                        size="small"
+                        round
+                        >{{
+                          single_concept.concept_type === "0"
+                            ? "Ingreso"
+                            : "Egreso"
+                        }}</n-tag
+                      >
+                    </n-space>
+                  </n-list-item>
+                </n-list>
+              </n-gi>
+              <n-gi :span="9">
+                <n-form class="mt-2">
+                  <n-grid responsive="screen" cols="24" :x-gap="12">
+                    <n-form-item-gi :span="4" label="Tipo">
+                      <n-select
+                        :options="conceptTypeOptions"
+                        v-model:value="concept.concept_type"
+                        placeholder=""
+                      />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="4" label="Descripción">
+                      <n-input
+                        v-model:value="concept.description"
+                        placeholder=""
+                      />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="4">
+                      <n-button
+                        class="me-2"
+                        :type="!selectedConcept ? 'info' : 'warning'"
+                        :disabled="
+                          !concept.description || !concept.concept_type
+                        "
+                        @click="
+                          !selectedConcept
+                            ? performCreateConcept()
+                            : performUpdateConcept()
+                        "
+                        secondary
+                        >{{
+                          !selectedConcept ? "Agregar" : "Guardar"
+                        }}</n-button
+                      >
+                      <n-button
+                        type="error"
+                        secondary
+                        :disabled="
+                          !concept.description || !concept.concept_type
+                        "
+                        @click="
+                          selectedConcept = null;
+                          concept = { description: '', concept_type: null };
+                        "
+                        >Cancelar</n-button
+                      >
+                    </n-form-item-gi>
+                  </n-grid>
+                </n-form>
+              </n-gi>
+            </n-grid>
+          </n-card>
+        </n-tab-pane>
       </n-tabs>
     </n-card>
   </div>
@@ -328,8 +421,8 @@ import { useTableStore } from "@/store/modules/table";
 import { createArea, updateArea, createTable } from "@/api/modules/tables";
 import {
   getPaymentMethods,
-  createPaymentMethod,
-  updatePaymentMethod,
+  createPaymentMethodDesc,
+  updatePaymentMethodDesc,
 } from "@/api/modules/sales";
 import {
   getProductPlaces,
@@ -339,6 +432,7 @@ import {
   createProductCategory,
   updateProductCategory,
 } from "@/api/modules/products";
+import { getConcepts, createConcept, updateConcept } from "@/api/modules/tills";
 
 export default defineComponent({
   name: "GeneralSettings",
@@ -623,7 +717,7 @@ export default defineComponent({
     };
 
     const performCreatePaymentMethod = () => {
-      createPaymentMethod(paymentMethod.value)
+      createPaymentMethodDesc(paymentMethod.value)
         .then((response) => {
           if (response.status === 201) {
             loadPaymentMethods();
@@ -639,7 +733,7 @@ export default defineComponent({
     };
 
     const performUpdatePaymentMethod = () => {
-      updatePaymentMethod(selectedPayment.value, paymentMethod.value)
+      updatePaymentMethodDesc(selectedPayment.value, paymentMethod.value)
         .then((response) => {
           if (response.status === 202) {
             loadPaymentMethods();
@@ -655,11 +749,94 @@ export default defineComponent({
         });
     };
 
+    const concepts = ref([]);
+    const concept = ref({
+      description: "",
+      concept_type: null,
+    });
+    const selectedConcept = ref(null);
+
+    const conceptTypeOptions = [
+      {
+        label: "Ingreso",
+        value: "0",
+      },
+      {
+        label: "Egreso",
+        value: "1",
+      },
+    ];
+
+    const selectConcept = (single_concept) => {
+      if (!selectedConcept) {
+        selectedConcept.value = single_concept.id;
+        concept.value.description = cloneDeep(single_concept.description);
+        concept.value.concept_type = cloneDeep(single_concept.concept_type);
+      } else {
+        if (selectedConcept.value === single_concept.id) {
+          selectedConcept.value = null;
+          concept.value.description = null;
+          concept.value.concept_type = null;
+        } else {
+          selectedConcept.value = single_concept.id;
+          concept.value.description = cloneDeep(single_concept.description);
+          concept.value.concept_type = cloneDeep(single_concept.concept_type);
+        }
+      }
+    };
+
+    const loadConcepts = () => {
+      getConcepts()
+        .then((response) => {
+          if (response.status === 200) {
+            concepts.value = response.data;
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        });
+    };
+
+    const performCreateConcept = () => {
+      createConcept(concept.value)
+        .then((response) => {
+          if (response.status === 201) {
+            loadConcepts();
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          concept.value = { description: "", concept_type: null };
+        });
+    };
+
+    const performUpdateConcept = () => {
+      updateConcept(selectedConcept.value, concept.value)
+        .then((response) => {
+          if (response.status === 202) {
+            loadConcepts();
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          selectedConcept.value = null;
+          concept.value = { description: "", concept_type: null };
+        });
+    };
+
     onMounted(() => {
       tableStore.refreshData();
       loadPreparationPlaces();
       loadProductCategories();
       loadPaymentMethods();
+      loadConcepts();
     });
 
     const handleBack = () => {
@@ -698,6 +875,13 @@ export default defineComponent({
       selectPaymentMethod,
       performCreatePaymentMethod,
       performUpdatePaymentMethod,
+      conceptTypeOptions,
+      concepts,
+      concept,
+      selectedConcept,
+      selectConcept,
+      performCreateConcept,
+      performUpdateConcept,
     };
   },
 });

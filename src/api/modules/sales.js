@@ -15,3 +15,15 @@ export async function updatePaymentMethod(idPayment, payment_method) {
         description: payment_method.description,
     })
 }
+
+export async function createPaymentMethodDesc(description) {
+    return await http.post('payment_methods/', {
+        description: description,
+    })
+}
+
+export async function updatePaymentMethodDesc(idPayment, description) {
+    return await http.put(`payment_methods/${idPayment}/`, {
+        description: description,
+    })
+}

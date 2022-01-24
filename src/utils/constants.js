@@ -469,6 +469,7 @@ export const movementRules = {
         message: 'Este campo es requerido'
     },
     payment_method: {
+        type: 'number',
         required: true,
         trigger: ['blur', 'input'],
         message: 'Este campo es requerido'
@@ -479,6 +480,7 @@ export const movementRules = {
         message: 'Este campo es requerido'
     },
     concept: {
+        type: 'number',
         required: true,
         trigger: ['blur', 'input'],
         message: 'Este campo es requerido'
