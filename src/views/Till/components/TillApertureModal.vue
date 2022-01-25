@@ -13,13 +13,23 @@
     <n-spin :show="isLoading">
       <n-form>
         <n-form-item label="Responsable">
-          <n-input v-model:value="till.opening_responsable" />
+          <n-input
+            v-model:value="till.opening_responsable"
+            @keypress="isLetter($event)"
+          />
         </n-form-item>
         <n-form-item label="Monto Inicial">
-          <n-input v-model:value="till.opening_amount" />
+          <n-input
+            v-model:value="till.opening_amount"
+            @keypress="isDecimal($event)"
+          />
         </n-form-item>
         <n-form-item label="Observaciones">
-          <n-input v-model:value="till.opening_observations" type="textarea" />
+          <n-input
+            v-model:value="till.opening_observations"
+            type="textarea"
+            @keypress="isLetter($event)"
+          />
         </n-form-item>
       </n-form>
     </n-spin>
@@ -43,6 +53,7 @@ import { useMessage } from "naive-ui";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useTillStore } from "@/store/modules/till";
 import { createTill } from "@/api/modules/tills";
+import { isDecimal, isLetter, isNumber } from "@/utils";
 
 export default defineComponent({
   name: "TillApertureModal",
@@ -84,6 +95,9 @@ export default defineComponent({
     };
 
     return {
+      isDecimal,
+      isNumber,
+      isLetter,
       genericsStore,
       isLoading,
       till,

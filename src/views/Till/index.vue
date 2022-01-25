@@ -117,15 +117,22 @@
             :x-gap="12"
           >
             <n-form-item-gi label="Documento" :span="3">
-              <n-input v-model:value="filterParams.document" />
+              <n-input
+                v-model:value="filterParams.document"
+                @keypress="isLetter($event)"
+              />
             </n-form-item-gi>
             <n-form-item-gi label="Descripción" :span="3">
-              <n-input v-model:value="filterParams.description" />
+              <n-input
+                v-model:value="filterParams.description"
+                @keypress="isLetter($event)"
+              />
             </n-form-item-gi>
             <n-form-item-gi label="Monto" :span="3">
               <n-input-number
                 v-model:value="filterParams.amount"
                 :show-button="false"
+                @keypress="isDecimal($event)"
               />
             </n-form-item-gi>
             <n-form-item-gi label="Tipo Concepto" :span="3">
@@ -182,6 +189,7 @@
 import { defineComponent, ref, onMounted, computed } from "vue";
 import { useMessage, useDialog } from "naive-ui";
 import MovementModal from "./components/MovementModal";
+import { isDecimal, isLetter, isNumber } from "@/utils";
 import { createMovementsColumns } from "@/utils/constants";
 import { useTillStore } from "@/store/modules/till";
 import { useSaleStore } from "@/store/modules/sale";
@@ -321,6 +329,9 @@ export default defineComponent({
     };
 
     return {
+      isDecimal,
+      isNumber,
+      isLetter,
       pagination,
       isLoading,
       showModal,

@@ -18,7 +18,11 @@
             :label="!concept.id ? 'Crear Concepto' : 'Editar Concepto'"
           >
             <n-input-group>
-              <n-input v-model:value="concept.description" placeholder="" />
+              <n-input
+                v-model:value="concept.description"
+                placeholder=""
+                @keypress="isLetter($event)"
+              />
               <n-button
                 type="info"
                 tertiary
@@ -86,7 +90,11 @@
             :label="!payment.id ? 'Crear Método Pago' : 'Editar Método Pago'"
           >
             <n-input-group>
-              <n-input v-model:value="payment.description" placeholder="" />
+              <n-input
+                v-model:value="payment.description"
+                placeholder=""
+                @keypress="isLetter($event)"
+              />
               <n-button
                 type="info"
                 tertiary
@@ -145,10 +153,16 @@
           </n-form-item>
         </transition>
         <n-form-item label="Descripción" path="description">
-          <n-input v-model:value="detail.description" />
+          <n-input
+            v-model:value="detail.description"
+            @keypress="isLetter($event)"
+          />
         </n-form-item>
         <n-form-item label="Monto" path="amount">
-          <n-input v-model:value="detail.amount" />
+          <n-input
+            v-model:value="detail.amount"
+            @keypress="isDecimal($event)"
+          />
         </n-form-item>
       </n-form>
     </n-spin>
@@ -166,6 +180,7 @@ import { useMessage } from "naive-ui";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useTillStore } from "@/store/modules/till";
 import { useSaleStore } from "@/store/modules/sale";
+import { isDecimal, isLetter, isNumber } from "@/utils";
 import {
   createTillDetails,
   createConcept,
@@ -330,6 +345,9 @@ export default defineComponent({
     };
 
     return {
+      isDecimal,
+      isNumber,
+      isLetter,
       genericsStore,
       tillStore,
       saleStore,

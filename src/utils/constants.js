@@ -352,7 +352,7 @@ export const createUserColumns = ({ editUser, deleteUser }) => {
     ]
 }
 
-export const createTillColumns = ({ generateReport, deleteMovement }) => {
+export const createTillColumns = ({ generateReport, closeTill }) => {
     return [
         /* {
             title: 'Usuario',
@@ -452,7 +452,8 @@ export const createTillColumns = ({ generateReport, deleteMovement }) => {
                             size: 'small',
                             type: 'error',
                             secondary: true,
-                            onClick: () => deleteMovement(row)
+                            disabled: !row.status,
+                            onClick: () => closeTill(row)
                         },
                         renderIcon('md-lock-round')
                     )

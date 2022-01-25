@@ -36,16 +36,23 @@
             :x-gap="12"
           >
             <n-form-item-gi label="Responsable Apertura" :span="3">
-              <n-input v-model:value="filterParams.opening_responsable" />
+              <n-input
+                v-model:value="filterParams.opening_responsable"
+                @keypress="isLetter($event)"
+              />
             </n-form-item-gi>
             <n-form-item-gi label="Responsable Cierre" :span="3">
-              <n-input v-model:value="filterParams.closing_responsable" />
+              <n-input
+                v-model:value="filterParams.closing_responsable"
+                @keypress="isLetter($event)"
+              />
             </n-form-item-gi>
             <n-form-item-gi label="Saldo inicial" :span="3">
               <n-input-number
                 class="w-100"
                 v-model:value="filterParams.opening_amount"
                 :show-button="false"
+                @keypress="isDecimal($event)"
               />
             </n-form-item-gi>
             <n-form-item-gi label="Saldo final" :span="3">
@@ -53,6 +60,7 @@
                 class="w-100"
                 v-model:value="filterParams.closing_amount"
                 :show-button="false"
+                @keypress="isDecimal($event)"
               />
             </n-form-item-gi>
             <n-form-item-gi label="Apertura" :span="6">
@@ -114,6 +122,7 @@ import { useMessage } from "naive-ui";
 import TillApertureModal from "./components/TillApertureModal";
 import TillClosureModal from "./components/TillClosureModal";
 import { createTillColumns } from "@/utils/constants";
+import { isDecimal, isLetter, isNumber } from "@/utils";
 import {
   getTills,
   getTillsByPageNumber,
@@ -262,6 +271,9 @@ export default defineComponent({
     };
 
     return {
+      isDecimal,
+      isNumber,
+      isLetter,
       onCloseModal,
       showApertureModal,
       showClosureModal,
