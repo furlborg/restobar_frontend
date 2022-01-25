@@ -19,9 +19,11 @@
           />
         </n-form-item>
         <n-form-item label="Monto Final">
-          <n-input
+          <n-input-number
+            class="w-100"
             v-model:value="till.closing_amount"
             @keypress="isDecimal($event)"
+            :show-button="false"
           />
         </n-form-item>
         <n-form-item label="Observaciones">

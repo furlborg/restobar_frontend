@@ -159,9 +159,11 @@
           />
         </n-form-item>
         <n-form-item label="Monto" path="amount">
-          <n-input
+          <n-input-number
+            class="w-100"
             v-model:value="detail.amount"
             @keypress="isDecimal($event)"
+            :show-button="false"
           />
         </n-form-item>
       </n-form>

@@ -19,9 +19,11 @@
           />
         </n-form-item>
         <n-form-item label="Monto Inicial">
-          <n-input
+          <n-input-number
+            class="w-100"
             v-model:value="till.opening_amount"
             @keypress="isDecimal($event)"
+            :show-button="false"
           />
         </n-form-item>
         <n-form-item label="Observaciones">
