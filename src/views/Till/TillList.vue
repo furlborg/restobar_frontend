@@ -207,7 +207,6 @@ export default defineComponent({
       pagination.value.page = 1;
       filterTills(pagination.value.page, pagination.value.filterParams)
         .then((response) => {
-          console.log(response.data);
           pagination.value.total = response.data.count;
           pagination.value.pageCount = Math.trunc(
             Number(response.data.count) / pagination.value.pageSize

@@ -20,7 +20,7 @@ export const useTillStore = defineStore('till', {
         getConceptsOptions() {
             return this.concepts
                 .map(concept => ({ label: concept.description, value: concept.id }))
-        }
+        },
     },
     actions: {
         initializeStore() {

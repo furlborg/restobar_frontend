@@ -23,7 +23,7 @@
             </n-button>
           </n-space>
           <n-space>
-            <n-text class="fs-1">S/. 1000</n-text>
+            <n-text class="fs-1">S/. {{ income.toFixed(2) }}</n-text>
           </n-space>
         </n-card>
       </n-gi>
@@ -49,7 +49,7 @@
             </n-button>
           </n-space>
           <n-space>
-            <n-text class="fs-1">S/. 100</n-text>
+            <n-text class="fs-1">S/. -{{ outcome.toFixed(2) }}</n-text>
           </n-space>
         </n-card>
       </n-gi>
@@ -66,7 +66,7 @@
             </n-space>
           </n-space>
           <n-space>
-            <n-text class="fs-1">S/. 1000</n-text>
+            <n-text class="fs-1">S/. {{ sells.toFixed(2) }}</n-text>
           </n-space>
         </n-card>
       </n-gi>
@@ -79,7 +79,7 @@
             </n-space>
           </n-space>
           <n-space>
-            <n-text class="fs-1">S/. 900</n-text>
+            <n-text class="fs-1">S/. {{ total.toFixed(2) }}</n-text>
           </n-space>
         </n-card>
       </n-gi>
@@ -104,7 +104,7 @@
           <v-icon name="md-filteralt-round" />
           {{ showFilters ? "Ocultar Filtros" : "Mostrar filtros" }}
         </n-button>
-        <n-button type="info" text>
+        <n-button type="info" text @click="refreshTable">
           <v-icon name="hi-solid-refresh" />
           Recargar
         </n-button>
@@ -117,34 +117,46 @@
             :x-gap="12"
           >
             <n-form-item-gi label="Documento" :span="3">
-              <n-input />
+              <n-input v-model:value="filterParams.document" />
             </n-form-item-gi>
             <n-form-item-gi label="Descripción" :span="3">
-              <n-input />
+              <n-input v-model:value="filterParams.description" />
             </n-form-item-gi>
             <n-form-item-gi label="Monto" :span="3">
-              <n-input-number :show-button="false" />
+              <n-input-number
+                v-model:value="filterParams.amount"
+                :show-button="false"
+              />
             </n-form-item-gi>
-            <n-form-item-gi label="Tipo" :span="3">
-              <n-select :options="conceptTypeOptions" clearable />
-            </n-form-item-gi>
-            <n-form-item-gi label="Concepto" :span="3">
-              <n-select :options="tillStore.getConceptsOptions" clearable />
-            </n-form-item-gi>
-            <n-form-item-gi label="Método Pago" :span="3">
+            <n-form-item-gi label="Tipo Concepto" :span="3">
               <n-select
-                :options="saleStore.getPaymentMethodsOptions"
+                v-model:value="filterParams.concept_type"
+                :options="conceptTypeOptions"
+                @update:value="filterParams.concept = null"
                 clearable
               />
             </n-form-item-gi>
-            <n-form-item-gi label="Cierre" :span="6">
-              <n-date-picker type="daterange" format="dd/MM/yyyy" clearable />
+            <n-form-item-gi label="Concepto" :span="3">
+              <n-select
+                v-model:value="filterParams.concept"
+                :options="ConceptOptions"
+                clearable
+              />
+            </n-form-item-gi>
+            <n-form-item-gi label="Método Pago" :span="3">
+              <n-select
+                v-model:value="filterParams.payment_method"
+                :options="saleStore.getPaymentMethodsOptions"
+                clearable
+              />
             </n-form-item-gi>
             <!-- <n-form-item-gi label="Sucursal" :span="3">
               <n-select clearable />
             </n-form-item-gi> -->
             <n-gi :span="3">
-              <n-button type="info" secondary>Buscar</n-button>
+              <n-button type="info" secondary @click="performFilter"
+                >Buscar</n-button
+              >
             </n-gi>
           </n-grid>
         </n-form>
@@ -154,6 +166,7 @@
         :columns="tableColumns"
         :data="movements"
         :loading="isLoading"
+        :pagination="pagination"
       />
     </n-card>
     <movement-modal
@@ -166,13 +179,13 @@
 </template>
 
 <script>
-import { defineComponent, ref, onMounted } from "vue";
+import { defineComponent, ref, onMounted, computed } from "vue";
 import { useMessage, useDialog } from "naive-ui";
 import MovementModal from "./components/MovementModal";
 import { createMovementsColumns } from "@/utils/constants";
 import { useTillStore } from "@/store/modules/till";
 import { useSaleStore } from "@/store/modules/sale";
-import { getCurrentTillDetails } from "@/api/modules/tills";
+import { getCurrentTillDetails, filterTillDetails } from "@/api/modules/tills";
 
 export default defineComponent({
   name: "Till",
@@ -189,6 +202,49 @@ export default defineComponent({
     const showFilters = ref(false);
     const isLoading = ref(false);
     const movements = ref([]);
+    const filterParams = ref({
+      document: null,
+      description: null,
+      amount: null,
+      concept_type: null,
+      concept: null,
+      payment_method: null,
+    });
+    const pagination = ref({
+      filterParams: null,
+      pageSize: 20,
+    });
+
+    const income = computed(() =>
+      movements.value
+        .filter((row) => tillStore.getConceptType(row.concept) === "0")
+        .reduce((prevValue, row) => prevValue + Number(row.amount), 0)
+    );
+
+    const outcome = computed(() =>
+      movements.value
+        .filter((row) => tillStore.getConceptType(row.concept) === "1")
+        .reduce((prevValue, row) => prevValue + Number(row.amount), 0)
+    );
+
+    const sells = computed(() =>
+      movements.value
+        .filter((row) => row.concept === 3)
+        .reduce((prevValue, row) => prevValue + Number(row.amount), 0)
+    );
+
+    const total = computed(() => income.value - outcome.value);
+
+    const ConceptOptions = computed(() => {
+      switch (filterParams.value.concept_type) {
+        case "0":
+          return tillStore.getIncomeConceptsOptions;
+        case "1":
+          return tillStore.getOutcomeConceptsOptions;
+        default:
+          return tillStore.getConceptsOptions;
+      }
+    });
 
     const loadMovements = () => {
       isLoading.value = true;
@@ -205,6 +261,35 @@ export default defineComponent({
         .finally(() => {
           isLoading.value = false;
         });
+    };
+
+    const performFilter = () => {
+      isLoading.value = true;
+      pagination.value.filterParams = filterParams.value;
+      filterTillDetails(tillStore.currentTillID, pagination.value.filterParams)
+        .then((response) => {
+          movements.value = response.data;
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          isLoading.value = false;
+        });
+    };
+
+    const refreshTable = () => {
+      filterParams.value = {
+        document: null,
+        description: null,
+        amount: null,
+        concept_type: null,
+        concept: null,
+        payment_method: null,
+      };
+      pagination.value.filterParams = null;
+      loadMovements();
     };
 
     const conceptTypeOptions = [
@@ -236,6 +321,7 @@ export default defineComponent({
     };
 
     return {
+      pagination,
       isLoading,
       showModal,
       movementType,
@@ -246,6 +332,14 @@ export default defineComponent({
       onCloseModal,
       onSuccess,
       movements,
+      income,
+      outcome,
+      sells,
+      total,
+      filterParams,
+      ConceptOptions,
+      performFilter,
+      refreshTable,
       tableColumns: createMovementsColumns({
         editMovement(rowData) {
           message.info("Editar registro " + rowData.id);

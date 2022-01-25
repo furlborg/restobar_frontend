@@ -12,9 +12,12 @@
   >
     <n-spin :show="isLoading">
       <n-form :rules="movementRules" :model="detail" ref="detailRef">
-        <n-form-item label="Concepto" path="concept">
-          <transition name="mode-fade" mode="out-in">
-            <n-input-group v-if="conceptForm">
+        <transition name="mode-fade" mode="out-in">
+          <n-form-item
+            v-if="conceptForm"
+            :label="!concept.id ? 'Crear Concepto' : 'Editar Concepto'"
+          >
+            <n-input-group>
               <n-input v-model:value="concept.description" placeholder="" />
               <n-button
                 type="info"
@@ -36,7 +39,9 @@
                 <v-icon name="md-close-round" />
               </n-button>
             </n-input-group>
-            <n-input-group v-else>
+          </n-form-item>
+          <n-form-item v-else label="Concepto" path="concept">
+            <n-input-group>
               <n-button
                 type="info"
                 tertiary
@@ -73,11 +78,14 @@
                 <v-icon name="ri-edit-fill" />
               </n-button>
             </n-input-group>
-          </transition>
-        </n-form-item>
-        <n-form-item label="Método Pago" path="payment_method">
-          <transition name="mode-fade" mode="out-in">
-            <n-input-group v-if="paymentForm">
+          </n-form-item>
+        </transition>
+        <transition name="mode-fade" mode="out-in">
+          <n-form-item
+            v-if="paymentForm"
+            :label="!payment.id ? 'Crear Método Pago' : 'Editar Método Pago'"
+          >
+            <n-input-group>
               <n-input v-model:value="payment.description" placeholder="" />
               <n-button
                 type="info"
@@ -99,7 +107,9 @@
                 <v-icon name="md-close-round" />
               </n-button>
             </n-input-group>
-            <n-input-group v-else>
+          </n-form-item>
+          <n-form-item v-else label="Método Pago" path="payment_method">
+            <n-input-group>
               <n-button
                 type="info"
                 tertiary
@@ -132,8 +142,8 @@
                 <v-icon name="ri-edit-fill" />
               </n-button>
             </n-input-group>
-          </transition>
-        </n-form-item>
+          </n-form-item>
+        </transition>
         <n-form-item label="Descripción" path="description">
           <n-input v-model:value="detail.description" />
         </n-form-item>

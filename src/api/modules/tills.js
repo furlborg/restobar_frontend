@@ -29,7 +29,6 @@ export async function getTillsByPageNumber(page, filterParams) {
 }
 
 export async function filterTills(page, filterParams) {
-    /* console.log(filterParams.created[0], filterParams.created[1]) */
     return await http.get('tills/', {
         params: {
             opening_responsable__icontains: filterParams.opening_responsable,
@@ -81,6 +80,43 @@ export async function updateTill(idTill, till) {
 
 export async function getTillDetails() {
     return await http.get('till_details/')
+}
+
+/* export async function getTillDetailsByPageNumber(id, page, filterParams) {
+    if (filterParams) {
+        return await http.get(`tills/${id}/details/`, {
+            params: {
+                document__icontains: filterParams.document,
+                description__icontains: filterParams.description,
+                amount__icontains: filterParams.amount,
+                concept: filterParams.concept,
+                concept__concept_type: filterParams.concept_type,
+                payment_method: filterParams.payment_method,
+                created__gte: filterParams.created ? filterParams.created[0] : null,
+                created__lte: filterParams.created ? filterParams.created[1] : null,
+                page: page
+            }
+        })
+    } else {
+        return await http.get(`tills/${id}/details/`, {
+            params: {
+                page: page
+            }
+        })
+    }
+} */
+
+export async function filterTillDetails(id, filterParams) {
+    return await http.get(`tills/${id}/details/`, {
+        params: {
+            document__icontains: filterParams.document,
+            description__icontains: filterParams.description,
+            amount__icontains: filterParams.amount,
+            concept: filterParams.concept,
+            concept__concept_type: filterParams.concept_type,
+            payment_method: filterParams.payment_method,
+        }
+    })
 }
 
 export async function retrieveTillDetail(id) {
