@@ -6,7 +6,7 @@ const routes = [
   {
     path: "",
     name: "App",
-    redirect: { name: "Dashboard" },
+    redirect: { name: "Login" },
     component: () => import(/* webpackChunkName: "dashboard" */ '@/layout'),
     children: [
       {
@@ -130,6 +130,11 @@ const routes = [
         ]
       }
     ]
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import(/* webpackChunkName: "waiter-mode" */ '@/views/login'),
   },
   {
     path: '/initial-setup',

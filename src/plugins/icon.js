@@ -80,6 +80,8 @@ import {
     RiForbidLine,
     MdPrintRound,
     MdNotinterestedRound,
+    MdPersonoutlineTwotone,
+    MdLockopenTwotone,
 } from "oh-vue-icons/icons";
 OhVueIcon.add(
     BiThreeDots,
@@ -162,5 +164,7 @@ OhVueIcon.add(
     RiForbidLine,
     MdPrintRound,
     MdNotinterestedRound,
+    MdPersonoutlineTwotone,
+    MdLockopenTwotone,
 );
 export { OhVueIcon }
