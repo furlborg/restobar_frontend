@@ -193,7 +193,11 @@ import { isDecimal, isLetter, isNumber } from "@/utils";
 import { createMovementsColumns } from "@/utils/constants";
 import { useTillStore } from "@/store/modules/till";
 import { useSaleStore } from "@/store/modules/sale";
-import { getCurrentTillDetails, filterTillDetails } from "@/api/modules/tills";
+import {
+  getCurrentTillDetails,
+  filterTillDetails,
+  nullifyDetail,
+} from "@/api/modules/tills";
 
 export default defineComponent({
   name: "Till",
@@ -352,19 +356,35 @@ export default defineComponent({
       performFilter,
       refreshTable,
       tableColumns: createMovementsColumns({
+        hasSells() {
+          return movements.value.some(
+            (movement) => movement.concept !== 1 && movement.concept !== 7
+          );
+        },
         editMovement(rowData) {
-          message.info("Editar registro " + rowData.id);
+          message.info("Ver detalles");
           /* showModal.value = true
               idCustomer.value = rowData.id */
         },
         deleteMovement(rowData) {
           dialog.error({
-            title: "Eliminando registro",
+            title: "Anular",
             content: "¿Está seguro?",
             positiveText: "Sí",
             onPositiveClick: () => {
-              message.success("Usuario " + rowData.id + " eliminado");
-              /* performDisableCustomer(rowData.id) */
+              isLoading.value = true;
+              nullifyDetail(rowData.id)
+                .then((response) => {
+                  if (response.status === 202) {
+                    message.success("Anulación exitosa!");
+                    refreshTable();
+                  }
+                })
+                .catch((error) => {
+                  console.error(error);
+                  message.error("Algo salió mal...");
+                  isLoading.value = true;
+                });
             },
           });
         },

@@ -291,7 +291,7 @@ export default defineComponent({
         generateReport() {
           message.success("Opcion 1!");
         },
-        deleteMovement(row) {
+        closeTill(row) {
           idTill.value = row.id;
           showClosureModal.value = true;
         },

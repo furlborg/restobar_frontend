@@ -476,6 +476,7 @@ export const movementRules = {
         message: 'Este campo es requerido'
     },
     amount: {
+        type: 'number',
         required: true,
         trigger: ['blur', 'input'],
         message: 'Este campo es requerido'
@@ -488,7 +489,7 @@ export const movementRules = {
     },
 }
 
-export const createMovementsColumns = ({ editMovement, deleteMovement }) => {
+export const createMovementsColumns = ({ hasSells, editMovement, deleteMovement }) => {
     return [
         {
             title: 'Documento',
@@ -569,6 +570,7 @@ export const createMovementsColumns = ({ editMovement, deleteMovement }) => {
                             size: 'small',
                             type: 'error',
                             secondary: true,
+                            disabled: (row.status || row.concept === 4 || row.concept === 5 || row.concept === 6 || row.concept === 7) ? true : row.concept === 1 && hasSells(),
                             onClick: () => deleteMovement(row)
                         },
                         renderIcon('md-notinterested-round')

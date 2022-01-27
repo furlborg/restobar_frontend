@@ -12,10 +12,8 @@ export async function getTillsByPageNumber(page, filterParams) {
                 closing_responsable__icontains: filterParams.closing_responsable,
                 opening_amount__icontains: filterParams.opening_amount,
                 closing_amount__icontains: filterParams.closing_amount,
-                created__lte: filterParams.created ? filterParams.created[0] : null,
-                created__gte: filterParams.created ? filterParams.created[1] : null,
-                modified__lte: filterParams.modified ? filterParams.modified[0] : null,
-                modified__gte: filterParams.modified ? filterParams.modified[1] : null,
+                created__range: filterParams.created !== null ? `${filterParams.created[0]} 00:00:00, ${filterParams.created[1]} 23:59:59` : null,
+                modified__range: filterParams.modified !== null ? `${filterParams.modified[0]} 00:00:00, ${filterParams.modified[1]} 23:59:59` : null,
                 page: page
             }
         })
@@ -35,10 +33,8 @@ export async function filterTills(page, filterParams) {
             closing_responsable__icontains: filterParams.closing_responsable,
             opening_amount__icontains: filterParams.opening_amount,
             closing_amount__icontains: filterParams.closing_amount,
-            created__gte: filterParams.created !== null ? filterParams.created[0] : null,
-            created__lte: filterParams.created !== null ? filterParams.created[1] : null,
-            modified__gte: filterParams.modified !== null ? filterParams.modified[0] : null,
-            modified__lte: filterParams.modified !== null ? filterParams.modified[1] : null,
+            created__range: filterParams.created !== null ? `${filterParams.created[0]} 00:00:00, ${filterParams.created[1]} 23:59:59` : null,
+            modified__range: filterParams.modified !== null ? `${filterParams.modified[0]} 00:00:00, ${filterParams.modified[1]} 23:59:59` : null,
             page: page
         }
     })
@@ -82,30 +78,6 @@ export async function getTillDetails() {
     return await http.get('till_details/')
 }
 
-/* export async function getTillDetailsByPageNumber(id, page, filterParams) {
-    if (filterParams) {
-        return await http.get(`tills/${id}/details/`, {
-            params: {
-                document__icontains: filterParams.document,
-                description__icontains: filterParams.description,
-                amount__icontains: filterParams.amount,
-                concept: filterParams.concept,
-                concept__concept_type: filterParams.concept_type,
-                payment_method: filterParams.payment_method,
-                created__gte: filterParams.created ? filterParams.created[0] : null,
-                created__lte: filterParams.created ? filterParams.created[1] : null,
-                page: page
-            }
-        })
-    } else {
-        return await http.get(`tills/${id}/details/`, {
-            params: {
-                page: page
-            }
-        })
-    }
-} */
-
 export async function filterTillDetails(id, filterParams) {
     return await http.get(`tills/${id}/details/`, {
         params: {
@@ -141,6 +113,10 @@ export async function updateTillDetails(idTill, till) {
         closing_observations: till.closing_observations,
         status: false,
     })
+}
+
+export async function nullifyDetail(idTill) {
+    return await http.delete(`till_details/${idTill}`)
 }
 
 export async function getConcepts() {
