@@ -272,15 +272,23 @@ export const productRules = {
     }, */
 }
 
-export const createUserColumns = ({ editUser, deleteUser }) => {
+export const createUserColumns = ({ editUser, deleteUser, changePassword }) => {
     return [
         {
-            title: 'ID',
-            key: 'id'
+            title: "#",
+            key: "num",
+            width: 50,
+            render(row, index) {
+                return index + 1;
+            },
         },
         {
-            title: 'Usuario',
-            key: 'username'
+            title: 'DNI',
+            key: 'dni'
+        },
+        {
+            title: 'Nombres',
+            key: 'names'
         },
         {
             title: 'Correo',
@@ -288,23 +296,22 @@ export const createUserColumns = ({ editUser, deleteUser }) => {
         },
         {
             title: 'Perfil',
-            key: 'profile'
+            key: 'profile_des'
         },
         {
             title: 'Sucursal',
-            key: 'sucursal',
+            key: 'branchoffice_des',
         },
-        /* {
+        {
             title: 'Estado',
-            key: 'isDisabled',
             render (row) {
-                let type, text
-                if (row.isDisabled) {
-                    type="error"
-                    text="Inactivo"
-                } else {
+                let type, text;
+                if (row.is_active) {
                     type="success"
                     text="Activo"
+                } else {
+                    type="error"
+                    text="Inactivo"
                 }
 
                 return h(
@@ -319,10 +326,11 @@ export const createUserColumns = ({ editUser, deleteUser }) => {
                     }
                 )
             }
-        }, */
+        }, 
         {
             title: 'Acciones',
             key: 'actions',
+            width: 140,
             render(row) {
                 return [
                     h(
@@ -339,8 +347,19 @@ export const createUserColumns = ({ editUser, deleteUser }) => {
                     h(
                         NButton,
                         {
+                            class: 'me-2',
                             size: 'small',
-                            type: 'error',
+                            type: 'info',
+                            secondary: true,
+                            onClick: () => changePassword(row)
+                        },
+                        renderIcon('la-user-edit-solid')
+                    ),
+                    h(
+                        NButton,
+                        {
+                            size: 'small',
+                            type: row.is_active?'error': 'success',
                             secondary: true,
                             onClick: () => deleteUser(row)
                         },
