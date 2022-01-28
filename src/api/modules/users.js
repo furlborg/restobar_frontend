@@ -33,6 +33,7 @@ export async function updateUsers(id, user) {
         user_permission: user.user_permission,
     })
 }
+
 export async function updatePassword(id, pass) {
     return await http.put(`changepassword/${id}/`, {
         password: pass
@@ -51,3 +52,9 @@ export async function getPermission() {
     return await http.get('permission/')
 }
 
+export async function login(username, password) {
+    return await http.post('login/', {
+        username: username,
+        password: password,
+    })
+}

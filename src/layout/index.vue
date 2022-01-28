@@ -5,42 +5,42 @@
     :theme="getDarkTheme"
     :theme-overrides="getThemeOverrides"
   >
-    <app-provider>
-      <n-layout class="layout" position="absolute" has-sider>
-        <n-layout-sider
-          class="layout-sider"
-          @collapse="collapsed = true"
-          @expand="collapsed = false"
-          :collapsed="collapsed"
-          :collapsed-width="64"
-          collapse-mode="width"
-          :width="200"
+    <!-- <app-provider> -->
+    <n-layout class="layout" position="absolute" has-sider>
+      <n-layout-sider
+        class="layout-sider"
+        @collapse="collapsed = true"
+        @expand="collapsed = false"
+        :collapsed="collapsed"
+        :collapsed-width="64"
+        collapse-mode="width"
+        :width="200"
+        :native-scrollbar="false"
+        bordered
+      >
+        <Logo :collapsed="collapsed" />
+        <AsideMenu v-model:collapsed="collapsed" />
+      </n-layout-sider>
+      <n-layout :native-scrollbar="false">
+        <n-layout-header position="absolute" bordered>
+          <PageHeader v-model:collapsed="collapsed" />
+        </n-layout-header>
+        <n-layout-content
+          class="layout-content"
+          :class="{ 'layout-default-background': getDarkTheme === undefined }"
           :native-scrollbar="false"
-          bordered
         >
-          <Logo :collapsed="collapsed" />
-          <AsideMenu v-model:collapsed="collapsed" />
-        </n-layout-sider>
-        <n-layout :native-scrollbar="false">
-          <n-layout-header position="absolute" bordered>
-            <PageHeader v-model:collapsed="collapsed" />
-          </n-layout-header>
-          <n-layout-content
-            class="layout-content"
-            :class="{ 'layout-default-background': getDarkTheme === undefined }"
-            :native-scrollbar="false"
-          >
-            <div class="layout-content-main">
-              <router-view v-slot="{ Component }">
-                <transition name="zoom-fade" mode="out-in" appear>
-                  <component :is="Component" />
-                </transition>
-              </router-view>
-            </div>
-          </n-layout-content>
-        </n-layout>
+          <div class="layout-content-main">
+            <router-view v-slot="{ Component }">
+              <transition name="zoom-fade" mode="out-in" appear>
+                <component :is="Component" />
+              </transition>
+            </router-view>
+          </div>
+        </n-layout-content>
       </n-layout>
-    </app-provider>
+    </n-layout>
+    <!-- </app-provider> -->
   </n-config-provider>
 </template>
 

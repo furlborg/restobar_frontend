@@ -1,70 +1,82 @@
 <template>
-  <div class="view-account">
-    <div class="view-account-container">
-      <div class="view-account-top">
-        <div class="view-account-top-logo">
-          <img
-            draggable="false"
-            src="~@/assets/images/account-logo.png"
-            alt=""
-          />
+  <n-message-provider>
+    <div class="view-account">
+      <div class="view-account-container">
+        <div class="view-account-top">
+          <div class="view-account-top-logo">
+            <img
+              draggable="false"
+              src="~@/assets/images/account-logo.png"
+              alt=""
+            />
+          </div>
+        </div>
+        <div class="view-account-form">
+          <n-form
+            ref="formRef"
+            label-placement="left"
+            size="large"
+            :model="formInline"
+            :rules="rules"
+          >
+            <n-form-item path="username">
+              <n-input
+                v-model:value="formInline.username"
+                placeholder="Usuario"
+                :disabled="loading"
+              >
+                <template #prefix>
+                  <v-icon name="md-personoutline-twotone" fill="#808695" />
+                </template>
+              </n-input>
+            </n-form-item>
+            <n-form-item path="password">
+              <n-input
+                v-model:value="formInline.password"
+                type="password"
+                showPasswordOn="click"
+                placeholder="Contraseña"
+                :disabled="loading"
+              >
+                <template #prefix>
+                  <v-icon name="md-lockopen-twotone" fill="#808695" />
+                </template>
+              </n-input>
+            </n-form-item>
+            <n-form-item>
+              <n-button
+                @click.prevent="handleSubmit"
+                size="large"
+                :loading="loading"
+                color="#A32B2C"
+                block
+              >
+                Iniciar Sesión
+              </n-button>
+            </n-form-item>
+          </n-form>
         </div>
       </div>
-      <div class="view-account-form">
-        <n-form
-          ref="formRef"
-          label-placement="left"
-          size="large"
-          :model="formInline"
-          :rules="rules"
-        >
-          <n-form-item path="username">
-            <n-input v-model:value="formInline.username" placeholder="Usuario">
-              <template #prefix>
-                <v-icon name="md-personoutline-twotone" fill="#808695" />
-              </template>
-            </n-input>
-          </n-form-item>
-          <n-form-item path="password">
-            <n-input
-              v-model:value="formInline.password"
-              type="password"
-              showPasswordOn="click"
-              placeholder="Contraseña"
-            >
-              <template #prefix>
-                <v-icon name="md-lockopen-twotone" fill="#808695" />
-              </template>
-            </n-input>
-          </n-form-item>
-          <n-form-item>
-            <n-button
-              @click.prevent="handleSubmit"
-              size="large"
-              :loading="loading"
-              color="#A32B2C"
-              block
-            >
-              Iniciar Sesión
-            </n-button>
-          </n-form-item>
-        </n-form>
-      </div>
     </div>
-  </div>
+  </n-message-provider>
 </template>
 
 <script>
-import { defineComponent, ref } from "vue-demi";
+import { defineComponent, ref, reactive } from "vue";
+import { useMessage } from "naive-ui";
+import { useRouter } from "vue-router";
+import { login } from "@/api/modules/users";
 
 export default defineComponent({
   name: "login",
   setup() {
     const formRef = ref();
-
+    const message = useMessage();
     const loading = ref(false);
 
-    const formInline = ref({
+    const router = useRouter();
+
+    const formInline = reactive({
       username: "",
       password: "",
     });
@@ -82,7 +94,39 @@ export default defineComponent({
       },
     };
 
-    const handleSubmit = () => {};
+    const handleSubmit = () => {
+      formRef.value.validate(async (errors) => {
+        if (!errors) {
+          const { username, password } = formInline;
+          message.loading("Iniciando sesión...");
+          loading.value = true;
+          await login(username, password)
+            .then((response) => {
+              console.log(response.data);
+              message.success("¡Inicio de sesión correcto!");
+              router.push({ name: "Dashboard" });
+            })
+            .catch((error) => {
+              console.error(error);
+              loading.value = true;
+              message.info("Error de inicio de sesión");
+            });
+          /* if (code == ResultEnum.SUCCESS) {
+          const toPath = decodeURIComponent((route.query?.redirect || '/') as string);
+          message.success('¡Inicio de sesión correcto!');
+          router.replace(toPath).then((_) => {
+            if (route.name == 'login') {
+              router.replace('/');
+            }
+          });
+        } else {
+          message.info(msg || 'Error de inicio de sesión');
+        } */
+        } else {
+          message.error("Por favor complete la información requerida.");
+        }
+      });
+    };
 
     return {
       formRef,
