@@ -21,18 +21,16 @@
             <n-input v-model:value="product.name" placeholder="" />
           </n-form-item-gi>
           <n-form-item-gi label="Precio" path="prices" :span="3">
-            <n-input-number
+            <n-input
               v-model:value="product.prices"
               placeholder=""
-              :min="0"
-              :show-button="false"
               @keypress="isDecimal($event)"
             />
           </n-form-item-gi>
           <n-form-item-gi label="Description" path="description" :span="12">
             <n-input v-model:value="product.description" placeholder="" />
           </n-form-item-gi>
-          <n-form-item-gi label="Categoría" path="category_product" :span="12">
+          <n-form-item-gi label="Categoría" path="category" :span="12">
             <transition name="mode-fade" mode="out-in">
               <n-input-group v-if="categoryForm">
                 <n-input v-model:value="categorie.description" placeholder="" />
@@ -71,22 +69,20 @@
                   <v-icon name="md-add-round" />
                 </n-button>
                 <n-select
-                  v-model:value="product.category_product"
+                  v-model:value="product.category"
                   :options="categoriesOptions"
                   placeholder=""
                   clearable
                 />
                 <n-button
-                  v-if="product.category_product"
+                  v-if="product.category"
                   type="warning"
                   tertiary
                   @click="
                     categoryForm = true;
-                    categorie.id = product.category_product;
+                    categorie.id = product.category;
                     categorie.description =
-                      productStore.getCategorieDescription(
-                        product.category_product
-                      );
+                      productStore.getCategorieDescription(product.category);
                   "
                 >
                   <v-icon name="ri-edit-fill" />
@@ -223,7 +219,7 @@ export default defineComponent({
       icbper: false,
       number_points: null,
       redeem_points: null,
-      category_product: null,
+      category: null,
       preparation_place: null,
     });
     const categoriesOptions = computed(() => {
@@ -268,7 +264,7 @@ export default defineComponent({
           icbper: false,
           number_points: null,
           redeem_points: null,
-          category_product: null,
+          category: null,
           preparation_place: null,
         };
       }
@@ -337,7 +333,7 @@ export default defineComponent({
         .then((response) => {
           if (response.status === 201) {
             productStore.refreshCategories().then(() => {
-              product.value.category_product = productStore.getCategorieID(
+              product.value.category = productStore.getCategorieID(
                 categorie.value.description
               );
             });

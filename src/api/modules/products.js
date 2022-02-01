@@ -29,12 +29,13 @@ export async function createProduct(product) {
         icbper: product.icbper,
         number_points: product.number_points,
         redeem_points: product.redeem_points,
-        category_product: product.category_product,
+        category: product.category,
         preparation_place: product.preparation_place,
     })
 }
 
 export async function updateProduct(idProduct, product) {
+    console.log(product.categorie);
     return await http.put(`products/${idProduct}/`, {
         name: product.name,
         description: product.description,
@@ -45,7 +46,7 @@ export async function updateProduct(idProduct, product) {
         icbper: product.icbper,
         number_points: product.number_points,
         redeem_points: product.redeem_points,
-        category_product: product.category_product,
+        category: product.category,
         preparation_place: product.preparation_place,
     })
 }
@@ -53,16 +54,6 @@ export async function updateProduct(idProduct, product) {
 export async function disableProduct(id) {
     return await http.delete(`products/${id}/`)
 }
-
-/* export async function searchProductByPageNumber(search, pageLimit, pageOffset) {
-    return await http.get('api/v1/products/', {
-        params: {
-            search: search,
-            limit: pageLimit,
-            offset: pageOffset,
-        }
-    })
-} */
 
 export async function searchProduct(search, pageLimit, pageOffset) {
     return await http.get('products/', {
@@ -76,6 +67,10 @@ export async function searchProduct(search, pageLimit, pageOffset) {
 
 export async function getProductCategories() {
     return await http.get('product-categories/')
+}
+
+export async function getProductsByCategory(categoryId) {
+    return await http.get(`product-categories/${categoryId}/products/`)
 }
 
 export async function createProductCategory(categorie) {

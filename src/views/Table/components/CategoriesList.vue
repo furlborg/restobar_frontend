@@ -4,7 +4,7 @@
     <n-scrollbar class="mt-2" style="height: 700px">
       <n-list v-if="listType === 'list'" class="me-2">
         <n-list-item
-          v-for="(id, index) in productStore.categories"
+          v-for="(category, index) in productStore.categories"
           :key="index"
         >
           <template #prefix>
@@ -20,9 +20,12 @@
               <n-space align="center">
                 <router-link
                   class="text-decoration-none"
-                  :to="{ name: 'CategoriesItems', params: { category: index } }"
+                  :to="{
+                    name: 'CategoriesItems',
+                    params: { category: category.id },
+                  }"
                 >
-                  <n-text class="fs-4">Categoria</n-text>
+                  <n-text class="fs-4">{{ category.description }}</n-text>
                 </router-link>
                 <n-text class="fs-6" type="success">S/. 10.00</n-text>
               </n-space>
@@ -54,7 +57,10 @@
           <div class="item-zoom">
             <router-link
               class="text-decoration-none"
-              :to="{ name: 'CategoriesItems', params: { category: index } }"
+              :to="{
+                name: 'CategoriesItems',
+                params: { category: category.id },
+              }"
             >
               <img src="~@/assets/images/category-bg.jpg" alt="" />
               <n-text
@@ -70,9 +76,10 @@
 </template>
 
 <script>
-import { defineComponent, ref } from "vue";
+import { defineComponent, ref, onMounted } from "vue";
 import { renderIcon } from "@/utils";
 import { useProductStore } from "@/store/modules/product";
+import { useRoute } from "vue-router";
 
 export default defineComponent({
   name: "CategoriesList",
@@ -80,7 +87,9 @@ export default defineComponent({
     const productStore = useProductStore();
     const listType = ref("grid");
 
-    productStore.refreshCategories();
+    onMounted(() => {
+      productStore.refreshCategories();
+    });
 
     const productOptions = [
       {

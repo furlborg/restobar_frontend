@@ -41,7 +41,7 @@ export const useProductStore = defineStore('product', {
             }
         },
         getCategorieDescription(id) {
-            const categorie = this.categories.find(categorie => categorie.id === id)
+            const categorie = this.categories.find(categorie => categorie.id === Number(id))
             if (categorie) {
                 return categorie.description
             } else {

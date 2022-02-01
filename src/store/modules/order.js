@@ -7,7 +7,7 @@ export const useOrderStore = defineStore('order', {
     }),
     getters: {
         orderList(state) {
-            state.orders.forEach(order => order.subTotal = order.quantity * order.price.toFixed(2))
+            state.orders.forEach(order => (order.subTotal = order.quantity * parseFloat(order.price).toFixed(2), order.indications = []))
             return state.orders
         },
         orderTotal(state) {
@@ -21,12 +21,16 @@ export const useOrderStore = defineStore('order', {
             return null
         },
         addOrder(product) {
-            const existence = this.orders.find(order => order.id === product.id)
+            const existence = this.orders.find(order => order.product === product.id)
             if (typeof existence !== "undefined") {
                 existence.quantity++
             } else {
-                let order = cloneDeep(product)
-                order.quantity++
+                let order = {
+                    product: product.id,
+                    product_name: product.name,
+                    price: product.prices,
+                    quantity: 1,
+                }
                 this.orders.push(order)
             }
         }

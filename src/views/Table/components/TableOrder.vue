@@ -40,7 +40,7 @@
                     /></n-button>
                   </td>
                   <td>
-                    {{ order.title }}
+                    {{ order.product_name }}
                   </td>
                   <td>
                     <n-input-number

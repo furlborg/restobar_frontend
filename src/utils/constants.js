@@ -244,33 +244,10 @@ export const productRules = {
         message: 'Nombre requeridos'
     },
     prices: {
-        type: 'number',
         required: true,
         trigger: ['blur', 'input'],
         message: 'Precio requerido'
     },
-    /* measure_unit: {
-        required: true,
-        trigger: ['blur', 'change'],
-        message: 'Número documento requerido'
-    },
-    stock: {
-        required: true,
-        trigger: ['blur', 'input'],
-        message: 'Número documento requerido'
-    },
-    number_points: {
-        type: 'number',
-        required: true,
-        trigger: ['blur', 'input'],
-        message: 'Número documento requerido'
-    },
-    redeem_points: {
-        type: 'number',
-        required: true,
-        trigger: ['blur', 'input'],
-        message: 'Número documento requerido'
-    }, */
 }
 
 export const createUserColumns = ({ editUser, deleteUser, changePassword }) => {
