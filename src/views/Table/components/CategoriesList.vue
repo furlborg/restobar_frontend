@@ -3,7 +3,10 @@
     <n-text class="fs-4">Categorías</n-text>
     <n-scrollbar class="mt-2" style="height: 700px">
       <n-list v-if="listType === 'list'" class="me-2">
-        <n-list-item v-for="index in 10" :key="index">
+        <n-list-item
+          v-for="(id, index) in productStore.categories"
+          :key="index"
+        >
           <template #prefix>
             <img
               src="~@/assets/images/category-bg.jpg"
@@ -43,7 +46,11 @@
         :x-gap="12"
         :y-gap="12"
       >
-        <n-gi :span="4" v-for="index in 10" :key="index">
+        <n-gi
+          :span="4"
+          v-for="(category, index) in productStore.categories"
+          :key="index"
+        >
           <div class="item-zoom">
             <router-link
               class="text-decoration-none"
@@ -52,7 +59,7 @@
               <img src="~@/assets/images/category-bg.jpg" alt="" />
               <n-text
                 class="position-absolute top-50 start-50 translate-middle fs-2"
-                >Categoría</n-text
+                >{{ category.description }}</n-text
               >
             </router-link>
           </div>
@@ -65,11 +72,15 @@
 <script>
 import { defineComponent, ref } from "vue";
 import { renderIcon } from "@/utils";
+import { useProductStore } from "@/store/modules/product";
 
 export default defineComponent({
   name: "CategoriesList",
   setup() {
+    const productStore = useProductStore();
     const listType = ref("grid");
+
+    productStore.refreshCategories();
 
     const productOptions = [
       {
@@ -87,6 +98,7 @@ export default defineComponent({
     return {
       listType,
       productOptions,
+      productStore,
     };
   },
 });
@@ -112,10 +124,6 @@ export default defineComponent({
   -moz-filter: grayscale(100%);
   filter: grayscale(100%);
 }
-
-/* .item-zoom span {
-    text-shadow: 0px 0px 5px white;
-} */
 
 .item-zoom:hover img {
   -moz-transform: scale(1.1);

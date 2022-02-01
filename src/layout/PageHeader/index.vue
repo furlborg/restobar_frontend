@@ -1,14 +1,15 @@
 <template>
   <div class="layout-header">
     <div class="layout-header-left">
-      <div class="layout-header-trigger layout-header-trigger-min"
-           @click="() => $emit('update:collapsed', !collapsed)"
+      <div
+        class="layout-header-trigger layout-header-trigger-min"
+        @click="() => $emit('update:collapsed', !collapsed)"
       >
         <n-icon size="18" v-if="collapsed">
-          <v-icon name="oi-sidebar-expand" flip="horizontal"/>
+          <v-icon name="oi-sidebar-expand" flip="horizontal" />
         </n-icon>
         <n-icon size="18" v-else>
-          <v-icon name="oi-sidebar-collapse" flip="horizontal"/>
+          <v-icon name="oi-sidebar-collapse" flip="horizontal" />
         </n-icon>
       </div>
     </div>
@@ -23,7 +24,10 @@
           <span>Pantalla completa</span>
         </n-tooltip>
       </div>
-      <div class="layout-header-trigger layout-header-trigger-min" @click="openSetting">
+      <div
+        class="layout-header-trigger layout-header-trigger-min"
+        @click="openSetting"
+      >
         <n-tooltip>
           <template #trigger>
             <n-icon size="18">
@@ -34,7 +38,12 @@
         </n-tooltip>
       </div>
       <div class="layout-header-trigger layout-header-trigger-min">
-        <n-dropdown trigger="hover" placement="bottom-end" @select="avatarSelect" :options="avatarOptions">
+        <n-dropdown
+          trigger="hover"
+          placement="bottom-end"
+          @select="avatarSelect"
+          :options="avatarOptions"
+        >
           <div class="avatar">
             <n-avatar>
               <v-icon name="hi-user" />
@@ -48,10 +57,10 @@
 </template>
 
 <script>
-import {defineComponent, reactive, ref, toRefs} from "vue"
-import {useDialog, useMessage} from "naive-ui"
-import ProjectSetting from './ProjectSetting'
-import { useRouter } from "vue-router"
+import { defineComponent, reactive, ref, toRefs } from "vue";
+import { useDialog, useMessage } from "naive-ui";
+import ProjectSetting from "./ProjectSetting";
+import { useRouter } from "vue-router";
 
 export default defineComponent({
   name: "PageHeader",
@@ -64,75 +73,78 @@ export default defineComponent({
     },
   },
   setup() {
-    const router = useRouter()
-    const message = useMessage()
-    const dialog = useDialog()
-    const drawerSetting = ref()
+    const router = useRouter();
+    const message = useMessage();
+    const dialog = useDialog();
+    const drawerSetting = ref();
 
     const state = reactive({
-      fullscreenIcon: 'bi-fullscreen',
-    })
+      fullscreenIcon: "bi-fullscreen",
+    });
 
-    const toggleFullscreenIcon = () => (
-        state.fullscreenIcon = document.fullscreenElement !== null ? 'bi-fullscreen-exit' : 'bi-fullscreen'
-    )
+    const toggleFullscreenIcon = () =>
+      (state.fullscreenIcon =
+        document.fullscreenElement !== null
+          ? "bi-fullscreen-exit"
+          : "bi-fullscreen");
 
-    document.addEventListener('fullscreenchange', toggleFullscreenIcon)
+    document.addEventListener("fullscreenchange", toggleFullscreenIcon);
 
     const toggleFullScreen = () => {
       if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen()
+        document.documentElement.requestFullscreen();
       } else {
         if (document.exitFullscreen) {
-          document.exitFullscreen()
+          document.exitFullscreen();
         }
       }
-    }
+    };
 
     const avatarOptions = [
       {
-        label: 'Modo Mozo',
+        label: "Modo Mozo",
         key: 0,
       },
       {
-        label: 'Configuraciones personales',
+        label: "Configuraciones personales",
         key: 1,
       },
       {
-        label: 'Desconectar',
+        label: "Desconectar",
         key: 2,
+        style: "color:blue;",
       },
-    ]
+    ];
 
     const avatarSelect = (key) => {
       switch (key) {
         case 0:
-          router.push({name: 'WaiterMode'})
+          router.push({ name: "WaiterMode" });
           break;
         case 1:
-          console.log('option 1')
+          console.log("option 1");
           break;
         case 2:
           doLogout();
-          console.log('option 2')
+          console.log("option 2");
           break;
       }
-    }
+    };
 
     const doLogout = () => {
       dialog.info({
-        title: 'Logout',
-        content: 'Are you sure you want to log out',
-        positiveText: 'Yes',
-        negativeText: 'No',
+        title: "Logout",
+        content: "Are you sure you want to log out",
+        positiveText: "Yes",
+        negativeText: "No",
         onPositiveClick: () => {
-          message.success('You just logged out...')
+          message.success("You just logged out...");
         },
         onNegativeClick: () => {
-          message.error('You stay...')
+          message.error("You stay...");
         },
-      })
-    }
+      });
+    };
 
     function openSetting() {
       const { openDrawer } = drawerSetting.value;
@@ -147,9 +159,9 @@ export default defineComponent({
       avatarSelect,
       drawerSetting,
       openSetting,
-    }
-  }
-})
+    };
+  },
+});
 </script>
 
 <style lang="scss" scoped>
@@ -230,7 +242,9 @@ export default defineComponent({
   }
 
   .layout-header-left {
-    ::v-deep(.n-breadcrumb .n-breadcrumb-item:last-child .n-breadcrumb-item__link) {
+    ::v-deep(.n-breadcrumb
+        .n-breadcrumb-item:last-child
+        .n-breadcrumb-item__link) {
       color: #515a6e;
     }
   }

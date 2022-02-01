@@ -96,6 +96,7 @@
                   :to="{ name: 'TableOrder', params: { table: table.id } }"
                 > -->
                 <img
+                  draggable="false"
                   src="~@/assets/images/default-table.png"
                   alt=""
                   width="128"
@@ -250,10 +251,5 @@ export default defineComponent({
 <style lang="scss" scoped>
 .table img {
   opacity: 0.15;
-  user-select: none;
-  -moz-user-select: none;
-  -webkit-user-drag: none;
-  -webkit-user-select: none;
-  -ms-user-select: none;
 }
 </style>

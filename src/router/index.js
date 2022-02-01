@@ -1,13 +1,17 @@
-import { useTillStore } from "@/store/modules/till";
 import { createRouter, createWebHistory } from 'vue-router'
+import { useTillStore } from "@/store/modules/till";
+import { useUserStore } from '@/store/modules/user'
 import { retrieveCurrentTill } from '@/api/modules/tills'
 
 const routes = [
   {
     path: "",
     name: "App",
-    redirect: { name: "Login" },
+    redirect: { name: "Dashboard" },
     component: () => import(/* webpackChunkName: "dashboard" */ '@/layout'),
+    meta: {
+      requiresAuth: true,
+    },
     children: [
       {
         path: 'dashboard',
@@ -140,12 +144,18 @@ const routes = [
     path: '/initial-setup',
     name: 'InitialSetup',
     component: () => import(/* webpackChunkName: "waiter-mode" */ '@/InitialSetup'),
+    meta: {
+      requiresAuth: true,
+    },
   },
   {
     path: '/waiter-mode',
     name: 'WaiterMode',
     redirect: { name: 'WHome' },
     component: () => import(/* webpackChunkName: "waiter-mode" */ '@/WaiterMode'),
+    meta: {
+      requiresAuth: true,
+    },
     children: [
       {
         name: 'WHome',
@@ -177,6 +187,19 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes
+})
+
+router.beforeEach((to, from, next) => {
+  const userStore = useUserStore()
+  userStore.checkAuthentication()
+  if (to.matched.some((record) => record.meta.requiresAuth)) {
+    if (userStore.isAuthenticated) {
+      next()
+      return
+    }
+    next({ name: 'Login' })
+  }
+  next()
 })
 
 export default router

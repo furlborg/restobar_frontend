@@ -244,6 +244,7 @@ export const productRules = {
         message: 'Nombre requeridos'
     },
     prices: {
+        type: 'number',
         required: true,
         trigger: ['blur', 'input'],
         message: 'Precio requerido'
@@ -304,14 +305,14 @@ export const createUserColumns = ({ editUser, deleteUser, changePassword }) => {
         },
         {
             title: 'Estado',
-            render (row) {
+            render(row) {
                 let type, text;
                 if (row.is_active) {
-                    type="success"
-                    text="Activo"
+                    type = "success"
+                    text = "Activo"
                 } else {
-                    type="error"
-                    text="Inactivo"
+                    type = "error"
+                    text = "Inactivo"
                 }
 
                 return h(
@@ -326,7 +327,7 @@ export const createUserColumns = ({ editUser, deleteUser, changePassword }) => {
                     }
                 )
             }
-        }, 
+        },
         {
             title: 'Acciones',
             key: 'actions',
@@ -359,7 +360,7 @@ export const createUserColumns = ({ editUser, deleteUser, changePassword }) => {
                         NButton,
                         {
                             size: 'small',
-                            type: row.is_active?'error': 'success',
+                            type: row.is_active ? 'error' : 'success',
                             secondary: true,
                             onClick: () => deleteUser(row)
                         },
