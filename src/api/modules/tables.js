@@ -1,4 +1,5 @@
 import { http } from "@/api"
+import { MdDetails } from "oh-vue-icons/icons"
 
 export async function getAreas() {
     return await http.get('areas/')
@@ -31,7 +32,7 @@ export async function createTable(areaID, table) {
 }
 
 export async function updateTable(areaID, table) {
-    return await http.put(`tables/${table.id}`, {
+    return await http.put(`tables/${table.id}/`, {
         area: areaID,
         code: table.code,
         description: table.description,
@@ -40,9 +41,19 @@ export async function updateTable(areaID, table) {
 }
 
 export async function disableTable(id) {
-    return await http.delete(`tables/${id}`)
+    return await http.delete(`tables/${id}/`)
 }
 
 export async function getAreasTables() {
     return await http.get('areas/areas_tables/')
+}
+
+export async function createTableOrder(idTable, details) {
+    return await http.post(`tables/${idTable}/take_order/`, {
+        order_details: {
+            product: details.product,
+            indication: details.indication,
+            quantity: details.quantity
+        },
+    })
 }

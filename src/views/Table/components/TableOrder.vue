@@ -15,7 +15,18 @@
         <n-gi span="2">
           <n-card class="h-100" title="Pedidos" :bordered="false" embedded>
             <template #header-extra>
-              <n-switch size="small" /><n-text>Por consumo</n-text>
+              <router-link
+                class="text-decoration-none"
+                :to="{
+                  name: 'TablePayment',
+                  params: { table: $route.params.table },
+                }"
+              >
+                <n-button type="success" text>
+                  <span class="fs-6">Cobrar</span>
+                  <v-icon class="me-1" name="gi-money-stack" scale="1.5" />
+                </n-button>
+              </router-link>
             </template>
             <n-table>
               <thead>
@@ -59,18 +70,14 @@
               <tfoot>
                 <tr>
                   <td colspan="3">
-                    <router-link
-                      class="text-decoration-none"
-                      :to="{
-                        name: 'TablePayment',
-                        params: { table: $route.params.table },
-                      }"
-                    >
-                      <n-button type="success" text block>
-                        <v-icon class="me-2" name="gi-money-stack" scale="2" />
-                        <span class="fs-4">Cobrar</span>
-                      </n-button>
-                    </router-link>
+                    <n-button type="info" text block>
+                      <v-icon
+                        class="me-2"
+                        name="md-notealt-twotone"
+                        scale="2"
+                      />
+                      <span class="fs-4">Guardar pedido</span>
+                    </n-button>
                   </td>
                   <td class="fs-6 fw-bold">
                     TOTAL S/. {{ orderStore.orderTotal }}

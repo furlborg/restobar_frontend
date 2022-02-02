@@ -53,7 +53,8 @@ export const useUserStore = defineStore('user', {
             useCookie.remove('user-info')
             useCookie.remove('token')
             useCookie.remove('refresh')
-            localStorage.removeItem('isAuthenticated')
+            this.isAuthenticated = false
+            localStorage.setItem('isAuthenticated', this.isAuthenticated)
         }
     }
 })

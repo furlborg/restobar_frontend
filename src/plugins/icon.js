@@ -82,6 +82,7 @@ import {
     MdNotinterestedRound,
     MdPersonoutlineTwotone,
     MdLockopenTwotone,
+    MdNotealtTwotone,
 } from "oh-vue-icons/icons";
 OhVueIcon.add(
     BiThreeDots,
@@ -166,5 +167,6 @@ OhVueIcon.add(
     MdNotinterestedRound,
     MdPersonoutlineTwotone,
     MdLockopenTwotone,
+    MdNotealtTwotone,
 );
 export { OhVueIcon }

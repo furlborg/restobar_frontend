@@ -196,10 +196,14 @@ router.beforeEach((to, from, next) => {
     if (userStore.isAuthenticated) {
       next()
       return
+    } else {
+      next({ name: 'Login' })
+      return
     }
-    next({ name: 'Login' })
+  } else {
+    next()
+    return
   }
-  next()
 })
 
 export default router
