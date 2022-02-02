@@ -76,6 +76,8 @@ export default defineComponent({
 
     const router = useRouter();
 
+    userStore.initializeStore();
+
     const formInline = reactive({
       username: "ADMIN",
       password: "admin",
@@ -102,7 +104,7 @@ export default defineComponent({
           loading.value = true;
           await login(username, password)
             .then((response) => {
-              userStore.initializeStore(response.data);
+              userStore.login(response.data);
               message.success("¡Inicio de sesión correcto!");
               loading.value = false;
               router.push({ name: "Dashboard" });
