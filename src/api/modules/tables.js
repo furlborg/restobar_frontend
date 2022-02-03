@@ -48,12 +48,13 @@ export async function getAreasTables() {
     return await http.get('areas/areas_tables/')
 }
 
+export async function retrieveTableOrder(idTable) {
+    return await http.get(`tables/${idTable}/order/`)
+}
+
 export async function createTableOrder(idTable, details) {
+    let order_details = details.map(order => ({ product: order.product, indication: order.indications, quantity: order.quantity }))
     return await http.post(`tables/${idTable}/take_order/`, {
-        order_details: {
-            product: details.product,
-            indication: details.indication,
-            quantity: details.quantity
-        },
+        order_details: order_details,
     })
 }

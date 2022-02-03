@@ -70,7 +70,12 @@
               <tfoot>
                 <tr>
                   <td colspan="3">
-                    <n-button type="info" text block>
+                    <n-button
+                      type="info"
+                      text
+                      block
+                      @click="performCreateTableOrder"
+                    >
                       <v-icon
                         class="me-2"
                         name="md-notealt-twotone"
@@ -100,12 +105,14 @@
 </template>
 
 <script>
-import { defineComponent, ref } from "vue";
+import { defineComponent, ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useRouter } from "vue-router";
+import { useMessage } from "naive-ui";
 import OrderIndications from "./OrderIndications";
 import { renderIcon } from "@/utils";
 import { useOrderStore } from "@/store/modules/order";
+import { retrieveTableOrder, createTableOrder } from "@/api/modules/tables";
 
 export default defineComponent({
   name: "TableOrder",
@@ -115,6 +122,7 @@ export default defineComponent({
   setup() {
     const route = useRoute();
     const router = useRouter();
+    const message = useMessage();
     const table = route.params.table;
     const orderStore = useOrderStore();
     const listType = ref("grid");
@@ -134,6 +142,38 @@ export default defineComponent({
       },
     ];
 
+    const performRetrieveTableOrder = () => {
+      retrieveTableOrder(route.params.table)
+        .then((response) => {
+          if (response.status === 200) {
+            orderStore.orders = response.data.order_details;
+          }
+        })
+        .catch((error) => {
+          if (error.response.status === 404) {
+            orderStore.orders = [];
+          } else {
+            console.error(error);
+            message.error("Algo salió mal...");
+          }
+        });
+    };
+
+    onMounted(() => {
+      performRetrieveTableOrder();
+    });
+
+    const performCreateTableOrder = () => {
+      createTableOrder(route.params.table, orderStore.orderList)
+        .then((response) => {
+          console.log(response.status);
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        });
+    };
+
     const handleBack = () => {
       router.push({ name: "TableHome" });
     };
@@ -146,6 +186,7 @@ export default defineComponent({
       listType,
       productOptions,
       orderStore,
+      performCreateTableOrder,
     };
   },
 });

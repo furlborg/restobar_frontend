@@ -7,7 +7,7 @@ export const useOrderStore = defineStore('order', {
     }),
     getters: {
         orderList(state) {
-            state.orders.forEach(order => (order.subTotal = order.quantity * parseFloat(order.price).toFixed(2), order.indications = []))
+            state.orders.forEach(order => (order.subTotal = Number(order.quantity) * parseFloat(order.price).toFixed(2), order.indications = []))
             return state.orders
         },
         orderTotal(state) {
