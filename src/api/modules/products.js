@@ -35,7 +35,6 @@ export async function createProduct(product) {
 }
 
 export async function updateProduct(idProduct, product) {
-    console.log(product.categorie);
     return await http.put(`products/${idProduct}/`, {
         name: product.name,
         description: product.description,

@@ -14,41 +14,43 @@
       <n-list-item
         v-for="(indication, index) in indications"
         class="p-2"
-        :class="{ 'bg-selected': selectedIndication === indication }"
+        :class="{ 'bg-selected': selectedIndication === index }"
         :key="index"
-        @click="selectIndication(indication)"
+        @click="selectIndication(index)"
       >
         <template #prefix>
           <v-icon
-            :name="indication.takeAway ? 'io-bag' : 'io-bag-check'"
+            :name="!indication.takeAway ? 'io-bag' : 'io-bag-check'"
             @click="
               indication.takeAway
                 ? (indication.takeAway = false)
                 : (indication.takeAway = true)
             "
-            :fill="indication.takeAway ? null : 'green'"
+            :fill="!indication.takeAway ? null : 'green'"
+            @click.stop
           ></v-icon>
         </template>
         <n-thing
           :title="order.product_name"
           :title-extra="`S/. ${order.price}`"
-          :description="indication.description"
         ></n-thing>
+        <n-collapse-transition :show="selectedIndication === index">
+          <n-form>
+            <n-form-item
+              v-if="selectedIndication !== null"
+              :span="12"
+              label="Indicaciones"
+            >
+              <n-input
+                @click.stop
+                type="textarea"
+                v-model:value="indication.description"
+              />
+            </n-form-item>
+          </n-form>
+        </n-collapse-transition>
       </n-list-item>
     </n-list>
-    <n-collapse-transition :show="!!selectedIndication">
-      <n-form>
-        <n-form-item
-          v-if="selectedIndication !== null"
-          :span="12"
-          v-model:value="selectedIndication.description"
-          label="Indicaciones"
-        >
-          <n-input type="textarea" />
-        </n-form-item>
-        <!-- <n-button type="info" block></n-button> -->
-      </n-form>
-    </n-collapse-transition>
     <template #action>
       <n-space justify="end"
         ><n-button type="info" @click="saveIndications"
@@ -134,7 +136,6 @@ export default defineComponent({
 
     const saveIndications = () => {
       order.value.indication = cloneDeep(indications.value);
-      console.log(order.value);
       indications.value = [];
       emit("success");
     };

@@ -53,14 +53,14 @@ export async function retrieveTableOrder(idTable) {
 }
 
 export async function createTableOrder(idTable, details) {
-    let order_details = details.map(order => ({ product: order.product, indication: order.indications, quantity: order.quantity }))
+    let order_details = details.map(order => ({ product: order.product, indication: order.indication, quantity: order.quantity }))
     return await http.post(`tables/${idTable}/take_order/`, {
         order_details: order_details,
     })
 }
 
 export async function updateTableOrder(idTable, orderId, details) {
-    let order_details = details.map(order => ({ id: order.id, product: order.product, indication: order.indications, quantity: order.quantity }))
+    let order_details = details.map(order => ({ id: order.id, product: order.product, indication: order.indication, quantity: order.quantity }))
     return await http.put(`tables/${idTable}/change_order/`, {
         id: orderId,
         order_details: order_details,
