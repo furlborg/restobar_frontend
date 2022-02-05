@@ -92,6 +92,7 @@ import { defineComponent, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import { useRouter } from "vue-router";
 import { useMessage } from "naive-ui";
+import { renderIcon } from "@/utils";
 import { useOrderStore } from "@/store/modules/order";
 import { getProductsByCategory } from "@/api/modules/products";
 import { useProductStore } from "@/store/modules/product";
@@ -107,6 +108,19 @@ export default defineComponent({
     const category = route.params.category;
     const listType = ref("list");
     const products = ref([]);
+
+    const productOptions = [
+      {
+        label: "Editar",
+        key: "edit",
+        icon: renderIcon("ri-edit-fill"),
+      },
+      {
+        label: "Eliminar",
+        key: "delete",
+        icon: renderIcon("ri-delete-bin-2-fill"),
+      },
+    ];
 
     const loadProducts = () => {
       getProductsByCategory(route.params.category)
@@ -132,6 +146,7 @@ export default defineComponent({
     return {
       handleBack,
       listType,
+      productOptions,
       productStore,
       category,
       products,

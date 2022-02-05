@@ -34,7 +34,8 @@
                   <th width="10%"></th>
                   <th width="40%">Producto</th>
                   <th width="25%">Cantidad</th>
-                  <th width="25%">SubTotal</th>
+                  <th width="15%">SubTotal</th>
+                  <th width="10%"></th>
                 </tr>
               </thead>
               <tbody>
@@ -65,26 +66,46 @@
                     />
                   </td>
                   <td>S/. {{ order.subTotal }}</td>
+                  <td>
+                    <n-button
+                      type="error"
+                      text
+                      @click="
+                        !order.id
+                          ? orderStore.orderList.splice(index, 1)
+                          : deleteOrderDetail(index, order.id)
+                      "
+                    >
+                      <v-icon name="md-disabledbydefault-round" />
+                    </n-button>
+                  </td>
                 </tr>
               </tbody>
               <tfoot>
                 <tr>
                   <td colspan="3">
                     <n-button
-                      type="info"
+                      :type="orderId ? 'info' : 'primary'"
                       text
                       block
-                      @click="performCreateTableOrder"
+                      :disabled="!orderStore.orderList.length"
+                      @click="
+                        orderId
+                          ? performUpdateTableOrder()
+                          : performCreateTableOrder()
+                      "
                     >
                       <v-icon
                         class="me-2"
                         name="md-notealt-twotone"
                         scale="2"
                       />
-                      <span class="fs-4">Guardar pedido</span>
+                      <span class="fs-4"
+                        >{{ orderId ? "Guardar" : "Realizar" }} pedido</span
+                      >
                     </n-button>
                   </td>
-                  <td class="fs-6 fw-bold">
+                  <td colspan="2" class="fs-6 fw-bold">
                     TOTAL S/. {{ orderStore.orderTotal }}
                   </td>
                 </tr>
@@ -97,7 +118,7 @@
         v-model:show="showModal"
         preset="card"
         title="Indicaciones"
-        :product="orderStore.orderList[itemIndex]"
+        :order="orderStore.orderList[itemIndex]"
         @success="showModal = false"
       ></OrderIndications>
     </n-card>
@@ -105,14 +126,18 @@
 </template>
 
 <script>
+import OrderIndications from "./OrderIndications";
 import { defineComponent, ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useRouter } from "vue-router";
-import { useMessage } from "naive-ui";
-import OrderIndications from "./OrderIndications";
-import { renderIcon } from "@/utils";
+import { useDialog, useMessage } from "naive-ui";
 import { useOrderStore } from "@/store/modules/order";
-import { retrieveTableOrder, createTableOrder } from "@/api/modules/tables";
+import {
+  retrieveTableOrder,
+  createTableOrder,
+  updateTableOrder,
+  performDeleteOrderDetail,
+} from "@/api/modules/tables";
 
 export default defineComponent({
   name: "TableOrder",
@@ -123,30 +148,22 @@ export default defineComponent({
     const route = useRoute();
     const router = useRouter();
     const message = useMessage();
+    const dialog = useDialog();
     const table = route.params.table;
     const orderStore = useOrderStore();
     const listType = ref("grid");
     const showModal = ref(false);
+    const orderId = ref(null);
     const itemIndex = ref(null);
 
-    const productOptions = [
-      {
-        label: "Editar",
-        key: "edit",
-        icon: renderIcon("ri-edit-fill"),
-      },
-      {
-        label: "Eliminar",
-        key: "delete",
-        icon: renderIcon("ri-delete-bin-2-fill"),
-      },
-    ];
+    orderStore.orders = [];
 
     const performRetrieveTableOrder = () => {
       retrieveTableOrder(route.params.table)
         .then((response) => {
           if (response.status === 200) {
             orderStore.orders = response.data.order_details;
+            orderId.value = response.data.id;
           }
         })
         .catch((error) => {
@@ -166,12 +183,45 @@ export default defineComponent({
     const performCreateTableOrder = () => {
       createTableOrder(route.params.table, orderStore.orderList)
         .then((response) => {
-          console.log(response.status);
+          if (response.status === 201) {
+            message.success("Orden creada correctamente");
+          }
         })
         .catch((error) => {
           console.error(error);
           message.error("Algo salió mal...");
         });
+    };
+
+    const performUpdateTableOrder = () => {
+      updateTableOrder(route.params.table, orderId.value, orderStore.orderList)
+        .then((response) => {
+          if (response.status === 202) {
+            message.success("Orden actualizada correctamente");
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        });
+    };
+
+    const deleteOrderDetail = (detailIndex, detailId) => {
+      dialog.error({
+        title: "Eliminando comanda",
+        content: "¿Está seguro?",
+        positiveText: "Sí",
+        onPositiveClick: () => {
+          performDeleteOrderDetail(route.params.table, detailId).then(
+            (response) => {
+              if (response.status === 202) {
+                orderStore.orderList.splice(detailIndex, 1);
+                message.success("Comanda eliminada");
+              }
+            }
+          );
+        },
+      });
     };
 
     const handleBack = () => {
@@ -181,12 +231,14 @@ export default defineComponent({
     return {
       showModal,
       itemIndex,
+      orderId,
       table,
       handleBack,
       listType,
-      productOptions,
       orderStore,
       performCreateTableOrder,
+      performUpdateTableOrder,
+      deleteOrderDetail,
     };
   },
 });

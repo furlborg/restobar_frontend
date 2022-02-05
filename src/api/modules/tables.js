@@ -58,3 +58,17 @@ export async function createTableOrder(idTable, details) {
         order_details: order_details,
     })
 }
+
+export async function updateTableOrder(idTable, orderId, details) {
+    let order_details = details.map(order => ({ id: order.id, product: order.product, indication: order.indications, quantity: order.quantity }))
+    return await http.put(`tables/${idTable}/change_order/`, {
+        id: orderId,
+        order_details: order_details,
+    })
+}
+
+export async function performDeleteOrderDetail(idTable, orderId) {
+    return await http.post(`tables/${idTable}/remove_detail/`, {
+        id: orderId,
+    })
+}

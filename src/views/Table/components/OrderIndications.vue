@@ -11,7 +11,13 @@
     :on-close="() => $emit('update:show')"
   >
     <n-list>
-      <n-list-item v-for="(indication, index) in indications" :key="index">
+      <n-list-item
+        v-for="(indication, index) in indications"
+        class="p-2"
+        :class="{ 'bg-selected': selectedIndication === indication }"
+        :key="index"
+        @click="selectIndication(indication)"
+      >
         <template #prefix>
           <v-icon
             :name="indication.takeAway ? 'io-bag' : 'io-bag-check'"
@@ -24,19 +30,25 @@
           ></v-icon>
         </template>
         <n-thing
-          :title="product.title"
-          title-extra="S/. 10.00"
-          description="indicaciones"
+          :title="order.product_name"
+          :title-extra="`S/. ${order.price}`"
+          :description="indication.description"
         ></n-thing>
       </n-list-item>
     </n-list>
-    <n-form>
-      <n-grid responsive="screen" cols="12 s:12 m:12 l:12 xl:12 2xl:12">
-        <n-form-item-gi :span="12" label="Indicaciones">
+    <n-collapse-transition :show="!!selectedIndication">
+      <n-form>
+        <n-form-item
+          v-if="selectedIndication !== null"
+          :span="12"
+          v-model:value="selectedIndication.description"
+          label="Indicaciones"
+        >
           <n-input type="textarea" />
-        </n-form-item-gi>
-      </n-grid>
-    </n-form>
+        </n-form-item>
+        <!-- <n-button type="info" block></n-button> -->
+      </n-form>
+    </n-collapse-transition>
     <template #action>
       <n-space justify="end"
         ><n-button type="info" @click="saveIndications"
@@ -60,46 +72,45 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
-    product: {
+    order: {
       default: null,
     },
   },
   setup(props, { emit }) {
-    const { show, product } = toRefs(props);
+    const { show, order } = toRefs(props);
     const genericsStore = useGenericsStore();
     const indications = ref([]);
 
     watch(show, () => {
-      if (show.value === true && product.value.indications.length === 0) {
-        indications.value = Array.apply(
-          null,
-          Array(product.value.quantity)
-        ).map(() => ({ takeAway: false, description: "" }));
+      if (show.value === true && order.value.indication.length === 0) {
+        indications.value = Array.apply(null, Array(order.value.quantity)).map(
+          () => ({ takeAway: false, description: "" })
+        );
       } else if (
         show.value === true &&
-        product.value.indications.length === product.value.quantity
+        order.value.indication.length === order.value.quantity
       ) {
-        indications.value = cloneDeep(product.value.indications);
+        indications.value = cloneDeep(order.value.indication);
       } else if (
         show.value === true &&
-        product.value.indications.length < product.value.quantity
+        order.value.indication.length < order.value.quantity
       ) {
-        indications.value = cloneDeep(product.value.indications);
+        indications.value = cloneDeep(order.value.indication);
         for (
           let i = 0;
-          i < product.value.quantity - product.value.indications.length;
+          i < order.value.quantity - order.value.indication.length;
           i++
         ) {
           indications.value.push({ takeAway: false, description: "" });
         }
       } else if (
         show.value === true &&
-        product.value.indications.length > product.value.quantity
+        order.value.indication.length > order.value.quantity
       ) {
-        indications.value = cloneDeep(product.value.indications);
+        indications.value = cloneDeep(order.value.indication);
         for (
           let i = 0;
-          i < product.value.indications.length - product.value.quantity;
+          i < order.value.indication.length - order.value.quantity;
           i++
         ) {
           indications.value.pop();
@@ -107,8 +118,23 @@ export default defineComponent({
       }
     });
 
+    const selectedIndication = ref(null);
+
+    const selectIndication = (indication) => {
+      if (!selectedIndication) {
+        selectedIndication.value = indication;
+      } else {
+        if (selectedIndication.value === indication) {
+          selectedIndication.value = null;
+        } else {
+          selectedIndication.value = indication;
+        }
+      }
+    };
+
     const saveIndications = () => {
-      product.value.indications = cloneDeep(indications.value);
+      order.value.indication = cloneDeep(indications.value);
+      console.log(order.value);
       indications.value = [];
       emit("success");
     };
@@ -117,10 +143,15 @@ export default defineComponent({
       genericsStore,
       indications,
       saveIndications,
+      selectIndication,
+      selectedIndication,
     };
   },
 });
 </script>
 
-<style>
+<style lang="scss">
+.bg-selected {
+  background-color: AliceBlue;
+}
 </style>
