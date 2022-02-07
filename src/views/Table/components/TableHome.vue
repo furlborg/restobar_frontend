@@ -250,10 +250,6 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-.table img {
-  /* w */
-}
-
 .bg-occuped {
   background-color: rgb(255, 128, 128);
 }
