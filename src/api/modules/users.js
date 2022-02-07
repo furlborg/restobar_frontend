@@ -58,3 +58,9 @@ export async function login(username, password) {
         password: password,
     })
 }
+
+export async function refreshToken(refresh) {
+    return await http.post('login/refresh/', {
+        refresh: refresh,
+    })
+}

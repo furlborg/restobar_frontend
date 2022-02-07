@@ -42,6 +42,7 @@
             <n-card
               :id="`table-${table.id}`"
               class="position-relative overflow-hidden table"
+              :class="{ 'bg-occuped': table.status === '3' }"
               size="small"
               @click="
                 groupMode
@@ -251,5 +252,9 @@ export default defineComponent({
 <style lang="scss" scoped>
 .table img {
   opacity: 0.15;
+}
+
+.bg-occuped {
+  background-color: LavenderBlush;
 }
 </style>

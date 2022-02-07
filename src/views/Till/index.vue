@@ -160,11 +160,11 @@
             <!-- <n-form-item-gi label="Sucursal" :span="3">
               <n-select clearable />
             </n-form-item-gi> -->
-            <n-gi :span="3">
+            <n-form-item-gi :span="3">
               <n-button type="info" secondary @click="performFilter"
                 >Buscar</n-button
               >
-            </n-gi>
+            </n-form-item-gi>
           </n-grid>
         </n-form>
       </n-collapse-transition>

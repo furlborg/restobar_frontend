@@ -83,6 +83,7 @@ import {
     MdPersonoutlineTwotone,
     MdLockopenTwotone,
     MdNotealtTwotone,
+    FaCoins,
 } from "oh-vue-icons/icons";
 OhVueIcon.add(
     BiThreeDots,
@@ -168,5 +169,6 @@ OhVueIcon.add(
     MdPersonoutlineTwotone,
     MdLockopenTwotone,
     MdNotealtTwotone,
+    FaCoins,
 );
 export { OhVueIcon }

@@ -100,7 +100,6 @@ export default defineComponent({
       formRef.value.validate(async (errors) => {
         if (!errors) {
           const { username, password } = formInline;
-          message.loading("Iniciando sesión...");
           loading.value = true;
           await login(username, password)
             .then((response) => {

@@ -16,6 +16,7 @@
           <n-card class="h-100" title="Pedidos" :bordered="false" embedded>
             <template #header-extra>
               <router-link
+                v-if="!($route.name === 'TablePayment')"
                 class="text-decoration-none"
                 :to="{
                   name: 'TablePayment',
@@ -23,8 +24,21 @@
                 }"
               >
                 <n-button type="success" text>
+                  <v-icon class="me-1" name="fa-coins" />
                   <span class="fs-6">Cobrar</span>
-                  <v-icon class="me-1" name="gi-money-stack" scale="1.5" />
+                </n-button>
+              </router-link>
+              <router-link
+                v-else
+                class="text-decoration-none"
+                :to="{
+                  name: 'ProductCategories',
+                  params: { table: $route.params.table },
+                }"
+              >
+                <n-button type="info" text>
+                  <v-icon class="me-1" name="md-add-round" />
+                  <span class="fs-6">Añadir pedido</span>
                 </n-button>
               </router-link>
             </template>
@@ -57,12 +71,8 @@
                   <td>
                     <n-input-number
                       class="border-top-0"
+                      :min="1"
                       v-model:value="order.quantity"
-                      @update:value="
-                        order.quantity === 0
-                          ? orderStore.orders.splice(index, 1)
-                          : null
-                      "
                     />
                   </td>
                   <td>S/. {{ order.subTotal }}</td>
@@ -85,6 +95,7 @@
                 <tr>
                   <td colspan="3">
                     <n-button
+                      v-if="!($route.name === 'TablePayment')"
                       :type="orderId ? 'info' : 'primary'"
                       text
                       block
@@ -98,7 +109,7 @@
                       <v-icon
                         class="me-2"
                         name="md-notealt-twotone"
-                        scale="2"
+                        scale="1.5"
                       />
                       <span class="fs-4"
                         >{{ orderId ? "Guardar" : "Realizar" }} pedido</span
@@ -185,6 +196,7 @@ export default defineComponent({
         .then((response) => {
           if (response.status === 201) {
             message.success("Orden creada correctamente");
+            router.push({ name: "TableHome" });
           }
         })
         .catch((error) => {
@@ -198,6 +210,7 @@ export default defineComponent({
         .then((response) => {
           if (response.status === 202) {
             message.success("Orden actualizada correctamente");
+            router.push({ name: "TableHome" });
           }
         })
         .catch((error) => {

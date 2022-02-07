@@ -1,4 +1,5 @@
 import { defineStore } from "pinia"
+import { refreshToken } from "@/api/modules/users";
 
 const useCookie = require('vue-cookies')
 
@@ -32,22 +33,31 @@ export const useUserStore = defineStore('user', {
             this.refresh = refresh;
         },
         saveUserInfo(user) {
-            useCookie.set('user-info', user, 60 * 30)
+            useCookie.set('user-info', user, '')
             this.user = user
         },
         saveAuthentication() {
             this.isAuthenticated = true
             localStorage.setItem('isAuthenticated', String(this.isAuthenticated));
         },
-        checkAuthentication() {
-            if (localStorage.getItem('isAuthenticated') && useCookie.isKey('token') && useCookie.isKey('refresh') && useCookie.isKey('refresh') && localStorage.getItem('isAuthenticated') == 'true') {
+        async checkAuthentication() {
+            if (localStorage.getItem('isAuthenticated') && useCookie.get('user-info') && useCookie.isKey('refresh') && localStorage.getItem('isAuthenticated') == 'true') {
                 this.isAuthenticated = true
-                this.token = useCookie.get('token')
                 this.refresh = useCookie.get('refresh')
                 this.user = useCookie.get('user-info')
+                if (!useCookie.isKey('token') && localStorage.getItem('isAuthenticated') && useCookie.get('user-info') && useCookie.isKey('refresh') && localStorage.getItem('isAuthenticated') == 'true') {
+                    await this.updateToken()
+                }
+                this.token = useCookie.get('token')
             } else {
                 this.logout()
             }
+        },
+        async updateToken() {
+            await refreshToken(this.refresh)
+                .then(response => {
+                    useCookie.set('token', response.data.access, 60 * 30);
+                })
         },
         logout() {
             useCookie.remove('user-info')

@@ -48,6 +48,7 @@
 import { computed, defineComponent, onMounted, ref } from "vue";
 import { createTheme, inputDark, datePickerDark, darkTheme } from "naive-ui";
 import { commonEsPE, dateEsPE } from "@/locale";
+import { useUserStore } from "@/store/modules/user";
 import { useBusinessStore } from "@/store/modules/business";
 import { useCustomerStore } from "@/store/modules/customer";
 import { useGenericsStore } from "@/store/modules/generics";
@@ -72,6 +73,8 @@ export default defineComponent({
   },
   setup() {
     const collapsed = ref(false);
+
+    const userStore = useUserStore();
 
     const designStore = useDesignSettingStore();
 
@@ -113,9 +116,17 @@ export default defineComponent({
 
     onMounted(() => {
       window.addEventListener("resize", watchWidth);
+      // cookieStore.onchange = watchCookies;
       // window['$loading'] = useLoadingBar()
       // window['$loading'].finish()
     });
+
+    /* const watchCookies = ({ deleted }) => {
+      console.log(deleted);
+      if (deleted.some((item) => item.name === "token")) {
+        userStore.updateToken();
+      }
+    }; */
 
     const getThemeOverrides = computed(() => {
       const appTheme = designStore.appTheme;

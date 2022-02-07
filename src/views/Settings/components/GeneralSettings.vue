@@ -112,7 +112,7 @@
                         <v-icon name="bi-three-dots" scale="1.25" />
                       </n-button>
                       <v-icon name="gi-table" scale="3" />
-                      <n-text>{{ table.id }}</n-text>
+                      <n-text>{{ table.code }}</n-text>
                     </n-space>
                   </n-card>
                 </n-gi>

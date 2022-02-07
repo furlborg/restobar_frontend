@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useTillStore } from "@/store/modules/till";
 import { useUserStore } from '@/store/modules/user'
 import { retrieveCurrentTill } from '@/api/modules/tills'
+const useCookie = require('vue-cookies')
 
 const routes = [
   {
@@ -189,9 +190,9 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
-  userStore.checkAuthentication()
+  await userStore.checkAuthentication()
   if (to.matched.some((record) => record.meta.requiresAuth)) {
     if (userStore.isAuthenticated) {
       next()
