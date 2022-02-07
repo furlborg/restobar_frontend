@@ -41,7 +41,7 @@
           <n-gi v-for="table in area.tables" :key="table.id" :span="3">
             <n-card
               :id="`table-${table.id}`"
-              class="position-relative overflow-hidden table"
+              class="position-relative overflow-hidden rounded-3"
               :class="{ 'bg-occuped': table.status === '3' }"
               size="small"
               @click="
@@ -251,10 +251,10 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 .table img {
-  opacity: 0.15;
+  /* w */
 }
 
 .bg-occuped {
-  background-color: LavenderBlush;
+  background-color: rgb(255, 128, 128);
 }
 </style>
