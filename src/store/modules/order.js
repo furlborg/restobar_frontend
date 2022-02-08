@@ -3,6 +3,7 @@ import { cloneDeep } from "@/utils";
 
 export const useOrderStore = defineStore('order', {
     state: () => ({
+        orderId: null,
         orders: [],
     }),
     getters: {
@@ -15,6 +16,14 @@ export const useOrderStore = defineStore('order', {
                 return acc += curVal.price * curVal.quantity
             }, 0)
         },
+        orderToSale(state) {
+            return state.orders.map(order => ({
+                product: order.product,
+                product_name: order.product_name,
+                price_sale: parseFloat(order.price).toFixed(2),
+                quantity: Number(order.quantity)
+            }))
+        }
     },
     actions: {
         initializeStore() {

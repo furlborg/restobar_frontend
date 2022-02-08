@@ -23,7 +23,7 @@
                   params: { table: $route.params.table },
                 }"
               >
-                <n-button type="success" text>
+                <n-button type="success" :disabled="!orderStore.orderId" text>
                   <v-icon class="me-1" name="fa-coins" />
                   <span class="fs-6">Cobrar</span>
                 </n-button>
@@ -96,12 +96,12 @@
                   <td colspan="3">
                     <n-button
                       v-if="!($route.name === 'TablePayment')"
-                      :type="orderId ? 'info' : 'primary'"
+                      :type="orderStore.orderId ? 'info' : 'primary'"
                       text
                       block
                       :disabled="!orderStore.orderList.length"
                       @click="
-                        orderId
+                        orderStore.orderId
                           ? performUpdateTableOrder()
                           : performCreateTableOrder()
                       "
@@ -112,7 +112,10 @@
                         scale="1.5"
                       />
                       <span class="fs-4"
-                        >{{ orderId ? "Guardar" : "Realizar" }} pedido</span
+                        >{{
+                          orderStore.orderId ? "Guardar" : "Realizar"
+                        }}
+                        pedido</span
                       >
                     </n-button>
                   </td>
@@ -164,7 +167,6 @@ export default defineComponent({
     const orderStore = useOrderStore();
     const listType = ref("grid");
     const showModal = ref(false);
-    const orderId = ref(null);
     const itemIndex = ref(null);
 
     orderStore.orders = [];
@@ -174,7 +176,7 @@ export default defineComponent({
         .then((response) => {
           if (response.status === 200) {
             orderStore.orders = response.data.order_details;
-            orderId.value = response.data.id;
+            orderStore.orderId = response.data.id;
           }
         })
         .catch((error) => {
@@ -206,7 +208,11 @@ export default defineComponent({
     };
 
     const performUpdateTableOrder = () => {
-      updateTableOrder(route.params.table, orderId.value, orderStore.orderList)
+      updateTableOrder(
+        route.params.table,
+        orderStore.orderId,
+        orderStore.orderList
+      )
         .then((response) => {
           if (response.status === 202) {
             message.success("Orden actualizada correctamente");
@@ -244,7 +250,6 @@ export default defineComponent({
     return {
       showModal,
       itemIndex,
-      orderId,
       table,
       handleBack,
       listType,
