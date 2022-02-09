@@ -1,8 +1,8 @@
 <template>
   <div id="TablePayment">
     <n-card>
-      <template #header>
-        <n-space align="center" justify="space-between">
+      <n-form>
+        <n-space class="mb-2" align="center" justify="space-between">
           <div class="d-flex align-items-center">
             <n-text class="fs-4">BO-001</n-text>
             <n-dropdown
@@ -31,8 +31,7 @@
             <n-radio-button :value="2" :key="2">CRÉDITO</n-radio-button>
           </n-radio-group>
         </n-space>
-      </template>
-      <n-form>
+
         <n-grid
           responsive="screen"
           cols="12 s:12 m:12 l:12 xl:12 2xl:12"
@@ -46,8 +45,20 @@
               </n-button>
             </n-input-group>
           </n-form-item-gi>
+          <n-form-item-gi :span="3" label="Método Pago">
+            <n-input />
+          </n-form-item-gi>
+          <n-form-item-gi :span="3" label="Fecha">
+            <n-date-picker class="w-100" type="date" />
+          </n-form-item-gi>
+          <n-form-item-gi :span="6" label="Nombres">
+            <n-input />
+          </n-form-item-gi>
           <n-form-item-gi :span="6" label="Dirección">
             <n-input />
+          </n-form-item-gi>
+          <n-form-item-gi :span="12" label="Observaciones">
+            <n-input type="textarea" />
           </n-form-item-gi>
         </n-grid>
       </n-form>
@@ -78,9 +89,10 @@
             S/.
             <span
               class="fs-1"
+              @keypress="isDecimal($event)"
               @keypress.enter.prevent="onInput"
               contenteditable
-              >{{ amount.toFixed(2) }}</span
+              >{{ sale.amount.toFixed(2) }}</span
             >
           </div>
         </n-space>
@@ -103,6 +115,7 @@
 <script>
 import { defineComponent, ref } from "vue";
 import { useOrderStore } from "@/store/modules/order";
+import { isDecimal, isNumber, isLetter } from "@/utils";
 
 export default defineComponent({
   name: "TablePayment",
@@ -110,7 +123,24 @@ export default defineComponent({
     const orderStore = useOrderStore();
     const doc_type = ref(2);
     const sale_type = ref(1);
-    const amount = ref(0.0);
+    const sale = ref({
+      order: orderStore.orderId,
+      serie: null,
+      number: "",
+      date_sale: "",
+      count: "",
+      amount: 0.0,
+      invoice_type: null,
+      payment_method: null,
+      payment_condition: null,
+      customer: null,
+      customer_name: "",
+      address: "",
+      branch_office: "",
+      discount: "",
+      observations: "",
+      sale_details: [],
+    });
     const docOptions = [
       {
         label: "BO-001",
@@ -131,16 +161,17 @@ export default defineComponent({
     ];
 
     const onInput = (e) => {
-      amount.value = Number(e.target.innerText);
+      sale.value.amount = Number(e.target.innerText);
     };
 
     return {
       orderStore,
       doc_type,
       sale_type,
-      amount,
+      sale,
       onInput,
       docOptions,
+      isDecimal,
     };
   },
 });
