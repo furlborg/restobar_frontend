@@ -248,6 +248,16 @@ export const productRules = {
         trigger: ['blur', 'input'],
         message: 'Precio requerido'
     },
+    category: {
+        required: true,
+        trigger: ['blur', 'input'],
+        message: 'Categoría requerido'
+    },
+    preparation_place: {
+        required: true,
+        trigger: ['blur', 'input'],
+        message: 'Lugar de preparación requerido'
+    },
 }
 
 export const createUserColumns = ({ editUser, deleteUser, changePassword }) => {
@@ -817,4 +827,24 @@ export const createKardexBySupplyColumns = () => {
             align: 'center'
         },
     ]
+}
+
+export const saleRules = {
+    customer_name: {
+        required: true,
+        trigger: ['blur', 'input'],
+        message: 'Cliente es requerido'
+    },
+    payment_method: {
+        type: 'number',
+        required: true,
+        trigger: ['blur', 'input'],
+        message: 'Método de pago es requerido'
+    },
+    date_sale: {
+        type: 'date',
+        required: true,
+        trigger: ['blur', 'input'],
+        message: 'Este campo es requerido'
+    }
 }

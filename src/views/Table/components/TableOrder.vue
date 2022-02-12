@@ -56,6 +56,7 @@
                 <tr v-for="(order, index) in orderStore.orderList" :key="index">
                   <td>
                     <n-button
+                      v-if="!($route.name === 'TablePayment')"
                       type="info"
                       text
                       @click="
@@ -70,14 +71,20 @@
                   </td>
                   <td>
                     <n-input-number
+                      v-if="!($route.name === 'TablePayment')"
                       class="border-top-0"
+                      size="small"
                       :min="1"
                       v-model:value="order.quantity"
                     />
+                    <template v-else>
+                      {{ order.quantity }}
+                    </template>
                   </td>
-                  <td>S/. {{ order.subTotal }}</td>
+                  <td>S/. {{ order.subTotal.toFixed(2) }}</td>
                   <td>
                     <n-button
+                      v-if="!($route.name === 'TablePayment')"
                       type="error"
                       text
                       @click="
@@ -120,7 +127,7 @@
                     </n-button>
                   </td>
                   <td colspan="2" class="fs-6 fw-bold">
-                    TOTAL S/. {{ orderStore.orderTotal }}
+                    S/. {{ orderStore.orderTotal.toFixed(2) }}
                   </td>
                 </tr>
               </tfoot>

@@ -27,69 +27,96 @@
               @keypress="isDecimal($event)"
             />
           </n-form-item-gi>
-          <n-form-item-gi label="Description" path="description" :span="12">
-            <n-input v-model:value="product.description" placeholder="" />
+          <n-form-item-gi label="Stock" path="stock" :span="4">
+            <n-input-number
+              v-model:value="product.stock"
+              placeholder=""
+              :min="0"
+              :show-button="false"
+              :disabled="!product.control_stock"
+              @keypress="isNumber($event)"
+            />
           </n-form-item-gi>
-          <n-form-item-gi label="Categoría" path="category" :span="12">
+          <n-form-item-gi path="control_stock" :span="4">
+            <n-checkbox
+              v-model:checked="product.control_stock"
+              @update:checked="product.stock = null"
+              >Controlar Stock</n-checkbox
+            >
+          </n-form-item-gi>
+          <n-form-item-gi path="icbper" :span="4">
+            <n-checkbox v-model:checked="product.icbper">ICBPER</n-checkbox>
+          </n-form-item-gi>
+          <n-gi :span="12">
             <transition name="mode-fade" mode="out-in">
-              <n-input-group v-if="categoryForm">
-                <n-input v-model:value="categorie.description" placeholder="" />
-                <n-button
-                  type="info"
-                  tertiary
-                  :disabled="
-                    categorie.description ===
-                      productStore.getCategorieDescription(categorie.id) ||
-                    !categorie.description
-                      ? true
-                      : false
-                  "
-                  @click="
-                    !categorie.id
-                      ? performCreateProductCategory()
-                      : performUpdateProductCategory()
-                  "
-                >
-                  <v-icon name="md-save-round" />
-                </n-button>
-                <n-button type="error" tertiary @click="categoryForm = false">
-                  <v-icon name="md-close-round" />
-                </n-button>
-              </n-input-group>
-              <n-input-group v-else>
-                <n-button
-                  type="info"
-                  tertiary
-                  @click="
-                    categoryForm = true;
-                    categorie.id = null;
-                    categorie.description = null;
-                  "
-                >
-                  <v-icon name="md-add-round" />
-                </n-button>
-                <n-select
-                  v-model:value="product.category"
-                  :options="categoriesOptions"
-                  placeholder=""
-                  clearable
-                />
-                <n-button
-                  v-if="product.category"
-                  type="warning"
-                  tertiary
-                  @click="
-                    categoryForm = true;
-                    categorie.id = product.category;
-                    categorie.description =
-                      productStore.getCategorieDescription(product.category);
-                  "
-                >
-                  <v-icon name="ri-edit-fill" />
-                </n-button>
-              </n-input-group>
+              <n-form-item
+                v-if="categoryForm"
+                :label="!categorie.id ? 'Crear Categoría' : 'Editar Categoría'"
+              >
+                <n-input-group>
+                  <n-input
+                    v-model:value="categorie.description"
+                    placeholder=""
+                  />
+                  <n-button
+                    type="info"
+                    tertiary
+                    :disabled="
+                      categorie.description ===
+                        productStore.getCategorieDescription(categorie.id) ||
+                      !categorie.description
+                        ? true
+                        : false
+                    "
+                    @click="
+                      !categorie.id
+                        ? performCreateProductCategory()
+                        : performUpdateProductCategory()
+                    "
+                  >
+                    <v-icon name="md-save-round" />
+                  </n-button>
+                  <n-button type="error" tertiary @click="categoryForm = false">
+                    <v-icon name="md-close-round" />
+                  </n-button>
+                </n-input-group>
+              </n-form-item>
+              <n-form-item v-else label="Categoría" path="category">
+                <n-input-group>
+                  <n-button
+                    type="info"
+                    tertiary
+                    @click="
+                      categoryForm = true;
+                      categorie.id = null;
+                      categorie.description = null;
+                    "
+                  >
+                    <v-icon name="md-add-round" />
+                  </n-button>
+                  <n-select
+                    v-model:value="product.category"
+                    :options="categoriesOptions"
+                    placeholder=""
+                    clearable
+                  />
+                  <n-button
+                    v-if="product.category"
+                    type="warning"
+                    tertiary
+                    @click="
+                      categoryForm = true;
+                      categorie.id = product.category;
+                      categorie.description =
+                        productStore.getCategorieDescription(product.category);
+                    "
+                  >
+                    <v-icon name="ri-edit-fill" />
+                  </n-button>
+                </n-input-group>
+              </n-form-item>
             </transition>
-          </n-form-item-gi>
+          </n-gi>
           <n-form-item-gi
             label="Lugar Preparación"
             path="preparation_place"
@@ -101,10 +128,17 @@
               placeholder=""
             />
           </n-form-item-gi>
-          <n-form-item-gi label="Imagen" :span="4">
+          <!-- <n-form-item-gi label="Imagen" :span="4">
             <n-upload list-type="image" ref="uploadRef">
               <n-button>Seleccionar Imagen</n-button>
             </n-upload>
+          </n-form-item-gi> -->
+          <n-form-item-gi label="Descripción" path="description" :span="12">
+            <n-input
+              v-model:value="product.description"
+              type="textarea"
+              placeholder=""
+            />
           </n-form-item-gi>
           <n-form-item-gi label="Nº Puntos" path="number_points" :span="4">
             <n-input-number
@@ -123,26 +157,6 @@
               :show-button="false"
               @keypress="isNumber($event)"
             />
-          </n-form-item-gi>
-          <n-form-item-gi path="control_stock" :span="4">
-            <n-checkbox
-              v-model:checked="product.control_stock"
-              @update:checked="product.stock = null"
-              >Controlar Stock:</n-checkbox
-            >
-          </n-form-item-gi>
-          <n-form-item-gi label="Stock" path="stock" :span="4">
-            <n-input-number
-              v-model:value="product.stock"
-              placeholder=""
-              :min="0"
-              :show-button="false"
-              :disabled="!product.control_stock"
-              @keypress="isNumber($event)"
-            />
-          </n-form-item-gi>
-          <n-form-item-gi path="icbper" :span="4">
-            <n-checkbox v-model:checked="product.icbper">ICBPER</n-checkbox>
           </n-form-item-gi>
         </n-grid>
       </n-form>

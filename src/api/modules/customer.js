@@ -86,6 +86,14 @@ export async function disableCustomer(id) {
     return await http.delete(`customers/${id}/`)
 }
 
+export async function searchCustomerByName(names) {
+    return await http.get('customers/search_customer/', {
+        params: {
+            search: names
+        }
+    })
+}
+
 export async function requestCustomerData(document) {
     return await http.post('customers/request_data/', {
         document: document,
