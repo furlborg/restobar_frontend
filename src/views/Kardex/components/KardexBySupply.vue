@@ -8,7 +8,11 @@
           </n-space>
         <n-form>
           <n-input-group>
-            <n-input placeholder="Buscar..." v-model:value="textSearch" @keydown.enter="searchItem(textSearch)" />
+            <n-input placeholder="Buscar..." v-model:value="textSearch" @keydown.enter="searchItem(textSearch)">
+              <template #prefix>
+                <n-icon style="margin-top: -4px;"><v-icon name="md-search-round" /></n-icon>
+              </template>
+            </n-input>
             <!-- <n-button type="info">
               <v-icon name="md-search-round" @click="searchItem(textSearch)" />
             </n-button> -->
@@ -32,12 +36,12 @@
       <n-card :title="ProductInstance.product">
         <template #header-extra>
           <n-date-picker type="daterange" size="small" value-format="yyyy-MM-dd" v-model:formatted-value="dateSearch" clearable />
-            <n-button class="ms-2" type="info" size="small" @click="selectKardex(ProductInstance.id, ProductInstance.product, dateSearch)">
+            <n-button :disabled='ProductInstance.id?false:true' class="ms-2" type="info" size="small" @click="selectKardex(ProductInstance.id, ProductInstance.product, dateSearch)">
                 <v-icon name="md-search-round" />
                 Buscar
             </n-button>
 
-            <n-button class="ms-2" size="small">
+            <n-button :disabled='ProductInstance.id?false:true' class="ms-2" size="small">
                 <v-icon name="vi-file-type-excel" />
             </n-button>
           <!-- <n-dropdown trigger="click" :options="options" placement="bottom-end" :show-arrow="true">
