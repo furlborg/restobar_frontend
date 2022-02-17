@@ -1,5 +1,5 @@
 import { h } from "vue"
-import { NButton, NTag } from "naive-ui"
+import { NButton, NTag, NPopover, NText, NSpace } from "naive-ui"
 import { renderIcon } from "@/utils"
 import { OhVueIcon } from '@/plugins/icon'
 import { useSaleStore } from '@/store/modules/sale';
@@ -578,62 +578,20 @@ export const createMovementsColumns = ({ hasSells, editMovement, deleteMovement 
     ]
 }
 
-export const createSuppliesColumns = ({ removeSupply }) => {
-    return [
-        {
-            title: 'Código',
-            key: 'code'
-        },
-        {
-            title: 'Cantidad',
-            key: 'quantity'
-        },
-        {
-            title: 'Descripción',
-            key: 'description'
-        },
-        {
-            title: 'Precio Unitario',
-            key: 'unit_price',
-            render(row) {
-                return row.unit_price.toFixed(2)
-            }
-        },
-        {
-            title: 'SubTotal',
-            key: 'subtotal',
-            render(row) {
-                return row.subtotal.toFixed(2)
-            }
-        },
-        {
-            title: 'Acciones',
-            key: 'actions',
-            render(row) {
-                return h(
-                    NButton,
-                    {
-                        size: 'small',
-                        type: 'error',
-                        secondary: true,
-                        onClick: () => removeSupply(row)
-                    },
-                    renderIcon('md-close-round')
-                )
-            }
-        }
-    ]
-}
 
 export const createSuppliersColumns = ({ editSupplier, deleteSupplier }) => {
     return [
         {
-            title: 'Código',
-            key: 'code',
+            title: "#",
+            key: "num",
+            width: 50,
+            render(row, index) {
+                return index + 1;
+            },
         },
         {
-            title: 'RUC',
-            key: 'ruc'
+            title: 'Documento',
+            key: 'document'
         },
         {
             title: 'Nombres',
@@ -641,11 +599,7 @@ export const createSuppliersColumns = ({ editSupplier, deleteSupplier }) => {
         },
         {
             title: 'Representante',
-            key: 'legal_representative'
-        },
-        {
-            title: 'Dirección',
-            key: 'address'
+            key: 'representative'
         },
         {
             title: 'Email',
@@ -657,13 +611,13 @@ export const createSuppliersColumns = ({ editSupplier, deleteSupplier }) => {
         },
         {
             title: 'Estado',
-            key: 'status',
+            key: 'state',
             render(row) {
                 let type, text
-                if (row.status === true) {
+                if (row.state === true) {
                     type = "success"
                     text = "Activo"
-                } else if (row.status === false) {
+                } else if (row.state === false) {
                     type = "error"
                     text = "Inactivo"
                 }
@@ -700,10 +654,112 @@ export const createSuppliersColumns = ({ editSupplier, deleteSupplier }) => {
                         NButton,
                         {
                             size: 'small',
-                            type: 'error',
+                            type: row.state ? 'error' : 'success',
                             onClick: () => deleteSupplier(row)
                         },
                         renderIcon('la-user-slash-solid')
+                    )
+                ]
+            }
+        }
+    ]
+}
+
+export const createSuppliesColumns = ({ editSupplies, deleteSupplies }) => {
+    return [
+        {
+            title: "#",
+            key: "num",
+            width: 50,
+            render(row, index) {
+                return index + 1;
+            },
+        },
+        {
+            title: 'Nombres',
+            key: 'name'
+        },
+        {
+            title: 'Unidad medida',
+            key: 'measureunit_des'
+        },
+        {
+            title: 'Precio compra',
+            key: 'purchase_price',
+            render(row) {
+                return "S/." + row.purchase_price
+            }
+        },
+        {
+            title: 'Stock',
+            align: 'center',
+            render(row) {
+                return h(NPopover,
+                    { trigger: "click"},
+                    { trigger: () => h(NButton,
+                        {
+                            size: 'small',
+                            type: 'success',
+                            circle: true
+                        },
+                        renderIcon('md-search-round')),
+                        default: () => h(NSpace,{vertical: true},{
+                            default: () => row.amount.map((v)=>{
+                                return [h(NText,{},{default: () => v.amount})]})
+                        })
+                    }
+                )
+            }
+        },
+        {
+            title: 'Estado',
+            key: 'state',
+            render(row) {
+                let type, text
+                if (row.state === true) {
+                    type = "success"
+                    text = "Activo"
+                } else if (row.state === false) {
+                    type = "error"
+                    text = "Inactivo"
+                }
+
+                return h(
+                    NTag,
+                    {
+                        size: 'small',
+                        type: type,
+                        round: true
+                    },
+                    {
+                        default: () => text
+                    }
+                )
+            }
+        },
+        {
+            title: 'Acciones',
+            key: 'actions',
+            render(row) {
+                return [
+                    h(
+                        NButton,
+                        {
+                            class: 'me-2',
+                            size: 'small',
+                            type: 'warning',
+                            onClick: () => editSupplies(row)
+                        },
+                        renderIcon('md-edit')
+                    ),
+                    h(
+                        NButton,
+                        {
+                            size: 'small',
+                            type: row.state ? 'error' : 'success',
+                            onClick: () => deleteSupplies(row)
+                        },
+                        renderIcon('md-delete')
                     )
                 ]
             }
@@ -773,47 +829,46 @@ export const createKardexListColumns = () => {
 export const createKardexBySupplyColumns = () => {
     return [
         {
+            title: "",
+            width: 20,
+            render(row, index) {
+                return index + 1;
+            },
+        },
+        {
             title: 'Fecha',
-            key: 'date',
+            key: 'created',
             align: 'center'
         },
         {
             title: 'Descripción',
-            key: 'description',
-            align: 'center'
+            key: 'concept_des'
         },
         {
             title: 'Documento',
-            key: 'document',
+            key: 'associateddoc',
             align: 'center',
         },
         {
             title: 'Entrada',
-            key: 'input',
+            key: 'ingress',
             align: 'center',
-            render(row) {
-                if (row.input) {
-                    return row.input
-                } else {
-                    return '-'
-                }
-            }
         },
         {
             title: 'Salida',
-            key: 'output',
+            key: 'egress',
             align: 'center',
-            render(row) {
-                if (row.output) {
-                    return row.output
-                } else {
-                    return '-'
-                }
-            }
+            // render(row) {
+            //     if (row.output) {
+            //         return row.output
+            //     } else {
+            //         return '-'
+            //     }
+            // }
         },
         {
             title: 'Stock',
-            key: 'stock',
+            key: 'balance',
             align: 'center'
         },
     ]

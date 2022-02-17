@@ -192,7 +192,7 @@ export default defineComponent({
     const changeState = async (id, state) => {
       const dial = state==false? dialog.success: dialog.error;
       let titles = state==false?"HABILITAR USUARIO" :"DESHABILITAR USUARIO";
-      const button = state==false?"Habilitar":"Desabilitar";
+      const button = state==false?"Habilitar":"Deshabilitar";
 
       dial({
         title: titles,

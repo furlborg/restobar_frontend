@@ -82,6 +82,7 @@ import {
     NH5,
     NH6,
     NScrollbar,
+    NAutoComplete
 } from 'naive-ui'
 
 export const naive = create({
@@ -168,5 +169,6 @@ export const naive = create({
         NH5,
         NH6,
         NScrollbar,
+        NAutoComplete,
     ],
 })
