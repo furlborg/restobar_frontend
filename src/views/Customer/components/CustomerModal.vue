@@ -82,7 +82,7 @@
                 :span="4"
               >
                 <n-date-picker
-                  v-model:value="customer.birthdate"
+                  v-model:formatted-value="customer.birthdate"
                   type="date"
                   placeholder=""
                   clearable
@@ -195,6 +195,7 @@
 
 <script>
 import { defineComponent, ref, toRefs, watch, computed } from "vue";
+import format from "date-fns/format";
 import { isNumber, isLetter } from "@/utils";
 import { toTimestamp } from "@/utils/dates";
 import { documentOptions, customerRules } from "@/utils/constants";
@@ -390,8 +391,9 @@ export default defineComponent({
                 message.success("Éxito");
                 if (customer.value.doc_num.length === 8) {
                   customer.value.names = response.data.nombre_completo;
-                  customer.value.birthdate = toTimestamp(
-                    response.data.fecha_nacimiento
+                  customer.value.birthdate = format(
+                    new Date(response.data.fecha_nacimiento),
+                    "dd/MM/yyyy"
                   );
                   if (response.data.sexo === "FEMENINO") {
                     customer.value.gender = "F";

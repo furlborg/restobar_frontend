@@ -842,7 +842,6 @@ export const saleRules = {
         message: 'Método de pago es requerido'
     },
     date_sale: {
-        type: 'date',
         required: true,
         trigger: ['blur', 'input'],
         message: 'Este campo es requerido'

@@ -6,17 +6,7 @@ export async function getCustomers() {
 }
 
 export async function retrieveCustomer(id) {
-    return await http.get(`customers/${id}/`, {
-        transformResponse: [
-            function (data) {
-                if (data) {
-                    data = JSON.parse(data)
-                    data.birthdate = toTimestamp(data.birthdate)
-                }
-                return data
-            }
-        ]
-    })
+    return await http.get(`customers/${id}/`)
 }
 
 export async function getCustomersByPageNumber(searchParams, pageLimit, pageOffset) {
@@ -62,7 +52,7 @@ export async function createCustomer(customer) {
         doc_type: customer.doc_type,
         doc_num: customer.doc_num,
         gender: customer.gender,
-        birthdate: toDate(customer.birthdate),
+        birthdate: customer.birthdate,
         phone: customer.phone,
         email: customer.email,
         addresses: customer.addresses,
@@ -75,7 +65,7 @@ export async function updateCustomer(idCustomer, customer) {
         doc_type: customer.doc_type,
         doc_num: customer.doc_num,
         gender: customer.gender,
-        birthdate: toDate(customer.birthdate),
+        birthdate: customer.birthdate,
         phone: customer.phone,
         email: customer.email,
         addresses: customer.addresses,

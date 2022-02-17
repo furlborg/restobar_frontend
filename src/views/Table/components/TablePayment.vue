@@ -84,7 +84,6 @@
                 class="w-100"
                 v-model:formatted-value="sale.date_sale"
                 type="datetime"
-                format="dd/M/yyyy hh:mm:ss"
               />
             </n-form-item-gi>
             <n-form-item-gi :span="10" label="Dirección">
@@ -124,10 +123,27 @@
             <tr v-for="(detail, index) in sale.sale_details" :key="index">
               <td>{{ index + 1 }}</td>
               <td>{{ detail.quantity }}</td>
-              <td>{{ detail.product_name }}</td>
-              <td>S/. {{ detail.price_sale }}</td>
+              <td>
+                <input
+                  class="custom-input"
+                  v-model="detail.product_name"
+                  v-autowidth
+                  @click="$event.target.select()"
+                />
+              </td>
               <td>
                 S/.
+                <input
+                  class="custom-input"
+                  type="number"
+                  min="0"
+                  step=".01"
+                  v-model="detail.price_sale"
+                  v-autowidth
+                  @click="$event.target.select()"
+                />
+              </td>
+              <td>
                 {{ parseFloat(detail.quantity * detail.price_sale).toFixed(2) }}
               </td>
             </tr>
@@ -139,7 +155,7 @@
             <div class="fs-5">
               S/.
               <input
-                class="fs-1 currency-input"
+                class="fs-1 custom-input"
                 type="number"
                 min="0"
                 step=".01"
@@ -165,7 +181,7 @@
               DSCT:
               <span>S/.</span>
               <input
-                class="currency-input fw-bold"
+                class="custom-input fw-bold"
                 type="number"
                 min="0"
                 step=".01"
@@ -203,6 +219,7 @@ import { searchCustomerByName } from "@/api/modules/customer";
 import { createSale, getSaleNumber } from "@/api/modules/sales";
 import { useMessage } from "naive-ui";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
+import format from "date-fns/format";
 
 export default defineComponent({
   name: "TablePayment",
@@ -240,7 +257,7 @@ export default defineComponent({
       order: orderStore.orderId,
       serie: 2,
       number: "",
-      date_sale: null,
+      date_sale: format(new Date(Date.now()), "dd/MM/yyyy hh:mm:ss"),
       count: products_count,
       amount: total,
       invoice_type: 3,
@@ -344,12 +361,10 @@ export default defineComponent({
     const { serie } = toRefs(sale.value);
 
     watch(serie, () => {
-      console.log(new Date(Date.now()).toLocaleString("es-PE"));
       obtainSaleNumber();
     });
 
     onMounted(() => {
-      sale.value.date_sale = new Date(Date.now()).toLocaleString();
       obtainSaleNumber();
     });
 
@@ -377,9 +392,14 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-.currency-input {
+.custom-input {
   border: none;
   outline: none;
+}
+
+.custom-input:hover {
+  border-radius: 5px;
+  outline: LightBlue solid 2px;
 }
 
 input::-webkit-outer-spin-button,
