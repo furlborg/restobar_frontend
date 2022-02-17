@@ -107,6 +107,11 @@ const routes = [
         component: () => import(/* webpackChunkName: "supplies" */ '@/views/Supplies'),
       },
       {
+        path: '/kardex',
+        name: 'Kardex',
+        component: () => import(/* webpackChunkName: "supplies" */ '@/views/Kardex'),
+      },
+      {
         path: '/settings',
         name: 'Settings',
         redirect: { name: "HomeSettings" },
