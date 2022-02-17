@@ -110,6 +110,18 @@ export default defineComponent({
           h(
             RouterLink,
             {
+              to: { name: "Kardex" },
+            },
+            () => h("span", "Kardex")
+          ),
+        key: "Kardex",
+        icon: renderIcon("md-equalizer-twotone"),
+      },
+      {
+        label: () =>
+          h(
+            RouterLink,
+            {
               to: { name: "Customer" },
             },
             () => h("span", "Clientes")

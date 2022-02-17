@@ -84,6 +84,11 @@ import {
     MdLockopenTwotone,
     MdNotealtTwotone,
     FaCoins,
+    MdEqualizerTwotone,
+    HiSolidArrowSmUp,
+    HiSolidArrowSmDown,
+    MdEdit,
+    MdDelete,
 } from "oh-vue-icons/icons";
 OhVueIcon.add(
     BiThreeDots,
@@ -170,5 +175,10 @@ OhVueIcon.add(
     MdLockopenTwotone,
     MdNotealtTwotone,
     FaCoins,
+    MdEqualizerTwotone,
+    HiSolidArrowSmUp,
+    HiSolidArrowSmDown,
+    MdEdit,
+    MdDelete,
 );
 export { OhVueIcon }
