@@ -211,6 +211,7 @@
 
 <script>
 import { defineComponent, ref, toRefs, computed, watch, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { saleRules } from "@/utils/constants";
@@ -225,6 +226,7 @@ export default defineComponent({
   name: "TablePayment",
   directives: { autowidth: VueInputAutowidth },
   setup() {
+    const router = useRouter();
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
     const message = useMessage();
@@ -299,15 +301,20 @@ export default defineComponent({
     const performCreateSale = () => {
       saleForm.value.validate((errors) => {
         if (!errors) {
+          loading.value = true;
           createSale(sale.value)
             .then((response) => {
               if (response.status === 201) {
-                console.log(response.data);
+                message.error("Venta realizada correctamente!");
+                router.push({ name: "TableHome" });
               }
             })
             .catch((error) => {
               console.error(error.response.data);
               message.error("Algo salió mal...");
+            })
+            .finally(() => {
+              loading.value = false;
             });
         } else {
           console.error(errors);
@@ -326,7 +333,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.log(error);
-          message.error("Algo salió mal...");
+          message.success("Algo salió mal...");
         })
         .finally(() => {
           loading.value = false;
