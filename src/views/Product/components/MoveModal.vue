@@ -8,9 +8,9 @@
     >
         <n-form v-model:model="formitem" :rules="rules" ref="formRef">
             <n-grid cols="12 100:1 450:12" :x-gap="12">
-                <n-form-item-gi label="Insumo" :span="8" path="supplie">
-                    <n-select v-model:value="formitem.supplie" placeholder="Buscar..."
-                        filterable @search="supplieSearch"  :options="optionsSupplies" clearable />
+                <n-form-item-gi label="Insumo" :span="8" path="product">
+                    <n-select v-model:value="formitem.product" placeholder="Buscar..."
+                        filterable @search="productSearch"  :options="optionsProduct" clearable />
                 </n-form-item-gi>
                 <n-form-item-gi label="Cantidad" :span="4" path="amount" >
                     <n-input type="number" v-model:value="formitem.amount"  placeholder="" />
@@ -42,7 +42,8 @@
 import { defineComponent, onUpdated, ref, toRefs } from "vue"
 import {useGenericsStore} from '@/store/modules/generics'
 import { useMessage } from "naive-ui";
-import { createSupplieMovement, getConcept, getSupplies } from "@/api/modules/supplies";
+import { getProductSimpleSearch, createProductMovement } from "@/api/modules/products";
+import { getConcept } from "@/api/modules/supplies";
 import { getBranchs } from "@/api/modules/business";
 
 export default  defineComponent({
@@ -65,7 +66,7 @@ export default  defineComponent({
         const formRef = ref(null);
         const optionsConcept = ref([]);
         const optionsEstablishment = ref([]);
-        const optionsSupplies = ref([]);
+        const optionsProduct = ref([]);
         const genericsStore = useGenericsStore();
         const {show, type} = toRefs(props);
 
@@ -87,10 +88,10 @@ export default  defineComponent({
             })
         }
 
-        const supplieSearch = async (search) => {
-            getSupplies(`supplies/search/?search=${search}`)
+        const productSearch = async (search) => {
+            getProductSimpleSearch(`?search=${search}`)
             .then((response) => {
-                optionsSupplies.value = response.data.map((v) => ({
+                optionsProduct.value = response.data.map((v) => ({
                     label: v.name,
                     value: v.id,
                 }));
@@ -99,7 +100,7 @@ export default  defineComponent({
                 message.error("Algo salió mal...");
             })
         }
-        supplieSearch('')
+        productSearch('')
 
         const getEstablishment = async () => {
             getBranchs()
@@ -125,7 +126,7 @@ export default  defineComponent({
         const save = (formitem) => {
             formRef.value.validate(async (errors) => {
                 if (!errors) {
-                    createSupplieMovement(formitem)
+                    createProductMovement(formitem)
                     .then((response) => {
                         emit("on-success");
                         emit('update:show');
@@ -152,12 +153,12 @@ export default  defineComponent({
             formRef,
             save,
             genericsStore,
-            optionsSupplies,
-            supplieSearch,
+            optionsProduct,
+            productSearch,
             optionsConcept,
             optionsEstablishment,
             rules: {
-                supplie: {
+                product: {
                     type: "number",
                     required: true,
                     message: "Requerido",

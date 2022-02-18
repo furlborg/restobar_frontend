@@ -43,17 +43,6 @@ export async function createSupplieMovement(supplies) {
     })
 }
 
-export async function updateSupplieMovement(id, supplies) {
-    return await http.put(`suppliemovement/${id}/`, {
-        supplie: supplies.supplie,
-        type: supplies.type,
-        branchoffice: supplies.branchoffice,
-        concept: supplies.concept,
-        amount: supplies.amount
-    })
-}
-
-
 export async function getMeasureUnit() {
     return await http.get('measureunit')
 }

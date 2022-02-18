@@ -830,6 +830,7 @@ export const createKardexBySupplyColumns = () => {
     return [
         {
             title: "",
+            align: 'center',
             width: 20,
             render(row, index) {
                 return index + 1;
@@ -841,12 +842,12 @@ export const createKardexBySupplyColumns = () => {
             align: 'center'
         },
         {
-            title: 'Descripción',
+            title: 'Concepto',
             key: 'concept_des'
         },
         {
             title: 'Documento',
-            key: 'associateddoc',
+            key: 'document',
             align: 'center',
         },
         {

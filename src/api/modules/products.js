@@ -4,6 +4,10 @@ export async function getProducts() {
     return await http.get('products/')
 }
 
+export async function getProductSimpleSearch(search) {
+    return await http.get('products/simplesearch/' + search)
+}
+
 export async function retrieveProduct(id) {
     return await http.get(`products/${id}/`, {
         transformResponse: [
@@ -106,4 +110,14 @@ export async function updateProductPlace(idPlace, place) {
 
 export async function disableProductPlace(id) {
     return await http.delete(`preparation-places/${id}/`)
+}
+
+export async function createProductMovement(products) {
+    return await http.post('productmovement/', {
+        product: products.product,
+        type: products.type,
+        branchoffice: products.branchoffice,
+        concept: products.concept,
+        amount: products.amount
+    })
 }
