@@ -15,19 +15,21 @@
         <n-gi span="2">
           <n-card class="h-100" title="Pedidos" :bordered="false" embedded>
             <template #header-extra>
-              <router-link
+              <n-button
                 v-if="!($route.name === 'TablePayment')"
-                class="text-decoration-none"
-                :to="{
-                  name: 'TablePayment',
-                  params: { table: $route.params.table },
-                }"
+                type="success"
+                :disabled="!orderStore.orderId"
+                text
+                @click="
+                  $router.push({
+                    name: 'TablePayment',
+                    params: { table: $route.params.table },
+                  })
+                "
               >
-                <n-button type="success" text>
-                  <v-icon class="me-1" name="fa-coins" />
-                  <span class="fs-6">Cobrar</span>
-                </n-button>
-              </router-link>
+                <v-icon class="me-1" name="fa-coins" />
+                <span class="fs-6">Cobrar</span>
+              </n-button>
               <router-link
                 v-else
                 class="text-decoration-none"
@@ -42,6 +44,22 @@
                 </n-button>
               </router-link>
             </template>
+            <n-form v-if="!($route.name === 'TablePayment')">
+              <n-form-item label="Buscar producto">
+                <n-input-group>
+                  <n-auto-complete
+                    :input-props="{
+                      autocomplete: 'disabled',
+                    }"
+                    v-model:value="productSearch"
+                    :options="productOptions"
+                    :get-show="showOptions"
+                    :loading="searching"
+                    @select="selectProduct"
+                  />
+                </n-input-group>
+              </n-form-item>
+            </n-form>
             <n-table>
               <thead>
                 <tr>
@@ -56,6 +74,7 @@
                 <tr v-for="(order, index) in orderStore.orderList" :key="index">
                   <td>
                     <n-button
+                      v-if="!($route.name === 'TablePayment')"
                       type="info"
                       text
                       @click="
@@ -70,14 +89,20 @@
                   </td>
                   <td>
                     <n-input-number
+                      v-if="!($route.name === 'TablePayment')"
                       class="border-top-0"
+                      size="small"
                       :min="1"
                       v-model:value="order.quantity"
                     />
+                    <template v-else>
+                      {{ order.quantity }}
+                    </template>
                   </td>
-                  <td>S/. {{ order.subTotal }}</td>
+                  <td>S/. {{ order.subTotal.toFixed(2) }}</td>
                   <td>
                     <n-button
+                      v-if="!($route.name === 'TablePayment')"
                       type="error"
                       text
                       @click="
@@ -96,12 +121,12 @@
                   <td colspan="3">
                     <n-button
                       v-if="!($route.name === 'TablePayment')"
-                      :type="orderId ? 'info' : 'primary'"
+                      :type="orderStore.orderId ? 'info' : 'primary'"
                       text
                       block
                       :disabled="!orderStore.orderList.length"
                       @click="
-                        orderId
+                        orderStore.orderId
                           ? performUpdateTableOrder()
                           : performCreateTableOrder()
                       "
@@ -112,12 +137,15 @@
                         scale="1.5"
                       />
                       <span class="fs-4"
-                        >{{ orderId ? "Guardar" : "Realizar" }} pedido</span
+                        >{{
+                          orderStore.orderId ? "Guardar" : "Realizar"
+                        }}
+                        pedido</span
                       >
                     </n-button>
                   </td>
                   <td colspan="2" class="fs-6 fw-bold">
-                    TOTAL S/. {{ orderStore.orderTotal }}
+                    S/. {{ orderStore.orderTotal.toFixed(2) }}
                   </td>
                 </tr>
               </tfoot>
@@ -138,7 +166,7 @@
 
 <script>
 import OrderIndications from "./OrderIndications";
-import { defineComponent, ref, onMounted } from "vue";
+import { defineComponent, ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useRouter } from "vue-router";
 import { useDialog, useMessage } from "naive-ui";
@@ -149,6 +177,7 @@ import {
   updateTableOrder,
   performDeleteOrderDetail,
 } from "@/api/modules/tables";
+import { searchProductByName } from "@/api/modules/products";
 
 export default defineComponent({
   name: "TableOrder",
@@ -164,22 +193,23 @@ export default defineComponent({
     const orderStore = useOrderStore();
     const listType = ref("grid");
     const showModal = ref(false);
-    const orderId = ref(null);
     const itemIndex = ref(null);
 
     orderStore.orders = [];
+    orderStore.orderId = null;
 
     const performRetrieveTableOrder = () => {
       retrieveTableOrder(route.params.table)
         .then((response) => {
           if (response.status === 200) {
             orderStore.orders = response.data.order_details;
-            orderId.value = response.data.id;
+            orderStore.orderId = response.data.id;
           }
         })
         .catch((error) => {
           if (error.response.status === 404) {
             orderStore.orders = [];
+            orderStore.orderId = null;
           } else {
             console.error(error);
             message.error("Algo salió mal...");
@@ -206,7 +236,11 @@ export default defineComponent({
     };
 
     const performUpdateTableOrder = () => {
-      updateTableOrder(route.params.table, orderId.value, orderStore.orderList)
+      updateTableOrder(
+        route.params.table,
+        orderStore.orderId,
+        orderStore.orderList
+      )
         .then((response) => {
           if (response.status === 202) {
             message.success("Orden actualizada correctamente");
@@ -237,6 +271,47 @@ export default defineComponent({
       });
     };
 
+    const searching = ref(false);
+
+    const productSearch = ref("");
+
+    const products = ref([]);
+
+    const productOptions = computed(() => {
+      return products.value.map((product) => ({
+        value: product.id,
+        label: product.name,
+        disabled: product.is_disabled,
+      }));
+    });
+
+    const showOptions = (value) => {
+      if (value.length >= 3) {
+        searching.value = true;
+        searchProductByName(value)
+          .then((response) => {
+            if (response.status === 200) {
+              products.value = response.data;
+            }
+          })
+          .catch((error) => {
+            console.error(error);
+            message.error("Algo salió mal...");
+          })
+          .finally(() => {
+            searching.value = false;
+          });
+        return true;
+      }
+      return false;
+    };
+
+    const selectProduct = (v) => {
+      const item = products.value.find((product) => product.id === v);
+      orderStore.addOrder(item);
+      productSearch.value = "";
+    };
+
     const handleBack = () => {
       router.push({ name: "TableHome" });
     };
@@ -244,7 +319,6 @@ export default defineComponent({
     return {
       showModal,
       itemIndex,
-      orderId,
       table,
       handleBack,
       listType,
@@ -252,6 +326,11 @@ export default defineComponent({
       performCreateTableOrder,
       performUpdateTableOrder,
       deleteOrderDetail,
+      searching,
+      productSearch,
+      productOptions,
+      showOptions,
+      selectProduct,
     };
   },
 });

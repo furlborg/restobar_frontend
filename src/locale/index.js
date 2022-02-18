@@ -17,15 +17,15 @@ const commonEsPE = {
         loadingRequiredMessage: (label) => `Cargue todos los descendientes de ${label} antes de verificarlo.`
     },
     Time: {
-        dateFormat: 'yyyy-MM-dd',
-        dateTimeFormat: 'yyyy-MM-dd hh:mm:ss'
+        dateFormat: 'dd/MM/yyyy',
+        dateTimeFormat: 'dd/MM/yyyy HH:mm:ss'
     },
     DatePicker: {
         yearFormat: 'yyyy',
         monthFormat: 'MMM',
         dayFormat: 'eeeeee',
-        dateFormat: 'yyyy-MM-dd',
-        dateTimeFormat: 'yyyy-MM-dd hh:mm:ss',
+        dateFormat: 'dd/MM/yyyy',
+        dateTimeFormat: 'dd/MM/yyyy HH:mm:ss',
         clear: 'Limpiar',
         now: 'Ahora',
         confirm: 'Confirmar',

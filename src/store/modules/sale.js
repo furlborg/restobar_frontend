@@ -1,9 +1,11 @@
 import { defineStore } from "pinia";
 import { getPaymentMethods } from '@/api/modules/sales'
+import { getDocumentSeries } from '@/api/modules/business'
 
 export const useSaleStore = defineStore('sale', {
     state: () => ({
         payment_methods: [],
+        series: []
     }),
     getters: {
         getPaymentMethodsOptions() {
@@ -18,6 +20,12 @@ export const useSaleStore = defineStore('sale', {
             getPaymentMethods()
                 .then(response => {
                     this.payment_methods = response.data
+                }).catch(error => {
+                    console.error(error)
+                })
+            getDocumentSeries()
+                .then(response => {
+                    this.series = response.data
                 }).catch(error => {
                     console.error(error)
                 })
@@ -45,6 +53,13 @@ export const useSaleStore = defineStore('sale', {
             } else {
                 return null
             }
+        },
+        getDocumentSeriesOptions(doc_type) {
+            return this.series.filter(serie => serie.doc_type === String(doc_type)).map(serie => ({ label: serie.description, key: serie.id }))
+        },
+        getSerieDescription(id) {
+            const serie = this.series.find(serie => serie.id === id)
+            return serie ? serie.description : null
         }
     }
 })

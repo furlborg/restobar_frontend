@@ -1,7 +1,7 @@
 <template>
   <n-card title="Mesas" :bordered="false" :segmented="{ content: 'hard' }">
     <template #header-extra>
-      <n-button
+      <!-- <n-button
         v-if="!groupMode"
         type="info"
         secondary
@@ -22,7 +22,7 @@
           "
           >Cancelar</n-button
         >
-      </n-space>
+      </n-space> -->
     </template>
     <n-spin :show="isLoading">
       <n-card
@@ -70,7 +70,15 @@
                 class="position-absolute top-0 start-0 m-2"
               />
               <div
-                class="position-absolute top-50 start-50 translate-middle fs-4"
+                class="
+                  black-outline
+                  text-center
+                  position-absolute
+                  top-50
+                  start-50
+                  translate-middle
+                  fs-4
+                "
               >
                 {{ "MESA " + String(table.id) }}
               </div>
@@ -250,11 +258,14 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-.table img {
-  /* w */
-}
-
 .bg-occuped {
   background-color: rgb(255, 128, 128);
+}
+
+.black-outline {
+  -webkit-text-stroke: 0.75px black;
+  color: Gainsboro;
+  -webkit-font-smoothing: antialiased;
+  font-weight: bold;
 }
 </style>

@@ -68,6 +68,14 @@ export async function searchProduct(search, pageLimit, pageOffset) {
     })
 }
 
+export async function searchProductByName(search) {
+    return await http.get('products/search_products/', {
+        params: {
+            search: search
+        }
+    })
+}
+
 export async function getProductCategories() {
     return await http.get('product-categories/')
 }

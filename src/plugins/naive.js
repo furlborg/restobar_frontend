@@ -3,6 +3,7 @@ import {
     NConfigProvider,
     NMessageProvider,
     NDialogProvider,
+    NAutoComplete,
     NInput,
     NButton,
     NForm,
@@ -82,7 +83,6 @@ import {
     NH5,
     NH6,
     NScrollbar,
-    NAutoComplete
 } from 'naive-ui'
 
 export const naive = create({
@@ -90,6 +90,7 @@ export const naive = create({
         NMessageProvider,
         NDialogProvider,
         NConfigProvider,
+        NAutoComplete,
         NInput,
         NButton,
         NForm,
@@ -169,6 +170,5 @@ export const naive = create({
         NH5,
         NH6,
         NScrollbar,
-        NAutoComplete,
     ],
 })

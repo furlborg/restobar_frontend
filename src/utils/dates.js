@@ -9,5 +9,5 @@ export function calcAge(dateString) {
 
 export function toDate(timestamp) {
     let date = new Date(timestamp)
-    return `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}`
+    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
 }
