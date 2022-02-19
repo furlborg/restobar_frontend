@@ -5,7 +5,9 @@
       @back="$router.push({ name: 'WCategories' })"
     >
       <template #title>
-        <n-text class="fs-4">{{ $route.params.category }}</n-text>
+        <n-text class="fs-4">{{
+          productStore.getCategorieDescription($route.params.category)
+        }}</n-text>
       </template>
     </n-page-header>
 
@@ -16,8 +18,8 @@
             justify="space-between"
             @click="product.quantity ? null : (product.quantity = 1)"
           >
-            <n-text>{{ product.title }}</n-text>
-            <n-text>S/. {{ product.price.toFixed(2) }}</n-text>
+            <n-text>{{ product.name }}</n-text>
+            <n-text>S/. {{ parseFloat(product.prices).toFixed(2) }}</n-text>
           </n-space>
           <n-collapse-transition :show="product.quantity > 0">
             <n-space justify="space-between">
@@ -100,9 +102,9 @@
         <n-list>
           <n-list-item v-for="(orderItem, index) in preOrderList" :key="index">
             <n-thing
-              :title="`${orderItem.quantity} - ${orderItem.title}`"
+              :title="`${orderItem.quantity} - ${orderItem.name}`"
               :title-extra="`S/. ${
-                orderItem.quantity * orderItem.price.toFixed(2)
+                orderItem.quantity * parseFloat(orderItem.prices).toFixed(2)
               }`"
               ><n-button
                 type="info"
@@ -131,9 +133,13 @@
 </template>
 
 <script>
-import { defineComponent, ref } from "vue";
+import { defineComponent, ref, onMounted } from "vue";
+import { useRoute } from "vue-router";
+import { useMessage } from "naive-ui";
 import ProductIndications from "./ProductIndications";
 import { useWaiterStore } from "@/store/modules/waiter";
+import { useProductStore } from "@/store/modules/product";
+import { getProductsByCategory } from "@/api/modules/products";
 import { cloneDeep } from "@/utils";
 
 export default defineComponent({
@@ -142,154 +148,16 @@ export default defineComponent({
     ProductIndications,
   },
   setup() {
+    const message = useMessage();
+    const route = useRoute();
     const waiterStore = useWaiterStore();
+    const productStore = useProductStore();
     const activeDrawer = ref(false);
     const showModal = ref(false);
     const preOrderList = ref([]);
     const productIndex = ref(null);
     const orderItemIndex = ref(null);
-    const products = ref([
-      {
-        id: 0,
-        title: "Product 1",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 1,
-        title: "Product 2",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 2,
-        title: "Product 3",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 3,
-        title: "Product 4",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 4,
-        title: "Product 5",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 5,
-        title: "Product 6",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 6,
-        title: "Product 7",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 7,
-        title: "Product 8",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 8,
-        title: "Product 9",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 9,
-        title: "Product 10",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 10,
-        title: "Product 11",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 11,
-        title: "Product 12",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 12,
-        title: "Product 13",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 13,
-        title: "Product 14",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 14,
-        title: "Product 15",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 15,
-        title: "Product 16",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 16,
-        title: "Product 17",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 17,
-        title: "Product 18",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 18,
-        title: "Product 19",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 19,
-        title: "Product 20",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-    ]);
+    const products = ref([]);
 
     const addToList = () => {
       products.value.forEach((product) => {
@@ -316,6 +184,23 @@ export default defineComponent({
       });
     };
 
+    const loadProducts = () => {
+      getProductsByCategory(route.params.category)
+        .then((response) => {
+          if (response.status === 200) {
+            products.value = response.data;
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        });
+    };
+
+    onMounted(() => {
+      loadProducts();
+    });
+
     const saveOrder = () => {
       if (waiterStore.orderList.length === 0) {
         waiterStore.saveOrders(cloneDeep(preOrderList.value));
@@ -329,6 +214,7 @@ export default defineComponent({
     return {
       activeDrawer,
       showModal,
+      productStore,
       productIndex,
       orderItemIndex,
       products,

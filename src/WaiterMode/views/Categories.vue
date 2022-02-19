@@ -1,8 +1,14 @@
 <template>
   <n-list class="m-0">
-    <router-link :to="{ name: 'WProducts', params: { category: 'Menu' } }">
-      <n-list-item class="box small back1">
-        <template #prefix>
+    <n-list-item
+      v-for="category in productStore.categories"
+      :key="category.id"
+      :class="`box small back-${category.id}`"
+      @click="
+        $router.push({ name: 'WProducts', params: { category: category.id } })
+      "
+    >
+      <!-- <template #prefix>
           <img
             class="ms-4"
             src="~@/assets/icons/food/Ramen.png"
@@ -10,12 +16,11 @@
             width="48"
             height="48"
           />
-        </template>
-        <span>Menu</span>
-      </n-list-item>
-    </router-link>
-    <router-link :to="{ name: 'WProducts', params: { category: 'Pizzas' } }">
-      <n-list-item class="box small back2">
+        </template> -->
+      <span>{{ category.description }}</span>
+    </n-list-item>
+    <!-- <router-link :to="{ name: 'WProducts', params: { category: 'Pizzas' } }">
+      <n-list-item class="box small back-2">
         <template #prefix>
           <img
             class="ms-4"
@@ -29,7 +34,7 @@
       </n-list-item>
     </router-link>
     <router-link :to="{ name: 'WProducts', params: { category: 'Pastas' } }">
-      <n-list-item class="box small back3">
+      <n-list-item class="box small back-3">
         <template #prefix>
           <img
             class="ms-4"
@@ -43,7 +48,7 @@
       </n-list-item>
     </router-link>
     <router-link :to="{ name: 'WProducts', params: { category: 'Mariscos' } }">
-      <n-list-item class="box small back4">
+      <n-list-item class="box small back-4">
         <template #prefix>
           <img
             class="ms-4"
@@ -57,7 +62,7 @@
       </n-list-item>
     </router-link>
     <router-link :to="{ name: 'WProducts', params: { category: 'Chifa' } }">
-      <n-list-item class="box small back5">
+      <n-list-item class="box small back-5">
         <template #prefix>
           <img
             class="ms-4"
@@ -71,7 +76,7 @@
       </n-list-item>
     </router-link>
     <router-link :to="{ name: 'WProducts', params: { category: 'Postres' } }">
-      <n-list-item class="box small back6">
+      <n-list-item class="box small back-6">
         <template #prefix>
           <img
             class="ms-4"
@@ -85,7 +90,7 @@
       </n-list-item>
     </router-link>
     <router-link :to="{ name: 'WProducts', params: { category: 'Ensaladas' } }">
-      <n-list-item class="box small back7">
+      <n-list-item class="box small back-7">
         <template #prefix>
           <img
             class="ms-4"
@@ -99,7 +104,7 @@
       </n-list-item>
     </router-link>
     <router-link :to="{ name: 'WProducts', params: { category: 'Refrescos' } }">
-      <n-list-item class="box small back8">
+      <n-list-item class="box small back-8">
         <template #prefix>
           <img
             class="ms-4"
@@ -113,7 +118,7 @@
       </n-list-item>
     </router-link>
     <router-link :to="{ name: 'WProducts', params: { category: 'Gaseosas' } }">
-      <n-list-item class="box small back9">
+      <n-list-item class="box small back-9">
         <template #prefix>
           <img
             class="ms-4"
@@ -127,7 +132,7 @@
       </n-list-item>
     </router-link>
     <router-link :to="{ name: 'WProducts', params: { category: 'Helados' } }">
-      <n-list-item class="box small back10">
+      <n-list-item class="box small back-10">
         <template #prefix>
           <img
             class="ms-4"
@@ -141,7 +146,7 @@
       </n-list-item>
     </router-link>
     <router-link :to="{ name: 'WProducts', params: { category: 'Parrillas' } }">
-      <n-list-item class="box small back11">
+      <n-list-item class="box small back-11">
         <template #prefix>
           <img
             class="ms-4"
@@ -153,53 +158,65 @@
         </template>
         <span>Parrillas</span>
       </n-list-item>
-    </router-link>
+    </router-link> -->
   </n-list>
 </template>
 
 <script>
-import { defineComponent } from "vue";
+import { defineComponent, ref, onMounted } from "vue";
+import { useProductStore } from "@/store/modules/product";
 
 export default defineComponent({
   name: "Categories",
   setup() {
-    return {};
+    const productStore = useProductStore();
+
+    const counter = ref(0);
+
+    onMounted(() => {
+      productStore.refreshCategories();
+    });
+
+    return {
+      productStore,
+      counter,
+    };
   },
 });
 </script>
 
 <style lang="scss" scoped>
-.back1 {
+.back-1 {
   background: -webkit-linear-gradient(-50deg, WhiteSmoke, Azure);
 }
-.back2 {
+.back-2 {
   background: -webkit-linear-gradient(-50deg, WhiteSmoke, GhostWhite);
 }
-.back3 {
+.back-3 {
   background: -webkit-linear-gradient(-50deg, WhiteSmoke, Ivory);
 }
-.back4 {
+.back-4 {
   background: -webkit-linear-gradient(-50deg, WhiteSmoke, LavenderBlush);
 }
-.back5 {
+.back-5 {
   background: -webkit-linear-gradient(-50deg, WhiteSmoke, LightCyan);
 }
-.back6 {
+.back-6 {
   background: -webkit-linear-gradient(-50deg, WhiteSmoke, MintCream);
 }
-.back7 {
+.back-7 {
   background: -webkit-linear-gradient(-50deg, WhiteSmoke, Linen);
 }
-.back8 {
+.back-8 {
   background: -webkit-linear-gradient(-50deg, WhiteSmoke, MistyRose);
 }
-.back9 {
+.back-9 {
   background: -webkit-linear-gradient(-50deg, WhiteSmoke, OldLace);
 }
-.back10 {
+.back-10 {
   background: -webkit-linear-gradient(-50deg, WhiteSmoke, FloralWhite);
 }
-.back11 {
+.back-11 {
   background: -webkit-linear-gradient(-50deg, WhiteSmoke, HoneyDew);
 }
 .box {

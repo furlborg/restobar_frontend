@@ -86,7 +86,6 @@
 import { defineComponent, ref, onMounted } from "vue";
 import { renderIcon } from "@/utils";
 import { useProductStore } from "@/store/modules/product";
-import { useRoute } from "vue-router";
 
 export default defineComponent({
   name: "CategoriesList",
