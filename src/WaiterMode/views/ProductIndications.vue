@@ -49,7 +49,7 @@
     <template #action>
       <n-space justify="end"
         ><n-button type="info" @click="saveIndications"
-          >Agregar</n-button
+          >Guardar</n-button
         ></n-space
       >
     </template>

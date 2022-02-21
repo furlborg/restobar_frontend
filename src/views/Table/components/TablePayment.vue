@@ -76,7 +76,6 @@
                 v-model:value="sale.payment_method"
                 :options="saleStore.getPaymentMethodsOptions"
                 filterable
-                clearable
               />
             </n-form-item-gi>
             <n-form-item-gi :span="3" label="Fecha" path="date_sale">
@@ -263,7 +262,7 @@ export default defineComponent({
       count: products_count,
       amount: total,
       invoice_type: 3,
-      payment_method: null,
+      payment_method: 1,
       payment_condition: 1,
       customer: null,
       customer_name: "",

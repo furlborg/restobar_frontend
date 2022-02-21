@@ -119,7 +119,7 @@
                   ? performUpdateTableOrder()
                   : performCreateTableOrder()
               "
-              >Realizar pedido</n-button
+              >{{ orderStore.orderId ? "Añadir" : "Realizar" }} pedido</n-button
             >
           </n-space>
         </template>
@@ -131,6 +131,7 @@
 <script>
 import { defineComponent, ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
+import { useRouter } from "vue-router";
 import { useMessage } from "naive-ui";
 import ProductIndications from "./ProductIndications";
 import { useWaiterStore } from "@/store/modules/waiter";
@@ -151,6 +152,7 @@ export default defineComponent({
   setup() {
     const message = useMessage();
     const route = useRoute();
+    const router = useRouter();
     const productStore = useProductStore();
     const orderStore = useOrderStore();
     const activeDrawer = ref(false);
@@ -164,6 +166,7 @@ export default defineComponent({
           if (response.status === 201) {
             message.success("Orden creada correctamente");
             activeDrawer.value = false;
+            router.push({ name: "WHome" });
           }
         })
         .catch((error) => {
@@ -182,6 +185,7 @@ export default defineComponent({
           if (response.status === 202) {
             message.success("Orden actualizada correctamente");
             activeDrawer.value = false;
+            router.push({ name: "WHome" });
           }
         })
         .catch((error) => {

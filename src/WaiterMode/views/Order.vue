@@ -8,20 +8,13 @@
     <n-tab-pane class="p-0" name="menu" tab="Carta">
       <router-view></router-view>
     </n-tab-pane>
-    <n-tab-pane
-      name="order"
-      tab="Pedido"
-      :disabled="!orderStore.orderList.length"
-    >
+    <n-tab-pane name="order" tab="Pedido" :disabled="!orderStore.orderId">
       <n-card title="Pedido" size="small" :segmented="{ content: 'hard' }">
         <!-- <n-h2>Pedido</n-h2> -->
         <n-list class="m-0">
-          <n-list-item
-            v-for="(order, index) in waiterStore.orderList"
-            :key="index"
-          >
+          <n-list-item v-for="(order, index) in orderDetails" :key="index">
             <n-thing
-              :title="`${order.quantity} - ${order.title}`"
+              :title="`${order.quantity} - ${order.product_name}`"
               :title-extra="`S/. ${order.quantity * order.price.toFixed(2)}`"
               @click="
                 itemIndex = index;
@@ -35,7 +28,7 @@
         v-model:show="showModal"
         preset="card"
         title="Indicaciones"
-        :product="waiterStore.orderList[itemIndex]"
+        :product="orderDetails[itemIndex]"
         @success="showModal = false"
       ></ProductIndications>
     </n-tab-pane>
@@ -63,6 +56,7 @@ export default defineComponent({
     const route = useRoute();
     const showModal = ref(false);
     const itemIndex = ref(null);
+    const orderDetails = ref([]);
 
     orderStore.orders = [];
     orderStore.orderId = null;
@@ -71,7 +65,7 @@ export default defineComponent({
       retrieveTableOrder(route.params.table)
         .then((response) => {
           if (response.status === 200) {
-            orderStore.orders = response.data.order_details;
+            orderDetails.value = response.data.order_details;
             orderStore.orderId = response.data.id;
           }
         })
@@ -109,6 +103,7 @@ export default defineComponent({
       orderStore,
       showModal,
       itemIndex,
+      orderDetails,
     };
   },
 });
