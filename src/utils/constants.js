@@ -249,11 +249,13 @@ export const productRules = {
         message: 'Precio requerido'
     },
     category: {
+        type: 'number',
         required: true,
         trigger: ['blur', 'input'],
         message: 'Categoría requerido'
     },
     preparation_place: {
+        type: 'number',
         required: true,
         trigger: ['blur', 'input'],
         message: 'Lugar de preparación requerido'
@@ -705,17 +707,19 @@ export const createSuppliesColumns = ({ editSupplies, deleteSupplies }) => {
             align: 'center',
             render(row) {
                 return h(NPopover,
-                    { trigger: "click"},
-                    { trigger: () => h(NButton,
-                        {
-                            size: 'small',
-                            type: 'success',
-                            circle: true
-                        },
-                        renderIcon('md-search-round')),
-                        default: () => h(NSpace,{vertical: true},{
-                            default: () => row.amount.map((v)=>{
-                                return [h(NText,{},{default: () => v.amount})]})
+                    { trigger: "click" },
+                    {
+                        trigger: () => h(NButton,
+                            {
+                                size: 'small',
+                                type: 'success',
+                                circle: true
+                            },
+                            renderIcon('md-search-round')),
+                        default: () => h(NSpace, { vertical: true }, {
+                            default: () => row.amount.map((v) => {
+                                return [h(NText, {}, { default: () => v.amount })]
+                            })
                         })
                     }
                 )

@@ -22,17 +22,7 @@
             <n-text>S/. {{ parseFloat(product.prices).toFixed(2) }}</n-text>
           </n-space>
           <n-collapse-transition :show="product.quantity > 0">
-            <n-space justify="space-between">
-              <n-button
-                type="info"
-                text
-                @click="
-                  productIndex = index;
-                  orderItemIndex = null;
-                  showModal = true;
-                "
-                >Indicaciones</n-button
-              >
+            <n-space justify="end">
               <n-input-group>
                 <n-button
                   type="warning"
@@ -65,11 +55,7 @@
       v-model:show="showModal"
       preset="card"
       title="Indicaciones"
-      :product="
-        productIndex !== null
-          ? products[productIndex]
-          : preOrderList[orderItemIndex]
-      "
+      :product="orderStore.orders[orderItemIndex]"
       @success="showModal = false"
     ></ProductIndications>
     <teleport to="body">
@@ -89,7 +75,7 @@
         </transition>
         <n-button
           type="info"
-          :disabled="!(preOrderList.length > 0)"
+          :disabled="!(orderStore.orders.length > 0)"
           round
           @click="activeDrawer = true"
           ><v-icon class="me-1" name="md-shoppingcart-round" />Ver
@@ -97,20 +83,23 @@
         >
       </n-space>
     </teleport>
-    <n-drawer height="auto" v-model:show="activeDrawer" placement="bottom">
+    <n-drawer height="50%" v-model:show="activeDrawer" placement="bottom">
       <n-drawer-content title="Pedidos" closable>
         <n-list>
-          <n-list-item v-for="(orderItem, index) in preOrderList" :key="index">
+          <n-list-item
+            v-for="(orderItem, index) in orderStore.orders"
+            :key="index"
+          >
             <n-thing
-              :title="`${orderItem.quantity} - ${orderItem.name}`"
+              :title="`${orderItem.quantity} - ${orderItem.product_name}`"
               :title-extra="`S/. ${
-                orderItem.quantity * parseFloat(orderItem.prices).toFixed(2)
+                Number(orderItem.quantity) *
+                parseFloat(orderItem.price).toFixed(2)
               }`"
               ><n-button
                 type="info"
                 text
                 @click="
-                  productIndex = null;
                   orderItemIndex = index;
                   showModal = true;
                 "
@@ -122,7 +111,14 @@
         <template #footer>
           <n-space class="w-100" justify="center">
             <n-button type="error" secondary>Cancelar pedido</n-button>
-            <n-button type="info" secondary @click="saveOrder"
+            <n-button
+              type="info"
+              secondary
+              @click="
+                orderStore.orderId
+                  ? performUpdateTableOrder()
+                  : performCreateTableOrder()
+              "
               >Realizar pedido</n-button
             >
           </n-space>
@@ -139,8 +135,13 @@ import { useMessage } from "naive-ui";
 import ProductIndications from "./ProductIndications";
 import { useWaiterStore } from "@/store/modules/waiter";
 import { useProductStore } from "@/store/modules/product";
+import { useOrderStore } from "@/store/modules/order";
 import { getProductsByCategory } from "@/api/modules/products";
-import { cloneDeep } from "@/utils";
+import {
+  createTableOrder,
+  updateTableOrder,
+  performDeleteOrderDetail,
+} from "@/api/modules/tables";
 
 export default defineComponent({
   name: "WProducts",
@@ -150,38 +151,43 @@ export default defineComponent({
   setup() {
     const message = useMessage();
     const route = useRoute();
-    const waiterStore = useWaiterStore();
     const productStore = useProductStore();
+    const orderStore = useOrderStore();
     const activeDrawer = ref(false);
     const showModal = ref(false);
-    const preOrderList = ref([]);
-    const productIndex = ref(null);
     const orderItemIndex = ref(null);
     const products = ref([]);
 
-    const addToList = () => {
-      products.value.forEach((product) => {
-        if (product.quantity > 0) {
-          const existence = preOrderList.value.find(
-            (item) => item.id === product.id
-          );
-          if (typeof existence !== "undefined") {
-            existence.quantity += product.quantity;
-            if (
-              product.indications.length > 0 &&
-              existence.indications.length > 0
-            ) {
-              product.indications.forEach((indication) => {
-                existence.indications.push(cloneDeep(indication));
-              });
-            }
-          } else {
-            preOrderList.value.push(cloneDeep(product));
+    const performCreateTableOrder = () => {
+      createTableOrder(route.params.table, orderStore.orderList)
+        .then((response) => {
+          if (response.status === 201) {
+            message.success("Orden creada correctamente");
+            activeDrawer.value = false;
           }
-          product.quantity = 0;
-          product.indications = [];
-        }
-      });
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        });
+    };
+
+    const performUpdateTableOrder = () => {
+      updateTableOrder(
+        route.params.table,
+        orderStore.orderId,
+        orderStore.orderList
+      )
+        .then((response) => {
+          if (response.status === 202) {
+            message.success("Orden actualizada correctamente");
+            activeDrawer.value = false;
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        });
     };
 
     const loadProducts = () => {
@@ -201,26 +207,26 @@ export default defineComponent({
       loadProducts();
     });
 
-    const saveOrder = () => {
-      if (waiterStore.orderList.length === 0) {
-        waiterStore.saveOrders(cloneDeep(preOrderList.value));
-      } else {
-        waiterStore.addOrders(cloneDeep(preOrderList.value));
-      }
-      preOrderList.value = [];
-      activeDrawer.value = false;
+    const addToList = () => {
+      products.value.forEach((product) => {
+        if (product.quantity > 0) {
+          orderStore.addOrderItem(product);
+          product.quantity = 0;
+          product.indications = [];
+        }
+      });
     };
 
     return {
       activeDrawer,
       showModal,
       productStore,
-      productIndex,
       orderItemIndex,
       products,
-      preOrderList,
       addToList,
-      saveOrder,
+      orderStore,
+      performCreateTableOrder,
+      performUpdateTableOrder,
     };
   },
 });

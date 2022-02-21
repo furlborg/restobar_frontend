@@ -8,7 +8,11 @@
     <n-tab-pane class="p-0" name="menu" tab="Carta">
       <router-view></router-view>
     </n-tab-pane>
-    <n-tab-pane name="order" tab="Pedido">
+    <n-tab-pane
+      name="order"
+      tab="Pedido"
+      :disabled="!orderStore.orderList.length"
+    >
       <n-card title="Pedido" size="small" :segmented="{ content: 'hard' }">
         <!-- <n-h2>Pedido</n-h2> -->
         <n-list class="m-0">
@@ -40,8 +44,12 @@
 
 <script>
 import { defineComponent, ref, onUpdated, onMounted } from "vue";
+import { useMessage } from "naive-ui";
+import { useRoute } from "vue-router";
 import ProductIndications from "./ProductIndications";
 import { useWaiterStore } from "@/store/modules/waiter";
+import { useOrderStore } from "@/store/modules/order";
+import { retrieveTableOrder } from "@/api/modules/tables";
 
 export default defineComponent({
   name: "WOrder",
@@ -50,8 +58,33 @@ export default defineComponent({
   },
   setup() {
     const waiterStore = useWaiterStore();
+    const orderStore = useOrderStore();
+    const message = useMessage();
+    const route = useRoute();
     const showModal = ref(false);
     const itemIndex = ref(null);
+
+    orderStore.orders = [];
+    orderStore.orderId = null;
+
+    const performRetrieveTableOrder = () => {
+      retrieveTableOrder(route.params.table)
+        .then((response) => {
+          if (response.status === 200) {
+            orderStore.orders = response.data.order_details;
+            orderStore.orderId = response.data.id;
+          }
+        })
+        .catch((error) => {
+          if (error.response.status === 404) {
+            orderStore.orders = [];
+            orderStore.orderId = null;
+          } else {
+            console.error(error);
+            message.error("Algo salió mal...");
+          }
+        });
+    };
 
     function setTabStyle() {
       let tab_nav = document.getElementsByClassName("n-tabs-nav");
@@ -63,6 +96,7 @@ export default defineComponent({
     }
 
     onMounted(() => {
+      performRetrieveTableOrder();
       setTabStyle();
     });
 
@@ -72,6 +106,7 @@ export default defineComponent({
 
     return {
       waiterStore,
+      orderStore,
       showModal,
       itemIndex,
     };
