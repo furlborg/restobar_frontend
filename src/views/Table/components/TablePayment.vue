@@ -63,6 +63,7 @@
                   @select="
                     (value) => {
                       sale.customer = value;
+                      createAddressesOptions();
                     }
                   "
                 />
@@ -86,7 +87,12 @@
               />
             </n-form-item-gi>
             <n-form-item-gi :span="10" label="Dirección">
-              <n-input v-model="sale.address" />
+              <n-select
+                v-model:value="sale.address"
+                :options="addressesOptions"
+                :disabled="!sale.customer"
+                placeholder=""
+              />
             </n-form-item-gi>
             <n-form-item-gi>
               <n-button
@@ -266,16 +272,12 @@ export default defineComponent({
       payment_condition: 1,
       customer: null,
       customer_name: "",
-      address: "",
+      address: null,
       branch_office: 1,
       discount: "0.00",
       observations: "",
       sale_details: orderStore.orderToSale,
     });
-
-    const customerOptions = ref([]);
-
-    const searching = ref(false);
 
     const selectSerie = (v) => {
       sale.value.serie = v;
@@ -304,7 +306,7 @@ export default defineComponent({
           createSale(sale.value)
             .then((response) => {
               if (response.status === 201) {
-                message.error("Venta realizada correctamente!");
+                message.success("Venta realizada correctamente!");
                 router.push({ name: "TableHome" });
               }
             })
@@ -332,11 +334,37 @@ export default defineComponent({
         })
         .catch((error) => {
           console.log(error);
-          message.success("Algo salió mal...");
+          message.error("Algo salió mal...");
         })
         .finally(() => {
           loading.value = false;
         });
+    };
+
+    const searching = ref(false);
+
+    const customerResults = ref([]);
+
+    const customerOptions = computed(() => {
+      return customerResults.value.map((customer) => ({
+        value: customer.id,
+        label: `${customer.doc_num} - ${customer.names}`,
+        disabled: customer.is_disabled,
+      }));
+    });
+
+    const addressesOptions = ref([]);
+
+    const createAddressesOptions = () => {
+      const customer = customerResults.value.find(
+        (customer) => customer.id === sale.value.customer
+      );
+      if (typeof customer !== "undefined") {
+        addressesOptions.value = customer.addresses.map((address) => ({
+          value: address.id,
+          label: address.description,
+        }));
+      }
     };
 
     const showOptions = (value) => {
@@ -345,11 +373,7 @@ export default defineComponent({
         searchCustomerByName(value)
           .then((response) => {
             if (response.status === 200) {
-              customerOptions.value = response.data.map((customer) => ({
-                value: customer.id,
-                label: customer.names,
-                disabled: customer.is_disabled,
-              }));
+              customerResults.value = response.data;
             }
           })
           .catch((error) => {
@@ -392,6 +416,8 @@ export default defineComponent({
       changeSerie,
       showObservations,
       performCreateSale,
+      addressesOptions,
+      createAddressesOptions,
     };
   },
 });
