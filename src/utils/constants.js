@@ -889,9 +889,10 @@ export const createKardexBySupplyColumns = () => {
 }
 
 export const saleRules = {
-    customer_name: {
+    customer: {
+        type: 'number',
         required: true,
-        trigger: ['blur', 'input'],
+        trigger: ['blur'],
         message: 'Cliente es requerido'
     }
 }

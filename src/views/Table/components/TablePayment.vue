@@ -50,19 +50,20 @@
             cols="12 s:12 m:12 l:12 xl:12 2xl:12"
             :x-gap="12"
           >
-            <n-form-item-gi :span="6" label="Cliente" path="customer_name">
+            <n-form-item-gi :span="6" label="Cliente" path="customer">
               <n-input-group>
                 <n-auto-complete
+                  blur-after-select
                   :input-props="{
                     autocomplete: 'disabled',
                   }"
-                  v-model:value="sale.customer_name"
                   :options="customerOptions"
                   :get-show="showOptions"
                   :loading="searching"
                   @select="
                     (value) => {
                       sale.customer = value;
+                      sale.address = null;
                       createAddressesOptions();
                     }
                   "
@@ -271,7 +272,6 @@ export default defineComponent({
       payment_method: 1,
       payment_condition: 1,
       customer: null,
-      customer_name: "",
       address: null,
       branch_office: 1,
       discount: "0.00",
@@ -368,8 +368,9 @@ export default defineComponent({
     };
 
     const showOptions = (value) => {
-      if (value.length >= 3) {
+      if (value.length >= 3 && value.length <= 10) {
         searching.value = true;
+        customerResults.value = [];
         searchCustomerByName(value)
           .then((response) => {
             if (response.status === 200) {
