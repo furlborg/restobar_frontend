@@ -325,7 +325,7 @@ export default defineComponent({
             .then((response) => {
               if (response.status === 201) {
                 message.success("Cliente registrado!");
-                emit("on-success");
+                emit("on-success", response.data);
               }
             })
             .catch((error) => {
@@ -358,7 +358,7 @@ export default defineComponent({
             .then((response) => {
               if (response.status === 202) {
                 message.success("Cliente actualizado!");
-                emit("on-success");
+                emit("on-success", response.data);
               }
             })
             .catch((error) => {
@@ -402,9 +402,7 @@ export default defineComponent({
                   }
                 } else if (customer.value.doc_num.length === 11) {
                   customer.value.names = response.data.nombre_o_razon_social;
-                  customer.value.addresses[0].ubigeo = Number(
-                    response.data.district
-                  );
+                  customer.value.addresses[0].ubigeo = response.data.ubigeo[2];
                   customer.value.addresses[0].description =
                     response.data.direccion;
                 }

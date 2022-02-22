@@ -101,9 +101,9 @@
 </template>
 
 <script>
-import { defineComponent, onMounted, ref, h } from "vue";
+import { defineComponent, onMounted, ref } from "vue";
 import { documentOptions, createCustomerColumns } from "@/utils/constants";
-import { useMessage, useDialog, NButton } from "naive-ui";
+import { useMessage, useDialog } from "naive-ui";
 import {
   getCustomers,
   getCustomersByPageNumber,
@@ -144,24 +144,6 @@ export default defineComponent({
       pageSize: 10,
       showSizePicker: true,
       pageSizes: [10, 25, 50, 100],
-      /* next: () => {
-        return h(
-          NButton,
-          {
-            text: true,
-          },
-          () => 'Siguiente'
-          )
-      },
-      prev: () => {
-        return h(
-          NButton,
-          {
-            text: true,
-          },
-          () => 'Anterior'
-          )
-      }, */
       onChange: (page) => {
         isTableLoading.value = true;
         pagination.value.page = page;

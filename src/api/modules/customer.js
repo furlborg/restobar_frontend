@@ -84,6 +84,14 @@ export async function searchCustomerByName(names) {
     })
 }
 
+export async function searchRucCustomer(names) {
+    return await http.get('customers/search_ruc_customers/', {
+        params: {
+            search: names
+        }
+    })
+}
+
 export async function requestCustomerData(document) {
     return await http.post('customers/request_data/', {
         document: document,

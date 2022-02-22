@@ -2,7 +2,7 @@
   <div id="TablePayment">
     <n-spin :show="loading">
       <n-card>
-        <n-form ref="saleForm" :model="sale" :rules="saleRules">
+        <n-form class="mb-2" ref="saleForm" :model="sale" :rules="saleRules">
           <n-space class="mb-2" align="center" justify="space-between">
             <div class="d-flex align-items-center">
               <n-text class="fs-4">{{
@@ -50,35 +50,41 @@
             cols="12 s:12 m:12 l:12 xl:12 2xl:12"
             :x-gap="12"
           >
-            <n-form-item-gi :span="6" label="Cliente" path="customer">
+            <n-form-item-gi :span="9" label="Cliente" path="customer">
               <n-input-group>
                 <n-auto-complete
                   blur-after-select
                   :input-props="{
                     autocomplete: 'disabled',
                   }"
+                  v-model:value="sale.customer_name"
                   :options="customerOptions"
                   :get-show="showOptions"
                   :loading="searching"
+                  @update:value="
+                    (v) => {
+                      !v
+                        ? ((sale.customer = null), createAddressesOptions())
+                        : null;
+                    }
+                  "
                   @select="
                     (value) => {
                       sale.customer = value;
                       sale.address = null;
                       createAddressesOptions();
+                      sale.invoice_type === 1
+                        ? (sale.address = addressesOptions[0].value)
+                        : null;
                     }
                   "
+                  placeholder=""
+                  clearable
                 />
                 <n-button type="info">
-                  <v-icon name="md-add-round" />
+                  <v-icon name="md-add-round" @click="showModal = true" />
                 </n-button>
               </n-input-group>
-            </n-form-item-gi>
-            <n-form-item-gi :span="3" label="Método Pago" path="payment_method">
-              <n-select
-                v-model:value="sale.payment_method"
-                :options="saleStore.getPaymentMethodsOptions"
-                filterable
-              />
             </n-form-item-gi>
             <n-form-item-gi :span="3" label="Fecha" path="date_sale">
               <n-date-picker
@@ -87,7 +93,7 @@
                 type="datetime"
               />
             </n-form-item-gi>
-            <n-form-item-gi :span="10" label="Dirección">
+            <n-form-item-gi :span="6" label="Dirección">
               <n-select
                 v-model:value="sale.address"
                 :options="addressesOptions"
@@ -95,7 +101,14 @@
                 placeholder=""
               />
             </n-form-item-gi>
-            <n-form-item-gi>
+            <n-form-item-gi :span="3" label="Método Pago" path="payment_method">
+              <n-select
+                v-model:value="sale.payment_method"
+                :options="saleStore.getPaymentMethodsOptions"
+                filterable
+              />
+            </n-form-item-gi>
+            <n-form-item-gi :span="3">
               <n-button
                 type="info"
                 text
@@ -212,17 +225,27 @@
         >
       </n-card>
     </n-spin>
+    <!-- Customer Modal -->
+    <customer-modal
+      v-model:show="showModal"
+      @update:show="onCloseModal"
+      @on-success="onSuccess"
+    />
   </div>
 </template>
 
 <script>
 import { defineComponent, ref, toRefs, computed, watch, onMounted } from "vue";
+import CustomerModal from "@/views/Customer/components/CustomerModal";
 import { useRouter } from "vue-router";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { saleRules } from "@/utils/constants";
 import { isDecimal, isNumber, isLetter } from "@/utils";
-import { searchCustomerByName } from "@/api/modules/customer";
+import {
+  searchCustomerByName,
+  searchRucCustomer,
+} from "@/api/modules/customer";
 import { createSale, getSaleNumber } from "@/api/modules/sales";
 import { useMessage } from "naive-ui";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
@@ -231,12 +254,16 @@ import format from "date-fns/format";
 export default defineComponent({
   name: "TablePayment",
   directives: { autowidth: VueInputAutowidth },
+  components: {
+    CustomerModal,
+  },
   setup() {
     const router = useRouter();
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
     const message = useMessage();
     const loading = ref(false);
+    const showModal = ref(false);
     const payment_amount = ref("0.00");
     const saleForm = ref();
     const changing = computed(() => {
@@ -271,6 +298,7 @@ export default defineComponent({
       invoice_type: 3,
       payment_method: 1,
       payment_condition: 1,
+      customer_name: "",
       customer: null,
       address: null,
       branch_office: 1,
@@ -286,6 +314,9 @@ export default defineComponent({
     const changeSerie = (v) => {
       switch (v) {
         case 1:
+          sale.value.customer_name = "";
+          sale.value.customer = null;
+          sale.value.address = null;
           sale.value.serie = 1;
           break;
         case 3:
@@ -362,31 +393,49 @@ export default defineComponent({
       if (typeof customer !== "undefined") {
         addressesOptions.value = customer.addresses.map((address) => ({
           value: address.id,
-          label: address.description,
+          label: `${address.ubigeo} - ${address.description}`,
         }));
       }
     };
 
-    const showOptions = (value) => {
-      if (value.length >= 3 && value.length <= 10) {
+    const showOptions = async (value) => {
+      if (value.length >= 3 && value.length <= 11) {
         searching.value = true;
+        if (sale.value.invoice_type === 1) {
+          await searchRucCustomer(value)
+            .then((response) => {
+              if (response.status === 200) {
+                customerResults.value = response.data;
+              }
+            })
+            .catch((error) => {
+              console.error(error);
+              message.error("Algo salió mal...");
+            })
+            .finally(() => {
+              searching.value = false;
+            });
+          return true;
+        } else {
+          await searchCustomerByName(value)
+            .then((response) => {
+              if (response.status === 200) {
+                customerResults.value = response.data;
+              }
+            })
+            .catch((error) => {
+              console.error(error);
+              message.error("Algo salió mal...");
+            })
+            .finally(() => {
+              searching.value = false;
+            });
+          return true;
+        }
+      } else {
         customerResults.value = [];
-        searchCustomerByName(value)
-          .then((response) => {
-            if (response.status === 200) {
-              customerResults.value = response.data;
-            }
-          })
-          .catch((error) => {
-            console.error(error);
-            message.error("Algo salió mal...");
-          })
-          .finally(() => {
-            searching.value = false;
-          });
-        return true;
+        return false;
       }
-      return false;
     };
 
     const { serie } = toRefs(sale.value);
@@ -396,10 +445,25 @@ export default defineComponent({
     });
 
     onMounted(() => {
+      document.title = "Venta | App";
       obtainSaleNumber();
     });
 
+    const onCloseModal = () => {
+      document.title = "Venta | App";
+    };
+
+    const onSuccess = (customer) => {
+      customerResults.value.push(customer);
+      sale.value.customer_name = `${customer.doc_num} - ${customer.names}`;
+      sale.value.customer = customer.id;
+      createAddressesOptions();
+      showModal.value = false;
+      onCloseModal();
+    };
+
     return {
+      showModal,
       orderStore,
       saleStore,
       sale,
@@ -419,6 +483,8 @@ export default defineComponent({
       performCreateSale,
       addressesOptions,
       createAddressesOptions,
+      onCloseModal,
+      onSuccess,
     };
   },
 });
