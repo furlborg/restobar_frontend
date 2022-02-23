@@ -25,6 +25,7 @@
                 path="names"
                 :span="12"
                 @keypress="isLetter($event)"
+                ref="customer_name"
               >
                 <n-input v-model:value="customer.names" placeholder="" />
               </n-form-item-gi>
@@ -292,6 +293,8 @@ export default defineComponent({
       }
     });
 
+    const customer_name = ref(null);
+
     const errorLabel = (field) => {
       switch (field) {
         case "names":
@@ -406,6 +409,7 @@ export default defineComponent({
                   customer.value.addresses[0].description =
                     response.data.direccion;
                 }
+                customer_name.value.restoreValidation();
               } else if (response.status === 404) {
                 message.error("Documento no encontrado");
               } else {
@@ -475,6 +479,7 @@ export default defineComponent({
       documentOptions,
       countriesOptions,
       ubigeeOptions,
+      customer_name,
       addAddress,
       popAddress,
       performCreate,

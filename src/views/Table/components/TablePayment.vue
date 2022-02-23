@@ -81,8 +81,8 @@
                   placeholder=""
                   clearable
                 />
-                <n-button type="info">
-                  <v-icon name="md-add-round" @click="showModal = true" />
+                <n-button type="info" @click="showModal = true">
+                  <v-icon name="md-add-round" />
                 </n-button>
               </n-input-group>
             </n-form-item-gi>
