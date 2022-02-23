@@ -79,9 +79,6 @@
                 clearable
               />
             </n-form-item-gi>
-            <!-- <n-form-item-gi label="Sucursal" :span="3">
-              <n-select />
-            </n-form-item-gi> -->
             <n-gi :span="6">
               <n-button type="info" secondary @click="performFilter"
                 >Buscar</n-button

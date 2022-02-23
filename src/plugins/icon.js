@@ -89,6 +89,10 @@ import {
     HiSolidArrowSmDown,
     MdEdit,
     MdDelete,
+    MdDescriptionTwotone,
+    RiSendPlaneFill,
+    MdCancelTwotone,
+    RiMailSendFill,
 } from "oh-vue-icons/icons";
 OhVueIcon.add(
     BiThreeDots,
@@ -180,5 +184,9 @@ OhVueIcon.add(
     HiSolidArrowSmDown,
     MdEdit,
     MdDelete,
+    MdDescriptionTwotone,
+    RiSendPlaneFill,
+    MdCancelTwotone,
+    RiMailSendFill,
 );
 export { OhVueIcon }

@@ -13,6 +13,12 @@ export const useSaleStore = defineStore('sale', {
                 label: payment_method.description,
                 value: payment_method.id
             }))
+        },
+        getSeriesOptions() {
+            return this.series.map(serie => ({
+                label: serie.description,
+                value: serie.id
+            }))
         }
     },
     actions: {

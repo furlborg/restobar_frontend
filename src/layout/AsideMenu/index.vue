@@ -50,6 +50,18 @@ export default defineComponent({
           h(
             RouterLink,
             {
+              to: { name: "Sales" },
+            },
+            () => h("span", "Ventas")
+          ),
+        key: "Sales",
+        icon: renderIcon("md-description-twotone"),
+      },
+      {
+        label: () =>
+          h(
+            RouterLink,
+            {
               to: { name: "Till" },
             },
             () => h("span", "Caja")

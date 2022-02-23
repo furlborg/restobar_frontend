@@ -1,19 +1,298 @@
 <template>
-  <div id="Sale"></div>
+  <div id="Sale">
+    <n-card title="Ventas" :segmented="{ content: 'hard' }">
+      <n-space justify="space-between">
+        <n-button
+          type="info"
+          text
+          @click="
+            showFilters === false ? (showFilters = true) : (showFilters = false)
+          "
+        >
+          <v-icon name="md-filteralt-round" />
+          {{ showFilters ? "Ocultar Filtros" : "Mostrar filtros" }}
+        </n-button>
+        <n-button type="info" text @click="refreshTable">
+          <v-icon name="hi-solid-refresh" />
+          Recargar
+        </n-button>
+      </n-space>
+      <n-collapse-transition class="mt-2" :show="showFilters">
+        <n-form>
+          <n-grid
+            responsive="screen"
+            cols="6 s:6 m:12 l:12 xl:24 2xl:24"
+            :x-gap="12"
+          >
+            <n-form-item-gi label="Cliente" :span="4">
+              <n-input
+                v-model:value="filterParams.customer"
+                placeholder=""
+                @keypress="isLetter($event)"
+              />
+            </n-form-item-gi>
+            <n-form-item-gi label="Serie" :span="2">
+              <n-select
+                v-model:value="filterParams.serie"
+                :options="saleStore.getSeriesOptions"
+                placeholder=""
+                clearable
+              />
+            </n-form-item-gi>
+            <n-form-item-gi label="Número" :span="2">
+              <n-input
+                v-model:value="filterParams.number"
+                placeholder=""
+                @keypress="isNumber($event)"
+              />
+            </n-form-item-gi>
+            <n-form-item-gi label="Método Pago" :span="3">
+              <n-select
+                v-model:value="filterParams.payment_method"
+                :options="saleStore.getPaymentMethodsOptions"
+                placeholder=""
+                clearable
+              />
+            </n-form-item-gi>
+            <n-form-item-gi label="Estado" :span="2">
+              <n-select
+                v-model:value="filterParams.status"
+                :options="statusOptions"
+                placeholder=""
+                clearable
+              />
+            </n-form-item-gi>
+            <n-form-item-gi label="Fecha" :span="6">
+              <n-date-picker
+                type="daterange"
+                v-model:formatted-value="filterParams.date_sale"
+                format="dd/MM/yyyy"
+                clearable
+              />
+            </n-form-item-gi>
+            <n-form-item-gi :span="5">
+              <n-button type="info" secondary @click="performFilter"
+                >Buscar</n-button
+              >
+            </n-form-item-gi>
+          </n-grid>
+        </n-form>
+      </n-collapse-transition>
+      <n-data-table
+        class="mt-2"
+        :columns="tableColumns"
+        :data="sales"
+        :loading="isTableLoading"
+        :pagination="sales.length > 20 ? pagination : {}"
+        remote
+      />
+    </n-card>
+  </div>
 </template>
 
 <script>
-import { defineComponent } from "vue"
+import { defineComponent, ref, onMounted } from "vue";
+import { useMessage, useDialog } from "naive-ui";
+import { createSaleColumns } from "@/utils/constants";
+import { listSales, listSalesByPage, searchSales } from "@/api/modules/sales";
+import { useSaleStore } from "@/store/modules/sale";
+import { isNumber, isLetter } from "@/utils";
 
 export default defineComponent({
-    name: "Sale",
-    setup() {
+  name: "Sale",
+  setup() {
+    const message = useMessage();
+    const dialog = useDialog();
+    const saleStore = useSaleStore();
+    const isTableLoading = ref(false);
+    const sales = ref([]);
+    const showFilters = ref(false);
+    const filterParams = ref({
+      customer: "",
+      serie: null,
+      number: "",
+      payment_method: null,
+      date_sale: null,
+      status: null,
+    });
 
-        return {}
-    }
-})
+    const pagination = ref({
+      pageSearchParams: null,
+      total: 0,
+      page: 1,
+      pageCount: 1,
+      pageSize: 20,
+      showSizePicker: true,
+      pageSizes: [20, 50, 100],
+      onChange: (page) => {
+        isTableLoading.value = true;
+        pagination.value.page = page;
+        listSalesByPage(
+          pagination.value.pageSearchParams,
+          pagination.value.page,
+          pagination.value.pageSize
+        )
+          .then((response) => {
+            pagination.value.total = response.data.count;
+            pagination.value.pageCount = Math.trunc(
+              Number(response.data.count) / pagination.value.pageSize
+            );
+            if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+              ++pagination.value.pageCount;
+            }
+            sales.value = response.data.results;
+          })
+          .catch((error) => {
+            console.error(error);
+            message.error("Algo salió mal...");
+          })
+          .finally(() => {
+            isTableLoading.value = false;
+          });
+      },
+      onPageSizeChange: (pageSize) => {
+        isTableLoading.value = true;
+        pagination.value.pageSize = pageSize;
+        listSalesByPage(
+          pagination.value.pageSearchParams,
+          pagination.value.page,
+          pagination.value.pageSize
+        )
+          .then((response) => {
+            pagination.value.total = response.data.count;
+            pagination.value.pageCount = Math.trunc(
+              Number(response.data.count) / pagination.value.pageSize
+            );
+            if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+              ++pagination.value.pageCount;
+            }
+            sales.value = response.data.results;
+          })
+          .catch((error) => {
+            console.error(error);
+            message.error("Algo salió mal...");
+          })
+          .finally(() => {
+            isTableLoading.value = false;
+          });
+      },
+    });
+
+    const loadSales = () => {
+      isTableLoading.value = true;
+      // pagination.value.pageSize = 20;
+      pagination.value.page = 1;
+      listSales()
+        .then((response) => {
+          pagination.value.total = response.data.count;
+          pagination.value.pageCount = Math.trunc(
+            Number(response.data.count) / pagination.value.pageSize
+          );
+          if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+            ++pagination.value.pageCount;
+          }
+          sales.value = response.data.results;
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          isTableLoading.value = false;
+        });
+    };
+
+    const performFilter = () => {
+      isTableLoading.value = true;
+      pagination.value.pageSearchParams = filterParams.value;
+      pagination.value.page = 1;
+      searchSales(
+        pagination.value.pageSearchParams,
+        pagination.value.page,
+        pagination.value.pageSize
+      )
+        .then((response) => {
+          pagination.value.total = response.data.count;
+          pagination.value.pageCount = Math.trunc(
+            Number(response.data.count) / pagination.value.pageSize
+          );
+          if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+            ++pagination.value.pageCount;
+          }
+          sales.value = response.data.results;
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          isTableLoading.value = false;
+        });
+    };
+
+    const refreshTable = () => {
+      filterParams.value = {
+        customer: "",
+        serie: null,
+        number: "",
+        payment_method: null,
+        date_sale: null,
+        status: null,
+      };
+      pagination.value.pageSearchParams = null;
+      loadSales();
+    };
+
+    const statusOptions = [
+      {
+        value: "N",
+        label: "NUEVO",
+      },
+      {
+        value: "E",
+        label: "ENVIADO",
+      },
+      {
+        value: "A",
+        label: "ANULADO",
+      },
+    ];
+
+    onMounted(() => {
+      document.title = "Ventas | App";
+      loadSales();
+    });
+
+    return {
+      saleStore,
+      isLetter,
+      isNumber,
+      isTableLoading,
+      statusOptions,
+      pagination,
+      showFilters,
+      filterParams,
+      refreshTable,
+      performFilter,
+      sales,
+      tableColumns: createSaleColumns({
+        printSale() {
+          message.success("Imprimir");
+        },
+        miscSale() {
+          message.success("Miscelaneo");
+        },
+        sendSale() {
+          message.success("Enviar");
+        },
+        nullifySale() {
+          message.success("Anular");
+        },
+      }),
+    };
+  },
+});
 </script>
 
 <style>
-
 </style>
