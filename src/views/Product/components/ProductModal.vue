@@ -126,8 +126,8 @@
           <n-form-item-gi label="Unidad de medida" :span="5">
             <n-select v-model:value="product.measure_unit" placeholder="Seleccione" :options="optionsUND" />
           </n-form-item-gi>
-          <n-form-item-gi v-if="!product.id" label="Almacen" :span="12">
-              <n-select v-model:value="product.branchoffice" :default-value="1" placeholder="Seleccione" :options="optionsEstablishment" />
+          <n-form-item-gi label="Almacen" :span="12">
+              <n-select v-model:value="product.branchoffice" :disabled="product.id?true:false" :default-value="1" placeholder="Seleccione" :options="optionsEstablishment" />
           </n-form-item-gi>
           <n-form-item-gi v-if="!product.id" label="Stock Inicial" path="stock" :span="6">
             <n-input-number
@@ -135,7 +135,7 @@
               placeholder=""
               :min="0"
               :show-button="false"
-              :disabled="!product.control_stock"
+              :disabled="!product.control_stock?true:false"
               @keypress="isNumber($event)"
             />
           </n-form-item-gi>
@@ -176,8 +176,15 @@
             <n-checkbox v-model:checked="product.icbper">ICBPER</n-checkbox>
           </n-form-item-gi>
           <n-form-item-gi v-if="product.control_supplie" label="Lista de Insumos" :span="12">
-              <n-select v-model:value="supplieItem.supplie" placeholder="Buscar..." filterable clearable
-              @search="supplieSearch"  :options="optionsSupplie" />
+              <n-input-group>
+                <n-select v-model:value="supplieItem.supplie" placeholder="Buscar..." filterable clearable
+                @search="supplieSearch"  :options="optionsSupplie" />
+                <n-button
+                  type="success"
+                  secondary
+                  @click="newSupplies()"
+                  >Nuevo </n-button>
+              </n-input-group>
           </n-form-item-gi>
           <n-form-item-gi v-if="product.control_supplie" label="Cantidad" :span="4">
             <n-input-number
@@ -230,11 +237,16 @@
         >
       </n-space>
     </template>
+    <supplies-modal
+      v-model:show="showModal"
+      @on-success="refreshSupplie"
+      :items="items"
+    />
   </n-modal>
 </template>
 
 <script>
-import { defineComponent, ref, toRefs, computed, watch } from "vue";
+import { defineComponent, ref, toRefs, computed, watch, reactive } from "vue";
 import { useGenericsStore } from "@/store/modules/generics";
 import {
   createProduct,
@@ -249,9 +261,13 @@ import { useMessage } from "naive-ui";
 import { productRules } from "@/utils/constants";
 import { isNumber } from "@/utils";
 import { getBranchs } from "@/api/modules/business";
+import SuppliesModal from "../../Supplies/components/SuppliesModal.vue";
 
 export default defineComponent({
   name: "ProductModal",
+  components: {
+    SuppliesModal,
+  },
   emits: ["update:show", "on-success"],
   props: {
     show: {
@@ -265,6 +281,7 @@ export default defineComponent({
   },
   setup(props, { emit }) {
     const message = useMessage();
+    const showModal = ref(false);
     const isLoadingData = ref(false);
     const genericsStore = useGenericsStore();
     const productStore = useProductStore();
@@ -272,6 +289,7 @@ export default defineComponent({
     const uploadRef = ref(null);
     const modalTitle = ref("Registrar Producto");
     const productRef = ref(null);
+    const items = reactive({});
     const optionsSupplie = ref([]);
     const optionsEstablishment = ref([]);
     const optionsUND = ref([]);
@@ -531,6 +549,21 @@ export default defineComponent({
       product.value.supplies = data;
     };
 
+    const newSupplies = () => {
+        (showModal.value = true),
+        (items.id = undefined),
+        (items.name = undefined),
+        (items.purchase_price = undefined),
+        (items.measureunit = 1),
+        (items.branchoffice = 1),
+        (items.amount = undefined);
+    };
+
+    const refreshSupplie = (value) => {
+      supplieSearch('');
+      supplieItem.value.supplie = value.id
+    };
+
     //Crear columnas
     const columnsSupplie = ref([
         {
@@ -594,6 +627,10 @@ export default defineComponent({
       deleteSupplie,
       optionsEstablishment,
       optionsUND,
+      showModal,
+      newSupplies,
+      items,
+      refreshSupplie,
       restrictDecimal (value) {
         let data = value.match(/^\d+\.?\d{0,3}/)
         if (data) {

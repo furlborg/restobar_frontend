@@ -45,7 +45,7 @@ import { createSupplies, updateSupplies, getMeasureUnit } from "@/api/modules/su
 import { getBranchs } from "@/api/modules/business";
 
 export default  defineComponent({
-    name: 'SupplierModal',
+    name: 'SuppliesModal',
     emits: [
         'update:show',
         'on-success',
@@ -124,7 +124,7 @@ export default  defineComponent({
                     }else{
                         createSupplies(formitem)
                         .then((response) => {
-                            emit("on-success");
+                            emit("on-success", response.data);
                             emit('update:show');
                             message.success("Insumo registrado correctamente.");
                         })

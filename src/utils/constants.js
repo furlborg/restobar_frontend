@@ -854,6 +854,10 @@ export const createKardexBySupplyColumns = () => {
             },
         },
         {
+            title: 'Almacen',
+            key: 'branchoffice_des',
+        },
+        {
             title: 'Fecha',
             key: 'created',
             align: 'center'

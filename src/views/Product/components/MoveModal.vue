@@ -126,21 +126,25 @@ export default  defineComponent({
         const save = (formitem) => {
             formRef.value.validate(async (errors) => {
                 if (!errors) {
-                    createProductMovement(formitem)
-                    .then((response) => {
-                        emit("on-success");
-                        emit('update:show');
-                        message.success("Insumo registrado correctamente.");
-                    })
-                    .catch((error) => {
-                        if ('amount' in error.response.data) {
-                            message.warning("Asegúrese de que no haya más de 3 decimales.");
-                        }else if('error' in error.response.data) {
-                            message.warning(error.response.data.error);
-                        }else{
-                            message.error("Algo salió mal...");
-                        }
-                    });
+                    if (formitem.amount == "" || parseInt(formitem.amount) <= 0){
+                        message.warning("La cantidad debe ser mayor a 0.");
+                    }else{
+                        createProductMovement(formitem)
+                        .then((response) => {
+                            emit("on-success");
+                            emit('update:show');
+                            message.success("Insumo registrado correctamente.");
+                        })
+                        .catch((error) => {
+                            if ('amount' in error.response.data) {
+                                message.warning("Asegúrese de que no haya más de 3 decimales.");
+                            }else if('error' in error.response.data) {
+                                message.warning(error.response.data.error);
+                            }else{
+                                message.error("Algo salió mal...");
+                            }
+                        });
+                    }
                 } else {
                     message.warning("Campos Requeridos");
                 }
