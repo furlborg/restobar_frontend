@@ -4,6 +4,10 @@ export async function getProducts() {
     return await http.get('products/')
 }
 
+export async function getProductSimpleSearch(search) {
+    return await http.get('products/simplesearch/' + search)
+}
+
 export async function retrieveProduct(id) {
     return await http.get(`products/${id}/`, {
         transformResponse: [
@@ -23,14 +27,18 @@ export async function createProduct(product) {
         name: product.name,
         description: product.description,
         prices: product.prices,
+        purchase_price: product.purchase_price,
         measure_unit: product.measure_unit,
         control_stock: product.control_stock,
+        control_supplie: product.control_supplie,
         stock: product.stock,
         icbper: product.icbper,
         number_points: product.number_points,
         redeem_points: product.redeem_points,
         category: product.category,
         preparation_place: product.preparation_place,
+        branchoffice: product.branchoffice,
+        supplies: product.supplies,
     })
 }
 
@@ -39,14 +47,18 @@ export async function updateProduct(idProduct, product) {
         name: product.name,
         description: product.description,
         prices: product.prices,
+        purchase_price: product.purchase_price,
         measure_unit: product.measure_unit,
         control_stock: product.control_stock,
+        control_supplie: product.control_supplie,
         stock: product.stock,
         icbper: product.icbper,
         number_points: product.number_points,
         redeem_points: product.redeem_points,
         category: product.category,
         preparation_place: product.preparation_place,
+        branchoffice: product.branchoffice,
+        supplies: product.supplies,
     })
 }
 
@@ -114,4 +126,14 @@ export async function updateProductPlace(idPlace, place) {
 
 export async function disableProductPlace(id) {
     return await http.delete(`preparation-places/${id}/`)
+}
+
+export async function createProductMovement(products) {
+    return await http.post('productmovement/', {
+        product: products.product,
+        type: products.type,
+        branchoffice: products.branchoffice,
+        concept: products.concept,
+        amount: products.amount
+    })
 }

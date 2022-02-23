@@ -8,7 +8,11 @@
           </n-space>
         <n-form>
           <n-input-group>
-            <n-input placeholder="Buscar..." v-model:value="textSearch" @keydown.enter="searchItem(textSearch)" />
+            <n-input placeholder="Buscar..." v-model:value="textSearch" @keydown.enter="searchItem(textSearch)">
+              <template #prefix>
+                <n-icon style="margin-top: -4px;"><v-icon name="md-search-round" /></n-icon>
+              </template>
+            </n-input>
             <!-- <n-button type="info">
               <v-icon name="md-search-round" @click="searchItem(textSearch)" />
             </n-button> -->
@@ -32,12 +36,12 @@
       <n-card :title="ProductInstance.product">
         <template #header-extra>
           <n-date-picker type="daterange" size="small" value-format="yyyy-MM-dd" v-model:formatted-value="dateSearch" clearable />
-            <n-button class="ms-2" type="info" size="small" @click="selectKardex(ProductInstance.id, ProductInstance.product, dateSearch)">
+            <n-button :disabled='ProductInstance.id?false:true' class="ms-2" type="info" size="small" @click="selectKardex(ProductInstance.id, ProductInstance.product, dateSearch)">
                 <v-icon name="md-search-round" />
                 Buscar
             </n-button>
 
-            <n-button class="ms-2" size="small">
+            <n-button :disabled='ProductInstance.id?false:true' class="ms-2" size="small">
                 <v-icon name="vi-file-type-excel" />
             </n-button>
           <!-- <n-dropdown trigger="click" :options="options" placement="bottom-end" :show-arrow="true">
@@ -83,7 +87,7 @@ import { defineComponent, ref, onMounted } from "vue"
 import {createKardexBySupplyColumns} from "@/utils/constants"
 import {renderIcon} from '@/utils'
 import { getSupplies } from "@/api/modules/supplies";
-import { getSuplieKardex } from "@/api/modules/kardex";
+import { getSuplieKardex, getProductKardex } from "@/api/modules/kardex";
 import { getProducts, searchProduct } from "@/api/modules/products";
 import { useMessage } from "naive-ui";
 
@@ -154,7 +158,25 @@ export default defineComponent({
       ProductInstance.value.product = prod;
 
       if (checkedValue.value == "product") {
-        console.log(value);
+        let filter =`?product=${id}`;
+        if (date) {
+          filter += `&dfrom=${date[0]} 00:00:00&dto=${date[1]} 23:59:59`;
+        }
+        getProductKardex(filter)
+          .then((response) => {
+            // console.log(response.data);
+            dataKardex.value = response.data;
+            response.data.map(function (v){
+              total.value.ingress = v.type == "0"? total.value.ingress + 1: total.value.ingress;
+              total.value.egress = v.type == "1"? total.value.egress + 1 : total.value.egress;
+              if (v.ingress !== null) {
+                total.value.total = v.type == "0"? total.value.total + parseFloat(v.ingress) : total.value.total - parseFloat(v.egress);
+              }
+            })
+          })
+          .catch((error) => {
+            message.error("Algo salió mal...");
+          })
       } else {
         let filter =`?supplie=${id}`;
         if (date) {

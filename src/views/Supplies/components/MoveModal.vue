@@ -73,7 +73,7 @@ export default  defineComponent({
             getConcept(`?search=${type.value}`)
             .then((response) => {
                 const json = response.data.filter(data => {
-                    if (data.concept != "STOCK INICIAL" && data.concept != "TRASLADO" && data.concept != "RETIRAR"){
+                    if (data.concept != "STOCK INICIAL" && data.concept != "VENTA" && data.concept != "COMPRA"){
                     return data;
                     }
                 })
@@ -88,9 +88,9 @@ export default  defineComponent({
         }
 
         const supplieSearch = async (search) => {
-            getSupplies(`suppliesearch/?search=${search}`)
+            getSupplies(`supplies/search/?search=${search}`)
             .then((response) => {
-                optionsSupplies.value = response.data.results.map((v) => ({
+                optionsSupplies.value = response.data.map((v) => ({
                     label: v.name,
                     value: v.id,
                 }));
@@ -125,21 +125,25 @@ export default  defineComponent({
         const save = (formitem) => {
             formRef.value.validate(async (errors) => {
                 if (!errors) {
-                    createSupplieMovement(formitem)
-                    .then((response) => {
-                        emit("on-success");
-                        emit('update:show');
-                        message.success("Insumo registrado correctamente.");
-                    })
-                    .catch((error) => {
-                        if ('amount' in error.response.data) {
-                            message.warning("Asegúrese de que no haya más de 3 decimales.");
-                        }else if('error' in error.response.data) {
-                            message.warning(error.response.data.error);
-                        }else{
-                            message.error("Algo salió mal...");
-                        }
-                    });
+                    if (formitem.amount == "" || parseInt(formitem.amount) <= 0){
+                        message.warning("La cantidad debe ser mayor a 0.");
+                    }else{
+                        createSupplieMovement(formitem)
+                        .then((response) => {
+                            emit("on-success");
+                            emit('update:show');
+                            message.success("Insumo registrado correctamente.");
+                        })
+                        .catch((error) => {
+                            if ('amount' in error.response.data) {
+                                message.warning("Asegúrese de que no haya más de 3 decimales.");
+                            }else if('error' in error.response.data) {
+                                message.warning(error.response.data.error);
+                            }else{
+                                message.error("Algo salió mal...");
+                            }
+                        });
+                    }
                 } else {
                     message.warning("Campos Requeridos");
                 }
