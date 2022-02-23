@@ -39,7 +39,7 @@
         </n-radio-group>
       </n-space>
       <n-spin class="mt-2" :show="isLoadingData">
-        <n-scrollbar style="max-height: 650px; min-height: 650px">
+        <n-scrollbar style="height: 70vh; min-height: 650px">
           <!-- Products List -->
           <n-list v-if="listType === 'list'" class="px-3">
             <n-list-item
@@ -61,9 +61,17 @@
                   <n-text class="fs-4">{{ product.name }}</n-text>
                 </template>
                 <template #description>
-                  <n-text class="fs-6" type="success"
-                    >S/. {{ Number(product.prices).toFixed(2) }}</n-text
-                  >
+                  <n-space vertical  item-style="margin-top: -10px;">
+                    <n-text class="fs-6" type="success">S/. {{ Number(product.prices).toFixed(2) }}</n-text>
+                    <div v-if="product.amount.length > 0">
+                      <div v-if="product.amount.length == 1">
+                        <n-text class="fs-6">Stock: {{ product.amount[0].amount }}</n-text>
+                      </div>
+                      <div v-else v-for="item in product.amount" :key="item.key">
+                        <n-text class="fs-6">Stock: {{ item.amount }}</n-text>
+                      </div>
+                    </div>
+                  </n-space>
                 </template>
                 <n-text>{{ product.description }}</n-text>
               </n-thing>

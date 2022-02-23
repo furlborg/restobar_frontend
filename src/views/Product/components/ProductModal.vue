@@ -17,35 +17,30 @@
           cols="6 s:6 m:12 l:24 xl:24 2xl:24"
           :x-gap="12"
         >
-          <n-form-item-gi label="Nombre" path="name" :span="9">
+          <n-form-item-gi label="Nombre" path="name" :span="12">
             <n-input v-model:value="product.name" placeholder="" />
           </n-form-item-gi>
-          <n-form-item-gi label="Precio" path="prices" :span="3">
+          <n-form-item-gi label="Precio Compra" path="prices" :span="4">
+            <n-input
+              type="number"
+              v-model:value="product.purchase_price"
+              placeholder=""
+              @input="product.purchase_price = restrictDecimal(product.purchase_price)"
+            />
+          </n-form-item-gi>
+          <n-form-item-gi label="Precio venta" path="purchase_price" :span="4">
             <n-input
               v-model:value="product.prices"
               placeholder=""
-              @keypress="isDecimal($event)"
+              @input="product.prices = restrictDecimal(product.prices)"
             />
           </n-form-item-gi>
-          <n-form-item-gi label="Stock" path="stock" :span="4">
-            <n-input-number
-              v-model:value="product.stock"
-              placeholder=""
-              :min="0"
-              :show-button="false"
-              :disabled="!product.control_stock"
-              @keypress="isNumber($event)"
-            />
-          </n-form-item-gi>
-          <n-form-item-gi path="control_stock" :span="4">
+          <n-form-item-gi path="control_stock" :span="2">
             <n-checkbox
               v-model:checked="product.control_stock"
               @update:checked="product.stock = null"
               >Controlar Stock</n-checkbox
             >
-          </n-form-item-gi>
-          <n-form-item-gi path="icbper" :span="4">
-            <n-checkbox v-model:checked="product.icbper">ICBPER</n-checkbox>
           </n-form-item-gi>
           <n-gi :span="12">
             <transition name="mode-fade" mode="out-in">
@@ -120,13 +115,32 @@
           <n-form-item-gi
             label="Lugar Preparación"
             path="preparation_place"
-            :span="12"
+            :span="7"
           >
             <n-select
               v-model:value="product.preparation_place"
               :options="placesOptions"
               placeholder=""
             />
+          </n-form-item-gi>
+          <n-form-item-gi label="Unidad de medida" :span="5">
+            <n-select v-model:value="product.measure_unit" placeholder="Seleccione" :options="optionsUND" />
+          </n-form-item-gi>
+          <n-form-item-gi v-if="!product.id" label="Almacen" :span="12">
+              <n-select v-model:value="product.branchoffice" :default-value="1" placeholder="Seleccione" :options="optionsEstablishment" />
+          </n-form-item-gi>
+          <n-form-item-gi v-if="!product.id" label="Stock Inicial" path="stock" :span="6">
+            <n-input-number
+              v-model:value="product.stock"
+              placeholder=""
+              :min="0"
+              :show-button="false"
+              :disabled="!product.control_stock"
+              @keypress="isNumber($event)"
+            />
+          </n-form-item-gi>
+          <n-form-item-gi :span="4">
+            <n-checkbox v-model:checked="product.control_supplie" @update:checked="(key)=>{product.supplies=key?product.supplies:[]}">Insumos</n-checkbox>
           </n-form-item-gi>
           <!-- <n-form-item-gi label="Imagen" :span="4">
             <n-upload list-type="image" ref="uploadRef">
@@ -158,9 +172,42 @@
               @keypress="isNumber($event)"
             />
           </n-form-item-gi>
+          <n-form-item-gi path="icbper" :span="4">
+            <n-checkbox v-model:checked="product.icbper">ICBPER</n-checkbox>
+          </n-form-item-gi>
+          <n-form-item-gi v-if="product.control_supplie" label="Lista de Insumos" :span="12">
+              <n-select v-model:value="supplieItem.supplie" placeholder="Buscar..." filterable clearable
+              @search="supplieSearch"  :options="optionsSupplie" />
+          </n-form-item-gi>
+          <n-form-item-gi v-if="product.control_supplie" label="Cantidad" :span="4">
+            <n-input-number
+              placeholder=""
+              v-model:value="supplieItem.stock"
+              :min="0"
+              :show-button="false"
+              @keypress="isNumber($event)"
+            />
+          </n-form-item-gi>
+          <n-form-item-gi v-if="product.control_supplie" :span="4">
+            <n-button
+              type="primary"
+              @click="addSupplie(supplieItem)"
+              secondary
+              :disabled="supplieItem.supplie && supplieItem.stock?false:true"
+              >+ Agregar</n-button
+            >
+          </n-form-item-gi>
+          <n-form-item-gi v-if="product.control_supplie" span="24" style="margin-top: -30px;">
+            <n-data-table
+              :columns="columnsSupplie"
+              :data="product.supplies"
+              size="small"
+            />
+        </n-form-item-gi>
         </n-grid>
       </n-form>
     </n-spin>
+        <!-- <pre>{{ JSON.stringify(product, 0, 2) }}</pre> -->
     <template #action>
       <n-space justify="end">
         <n-button
@@ -196,10 +243,12 @@ import {
   createProductCategory,
   updateProductCategory,
 } from "@/api/modules/products";
+import { getSupplies, getMeasureUnit } from "@/api/modules/supplies";
 import { useProductStore } from "@/store/modules/product";
 import { useMessage } from "naive-ui";
 import { productRules } from "@/utils/constants";
-import { isDecimal, isNumber } from "@/utils";
+import { isNumber } from "@/utils";
+import { getBranchs } from "@/api/modules/business";
 
 export default defineComponent({
   name: "ProductModal",
@@ -223,11 +272,20 @@ export default defineComponent({
     const uploadRef = ref(null);
     const modalTitle = ref("Registrar Producto");
     const productRef = ref(null);
+    const optionsSupplie = ref([]);
+    const optionsEstablishment = ref([]);
+    const optionsUND = ref([]);
+    const supplieItem = ref({
+      supplie: null,
+      stock: null,
+      supplie_des: null
+    });
     const product = ref({
       name: null,
       description: null,
       prices: null,
-      measure_unit: null,
+      purchase_price: null,
+      measure_unit: 1,
       control_stock: false,
       stock: null,
       icbper: false,
@@ -235,6 +293,9 @@ export default defineComponent({
       redeem_points: null,
       category: null,
       preparation_place: null,
+      control_supplie: false,
+      branchoffice: 1,
+      supplies: [],
     });
     const categoriesOptions = computed(() => {
       return productStore.categories.map((categorie) => ({
@@ -248,6 +309,48 @@ export default defineComponent({
         value: place.id,
       }));
     });
+
+    const supplieSearch = async (search) => {
+      getSupplies(`supplies/search/?search=${search}`)
+      .then((response) => {
+          optionsSupplie.value = response.data.map((v) => ({
+              label: v.name,
+              value: v.id,
+          }));
+      })
+      .catch((error) => {
+          message.error("Algo salió mal...");
+      })
+    }
+    supplieSearch('');
+
+    const getEstablishment = async () => {
+      getBranchs()
+      .then((response) => {
+          optionsEstablishment.value = response.data.map((v) => ({
+              label: v.description,
+              value: v.id,
+          }));
+      })
+      .catch((error) => {
+          message.error("Algo salió mal...");
+      })
+    }
+    getEstablishment();
+
+    const getUND = async () => {
+            getMeasureUnit()
+            .then((response) => {
+                optionsUND.value = response.data.map((v) => ({
+                    label: v.description,
+                    value: v.id,
+                }));
+            })
+            .catch((error) => {
+                message.error("Algo salió mal...");
+            })
+        }
+        getUND();
 
     watch(show, () => {
       if (show.value === true && idProduct.value !== 0) {
@@ -272,7 +375,8 @@ export default defineComponent({
           name: null,
           description: null,
           prices: null,
-          measure_unit: null,
+          purchase_price: null,
+          measure_unit: 1,
           control_stock: false,
           stock: null,
           icbper: false,
@@ -280,6 +384,9 @@ export default defineComponent({
           redeem_points: null,
           category: null,
           preparation_place: null,
+          control_supplie: false,
+          branchoffice: 1,
+          supplies: []
         };
       }
     });
@@ -288,21 +395,25 @@ export default defineComponent({
       e.preventDefault();
       productRef.value.validate((errors) => {
         if (!errors) {
-          isLoadingData.value = true;
-          createProduct(product.value)
-            .then((response) => {
-              if (response.status === 201) {
-                message.success("Producto registrado!");
-                emit("on-success");
-              }
-            })
-            .catch((error) => {
-              console.error(error.response.data);
-              message.error("Algo salió mal...");
-            })
-            .finally(() => {
-              isLoadingData.value = false;
-            });
+          if (product.value.control_supplie && product.value.supplies.length < 1) {
+            message.warning("Necesitas agregar insumos.");
+          }else{
+            isLoadingData.value = true;
+            createProduct(product.value)
+              .then((response) => {
+                if (response.status === 201) {
+                  message.success("Producto registrado!");
+                  emit("on-success");
+                }
+              })
+              .catch((error) => {
+                console.error(error.response.data);
+                message.error("Algo salió mal...");
+              })
+              .finally(() => {
+                isLoadingData.value = false;
+              });
+          }
         } else {
           console.error(errors);
           message.error("Datos incorrectos");
@@ -314,21 +425,25 @@ export default defineComponent({
       e.preventDefault();
       productRef.value.validate((errors) => {
         if (!errors) {
-          isLoadingData.value = true;
-          updateProduct(idProduct.value, product.value)
-            .then((response) => {
-              if (response.status === 202) {
-                message.success("Producto actualizado!");
-                emit("on-success");
-              }
-            })
-            .catch((error) => {
-              console.error(error.response.data);
-              message.error("Algo salió mal...");
-            })
-            .finally(() => {
-              isLoadingData.value = false;
-            });
+          if (product.value.control_supplie && product.value.supplies.length < 1) {
+            message.warning("Necesitas agregar insumos.");
+          }else{
+            isLoadingData.value = true;
+            updateProduct(idProduct.value, product.value)
+              .then((response) => {
+                if (response.status === 202) {
+                  message.success("Producto actualizado!");
+                  emit("on-success");
+                }
+              })
+              .catch((error) => {
+                console.error(error.response.data);
+                message.error("Algo salió mal...");
+              })
+              .finally(() => {
+                isLoadingData.value = false;
+              });
+          } 
         } else {
           console.error(errors);
           message.error("Datos Incorrectos");
@@ -378,6 +493,81 @@ export default defineComponent({
         });
     };
 
+    const addSupplie = (data)=>{
+        let verify = false;
+        product.value.supplies.map((v)=>{
+          if (v.supplie == data.supplie) {
+            verify = true;
+          }
+        })
+        if (verify) {
+          message.warning("El insumo ya fue agregado.")
+        }else{
+          let name = "";
+          optionsSupplie.value.map((v)=>{
+            if (v.value == data.supplie) {
+              name = v.label;
+            }
+          })
+
+          product.value.supplies.push({
+              supplie: data.supplie,
+              amount: data.stock,
+              supplie_des: name
+          });
+          supplieItem.value.supplie = null;
+          supplieItem.value.stock = null;
+          supplieItem.value.supplie_des = null;
+        }
+    }
+
+    const deleteSupplie = (value) => {
+      let data = [];
+      product.value.supplies.map((v) => {
+        if (value !== v.supplie) {
+          data.push(v)
+        }
+      });
+      product.value.supplies = data;
+    };
+
+    //Crear columnas
+    const columnsSupplie = ref([
+        {
+            title: "",
+            width: 5,
+            render(row, index) {
+                return index + 1;
+            },
+        },
+        {
+          title: "Insumo",
+          key: "supplie_des",
+          width: 150,
+        },
+        {
+          title: "Cantidad",
+          key: "amount",
+          width: 50,
+        },
+        {
+          title: "",
+          width: 5,
+          render(row, i) {
+            return (
+              <NButton
+                type="error"
+                size="small"
+                onClick={() => {
+                  deleteSupplie(row.supplie)
+                }}>
+                Quitar
+              </NButton>
+            );
+          },
+        }
+      ]);
+
     return {
       genericsStore,
       isLoadingData,
@@ -395,8 +585,21 @@ export default defineComponent({
       performUpdate,
       performUpdateProductCategory,
       performCreateProductCategory,
-      isDecimal,
       isNumber,
+      optionsSupplie,
+      supplieSearch,
+      addSupplie,
+      supplieItem,
+      columnsSupplie,
+      deleteSupplie,
+      optionsEstablishment,
+      optionsUND,
+      restrictDecimal (value) {
+        let data = value.match(/^\d+\.?\d{0,3}/)
+        if (data) {
+          return data[0];
+        }
+      }
     };
   },
 });

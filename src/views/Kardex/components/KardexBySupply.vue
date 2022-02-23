@@ -169,7 +169,9 @@ export default defineComponent({
             response.data.map(function (v){
               total.value.ingress = v.type == "0"? total.value.ingress + 1: total.value.ingress;
               total.value.egress = v.type == "1"? total.value.egress + 1 : total.value.egress;
-              total.value.total = v.type == "0"? total.value.total + parseFloat(v.ingress) : total.value.total - parseFloat(v.egress);
+              if (v.ingress !== null) {
+                total.value.total = v.type == "0"? total.value.total + parseFloat(v.ingress) : total.value.total - parseFloat(v.egress);
+              }
             })
           })
           .catch((error) => {

@@ -248,12 +248,19 @@ export const productRules = {
         trigger: ['blur', 'input'],
         message: 'Precio requerido'
     },
+    purchase_price: {
+        required: true,
+        trigger: ['blur', 'input'],
+        message: 'Precio requerido'
+    },
     category: {
+        type: "number",
         required: true,
         trigger: ['blur', 'input'],
         message: 'Categoría requerido'
     },
     preparation_place: {
+        type: "number",
         required: true,
         trigger: ['blur', 'input'],
         message: 'Lugar de preparación requerido'
