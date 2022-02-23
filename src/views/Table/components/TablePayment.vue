@@ -267,7 +267,9 @@ export default defineComponent({
     const payment_amount = ref("0.00");
     const saleForm = ref();
     const changing = computed(() => {
-      return total.value - payment_amount.value;
+      return payment_amount.value > total.value
+        ? total.value - payment_amount.value
+        : 0.0;
     });
 
     const showObservations = ref(false);
@@ -360,7 +362,7 @@ export default defineComponent({
       getSaleNumber(sale.value.serie)
         .then((response) => {
           if (response.status === 200) {
-            sale.value.number = response.data.number;
+            sale.value.number = Number(response.data.number) + 1;
           }
         })
         .catch((error) => {
