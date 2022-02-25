@@ -7,7 +7,11 @@
     </n-page-header>
     <n-card title="Usuarios" :segmented="{ content: 'hard' }">
       <template #header-extra>
-        <n-button type="primary" @click="newUser(), (showModal = true)" secondary>
+        <n-button
+          type="primary"
+          @click="newUser(), (showModal = true)"
+          secondary
+        >
           <template #icon>
             <n-icon>
               <v-icon name="la-user-plus-solid" />
@@ -19,28 +23,31 @@
 
       <n-form
         label-placement="left"
-        style="maxWidth: 350px; margin-top: -8px; margin-bottom: 12px;"
+        style="width: 350px; margin-top: -8px; margin-bottom: 12px"
       >
-          
         <n-input
           placeholder="Buscar"
           @keydown.enter="SearchFilter()"
           v-model:value="textsearch"
-          round>
+          round
+        >
           <template #prefix>
-            <n-icon style="margin-top: -4px;"><v-icon name="md-search-round" /></n-icon>
+            <n-icon style="margin-top: -4px"
+              ><v-icon name="md-search-round"
+            /></n-icon>
           </template>
         </n-input>
       </n-form>
 
-      <n-data-table 
+      <n-data-table
         :columns="tableColumns"
-        :data="users.results" 
+        :data="users.results"
         size="small"
         :scroll-x="900"
-        :loading="isLoadingData" 
-        remote 
-        :pagination="pagination" />
+        :loading="isLoadingData"
+        remote
+        :pagination="pagination"
+      />
     </n-card>
     <!-- Customer Modal -->
     <user-settings-modal
@@ -69,7 +76,7 @@ export default defineComponent({
   name: "UserSettings",
   components: {
     UserSettingsModal,
-    UserPassword
+    UserPassword,
   },
   setup() {
     const router = useRouter();
@@ -110,7 +117,6 @@ export default defineComponent({
         (items.password = undefined),
         (items.branchoffice = undefined),
         (items.profile = undefined),
-        (items.user_permission = undefined),
         (items.is_active = undefined);
     };
 
@@ -123,15 +129,14 @@ export default defineComponent({
         (items.password = data.password),
         (items.branchoffice = data.branchoffice),
         (items.profile = data.profile),
-        (items.user_permission = data.user_permission),
         (items.is_active = data.is_active);
     };
 
     const listUsers = (search) => {
       isLoadingData.value = true;
-      let filter = 'users/';
+      let filter = "users/";
       if (search) {
-          filter = 'users/' + search;
+        filter = "users/" + search;
       }
       getUsers(filter)
         .then((response) => {
@@ -144,7 +149,7 @@ export default defineComponent({
         .finally(() => {
           isLoadingData.value = false;
         });
-    }
+    };
 
     const PaginationF = () => {
       let total = users.value.count / 15;
@@ -190,9 +195,10 @@ export default defineComponent({
     };
 
     const changeState = async (id, state) => {
-      const dial = state==false? dialog.success: dialog.error;
-      let titles = state==false?"HABILITAR USUARIO" :"DESHABILITAR USUARIO";
-      const button = state==false?"Habilitar":"Deshabilitar";
+      const dial = state == false ? dialog.success : dialog.error;
+      let titles =
+        state == false ? "HABILITAR USUARIO" : "DESHABILITAR USUARIO";
+      const button = state == false ? "Habilitar" : "Deshabilitar";
 
       dial({
         title: titles,
@@ -201,15 +207,15 @@ export default defineComponent({
         negativeText: "Cancelar",
         onPositiveClick: async () => {
           disableUsers(id)
-          .then((response) => {
-            listUsers();
-            message.success("Usuario deshabilitado correctamente.");
-          })
-          .catch((error) => {
-            message.error("Algo salió mal...");
-          })
+            .then((response) => {
+              listUsers();
+              message.success("Usuario deshabilitado correctamente.");
+            })
+            .catch((error) => {
+              message.error("Algo salió mal...");
+            });
         },
-      })
+      });
     };
 
     return {
@@ -231,12 +237,16 @@ export default defineComponent({
           showModal.value = true;
         },
         deleteUser(rowData) {
-          changeState(rowData.id, rowData.is_active)
+          changeState(rowData.id, rowData.is_active);
         },
         changePassword(row) {
-          itemsUser.value = { id: row.id, names: "NUEVA CONTRASEÑA DE " + row.names, password: null};
+          itemsUser.value = {
+            id: row.id,
+            names: "NUEVA CONTRASEÑA DE " + row.names,
+            password: null,
+          };
           showModalPass.value = true;
-        }
+        },
       }),
     };
   },

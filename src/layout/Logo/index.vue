@@ -1,12 +1,16 @@
 <template>
   <div class="logo">
-    <img src="~@/assets/images/logo.png" alt="" :class="{ 'mr-2': !collapsed }" />
-    <h2 v-show="!collapsed" class="title">Logo</h2>
+    <img
+      draggable="false"
+      src="~@/assets/images/account-logo.png"
+      alt=""
+      :class="{ 'mr-2': !collapsed }"
+    />
   </div>
 </template>
 
 <script>
-import {defineComponent} from "vue"
+import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "Logo",
@@ -15,7 +19,7 @@ export default defineComponent({
       type: Boolean,
     },
   },
-})
+});
 </script>
 
 <style lang="scss" scoped>
@@ -30,7 +34,7 @@ export default defineComponent({
 
   img {
     width: auto;
-    height: 32px;
+    height: 56px;
   }
 
   .title {

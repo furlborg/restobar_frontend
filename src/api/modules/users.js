@@ -48,10 +48,6 @@ export async function getProfile() {
     return await http.get('profile/')
 }
 
-export async function getPermission() {
-    return await http.get('permission/')
-}
-
 export async function login(username, password) {
     return await http.post('login/', {
         username: username,
