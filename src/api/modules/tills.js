@@ -54,7 +54,6 @@ export async function retrieveTill(id) {
 
 export async function createTill(till) {
     return await http.post('tills/', {
-        branch: 1,
         opening_responsable: till.opening_responsable,
         closing_responsable: '',
         opening_amount: till.opening_amount,

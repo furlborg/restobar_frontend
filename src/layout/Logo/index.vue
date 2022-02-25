@@ -27,14 +27,14 @@ export default defineComponent({
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 64px;
+  height: 96px;
   line-height: 64px;
   overflow: hidden;
   white-space: nowrap;
 
   img {
     width: auto;
-    height: 56px;
+    height: 64px;
   }
 
   .title {

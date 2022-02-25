@@ -96,3 +96,11 @@ export async function getSaleNumber(serie) {
         number: serie
     })
 }
+
+export async function sendSale(id) {
+    return await http.get(`sales/${id}/send_sale/`)
+}
+
+export async function nullSale(id) {
+    return await http.delete(`sales/${id}/`)
+}

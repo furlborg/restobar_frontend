@@ -94,7 +94,13 @@
 import { defineComponent, ref, onMounted } from "vue";
 import { useMessage, useDialog } from "naive-ui";
 import { createSaleColumns } from "@/utils/constants";
-import { listSales, listSalesByPage, searchSales } from "@/api/modules/sales";
+import {
+  listSales,
+  listSalesByPage,
+  searchSales,
+  sendSale,
+  nullSale,
+} from "@/api/modules/sales";
 import { useSaleStore } from "@/store/modules/sale";
 import { isNumber, isLetter } from "@/utils";
 
@@ -282,11 +288,38 @@ export default defineComponent({
         miscSale() {
           message.success("Miscelaneo");
         },
-        sendSale() {
-          message.success("Enviar");
+        sendSale(row) {
+          isTableLoading.value = true;
+          sendSale(row.id)
+            .then((response) => {
+              if (response.status === 200) {
+                message.success("Enviado");
+                console.log(response.data);
+              }
+            })
+            .catch((error) => {
+              console.error(error);
+              message.error("Algo salió mal...");
+            })
+            .finally(() => {
+              isTableLoading.value = false;
+            });
         },
-        nullifySale() {
-          message.success("Anular");
+        nullifySale(row) {
+          isTableLoading.value = true;
+          nullSale(row.id)
+            .then((response) => {
+              if (response.status === 204) {
+                message.success("Anulado");
+              }
+            })
+            .catch((error) => {
+              console.error(error);
+              message.error("Algo salió mal...");
+            })
+            .finally(() => {
+              isTableLoading.value = false;
+            });
         },
       }),
     };
