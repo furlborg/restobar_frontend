@@ -303,7 +303,6 @@ export default defineComponent({
       customer_name: "",
       customer: null,
       address: null,
-      branch_office: 1,
       discount: "0.00",
       observations: "",
       sale_details: orderStore.orderToSale,

@@ -1,5 +1,8 @@
 import { http } from "@/api"
-import { MdDetails } from "oh-vue-icons/icons"
+import { useBusinessStore } from "@/store/modules/business";
+import { useUserStore } from "@/store/modules/user";
+const businessStore = useBusinessStore();
+const userStore = useUserStore();
 
 export async function getAreas() {
     return await http.get('areas/')
@@ -8,14 +11,14 @@ export async function getAreas() {
 export async function createArea(area) {
     return await http.post('areas/', {
         description: area.description,
-        branch: 1,
+        branch: !userStore.user.branchoffice ? businessStore.currentBranch : null,
     })
 }
 
 export async function updateArea(idArea, area) {
     return await http.put(`areas/${idArea}/`, {
         description: area.description,
-        branch: 1,
+        branch: !userStore.user.branchoffice ? businessStore.currentBranch : null,
     })
 }
 

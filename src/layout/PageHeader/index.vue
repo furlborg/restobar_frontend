@@ -57,10 +57,13 @@
 </template>
 
 <script>
-import { defineComponent, reactive, ref, toRefs } from "vue";
+import { defineComponent, reactive, ref, computed, toRefs } from "vue";
 import { useDialog, useMessage } from "naive-ui";
-import ProjectSetting from "./ProjectSetting";
 import { useRouter } from "vue-router";
+import { useUserStore } from "@/store/modules/user";
+import { useBusinessStore } from "@/store/modules/business";
+import ProjectSetting from "./ProjectSetting";
+import { renderIcon } from "@/utils";
 
 export default defineComponent({
   name: "PageHeader",
@@ -77,6 +80,8 @@ export default defineComponent({
     const message = useMessage();
     const dialog = useDialog();
     const drawerSetting = ref();
+    const userStore = useUserStore();
+    const businessStore = useBusinessStore();
 
     const state = reactive({
       fullscreenIcon: "bi-fullscreen",
@@ -100,49 +105,55 @@ export default defineComponent({
       }
     };
 
-    const avatarOptions = [
-      {
-        label: "Modo Mozo",
-        key: 0,
-      },
-      {
-        label: "Configuraciones personales",
-        key: 1,
-      },
-      {
-        label: "Desconectar",
-        key: 2,
-        style: "color:blue;",
-      },
-    ];
+    const avatarOptions = computed(() => {
+      return [
+        {
+          label: "Cambiar de Sucursal",
+          key: "branchs",
+          children: businessStore.branchOptions,
+        },
+        {
+          label: "Modo Mozo",
+          key: 0,
+        },
+        {
+          label: "Desconectar",
+          key: -1,
+          icon: renderIcon("md-logout-round"),
+        },
+      ];
+    });
 
     const avatarSelect = (key) => {
       switch (key) {
         case 0:
           router.push({ name: "WaiterMode" });
           break;
-        case 1:
-          console.log("option 1");
-          break;
-        case 2:
+        case -1:
           doLogout();
-          console.log("option 2");
           break;
+        default:
+          if (key > 0) {
+            businessStore.currentBranch = key;
+            router.push({ name: "Dashboard" });
+          }
       }
     };
 
     const doLogout = () => {
       dialog.info({
-        title: "Logout",
-        content: "Are you sure you want to log out",
-        positiveText: "Yes",
+        title: "Cerrar sesión",
+        content: "¿Desea cerrar sesión?",
+        positiveText: "Si",
         negativeText: "No",
-        onPositiveClick: () => {
-          message.success("You just logged out...");
+        onPositiveClick: async () => {
+          await userStore.blacklistToken().then((v) => {
+            if (v) {
+              router.push({ name: "Login" });
+            }
+          });
         },
-        onNegativeClick: () => {
-          message.error("You stay...");
-        },
+        onNegativeClick: () => {},
       });
     };
 

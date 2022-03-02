@@ -8,27 +8,25 @@
     "production": "serve -s dist"
   },
   "dependencies": {
-    "axios": "^0.21.4",
+    "axios": "^0.26.0",
     "clone-deep": "^4.0.1",
-    "core-js": "^3.20.0",
     "oh-vue-icons": "^0.4.7",
-    "pinia": "^2.0.6",
-    "vue": "^3.2.26",
+    "pinia": "^2.0.11",
+    "vue": "^3.2.31",
     "vue-cookies": "^1.7.4",
     "vue-input-autowidth": "^2.2.0",
-    "vue-router": "^4.0.12",
-    "vuedraggable": "^4.1.0"
+    "vue-router": "^4.0.13"
   },
   "devDependencies": {
-    "@vue/cli-plugin-babel": "^4.5.15",
-    "@vue/cli-plugin-router": "^4.5.15",
-    "@vue/cli-service": "^4.5.15",
-    "@vue/compiler-sfc": "^3.2.26",
-    "eslint": "^7.32.0",
-    "eslint-plugin-vue": "^7.20.0",
-    "naive-ui": "^2.25.2",
-    "sass": "^1.45.0",
-    "sass-loader": "^8.0.2",
+    "@vue/cli-plugin-babel": "^5.0.1",
+    "@vue/cli-plugin-router": "^5.0.1",
+    "@vue/cli-service": "^5.0.1",
+    "@vue/compiler-sfc": "^3.2.31",
+    "eslint": "^8.10.0",
+    "eslint-plugin-vue": "^8.5.0",
+    "naive-ui": "^2.26.0",
+    "sass": "^1.49.9",
+    "sass-loader": "^12.6.0",
     "vfonts": "^0.1.0"
   }
 }

@@ -60,3 +60,9 @@ export async function refreshToken(refresh) {
         refresh: refresh,
     })
 }
+
+export async function logout(refresh) {
+    return await http.post('logout/', {
+        refresh_token: refresh,
+    })
+}

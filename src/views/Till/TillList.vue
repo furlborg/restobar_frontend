@@ -23,10 +23,19 @@
           <v-icon name="md-filteralt-round" />
           {{ showFilters ? "Ocultar Filtros" : "Mostrar filtros" }}
         </n-button>
-        <n-button type="info" text @click="refreshTable">
-          <v-icon name="hi-solid-refresh" />
-          Recargar
-        </n-button>
+        <div class="d-flex">
+          <n-button type="info" text @click="refreshTable">
+            <v-icon name="hi-solid-refresh" />
+            Recargar
+          </n-button>
+          <n-select
+            v-if="!userStore.user.branchoffice"
+            class="ps-2"
+            v-model:value="filterParams.branch"
+            :options="businessStore.branchSelectOptions"
+            @update:value="refreshTable"
+          ></n-select>
+        </div>
       </n-space>
       <n-collapse-transition class="mt-2" :show="showFilters">
         <n-form>
@@ -125,6 +134,8 @@ import {
   getTillsByPageNumber,
   filterTills,
 } from "@/api/modules/tills";
+import { useBusinessStore } from "@/store/modules/business";
+import { useUserStore } from "@/store/modules/user";
 
 export default defineComponent({
   name: "TillList",
@@ -135,6 +146,8 @@ export default defineComponent({
   setup() {
     const message = useMessage();
     const router = useRouter();
+    const businessStore = useBusinessStore();
+    const userStore = useUserStore();
     const isTableLoading = ref(false);
     const showApertureModal = ref(false);
     const showClosureModal = ref(false);
@@ -142,6 +155,9 @@ export default defineComponent({
     const idTill = ref(0);
     const tills = ref([]);
     const filterParams = ref({
+      branch: !userStore.user.branchoffice
+        ? businessStore.currentBranch
+        : userStore.user.branchoffice,
       opening_responsable: null,
       closing_responsable: null,
       opening_amount: null,
@@ -185,7 +201,7 @@ export default defineComponent({
     const loadTills = () => {
       isTableLoading.value = true;
       pagination.value.page = 1;
-      getTills()
+      getTills(filterParams.value.branch)
         .then((response) => {
           if (response.status === 200) {
             pagination.value.total = response.data.count;
@@ -232,14 +248,12 @@ export default defineComponent({
     };
 
     const refreshTable = () => {
-      filterParams.value = {
-        opening_responsable: null,
-        closing_responsable: null,
-        opening_amount: null,
-        closing_amount: null,
-        created: null,
-        modified: null,
-      };
+      filterParams.value.opening_responsable = null;
+      filterParams.value.closing_responsable = null;
+      filterParams.value.opening_amount = null;
+      filterParams.value.closing_amount = null;
+      filterParams.value.created = null;
+      filterParams.value.modified = null;
       pagination.value.filterParams = null;
       loadTills();
     };
@@ -284,6 +298,8 @@ export default defineComponent({
       pagination,
       tills,
       idTill,
+      businessStore,
+      userStore,
       tableColumns: createTillColumns({
         generateReport() {
           message.success("Opcion 1!");

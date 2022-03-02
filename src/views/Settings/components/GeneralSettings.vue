@@ -21,6 +21,7 @@
                           v-model:value="currentArea"
                           :consistent-menu-width="true"
                           :options="areaOptions"
+                          clearable
                         />
                         <n-button
                           type="warning"
@@ -441,7 +442,7 @@ export default defineComponent({
     const router = useRouter();
     const tableStore = useTableStore();
     const isLoadingData = ref(false);
-    const currentArea = ref(1);
+    const currentArea = ref(null);
     const area = ref({
       id: null,
       description: "",

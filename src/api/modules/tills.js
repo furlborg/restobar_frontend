@@ -1,13 +1,20 @@
 import { http } from "@/api"
+import { useBusinessStore } from "@/store/modules/business";
+import { useUserStore } from "@/store/modules/user";
 
-export async function getTills() {
-    return await http.get('tills/')
+export async function getTills(branch) {
+    return await http.get('tills/', {
+        params: {
+            branch: branch
+        }
+    })
 }
 
 export async function getTillsByPageNumber(page, filterParams) {
     if (filterParams) {
         return await http.get('tills/', {
             params: {
+                branch: filterParams.branch,
                 opening_responsable__icontains: filterParams.opening_responsable,
                 closing_responsable__icontains: filterParams.closing_responsable,
                 opening_amount__icontains: filterParams.opening_amount,
@@ -29,6 +36,7 @@ export async function getTillsByPageNumber(page, filterParams) {
 export async function filterTills(page, filterParams) {
     return await http.get('tills/', {
         params: {
+            branch: filterParams.branch,
             opening_responsable__icontains: filterParams.opening_responsable,
             closing_responsable__icontains: filterParams.closing_responsable,
             opening_amount__icontains: filterParams.opening_amount,
@@ -41,7 +49,15 @@ export async function filterTills(page, filterParams) {
 }
 
 export async function retrieveCurrentTill() {
-    return await http.get('tills/current/')
+    const businessStore = useBusinessStore();
+    const userStore = useUserStore();
+    if (userStore.user.branchoffice) {
+        return await http.get('tills/current/')
+    } else {
+        return await http.post('tills/current/', {
+            branch: businessStore.currentBranch
+        })
+    }
 }
 
 export async function getCurrentTillDetails(id) {

@@ -1,5 +1,9 @@
 import { defineStore } from "pinia"
 import { getAreasTables } from '@/api/modules/tables'
+import { useBusinessStore } from "@/store/modules/business";
+import { useUserStore } from "@/store/modules/user";
+const businessStore = useBusinessStore();
+const userStore = useUserStore();
 
 export const useTableStore = defineStore('table', {
     state: () => ({
@@ -7,7 +11,11 @@ export const useTableStore = defineStore('table', {
     }),
     getters: {
         getAreasOptions() {
-            return this.areas.map(area => ({
+            let areas = this.areas
+            if (!userStore.user.branchoffice) {
+                areas = areas.filter(area => area.branch === businessStore.currentBranch)
+            }
+            return areas.map(area => ({
                 label: area.description,
                 value: area.id
             }))

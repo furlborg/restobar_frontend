@@ -1,6 +1,5 @@
 import { defineStore } from "pinia"
-import { refreshToken } from "@/api/modules/users";
-
+import { refreshToken, logout } from "@/api/modules/users";
 const useCookie = require('vue-cookies')
 
 export const useUserStore = defineStore('user', {
@@ -57,6 +56,27 @@ export const useUserStore = defineStore('user', {
             await refreshToken(this.refresh)
                 .then(response => {
                     useCookie.set('token', response.data.access, 60 * 30);
+                })
+                .catch(error => {
+                    if (error.response.data.code === 'token_not_valid') {
+                        this.logout()
+                    }
+                })
+        },
+        async blacklistToken() {
+            return await logout(this.refresh)
+                .then(response => {
+                    if (response.status === 205) {
+                        this.logout()
+                    }
+                    return true
+                })
+                .catch(error => {
+                    if (error.response.data.code === 'token_blacklisted') {
+                        this.logout()
+                        return true
+                    }
+                    return false
                 })
         },
         logout() {

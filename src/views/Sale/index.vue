@@ -12,10 +12,19 @@
           <v-icon name="md-filteralt-round" />
           {{ showFilters ? "Ocultar Filtros" : "Mostrar filtros" }}
         </n-button>
-        <n-button type="info" text @click="refreshTable">
-          <v-icon name="hi-solid-refresh" />
-          Recargar
-        </n-button>
+        <div class="d-flex">
+          <n-button type="info" text @click="refreshTable">
+            <v-icon name="hi-solid-refresh" />
+            Recargar
+          </n-button>
+          <n-select
+            v-if="!userStore.user.branchoffice"
+            class="ps-2"
+            v-model:value="filterParams.branch"
+            :options="businessStore.branchSelectOptions"
+            @update:value="refreshTable"
+          ></n-select>
+        </div>
       </n-space>
       <n-collapse-transition class="mt-2" :show="showFilters">
         <n-form>
@@ -102,6 +111,8 @@ import {
   nullSale,
 } from "@/api/modules/sales";
 import { useSaleStore } from "@/store/modules/sale";
+import { useBusinessStore } from "@/store/modules/business";
+import { useUserStore } from "@/store/modules/user";
 import { isNumber, isLetter } from "@/utils";
 
 export default defineComponent({
@@ -109,11 +120,16 @@ export default defineComponent({
   setup() {
     const message = useMessage();
     const dialog = useDialog();
+    const businessStore = useBusinessStore();
+    const userStore = useUserStore();
     const saleStore = useSaleStore();
     const isTableLoading = ref(false);
     const sales = ref([]);
     const showFilters = ref(false);
     const filterParams = ref({
+      branch: !userStore.user.branchoffice
+        ? businessStore.currentBranch
+        : userStore.user.branchoffice,
       customer: "",
       serie: null,
       number: "",
@@ -188,7 +204,7 @@ export default defineComponent({
       isTableLoading.value = true;
       // pagination.value.pageSize = 20;
       pagination.value.page = 1;
-      listSales()
+      listSales(filterParams.value.branch)
         .then((response) => {
           pagination.value.total = response.data.count;
           pagination.value.pageCount = Math.trunc(
@@ -237,15 +253,13 @@ export default defineComponent({
     };
 
     const refreshTable = () => {
-      filterParams.value = {
-        customer: "",
-        serie: null,
-        number: "",
-        payment_method: null,
-        date_sale: null,
-        status: null,
-      };
-      pagination.value.pageSearchParams = null;
+      (filterParams.value.customer = ""),
+        (filterParams.value.serie = null),
+        (filterParams.value.number = ""),
+        (filterParams.value.payment_method = null),
+        (filterParams.value.date_sale = null),
+        (filterParams.value.status = null),
+        (pagination.value.pageSearchParams = null);
       loadSales();
     };
 
@@ -281,6 +295,8 @@ export default defineComponent({
       refreshTable,
       performFilter,
       sales,
+      businessStore,
+      userStore,
       tableColumns: createSaleColumns({
         printSale() {
           message.success("Imprimir");

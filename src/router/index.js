@@ -42,8 +42,7 @@ const routes = [
               }
             })
             .catch(error => {
-              if (error.response.status !== 404) {
-                console.error('Algo salió mal...')
+              if (error.response.status === 404) {
                 tillStore.currentTillID = null
               }
             })
@@ -69,8 +68,7 @@ const routes = [
               }
             })
             .catch(error => {
-              if (error.response.status !== 404) {
-                console.error('Algo salió mal...')
+              if (error.response.status === 404) {
                 tillStore.currentTillID = null
               }
             })

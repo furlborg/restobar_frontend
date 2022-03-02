@@ -1,4 +1,8 @@
 import { http } from "@/api"
+import { useBusinessStore } from "@/store/modules/business";
+import { useUserStore } from "@/store/modules/user";
+const businessStore = useBusinessStore();
+const userStore = useUserStore();
 
 export async function getPaymentMethods() {
     return await http.get('payment_methods/')
@@ -28,14 +32,19 @@ export async function updatePaymentMethodDesc(idPayment, description) {
     })
 }
 
-export async function listSales() {
-    return await http.get('sales/')
+export async function listSales(branch) {
+    return await http.get('sales/', {
+        params: {
+            branch_office: branch
+        }
+    })
 }
 
 export async function listSalesByPage(filterParams, page, pageSize) {
     if (filterParams) {
         return await http.get('sales/', {
             params: {
+                branch_office: filterParams.branch,
                 customer__names__icontains: filterParams.customer,
                 serie: filterParams.serie,
                 number__icontains: filterParams.number,
@@ -59,6 +68,7 @@ export async function listSalesByPage(filterParams, page, pageSize) {
 export async function searchSales(filterParams, page, pageSize) {
     return await http.get('sales/', {
         params: {
+            branch: filterParams.branch,
             customer__names__icontains: filterParams.customer,
             serie: filterParams.serie,
             number__icontains: filterParams.number,
@@ -84,7 +94,7 @@ export async function createSale(sale) {
         payment_condition: sale.payment_condition,
         customer: sale.customer,
         address: sale.address,
-        branch_office: sale.branch_office,
+        branch_office: !userStore.user.branchoffice ? businessStore.currentBranch : null,
         discount: sale.discount,
         observations: sale.observations,
         sale_details: sale.sale_details,
@@ -93,7 +103,7 @@ export async function createSale(sale) {
 
 export async function getSaleNumber(serie) {
     return await http.post('sales/serie_number/', {
-        number: serie
+        serie: serie
     })
 }
 

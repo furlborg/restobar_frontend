@@ -79,19 +79,19 @@ export default defineComponent({
     userStore.initializeStore();
 
     const formInline = reactive({
-      username: "ADMIN",
+      username: "FURLBORG",
       password: "admin",
     });
 
     const rules = {
       username: {
         required: true,
-        message: "Por favor ingrese el nombre de usuario",
+        message: "Nombre de usuario requerido",
         trigger: ["blur", "input"],
       },
       password: {
         required: true,
-        message: "Por favor, ingrese contraseña",
+        message: "Contraseña requerido",
         trigger: ["blur", "input"],
       },
     };
@@ -114,7 +114,7 @@ export default defineComponent({
               message.error("Error de inicio de sesión");
             });
         } else {
-          message.error("Por favor complete la información requerida.");
+          message.error("Complete la información requerida.");
         }
       });
     };
