@@ -248,12 +248,19 @@ export const productRules = {
         trigger: ['blur', 'input'],
         message: 'Precio requerido'
     },
+    purchase_price: {
+        required: true,
+        trigger: ['blur', 'input'],
+        message: 'Precio requerido'
+    },
     category: {
+        type: 'number',
         required: true,
         trigger: ['blur', 'input'],
         message: 'Categoría requerido'
     },
     preparation_place: {
+        type: 'number',
         required: true,
         trigger: ['blur', 'input'],
         message: 'Lugar de preparación requerido'
@@ -705,17 +712,19 @@ export const createSuppliesColumns = ({ editSupplies, deleteSupplies }) => {
             align: 'center',
             render(row) {
                 return h(NPopover,
-                    { trigger: "click"},
-                    { trigger: () => h(NButton,
-                        {
-                            size: 'small',
-                            type: 'success',
-                            circle: true
-                        },
-                        renderIcon('md-search-round')),
-                        default: () => h(NSpace,{vertical: true},{
-                            default: () => row.amount.map((v)=>{
-                                return [h(NText,{},{default: () => v.amount})]})
+                    { trigger: "click" },
+                    {
+                        trigger: () => h(NButton,
+                            {
+                                size: 'small',
+                                type: 'success',
+                                circle: true
+                            },
+                            renderIcon('md-search-round')),
+                        default: () => h(NSpace, { vertical: true }, {
+                            default: () => row.amount.map((v) => {
+                                return [h(NText, {}, { default: () => v.amount })]
+                            })
                         })
                     }
                 )
@@ -840,10 +849,15 @@ export const createKardexBySupplyColumns = () => {
     return [
         {
             title: "",
+            align: 'center',
             width: 20,
             render(row, index) {
                 return index + 1;
             },
+        },
+        {
+            title: 'Almacen',
+            key: 'branchoffice_des',
         },
         {
             title: 'Fecha',
@@ -851,12 +865,12 @@ export const createKardexBySupplyColumns = () => {
             align: 'center'
         },
         {
-            title: 'Descripción',
+            title: 'Concepto',
             key: 'concept_des'
         },
         {
             title: 'Documento',
-            key: 'associateddoc',
+            key: 'document',
             align: 'center',
         },
         {
@@ -885,21 +899,122 @@ export const createKardexBySupplyColumns = () => {
 }
 
 export const saleRules = {
-    customer_name: {
-        required: true,
-        trigger: ['blur', 'input'],
-        message: 'Cliente es requerido'
-    },
-    payment_method: {
+    customer: {
         type: 'number',
         required: true,
-        trigger: ['blur', 'input'],
-        message: 'Método de pago es requerido'
-    },
-    date_sale: {
-        type: 'date',
-        required: true,
-        trigger: ['blur', 'input'],
-        message: 'Este campo es requerido'
+        trigger: ['blur'],
+        message: 'Cliente es requerido'
     }
+}
+
+export const createSaleColumns = ({ printSale, miscSale, sendSale, nullifySale }) => {
+    return [
+        {
+            title: 'Cliente',
+            key: 'customer'
+        },
+        {
+            title: 'Documento',
+            key: 'document',
+            render(row) {
+                return row.serie + row.number
+            }
+        },
+        {
+            title: 'Método Pago',
+            key: 'payment_method',
+        },
+        {
+            title: 'Monto',
+            key: 'amount',
+        },
+        {
+            title: 'Emisión',
+            key: 'date_sale',
+        },
+        {
+            title: 'Estado',
+            key: 'status',
+            render(row) {
+                let type, text
+                if (row.status === 'N') {
+                    type = "info"
+                    text = "NUEVO"
+                } else if (row.status === 'E') {
+                    type = "success"
+                    text = "ENVIADO"
+                } else if (row.status === 'A') {
+                    type = "error"
+                    text = "ANULADO"
+                } else {
+                    type = "warning"
+                    text = "-"
+                }
+
+                return h(
+                    NTag,
+                    {
+                        size: 'small',
+                        type: type,
+                        round: true
+                    },
+                    {
+                        default: () => text
+                    }
+                )
+            }
+        },
+        {
+            title: 'Acciones',
+            key: 'actions',
+            width: 200,
+            render(row) {
+                return [
+                    h(
+                        NButton,
+                        {
+                            class: 'me-2',
+                            size: 'small',
+                            type: 'info',
+                            secondary: true,
+                            onClick: () => sendSale(row)
+                        },
+                        renderIcon('ri-send-plane-fill')
+                    ),
+                    h(
+                        NButton,
+                        {
+                            class: 'me-2',
+                            size: 'small',
+                            type: 'error',
+                            secondary: true,
+                            onClick: () => nullifySale(row)
+                        },
+                        renderIcon('md-cancel-twotone')
+                    ),
+                    h(
+                        NButton,
+                        {
+                            class: 'me-2',
+                            size: 'small',
+                            type: 'warning',
+                            secondary: true,
+                            onClick: () => printSale(row)
+                        },
+                        renderIcon('md-print-round')
+                    ),
+                    h(
+                        NButton,
+                        {
+                            size: 'small',
+                            type: 'success',
+                            secondary: true,
+                            onClick: () => miscSale(row)
+                        },
+                        renderIcon('ri-mail-send-fill')
+                    )
+                ]
+            }
+        },
+    ]
 }

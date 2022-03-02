@@ -2,7 +2,7 @@
   <div id="TablePayment">
     <n-spin :show="loading">
       <n-card>
-        <n-form ref="saleForm" :model="sale" :rules="saleRules">
+        <n-form class="mb-2" ref="saleForm" :model="sale" :rules="saleRules">
           <n-space class="mb-2" align="center" justify="space-between">
             <div class="d-flex align-items-center">
               <n-text class="fs-4">{{
@@ -50,9 +50,10 @@
             cols="12 s:12 m:12 l:12 xl:12 2xl:12"
             :x-gap="12"
           >
-            <n-form-item-gi :span="6" label="Cliente" path="customer_name">
+            <n-form-item-gi :span="9" label="Cliente" path="customer">
               <n-input-group>
                 <n-auto-complete
+                  blur-after-select
                   :input-props="{
                     autocomplete: 'disabled',
                   }"
@@ -60,37 +61,54 @@
                   :options="customerOptions"
                   :get-show="showOptions"
                   :loading="searching"
+                  @update:value="
+                    (v) => {
+                      !v
+                        ? ((sale.customer = null), createAddressesOptions())
+                        : null;
+                    }
+                  "
                   @select="
                     (value) => {
                       sale.customer = value;
+                      sale.address = null;
+                      createAddressesOptions();
+                      sale.invoice_type === 1
+                        ? (sale.address = addressesOptions[0].value)
+                        : null;
                     }
                   "
+                  placeholder=""
+                  clearable
                 />
-                <n-button type="info">
+                <n-button type="info" @click="showModal = true">
                   <v-icon name="md-add-round" />
                 </n-button>
               </n-input-group>
-            </n-form-item-gi>
-            <n-form-item-gi :span="3" label="Método Pago" path="payment_method">
-              <n-select
-                v-model:value="sale.payment_method"
-                :options="saleStore.getPaymentMethodsOptions"
-                filterable
-                clearable
-              />
             </n-form-item-gi>
             <n-form-item-gi :span="3" label="Fecha" path="date_sale">
               <n-date-picker
                 class="w-100"
                 v-model:formatted-value="sale.date_sale"
                 type="datetime"
-                format="dd/M/yyyy hh:mm:ss"
               />
             </n-form-item-gi>
-            <n-form-item-gi :span="10" label="Dirección">
-              <n-input v-model="sale.address" />
+            <n-form-item-gi :span="6" label="Dirección">
+              <n-select
+                v-model:value="sale.address"
+                :options="addressesOptions"
+                :disabled="!sale.customer"
+                placeholder=""
+              />
             </n-form-item-gi>
-            <n-form-item-gi>
+            <n-form-item-gi :span="3" label="Método Pago" path="payment_method">
+              <n-select
+                v-model:value="sale.payment_method"
+                :options="saleStore.getPaymentMethodsOptions"
+                filterable
+              />
+            </n-form-item-gi>
+            <n-form-item-gi :span="3">
               <n-button
                 type="info"
                 text
@@ -124,10 +142,27 @@
             <tr v-for="(detail, index) in sale.sale_details" :key="index">
               <td>{{ index + 1 }}</td>
               <td>{{ detail.quantity }}</td>
-              <td>{{ detail.product_name }}</td>
-              <td>S/. {{ detail.price_sale }}</td>
+              <td>
+                <input
+                  class="custom-input"
+                  v-model="detail.product_name"
+                  v-autowidth
+                  @click="$event.target.select()"
+                />
+              </td>
               <td>
                 S/.
+                <input
+                  class="custom-input"
+                  type="number"
+                  min="0"
+                  step=".01"
+                  v-model="detail.price_sale"
+                  v-autowidth
+                  @click="$event.target.select()"
+                />
+              </td>
+              <td>
                 {{ parseFloat(detail.quantity * detail.price_sale).toFixed(2) }}
               </td>
             </tr>
@@ -139,7 +174,7 @@
             <div class="fs-5">
               S/.
               <input
-                class="fs-1 currency-input"
+                class="fs-1 custom-input"
                 type="number"
                 min="0"
                 step=".01"
@@ -165,7 +200,7 @@
               DSCT:
               <span>S/.</span>
               <input
-                class="currency-input fw-bold"
+                class="custom-input fw-bold"
                 type="number"
                 min="0"
                 step=".01"
@@ -190,32 +225,51 @@
         >
       </n-card>
     </n-spin>
+    <!-- Customer Modal -->
+    <customer-modal
+      v-model:show="showModal"
+      @update:show="onCloseModal"
+      @on-success="onSuccess"
+    />
   </div>
 </template>
 
 <script>
 import { defineComponent, ref, toRefs, computed, watch, onMounted } from "vue";
+import CustomerModal from "@/views/Customer/components/CustomerModal";
+import { useRouter } from "vue-router";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { saleRules } from "@/utils/constants";
 import { isDecimal, isNumber, isLetter } from "@/utils";
-import { searchCustomerByName } from "@/api/modules/customer";
+import {
+  searchCustomerByName,
+  searchRucCustomer,
+} from "@/api/modules/customer";
 import { createSale, getSaleNumber } from "@/api/modules/sales";
 import { useMessage } from "naive-ui";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
+import format from "date-fns/format";
 
 export default defineComponent({
   name: "TablePayment",
   directives: { autowidth: VueInputAutowidth },
+  components: {
+    CustomerModal,
+  },
   setup() {
+    const router = useRouter();
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
     const message = useMessage();
     const loading = ref(false);
+    const showModal = ref(false);
     const payment_amount = ref("0.00");
     const saleForm = ref();
     const changing = computed(() => {
-      return total.value - payment_amount.value;
+      return payment_amount.value > total.value
+        ? total.value - payment_amount.value
+        : 0.0;
     });
 
     const showObservations = ref(false);
@@ -240,24 +294,20 @@ export default defineComponent({
       order: orderStore.orderId,
       serie: 2,
       number: "",
-      date_sale: null,
+      date_sale: format(new Date(Date.now()), "dd/MM/yyyy hh:mm:ss"),
       count: products_count,
       amount: total,
       invoice_type: 3,
-      payment_method: null,
+      payment_method: 1,
       payment_condition: 1,
-      customer: null,
       customer_name: "",
-      address: "",
+      customer: null,
+      address: null,
       branch_office: 1,
       discount: "0.00",
       observations: "",
       sale_details: orderStore.orderToSale,
     });
-
-    const customerOptions = ref([]);
-
-    const searching = ref(false);
 
     const selectSerie = (v) => {
       sale.value.serie = v;
@@ -266,6 +316,9 @@ export default defineComponent({
     const changeSerie = (v) => {
       switch (v) {
         case 1:
+          sale.value.customer_name = "";
+          sale.value.customer = null;
+          sale.value.address = null;
           sale.value.serie = 1;
           break;
         case 3:
@@ -282,15 +335,20 @@ export default defineComponent({
     const performCreateSale = () => {
       saleForm.value.validate((errors) => {
         if (!errors) {
+          loading.value = true;
           createSale(sale.value)
             .then((response) => {
               if (response.status === 201) {
-                console.log(response.data);
+                message.success("Venta realizada correctamente!");
+                router.push({ name: "TableHome" });
               }
             })
             .catch((error) => {
               console.error(error.response.data);
               message.error("Algo salió mal...");
+            })
+            .finally(() => {
+              loading.value = false;
             });
         } else {
           console.error(errors);
@@ -304,7 +362,7 @@ export default defineComponent({
       getSaleNumber(sale.value.serie)
         .then((response) => {
           if (response.status === 200) {
-            sale.value.number = response.data.number;
+            sale.value.number = Number(response.data.number) + 1;
           }
         })
         .catch((error) => {
@@ -316,44 +374,98 @@ export default defineComponent({
         });
     };
 
-    const showOptions = (value) => {
-      if (value.length >= 3) {
-        searching.value = true;
-        searchCustomerByName(value)
-          .then((response) => {
-            if (response.status === 200) {
-              customerOptions.value = response.data.map((customer) => ({
-                value: customer.id,
-                label: customer.names,
-                disabled: customer.is_disabled,
-              }));
-            }
-          })
-          .catch((error) => {
-            console.error(error);
-            message.error("Algo salió mal...");
-          })
-          .finally(() => {
-            searching.value = false;
-          });
-        return true;
+    const searching = ref(false);
+
+    const customerResults = ref([]);
+
+    const customerOptions = computed(() => {
+      return customerResults.value.map((customer) => ({
+        value: customer.id,
+        label: `${customer.doc_num} - ${customer.names}`,
+        disabled: customer.is_disabled,
+      }));
+    });
+
+    const addressesOptions = ref([]);
+
+    const createAddressesOptions = () => {
+      const customer = customerResults.value.find(
+        (customer) => customer.id === sale.value.customer
+      );
+      if (typeof customer !== "undefined") {
+        addressesOptions.value = customer.addresses.map((address) => ({
+          value: address.id,
+          label: `${address.ubigeo} - ${address.description}`,
+        }));
       }
-      return false;
+    };
+
+    const showOptions = async (value) => {
+      if (value.length >= 3 && value.length <= 11) {
+        searching.value = true;
+        if (sale.value.invoice_type === 1) {
+          await searchRucCustomer(value)
+            .then((response) => {
+              if (response.status === 200) {
+                customerResults.value = response.data;
+              }
+            })
+            .catch((error) => {
+              console.error(error);
+              message.error("Algo salió mal...");
+            })
+            .finally(() => {
+              searching.value = false;
+            });
+          return true;
+        } else {
+          await searchCustomerByName(value)
+            .then((response) => {
+              if (response.status === 200) {
+                customerResults.value = response.data;
+              }
+            })
+            .catch((error) => {
+              console.error(error);
+              message.error("Algo salió mal...");
+            })
+            .finally(() => {
+              searching.value = false;
+            });
+          return true;
+        }
+      } else {
+        customerResults.value = [];
+        return false;
+      }
     };
 
     const { serie } = toRefs(sale.value);
 
     watch(serie, () => {
-      console.log(new Date(Date.now()).toLocaleString("es-PE"));
       obtainSaleNumber();
     });
 
     onMounted(() => {
-      sale.value.date_sale = new Date(Date.now()).toLocaleString();
+      document.title = "Venta | App";
       obtainSaleNumber();
     });
 
+    const onCloseModal = () => {
+      document.title = "Venta | App";
+    };
+
+    const onSuccess = (customer) => {
+      customerResults.value.push(customer);
+      sale.value.customer_name = `${customer.doc_num} - ${customer.names}`;
+      sale.value.customer = customer.id;
+      createAddressesOptions();
+      showModal.value = false;
+      onCloseModal();
+    };
+
     return {
+      showModal,
       orderStore,
       saleStore,
       sale,
@@ -371,15 +483,24 @@ export default defineComponent({
       changeSerie,
       showObservations,
       performCreateSale,
+      addressesOptions,
+      createAddressesOptions,
+      onCloseModal,
+      onSuccess,
     };
   },
 });
 </script>
 
 <style lang="scss" scoped>
-.currency-input {
+.custom-input {
   border: none;
   outline: none;
+}
+
+.custom-input:hover {
+  border-radius: 5px;
+  outline: LightBlue solid 2px;
 }
 
 input::-webkit-outer-spin-button,

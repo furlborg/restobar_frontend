@@ -24,7 +24,7 @@
     </n-layout-content>
     <div class="mainMenu" :class="{ act: active === true }">
       <ul>
-        <li>
+        <!-- <li>
           <a
             v-if="$route.name === 'WHome'"
             @click="
@@ -33,7 +33,7 @@
             "
             >Unir Mesas</a
           >
-        </li>
+        </li> -->
         <li>
           <a href="#">Services</a>
         </li>

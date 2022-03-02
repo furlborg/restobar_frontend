@@ -2,9 +2,37 @@
   <div id="Product">
     <n-card title="Productos" :segmented="{ content: 'hard' }">
       <template #header-extra>
-        <n-button type="info" @click="showModal = true" secondary
+        <!-- <n-button type="info" @click="showModal = true" secondary
           >Agregar</n-button
-        >
+        > -->
+        <n-space justify="space-around">
+          <n-button
+            type="success"
+            @click="newMovement(0), (showModalMovement = true)"
+            secondary
+          >
+            <template #icon
+              ><n-icon><v-icon name="hi-solid-arrow-sm-up" /></n-icon
+            ></template>
+            Entrada
+          </n-button>
+          <n-button
+            type="error"
+            secondary
+            @click="newMovement(1), (showModalMovement = true)"
+          >
+            <template #icon
+              ><n-icon><v-icon name="hi-solid-arrow-sm-down" /></n-icon
+            ></template>
+            Salida
+          </n-button>
+          <n-button type="primary" @click="showModal = true" secondary>
+            <template #icon
+              ><n-icon><v-icon name="la-user-plus-solid" /></n-icon
+            ></template>
+            Crear
+          </n-button>
+        </n-space>
       </template>
       <n-space justify="space-between">
         <n-input-group>
@@ -28,7 +56,7 @@
         </n-radio-group>
       </n-space>
       <n-spin class="mt-2" :show="isLoadingData">
-        <n-scrollbar style="max-height: 650px; min-height: 650px">
+        <n-scrollbar style="height: 70vh; min-height: 650px">
           <!-- Products List -->
           <n-list v-if="listType === 'list'" class="px-3">
             <n-list-item
@@ -50,11 +78,26 @@
                   <n-text class="fs-4">{{ product.name }}</n-text>
                 </template>
                 <template #description>
-                  <n-text class="fs-6" type="success"
-                    >S/. {{ Number(product.prices).toFixed(2) }}</n-text
-                  >
+                  <n-space vertical item-style="margin-top: -10px;">
+                    <n-text class="fs-6" type="success"
+                      >S/. {{ Number(product.prices).toFixed(2) }}</n-text
+                    >
+                    <div v-if="product.amount.length > 0">
+                      <div v-if="product.amount.length == 1">
+                        <n-text class="fs-6"
+                          >Stock: {{ product.amount[0].amount }}</n-text
+                        >
+                      </div>
+                      <div
+                        v-else
+                        v-for="item in product.amount"
+                        :key="item.key"
+                      >
+                        <n-text class="fs-6">Stock: {{ item.amount }}</n-text>
+                      </div>
+                    </div>
+                  </n-space>
                 </template>
-                <n-text>{{ product.description }}</n-text>
               </n-thing>
               <template #suffix>
                 <transition name="fade">
@@ -134,30 +177,42 @@
       @update:show="onCloseModal"
       @on-success="onSuccess"
     />
+
+    <move-modal
+      v-model:show="showModalMovement"
+      @on-success="loadProductsData"
+      :items="itemsMovement"
+      :type="type"
+    />
   </div>
 </template>
 
 <script>
-import { defineComponent, ref, onMounted } from "vue";
+import { defineComponent, ref, onMounted, reactive } from "vue";
 import { useMessage } from "naive-ui";
 import { renderIcon } from "@/utils";
 import ProductModal from "./components/ProductModal";
 import { getProducts, searchProduct } from "@/api/modules/products";
+import MoveModal from "./components/MoveModal.vue";
 
 export default defineComponent({
   name: "Product",
   components: {
     ProductModal,
+    MoveModal,
   },
   setup() {
     const isLoadingData = ref(false);
     const message = useMessage();
     const listType = ref("list");
     const showModal = ref(false);
+    const showModalMovement = ref(false);
     const showButtons = ref(false);
     const search = ref(null);
     const idProduct = ref(0);
+    const type = ref(0);
     const products = ref([]);
+    const itemsMovement = reactive({});
     const productOptions = [
       {
         label: "Editar",
@@ -170,6 +225,14 @@ export default defineComponent({
         icon: renderIcon("ri-delete-bin-2-fill"),
       },
     ];
+    const newMovement = (value) => {
+      (type.value = value),
+        (itemsMovement.product = undefined),
+        (itemsMovement.type = value),
+        (itemsMovement.branchoffice = 1),
+        (itemsMovement.concept = undefined),
+        (itemsMovement.amount = undefined);
+    };
     const pagination = ref({
       search: null,
       total: 0,
@@ -321,7 +384,10 @@ export default defineComponent({
     return {
       isLoadingData,
       listType,
+      type,
       showModal,
+      showModalMovement,
+      loadProductsData,
       showButtons,
       productOptions,
       onCloseModal,
@@ -333,6 +399,8 @@ export default defineComponent({
       refreshProducts,
       editProduct,
       performSearch,
+      itemsMovement,
+      newMovement,
     };
   },
 });

@@ -5,7 +5,9 @@
       @back="$router.push({ name: 'WCategories' })"
     >
       <template #title>
-        <n-text class="fs-4">{{ $route.params.category }}</n-text>
+        <n-text class="fs-4">{{
+          productStore.getCategorieDescription($route.params.category)
+        }}</n-text>
       </template>
     </n-page-header>
 
@@ -16,21 +18,11 @@
             justify="space-between"
             @click="product.quantity ? null : (product.quantity = 1)"
           >
-            <n-text>{{ product.title }}</n-text>
-            <n-text>S/. {{ product.price.toFixed(2) }}</n-text>
+            <n-text>{{ product.name }}</n-text>
+            <n-text>S/. {{ parseFloat(product.prices).toFixed(2) }}</n-text>
           </n-space>
           <n-collapse-transition :show="product.quantity > 0">
-            <n-space justify="space-between">
-              <n-button
-                type="info"
-                text
-                @click="
-                  productIndex = index;
-                  orderItemIndex = null;
-                  showModal = true;
-                "
-                >Indicaciones</n-button
-              >
+            <n-space justify="end">
               <n-input-group>
                 <n-button
                   type="warning"
@@ -63,11 +55,7 @@
       v-model:show="showModal"
       preset="card"
       title="Indicaciones"
-      :product="
-        productIndex !== null
-          ? products[productIndex]
-          : preOrderList[orderItemIndex]
-      "
+      :product="orderStore.orders[orderItemIndex]"
       @success="showModal = false"
     ></ProductIndications>
     <teleport to="body">
@@ -87,7 +75,7 @@
         </transition>
         <n-button
           type="info"
-          :disabled="!(preOrderList.length > 0)"
+          :disabled="!(orderStore.orders.length > 0)"
           round
           @click="activeDrawer = true"
           ><v-icon class="me-1" name="md-shoppingcart-round" />Ver
@@ -95,20 +83,23 @@
         >
       </n-space>
     </teleport>
-    <n-drawer height="auto" v-model:show="activeDrawer" placement="bottom">
+    <n-drawer height="50%" v-model:show="activeDrawer" placement="bottom">
       <n-drawer-content title="Pedidos" closable>
         <n-list>
-          <n-list-item v-for="(orderItem, index) in preOrderList" :key="index">
+          <n-list-item
+            v-for="(orderItem, index) in orderStore.orders"
+            :key="index"
+          >
             <n-thing
-              :title="`${orderItem.quantity} - ${orderItem.title}`"
+              :title="`${orderItem.quantity} - ${orderItem.product_name}`"
               :title-extra="`S/. ${
-                orderItem.quantity * orderItem.price.toFixed(2)
+                Number(orderItem.quantity) *
+                parseFloat(orderItem.price).toFixed(2)
               }`"
               ><n-button
                 type="info"
                 text
                 @click="
-                  productIndex = null;
                   orderItemIndex = index;
                   showModal = true;
                 "
@@ -120,8 +111,15 @@
         <template #footer>
           <n-space class="w-100" justify="center">
             <n-button type="error" secondary>Cancelar pedido</n-button>
-            <n-button type="info" secondary @click="saveOrder"
-              >Realizar pedido</n-button
+            <n-button
+              type="info"
+              secondary
+              @click="
+                orderStore.orderId
+                  ? performUpdateTableOrder()
+                  : performCreateTableOrder()
+              "
+              >{{ orderStore.orderId ? "Añadir" : "Realizar" }} pedido</n-button
             >
           </n-space>
         </template>
@@ -131,10 +129,20 @@
 </template>
 
 <script>
-import { defineComponent, ref } from "vue";
+import { defineComponent, ref, onMounted } from "vue";
+import { useRoute } from "vue-router";
+import { useRouter } from "vue-router";
+import { useMessage } from "naive-ui";
 import ProductIndications from "./ProductIndications";
 import { useWaiterStore } from "@/store/modules/waiter";
-import { cloneDeep } from "@/utils";
+import { useProductStore } from "@/store/modules/product";
+import { useOrderStore } from "@/store/modules/order";
+import { getProductsByCategory } from "@/api/modules/products";
+import {
+  createTableOrder,
+  updateTableOrder,
+  performDeleteOrderDetail,
+} from "@/api/modules/tables";
 
 export default defineComponent({
   name: "WProducts",
@@ -142,199 +150,87 @@ export default defineComponent({
     ProductIndications,
   },
   setup() {
-    const waiterStore = useWaiterStore();
+    const message = useMessage();
+    const route = useRoute();
+    const router = useRouter();
+    const productStore = useProductStore();
+    const orderStore = useOrderStore();
     const activeDrawer = ref(false);
     const showModal = ref(false);
-    const preOrderList = ref([]);
-    const productIndex = ref(null);
     const orderItemIndex = ref(null);
-    const products = ref([
-      {
-        id: 0,
-        title: "Product 1",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 1,
-        title: "Product 2",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 2,
-        title: "Product 3",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 3,
-        title: "Product 4",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 4,
-        title: "Product 5",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 5,
-        title: "Product 6",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 6,
-        title: "Product 7",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 7,
-        title: "Product 8",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 8,
-        title: "Product 9",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 9,
-        title: "Product 10",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 10,
-        title: "Product 11",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 11,
-        title: "Product 12",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 12,
-        title: "Product 13",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 13,
-        title: "Product 14",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 14,
-        title: "Product 15",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 15,
-        title: "Product 16",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 16,
-        title: "Product 17",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 17,
-        title: "Product 18",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 18,
-        title: "Product 19",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-      {
-        id: 19,
-        title: "Product 20",
-        price: 10.0,
-        quantity: 0,
-        indications: [],
-      },
-    ]);
+    const products = ref([]);
+
+    const performCreateTableOrder = () => {
+      createTableOrder(route.params.table, orderStore.orderList)
+        .then((response) => {
+          if (response.status === 201) {
+            message.success("Orden creada correctamente");
+            activeDrawer.value = false;
+            router.push({ name: "WHome" });
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        });
+    };
+
+    const performUpdateTableOrder = () => {
+      updateTableOrder(
+        route.params.table,
+        orderStore.orderId,
+        orderStore.orderList
+      )
+        .then((response) => {
+          if (response.status === 202) {
+            message.success("Orden actualizada correctamente");
+            activeDrawer.value = false;
+            router.push({ name: "WHome" });
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        });
+    };
+
+    const loadProducts = () => {
+      getProductsByCategory(route.params.category)
+        .then((response) => {
+          if (response.status === 200) {
+            products.value = response.data;
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        });
+    };
+
+    onMounted(() => {
+      loadProducts();
+    });
 
     const addToList = () => {
       products.value.forEach((product) => {
         if (product.quantity > 0) {
-          const existence = preOrderList.value.find(
-            (item) => item.id === product.id
-          );
-          if (typeof existence !== "undefined") {
-            existence.quantity += product.quantity;
-            if (
-              product.indications.length > 0 &&
-              existence.indications.length > 0
-            ) {
-              product.indications.forEach((indication) => {
-                existence.indications.push(cloneDeep(indication));
-              });
-            }
-          } else {
-            preOrderList.value.push(cloneDeep(product));
-          }
+          orderStore.addOrderItem(product);
           product.quantity = 0;
           product.indications = [];
         }
       });
     };
 
-    const saveOrder = () => {
-      if (waiterStore.orderList.length === 0) {
-        waiterStore.saveOrders(cloneDeep(preOrderList.value));
-      } else {
-        waiterStore.addOrders(cloneDeep(preOrderList.value));
-      }
-      preOrderList.value = [];
-      activeDrawer.value = false;
-    };
-
     return {
       activeDrawer,
       showModal,
-      productIndex,
+      productStore,
       orderItemIndex,
       products,
-      preOrderList,
       addToList,
-      saveOrder,
+      orderStore,
+      performCreateTableOrder,
+      performUpdateTableOrder,
     };
   },
 });

@@ -1,29 +1,30 @@
 <template>
     <n-modal
         preset="card"
-        :title="items.id ? 'Editar Insumo' : 'Registrar Insumo'"
+        :title="type==0? 'Registrar Entrada' : 'Registrar Salida'"
         :show="show"
-        style="width: 850px;"
+        style="width: 750px;"
         :on-close="() => $emit('update:show')"
     >
         <n-form v-model:model="formitem" :rules="rules" ref="formRef">
             <n-grid cols="12 100:1 450:12" :x-gap="12">
-                <n-form-item-gi label="Nombre" :span="8" path="name">
-                    <n-input v-model:value="formitem.name" @input="formitem.name = $event.toUpperCase()" placeholder="Nombres" />
+                <n-form-item-gi label="Insumo" :span="8" path="product">
+                    <n-select v-model:value="formitem.product" placeholder="Buscar..."
+                        filterable @search="productSearch"  :options="optionsProduct" clearable />
                 </n-form-item-gi>
-                <n-form-item-gi label="Unidad de medida" :span="4">
-                    <n-select v-model:value="formitem.measureunit" placeholder="Seleccione" :options="optionsUND" />
+                <n-form-item-gi label="Cantidad" :span="4" path="amount" >
+                    <n-input type="number" v-model:value="formitem.amount"  placeholder="" />
                 </n-form-item-gi>
             </n-grid>
             <n-grid cols="12 100:1 450:12" :x-gap="12">
-                <n-form-item-gi v-if="!formitem.id" label="Almacen" :span="4">
+                <n-form-item-gi label="Almacen" :span="8" path="branchoffice">
                     <n-select v-model:value="formitem.branchoffice" placeholder="Seleccione" :options="optionsEstablishment" />
                 </n-form-item-gi>
-                <n-form-item-gi label="Precio de compra" :span="4" path="purchase_price" >
-                    <n-input type="number" v-model:value="formitem.purchase_price"  placeholder="" />
-                </n-form-item-gi>
-                <n-form-item-gi v-if="!formitem.id" label="Stock Inicial" :span="4" path="amount">
-                    <n-input type="number" v-model:value="formitem.amount"  placeholder="" />
+            </n-grid>
+            
+            <n-grid cols="12 100:1 450:12" :x-gap="12">
+                <n-form-item-gi label="Motivo" :span="8" path="concept">
+                    <n-select v-model:value="formitem.concept" placeholder="Seleccione" :options="optionsConcept" />
                 </n-form-item-gi>
             </n-grid>
         </n-form>
@@ -41,11 +42,12 @@
 import { defineComponent, onUpdated, ref, toRefs } from "vue"
 import {useGenericsStore} from '@/store/modules/generics'
 import { useMessage } from "naive-ui";
-import { createSupplies, updateSupplies, getMeasureUnit } from "@/api/modules/supplies";
+import { getProductSimpleSearch, createProductMovement } from "@/api/modules/products";
+import { getConcept } from "@/api/modules/supplies";
 import { getBranchs } from "@/api/modules/business";
 
 export default  defineComponent({
-    name: 'SuppliesModal',
+    name: 'SupplierModal',
     emits: [
         'update:show',
         'on-success',
@@ -56,21 +58,28 @@ export default  defineComponent({
             default: false,
         },
         items: {type: Object, default: {}},
+        type: {type: Number, default: null}
     },
     setup(props, {emit}) {
         const formitem = ref({});
         const message = useMessage();
         const formRef = ref(null);
-        const optionsUND = ref([]);
+        const optionsConcept = ref([]);
         const optionsEstablishment = ref([]);
+        const optionsProduct = ref([]);
         const genericsStore = useGenericsStore();
-        const {show} = toRefs(props);
+        const {show, type} = toRefs(props);
 
-        const getUND = async () => {
-            getMeasureUnit()
+        const getApiConcept = async () => {
+            getConcept(`?search=${type.value}`)
             .then((response) => {
-                optionsUND.value = response.data.map((v) => ({
-                    label: v.description,
+                const json = response.data.filter(data => {
+                    if (data.concept != "STOCK INICIAL" && data.concept != "VENTA" && data.concept != "COMPRA"){
+                    return data;
+                    }
+                })
+                optionsConcept.value = json.map((v) => ({
+                    label: v.concept,
                     value: v.id,
                 }));
             })
@@ -78,7 +87,20 @@ export default  defineComponent({
                 message.error("Algo salió mal...");
             })
         }
-        getUND();
+
+        const productSearch = async (search) => {
+            getProductSimpleSearch(`?search=${search}`)
+            .then((response) => {
+                optionsProduct.value = response.data.map((v) => ({
+                    label: v.name,
+                    value: v.id,
+                }));
+            })
+            .catch((error) => {
+                message.error("Algo salió mal...");
+            })
+        }
+        productSearch('')
 
         const getEstablishment = async () => {
             getBranchs()
@@ -96,6 +118,7 @@ export default  defineComponent({
 
         onUpdated (() => {
             if (show.value == true) {
+                getApiConcept();
                 formitem.value = props.items;
             }
         })
@@ -103,38 +126,20 @@ export default  defineComponent({
         const save = (formitem) => {
             formRef.value.validate(async (errors) => {
                 if (!errors) {
-                    if (formitem.id) {
-                        updateSupplies(formitem.id, formitem)
+                    if (formitem.amount == "" || parseInt(formitem.amount) <= 0){
+                        message.warning("La cantidad debe ser mayor a 0.");
+                    }else{
+                        createProductMovement(formitem)
                         .then((response) => {
                             emit("on-success");
-                            emit('update:show');
-                            message.success("Insumo editado correctamente.");
-                        })
-                        .catch((error) => {
-                            if ('name' in error.response.data) {
-                                message.warning("El nombre ya existe.");
-                            }else if ('purchase_price' in error.response.data) {
-                                message.warning("Asegúrese de que no haya más de 2 decimales.");
-                            }else if ('amount' in error.response.data) {
-                                message.warning("Asegúrese de que no haya más de 2 decimales.");
-                            }else{
-                                message.error("Algo salió mal...");
-                            }
-                        });
-                    }else{
-                        createSupplies(formitem)
-                        .then((response) => {
-                            emit("on-success", response.data);
                             emit('update:show');
                             message.success("Insumo registrado correctamente.");
                         })
                         .catch((error) => {
-                            if ('name' in error.response.data) {
-                                message.warning("El nombre ya existe.");
-                            }else if ('purchase_price' in error.response.data) {
-                                message.warning("Asegúrese de que no haya más de 2 decimales.");
-                            }else if ('amount' in error.response.data) {
-                                message.warning("Asegúrese de que no haya más de 2 decimales.");
+                            if ('amount' in error.response.data) {
+                                message.warning("Asegúrese de que no haya más de 3 decimales.");
+                            }else if('error' in error.response.data) {
+                                message.warning(error.response.data.error);
                             }else{
                                 message.error("Algo salió mal...");
                             }
@@ -152,20 +157,30 @@ export default  defineComponent({
             formRef,
             save,
             genericsStore,
-            optionsUND,
+            optionsProduct,
+            productSearch,
+            optionsConcept,
             optionsEstablishment,
             rules: {
-                name: {
-                    required: true,
-                    message: "Requerido",
-                    trigger: "blur",
-                },
-                purchase_price: {
+                product: {
+                    type: "number",
                     required: true,
                     message: "Requerido",
                     trigger: "blur",
                 },
                 amount: {
+                    required: true,
+                    message: "Requerido",
+                    trigger: "blur",
+                },
+                branchoffice: {
+                    type: "number",
+                    required: true,
+                    message: "Requerido",
+                    trigger: "blur",
+                },
+                concept: {
+                    type: "number",
                     required: true,
                     message: "Requerido",
                     trigger: "blur",

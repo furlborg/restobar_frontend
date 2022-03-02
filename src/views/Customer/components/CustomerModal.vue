@@ -25,6 +25,7 @@
                 path="names"
                 :span="12"
                 @keypress="isLetter($event)"
+                ref="customer_name"
               >
                 <n-input v-model:value="customer.names" placeholder="" />
               </n-form-item-gi>
@@ -82,7 +83,7 @@
                 :span="4"
               >
                 <n-date-picker
-                  v-model:value="customer.birthdate"
+                  v-model:formatted-value="customer.birthdate"
                   type="date"
                   placeholder=""
                   clearable
@@ -195,6 +196,7 @@
 
 <script>
 import { defineComponent, ref, toRefs, watch, computed } from "vue";
+import format from "date-fns/format";
 import { isNumber, isLetter } from "@/utils";
 import { toTimestamp } from "@/utils/dates";
 import { documentOptions, customerRules } from "@/utils/constants";
@@ -291,6 +293,8 @@ export default defineComponent({
       }
     });
 
+    const customer_name = ref(null);
+
     const errorLabel = (field) => {
       switch (field) {
         case "names":
@@ -324,7 +328,7 @@ export default defineComponent({
             .then((response) => {
               if (response.status === 201) {
                 message.success("Cliente registrado!");
-                emit("on-success");
+                emit("on-success", response.data);
               }
             })
             .catch((error) => {
@@ -357,7 +361,7 @@ export default defineComponent({
             .then((response) => {
               if (response.status === 202) {
                 message.success("Cliente actualizado!");
-                emit("on-success");
+                emit("on-success", response.data);
               }
             })
             .catch((error) => {
@@ -390,8 +394,9 @@ export default defineComponent({
                 message.success("Éxito");
                 if (customer.value.doc_num.length === 8) {
                   customer.value.names = response.data.nombre_completo;
-                  customer.value.birthdate = toTimestamp(
-                    response.data.fecha_nacimiento
+                  customer.value.birthdate = format(
+                    new Date(response.data.fecha_nacimiento),
+                    "dd/MM/yyyy"
                   );
                   if (response.data.sexo === "FEMENINO") {
                     customer.value.gender = "F";
@@ -400,12 +405,11 @@ export default defineComponent({
                   }
                 } else if (customer.value.doc_num.length === 11) {
                   customer.value.names = response.data.nombre_o_razon_social;
-                  customer.value.addresses[0].ubigeo = Number(
-                    response.data.district
-                  );
+                  customer.value.addresses[0].ubigeo = response.data.ubigeo[2];
                   customer.value.addresses[0].description =
                     response.data.direccion;
                 }
+                customer_name.value.restoreValidation();
               } else if (response.status === 404) {
                 message.error("Documento no encontrado");
               } else {
@@ -475,6 +479,7 @@ export default defineComponent({
       documentOptions,
       countriesOptions,
       ubigeeOptions,
+      customer_name,
       addAddress,
       popAddress,
       performCreate,

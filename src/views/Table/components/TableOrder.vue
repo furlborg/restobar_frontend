@@ -15,19 +15,21 @@
         <n-gi span="2">
           <n-card class="h-100" title="Pedidos" :bordered="false" embedded>
             <template #header-extra>
-              <router-link
+              <n-button
                 v-if="!($route.name === 'TablePayment')"
-                class="text-decoration-none"
-                :to="{
-                  name: 'TablePayment',
-                  params: { table: $route.params.table },
-                }"
+                type="success"
+                :disabled="!orderStore.orderId"
+                text
+                @click="
+                  $router.push({
+                    name: 'TablePayment',
+                    params: { table: $route.params.table },
+                  })
+                "
               >
-                <n-button type="success" :disabled="!orderStore.orderId" text>
-                  <v-icon class="me-1" name="fa-coins" />
-                  <span class="fs-6">Cobrar</span>
-                </n-button>
-              </router-link>
+                <v-icon class="me-1" name="fa-coins" />
+                <span class="fs-6">Cobrar</span>
+              </n-button>
               <router-link
                 v-else
                 class="text-decoration-none"
@@ -42,6 +44,22 @@
                 </n-button>
               </router-link>
             </template>
+            <n-form v-if="!($route.name === 'TablePayment')">
+              <n-form-item label="Buscar producto">
+                <n-input-group>
+                  <n-auto-complete
+                    :input-props="{
+                      autocomplete: 'disabled',
+                    }"
+                    v-model:value="productSearch"
+                    :options="productOptions"
+                    :get-show="showOptions"
+                    :loading="searching"
+                    @select="selectProduct"
+                  />
+                </n-input-group>
+              </n-form-item>
+            </n-form>
             <n-table>
               <thead>
                 <tr>
@@ -148,7 +166,7 @@
 
 <script>
 import OrderIndications from "./OrderIndications";
-import { defineComponent, ref, onMounted } from "vue";
+import { defineComponent, ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useRouter } from "vue-router";
 import { useDialog, useMessage } from "naive-ui";
@@ -159,6 +177,8 @@ import {
   updateTableOrder,
   performDeleteOrderDetail,
 } from "@/api/modules/tables";
+import { searchProductByName } from "@/api/modules/products";
+import { generatePrint } from "./prints";
 
 export default defineComponent({
   name: "TableOrder",
@@ -175,8 +195,10 @@ export default defineComponent({
     const listType = ref("grid");
     const showModal = ref(false);
     const itemIndex = ref(null);
+    const dateNow = ref(null);
 
     orderStore.orders = [];
+    orderStore.orderId = null;
 
     const performRetrieveTableOrder = () => {
       retrieveTableOrder(route.params.table)
@@ -189,6 +211,7 @@ export default defineComponent({
         .catch((error) => {
           if (error.response.status === 404) {
             orderStore.orders = [];
+            orderStore.orderId = null;
           } else {
             console.error(error);
             message.error("Algo salió mal...");
@@ -198,13 +221,86 @@ export default defineComponent({
 
     onMounted(() => {
       performRetrieveTableOrder();
+
+      const fetch = new Date();
+      const dd = fetch.getDate();
+      const mm = fetch.getMonth();
+      const yy = fetch.getFullYear();
+      const hh = fetch.getHours();
+      const msms = fetch.getMinutes();
+
+      dateNow.value = `${dd}/${mm}/${yy} ${hh}:${msms}`;
     });
 
-    const performCreateTableOrder = () => {
+    const performCreateTableOrder = async () => {
       createTableOrder(route.params.table, orderStore.orderList)
         .then((response) => {
           if (response.status === 201) {
             message.success("Orden creada correctamente");
+            generatePrint([
+              {
+                dat: [
+                  [
+                    {
+                      content: "ACA IRA UN TITULO DE MIERDA",
+                      styles: {
+                        fontStyle: "bold",
+                        halign: "center",
+                        fontSize: 10,
+                      },
+                    },
+                  ],
+                ],
+              },
+              {
+                dat: [
+                  {
+                    tittle: "MESA/PEDIDO",
+                    twoPoints: ":",
+                    cont: "CHUPAMELA",
+                  },
+                ],
+              },
+              {
+                theme: "grid",
+                col: [
+                  {
+                    header: "Comida",
+                    dataKey: "product_name",
+                  },
+                  {
+                    header: "Cant.",
+                    dataKey: "quantity",
+                  },
+
+                  {
+                    header: "Detalle",
+                    dataKey: "indication",
+                  },
+                ],
+                dat: response.data.order_details.map((val) => {
+                  return {
+                    product_name: val.product_name,
+                    quantity: val.quantity,
+                    indication: val.indication,
+                  };
+                }),
+              },
+              {
+                dat: [
+                  {
+                    tittle: "Fecha",
+                    twoPoints: ":",
+                    cont: dateNow.value,
+                  },
+                  {
+                    tittle: "Número",
+                    twoPoints: ":",
+                    cont: response.data.id,
+                  },
+                ],
+              },
+            ]);
             router.push({ name: "TableHome" });
           }
         })
@@ -223,6 +319,73 @@ export default defineComponent({
         .then((response) => {
           if (response.status === 202) {
             message.success("Orden actualizada correctamente");
+            console.log(response.data);
+            generatePrint([
+              {
+                dat: [
+                  [
+                    {
+                      content: "ACA IRA UN TITULO DE MIERDA",
+                      styles: {
+                        fontStyle: "bold",
+                        halign: "center",
+                        fontSize: 10,
+                      },
+                    },
+                  ],
+                ],
+              },
+              {
+                dat: [
+                  {
+                    tittle: "MESA/PEDIDO",
+                    twoPoints: ":",
+                    cont: "CHUPAMELA",
+                  },
+                ],
+              },
+              {
+                theme: "grid",
+                col: [
+                  {
+                    header: "Comida",
+                    dataKey: "product_name",
+                  },
+                  {
+                    header: "Cant.",
+                    dataKey: "quantity",
+                  },
+
+                  {
+                    header: "Detalle",
+                    dataKey: "indication",
+                  },
+                ],
+                dat: response.data.order_details.map((val) => {
+                  return {
+                    product_name: val.product_name,
+                    quantity: val.quantity,
+                    indication: val.indication.map((v) => {
+                      return v.description;
+                    }),
+                  };
+                }),
+              },
+              {
+                dat: [
+                  {
+                    tittle: "Fecha",
+                    twoPoints: ":",
+                    cont: dateNow.value,
+                  },
+                  {
+                    tittle: "Número",
+                    twoPoints: ":",
+                    cont: response.data.id,
+                  },
+                ],
+              },
+            ]);
             router.push({ name: "TableHome" });
           }
         })
@@ -250,6 +413,47 @@ export default defineComponent({
       });
     };
 
+    const searching = ref(false);
+
+    const productSearch = ref("");
+
+    const products = ref([]);
+
+    const productOptions = computed(() => {
+      return products.value.map((product) => ({
+        value: product.id,
+        label: product.name,
+        disabled: product.is_disabled,
+      }));
+    });
+
+    const showOptions = (value) => {
+      if (value.length >= 3) {
+        searching.value = true;
+        searchProductByName(value)
+          .then((response) => {
+            if (response.status === 200) {
+              products.value = response.data;
+            }
+          })
+          .catch((error) => {
+            console.error(error);
+            message.error("Algo salió mal...");
+          })
+          .finally(() => {
+            searching.value = false;
+          });
+        return true;
+      }
+      return false;
+    };
+
+    const selectProduct = (v) => {
+      const item = products.value.find((product) => product.id === v);
+      orderStore.addOrder(item);
+      productSearch.value = "";
+    };
+
     const handleBack = () => {
       router.push({ name: "TableHome" });
     };
@@ -264,6 +468,11 @@ export default defineComponent({
       performCreateTableOrder,
       performUpdateTableOrder,
       deleteOrderDetail,
+      searching,
+      productSearch,
+      productOptions,
+      showOptions,
+      selectProduct,
     };
   },
 });

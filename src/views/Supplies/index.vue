@@ -43,12 +43,12 @@
     <!-- Customer Modal -->
     <supplies-modal
       v-model:show="showModal"
-      @on-success="listSupplies"
+      @on-success="listSupplies()"
       :items="items"
     />
     <move-modal
       v-model:show="showModalMovement"
-      @on-success="listSupplies"
+      @on-success="listSupplies()"
       :items="itemsMovement"
       :type="type"
     />
@@ -64,7 +64,7 @@ import { getSupplies, disableSupplies } from "@/api/modules/supplies";
 import MoveModal from "./components/MoveModal.vue";
 
 export default defineComponent({
-  name: "UserSettings",
+  name: "SupplieModal",
   components: {
     SuppliesModal,
     MoveModal,

@@ -25,6 +25,11 @@ const routes = [
         component: () => import(/* webpackChunkName: "customer" */ '@/views/Customer')
       },
       {
+        path: '/sales',
+        name: 'Sales',
+        component: () => import(/* webpackChunkName: "customer" */ '@/views/Sale')
+      },
+      {
         path: '/till',
         name: 'Till',
         component: () => import(/* webpackChunkName: "till" */ '@/views/Till'),
@@ -55,6 +60,22 @@ const routes = [
         name: 'Table',
         redirect: { name: "TableHome" },
         component: () => import(/* webpackChunkName: "table" */ '@/views/Table'),
+        beforeEnter: async (to, from, next) => {
+          const tillStore = useTillStore()
+          await retrieveCurrentTill()
+            .then(response => {
+              if (response.status === 200) {
+                tillStore.currentTillID = response.data
+              }
+            })
+            .catch(error => {
+              if (error.response.status !== 404) {
+                console.error('Algo salió mal...')
+                tillStore.currentTillID = null
+              }
+            })
+          tillStore.currentTillID !== null ? next() : next({ name: 'TillList' })
+        },
         children: [
           {
             name: "TableHome",

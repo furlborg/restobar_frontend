@@ -28,6 +28,49 @@ export async function updatePaymentMethodDesc(idPayment, description) {
     })
 }
 
+export async function listSales() {
+    return await http.get('sales/')
+}
+
+export async function listSalesByPage(filterParams, page, pageSize) {
+    if (filterParams) {
+        return await http.get('sales/', {
+            params: {
+                customer__names__icontains: filterParams.customer,
+                serie: filterParams.serie,
+                number__icontains: filterParams.number,
+                payment_method: filterParams.payment_method,
+                date_sale__range: filterParams.date_sale !== null ? `${filterParams.date_sale[0]} 00:00:00, ${filterParams.date_sale[1]} 23:59:59` : null,
+                status: filterParams.status,
+                page: page,
+                page_size: pageSize
+            }
+        })
+    } else {
+        return await http.get('sales/', {
+            params: {
+                page: page,
+                page_size: pageSize
+            }
+        })
+    }
+}
+
+export async function searchSales(filterParams, page, pageSize) {
+    return await http.get('sales/', {
+        params: {
+            customer__names__icontains: filterParams.customer,
+            serie: filterParams.serie,
+            number__icontains: filterParams.number,
+            payment_method: filterParams.payment_method,
+            date_sale__range: filterParams.date_sale !== null ? `${filterParams.date_sale[0]} 00:00:00, ${filterParams.date_sale[1]} 23:59:59` : null,
+            status: filterParams.status,
+            page: page,
+            page_size: pageSize
+        }
+    })
+}
+
 export async function createSale(sale) {
     return await http.post('sales/', {
         order: sale.order,
