@@ -124,7 +124,9 @@
                       :type="orderStore.orderId ? 'info' : 'primary'"
                       text
                       block
-                      :disabled="!orderStore.orderList.length"
+                      :disabled="
+                        orderStore.orderList.length ? checkState : true
+                      "
                       @click="
                         orderStore.orderId
                           ? performUpdateTableOrder()
@@ -138,7 +140,7 @@
                       />
                       <span class="fs-4"
                         >{{
-                          orderStore.orderId ? "Guardar" : "Realizar"
+                          orderStore.orderId ? "Actualizar" : "Realizar"
                         }}
                         pedido</span
                       >
@@ -166,11 +168,16 @@
 
 <script>
 import OrderIndications from "./OrderIndications";
-import { defineComponent, ref, computed, onMounted } from "vue";
-import { useRoute } from "vue-router";
-import { useRouter } from "vue-router";
+import { defineComponent, ref, computed, onMounted, watchEffect } from "vue";
+import {
+  useRoute,
+  useRouter,
+  onBeforeRouteLeave,
+  onBeforeRouteUpdate,
+} from "vue-router";
 import { useDialog, useMessage } from "naive-ui";
 import { useOrderStore } from "@/store/modules/order";
+import { useSaleStore } from "@/store/modules/sale";
 import {
   retrieveTableOrder,
   createTableOrder,
@@ -178,6 +185,7 @@ import {
   performDeleteOrderDetail,
 } from "@/api/modules/tables";
 import { searchProductByName } from "@/api/modules/products";
+import { cloneDeep } from "@/utils";
 
 export default defineComponent({
   name: "TableOrder",
@@ -191,24 +199,70 @@ export default defineComponent({
     const dialog = useDialog();
     const table = route.params.table;
     const orderStore = useOrderStore();
+    const saleStore = useSaleStore();
     const listType = ref("grid");
     const showModal = ref(false);
     const itemIndex = ref(null);
+    const checkState = ref(false);
 
     orderStore.orders = [];
+    saleStore.sale_details = [];
     orderStore.orderId = null;
 
-    const performRetrieveTableOrder = () => {
-      retrieveTableOrder(route.params.table)
+    watchEffect(() => {
+      checkState.value =
+        JSON.stringify(saleStore.sale_details) ===
+        JSON.stringify(orderStore.orderList);
+    });
+
+    onBeforeRouteUpdate((to, from) => {
+      if (to.name !== "ProductCategories" && to.name !== "CategoriesItems") {
+        if (!checkState.value) {
+          dialog.error({
+            title: "Cambios sin guardar",
+            content: "¿Salir de todos modos?",
+            positiveText: "Sí",
+            negativeText: "No",
+            onPositiveClick: () => {
+              checkState.value = true;
+              router.push(to);
+            },
+          });
+          return false;
+        }
+      }
+    });
+
+    onBeforeRouteLeave((to, from) => {
+      if (to.name !== "ProductCategories" && to.name !== "CategoriesItems") {
+        if (!checkState.value) {
+          dialog.error({
+            title: "Cambios sin guardar",
+            content: "¿Salir de todos modos?",
+            positiveText: "Sí",
+            onPositiveClick: () => {
+              checkState.value = true;
+              router.push(to);
+            },
+          });
+          return false;
+        }
+      }
+    });
+
+    const performRetrieveTableOrder = async () => {
+      await retrieveTableOrder(route.params.table)
         .then((response) => {
           if (response.status === 200) {
             orderStore.orders = response.data.order_details;
+            saleStore.sale_details = cloneDeep(orderStore.orderList);
             orderStore.orderId = response.data.id;
           }
         })
         .catch((error) => {
           if (error.response.status === 404) {
             orderStore.orders = [];
+            saleStore.sale_details = [];
             orderStore.orderId = null;
           } else {
             console.error(error);
@@ -226,6 +280,7 @@ export default defineComponent({
         .then((response) => {
           if (response.status === 201) {
             message.success("Orden creada correctamente");
+            checkState.value = true;
             router.push({ name: "TableHome" });
           }
         })
@@ -244,6 +299,7 @@ export default defineComponent({
         .then((response) => {
           if (response.status === 202) {
             message.success("Orden actualizada correctamente");
+            checkState.value = true;
             router.push({ name: "TableHome" });
           }
         })
@@ -323,10 +379,12 @@ export default defineComponent({
       handleBack,
       listType,
       orderStore,
+      saleStore,
       performCreateTableOrder,
       performUpdateTableOrder,
       deleteOrderDetail,
       searching,
+      checkState,
       productSearch,
       productOptions,
       showOptions,

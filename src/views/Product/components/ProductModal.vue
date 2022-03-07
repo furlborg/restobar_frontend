@@ -37,7 +37,7 @@
               @input="product.prices = restrictDecimal(product.prices)"
             />
           </n-form-item-gi>
-          <n-form-item-gi path="control_stock" :span="2">
+          <n-form-item-gi path="control_stock" :span="4">
             <n-checkbox
               v-model:checked="product.control_stock"
               @update:checked="product.stock = null"
@@ -132,20 +132,11 @@
               :options="optionsUND"
             />
           </n-form-item-gi>
-          <n-form-item-gi label="Almacen" :span="12">
-            <n-select
-              v-model:value="product.branchoffice"
-              :disabled="product.id ? true : false"
-              :default-value="1"
-              placeholder="Seleccione"
-              :options="optionsEstablishment"
-            />
-          </n-form-item-gi>
           <n-form-item-gi
             v-if="!product.id"
             label="Stock Inicial"
             path="stock"
-            :span="6"
+            :span="4"
           >
             <n-input-number
               v-model:value="product.stock"
@@ -154,29 +145,6 @@
               :show-button="false"
               :disabled="!product.control_stock ? true : false"
               @keypress="isNumber($event)"
-            />
-          </n-form-item-gi>
-          <n-form-item-gi :span="4">
-            <n-checkbox
-              v-model:checked="product.control_supplie"
-              @update:checked="
-                (key) => {
-                  product.supplies = key ? product.supplies : [];
-                }
-              "
-              >Insumos</n-checkbox
-            >
-          </n-form-item-gi>
-          <!-- <n-form-item-gi label="Imagen" :span="4">
-            <n-upload list-type="image" ref="uploadRef">
-              <n-button>Seleccionar Imagen</n-button>
-            </n-upload>
-          </n-form-item-gi> -->
-          <n-form-item-gi label="Descripción" path="description" :span="12">
-            <n-input
-              v-model:value="product.description"
-              type="textarea"
-              placeholder=""
             />
           </n-form-item-gi>
           <n-form-item-gi label="Nº Puntos" path="number_points" :span="4">
@@ -197,9 +165,45 @@
               @keypress="isNumber($event)"
             />
           </n-form-item-gi>
-          <n-form-item-gi path="icbper" :span="4">
+          <n-form-item-gi path="icbper" :span="3">
             <n-checkbox v-model:checked="product.icbper">ICBPER</n-checkbox>
           </n-form-item-gi>
+          <n-form-item-gi :span="3">
+            <n-checkbox
+              v-model:checked="product.control_supplie"
+              @update:checked="
+                (key) => {
+                  product.supplies = key ? product.supplies : [];
+                }
+              "
+              >Insumos</n-checkbox
+            >
+          </n-form-item-gi>
+          <n-form-item-gi label="Descripción" path="description" :span="12">
+            <n-input
+              v-model:value="product.description"
+              type="textarea"
+              placeholder=""
+            />
+          </n-form-item-gi>
+          <n-form-item-gi
+            v-if="!userStore.user.branchoffice"
+            label="Almacen"
+            :span="12"
+          >
+            <n-select
+              v-model:value="product.branchoffice"
+              :disabled="product.id ? true : false"
+              :default-value="1"
+              placeholder="Seleccione"
+              :options="optionsEstablishment"
+            />
+          </n-form-item-gi>
+          <!-- <n-form-item-gi label="Imagen" :span="4">
+            <n-upload list-type="image" ref="uploadRef">
+              <n-button>Seleccionar Imagen</n-button>
+            </n-upload>
+          </n-form-item-gi> -->
           <n-form-item-gi
             v-if="product.control_supplie"
             label="Lista de Insumos"
@@ -300,6 +304,8 @@ import {
 } from "@/api/modules/products";
 import { getSupplies, getMeasureUnit } from "@/api/modules/supplies";
 import { useProductStore } from "@/store/modules/product";
+import { useBusinessStore } from "@/store/modules/business";
+import { useUserStore } from "@/store/modules/user";
 import { useMessage } from "naive-ui";
 import { productRules } from "@/utils/constants";
 import { isNumber } from "@/utils";
@@ -328,6 +334,8 @@ export default defineComponent({
     const isLoadingData = ref(false);
     const genericsStore = useGenericsStore();
     const productStore = useProductStore();
+    const userStore = useUserStore();
+    const businessStore = useBusinessStore();
     const { idProduct, show } = toRefs(props);
     const uploadRef = ref(null);
     const modalTitle = ref("Registrar Producto");
@@ -355,7 +363,9 @@ export default defineComponent({
       category: null,
       preparation_place: null,
       control_supplie: false,
-      branchoffice: 1,
+      branchoffice: !userStore.user.branchoffice
+        ? businessStore.currentBranch
+        : userStore.user.branchoffice,
       supplies: [],
     });
     const categoriesOptions = computed(() => {
@@ -446,7 +456,9 @@ export default defineComponent({
           category: null,
           preparation_place: null,
           control_supplie: false,
-          branchoffice: 1,
+          branchoffice: !userStore.user.branchoffice
+            ? businessStore.currentBranch
+            : userStore.user.branchoffice,
           supplies: [],
         };
       }
@@ -660,6 +672,7 @@ export default defineComponent({
       categoriesOptions,
       placesOptions,
       productStore,
+      userStore,
       product,
       productRef,
       productRules,

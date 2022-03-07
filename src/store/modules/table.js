@@ -14,6 +14,8 @@ export const useTableStore = defineStore('table', {
             let areas = this.areas
             if (!userStore.user.branchoffice) {
                 areas = areas.filter(area => area.branch === businessStore.currentBranch)
+            } else {
+                areas = areas.filter(area => area.branch === userStore.user.branchoffice)
             }
             return areas.map(area => ({
                 label: area.description,

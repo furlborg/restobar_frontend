@@ -42,6 +42,7 @@ import { useRoute } from "vue-router";
 import ProductIndications from "./ProductIndications";
 import { useWaiterStore } from "@/store/modules/waiter";
 import { useOrderStore } from "@/store/modules/order";
+import { useSaleStore } from "@/store/modules/sale";
 import { retrieveTableOrder } from "@/api/modules/tables";
 
 export default defineComponent({
@@ -52,6 +53,7 @@ export default defineComponent({
   setup() {
     const waiterStore = useWaiterStore();
     const orderStore = useOrderStore();
+    const saleStore = useSaleStore();
     const message = useMessage();
     const route = useRoute();
     const showModal = ref(false);
@@ -59,6 +61,7 @@ export default defineComponent({
     const orderDetails = ref([]);
 
     orderStore.orders = [];
+    saleStore.sale_details = [];
     orderStore.orderId = null;
 
     const performRetrieveTableOrder = () => {
@@ -72,6 +75,7 @@ export default defineComponent({
         .catch((error) => {
           if (error.response.status === 404) {
             orderStore.orders = [];
+            saleStore.sale_details = [];
             orderStore.orderId = null;
           } else {
             console.error(error);

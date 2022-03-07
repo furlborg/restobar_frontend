@@ -7,4 +7,4 @@ import { OhVueIcon } from "@/plugins/icon"
 import '@/style/bootstrap-utilities.min.css'
 import 'vfonts/Lato.css'
 
-createApp(App).use(router).use(store).use(naive).component("v-icon", OhVueIcon).mount('#app')
+createApp(App).use(store).use(router).use(naive).component("v-icon", OhVueIcon).mount('#app')

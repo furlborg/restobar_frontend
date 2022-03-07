@@ -1,8 +1,6 @@
 import { http } from "@/api"
 import { useBusinessStore } from "@/store/modules/business";
 import { useUserStore } from "@/store/modules/user";
-const businessStore = useBusinessStore();
-const userStore = useUserStore();
 
 export async function getPaymentMethods() {
     return await http.get('payment_methods/')
@@ -82,6 +80,8 @@ export async function searchSales(filterParams, page, pageSize) {
 }
 
 export async function createSale(sale) {
+    const businessStore = useBusinessStore();
+    const userStore = useUserStore();
     return await http.post('sales/', {
         order: sale.order,
         serie: sale.serie,

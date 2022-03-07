@@ -106,7 +106,7 @@ export default defineComponent({
     };
 
     const avatarOptions = computed(() => {
-      return [
+      const options = [
         {
           label: "Cambiar de Sucursal",
           key: "branchs",
@@ -122,6 +122,10 @@ export default defineComponent({
           icon: renderIcon("md-logout-round"),
         },
       ];
+      if (userStore.user.branchoffice) {
+        return options.filter((option) => option.key === -1);
+      }
+      return options;
     });
 
     const avatarSelect = (key) => {

@@ -4,6 +4,7 @@ import { getConcepts, retrieveCurrentTill } from "@/api/modules/tills"
 export const useTillStore = defineStore('till', {
     state: () => ({
         currentTillID: null,
+        currentTillOrders: 0,
         concepts: []
     }),
     getters: {
@@ -27,7 +28,8 @@ export const useTillStore = defineStore('till', {
             retrieveCurrentTill()
                 .then(response => {
                     if (response.status === 200) {
-                        this.currentTillID = response.data
+                        this.currentTillID = response.data.id
+                        this.currentTillOrders = response.data.orders_count
                     }
                 })
                 .catch(error => {

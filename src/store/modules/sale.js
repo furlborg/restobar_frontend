@@ -1,43 +1,67 @@
-import { defineStore } from "pinia";
+import { defineStore } from "pinia"
 import { getPaymentMethods } from '@/api/modules/sales'
 import { getDocumentSeries } from '@/api/modules/business'
+import { useBusinessStore } from "@/store/modules/business";
+import { useUserStore } from "@/store/modules/user";
+const businessStore = useBusinessStore();
+const userStore = useUserStore();
 
 export const useSaleStore = defineStore('sale', {
     state: () => ({
         payment_methods: [],
-        series: []
+        series: [],
+        sale_details: []
     }),
     getters: {
-        getPaymentMethodsOptions() {
-            return this.payment_methods.map(payment_method => ({
+        getPaymentMethodsOptions(state) {
+            return state.payment_methods.map(payment_method => ({
                 label: payment_method.description,
                 value: payment_method.id
             }))
         },
-        getSeriesOptions() {
-            return this.series.map(serie => ({
+        getSeriesOptions(state) {
+            let series = state.series
+            if (!userStore.user.branchoffice) {
+                series = series.filter(serie => serie.sucursal === businessStore.currentBranch)
+            } else {
+                series = series.filter(serie => serie.sucursal === userStore.user.branchoffice)
+            }
+            return series.map(serie => ({
                 label: serie.description,
                 value: serie.id
             }))
-        }
+        },
+        toSale(state) {
+            return state.sale_details.map(order => ({
+                product: order.product,
+                product_name: order.product_name,
+                price_sale: parseFloat(order.price).toFixed(2),
+                quantity: Number(order.quantity)
+            }))
+        },
+        saleTotal(state) {
+            return state.orders.reduce((acc, curVal) => {
+                return acc += curVal.price * curVal.quantity
+            }, 0)
+        },
     },
     actions: {
-        initializeStore() {
-            getPaymentMethods()
+        async initializeStore() {
+            await getPaymentMethods()
                 .then(response => {
                     this.payment_methods = response.data
                 }).catch(error => {
                     console.error(error)
                 })
-            getDocumentSeries()
+            await getDocumentSeries()
                 .then(response => {
                     this.series = response.data
                 }).catch(error => {
                     console.error(error)
                 })
         },
-        refreshPaymentMethods() {
-            return getPaymentMethods()
+        async refreshPaymentMethods() {
+            return await getPaymentMethods()
                 .then(response => {
                     this.payment_methods = response.data
                 }).catch(error => {
@@ -60,12 +84,40 @@ export const useSaleStore = defineStore('sale', {
                 return null
             }
         },
+        async refreshSeries() {
+            return await getDocumentSeries()
+                .then(response => {
+                    this.series = response.data
+                }).catch(error => {
+                    console.error(error)
+                })
+        },
         getDocumentSeriesOptions(doc_type) {
-            return this.series.filter(serie => serie.doc_type === String(doc_type)).map(serie => ({ label: serie.description, key: serie.id }))
+            let series = this.series
+            if (!userStore.user.branchoffice) {
+                series = series.filter(serie => serie.sucursal === businessStore.currentBranch)
+            } else {
+                series = series.filter(serie => serie.sucursal === userStore.user.branchoffice)
+            }
+            return series.filter(serie => serie.doc_type === String(doc_type)).map(serie => ({ label: serie.description, key: serie.id }))
         },
         getSerieDescription(id) {
             const serie = this.series.find(serie => serie.id === id)
             return serie ? serie.description : null
+        },
+        getFirstOption(doc_type) {
+            let series = this.series
+            if (!userStore.user.branchoffice) {
+                series = series.filter(serie => serie.sucursal === businessStore.currentBranch)
+            } else {
+                series = series.filter(serie => serie.sucursal === userStore.user.branchoffice)
+            }
+            series = series.filter(serie => serie.doc_type === String(doc_type))
+            if (!series.length) {
+                return null
+            } else {
+                return series[0].id
+            }
         }
     }
 })

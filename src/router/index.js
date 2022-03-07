@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useTillStore } from "@/store/modules/till";
-import { useUserStore } from '@/store/modules/user'
+import { useUserStore } from '@/store/modules/user';
 import { retrieveCurrentTill } from '@/api/modules/tills'
 const useCookie = require('vue-cookies')
 
@@ -38,12 +38,14 @@ const routes = [
           await retrieveCurrentTill()
             .then(response => {
               if (response.status === 200) {
-                tillStore.currentTillID = response.data
+                tillStore.currentTillID = response.data.id
+                tillStore.currentTillOrders = response.data.orders_count
               }
             })
             .catch(error => {
               if (error.response.status === 404) {
                 tillStore.currentTillID = null
+                tillStore.currentTillOrders = 0
               }
             })
           tillStore.currentTillID !== null ? next() : next({ name: 'TillList' })
@@ -64,12 +66,14 @@ const routes = [
           await retrieveCurrentTill()
             .then(response => {
               if (response.status === 200) {
-                tillStore.currentTillID = response.data
+                tillStore.currentTillID = response.data.id
+                tillStore.currentTillOrders = response.data.orders_count
               }
             })
             .catch(error => {
               if (error.response.status === 404) {
                 tillStore.currentTillID = null
+                tillStore.currentTillOrders = 0
               }
             })
           tillStore.currentTillID !== null ? next() : next({ name: 'TillList' })

@@ -81,7 +81,7 @@ export default defineComponent({
         key: "Product",
         icon: renderIcon("md-fastfood-twotone"),
       },
-      {
+      /* {
         label: () =>
           h(
             RouterLink,
@@ -92,7 +92,7 @@ export default defineComponent({
           ),
         key: "Shopping",
         icon: renderIcon("md-shoppingcart-twotone"),
-      },
+      }, */
       {
         label: () =>
           h(

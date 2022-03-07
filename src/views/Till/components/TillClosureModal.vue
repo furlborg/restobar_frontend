@@ -12,20 +12,6 @@
   >
     <n-spin :show="isLoading">
       <n-form>
-        <n-form-item label="Responsable">
-          <n-input
-            v-model:value="till.closing_responsable"
-            @keypress="isLetter($event)"
-          />
-        </n-form-item>
-        <n-form-item label="Monto Final">
-          <n-input-number
-            class="w-100"
-            v-model:value="till.closing_amount"
-            @keypress="isDecimal($event)"
-            :show-button="false"
-          />
-        </n-form-item>
         <n-form-item label="Observaciones">
           <n-input
             v-model:value="till.closing_observations"
@@ -54,6 +40,7 @@ import { defineComponent, ref, toRefs } from "vue";
 import { useMessage } from "naive-ui";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useTillStore } from "@/store/modules/till";
+import { useUserStore } from "@/store/modules/user";
 import { updateTill } from "@/api/modules/tills";
 import { isDecimal, isLetter, isNumber } from "@/utils";
 
@@ -74,11 +61,11 @@ export default defineComponent({
     const { show, idTill } = toRefs(props);
     const genericsStore = useGenericsStore();
     const tillStore = useTillStore();
+    const userStore = useUserStore();
     const message = useMessage();
     const isLoading = ref(false);
     const till = ref({
-      closing_responsable: "",
-      closing_amount: 0.0,
+      closing_responsable: userStore.user.id,
       closing_observations: "",
     });
 

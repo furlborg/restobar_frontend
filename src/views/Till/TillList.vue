@@ -5,7 +5,14 @@
         <n-button
           type="success"
           :disabled="
-            isTableLoading || tills.some((till) => till.status === true)
+            userStore.user.branchoffice
+              ? isTableLoading || tills.some((till) => till.status === true)
+              : isTableLoading ||
+                tills.some((till) => till.status === true) ||
+                !(
+                  !userStore.user.branchoffice &&
+                  businessStore.currentBranch === filterParams.branch
+                )
           "
           secondary
           @click="showApertureModal = true"

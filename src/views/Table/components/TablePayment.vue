@@ -168,52 +168,58 @@
             </tr>
           </tbody>
         </n-table>
-        <n-space align="center" justify="space-between">
-          <n-space align="center" vertical>
-            <span class="fs-4">Pago</span>
-            <div class="fs-5">
-              S/.
-              <input
-                class="fs-1 custom-input"
-                type="number"
-                min="0"
-                step=".01"
-                v-model="payment_amount"
-                v-autowidth
-                @click="$event.target.select()"
-              />
-            </div>
-          </n-space>
-          <n-space align="center" vertical>
-            <span class="fs-4">Vuelto</span>
-            <div class="fs-5">
-              S/. <span class="fs-1">{{ changing.toFixed(2) }}</span>
-            </div>
-          </n-space>
-          <n-space class="mt-2 fs-6 fw-bold" align="end" vertical>
-            <div>
-              SUBTOTAL: <span>S/. {{ subTotal.toFixed(2) }}</span>
-            </div>
-            <div>ICBPER: <span>S/. 0.00</span></div>
-            <div>IGV: <span>S/. 0.00</span></div>
-            <div>
-              DSCT:
-              <span>S/.</span>
-              <input
-                class="custom-input fw-bold"
-                type="number"
-                min="0"
-                step=".01"
-                v-model="sale.discount"
-                v-autowidth
-                @click="$event.target.select()"
-              />
-            </div>
-            <div>
-              TOTAL: <span>S/. {{ sale.amount.toFixed(2) }}</span>
-            </div>
-          </n-space>
-        </n-space>
+        <n-grid cols="3">
+          <n-gi :span="2">
+            <n-space class="h-100" align="center" justify="space-around">
+              <n-space align="center" vertical>
+                <span class="fs-4">Pago</span>
+                <div class="fs-5">
+                  S/.
+                  <input
+                    class="fs-1 custom-input"
+                    type="number"
+                    min="0"
+                    step=".01"
+                    v-model="payment_amount"
+                    v-autowidth
+                    @click="$event.target.select()"
+                  />
+                </div>
+              </n-space>
+              <n-space align="center" vertical>
+                <span class="fs-4">Vuelto</span>
+                <div class="fs-5">
+                  S/. <span class="fs-1">{{ changing.toFixed(2) }}</span>
+                </div>
+              </n-space>
+            </n-space>
+          </n-gi>
+          <n-gi>
+            <n-space class="mt-2 fs-6 fw-bold" align="end" vertical>
+              <div>
+                SUBTOTAL: <span>S/. {{ subTotal.toFixed(2) }}</span>
+              </div>
+              <div>ICBPER: <span>S/. 0.00</span></div>
+              <div>IGV: <span>S/. 0.00</span></div>
+              <div>
+                DSCT:
+                <span>S/.</span>
+                <input
+                  class="custom-input fw-bold"
+                  type="number"
+                  min="0"
+                  step=".01"
+                  v-model="sale.discount"
+                  v-autowidth
+                  @click="$event.target.select()"
+                />
+              </div>
+              <div>
+                TOTAL: <span>S/. {{ sale.amount.toFixed(2) }}</span>
+              </div>
+            </n-space>
+          </n-gi>
+        </n-grid>
         <n-button
           class="fs-1 py-5 mt-2"
           type="success"
@@ -247,7 +253,7 @@ import {
   searchRucCustomer,
 } from "@/api/modules/customer";
 import { createSale, getSaleNumber } from "@/api/modules/sales";
-import { useMessage } from "naive-ui";
+import { useDialog, useMessage } from "naive-ui";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
 import format from "date-fns/format";
 
@@ -263,6 +269,7 @@ export default defineComponent({
     const saleStore = useSaleStore();
     const message = useMessage();
     const loading = ref(false);
+    const dialog = useDialog();
     const showModal = ref(false);
     const payment_amount = ref("0.00");
     const saleForm = ref();
@@ -292,7 +299,7 @@ export default defineComponent({
 
     const sale = ref({
       order: orderStore.orderId,
-      serie: 2,
+      serie: saleStore.getFirstOption(3),
       number: "",
       date_sale: format(new Date(Date.now()), "dd/MM/yyyy hh:mm:ss"),
       count: products_count,
@@ -305,7 +312,7 @@ export default defineComponent({
       address: null,
       discount: "0.00",
       observations: "",
-      sale_details: orderStore.orderToSale,
+      sale_details: saleStore.toSale,
     });
 
     const selectSerie = (v) => {
@@ -318,13 +325,13 @@ export default defineComponent({
           sale.value.customer_name = "";
           sale.value.customer = null;
           sale.value.address = null;
-          sale.value.serie = 1;
+          sale.value.serie = saleStore.getFirstOption(v);
           break;
         case 3:
-          sale.value.serie = 2;
+          sale.value.serie = saleStore.getFirstOption(v);
           break;
         case 80:
-          sale.value.serie = 3;
+          sale.value.serie = saleStore.getFirstOption(v);
           break;
         default:
           break;
@@ -334,21 +341,28 @@ export default defineComponent({
     const performCreateSale = () => {
       saleForm.value.validate((errors) => {
         if (!errors) {
-          loading.value = true;
-          createSale(sale.value)
-            .then((response) => {
-              if (response.status === 201) {
-                message.success("Venta realizada correctamente!");
-                router.push({ name: "TableHome" });
-              }
-            })
-            .catch((error) => {
-              console.error(error.response.data);
-              message.error("Algo salió mal...");
-            })
-            .finally(() => {
-              loading.value = false;
-            });
+          dialog.success({
+            title: "Venta",
+            content: "Realizar venta?",
+            positiveText: "Sí",
+            onPositiveClick: () => {
+              loading.value = true;
+              createSale(sale.value)
+                .then((response) => {
+                  if (response.status === 201) {
+                    message.success("Venta realizada correctamente!");
+                    router.push({ name: "TableHome" });
+                  }
+                })
+                .catch((error) => {
+                  console.error(error.response.data);
+                  message.error("Algo salió mal...");
+                })
+                .finally(() => {
+                  loading.value = false;
+                });
+            },
+          });
         } else {
           console.error(errors);
           message.error("Datos Incorrectos");

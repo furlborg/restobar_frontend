@@ -6,8 +6,10 @@ export const useUserStore = defineStore('user', {
     state: () => ({
         user: {
             id: '',
+            names: '',
+            profile_des: '',
             branchoffice: '',
-            names: ''
+            branchoffice_des: '',
         },
         isAuthenticated: false,
         token: '',
