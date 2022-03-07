@@ -970,30 +970,30 @@ export const createSaleColumns = ({ printSale, miscSale, sendSale, nullifySale }
             width: 200,
             render(row) {
                 return [
-                    h(
+                    row.invoice_type !== "80" ? h(
                         NButton,
                         {
                             class: 'me-2',
                             size: 'small',
                             type: 'info',
                             secondary: true,
-                            disabled: row.status === 'N',
+                            disabled: row.status === 'E',
                             onClick: () => sendSale(row)
                         },
                         renderIcon('ri-send-plane-fill')
-                    ),
-                    row.invoice_type !== "80" ? h(
+                    ) : null,
+                    h(
                         NButton,
                         {
                             class: 'me-2',
                             size: 'small',
                             type: 'error',
                             secondary: true,
-                            disabled: row.status === 'E',
+                            disabled: row.status === 'N',
                             onClick: () => nullifySale(row)
                         },
                         renderIcon('md-cancel-twotone')
-                    ) : null,
+                    ),
                     h(
                         NButton,
                         {

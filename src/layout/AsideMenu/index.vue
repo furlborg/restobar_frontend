@@ -11,6 +11,7 @@
 <script>
 import { defineComponent, h, computed } from "vue";
 import { RouterLink, useRoute } from "vue-router";
+import { useUserStore } from "@/store/modules/user";
 import { renderIcon } from "@/utils";
 import { routes } from "@/router";
 
@@ -22,6 +23,7 @@ export default defineComponent({
     },
   },
   setup() {
+    const userStore = useUserStore();
     const currentRoute = useRoute();
     const matched = currentRoute.matched;
 
@@ -34,7 +36,7 @@ export default defineComponent({
 
     // console.log(routes[0].children);
 
-    const menuOptions = [
+    const routesToOptions = [
       {
         label: () =>
           h(
@@ -46,6 +48,7 @@ export default defineComponent({
           ),
         key: "Dashboard",
         icon: renderIcon("md-spacedashboard-twotone"),
+        exclude: [],
       },
       {
         label: () =>
@@ -58,6 +61,7 @@ export default defineComponent({
           ),
         key: "Table",
         icon: renderIcon("md-dining-twotone"),
+        exclude: [],
       },
       {
         label: () =>
@@ -70,6 +74,7 @@ export default defineComponent({
           ),
         key: "Sales",
         icon: renderIcon("md-description-twotone"),
+        exclude: [],
       },
       {
         label: () =>
@@ -82,6 +87,7 @@ export default defineComponent({
           ),
         key: "Till",
         icon: renderIcon("md-pointofsale-twotone"),
+        exclude: [],
       },
       {
         label: () =>
@@ -94,6 +100,7 @@ export default defineComponent({
           ),
         key: "Product",
         icon: renderIcon("md-fastfood-twotone"),
+        exclude: [],
       },
       /* {
         label: () =>
@@ -118,6 +125,7 @@ export default defineComponent({
           ),
         key: "Supplier",
         icon: renderIcon("md-villa-twotone"),
+        exclude: [],
       },
       {
         label: () =>
@@ -130,6 +138,7 @@ export default defineComponent({
           ),
         key: "Supplies",
         icon: renderIcon("md-kitchen-twotone"),
+        exclude: [],
       },
       {
         label: () =>
@@ -142,6 +151,7 @@ export default defineComponent({
           ),
         key: "Kardex",
         icon: renderIcon("md-equalizer-twotone"),
+        exclude: [],
       },
       {
         label: () =>
@@ -154,6 +164,7 @@ export default defineComponent({
           ),
         key: "Customer",
         icon: renderIcon("md-supervisedusercircle-twotone"),
+        exclude: [],
       },
       {
         label: () =>
@@ -166,8 +177,16 @@ export default defineComponent({
           ),
         key: "Settings",
         icon: renderIcon("md-settings-twotone"),
+        exclude: ["CAJERO"],
       },
     ];
+
+    const menuOptions = computed(() => {
+      return routesToOptions.filter(
+        (option) =>
+          !option.exclude.find((item) => item === userStore.user.profile_des)
+      );
+    });
 
     return {
       menuOptions,
