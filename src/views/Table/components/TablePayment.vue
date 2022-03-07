@@ -101,14 +101,19 @@
                 placeholder=""
               />
             </n-form-item-gi>
-            <n-form-item-gi :span="3" label="Método Pago" path="payment_method">
+            <n-form-item-gi :span="2" label="Método Pago" path="payment_method">
               <n-select
                 v-model:value="sale.payment_method"
                 :options="saleStore.getPaymentMethodsOptions"
                 filterable
               />
             </n-form-item-gi>
-            <n-form-item-gi :span="3">
+            <n-form-item-gi :span="2">
+              <n-checkbox v-model:checked="sale.by_consumption"
+                >Por consumo</n-checkbox
+              >
+            </n-form-item-gi>
+            <n-form-item-gi :span="2">
               <n-button
                 type="info"
                 text
@@ -312,6 +317,7 @@ export default defineComponent({
       address: null,
       discount: "0.00",
       observations: "",
+      by_consumption: false,
       sale_details: saleStore.toSale,
     });
 

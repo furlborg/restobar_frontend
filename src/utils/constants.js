@@ -977,21 +977,23 @@ export const createSaleColumns = ({ printSale, miscSale, sendSale, nullifySale }
                             size: 'small',
                             type: 'info',
                             secondary: true,
+                            disabled: row.status === 'N',
                             onClick: () => sendSale(row)
                         },
                         renderIcon('ri-send-plane-fill')
                     ),
-                    h(
+                    row.invoice_type !== "80" ? h(
                         NButton,
                         {
                             class: 'me-2',
                             size: 'small',
                             type: 'error',
                             secondary: true,
+                            disabled: row.status === 'E',
                             onClick: () => nullifySale(row)
                         },
                         renderIcon('md-cancel-twotone')
-                    ),
+                    ) : null,
                     h(
                         NButton,
                         {

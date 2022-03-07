@@ -131,7 +131,7 @@
 <script>
 import { defineComponent, ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { useMessage } from "naive-ui";
+import { useDialog, useMessage } from "naive-ui";
 import TillApertureModal from "./components/TillApertureModal";
 import TillClosureModal from "./components/TillClosureModal";
 import { createTillColumns } from "@/utils/constants";
@@ -141,6 +141,7 @@ import {
   getTillsByPageNumber,
   filterTills,
 } from "@/api/modules/tills";
+import { useTillStore } from "@/store/modules/till";
 import { useBusinessStore } from "@/store/modules/business";
 import { useUserStore } from "@/store/modules/user";
 
@@ -152,9 +153,11 @@ export default defineComponent({
   },
   setup() {
     const message = useMessage();
+    const dialog = useDialog();
     const router = useRouter();
     const businessStore = useBusinessStore();
     const userStore = useUserStore();
+    const tillStore = useTillStore();
     const isTableLoading = ref(false);
     const showApertureModal = ref(false);
     const showClosureModal = ref(false);
@@ -312,8 +315,12 @@ export default defineComponent({
           message.success("Opcion 1!");
         },
         closeTill(row) {
-          idTill.value = row.id;
-          showClosureModal.value = true;
+          if (tillStore.currentTillOrders) {
+            message.error("Aún hay pedidos pendientes");
+          } else {
+            idTill.value = row.id;
+            showClosureModal.value = true;
+          }
         },
       }),
     };

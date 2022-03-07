@@ -4,13 +4,15 @@
     :collapsed-icon-size="22"
     :options="menuOptions"
     :collapsed="collapsed"
+    :value="openKey"
   />
 </template>
 
 <script>
-import { defineComponent, h } from "vue";
-import { RouterLink } from "vue-router";
+import { defineComponent, h, computed } from "vue";
+import { RouterLink, useRoute } from "vue-router";
 import { renderIcon } from "@/utils";
+import { routes } from "@/router";
 
 export default defineComponent({
   name: "AsideMenu",
@@ -20,6 +22,18 @@ export default defineComponent({
     },
   },
   setup() {
+    const currentRoute = useRoute();
+    const matched = currentRoute.matched;
+
+    const getOpenKeys =
+      matched && matched.length ? matched.map((item) => item.name) : [];
+
+    const openKey = computed(() => {
+      return getOpenKeys.find((item) => item === currentRoute.name);
+    });
+
+    // console.log(routes[0].children);
+
     const menuOptions = [
       {
         label: () =>
@@ -154,8 +168,10 @@ export default defineComponent({
         icon: renderIcon("md-settings-twotone"),
       },
     ];
+
     return {
       menuOptions,
+      openKey,
     };
   },
 });

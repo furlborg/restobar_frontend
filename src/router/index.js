@@ -4,7 +4,7 @@ import { useUserStore } from '@/store/modules/user';
 import { retrieveCurrentTill } from '@/api/modules/tills'
 const useCookie = require('vue-cookies')
 
-const routes = [
+export const routes = [
   {
     path: "",
     name: "App",
