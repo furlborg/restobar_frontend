@@ -114,6 +114,7 @@ import { useSaleStore } from "@/store/modules/sale";
 import { useBusinessStore } from "@/store/modules/business";
 import { useUserStore } from "@/store/modules/user";
 import { isNumber, isLetter } from "@/utils";
+import { generatePrint } from "./Prints/prints";
 
 export default defineComponent({
   name: "Sale",
@@ -298,7 +299,238 @@ export default defineComponent({
       businessStore,
       userStore,
       tableColumns: createSaleColumns({
-        printSale() {
+        printSale(val) {
+          console.log(val);
+          let dataForPrint = JSON.parse(val.json_sale);
+          console.log(dataForPrint);
+
+          let typeDoc = dataForPrint.serie_documento.split("");
+
+          if (typeDoc[0] === "F") {
+            typeDoc = "FACTURA ELECTRONICA";
+          } else {
+            typeDoc = "BOLETA ELECTRONICA";
+          }
+
+          let datTotals = [
+            { img: "IMG", tittle: null, twoPoints: null, cont: null },
+          ];
+
+          let newTotal = {
+            "OP.GRAVADA": dataForPrint.totales.total_operaciones_gravadas,
+            "OP.EXONERADA": dataForPrint.totales.total_operaciones_exoneradas,
+            "OP.GRATUITAS": dataForPrint.totales.total_operaciones_gratuitas,
+            "IGV(18%)": dataForPrint.totales.total_igv,
+            DESCUENTOS: "Este webon no poene descuentos",
+            "IMPORTE TOTAL": dataForPrint.totales.total_venta,
+          };
+
+          for (let i in newTotal) {
+            datTotals.push({
+              tittle: i,
+              twoPoints: ":",
+              cont: newTotal[i],
+            });
+          }
+
+          let structure = [
+            {
+              dat: [
+                {
+                  img: "ACA IRA UNA IMAGEN DE MRD",
+                },
+              ],
+            },
+            {
+              dat: [
+                [
+                  {
+                    content: "ACA IRA UN TITULO DE MIERDA",
+                    styles: {
+                      fontStyle: "bold",
+                      halign: "center",
+                      fontSize: 10,
+                    },
+                  },
+                ],
+                [
+                  {
+                    content: "Jr. Chumape las bolas Av. de los Webones",
+                    styles: {
+                      halign: "center",
+                      fontSize: 7.5,
+                    },
+                  },
+                ],
+                [
+                  {
+                    content: typeDoc,
+                    styles: {
+                      fontStyle: "bold",
+                      halign: "center",
+                      fontSize: 8,
+                    },
+                  },
+                ],
+                [
+                  {
+                    content: `RUC: 001CHUAPALA`,
+                    styles: {
+                      fontStyle: "bold",
+                      halign: "center",
+                      fontSize: 10,
+                    },
+                  },
+                ],
+                [
+                  {
+                    content: `${dataForPrint.serie_documento} ${dataForPrint.codigo_tipo_operacion}`,
+                    styles: {
+                      fontStyle: "bold",
+                      halign: "center",
+                      fontSize: 8,
+                    },
+                  },
+                ],
+              ],
+            },
+
+            {
+              dat: [
+                {
+                  tittle: "Cliente",
+                  twoPoints: ":",
+                  cont: dataForPrint.datos_del_cliente_o_receptor
+                    .apellidos_y_nombres_o_razon_social,
+                },
+
+                {
+                  tittle: typeDoc[0] === "F" ? "RUC" : "Documento",
+                  twoPoints: ":",
+                  cont: dataForPrint.datos_del_cliente_o_receptor
+                    .numero_documento,
+                },
+
+                {
+                  tittle: "Direccion",
+                  twoPoints: ":",
+                  cont: dataForPrint.datos_del_cliente_o_receptor.direccion,
+                },
+
+                {
+                  tittle: "F.Emicion",
+                  twoPoints: ":",
+                  cont: dataForPrint.fecha_de_emision,
+                },
+              ],
+            },
+            {
+              col: [
+                {
+                  header: "Cant.",
+                  dataKey: "amount",
+                },
+                {
+                  header: "U.",
+                  dataKey: "unit",
+                },
+                {
+                  header: "M.",
+                  dataKey: "M",
+                },
+                {
+                  header: "Descripción",
+                  dataKey: "description",
+                },
+                {
+                  header: "P.",
+                  dataKey: "price",
+                },
+                {
+                  header: "UnitV.",
+                  dataKey: "unitVal",
+                },
+                {
+                  header: "Total",
+                  dataKey: "total",
+                },
+              ],
+              dat: dataForPrint.items.map((val) => {
+                return {
+                  amount: val.cantidad,
+                  unit: val.unidad_de_medida,
+                  description: val.descripcion,
+                  price: val.precio_unitario,
+                  total: val.total_item,
+                };
+              }),
+            },
+            {
+              dat: datTotals,
+            },
+
+            {
+              dat: [
+                [
+                  {
+                    content: "Representacion impresa de la boleta electronica",
+                    styles: {
+                      halign: "center",
+                      fontSize: 7.5,
+                    },
+                  },
+                ],
+                [
+                  {
+                    content:
+                      "Puede verificarla usando su clave sol o ingresando a la pagina web:",
+                    styles: {
+                      halign: "center",
+                      fontSize: 7.5,
+                    },
+                  },
+                ],
+                [
+                  {
+                    content: "Correo de la empresa",
+                    styles: {
+                      fontStyle: "bold",
+                      halign: "center",
+                      fontSize: 7.5,
+                    },
+                  },
+                ],
+                [
+                  {
+                    content:
+                      "BIENES CONSUMOS / SERVICIOS PRESTADOS EN LA AMAZONIA PARA SER CONSUMIDAS EN LA MISMA",
+                    styles: {
+                      halign: "center",
+                      fontSize: 7.5,
+                    },
+                  },
+                ],
+              ],
+            },
+
+            {
+              dat: [
+                {
+                  tittle: "CONSULTOR/VENDEDOR",
+                  twoPoints: ":",
+                  cont: "PON EL NOMBRE DEL GIL QUE VENDE WEBADAS PS NO SEAS GIL",
+                },
+                {
+                  tittle: "TIPO DE PAGO",
+                  twoPoints: ":",
+                  cont: "SERIO WEY MANDA LA INFO NECESARIA PARA ESTA MADRE YA MUCHA WEBADA CONTIGO SERIO GAAAAAAAA",
+                },
+              ],
+            },
+          ];
+
+          generatePrint(structure);
+
           message.success("Imprimir");
         },
         miscSale() {
@@ -342,5 +574,4 @@ export default defineComponent({
 });
 </script>
 
-<style>
-</style>
+<style></style>

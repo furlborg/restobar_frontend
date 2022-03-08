@@ -186,6 +186,7 @@ import {
 } from "@/api/modules/tables";
 import { searchProductByName } from "@/api/modules/products";
 import { cloneDeep } from "@/utils";
+import { generatePrint } from "./prints";
 
 export default defineComponent({
   name: "TableOrder",
@@ -204,6 +205,7 @@ export default defineComponent({
     const showModal = ref(false);
     const itemIndex = ref(null);
     const checkState = ref(false);
+    const dateNow = ref(null);
 
     orderStore.orders = [];
     saleStore.sale_details = [];
@@ -273,14 +275,87 @@ export default defineComponent({
 
     onMounted(() => {
       performRetrieveTableOrder();
+
+      const fetch = new Date();
+      const dd = fetch.getDate();
+      const mm = fetch.getMonth();
+      const yy = fetch.getFullYear();
+      const hh = fetch.getHours();
+      const msms = fetch.getMinutes();
+
+      dateNow.value = `${dd}/${mm}/${yy} ${hh}:${msms}`;
     });
 
-    const performCreateTableOrder = () => {
+    const performCreateTableOrder = async () => {
       createTableOrder(route.params.table, orderStore.orderList)
         .then((response) => {
           if (response.status === 201) {
             message.success("Orden creada correctamente");
             checkState.value = true;
+            generatePrint([
+              {
+                dat: [
+                  [
+                    {
+                      content: "ACA IRA UN TITULO DE MIERDA",
+                      styles: {
+                        fontStyle: "bold",
+                        halign: "center",
+                        fontSize: 10,
+                      },
+                    },
+                  ],
+                ],
+              },
+              {
+                dat: [
+                  {
+                    tittle: "MESA/PEDIDO",
+                    twoPoints: ":",
+                    cont: "CHUPAMELA",
+                  },
+                ],
+              },
+              {
+                theme: "grid",
+                col: [
+                  {
+                    header: "Comida",
+                    dataKey: "product_name",
+                  },
+                  {
+                    header: "Cant.",
+                    dataKey: "quantity",
+                  },
+
+                  {
+                    header: "Detalle",
+                    dataKey: "indication",
+                  },
+                ],
+                dat: response.data.order_details.map((val) => {
+                  return {
+                    product_name: val.product_name,
+                    quantity: val.quantity,
+                    indication: val.indication,
+                  };
+                }),
+              },
+              {
+                dat: [
+                  {
+                    tittle: "Fecha",
+                    twoPoints: ":",
+                    cont: dateNow.value,
+                  },
+                  {
+                    tittle: "Número",
+                    twoPoints: ":",
+                    cont: response.data.id,
+                  },
+                ],
+              },
+            ]);
             router.push({ name: "TableHome" });
           }
         })
@@ -300,6 +375,73 @@ export default defineComponent({
           if (response.status === 202) {
             message.success("Orden actualizada correctamente");
             checkState.value = true;
+            console.log(response.data);
+            generatePrint([
+              {
+                dat: [
+                  [
+                    {
+                      content: "ACA IRA UN TITULO DE MIERDA",
+                      styles: {
+                        fontStyle: "bold",
+                        halign: "center",
+                        fontSize: 10,
+                      },
+                    },
+                  ],
+                ],
+              },
+              {
+                dat: [
+                  {
+                    tittle: "MESA/PEDIDO",
+                    twoPoints: ":",
+                    cont: "CHUPAMELA",
+                  },
+                ],
+              },
+              {
+                theme: "grid",
+                col: [
+                  {
+                    header: "Comida",
+                    dataKey: "product_name",
+                  },
+                  {
+                    header: "Cant.",
+                    dataKey: "quantity",
+                  },
+
+                  {
+                    header: "Detalle",
+                    dataKey: "indication",
+                  },
+                ],
+                dat: response.data.order_details.map((val) => {
+                  return {
+                    product_name: val.product_name,
+                    quantity: val.quantity,
+                    indication: val.indication.map((v) => {
+                      return v.description;
+                    }),
+                  };
+                }),
+              },
+              {
+                dat: [
+                  {
+                    tittle: "Fecha",
+                    twoPoints: ":",
+                    cont: dateNow.value,
+                  },
+                  {
+                    tittle: "Número",
+                    twoPoints: ":",
+                    cont: response.data.id,
+                  },
+                ],
+              },
+            ]);
             router.push({ name: "TableHome" });
           }
         })
