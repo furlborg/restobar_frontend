@@ -276,7 +276,7 @@ export default defineComponent({
     const loading = ref(false);
     const dialog = useDialog();
     const showModal = ref(false);
-    const payment_amount = ref("0.00");
+    const payment_amount = ref(saleStore.saleTotal.toFixed(2));
     const saleForm = ref();
     const changing = computed(() => {
       return payment_amount.value > total.value

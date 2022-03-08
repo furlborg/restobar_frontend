@@ -242,6 +242,7 @@ export default defineComponent({
           createTillDetails(detail.value)
             .then((response) => {
               if (response.status === 201) {
+                cleanDetail();
                 emit("on-success");
               }
             })

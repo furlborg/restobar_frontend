@@ -21,6 +21,13 @@ export const useTableStore = defineStore('table', {
                 label: area.description,
                 value: area.id
             }))
+        },
+        branchAreas() {
+            if (!userStore.user.branchoffice) {
+                return this.areas.filter(area => area.branch === businessStore.currentBranch)
+            } else {
+                return this.areas.filter(area => area.branch === userStore.user.branchoffice)
+            }
         }
     },
     actions: {

@@ -203,7 +203,6 @@ export default defineComponent({
     const loadSales = () => {
       isTableLoading.value = true;
       // pagination.value.pageSize = 20;
-      pagination.value.page = 1;
       listSales(filterParams.value.branch)
         .then((response) => {
           pagination.value.total = response.data.count;
@@ -253,13 +252,14 @@ export default defineComponent({
     };
 
     const refreshTable = () => {
-      (filterParams.value.customer = ""),
-        (filterParams.value.serie = null),
-        (filterParams.value.number = ""),
-        (filterParams.value.payment_method = null),
-        (filterParams.value.date_sale = null),
-        (filterParams.value.status = null),
-        (pagination.value.pageSearchParams = null);
+      filterParams.value.customer = "";
+      filterParams.value.serie = null;
+      filterParams.value.number = "";
+      filterParams.value.payment_method = null;
+      filterParams.value.date_sale = null;
+      filterParams.value.status = null;
+      pagination.value.pageSearchParams = null;
+      pagination.value.page = 1;
       loadSales();
     };
 
@@ -310,7 +310,6 @@ export default defineComponent({
             .then((response) => {
               if (response.status === 200) {
                 message.success("Enviado");
-                console.log(response.data);
               }
             })
             .catch((error) => {
@@ -318,7 +317,7 @@ export default defineComponent({
               message.error("Algo salió mal...");
             })
             .finally(() => {
-              isTableLoading.value = false;
+              loadSales();
             });
         },
         nullifySale(row) {
@@ -334,7 +333,7 @@ export default defineComponent({
               message.error("Algo salió mal...");
             })
             .finally(() => {
-              isTableLoading.value = false;
+              loadSales();
             });
         },
       }),

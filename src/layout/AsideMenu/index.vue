@@ -25,16 +25,13 @@ export default defineComponent({
   setup() {
     const userStore = useUserStore();
     const currentRoute = useRoute();
-    const matched = currentRoute.matched;
-
-    const getOpenKeys =
-      matched && matched.length ? matched.map((item) => item.name) : [];
 
     const openKey = computed(() => {
-      return getOpenKeys.find((item) => item === currentRoute.name);
+      const matched = currentRoute.matched;
+      const getOpenKeys =
+        matched && matched.length ? matched.map((item) => item.name) : [];
+      return getOpenKeys.length ? getOpenKeys[1] : null;
     });
-
-    // console.log(routes[0].children);
 
     const routesToOptions = [
       {

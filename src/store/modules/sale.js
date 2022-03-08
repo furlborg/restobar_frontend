@@ -40,7 +40,7 @@ export const useSaleStore = defineStore('sale', {
             }))
         },
         saleTotal(state) {
-            return state.orders.reduce((acc, curVal) => {
+            return state.sale_details.reduce((acc, curVal) => {
                 return acc += curVal.price * curVal.quantity
             }, 0)
         },

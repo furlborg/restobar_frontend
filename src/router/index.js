@@ -139,6 +139,16 @@ export const routes = [
         name: 'Settings',
         redirect: { name: "HomeSettings" },
         component: () => import(/* webpackChunkName: "settings" */ '@/views/Settings'),
+        beforeEnter: async (to, from, next) => {
+          const userStore = useUserStore()
+          if (!userStore.user.profile_des || userStore.user.profile_des === 'ADMINISTRADOR') {
+            next()
+            return
+          } else {
+            next({ name: 'Dashboard' })
+            return
+          }
+        },
         children: [
           {
             name: 'HomeSettings',

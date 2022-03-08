@@ -578,7 +578,7 @@ export const createMovementsColumns = ({ hasSells, editMovement, deleteMovement 
                         },
                         renderIcon('md-print-round')
                     ),
-                    h(
+                    !(String(row.document).startsWith('B') || String(row.document).startsWith('F') || String(row.document).startsWith('N')) ? h(
                         NButton,
                         {
                             size: 'small',
@@ -588,7 +588,7 @@ export const createMovementsColumns = ({ hasSells, editMovement, deleteMovement 
                             onClick: () => deleteMovement(row)
                         },
                         renderIcon('md-notinterested-round')
-                    )
+                    ) : null
                 ]
             }
         }

@@ -27,7 +27,7 @@
     <n-spin :show="isLoading">
       <n-card
         class="my-2"
-        v-for="area in tableStore.areas"
+        v-for="area in tableStore.branchAreas"
         :key="area.id"
         :title="area.description"
         embedded
