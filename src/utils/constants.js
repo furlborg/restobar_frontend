@@ -163,10 +163,10 @@ export const createCustomerColumns = ({ editCustomer, deleteCustomer }) => {
         },
         {
             title: 'Estado',
-            key: 'isDisabled',
+            key: 'is_disabled',
             render(row) {
                 let type, text
-                if (row.isDisabled) {
+                if (row.is_disabled) {
                     type = "error"
                     text = "Inactivo"
                 } else {
@@ -207,7 +207,7 @@ export const createCustomerColumns = ({ editCustomer, deleteCustomer }) => {
                         NButton,
                         {
                             size: 'small',
-                            type: 'error',
+                            type: row.is_disabled ? 'success' : 'error',
                             secondary: true,
                             onClick: () => deleteCustomer(row)
                         },
