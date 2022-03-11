@@ -139,9 +139,8 @@
                     "
                   >
                     Cobrar pedido
-                    <!-- <v-icon name="bi-coin"/> -->
                   </n-button>
-                  <n-button
+                  <!-- <n-button
                     class="mb-1"
                     type="warning"
                     size="small"
@@ -158,8 +157,7 @@
                     "
                   >
                     Unir mesa
-                    <!-- <v-icon name="md-search-round"/> -->
-                  </n-button>
+                  </n-button> -->
                   <n-button
                     class="mb-1"
                     type="error"
@@ -168,7 +166,6 @@
                     secondary
                   >
                     Anular pedido
-                    <!-- <v-icon name="md-search-round"/> -->
                   </n-button>
                   <n-space vertical align="center">
                     <n-button
