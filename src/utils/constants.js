@@ -211,7 +211,7 @@ export const createCustomerColumns = ({ editCustomer, deleteCustomer }) => {
                             secondary: true,
                             onClick: () => deleteCustomer(row)
                         },
-                        renderIcon('la-user-slash-solid')
+                        row.is_disabled ? renderIcon('la-user-check-solid') : renderIcon('la-user-times-solid')
                     )
                 ]
             }
