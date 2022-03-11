@@ -22,6 +22,7 @@
           <n-input
             type="number"
             v-model:value="formitem.amount"
+              @input="formitem.amount = restrictDecimal(formitem.amount)"
             placeholder=""
           />
         </n-form-item-gi>
@@ -214,10 +215,12 @@ export default defineComponent({
           trigger: "blur",
         },
       },
-      onlyNumber: (e) => {
-        let keyCode = e.keyCode ? e.keyCode : e.which;
-        if (keyCode < 48 || keyCode > 57) {
-          e.preventDefault();
+      restrictDecimal(value) {
+        let data = value.match(/^\d+\.?\d{0,3}/);
+        if (data) {
+          return data[0];
+        }else{
+          return null
         }
       },
     };

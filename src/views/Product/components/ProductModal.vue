@@ -18,31 +18,22 @@
           :x-gap="12"
         >
           <n-form-item-gi label="Nombre" path="name" :span="12">
-            <n-input v-model:value="product.name" placeholder="" />
+            <n-input v-model:value="product.name" @input="product.name = $event.toUpperCase()"  placeholder="" />
           </n-form-item-gi>
-          <n-form-item-gi label="Precio Compra" path="purchase_price" :span="4">
+          <n-form-item-gi label="Precio Compra" path="purchase_price" :span="5">
             <n-input
               type="number"
               v-model:value="product.purchase_price"
               placeholder=""
-              @input="
-                product.purchase_price = restrictDecimal(product.purchase_price)
-              "
+              @input="product.purchase_price = restrictDecimal(product.purchase_price)"
             />
           </n-form-item-gi>
-          <n-form-item-gi label="Precio venta" path="prices" :span="4">
+          <n-form-item-gi label="Precio venta" path="prices" :span="5">
             <n-input
               v-model:value="product.prices"
               placeholder=""
               @input="product.prices = restrictDecimal(product.prices)"
             />
-          </n-form-item-gi>
-          <n-form-item-gi path="control_stock" :span="4">
-            <n-checkbox
-              v-model:checked="product.control_stock"
-              @update:checked="product.stock = null"
-              >Controlar Stock</n-checkbox
-            >
           </n-form-item-gi>
           <n-gi :span="12">
             <transition name="mode-fade" mode="out-in">
@@ -132,19 +123,25 @@
               :options="optionsUND"
             />
           </n-form-item-gi>
+          <n-form-item-gi path="control_stock" :span="5">
+            <n-checkbox
+              v-model:checked="product.control_stock"
+              @update:checked="product.stock = null"
+              >Controlar Stock</n-checkbox
+            >
+          </n-form-item-gi>
           <n-form-item-gi
             v-if="!product.id"
             label="Stock Inicial"
             path="stock"
             :span="4"
           >
-            <n-input-number
+            <n-input
+              type="number"
               v-model:value="product.stock"
-              placeholder=""
-              :min="0"
-              :show-button="false"
+              @input="product.stock = restrictDecimal(product.stock)"
+              placeholder="0.0"
               :disabled="!product.control_stock ? true : false"
-              @keypress="isNumber($event)"
             />
           </n-form-item-gi>
           <n-form-item-gi label="Nº Puntos" path="number_points" :span="4">
@@ -468,12 +465,13 @@ export default defineComponent({
       e.preventDefault();
       productRef.value.validate((errors) => {
         if (!errors) {
-          if (
-            product.value.control_supplie &&
-            product.value.supplies.length < 1
-          ) {
+          if (product.value.control_supplie && product.value.supplies.length < 1) {
             message.warning("Necesitas agregar insumos.");
-          } else {
+          }else if (product.value.control_stock && product.value.stock == null || parseInt(product.value.stock) <= 0) {
+            message.warning("La cantidad debe ser mayor a 0.");
+          }else if (product.value.stock.length > 12) {
+            message.warning("Asegúrese de que no haya más de 12 digitos en el Stock Inicial.");
+          }else {
             isLoadingData.value = true;
             createProduct(product.value)
               .then((response) => {
@@ -698,6 +696,8 @@ export default defineComponent({
         let data = value.match(/^\d+\.?\d{0,3}/);
         if (data) {
           return data[0];
+        }else{
+          return null
         }
       },
     };

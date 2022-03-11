@@ -20,10 +20,10 @@
                     <n-select v-model:value="formitem.branchoffice" placeholder="Seleccione" :options="optionsEstablishment" />
                 </n-form-item-gi>
                 <n-form-item-gi label="Precio de compra" :span="4" path="purchase_price" >
-                    <n-input type="number" v-model:value="formitem.purchase_price"  placeholder="" />
+                    <n-input type="number" v-model:value="formitem.purchase_price" @input="formitem.purchase_price = restrictDecimal(1, formitem.purchase_price)"  placeholder="" />
                 </n-form-item-gi>
                 <n-form-item-gi v-if="!formitem.id" label="Stock Inicial" :span="4" path="amount">
-                    <n-input type="number" v-model:value="formitem.amount"  placeholder="" />
+                    <n-input type="number" v-model:value="formitem.amount" @input="formitem.amount = restrictDecimal(2, formitem.amount)"  placeholder="" />
                 </n-form-item-gi>
             </n-grid>
         </n-form>
@@ -103,43 +103,44 @@ export default  defineComponent({
         const save = (formitem) => {
             formRef.value.validate(async (errors) => {
                 if (!errors) {
-                    if (formitem.id) {
-                        updateSupplies(formitem.id, formitem)
-                        .then((response) => {
-                            emit("on-success");
-                            emit('update:show');
-                            message.success("Insumo editado correctamente.");
-                        })
-                        .catch((error) => {
-                            if ('name' in error.response.data) {
-                                message.warning("El nombre ya existe.");
-                            }else if ('purchase_price' in error.response.data) {
-                                message.warning("Asegúrese de que no haya más de 2 decimales.");
-                            }else if ('amount' in error.response.data) {
-                                message.warning("Asegúrese de que no haya más de 2 decimales.");
-                            }else{
-                                message.error("Algo salió mal...");
-                            }
-                        });
+                    if (formitem.amount.length > 12) {
+                        message.warning("Asegúrese de que no haya más de 12 digitos en el Stock Inicial.");
                     }else{
-                        createSupplies(formitem)
-                        .then((response) => {
-                            emit("on-success", response.data);
-                            emit('update:show');
-                            message.success("Insumo registrado correctamente.");
-                        })
-                        .catch((error) => {
-                            if ('name' in error.response.data) {
-                                message.warning("El nombre ya existe.");
-                            }else if ('purchase_price' in error.response.data) {
-                                message.warning("Asegúrese de que no haya más de 2 decimales.");
-                            }else if ('amount' in error.response.data) {
-                                message.warning("Asegúrese de que no haya más de 2 decimales.");
-                            }else{
-                                message.error("Algo salió mal...");
-                            }
-                        });
+                        if (formitem.id) {
+                            updateSupplies(formitem.id, formitem)
+                            .then((response) => {
+                                emit("on-success");
+                                emit('update:show');
+                                message.success("Insumo editado correctamente.");
+                            })
+                            .catch((error) => {
+                                if ('name' in error.response.data) {
+                                    message.warning("El nombre ya existe.");
+                                }else if ('purchase_price' in error.response.data) {
+                                    message.warning("Asegúrese de que no haya más de 12 digitos en Precio.");
+                                }else{
+                                    message.error("Algo salió mal...");
+                                }
+                            });
+                        }else{
+                            createSupplies(formitem)
+                            .then((response) => {
+                                emit("on-success", response.data);
+                                emit('update:show');
+                                message.success("Insumo registrado correctamente.");
+                            })
+                            .catch((error) => {
+                                if ('name' in error.response.data) {
+                                    message.warning("El nombre ya existe.");
+                                }else if ('purchase_price' in error.response.data) {
+                                    message.warning("Asegúrese de que no haya más de 12 digitos en Precio.");
+                                }else{
+                                    message.error("Algo salió mal...");
+                                }
+                            });
+                        }
                     }
+
                 } else {
                     message.warning("Campos Requeridos");
                 }
@@ -171,12 +172,19 @@ export default  defineComponent({
                     trigger: "blur",
                 }
             },
-            onlyNumber: (e) => {
-                let keyCode = (e.keyCode ? e.keyCode : e.which);
-                if ((keyCode < 48 || keyCode > 57)) {
-                    e.preventDefault();
+            restrictDecimal(option, value) {
+                let data;
+                if (option == 1) {
+                    data = value.match(/^\d+\.?\d{0,2}/);
+                }else{
+                    data = value.match(/^\d+\.?\d{0,3}/);
                 }
-            }
+                if (data) {
+                    return data[0];
+                }else{
+                    return null
+                }
+            },
         }
     }
 })

@@ -13,7 +13,7 @@
                         filterable @search="supplieSearch"  :options="optionsSupplies" clearable />
                 </n-form-item-gi>
                 <n-form-item-gi label="Cantidad" :span="4" path="amount" >
-                    <n-input type="number" v-model:value="formitem.amount"  placeholder="" />
+                    <n-input type="number" v-model:value="formitem.amount" @input="formitem.amount = restrictDecimal(formitem.amount)"  placeholder="" />
                 </n-form-item-gi>
             </n-grid>
             <n-grid cols="12 100:1 450:12" :x-gap="12">
@@ -132,7 +132,7 @@ export default  defineComponent({
                         .then((response) => {
                             emit("on-success");
                             emit('update:show');
-                            message.success("Insumo registrado correctamente.");
+                            message.success("Entrada registrada correctamente.");
                         })
                         .catch((error) => {
                             if ('amount' in error.response.data) {
@@ -185,12 +185,14 @@ export default  defineComponent({
                     trigger: "blur",
                 }
             },
-            onlyNumber: (e) => {
-                let keyCode = (e.keyCode ? e.keyCode : e.which);
-                if ((keyCode < 48 || keyCode > 57)) {
-                    e.preventDefault();
+            restrictDecimal(value) {
+                let data = value.match(/^\d+\.?\d{0,3}/);
+                if (data) {
+                    return data[0];
+                }else{
+                    return null
                 }
-            }
+            },
         }
     }
 })
