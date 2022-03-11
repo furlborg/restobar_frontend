@@ -60,9 +60,10 @@ export const useUserStore = defineStore('user', {
                     useCookie.set('token', response.data.access, 60 * 30);
                 })
                 .catch(error => {
-                    if (error.response.data.code === 'token_not_valid') {
+                    console.log(error, error.response.data)
+                    /* if (error.response.data.code === 'token_not_valid') {
                         this.logout()
-                    }
+                    } */
                 })
         },
         async blacklistToken() {
