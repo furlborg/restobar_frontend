@@ -53,11 +53,7 @@
             />
           </n-form-item-gi>
           <n-form-item-gi label="Nº Documento" :span="3">
-            <n-input-number
-              v-model:value="searchParams.doc_num"
-              :show-button="false"
-              placeholder=""
-            />
+            <n-input v-model:value="searchParams.doc_num" placeholder="" />
           </n-form-item-gi>
           <n-form-item-gi label="Nombre" :span="6">
             <n-input v-model:value="searchParams.names" placeholder="" />
