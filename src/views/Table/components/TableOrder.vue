@@ -107,7 +107,8 @@
                       text
                       @click="
                         !order.id
-                          ? orderStore.orderList.splice(index, 1)
+                          ? (orderStore.orderList.splice(index, 1),
+                            nullifyTableOrder())
                           : deleteOrderDetail(index, order.id)
                       "
                     >
@@ -182,6 +183,7 @@ import {
   retrieveTableOrder,
   createTableOrder,
   updateTableOrder,
+  cancelTableOrder,
   performDeleteOrderDetail,
 } from "@/api/modules/tables";
 import { searchProductByName } from "@/api/modules/products";
@@ -375,7 +377,7 @@ export default defineComponent({
           if (response.status === 202) {
             message.success("Orden actualizada correctamente");
             checkState.value = true;
-            console.log(response.data);
+            /* console.log(response.data); */
             generatePrint([
               {
                 dat: [
@@ -451,6 +453,35 @@ export default defineComponent({
         });
     };
 
+    const nullifyTableOrder = () => {
+      if (!orderStore.orderList.length && orderStore.orderId) {
+        dialog.error({
+          title: "Anular pedido",
+          content: "¿Está seguro?",
+          positiveText: "Sí",
+          negativeText: "No",
+          onPositiveClick: () => {
+            performNullifyTableOrder();
+          },
+        });
+      }
+    };
+
+    const performNullifyTableOrder = () => {
+      cancelTableOrder(table)
+        .then((response) => {
+          if (response.status === 202) {
+            message.success("Pedido anulado correctamente!");
+            checkState.value = true;
+            router.push({ name: "TableHome" });
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        });
+    };
+
     const deleteOrderDetail = (detailIndex, detailId) => {
       dialog.error({
         title: "Eliminando comanda",
@@ -462,6 +493,7 @@ export default defineComponent({
               if (response.status === 202) {
                 orderStore.orderList.splice(detailIndex, 1);
                 message.success("Comanda eliminada");
+                nullifyTableOrder();
               }
             }
           );
@@ -531,6 +563,7 @@ export default defineComponent({
       productOptions,
       showOptions,
       selectProduct,
+      nullifyTableOrder,
     };
   },
 });
