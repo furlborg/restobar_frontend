@@ -13,7 +13,7 @@
                         filterable @search="supplieSearch"  :options="optionsSupplies" clearable />
                 </n-form-item-gi>
                 <n-form-item-gi label="Cantidad" :span="4" path="amount" >
-                    <n-input type="number" v-model:value="formitem.amount"  placeholder="" />
+                    <n-input type="number" v-model:value="formitem.amount" @input="formitem.amount = restrictDecimal(formitem.amount)"  placeholder="" />
                 </n-form-item-gi>
             </n-grid>
             <n-grid cols="12 100:1 450:12" :x-gap="12">
@@ -40,7 +40,7 @@
 
 <script>
 import { defineComponent, onUpdated, ref, toRefs } from "vue"
-import {useGenericsStore} from '@/store/modules/generics'
+import { useUserStore } from "@/store/modules/user";
 import { useMessage } from "naive-ui";
 import { createSupplieMovement, getConcept, getSupplies } from "@/api/modules/supplies";
 import { getBranchs } from "@/api/modules/business";
@@ -62,11 +62,11 @@ export default  defineComponent({
     setup(props, {emit}) {
         const formitem = ref({});
         const message = useMessage();
+        const userStore = useUserStore();
         const formRef = ref(null);
         const optionsConcept = ref([]);
         const optionsEstablishment = ref([]);
         const optionsSupplies = ref([]);
-        const genericsStore = useGenericsStore();
         const {show, type} = toRefs(props);
 
         const getApiConcept = async () => {
@@ -90,10 +90,22 @@ export default  defineComponent({
         const supplieSearch = async (search) => {
             getSupplies(`supplies/search/?search=${search}`)
             .then((response) => {
-                optionsSupplies.value = response.data.map((v) => ({
-                    label: v.name,
-                    value: v.id,
-                }));
+                optionsEstablishment.value = [];
+                response.data.map((v) => {
+                    if (userStore.user.branchoffice == null || userStore.user.profile_des == "ADMINISTRADOR" ) {
+                        optionsEstablishment.value.push({
+                            label: v.description,
+                            value: v.id,
+                        })
+                    }else{
+                        if (userStore.user.branchoffice == v.id) {
+                        optionsEstablishment.value.push({
+                            label: v.description,
+                            value: v.id,
+                        })
+                        }
+                    }
+                });
             })
             .catch((error) => {
                 message.error("Algo salió mal...");
@@ -119,6 +131,9 @@ export default  defineComponent({
             if (show.value == true) {
                 getApiConcept();
                 formitem.value = props.items;
+                if (optionsEstablishment.value.length > 0) {
+                    formitem.value.branchoffice = optionsEstablishment.value[0].value;
+                }
             }
         })
 
@@ -132,7 +147,7 @@ export default  defineComponent({
                         .then((response) => {
                             emit("on-success");
                             emit('update:show');
-                            message.success("Insumo registrado correctamente.");
+                            message.success("Entrada registrada correctamente.");
                         })
                         .catch((error) => {
                             if ('amount' in error.response.data) {
@@ -155,7 +170,6 @@ export default  defineComponent({
             formitem,
             formRef,
             save,
-            genericsStore,
             optionsSupplies,
             supplieSearch,
             optionsConcept,
@@ -185,12 +199,14 @@ export default  defineComponent({
                     trigger: "blur",
                 }
             },
-            onlyNumber: (e) => {
-                let keyCode = (e.keyCode ? e.keyCode : e.which);
-                if ((keyCode < 48 || keyCode > 57)) {
-                    e.preventDefault();
+            restrictDecimal(value) {
+                let data = value.match(/^\d+\.?\d{0,3}/);
+                if (data) {
+                    return data[0];
+                }else{
+                    return null
                 }
-            }
+            },
         }
     }
 })

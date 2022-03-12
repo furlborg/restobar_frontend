@@ -13,7 +13,7 @@
             <n-input
               v-model:value="formitem.names"
               placeholder="Nombres"
-              :maxlength="200"
+              :maxlength="150"
               @input="formitem.names = $event.toUpperCase()"
             />
           </n-form-item-gi>
@@ -33,10 +33,10 @@
           </n-form-item-gi>
         </n-grid>
         <n-grid cols="12 100:1 450:12" :x-gap="12">
-          <n-form-item-gi label="DNI" :span="4" path="dni">
+          <n-form-item-gi label="N° DOCUMENTO" :span="4" path="dni">
             <n-input
               v-model:value="formitem.dni"
-              placeholder="DNI"
+              placeholder="DOCUMENTO"
               :maxlength="8"
             />
           </n-form-item-gi>
@@ -44,7 +44,7 @@
             <n-input
               v-model:value="formitem.email"
               placeholder="Correo@ejemplo.com"
-              :maxlength="200"
+              :maxlength="150"
             />
           </n-form-item-gi>
         </n-grid>
@@ -61,7 +61,7 @@
             <n-input
               type="password"
               v-model:value="formitem.password"
-              :maxlength="10"
+              :maxlength="15"
               show-password-on="click"
               placeholder="Contraseña"
             />
@@ -74,7 +74,7 @@
             <n-input
               type="password"
               v-model:value="confirmPass"
-              :maxlength="10"
+              :maxlength="15"
               show-password-on="click"
               placeholder="Confirmar contraseña"
             />
@@ -137,6 +137,9 @@ export default defineComponent({
             label: v.description,
             value: v.id,
           }));
+          if (response.data.length > 0) {
+              formitem.value.branchoffice =  response.data[0].id;
+          }
         })
         .catch((error) => {
           message.error("Algo salió mal...");
@@ -177,6 +180,7 @@ export default defineComponent({
                 .then((response) => {
                   emit("on-success");
                   closeModal();
+                  confirmPass.value = "";
                   message.success("Usuario editado correctamente.");
                 })
                 .catch((error) => {
@@ -195,6 +199,7 @@ export default defineComponent({
                 .then((response) => {
                   emit("on-success");
                   closeModal();
+                  confirmPass.value = "";
                   message.success("Usuario registrado correctamente.");
                 })
                 .catch((error) => {
