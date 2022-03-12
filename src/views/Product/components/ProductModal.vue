@@ -184,14 +184,12 @@
             />
           </n-form-item-gi>
           <n-form-item-gi
-            v-if="!userStore.user.branchoffice"
             label="Almacen"
             :span="12"
           >
             <n-select
               v-model:value="product.branchoffice"
               :disabled="product.id ? true : false"
-              :default-value="1"
               placeholder="Seleccione"
               :options="optionsEstablishment"
             />
@@ -360,9 +358,7 @@ export default defineComponent({
       category: null,
       preparation_place: null,
       control_supplie: false,
-      branchoffice: !userStore.user.branchoffice
-        ? businessStore.currentBranch
-        : userStore.user.branchoffice,
+      branchoffice: null,
       supplies: [],
     });
     const categoriesOptions = computed(() => {
@@ -395,10 +391,22 @@ export default defineComponent({
     const getEstablishment = async () => {
       getBranchs()
         .then((response) => {
-          optionsEstablishment.value = response.data.map((v) => ({
-            label: v.description,
-            value: v.id,
-          }));
+          optionsEstablishment.value = [];
+          response.data.map((v) => {
+            if (userStore.user.branchoffice == null || userStore.user.profile_des == "ADMINISTRADOR" ) {
+              optionsEstablishment.value.push({
+                label: v.description,
+                value: v.id,
+              })
+            }else{
+              if (userStore.user.branchoffice == v.id) {
+                optionsEstablishment.value.push({
+                  label: v.description,
+                  value: v.id,
+                })
+              }
+            }
+          });
         })
         .catch((error) => {
           message.error("Algo salió mal...");
@@ -428,6 +436,7 @@ export default defineComponent({
         retrieveProduct(idProduct.value)
           .then((response) => {
             product.value = response.data;
+            product.value.branchoffice = optionsEstablishment.value[0].value;
           })
           .catch((error) => {
             console.error(error);
@@ -453,9 +462,7 @@ export default defineComponent({
           category: null,
           preparation_place: null,
           control_supplie: false,
-          branchoffice: !userStore.user.branchoffice
-            ? businessStore.currentBranch
-            : userStore.user.branchoffice,
+          branchoffice: optionsEstablishment.value[0].value,
           supplies: [],
         };
       }
@@ -614,7 +621,7 @@ export default defineComponent({
         (items.name = undefined),
         (items.purchase_price = undefined),
         (items.measureunit = 1),
-        (items.branchoffice = 1),
+        (items.branchoffice = undefined),
         (items.amount = undefined);
     };
 

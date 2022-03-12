@@ -40,7 +40,7 @@
 
 <script>
 import { defineComponent, onUpdated, ref, toRefs } from "vue"
-import {useGenericsStore} from '@/store/modules/generics'
+import { useUserStore } from "@/store/modules/user";
 import { useMessage } from "naive-ui";
 import { createSupplieMovement, getConcept, getSupplies } from "@/api/modules/supplies";
 import { getBranchs } from "@/api/modules/business";
@@ -62,11 +62,11 @@ export default  defineComponent({
     setup(props, {emit}) {
         const formitem = ref({});
         const message = useMessage();
+        const userStore = useUserStore();
         const formRef = ref(null);
         const optionsConcept = ref([]);
         const optionsEstablishment = ref([]);
         const optionsSupplies = ref([]);
-        const genericsStore = useGenericsStore();
         const {show, type} = toRefs(props);
 
         const getApiConcept = async () => {
@@ -90,10 +90,22 @@ export default  defineComponent({
         const supplieSearch = async (search) => {
             getSupplies(`supplies/search/?search=${search}`)
             .then((response) => {
-                optionsSupplies.value = response.data.map((v) => ({
-                    label: v.name,
-                    value: v.id,
-                }));
+                optionsEstablishment.value = [];
+                response.data.map((v) => {
+                    if (userStore.user.branchoffice == null || userStore.user.profile_des == "ADMINISTRADOR" ) {
+                        optionsEstablishment.value.push({
+                            label: v.description,
+                            value: v.id,
+                        })
+                    }else{
+                        if (userStore.user.branchoffice == v.id) {
+                        optionsEstablishment.value.push({
+                            label: v.description,
+                            value: v.id,
+                        })
+                        }
+                    }
+                });
             })
             .catch((error) => {
                 message.error("Algo salió mal...");
@@ -119,6 +131,9 @@ export default  defineComponent({
             if (show.value == true) {
                 getApiConcept();
                 formitem.value = props.items;
+                if (optionsEstablishment.value.length > 0) {
+                    formitem.value.branchoffice = optionsEstablishment.value[0].value;
+                }
             }
         })
 
@@ -155,7 +170,6 @@ export default  defineComponent({
             formitem,
             formRef,
             save,
-            genericsStore,
             optionsSupplies,
             supplieSearch,
             optionsConcept,

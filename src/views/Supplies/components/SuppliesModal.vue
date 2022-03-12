@@ -39,7 +39,7 @@
 
 <script>
 import { defineComponent, onUpdated, ref, toRefs } from "vue"
-import {useGenericsStore} from '@/store/modules/generics'
+import { useUserStore } from "@/store/modules/user";
 import { useMessage } from "naive-ui";
 import { createSupplies, updateSupplies, getMeasureUnit } from "@/api/modules/supplies";
 import { getBranchs } from "@/api/modules/business";
@@ -63,7 +63,7 @@ export default  defineComponent({
         const formRef = ref(null);
         const optionsUND = ref([]);
         const optionsEstablishment = ref([]);
-        const genericsStore = useGenericsStore();
+        const userStore = useUserStore();
         const {show} = toRefs(props);
 
         const getUND = async () => {
@@ -83,10 +83,22 @@ export default  defineComponent({
         const getEstablishment = async () => {
             getBranchs()
             .then((response) => {
-                optionsEstablishment.value = response.data.map((v) => ({
-                    label: v.description,
-                    value: v.id,
-                }));
+                optionsEstablishment.value = [];
+                response.data.map((v) => {
+                    if (userStore.user.branchoffice == null || userStore.user.profile_des == "ADMINISTRADOR" ) {
+                        optionsEstablishment.value.push({
+                            label: v.description,
+                            value: v.id,
+                        })
+                    }else{
+                        if (userStore.user.branchoffice == v.id) {
+                        optionsEstablishment.value.push({
+                            label: v.description,
+                            value: v.id,
+                        })
+                        }
+                    }
+                });
             })
             .catch((error) => {
                 message.error("Algo salió mal...");
@@ -97,6 +109,9 @@ export default  defineComponent({
         onUpdated (() => {
             if (show.value == true) {
                 formitem.value = props.items;
+                if (optionsEstablishment.value.length > 0) {
+                    formitem.value.branchoffice = optionsEstablishment.value[0].value;
+                }
             }
         })
 
@@ -152,7 +167,6 @@ export default  defineComponent({
             formitem,
             formRef,
             save,
-            genericsStore,
             optionsUND,
             optionsEstablishment,
             rules: {

@@ -63,6 +63,7 @@
 import { defineComponent, onUpdated, ref, toRefs } from "vue";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useMessage } from "naive-ui";
+import { useUserStore } from "@/store/modules/user";
 import {
   getProductSimpleSearch,
   createProductMovement,
@@ -84,6 +85,7 @@ export default defineComponent({
   setup(props, { emit }) {
     const formitem = ref({});
     const message = useMessage();
+    const userStore = useUserStore();
     const formRef = ref(null);
     const optionsConcept = ref([]);
     const optionsEstablishment = ref([]);
@@ -132,10 +134,22 @@ export default defineComponent({
     const getEstablishment = async () => {
       getBranchs()
         .then((response) => {
-          optionsEstablishment.value = response.data.map((v) => ({
-            label: v.description,
-            value: v.id,
-          }));
+          optionsEstablishment.value = [];
+          response.data.map((v) => {
+              if (userStore.user.branchoffice == null || userStore.user.profile_des == "ADMINISTRADOR" ) {
+                optionsEstablishment.value.push({
+                  label: v.description,
+                  value: v.id,
+                })
+              }else{
+                if (userStore.user.branchoffice == v.id) {
+                  optionsEstablishment.value.push({
+                    label: v.description,
+                    value: v.id,
+                  })
+                }
+              }
+          });
         })
         .catch((error) => {
           console.error(error);
@@ -148,6 +162,9 @@ export default defineComponent({
       if (show.value == true) {
         getApiConcept();
         formitem.value = props.items;
+        if (optionsEstablishment.value.length > 0) {
+          formitem.value.branchoffice = optionsEstablishment.value[0].value;
+        }
       }
     });
 

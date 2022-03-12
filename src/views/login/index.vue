@@ -23,6 +23,7 @@
               v-model:value="formInline.username"
               placeholder="Usuario"
               :disabled="loading"
+              @input="formInline.username = $event.toUpperCase()"
               @keypress.enter="handleSubmit"
             >
               <template #prefix>
