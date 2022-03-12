@@ -529,8 +529,20 @@ export const createMovementsColumns = ({ hasSells, editMovement, deleteMovement 
             }
         },
         {
-            title: 'Monto',
-            key: 'amount',
+            title: 'Ingreso',
+            key: 'income',
+            render(row) {
+                let concept_type = tillStore.getConceptType(row.concept)
+                return concept_type == '0' ? row.amount : '----'
+            }
+        },
+        {
+            title: 'Egreso',
+            key: 'outcome',
+            render(row) {
+                let concept_type = tillStore.getConceptType(row.concept)
+                return concept_type == '1' ? row.amount : '----'
+            }
         },
         {
             title: 'Concepto',
