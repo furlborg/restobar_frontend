@@ -327,16 +327,7 @@ export default defineComponent({
       discount: "0.00",
       observations: "",
       by_consumption: false,
-      sale_details: [],
-    });
-
-    const saleOrders = toRef(saleStore.sale_details);
-
-    watch(saleOrders, () => {
-      console.log(saleOrders.value);
-      if (saleOrders.value.length) {
-        sale.value.sale_details = saleStore.toSale;
-      }
+      sale_details: saleStore.toSale,
     });
 
     const selectSerie = (v) => {

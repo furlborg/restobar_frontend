@@ -49,7 +49,6 @@ export const useUserStore = defineStore('user', {
                 if (!useCookie.isKey('token') && localStorage.getItem('isAuthenticated') && useCookie.get('user-info') && useCookie.isKey('refresh') && localStorage.getItem('isAuthenticated') == 'true') {
                     await this.updateToken()
                 }
-                this.token = useCookie.get('token')
             } else {
                 this.logout()
             }
@@ -58,6 +57,9 @@ export const useUserStore = defineStore('user', {
             await refreshToken(this.refresh)
                 .then(response => {
                     useCookie.set('token', response.data.access, 60 * 30);
+                    useCookie.set('refresh', response.data.refresh, '1d');
+                    this.token = useCookie.get('token')
+                    this.refresh = useCookie.get('refresh')
                 })
                 .catch(error => {
                     console.error(error, error.response.data)
