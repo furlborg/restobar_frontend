@@ -175,7 +175,7 @@ import {
   onBeforeRouteLeave,
   onBeforeRouteUpdate,
 } from "vue-router";
-import { useDialog, useMessage } from "naive-ui";
+import { NSpace, useDialog, useMessage } from "naive-ui";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import {
@@ -290,73 +290,128 @@ export default defineComponent({
       createTableOrder(route.params.table, orderStore.orderList)
         .then((response) => {
           if (response.status === 201) {
-            message.success("Orden creada correctamente");
+            message.success("Orden actualizada correctamente");
             checkState.value = true;
-            generatePrint([
-              {
-                dat: [
-                  [
-                    {
-                      content: "ACA IRA UN TITULO DE MIERDA",
-                      styles: {
-                        fontStyle: "bold",
-                        halign: "center",
-                        fontSize: 10,
+
+            let c = 0;
+            let lC = 0;
+
+            response.data.order_details.map((val) => {
+              if (val.indication.length) {
+                val.indication.map((v) => {
+                  c += 1;
+                  if (v.description.length > 19) {
+                    lC += v.description.length / 20;
+                  }
+                });
+              }
+            });
+
+            generatePrint(
+              [
+                {
+                  dat: [
+                    [
+                      {
+                        content: `N° ORDEN: ${response.data.id}`,
+                        styles: {
+                          fontStyle: "bold",
+                          halign: "center",
+                          fontSize: 20,
+                        },
                       },
+                    ],
+                  ],
+                },
+                {
+                  dat: [
+                    [
+                      {
+                        content: `N° MESA: ${"CHUPAMELA"}`,
+                        styles: {
+                          fontStyle: "bold",
+                          halign: "center",
+                          fontSize: 15,
+                        },
+                      },
+                    ],
+                  ],
+                },
+
+                {
+                  theme: "grid",
+                  col: [
+                    {
+                      header: "Comida",
+                      dataKey: "product_name",
+                    },
+                    {
+                      header: "Cant.",
+                      dataKey: "quantity",
+                    },
+
+                    {
+                      header: "Detalle",
+                      dataKey: "indication",
                     },
                   ],
-                ],
-              },
-              {
-                dat: [
-                  {
-                    tittle: "MESA/PEDIDO",
-                    twoPoints: ":",
-                    cont: "CHUPAMELA",
-                  },
-                ],
-              },
-              {
-                theme: "grid",
-                col: [
-                  {
-                    header: "Comida",
-                    dataKey: "product_name",
-                  },
-                  {
-                    header: "Cant.",
-                    dataKey: "quantity",
-                  },
+                  dat: response.data.order_details.map((val) => {
+                    let ind = "";
+                    val.indication.map((v, i) => {
+                      let cadenaConCaracteres = "";
 
-                  {
-                    header: "Detalle",
-                    dataKey: "indication",
-                  },
-                ],
-                dat: response.data.order_details.map((val) => {
-                  return {
-                    product_name: val.product_name,
-                    quantity: val.quantity,
-                    indication: val.indication,
-                  };
-                }),
-              },
-              {
-                dat: [
-                  {
-                    tittle: "Fecha",
-                    twoPoints: ":",
-                    cont: dateNow.value,
-                  },
-                  {
-                    tittle: "Número",
-                    twoPoints: ":",
-                    cont: response.data.id,
-                  },
-                ],
-              },
-            ]);
-            router.push({ name: "TableHome" });
+                      let longitudCadena = v.description.length;
+
+                      for (let i = 0; i < longitudCadena; i += 19) {
+                        if (i + 19 < longitudCadena) {
+                          cadenaConCaracteres +=
+                            v.description.substring(i, i + 19) + "\n";
+                        } else {
+                          cadenaConCaracteres += v.description.substring(
+                            i,
+                            longitudCadena
+                          );
+                        }
+                      }
+
+                      ind = `${ind} \n ${i + 1}-${cadenaConCaracteres}`;
+                      console.log(ind);
+                    });
+
+                    return {
+                      product_name: val.product_name,
+                      quantity: val.quantity,
+                      indication: ind,
+                    };
+                  }),
+                },
+                {
+                  dat: [
+                    [
+                      {
+                        content: "ACA IRA UN TITULO DE MIERDA",
+                        styles: {
+                          fontStyle: "bold",
+                          halign: "center",
+                          fontSize: 10,
+                        },
+                      },
+                    ],
+                  ],
+                },
+                {
+                  dat: [
+                    {
+                      tittle: "Fecha",
+                      twoPoints: ":",
+                      cont: dateNow.value,
+                    },
+                  ],
+                },
+              ],
+              (response.data.order_details.length + c * 2 + lC) * 6
+            );
+            // router.push({ name: "TableHome" });
           }
         })
         .catch((error) => {
@@ -375,74 +430,126 @@ export default defineComponent({
           if (response.status === 202) {
             message.success("Orden actualizada correctamente");
             checkState.value = true;
-            console.log(response.data);
-            generatePrint([
-              {
-                dat: [
-                  [
-                    {
-                      content: "ACA IRA UN TITULO DE MIERDA",
-                      styles: {
-                        fontStyle: "bold",
-                        halign: "center",
-                        fontSize: 10,
+
+            let c = 0;
+            let lC = 0;
+
+            response.data.order_details.map((val) => {
+              if (val.indication.length) {
+                val.indication.map((v) => {
+                  c += 1;
+                  if (v.description.length > 19) {
+                    lC += v.description.length / 20;
+                  }
+                });
+              }
+            });
+
+            generatePrint(
+              [
+                {
+                  dat: [
+                    [
+                      {
+                        content: `N° ORDEN: ${response.data.id}`,
+                        styles: {
+                          fontStyle: "bold",
+                          halign: "center",
+                          fontSize: 20,
+                        },
                       },
+                    ],
+                  ],
+                },
+                {
+                  dat: [
+                    [
+                      {
+                        content: `N° MESA: ${"CHUPAMELA"}`,
+                        styles: {
+                          fontStyle: "bold",
+                          halign: "center",
+                          fontSize: 15,
+                        },
+                      },
+                    ],
+                  ],
+                },
+
+                {
+                  theme: "grid",
+                  col: [
+                    {
+                      header: "Comida",
+                      dataKey: "product_name",
+                    },
+                    {
+                      header: "Cant.",
+                      dataKey: "quantity",
+                    },
+
+                    {
+                      header: "Detalle",
+                      dataKey: "indication",
                     },
                   ],
-                ],
-              },
-              {
-                dat: [
-                  {
-                    tittle: "MESA/PEDIDO",
-                    twoPoints: ":",
-                    cont: "CHUPAMELA",
-                  },
-                ],
-              },
-              {
-                theme: "grid",
-                col: [
-                  {
-                    header: "Comida",
-                    dataKey: "product_name",
-                  },
-                  {
-                    header: "Cant.",
-                    dataKey: "quantity",
-                  },
+                  dat: response.data.order_details.map((val) => {
+                    let ind = "";
+                    val.indication.map((v, i) => {
+                      let cadenaConCaracteres = "";
 
-                  {
-                    header: "Detalle",
-                    dataKey: "indication",
-                  },
-                ],
-                dat: response.data.order_details.map((val) => {
-                  return {
-                    product_name: val.product_name,
-                    quantity: val.quantity,
-                    indication: val.indication.map((v) => {
-                      return v.description;
-                    }),
-                  };
-                }),
-              },
-              {
-                dat: [
-                  {
-                    tittle: "Fecha",
-                    twoPoints: ":",
-                    cont: dateNow.value,
-                  },
-                  {
-                    tittle: "Número",
-                    twoPoints: ":",
-                    cont: response.data.id,
-                  },
-                ],
-              },
-            ]);
-            router.push({ name: "TableHome" });
+                      let longitudCadena = v.description.length;
+
+                      for (let i = 0; i < longitudCadena; i += 19) {
+                        if (i + 19 < longitudCadena) {
+                          cadenaConCaracteres +=
+                            v.description.substring(i, i + 19) + "\n";
+                        } else {
+                          cadenaConCaracteres += v.description.substring(
+                            i,
+                            longitudCadena
+                          );
+                        }
+                      }
+
+                      ind = `${ind} \n ${i + 1}-${cadenaConCaracteres}`;
+                      console.log(ind);
+                    });
+
+                    return {
+                      product_name: val.product_name,
+                      quantity: val.quantity,
+                      indication: ind,
+                    };
+                  }),
+                },
+                {
+                  dat: [
+                    [
+                      {
+                        content: "ACA IRA UN TITULO DE MIERDA",
+                        styles: {
+                          fontStyle: "bold",
+                          halign: "center",
+                          fontSize: 10,
+                        },
+                      },
+                    ],
+                  ],
+                },
+                {
+                  dat: [
+                    {
+                      tittle: "Fecha",
+                      twoPoints: ":",
+                      cont: dateNow.value,
+                    },
+                  ],
+                },
+              ],
+              (response.data.order_details.length + c * 2 + lC) * 6
+            );
+            // router.push({ name: "TableHome" });
           }
         })
         .catch((error) => {

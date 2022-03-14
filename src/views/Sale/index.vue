@@ -349,7 +349,7 @@ export default defineComponent({
                     styles: {
                       fontStyle: "bold",
                       halign: "center",
-                      fontSize: 10,
+                      fontSize: 11,
                     },
                   },
                 ],
@@ -357,8 +357,9 @@ export default defineComponent({
                   {
                     content: "Jr. Chumape las bolas Av. de los Webones",
                     styles: {
+                      fontStyle: "bold",
                       halign: "center",
-                      fontSize: 7.5,
+                      fontSize: 9,
                     },
                   },
                 ],
@@ -368,7 +369,7 @@ export default defineComponent({
                     styles: {
                       fontStyle: "bold",
                       halign: "center",
-                      fontSize: 8,
+                      fontSize: 9,
                     },
                   },
                 ],
@@ -378,7 +379,7 @@ export default defineComponent({
                     styles: {
                       fontStyle: "bold",
                       halign: "center",
-                      fontSize: 10,
+                      fontSize: 11,
                     },
                   },
                 ],
@@ -388,7 +389,7 @@ export default defineComponent({
                     styles: {
                       fontStyle: "bold",
                       halign: "center",
-                      fontSize: 8,
+                      fontSize: 11,
                     },
                   },
                 ],
@@ -398,27 +399,27 @@ export default defineComponent({
             {
               dat: [
                 {
-                  tittle: "Cliente",
+                  tittle: "CLIENTE",
                   twoPoints: ":",
                   cont: dataForPrint.datos_del_cliente_o_receptor
                     .apellidos_y_nombres_o_razon_social,
                 },
 
                 {
-                  tittle: typeDoc[0] === "F" ? "RUC" : "Documento",
+                  tittle: typeDoc[0] === "F" ? "RUC" : "DOCUMENTO",
                   twoPoints: ":",
                   cont: dataForPrint.datos_del_cliente_o_receptor
                     .numero_documento,
                 },
 
                 {
-                  tittle: "Direccion",
+                  tittle: "DIRECCION",
                   twoPoints: ":",
                   cont: dataForPrint.datos_del_cliente_o_receptor.direccion,
                 },
 
                 {
-                  tittle: "F.Emicion",
+                  tittle: "F.EMICION",
                   twoPoints: ":",
                   cont: dataForPrint.fecha_de_emision,
                 },
@@ -427,31 +428,25 @@ export default defineComponent({
             {
               col: [
                 {
-                  header: "Cant.",
+                  header: "CANT.",
                   dataKey: "amount",
                 },
                 {
-                  header: "U.",
+                  header: "U.M",
                   dataKey: "unit",
                 },
+
                 {
-                  header: "M.",
-                  dataKey: "M",
-                },
-                {
-                  header: "Descripción",
+                  header: "DESCRIPCIÓN",
                   dataKey: "description",
                 },
                 {
-                  header: "P.",
+                  header: "P.U",
                   dataKey: "price",
                 },
+
                 {
-                  header: "UnitV.",
-                  dataKey: "unitVal",
-                },
-                {
-                  header: "Total",
+                  header: "TOTAL",
                   dataKey: "total",
                 },
               ],
@@ -460,8 +455,8 @@ export default defineComponent({
                   amount: val.cantidad,
                   unit: val.unidad_de_medida,
                   description: val.descripcion,
-                  price: val.precio_unitario,
-                  total: val.total_item,
+                  price: parseFloat(val.precio_unitario).toFixed("2"),
+                  total: parseFloat(val.total_item).toFixed("2"),
                 };
               }),
             },
@@ -475,8 +470,9 @@ export default defineComponent({
                   {
                     content: "Representacion impresa de la boleta electronica",
                     styles: {
+                      fontStyle: "bold",
                       halign: "center",
-                      fontSize: 7.5,
+                      fontSize: 9,
                     },
                   },
                 ],
@@ -485,8 +481,9 @@ export default defineComponent({
                     content:
                       "Puede verificarla usando su clave sol o ingresando a la pagina web:",
                     styles: {
+                      fontStyle: "bold",
                       halign: "center",
-                      fontSize: 7.5,
+                      fontSize: 9,
                     },
                   },
                 ],
@@ -496,7 +493,7 @@ export default defineComponent({
                     styles: {
                       fontStyle: "bold",
                       halign: "center",
-                      fontSize: 7.5,
+                      fontSize: 9,
                     },
                   },
                 ],
@@ -505,8 +502,9 @@ export default defineComponent({
                     content:
                       "BIENES CONSUMOS / SERVICIOS PRESTADOS EN LA AMAZONIA PARA SER CONSUMIDAS EN LA MISMA",
                     styles: {
+                      fontStyle: "bold",
                       halign: "center",
-                      fontSize: 7.5,
+                      fontSize: 9,
                     },
                   },
                 ],
@@ -518,12 +516,12 @@ export default defineComponent({
                 {
                   tittle: "CONSULTOR/VENDEDOR",
                   twoPoints: ":",
-                  cont: "PON EL NOMBRE DEL GIL QUE VENDE WEBADAS PS NO SEAS GIL",
+                  cont: "UNA PERSONA",
                 },
                 {
                   tittle: "TIPO DE PAGO",
                   twoPoints: ":",
-                  cont: "SERIO WEY MANDA LA INFO NECESARIA PARA ESTA MADRE YA MUCHA WEBADA CONTIGO SERIO GAAAAAAAA",
+                  cont: "TIPO DE PAGO",
                 },
               ],
             },

@@ -3,8 +3,8 @@ import { useUserStore } from "@/store/modules/user";
 import { sleep } from "@/utils";
 
 export const http = axios.create({
-  baseURL: 'http://192.168.1.101:8000/api/v1/',
-})
+  baseURL: "http://192.168.1.43:8000/api/v1/",
+});
 
 http.interceptors.request.use((request) => {
   const userStore = useUserStore();

@@ -22,12 +22,15 @@ export const generatePrint = (structure) => {
       },
       body: val.dat,
       cellWidth: "auto",
-      headStyles: { fontSize: 7.5, font: "helvetica" },
-      bodyStyles: { fontSize: 7.5, font: "helvetica" },
+      headStyles: { fontSize: 9, font: "helvetica" },
+      bodyStyles: { fontSize: 9, font: "helvetica", fontStyle: "bold" },
 
       columnStyles: {
-        fontSize: 8,
+        fontSize: 9,
         tittle: {
+          fontStyle: "bold",
+        },
+        cont: {
           fontStyle: "bold",
         },
         tittleSec: {
@@ -49,12 +52,13 @@ export const generatePrint = (structure) => {
 
         if (!!data.row.raw.img === false) {
           doc.setLineDash([1, 1], 1);
-          doc.setDrawColor(183, 226, 255);
+          doc.setDrawColor(0, 0, 0);
           doc.line(3, finalY, 77, finalY);
         }
       },
     });
   });
 
-  doc.save("ReporteGeneral.pdf");
+  // doc.save("ReporteGeneral.pdf");
+  window.open(URL.createObjectURL(doc.output("blob")));
 };
