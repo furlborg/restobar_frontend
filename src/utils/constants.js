@@ -1032,3 +1032,103 @@ export const createSaleColumns = ({ printSale, miscSale, sendSale, nullifySale }
         },
     ]
 }
+
+export const createOrderColumns = ({ showDetails, payDeliver, nullifyOrder }) => {
+    return [
+        {
+            title: '#',
+            key: 'number',
+            render(row, index) {
+                return index + 1
+            }
+        },
+        {
+            title: 'Cliente',
+            key: 'customer'
+        },
+        {
+            title: 'Documento',
+            key: 'document',
+            render(row) {
+                return row.id
+            }
+        },
+        {
+            title: 'Tipo',
+            key: 'type',
+        },
+        {
+            title: 'Estado',
+            key: 'status',
+            render(row) {
+                let type, text
+                if (row.status === '1') {
+                    type = "warning"
+                    text = "PENDIENTE"
+                } else if (row.status === '2') {
+                    type = "success"
+                    text = "COBRADO"
+                } else {
+                    type = "error"
+                    text = "-"
+                }
+
+                return h(
+                    NTag,
+                    {
+                        size: 'small',
+                        type: type,
+                        round: true
+                    },
+                    {
+                        default: () => text
+                    }
+                )
+            }
+        },
+        {
+            title: 'Acciones',
+            key: 'actions',
+            width: 200,
+            render(row) {
+                return [
+                    h(
+                        NButton,
+                        {
+                            class: 'me-2',
+                            size: 'small',
+                            type: 'info',
+                            secondary: true,
+                            disabled: row.status === 'E',
+                            onClick: () => showDetails(row)
+                        },
+                        renderIcon('md-feed-round')
+                    ),
+                    h(
+                        NButton,
+                        {
+                            class: 'me-2',
+                            size: 'small',
+                            type: 'success',
+                            secondary: true,
+                            onClick: () => payDeliver(row)
+                        },
+                        renderIcon('fa-dollar-sign')
+                    ),
+                    h(
+                        NButton,
+                        {
+                            class: 'me-2',
+                            size: 'small',
+                            type: 'error',
+                            secondary: true,
+                            disabled: row.is_disabled,
+                            onClick: () => nullifyOrder(row)
+                        },
+                        renderIcon('md-cancel-twotone')
+                    )
+                ]
+            }
+        },
+    ]
+}

@@ -69,6 +69,8 @@ export async function retrieveTill(id) {
 }
 
 export async function createTill(till) {
+    const businessStore = useBusinessStore();
+    const userStore = useUserStore();
     return await http.post('tills/', {
         opening_responsable: till.opening_responsable,
         closing_responsable: '',
@@ -76,6 +78,7 @@ export async function createTill(till) {
         closing_amount: '',
         opening_observations: till.opening_observations,
         closing_observations: '',
+        branch: !userStore.user.branchoffice ? businessStore.currentBranch : null,
         status: true,
     })
 }

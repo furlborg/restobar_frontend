@@ -551,20 +551,29 @@ export default defineComponent({
             });
         },
         nullifySale(row) {
-          isTableLoading.value = true;
-          nullSale(row.id)
-            .then((response) => {
-              if (response.status === 204) {
-                message.success("Anulado");
-              }
-            })
-            .catch((error) => {
-              console.error(error);
-              message.error("Algo salió mal...");
-            })
-            .finally(() => {
-              loadSales();
-            });
+          dialog.error({
+            title: "Anular venta",
+            content: "¿Desea anular venta?",
+            positiveText: "Si",
+            negativeText: "No",
+            onPositiveClick: async () => {
+              isTableLoading.value = true;
+              await nullSale(row.id)
+                .then((response) => {
+                  if (response.status === 204) {
+                    message.success("Anulado");
+                  }
+                })
+                .catch((error) => {
+                  console.error(error);
+                  message.error("Algo salió mal...");
+                })
+                .finally(() => {
+                  loadSales();
+                });
+            },
+            onNegativeClick: () => {},
+          });
         },
       }),
     };
