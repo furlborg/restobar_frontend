@@ -339,7 +339,7 @@ export default defineComponent({
           if (!!v.description) {
             let longitudCadena = v.description.length;
 
-            for (let i = 0; i < longitudCadena; i += 45) {
+            for (let i = 0; i < longitudCadena; i += 30) {
               if (i + 45 < longitudCadena) {
                 cadenaConCaracteres +=
                   v.description.substring(i, i + 45) + "-\n";
