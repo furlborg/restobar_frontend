@@ -77,6 +77,10 @@ export async function updateTableOrder(idTable, orderId, details) {
     })
 }
 
+export async function cancelTableOrder(idTable) {
+    return http.delete(`tables/${idTable}/cancel_order/`)
+}
+
 export async function performDeleteOrderDetail(idTable, orderId) {
     return await http.post(`tables/${idTable}/remove_detail/`, {
         id: orderId,

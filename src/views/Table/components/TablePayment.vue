@@ -213,7 +213,8 @@
                   class="custom-input fw-bold"
                   type="number"
                   min="0"
-                  step=".01"
+                  :max="subTotal"
+                  step=".1"
                   v-model="sale.discount"
                   v-autowidth
                   @click="$event.target.select()"
@@ -246,7 +247,15 @@
 </template>
 
 <script>
-import { defineComponent, ref, toRefs, computed, watch, onMounted } from "vue";
+import {
+  defineComponent,
+  ref,
+  toRefs,
+  computed,
+  watch,
+  onMounted,
+  toRef,
+} from "vue";
 import CustomerModal from "@/views/Customer/components/CustomerModal";
 import { useRouter } from "vue-router";
 import { useOrderStore } from "@/store/modules/order";
@@ -462,6 +471,9 @@ export default defineComponent({
     const { serie } = toRefs(sale.value);
 
     watch(serie, () => {
+      !sale.value.sale_details.length
+        ? (sale.value.sale_details = saleStore.toSale)
+        : null;
       obtainSaleNumber();
     });
 

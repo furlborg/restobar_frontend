@@ -2,7 +2,7 @@
   <div id="Supplies">
       <n-card title="Kardex" :segmented="{content: 'hard'}">
         <template #header-extra>
-          <n-button type="info" text @click="buttonText.changeButton()">{{buttonText.text}}</n-button>
+          <!-- <n-button type="info" text @click="buttonText.changeButton()">{{buttonText.text}}</n-button> -->
         </template>
         <KardexList v-if="list==='general'" />
         <KardexBySupply v-if="list==='bySupply'" />

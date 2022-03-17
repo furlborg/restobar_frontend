@@ -9,10 +9,10 @@
         <n-form v-model:model="formitem" :rules="rules" ref="formRef">
             <n-grid cols="12 100:1 450:12" :x-gap="12">
                 <n-form-item-gi label="Contraseña" :span="6" path="password">
-                    <n-input type="password" v-model:value="formitem.password" :maxlength="10" show-password-on="click" placeholder="Contraseña" />
+                    <n-input type="password" v-model:value="formitem.password" :maxlength="15" show-password-on="click" placeholder="Contraseña" />
                 </n-form-item-gi>
                 <n-form-item-gi label="Confirmar Contraseña" :span="6" path="confirmPass">
-                    <n-input type="password" v-model:value="formitem.confirmPass" :maxlength="10" show-password-on="click" placeholder="Confirmar contraseña" />
+                    <n-input type="password" v-model:value="formitem.confirmPass" :maxlength="15" show-password-on="click" placeholder="Confirmar contraseña" />
                 </n-form-item-gi>
             </n-grid>
         </n-form>

@@ -1,21 +1,20 @@
 import jspdf from "jspdf";
 import autoTable from "jspdf-autotable";
 
-export const generatePrint = async (structure, height) => {
-  console.log(Math.round(height));
+export const generatePrint = (structure) => {
   const doc = new jspdf({
     orientation: "p",
     unit: "mm",
-    format: [80, !!height && height > 80 ? Math.round(height) : 80],
+    format: [80, 350],
   });
-  structure.map((val) => {
-    let finalY = doc.lastAutoTable.finalY || 5;
+
+  structure.map((val, index) => {
+    var finalY = doc.lastAutoTable.finalY || 10;
 
     doc.autoTable({
       startY: finalY,
       theme: "plain",
       pageBreak: "auto",
-      showHead: "firstPage",
       margin: { left: 3, right: 3 },
       columns: !!val.col ? val.col : null,
       styles: {
@@ -51,8 +50,6 @@ export const generatePrint = async (structure, height) => {
           // doc.addImage(img.src, textPos.x, textPos.y, dim, dim);
         }
 
-        // console.log(data.row.raw.indication);
-
         if (!!data.row.raw.img === false) {
           doc.setLineDash([1, 1], 1);
           doc.setDrawColor(0, 0, 0);
@@ -62,28 +59,6 @@ export const generatePrint = async (structure, height) => {
     });
   });
 
-  let docName = `ReportTable${Math.floor(Math.random() * (10 - 1)) + 1}.pdf`;
-
-  doc.save(docName);
-
-  setTimeout(() => {
-    let myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/json");
-
-    let requestOptions = {
-      method: "POST",
-
-      headers: myHeaders,
-      body: JSON.stringify({
-        nameFile: docName,
-        printerName: "POS-80-Series",
-      }),
-      redirect: "follow",
-    };
-
-    return fetch("http://localhost:3000/printer", requestOptions)
-      .then((response) => response.text())
-      .then((result) => console.log(result))
-      .catch((error) => console.log("error", error));
-  }, 1000);
+  // doc.save("ReporteGeneral.pdf");
+  window.open(URL.createObjectURL(doc.output("blob")));
 };

@@ -229,7 +229,7 @@ export default defineComponent({
       (type.value = value),
         (itemsMovement.product = undefined),
         (itemsMovement.type = value),
-        (itemsMovement.branchoffice = 1),
+        (itemsMovement.branchoffice = null),
         (itemsMovement.concept = undefined),
         (itemsMovement.amount = undefined);
     };

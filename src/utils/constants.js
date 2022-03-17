@@ -163,10 +163,10 @@ export const createCustomerColumns = ({ editCustomer, deleteCustomer }) => {
         },
         {
             title: 'Estado',
-            key: 'isDisabled',
+            key: 'is_disabled',
             render(row) {
                 let type, text
-                if (row.isDisabled) {
+                if (row.is_disabled) {
                     type = "error"
                     text = "Inactivo"
                 } else {
@@ -207,11 +207,11 @@ export const createCustomerColumns = ({ editCustomer, deleteCustomer }) => {
                         NButton,
                         {
                             size: 'small',
-                            type: 'error',
+                            type: row.is_disabled ? 'success' : 'error',
                             secondary: true,
                             onClick: () => deleteCustomer(row)
                         },
-                        renderIcon('la-user-slash-solid')
+                        row.is_disabled ? renderIcon('la-user-check-solid') : renderIcon('la-user-times-solid')
                     )
                 ]
             }
@@ -529,8 +529,20 @@ export const createMovementsColumns = ({ hasSells, editMovement, deleteMovement 
             }
         },
         {
-            title: 'Monto',
-            key: 'amount',
+            title: 'Ingreso',
+            key: 'income',
+            render(row) {
+                let concept_type = tillStore.getConceptType(row.concept)
+                return concept_type == '0' ? row.amount : '----'
+            }
+        },
+        {
+            title: 'Egreso',
+            key: 'outcome',
+            render(row) {
+                let concept_type = tillStore.getConceptType(row.concept)
+                return concept_type == '1' ? row.amount : '----'
+            }
         },
         {
             title: 'Concepto',
