@@ -44,10 +44,12 @@ export const useUserStore = defineStore('user', {
         async checkAuthentication() {
             if (localStorage.getItem('isAuthenticated') && useCookie.get('user-info') && useCookie.isKey('refresh') && localStorage.getItem('isAuthenticated') == 'true') {
                 this.isAuthenticated = true
-                this.refresh = useCookie.get('refresh')
                 this.user = useCookie.get('user-info')
                 if (!useCookie.isKey('token') && localStorage.getItem('isAuthenticated') && useCookie.get('user-info') && useCookie.isKey('refresh') && localStorage.getItem('isAuthenticated') == 'true') {
                     await this.updateToken()
+                } else {
+                    this.token = useCookie.get('token')
+                    this.refresh = useCookie.get('refresh')
                 }
             } else {
                 this.logout()
@@ -62,7 +64,7 @@ export const useUserStore = defineStore('user', {
                     this.refresh = useCookie.get('refresh')
                 })
                 .catch(error => {
-                    console.error(error, error.response.data)
+                    console.error(error)
                     /* if (error.response.data.code === 'token_not_valid') {
                         this.logout()
                     } */

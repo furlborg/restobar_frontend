@@ -65,6 +65,19 @@ export default defineComponent({
           h(
             RouterLink,
             {
+              to: { name: "Orders" },
+            },
+            () => h("span", "Pedidos")
+          ),
+        key: "Orders",
+        icon: renderIcon("md-pendingactions-twotone"),
+        exclude: [],
+      },
+      {
+        label: () =>
+          h(
+            RouterLink,
+            {
               to: { name: "Sales" },
             },
             () => h("span", "Ventas")

@@ -153,7 +153,7 @@ export default defineComponent({
     };
 
     const doLogout = () => {
-      dialog.info({
+      dialog.error({
         title: "Cerrar sesión",
         content: "¿Desea cerrar sesión?",
         positiveText: "Si",

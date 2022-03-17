@@ -95,6 +95,9 @@ import {
     MdCancelTwotone,
     RiMailSendFill,
     MdLogoutRound,
+    MdPendingactionsTwotone,
+    MdFeedRound,
+    FaDollarSign,
 } from "oh-vue-icons/icons";
 OhVueIcon.add(
     BiThreeDots,
@@ -192,5 +195,8 @@ OhVueIcon.add(
     MdCancelTwotone,
     RiMailSendFill,
     MdLogoutRound,
+    MdPendingactionsTwotone,
+    MdFeedRound,
+    FaDollarSign,
 );
 export { OhVueIcon }

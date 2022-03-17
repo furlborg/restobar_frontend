@@ -25,6 +25,11 @@ export const routes = [
         component: () => import(/* webpackChunkName: "customer" */ '@/views/Customer')
       },
       {
+        path: '/orders',
+        name: 'Orders',
+        component: () => import(/* webpackChunkName: "customer" */ '@/views/Order')
+      },
+      {
         path: '/sales',
         name: 'Sales',
         component: () => import(/* webpackChunkName: "customer" */ '@/views/Sale')
