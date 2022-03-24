@@ -92,7 +92,7 @@
         :columns="tableColumns"
         :data="sales"
         :loading="isTableLoading"
-        :pagination="sales.length > 20 ? pagination : {}"
+        :pagination="pagination.total > 20 ? pagination : {}"
         remote
       />
     </n-card>

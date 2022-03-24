@@ -108,7 +108,7 @@
         :columns="tableColumns"
         :data="tills"
         :loading="isTableLoading"
-        :pagination="tills.length > 20 ? pagination : {}"
+        :pagination="pagination.total > 20 ? pagination : {}"
         remote
       />
     </n-card>

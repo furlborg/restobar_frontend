@@ -81,7 +81,7 @@
       class="mt-2"
       :columns="tableColumns"
       :data="customers"
-      :pagination="customers.length > 10 ? pagination : {}"
+      :pagination="pagination.total > 10 ? pagination : {}"
       :loading="isTableLoading"
       :scroll-x="1500"
       remote

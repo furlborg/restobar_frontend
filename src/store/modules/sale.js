@@ -3,14 +3,17 @@ import { getPaymentMethods } from '@/api/modules/sales'
 import { getDocumentSeries } from '@/api/modules/business'
 import { useBusinessStore } from "@/store/modules/business";
 import { useUserStore } from "@/store/modules/user";
+import { useOrderStore } from "@/store/modules/order";
 const businessStore = useBusinessStore();
 const userStore = useUserStore();
+const orderStore = useOrderStore();
 
 export const useSaleStore = defineStore('sale', {
     state: () => ({
         payment_methods: [],
         series: [],
-        sale_details: []
+        sale_details: [],
+        order_initial: [],
     }),
     getters: {
         getPaymentMethodsOptions(state) {
@@ -32,12 +35,13 @@ export const useSaleStore = defineStore('sale', {
             }))
         },
         toSale(state) {
-            return state.sale_details.map(order => ({
+            state.sale_details = orderStore.orderList.map(order => ({
                 product: order.product,
                 product_name: order.product_name,
                 price_sale: parseFloat(order.price).toFixed(2),
                 quantity: Number(order.quantity)
             }))
+            return state.sale_details
         },
         saleTotal(state) {
             return state.sale_details.reduce((acc, curVal) => {

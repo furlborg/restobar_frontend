@@ -2,7 +2,7 @@
   <n-modal
     :class="{
       'w-100': genericsStore.device === 'mobile',
-      'w-20': genericsStore.device === 'tablet',
+      'w-50': genericsStore.device === 'tablet',
       'w-25': genericsStore.device === 'desktop',
     }"
     preset="card"
@@ -78,7 +78,6 @@ export default defineComponent({
                     parseFloat(detail.price).toFixed(2))
               );
             }
-            console.log(details.value);
           })
           .catch((error) => {
             console.error(error);

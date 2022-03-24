@@ -215,7 +215,7 @@ export default defineComponent({
 
     watchEffect(() => {
       checkState.value =
-        JSON.stringify(saleStore.sale_details) ===
+        JSON.stringify(saleStore.order_initial) ===
         JSON.stringify(orderStore.orderList);
     });
 
@@ -229,6 +229,7 @@ export default defineComponent({
             negativeText: "No",
             onPositiveClick: () => {
               checkState.value = true;
+              orderStore.orders = saleStore.order_initial;
               router.push(to);
             },
           });
@@ -246,8 +247,10 @@ export default defineComponent({
             positiveText: "Sí",
             onPositiveClick: () => {
               checkState.value = true;
+              orderStore.orders = saleStore.order_initial;
               router.push(to);
             },
+            closable: false,
           });
           return false;
         }
@@ -259,14 +262,14 @@ export default defineComponent({
         .then((response) => {
           if (response.status === 200) {
             orderStore.orders = response.data.order_details;
-            saleStore.sale_details = cloneDeep(orderStore.orderList);
+            saleStore.order_initial = cloneDeep(orderStore.orderList);
             orderStore.orderId = response.data.id;
           }
         })
         .catch((error) => {
           if (error.response.status === 404) {
             orderStore.orders = [];
-            saleStore.sale_details = [];
+            saleStore.order_initial = [];
             orderStore.orderId = null;
           } else {
             console.error(error);
