@@ -386,7 +386,6 @@
                   <td>S/. {{ order.subTotal.toFixed(2) }}</td>
                   <td>
                     <n-button
-                      v-if="!($route.name === 'TablePayment')"
                       type="error"
                       text
                       @click="orderStore.orderList.splice(index, 1)"

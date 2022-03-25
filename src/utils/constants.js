@@ -1038,30 +1038,43 @@ export const createOrderColumns = ({ showDetails, showDeliveryInfo, payDeliver, 
         {
             title: '#',
             key: 'number',
-            align: 'center',
+            width: 'auto',
             render(row, index) {
                 return index + 1
             }
         },
         {
             title: 'Cliente',
-            key: 'customer',
+            key: 'sale_customer',
             align: 'center',
+            width: 'auto',
         },
         {
             title: 'Usuario',
             key: 'user',
             align: 'center',
+            width: 'auto',
+        },
+        {
+            title: 'Monto',
+            key: 'amount',
+            align: 'center',
+            width: 'auto',
+            render(row) {
+                return `S/. ${parseFloat(row.amount).toFixed(2)}`
+            }
         },
         {
             title: 'Fecha',
             key: 'created',
             align: 'center',
+            width: 'auto',
         },
         {
             title: 'Tipo',
             key: 'type',
             align: 'center',
+            width: 'auto',
             render(row) {
                 let color, text;
                 if (row.table) {
@@ -1094,6 +1107,7 @@ export const createOrderColumns = ({ showDetails, showDeliveryInfo, payDeliver, 
             title: 'Estado',
             key: 'status',
             align: 'center',
+            width: 'auto',
             render(row) {
                 let type, text;
                 if (row.is_disabled) {
@@ -1128,7 +1142,7 @@ export const createOrderColumns = ({ showDetails, showDeliveryInfo, payDeliver, 
         {
             title: 'Acciones',
             key: 'actions',
-            width: 200,
+            width: 'auto',
             align: 'center',
             render(row) {
                 return [

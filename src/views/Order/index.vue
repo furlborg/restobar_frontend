@@ -62,7 +62,7 @@
         :columns="tableColumns"
         :data="orders"
         :loading="isTableLoading"
-        :pagination="pagination.total > 20 ? pagination : {}"
+        :pagination="pagination"
         remote
       />
     </n-card>
@@ -98,6 +98,7 @@ import {
   nullOrder,
   updateOrderStatus,
 } from "@/api/modules/orders";
+import { cancelTableOrder } from "@/api/modules/tables";
 
 export default defineComponent({
   name: "Order",
@@ -143,7 +144,10 @@ export default defineComponent({
             pagination.value.pageCount = Math.trunc(
               Number(response.data.count) / pagination.value.pageSize
             );
-            if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+            if (
+              Number(response.data.count) % pagination.value.pageSize !== 0 ||
+              pagination.value.pageCount === 0
+            ) {
               ++pagination.value.pageCount;
             }
             orders.value = response.data.results;
@@ -169,7 +173,10 @@ export default defineComponent({
             pagination.value.pageCount = Math.trunc(
               Number(response.data.count) / pagination.value.pageSize
             );
-            if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+            if (
+              Number(response.data.count) % pagination.value.pageSize !== 0 ||
+              pagination.value.pageCount === 0
+            ) {
               ++pagination.value.pageCount;
             }
             orders.value = response.data.results;
@@ -193,7 +200,10 @@ export default defineComponent({
           pagination.value.pageCount = Math.trunc(
             Number(response.data.count) / pagination.value.pageSize
           );
-          if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+          if (
+            Number(response.data.count) % pagination.value.pageSize !== 0 ||
+            pagination.value.pageCount === 0
+          ) {
             ++pagination.value.pageCount;
           }
           orders.value = response.data.results;
@@ -221,7 +231,10 @@ export default defineComponent({
           pagination.value.pageCount = Math.trunc(
             Number(response.data.count) / pagination.value.pageSize
           );
-          if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+          if (
+            Number(response.data.count) % pagination.value.pageSize !== 0 ||
+            pagination.value.pageCount === 0
+          ) {
             ++pagination.value.pageCount;
           }
           orders.value = response.data.results;
@@ -328,6 +341,21 @@ export default defineComponent({
             negativeText: "No",
             onPositiveClick: async () => {
               isTableLoading.value = true;
+              if (row.table) {
+                await cancelTableOrder(row.table)
+                  .then((response) => {
+                    if (response.status === 204) {
+                      message.success("Anulado");
+                    }
+                  })
+                  .catch((error) => {
+                    console.error(error);
+                    message.error("Algo salió mal...");
+                  })
+                  .finally(() => {
+                    loadOrders();
+                  });
+              }
               await nullOrder(row.id)
                 .then((response) => {
                   if (response.status === 204) {

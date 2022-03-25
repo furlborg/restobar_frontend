@@ -173,7 +173,7 @@
         :columns="tableColumns"
         :data="movements"
         :loading="isLoading"
-        :pagination="pagination.total > 20 ? pagination : {}"
+        :pagination="pagination"
       />
     </n-card>
     <movement-modal

@@ -109,7 +109,12 @@ export default defineComponent({
               userStore.login(response.data);
               message.success("¡Inicio de sesión correcto!");
               loading.value = false;
-              router.push({ name: "Dashboard" });
+              router.push({
+                name:
+                  userStore.user.profile_des === "MOZO"
+                    ? "WaiterMode"
+                    : "Dashboard",
+              });
             })
             .catch((error) => {
               console.error(error);

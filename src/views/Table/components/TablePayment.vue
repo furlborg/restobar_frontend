@@ -229,7 +229,7 @@
         <n-button
           class="fs-1 py-5 mt-2"
           type="success"
-          :disabled="changing > 0"
+          :disabled="!saleStore.toSale.length || payment_amount < sale.amount"
           secondary
           block
           @click.prevent="performCreateSale"
@@ -352,11 +352,11 @@ export default defineComponent({
             title: "Venta",
             content: "Realizar venta?",
             positiveText: "Sí",
-            onPositiveClick: () => {
+            onPositiveClick: async () => {
               loading.value = true;
               sale.value.order = orderStore.orderId;
               sale.value.sale_details = saleStore.toSale;
-              createSale(sale.value)
+              await createSale(sale.value)
                 .then((response) => {
                   if (response.status === 201) {
                     message.success("Venta realizada correctamente!");
@@ -379,9 +379,9 @@ export default defineComponent({
       });
     };
 
-    const obtainSaleNumber = () => {
+    const obtainSaleNumber = async () => {
       loading.value = true;
-      getSaleNumber(sale.value.serie)
+      await getSaleNumber(sale.value.serie)
         .then((response) => {
           if (response.status === 200) {
             sale.value.number = Number(response.data.number) + 1;
@@ -464,13 +464,13 @@ export default defineComponent({
 
     const { serie } = toRefs(sale.value);
 
-    watch(serie, () => {
-      obtainSaleNumber();
+    watch(serie, async () => {
+      await obtainSaleNumber();
     });
 
-    onMounted(() => {
+    onMounted(async () => {
       document.title = "Venta | App";
-      obtainSaleNumber();
+      await obtainSaleNumber();
     });
 
     const onCloseModal = () => {

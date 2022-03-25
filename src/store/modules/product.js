@@ -7,15 +7,15 @@ export const useProductStore = defineStore('product', {
         places: [],
     }),
     actions: {
-        initializeStore() {
-            getProductCategories()
+        async initializeStore() {
+            await getProductCategories()
                 .then(response => {
                     this.categories = response.data
                 })
                 .catch(error => {
                     console.error(error)
                 })
-            getProductPlaces()
+            await getProductPlaces()
                 .then(response => {
                     this.places = response.data
                 })
@@ -23,10 +23,19 @@ export const useProductStore = defineStore('product', {
                     console.error(error)
                 })
         },
-        refreshCategories() {
-            return getProductCategories()
+        async refreshCategories() {
+            return await getProductCategories()
                 .then(response => {
                     this.categories = response.data
+                })
+                .catch(error => {
+                    console.error(error)
+                })
+        },
+        async refreshPlaces() {
+            return await getProductPlaces()
+                .then(response => {
+                    this.places = response.data
                 })
                 .catch(error => {
                     console.error(error)

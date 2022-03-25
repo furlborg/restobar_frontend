@@ -222,6 +222,17 @@ export const routes = [
     path: '/login',
     name: 'Login',
     component: () => import(/* webpackChunkName: "waiter-mode" */ '@/views/login'),
+    beforeEnter: async (to, from, next) => {
+      const userStore = useUserStore()
+      await userStore.checkAuthentication()
+      if (!userStore.isAuthenticated) {
+        next()
+        return
+      } else {
+        next({ name: 'App' })
+        return
+      }
+    }
   },
   {
     path: '/initial-setup',
@@ -238,6 +249,7 @@ export const routes = [
     component: () => import(/* webpackChunkName: "waiter-mode" */ '@/WaiterMode'),
     meta: {
       requiresAuth: true,
+      onlyWaiter: true,
     },
     children: [
       {
