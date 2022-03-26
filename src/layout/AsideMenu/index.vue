@@ -12,6 +12,7 @@
 import { defineComponent, h, computed } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import { useUserStore } from "@/store/modules/user";
+import { useTillStore } from "@/store/modules/till";
 import { renderIcon } from "@/utils";
 import { routes } from "@/router";
 
@@ -24,6 +25,7 @@ export default defineComponent({
   },
   setup() {
     const userStore = useUserStore();
+    const tillStore = useTillStore();
     const currentRoute = useRoute();
 
     const openKey = computed(() => {
@@ -46,45 +48,7 @@ export default defineComponent({
         key: "Dashboard",
         icon: renderIcon("md-spacedashboard-twotone"),
         exclude: [],
-      },
-      {
-        label: () =>
-          h(
-            RouterLink,
-            {
-              to: { name: "Table" },
-            },
-            () => h("span", "Mesas")
-          ),
-        key: "Table",
-        icon: renderIcon("md-dining-twotone"),
-        exclude: [],
-      },
-      {
-        label: () =>
-          h(
-            RouterLink,
-            {
-              to: { name: "Orders" },
-            },
-            () => h("span", "Pedidos")
-          ),
-        key: "Orders",
-        icon: renderIcon("md-pendingactions-twotone"),
-        exclude: [],
-      },
-      {
-        label: () =>
-          h(
-            RouterLink,
-            {
-              to: { name: "Sales" },
-            },
-            () => h("span", "Ventas")
-          ),
-        key: "Sales",
-        icon: renderIcon("md-description-twotone"),
-        exclude: [],
+        tillOpened: false,
       },
       {
         label: () =>
@@ -98,6 +62,49 @@ export default defineComponent({
         key: "Till",
         icon: renderIcon("md-pointofsale-twotone"),
         exclude: [],
+        tillOpened: false,
+      },
+      {
+        label: () =>
+          h(
+            RouterLink,
+            {
+              to: { name: "Table" },
+            },
+            () => h("span", "Mesas")
+          ),
+        key: "Table",
+        icon: renderIcon("md-dining-twotone"),
+        exclude: [],
+        tillOpened: true,
+      },
+      {
+        label: () =>
+          h(
+            RouterLink,
+            {
+              to: { name: "Orders" },
+            },
+            () => h("span", "Pedidos")
+          ),
+        key: "Orders",
+        icon: renderIcon("md-pendingactions-twotone"),
+        exclude: [],
+        tillOpened: true,
+      },
+      {
+        label: () =>
+          h(
+            RouterLink,
+            {
+              to: { name: "Sales" },
+            },
+            () => h("span", "Ventas")
+          ),
+        key: "Sales",
+        icon: renderIcon("md-description-twotone"),
+        exclude: [],
+        tillOpened: false,
       },
       {
         label: () =>
@@ -111,6 +118,7 @@ export default defineComponent({
         key: "Product",
         icon: renderIcon("md-fastfood-twotone"),
         exclude: [],
+        tillOpened: false,
       },
       /* {
         label: () =>
@@ -136,6 +144,7 @@ export default defineComponent({
         key: "Supplier",
         icon: renderIcon("md-villa-twotone"),
         exclude: [],
+        tillOpened: false,
       },
       {
         label: () =>
@@ -149,6 +158,7 @@ export default defineComponent({
         key: "Supplies",
         icon: renderIcon("md-kitchen-twotone"),
         exclude: [],
+        tillOpened: false,
       },
       {
         label: () =>
@@ -162,6 +172,7 @@ export default defineComponent({
         key: "Kardex",
         icon: renderIcon("md-equalizer-twotone"),
         exclude: [],
+        tillOpened: false,
       },
       {
         label: () =>
@@ -175,6 +186,7 @@ export default defineComponent({
         key: "Customer",
         icon: renderIcon("md-supervisedusercircle-twotone"),
         exclude: [],
+        tillOpened: false,
       },
       {
         label: () =>
@@ -188,11 +200,16 @@ export default defineComponent({
         key: "Settings",
         icon: renderIcon("md-settings-twotone"),
         exclude: ["CAJERO"],
+        tillOpened: false,
       },
     ];
 
     const menuOptions = computed(() => {
-      return routesToOptions.filter(
+      let routes = routesToOptions;
+      if (!tillStore.currentTillID) {
+        routes = routesToOptions.filter((option) => !option.tillOpened);
+      }
+      return routes.filter(
         (option) =>
           !option.exclude.find((item) => item === userStore.user.profile_des)
       );

@@ -34,27 +34,26 @@
           </n-button>
         </n-space>
       </template>
-      <n-space justify="space-between">
-        <n-input-group>
-          <n-input
-            v-model:value="search"
-            @keypress.enter="performSearch"
-            placeholder="Buscar..."
-            clearable
-          />
-          <n-button type="primary" @click="performSearch" secondary>
-            <v-icon name="md-search-round" />
-          </n-button>
-        </n-input-group>
-        <n-radio-group v-model:value="listType" name="listType" size="small">
+      <n-input-group>
+        <n-input
+          class="w-25"
+          v-model:value="search"
+          @keypress.enter="performSearch"
+          placeholder="Buscar..."
+          clearable
+        />
+        <n-button type="primary" @click="performSearch" secondary>
+          <v-icon name="md-search-round" />
+        </n-button>
+      </n-input-group>
+      <!-- <n-radio-group v-model:value="listType" name="listType" size="small">
           <n-radio-button class="p-0" value="list" key="list">
             <v-icon class="m-1" name="md-list-round" />
           </n-radio-button>
           <n-radio-button class="p-0" value="grid" key="grid">
             <v-icon class="m-1" name="md-gridview-round" />
           </n-radio-button>
-        </n-radio-group>
-      </n-space>
+        </n-radio-group> -->
       <n-spin class="mt-2" :show="isLoadingData">
         <n-scrollbar style="height: 70vh; min-height: 650px">
           <!-- Products List -->

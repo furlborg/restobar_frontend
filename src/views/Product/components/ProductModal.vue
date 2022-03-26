@@ -488,7 +488,7 @@ export default defineComponent({
             parseInt(product.value.stock) <= 0
           ) {
             message.warning("La cantidad debe ser mayor a 0.");
-          } else if (product.value.stock.toString().length > 12) {
+          } else if (product.value.stock.length > 12) {
             message.warning(
               "Asegúrese de que no haya más de 12 digitos en el Stock Inicial."
             );

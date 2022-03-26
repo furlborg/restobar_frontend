@@ -478,6 +478,9 @@ export default defineComponent({
     const router = useRouter();
     const saleStore = useSaleStore();
     const orderStore = useOrderStore();
+    orderStore.orders = [];
+    saleStore.order_initial = [];
+    orderStore.orderId = null;
 
     const loading = ref(false);
     const payment_amount = ref(parseFloat(0).toFixed(2));
@@ -712,7 +715,6 @@ export default defineComponent({
               takeAwayOrder(orderStore.orderList, sale.value)
                 .then((response) => {
                   if (response.status === 201) {
-                    console.log(response.data);
                     message.success("Venta realizada correctamente!");
                     router.push({ name: "Orders" });
                   }
