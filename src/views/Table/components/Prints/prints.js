@@ -60,5 +60,17 @@ export const generatePrint = (structure) => {
   });
 
   // doc.save("ReporteGeneral.pdf");
-  window.open(URL.createObjectURL(doc.output("blob")));
+  // window.open(URL.createObjectURL(doc.output("blob")));
+  doc.autoPrint();
+
+  const hiddFrame = document.createElement("iframe");
+  hiddFrame.style.position = "fixed";
+  // "visibility: hidden" would trigger safety rules in some browsers like safari，
+  // in which the iframe display in a pretty small size instead of hidden.
+  // here is some little hack ~
+  hiddFrame.style.width = "1px";
+  hiddFrame.style.height = "1px";
+  hiddFrame.style.opacity = "0.01";
+  hiddFrame.src = doc.output("bloburl");
+  document.body.appendChild(hiddFrame);
 };
