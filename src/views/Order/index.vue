@@ -1,6 +1,14 @@
 <template>
   <div id="Order">
-    <n-card title="Ventas" :segmented="{ content: 'hard' }">
+    <n-card title="Pedidos" :segmented="{ content: 'hard' }">
+      <template #header-extra>
+        <n-button
+          type="info"
+          secondary
+          @click="$router.push({ name: 'TakeOrder' })"
+          >Realizar pedido</n-button
+        >
+      </template>
       <n-space justify="space-between">
         <n-button
           type="info"
@@ -33,49 +41,11 @@
             cols="6 s:6 m:12 l:12 xl:24 2xl:24"
             :x-gap="12"
           >
-            <n-form-item-gi label="Cliente" :span="4">
-              <n-input
-                v-model:value="filterParams.customer"
-                placeholder=""
-                @keypress="isLetter($event)"
-              />
-            </n-form-item-gi>
-            <n-form-item-gi label="Serie" :span="2">
-              <n-select
-                v-model:value="filterParams.serie"
-                :options="saleStore.getSeriesOptions"
-                placeholder=""
-                clearable
-              />
-            </n-form-item-gi>
-            <n-form-item-gi label="Número" :span="2">
-              <n-input
-                v-model:value="filterParams.number"
-                placeholder=""
-                @keypress="isNumber($event)"
-              />
-            </n-form-item-gi>
-            <n-form-item-gi label="Método Pago" :span="3">
-              <n-select
-                v-model:value="filterParams.payment_method"
-                :options="saleStore.getPaymentMethodsOptions"
-                placeholder=""
-                clearable
-              />
-            </n-form-item-gi>
-            <n-form-item-gi label="Estado" :span="2">
-              <n-select
-                v-model:value="filterParams.status"
-                :options="statusOptions"
-                placeholder=""
-                clearable
-              />
-            </n-form-item-gi>
             <n-form-item-gi label="Fecha" :span="6">
               <n-date-picker
-                type="daterange"
-                v-model:formatted-value="filterParams.date_sale"
-                format="dd/MM/yyyy"
+                type="datetimerange"
+                v-model:formatted-value="filterParams.created"
+                format="dd/MM/yyyy HH:mm:ss"
                 clearable
               />
             </n-form-item-gi>
@@ -92,14 +62,20 @@
         :columns="tableColumns"
         :data="orders"
         :loading="isTableLoading"
-        :pagination="orders.length > 20 ? pagination : {}"
+        :pagination="pagination"
         remote
       />
     </n-card>
     <!-- Details Modal -->
     <details-modal
-      v-model:show="showModal"
+      v-model:show="showDetailsModal"
       :id-order="idOrder"
+      @update:show="onCloseModal"
+    />
+    <!-- Details Modal -->
+    <delivery-modal
+      v-model:show="showDeliveryModal"
+      :delivery="delivery"
       @update:show="onCloseModal"
     />
   </div>
@@ -109,6 +85,7 @@
 import { defineComponent, ref, onMounted } from "vue";
 import { useMessage, useDialog } from "naive-ui";
 import DetailsModal from "./components/DetailsModal";
+import DeliveryModal from "./components/DeliveryModal";
 import { createOrderColumns } from "@/utils/constants";
 import { useBusinessStore } from "@/store/modules/business";
 import { useTillStore } from "@/store/modules/till";
@@ -119,12 +96,15 @@ import {
   listOrdersByPage,
   searchOrders,
   nullOrder,
+  updateOrderStatus,
 } from "@/api/modules/orders";
+import { cancelTableOrder } from "@/api/modules/tables";
 
 export default defineComponent({
   name: "Order",
   components: {
     DetailsModal,
+    DeliveryModal,
   },
   setup() {
     const message = useMessage();
@@ -133,12 +113,15 @@ export default defineComponent({
     const userStore = useUserStore();
     const tillStore = useTillStore();
     const isTableLoading = ref(false);
-    const showModal = ref(false);
+    const showDetailsModal = ref(false);
+    const showDeliveryModal = ref(false);
     const orders = ref([]);
     const idOrder = ref(0);
+    const delivery = ref({});
     const showFilters = ref(false);
     const filterParams = ref({
       till: tillStore.currentTillID,
+      created: null,
     });
     const pagination = ref({
       pageSearchParams: null,
@@ -161,7 +144,10 @@ export default defineComponent({
             pagination.value.pageCount = Math.trunc(
               Number(response.data.count) / pagination.value.pageSize
             );
-            if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+            if (
+              Number(response.data.count) % pagination.value.pageSize !== 0 ||
+              pagination.value.pageCount === 0
+            ) {
               ++pagination.value.pageCount;
             }
             orders.value = response.data.results;
@@ -187,7 +173,10 @@ export default defineComponent({
             pagination.value.pageCount = Math.trunc(
               Number(response.data.count) / pagination.value.pageSize
             );
-            if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+            if (
+              Number(response.data.count) % pagination.value.pageSize !== 0 ||
+              pagination.value.pageCount === 0
+            ) {
               ++pagination.value.pageCount;
             }
             orders.value = response.data.results;
@@ -211,7 +200,10 @@ export default defineComponent({
           pagination.value.pageCount = Math.trunc(
             Number(response.data.count) / pagination.value.pageSize
           );
-          if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+          if (
+            Number(response.data.count) % pagination.value.pageSize !== 0 ||
+            pagination.value.pageCount === 0
+          ) {
             ++pagination.value.pageCount;
           }
           orders.value = response.data.results;
@@ -239,7 +231,10 @@ export default defineComponent({
           pagination.value.pageCount = Math.trunc(
             Number(response.data.count) / pagination.value.pageSize
           );
-          if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+          if (
+            Number(response.data.count) % pagination.value.pageSize !== 0 ||
+            pagination.value.pageCount === 0
+          ) {
             ++pagination.value.pageCount;
           }
           orders.value = response.data.results;
@@ -254,6 +249,7 @@ export default defineComponent({
     };
 
     const refreshTable = () => {
+      filterParams.value.created = null;
       pagination.value.pageSearchParams = null;
       pagination.value.page = 1;
       loadOrders();
@@ -277,6 +273,7 @@ export default defineComponent({
     const onCloseModal = () => {
       document.title = "Pedidos | App";
       idOrder.value = 0;
+      delivery.value = null;
     };
 
     onMounted(() => {
@@ -298,15 +295,43 @@ export default defineComponent({
       userStore,
       idOrder,
       orders,
-      showModal,
+      showDetailsModal,
+      delivery,
+      showDeliveryModal,
       onCloseModal,
       tableColumns: createOrderColumns({
         showDetails(row) {
           idOrder.value = row.id;
-          showModal.value = true;
+          showDetailsModal.value = true;
+        },
+        showDeliveryInfo(row) {
+          delivery.value = row.delivery_info;
+          showDeliveryModal.value = true;
         },
         payDeliver(row) {
-          message.success("Pagar delivery");
+          dialog.success({
+            title: "Pedido cobrado",
+            content: "¿El pedido ya ha sido cobrado?",
+            positiveText: "Si",
+            negativeText: "No",
+            onPositiveClick: async () => {
+              isTableLoading.value = true;
+              await updateOrderStatus(row.id)
+                .then((response) => {
+                  if (response.status === 202) {
+                    message.success("¡Pedido cobrado!");
+                  }
+                })
+                .catch((error) => {
+                  console.error(error);
+                  message.error("Algo salió mal...");
+                })
+                .finally(() => {
+                  loadOrders();
+                });
+            },
+            onNegativeClick: () => {},
+          });
         },
         nullifyOrder(row) {
           dialog.error({
@@ -316,6 +341,21 @@ export default defineComponent({
             negativeText: "No",
             onPositiveClick: async () => {
               isTableLoading.value = true;
+              if (row.table) {
+                await cancelTableOrder(row.table)
+                  .then((response) => {
+                    if (response.status === 204) {
+                      message.success("Anulado");
+                    }
+                  })
+                  .catch((error) => {
+                    console.error(error);
+                    message.error("Algo salió mal...");
+                  })
+                  .finally(() => {
+                    loadOrders();
+                  });
+              }
               await nullOrder(row.id)
                 .then((response) => {
                   if (response.status === 204) {

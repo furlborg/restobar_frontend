@@ -45,11 +45,11 @@ export const useUserStore = defineStore('user', {
             if (localStorage.getItem('isAuthenticated') && useCookie.get('user-info') && useCookie.isKey('refresh') && localStorage.getItem('isAuthenticated') == 'true') {
                 this.isAuthenticated = true
                 this.user = useCookie.get('user-info')
+                this.refresh = useCookie.get('refresh')
                 if (!useCookie.isKey('token') && localStorage.getItem('isAuthenticated') && useCookie.get('user-info') && useCookie.isKey('refresh') && localStorage.getItem('isAuthenticated') == 'true') {
                     await this.updateToken()
                 } else {
                     this.token = useCookie.get('token')
-                    this.refresh = useCookie.get('refresh')
                 }
             } else {
                 this.logout()

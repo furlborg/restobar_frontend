@@ -98,6 +98,7 @@ import {
     MdPendingactionsTwotone,
     MdFeedRound,
     FaDollarSign,
+    MdDeliverydiningRound,
 } from "oh-vue-icons/icons";
 OhVueIcon.add(
     BiThreeDots,
@@ -198,5 +199,6 @@ OhVueIcon.add(
     MdPendingactionsTwotone,
     MdFeedRound,
     FaDollarSign,
+    MdDeliverydiningRound,
 );
 export { OhVueIcon }

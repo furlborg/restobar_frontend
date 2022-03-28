@@ -1,6 +1,6 @@
 import { h } from "vue"
 import { NButton, NTag, NPopover, NText, NSpace } from "naive-ui"
-import { renderIcon } from "@/utils"
+import { renderIcon, lighten } from "@/utils"
 import { OhVueIcon } from '@/plugins/icon'
 import { useSaleStore } from '@/store/modules/sale';
 import { useTillStore } from '@/store/modules/till';
@@ -1033,44 +1033,97 @@ export const createSaleColumns = ({ printSale, miscSale, sendSale, nullifySale }
     ]
 }
 
-export const createOrderColumns = ({ showDetails, payDeliver, nullifyOrder }) => {
+export const createOrderColumns = ({ showDetails, showDeliveryInfo, payDeliver, nullifyOrder }) => {
     return [
         {
             title: '#',
             key: 'number',
+            width: 'auto',
             render(row, index) {
                 return index + 1
             }
         },
         {
             title: 'Cliente',
-            key: 'customer'
+            key: 'sale_customer',
+            align: 'center',
+            width: 'auto',
         },
         {
-            title: 'Documento',
-            key: 'document',
+            title: 'Usuario',
+            key: 'user',
+            align: 'center',
+            width: 'auto',
+        },
+        {
+            title: 'Monto',
+            key: 'amount',
+            align: 'center',
+            width: 'auto',
             render(row) {
-                return row.id
+                return `S/. ${parseFloat(row.amount).toFixed(2)}`
             }
+        },
+        {
+            title: 'Fecha',
+            key: 'created',
+            align: 'center',
+            width: 'auto',
         },
         {
             title: 'Tipo',
             key: 'type',
+            align: 'center',
+            width: 'auto',
+            render(row) {
+                let color, text;
+                if (row.table) {
+                    color = "#3B689F"
+                    text = "EN MESA"
+                } else {
+                    if (row.is_delivery) {
+                        color = "#995C4E"
+                        text = "DELIVERY"
+                    } else {
+                        color = "#926ED7"
+                        text = "PARA LLEVAR"
+                    }
+                }
+
+                return h(
+                    NTag,
+                    {
+                        size: 'small',
+                        color: { color: lighten(color, 48), textColor: color, borderColor: lighten(color, 24) },
+                        round: false
+                    },
+                    {
+                        default: () => text
+                    }
+                )
+            }
         },
         {
             title: 'Estado',
             key: 'status',
+            align: 'center',
+            width: 'auto',
             render(row) {
-                let type, text
-                if (row.status === '1') {
-                    type = "warning"
-                    text = "PENDIENTE"
-                } else if (row.status === '2') {
-                    type = "success"
-                    text = "COBRADO"
-                } else {
+                let type, text;
+                if (row.is_disabled) {
                     type = "error"
-                    text = "-"
+                    text = "ANULADO"
+                } else {
+                    if (row.status === '1') {
+                        type = "warning"
+                        text = "PENDIENTE"
+                    } else if (row.status === '2') {
+                        type = "success"
+                        text = "COBRADO"
+                    } else {
+                        type = "error"
+                        text = "-"
+                    }
                 }
 
                 return h(
@@ -1089,7 +1142,8 @@ export const createOrderColumns = ({ showDetails, payDeliver, nullifyOrder }) =>
         {
             title: 'Acciones',
             key: 'actions',
-            width: 200,
+            width: 'auto',
+            align: 'center',
             render(row) {
                 return [
                     h(
@@ -1099,22 +1153,33 @@ export const createOrderColumns = ({ showDetails, payDeliver, nullifyOrder }) =>
                             size: 'small',
                             type: 'info',
                             secondary: true,
-                            disabled: row.status === 'E',
                             onClick: () => showDetails(row)
                         },
                         renderIcon('md-feed-round')
                     ),
-                    h(
+                    row.is_delivery ? h(
+                        NButton,
+                        {
+                            class: 'me-2',
+                            size: 'small',
+                            type: 'warning',
+                            secondary: true,
+                            onClick: () => showDeliveryInfo(row)
+                        },
+                        renderIcon('md-deliverydining-round')
+                    ) : null,
+                    row.is_delivery ? h(
                         NButton,
                         {
                             class: 'me-2',
                             size: 'small',
                             type: 'success',
                             secondary: true,
+                            disabled: row.status === '2',
                             onClick: () => payDeliver(row)
                         },
                         renderIcon('fa-dollar-sign')
-                    ),
+                    ) : null,
                     h(
                         NButton,
                         {

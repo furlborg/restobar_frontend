@@ -144,7 +144,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(detail, index) in sale.sale_details" :key="index">
+            <tr v-for="(detail, index) in saleStore.toSale" :key="index">
               <td>{{ index + 1 }}</td>
               <td>{{ detail.quantity }}</td>
               <td>
@@ -229,7 +229,7 @@
         <n-button
           class="fs-1 py-5 mt-2"
           type="success"
-          :disabled="changing > 0"
+          :disabled="!saleStore.toSale.length || payment_amount < sale.amount"
           secondary
           block
           @click.prevent="performCreateSale"
@@ -247,15 +247,7 @@
 </template>
 
 <script>
-import {
-  defineComponent,
-  ref,
-  toRefs,
-  computed,
-  watch,
-  onMounted,
-  toRef,
-} from "vue";
+import { defineComponent, ref, toRefs, computed, watch, onMounted } from "vue";
 import CustomerModal from "@/views/Customer/components/CustomerModal";
 import { useRouter } from "vue-router";
 import { useOrderStore } from "@/store/modules/order";
@@ -287,7 +279,7 @@ export default defineComponent({
     const loading = ref(false);
     const dialog = useDialog();
     const showModal = ref(false);
-    const payment_amount = ref(saleStore.saleTotal.toFixed(2));
+    const payment_amount = ref(parseFloat(0).toFixed(2));
     const saleForm = ref();
     const changing = computed(() => {
       return payment_amount.value > total.value
@@ -298,13 +290,13 @@ export default defineComponent({
     const showObservations = ref(false);
 
     const subTotal = computed(() => {
-      return sale.value.sale_details.reduce((acc, curVal) => {
+      return saleStore.toSale.reduce((acc, curVal) => {
         return (acc += curVal.price_sale * curVal.quantity);
       }, 0);
     });
 
     const products_count = computed(() => {
-      return sale.value.sale_details.reduce((acc, curVal) => {
+      return saleStore.toSale.reduce((acc, curVal) => {
         return (acc += curVal.quantity);
       }, 0);
     });
@@ -314,7 +306,7 @@ export default defineComponent({
     });
 
     const sale = ref({
-      order: orderStore.orderId,
+      order: null,
       serie: saleStore.getFirstOption(3),
       number: "",
       date_sale: format(new Date(Date.now()), "dd/MM/yyyy hh:mm:ss"),
@@ -329,7 +321,7 @@ export default defineComponent({
       discount: "0.00",
       observations: "",
       by_consumption: false,
-      sale_details: saleStore.toSale,
+      sale_details: [],
     });
 
     const selectSerie = (v) => {
@@ -596,9 +588,11 @@ export default defineComponent({
             title: "Venta",
             content: "Realizar venta?",
             positiveText: "Sí",
-            onPositiveClick: () => {
+            onPositiveClick: async () => {
               loading.value = true;
-              createSale(sale.value)
+              sale.value.order = orderStore.orderId;
+              sale.value.sale_details = saleStore.toSale;
+              await createSale(sale.value)
                 .then((response) => {
                   if (response.status === 201) {
                     printSale(response.data);
@@ -622,16 +616,16 @@ export default defineComponent({
       });
     };
 
-    const obtainSaleNumber = () => {
+    const obtainSaleNumber = async () => {
       loading.value = true;
-      getSaleNumber(sale.value.serie)
+      await getSaleNumber(sale.value.serie)
         .then((response) => {
           if (response.status === 200) {
             sale.value.number = Number(response.data.number) + 1;
           }
         })
         .catch((error) => {
-          console.log(error);
+          console.error(error);
           message.error("Algo salió mal...");
         })
         .finally(() => {
@@ -707,16 +701,13 @@ export default defineComponent({
 
     const { serie } = toRefs(sale.value);
 
-    watch(serie, () => {
-      !sale.value.sale_details.length
-        ? (sale.value.sale_details = saleStore.toSale)
-        : null;
-      obtainSaleNumber();
+    watch(serie, async () => {
+      await obtainSaleNumber();
     });
 
-    onMounted(() => {
+    onMounted(async () => {
       document.title = "Venta | App";
-      obtainSaleNumber();
+      await obtainSaleNumber();
     });
 
     const onCloseModal = () => {

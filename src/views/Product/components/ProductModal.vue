@@ -18,14 +18,20 @@
           :x-gap="12"
         >
           <n-form-item-gi label="Nombre" path="name" :span="12">
-            <n-input v-model:value="product.name" @input="product.name = $event.toUpperCase()"  placeholder="" />
+            <n-input
+              v-model:value="product.name"
+              @input="product.name = $event.toUpperCase()"
+              placeholder=""
+            />
           </n-form-item-gi>
           <n-form-item-gi label="Precio Compra" path="purchase_price" :span="5">
             <n-input
               type="number"
               v-model:value="product.purchase_price"
               placeholder=""
-              @input="product.purchase_price = restrictDecimal(product.purchase_price)"
+              @input="
+                product.purchase_price = restrictDecimal(product.purchase_price)
+              "
             />
           </n-form-item-gi>
           <n-form-item-gi label="Precio venta" path="prices" :span="5">
@@ -183,10 +189,7 @@
               placeholder=""
             />
           </n-form-item-gi>
-          <n-form-item-gi
-            label="Almacen"
-            :span="12"
-          >
+          <n-form-item-gi label="Almacen" :span="12">
             <n-select
               v-model:value="product.branchoffice"
               :disabled="product.id ? true : false"
@@ -351,7 +354,7 @@ export default defineComponent({
       purchase_price: null,
       measure_unit: 1,
       control_stock: false,
-      stock: null,
+      stock: "",
       icbper: false,
       number_points: null,
       redeem_points: null,
@@ -393,17 +396,20 @@ export default defineComponent({
         .then((response) => {
           optionsEstablishment.value = [];
           response.data.map((v) => {
-            if (userStore.user.branchoffice == null || userStore.user.profile_des == "ADMINISTRADOR" ) {
+            if (
+              userStore.user.branchoffice == null ||
+              userStore.user.profile_des == "ADMINISTRADOR"
+            ) {
               optionsEstablishment.value.push({
                 label: v.description,
                 value: v.id,
-              })
-            }else{
+              });
+            } else {
               if (userStore.user.branchoffice == v.id) {
                 optionsEstablishment.value.push({
                   label: v.description,
                   value: v.id,
-                })
+                });
               }
             }
           });
@@ -455,7 +461,7 @@ export default defineComponent({
           purchase_price: null,
           measure_unit: 1,
           control_stock: false,
-          stock: null,
+          stock: "",
           icbper: false,
           number_points: null,
           redeem_points: null,
@@ -472,13 +478,17 @@ export default defineComponent({
       e.preventDefault();
       productRef.value.validate((errors) => {
         if (!errors) {
-          if (product.value.control_supplie && product.value.supplies.length < 1) {
+          if (
+            product.value.control_supplie &&
+            product.value.supplies.length < 1
+          ) {
             message.warning("Necesitas agregar insumos.");
-          }else if (product.value.control_stock && product.value.stock == null || parseInt(product.value.stock) <= 0) {
+          } else if (
+            (product.value.control_stock && product.value.stock == "") ||
+            parseInt(product.value.stock) <= 0
+          ) {
             message.warning("La cantidad debe ser mayor a 0.");
-          }else if (product.value.stock.length > 12) {
-            message.warning("Asegúrese de que no haya más de 12 digitos en el Stock Inicial.");
-          }else {
+          } else {
             isLoadingData.value = true;
             createProduct(product.value)
               .then((response) => {
@@ -703,8 +713,8 @@ export default defineComponent({
         let data = value.match(/^\d+\.?\d{0,3}/);
         if (data) {
           return data[0];
-        }else{
-          return null
+        } else {
+          return null;
         }
       },
     };
