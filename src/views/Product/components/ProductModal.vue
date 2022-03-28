@@ -484,14 +484,10 @@ export default defineComponent({
           ) {
             message.warning("Necesitas agregar insumos.");
           } else if (
-            (product.value.control_stock && product.value.stock == null) ||
+            (product.value.control_stock && product.value.stock == "") ||
             parseInt(product.value.stock) <= 0
           ) {
             message.warning("La cantidad debe ser mayor a 0.");
-          } else if (product.value.stock.length > 12) {
-            message.warning(
-              "Asegúrese de que no haya más de 12 digitos en el Stock Inicial."
-            );
           } else {
             isLoadingData.value = true;
             createProduct(product.value)
