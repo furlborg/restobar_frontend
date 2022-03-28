@@ -63,6 +63,7 @@ export async function createTableOrder(idTable, details) {
     let order_details = details.map(order => ({ product: order.product, indication: order.indication, quantity: order.quantity }))
     return await http.post(`tables/${idTable}/take_order/`, {
         till: tillStore.currentTillID,
+        order_type: 'M',
         order_details: order_details,
     })
 }

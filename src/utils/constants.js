@@ -1077,17 +1077,24 @@ export const createOrderColumns = ({ showDetails, showDeliveryInfo, payDeliver, 
             width: 'auto',
             render(row) {
                 let color, text;
-                if (row.table) {
-                    color = "#3B689F"
-                    text = "EN MESA"
-                } else {
-                    if (row.is_delivery) {
-                        color = "#995C4E"
-                        text = "DELIVERY"
-                    } else {
+                switch (row.order_type) {
+                    case 'M':
+                        color = "#3B689F"
+                        text = "EN MESA"
+                        break;
+                    case 'P':
                         color = "#926ED7"
                         text = "PARA LLEVAR"
-                    }
+                        break;
+                    case 'D':
+                        color = "#995C4E"
+                        text = "DELIVERY"
+                        break;
+                    default:
+                        color = "#D03050FF"
+                        text = "ERROR"
+                        console.log("Algo salió mal...")
+                        break;
                 }
 
                 return h(
