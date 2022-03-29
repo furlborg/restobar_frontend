@@ -64,6 +64,7 @@ export async function takeAwayOrder(order_details, sale_data) {
     let order = {
         till: tillStore.currentTillID,
         order_details: details,
+        order_type: sale_data.delivery_info ? 'D' : 'P',
         delivery_info: sale_data.delivery_info
     }
     let sale = {
