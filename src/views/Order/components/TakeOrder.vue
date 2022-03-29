@@ -465,6 +465,8 @@ import {
 } from "@/api/modules/customer";
 import format from "date-fns/format";
 
+import { generatePrint } from "./Prints/prints";
+
 export default defineComponent({
   name: "TakeOrder",
   directives: { autowidth: VueInputAutowidth },
@@ -702,6 +704,242 @@ export default defineComponent({
         : (sale.value.delivery_info = null);
     };
 
+    const printSale = (val) => {
+      console.log(val);
+      let dataForPrint = JSON.parse(val.json_sale);
+
+      let typeDoc = dataForPrint.serie_documento.split("");
+
+      if (typeDoc[0] === "F") {
+        typeDoc = "FACTURA ELECTRONICA";
+      } else {
+        typeDoc = "BOLETA ELECTRONICA";
+      }
+
+      let datTotals = [
+        { img: "IMG", tittle: null, twoPoints: null, cont: null },
+      ];
+
+      let newTotal = {
+        "OP.GRAVADA": dataForPrint.totales.total_operaciones_gravadas,
+        "OP.EXONERADA": dataForPrint.totales.total_operaciones_exoneradas,
+        "OP.GRATUITAS": dataForPrint.totales.total_operaciones_gratuitas,
+        "IGV(18%)": dataForPrint.totales.total_igv,
+        DESCUENTOS: "Este webon no poene descuentos",
+        "IMPORTE TOTAL": dataForPrint.totales.total_venta,
+      };
+
+      for (let i in newTotal) {
+        datTotals.push({
+          tittle: i,
+          twoPoints: ":",
+          cont: newTotal[i],
+        });
+      }
+
+      let structure = [
+        {
+          dat: [
+            {
+              img: "ACA IRA UNA IMAGEN DE MRD",
+            },
+          ],
+        },
+        {
+          dat: [
+            [
+              {
+                content: "ACA IRA UN TITULO DE MIERDA",
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 11,
+                },
+              },
+            ],
+            [
+              {
+                content: "Jr. Chumape las bolas Av. de los Webones",
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 9,
+                },
+              },
+            ],
+            [
+              {
+                content: typeDoc,
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 9,
+                },
+              },
+            ],
+            [
+              {
+                content: `RUC: 001CHUAPALA`,
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 11,
+                },
+              },
+            ],
+            [
+              {
+                content: `${dataForPrint.serie_documento} ${dataForPrint.codigo_tipo_operacion}`,
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 11,
+                },
+              },
+            ],
+          ],
+        },
+
+        {
+          dat: [
+            {
+              tittle: "CLIENTE",
+              twoPoints: ":",
+              cont: dataForPrint.datos_del_cliente_o_receptor
+                .apellidos_y_nombres_o_razon_social,
+            },
+
+            {
+              tittle: typeDoc[0] === "F" ? "RUC" : "DOCUMENTO",
+              twoPoints: ":",
+              cont: dataForPrint.datos_del_cliente_o_receptor.numero_documento,
+            },
+
+            {
+              tittle: "DIRECCION",
+              twoPoints: ":",
+              cont: dataForPrint.datos_del_cliente_o_receptor.direccion,
+            },
+
+            {
+              tittle: "F.EMICION",
+              twoPoints: ":",
+              cont: dataForPrint.fecha_de_emision,
+            },
+            {
+              tittle: "TARADO EL QUE ATIENEDE:",
+              twoPoints: ":",
+              cont: "NOMBRE DE UN TARAO QUE ATIENDE",
+            },
+          ],
+        },
+        {
+          col: [
+            {
+              header: "CANT.",
+              dataKey: "amount",
+            },
+            {
+              header: "U.M",
+              dataKey: "unit",
+            },
+
+            {
+              header: "DESCRIPCIÓN",
+              dataKey: "description",
+            },
+            {
+              header: "P.U",
+              dataKey: "price",
+            },
+
+            {
+              header: "TOTAL",
+              dataKey: "total",
+            },
+          ],
+          dat: dataForPrint.items.map((val) => {
+            return {
+              amount: val.cantidad,
+              unit: val.unidad_de_medida,
+              description: val.descripcion,
+              price: parseFloat(val.precio_unitario).toFixed("2"),
+              total: parseFloat(val.total_item).toFixed("2"),
+            };
+          }),
+        },
+        {
+          dat: datTotals,
+        },
+
+        {
+          dat: [
+            [
+              {
+                content: "Representacion impresa de la boleta electronica",
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 9,
+                },
+              },
+            ],
+            [
+              {
+                content:
+                  "Puede verificarla usando su clave sol o ingresando a la pagina web:",
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 9,
+                },
+              },
+            ],
+            [
+              {
+                content: "Correo de la empresa",
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 9,
+                },
+              },
+            ],
+            [
+              {
+                content:
+                  "BIENES CONSUMOS / SERVICIOS PRESTADOS EN LA AMAZONIA PARA SER CONSUMIDAS EN LA MISMA",
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 9,
+                },
+              },
+            ],
+          ],
+        },
+
+        {
+          dat: [
+            {
+              tittle: "CONSULTOR/VENDEDOR",
+              twoPoints: ":",
+              cont: "UNA PERSONA",
+            },
+            {
+              tittle: "TIPO DE PAGO",
+              twoPoints: ":",
+              cont: "TIPO DE PAGO",
+            },
+          ],
+        },
+      ];
+
+      generatePrint(structure);
+
+      message.success("Imprimir");
+    };
+
     const performTakeAway = () => {
       saleForm.value.validate((errors) => {
         if (!errors) {
@@ -715,8 +953,10 @@ export default defineComponent({
               takeAwayOrder(orderStore.orderList, sale.value)
                 .then((response) => {
                   if (response.status === 201) {
+                    console.log(response);
+                    printSale(response.data);
                     message.success("Venta realizada correctamente!");
-                    router.push({ name: "Orders" });
+                    // router.push({ name: "Orders" });
                   }
                 })
                 .catch((error) => {
