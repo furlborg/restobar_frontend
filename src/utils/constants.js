@@ -1091,9 +1091,8 @@ export const createOrderColumns = ({ showDetails, showDeliveryInfo, payDeliver, 
                         text = "DELIVERY"
                         break;
                     default:
-                        color = "#D03050FF"
+                        color = "#D03050"
                         text = "ERROR"
-                        console.log("Algo salió mal...")
                         break;
                 }
 
@@ -1117,20 +1116,21 @@ export const createOrderColumns = ({ showDetails, showDeliveryInfo, payDeliver, 
             width: 'auto',
             render(row) {
                 let type, text;
-                if (row.is_disabled) {
-                    type = "error"
-                    text = "ANULADO"
-                } else {
-                    if (row.status === '1') {
+                switch (row.status) {
+                    case '1':
                         type = "warning"
                         text = "PENDIENTE"
-                    } else if (row.status === '2') {
+                        break
+                    case '2':
                         type = "success"
                         text = "COBRADO"
-                    } else {
+                        break
+                    case '3':
                         type = "error"
-                        text = "-"
-                    }
+                        text = "ANULADO"
+                        break
+                    default:
+                        break
                 }
 
                 return h(

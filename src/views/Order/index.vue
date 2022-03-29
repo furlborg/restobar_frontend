@@ -49,6 +49,36 @@
                 clearable
               />
             </n-form-item-gi>
+            <n-form-item-gi label="Tipo" :span="4">
+              <n-space>
+                <n-tag
+                  v-model:checked="filterParams.tables"
+                  size="small"
+                  checkable
+                  >EN MESA</n-tag
+                >
+                <n-tag
+                  v-model:checked="filterParams.take_aways"
+                  size="small"
+                  checkable
+                  >PARA LLEVAR</n-tag
+                >
+                <n-tag
+                  v-model:checked="filterParams.deliverys"
+                  size="small"
+                  checkable
+                  >DELIVERY</n-tag
+                >
+              </n-space>
+            </n-form-item-gi>
+            <n-form-item-gi label="Estado" :span="4">
+              <n-select
+                v-model:value="filterParams.status"
+                :options="statusOptions"
+                placeholder=""
+                clearable
+              />
+            </n-form-item-gi>
             <n-form-item-gi :span="5">
               <n-button type="info" secondary @click="performFilter"
                 >Buscar</n-button
@@ -84,6 +114,7 @@
 <script>
 import { defineComponent, ref, onMounted } from "vue";
 import { useMessage, useDialog } from "naive-ui";
+import { set, format } from "date-fns";
 import DetailsModal from "./components/DetailsModal";
 import DeliveryModal from "./components/DeliveryModal";
 import { createOrderColumns } from "@/utils/constants";
@@ -119,9 +150,24 @@ export default defineComponent({
     const idOrder = ref(0);
     const delivery = ref({});
     const showFilters = ref(false);
+    const today = set(new Date(Date.now()), {
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+    });
     const filterParams = ref({
       till: tillStore.currentTillID,
-      created: null,
+      created: [
+        format(today, "dd/MM/yyyy HH:mm:ss"),
+        format(
+          set(today, { hours: 23, minutes: 59, seconds: 59 }),
+          "dd/MM/yyyy HH:mm:ss"
+        ),
+      ],
+      take_aways: true,
+      tables: false,
+      deliverys: true,
+      status: null,
     });
     const pagination = ref({
       pageSearchParams: null,
@@ -250,6 +296,9 @@ export default defineComponent({
 
     const refreshTable = () => {
       filterParams.value.created = null;
+      filterParams.value.take_aways = true;
+      filterParams.value.tables = false;
+      filterParams.value.deliverys = true;
       pagination.value.pageSearchParams = null;
       pagination.value.page = 1;
       loadOrders();
@@ -257,15 +306,15 @@ export default defineComponent({
 
     const statusOptions = [
       {
-        value: "N",
-        label: "NUEVO",
+        value: "1",
+        label: "PENDIENTE",
       },
       {
-        value: "E",
-        label: "ENVIADO",
+        value: "2",
+        label: "COBRADO",
       },
       {
-        value: "A",
+        value: "3",
         label: "ANULADO",
       },
     ];
