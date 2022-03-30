@@ -309,7 +309,7 @@ export default defineComponent({
       // let colums = createKardexBySupplyColumns();
       // console.log(colums);
 
-      console.log(dataKardex.value);
+      /* console.log(dataKardex.value); */
 
       let c = [
         {
