@@ -958,6 +958,9 @@ export const createSaleColumns = ({ printSale, miscSale, sendSale, nullifySale }
                 } else if (row.status === 'A') {
                     type = "error"
                     text = "ANULADO"
+                } else if (row.status === 'X') {
+                    type = "warning"
+                    text = "¡ERROR!"
                 } else {
                     type = "warning"
                     text = "-"
@@ -989,7 +992,7 @@ export const createSaleColumns = ({ printSale, miscSale, sendSale, nullifySale }
                             size: 'small',
                             type: 'info',
                             secondary: true,
-                            disabled: row.status === 'E',
+                            disabled: row.status !== 'N',
                             onClick: () => sendSale(row)
                         },
                         renderIcon('ri-send-plane-fill')
@@ -1001,7 +1004,7 @@ export const createSaleColumns = ({ printSale, miscSale, sendSale, nullifySale }
                             size: 'small',
                             type: 'error',
                             secondary: true,
-                            disabled: row.status === 'N',
+                            disabled: row.status !== 'E',
                             onClick: () => nullifySale(row)
                         },
                         renderIcon('md-cancel-twotone')
@@ -1194,7 +1197,7 @@ export const createOrderColumns = ({ showDetails, showDeliveryInfo, payDeliver, 
                             size: 'small',
                             type: 'error',
                             secondary: true,
-                            disabled: row.is_disabled,
+                            disabled: row.status !== '1',
                             onClick: () => nullifyOrder(row)
                         },
                         renderIcon('md-cancel-twotone')
