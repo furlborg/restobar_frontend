@@ -451,32 +451,15 @@ export default defineComponent({
         }
       });
 
-      structure.push(
-        {
-          line: true,
-          dat: [
-            [
-              {
-                content: "ACA IRA UN TITULO DE MIERDA",
-                styles: {
-                  fontStyle: "bold",
-                  halign: "center",
-                  fontSize: 10,
-                },
-              },
-            ],
-          ],
-        },
-        {
-          dat: [
-            {
-              tittle: "Fecha",
-              twoPoints: ":",
-              cont: dateNow.value,
-            },
-          ],
-        }
-      );
+      structure.push({
+        dat: [
+          {
+            tittle: "Fecha",
+            twoPoints: ":",
+            cont: dateNow.value,
+          },
+        ],
+      });
 
       let myHeaders = new Headers();
       myHeaders.append("Content-Type", "application/json");

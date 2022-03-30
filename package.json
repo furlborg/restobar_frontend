@@ -17,6 +17,7 @@
     "jspdf-autotable": "^3.5.23",
     "oh-vue-icons": "^0.4.7",
     "pinia": "^2.0.12",
+    "qrcode": "^1.5.0",
     "vue": "^3.2.31",
     "vue-cookies": "^1.7.4",
     "vue-input-autowidth": "^2.2.0",

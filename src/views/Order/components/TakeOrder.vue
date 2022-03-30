@@ -453,6 +453,7 @@ import { useDialog, useMessage } from "naive-ui";
 import { useRouter } from "vue-router";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
+import { useBusinessStore } from "@/store/modules/business";
 import { searchProductByName } from "@/api/modules/products";
 import { takeAwayOrder } from "@/api/modules/orders";
 import { createSale, getSaleNumber } from "@/api/modules/sales";
@@ -467,6 +468,8 @@ import format from "date-fns/format";
 
 import { generatePrint } from "./Prints/prints";
 
+const dateNow = ref(null);
+
 export default defineComponent({
   name: "TakeOrder",
   directives: { autowidth: VueInputAutowidth },
@@ -480,9 +483,12 @@ export default defineComponent({
     const router = useRouter();
     const saleStore = useSaleStore();
     const orderStore = useOrderStore();
+    const businnessStore = useBusinessStore();
     orderStore.orders = [];
     saleStore.order_initial = [];
     orderStore.orderId = null;
+
+    const urlImg = ref(null);
 
     const loading = ref(false);
     const payment_amount = ref(parseFloat(0).toFixed(2));
@@ -705,10 +711,13 @@ export default defineComponent({
     };
 
     const printSale = (val) => {
-      console.log(val);
-      let dataForPrint = JSON.parse(val.json_sale);
+      let values = { ...val.order, ...val.sale };
+
+      let dataForPrint = JSON.parse(values.json_sale);
 
       let typeDoc = dataForPrint.serie_documento.split("");
+
+      let data = `${businnessStore.business.ruc}|${dataForPrint.serie_documento}|${dataForPrint.totales.total_igv}|${dataForPrint.hora_de_emision}|${dataForPrint.datos_del_cliente_o_receptor.numero_documento}|${dataForPrint.numero_documento}|${dataForPrint.totales.total_venta}|${dataForPrint.datos_del_cliente_o_receptor.codigo_tipo_documento_identidad}|`;
 
       if (typeDoc[0] === "F") {
         typeDoc = "FACTURA ELECTRONICA";
@@ -716,16 +725,14 @@ export default defineComponent({
         typeDoc = "BOLETA ELECTRONICA";
       }
 
-      let datTotals = [
-        { img: "IMG", tittle: null, twoPoints: null, cont: null },
-      ];
+      let datTotals = [];
 
       let newTotal = {
         "OP.GRAVADA": dataForPrint.totales.total_operaciones_gravadas,
         "OP.EXONERADA": dataForPrint.totales.total_operaciones_exoneradas,
         "OP.GRATUITAS": dataForPrint.totales.total_operaciones_gratuitas,
         "IGV(18%)": dataForPrint.totales.total_igv,
-        DESCUENTOS: "Este webon no poene descuentos",
+        DESCUENTOS: values.discount,
         "IMPORTE TOTAL": dataForPrint.totales.total_venta,
       };
 
@@ -737,19 +744,20 @@ export default defineComponent({
         });
       }
 
+      if (!!values.delivery_info) {
+        datTotals.splice(5, 0, {
+          tittle: "DELIVERY",
+          twoPoints: ":",
+          cont: values.delivery_info.amount,
+        });
+      }
+
       let structure = [
-        {
-          dat: [
-            {
-              img: "ACA IRA UNA IMAGEN DE MRD",
-            },
-          ],
-        },
         {
           dat: [
             [
               {
-                content: "ACA IRA UN TITULO DE MIERDA",
+                content: businnessStore.business.commercial_name,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -759,7 +767,7 @@ export default defineComponent({
             ],
             [
               {
-                content: "Jr. Chumape las bolas Av. de los Webones",
+                content: businnessStore.business.fiscal_address,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -779,7 +787,7 @@ export default defineComponent({
             ],
             [
               {
-                content: `RUC: 001CHUAPALA`,
+                content: businnessStore.business.ruc,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -790,6 +798,16 @@ export default defineComponent({
             [
               {
                 content: `${dataForPrint.serie_documento} ${dataForPrint.codigo_tipo_operacion}`,
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 11,
+                },
+              },
+            ],
+            [
+              {
+                content: values.order_type === "D" ? "DELIVERY" : "PEDIDO",
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -808,6 +826,11 @@ export default defineComponent({
               cont: dataForPrint.datos_del_cliente_o_receptor
                 .apellidos_y_nombres_o_razon_social,
             },
+            !!values.delivery_info && {
+              tittle: "PREGUNTAR POR",
+              twoPoints: ":",
+              cont: values.delivery_info.person,
+            },
 
             {
               tittle: typeDoc[0] === "F" ? "RUC" : "DOCUMENTO",
@@ -818,7 +841,9 @@ export default defineComponent({
             {
               tittle: "DIRECCION",
               twoPoints: ":",
-              cont: dataForPrint.datos_del_cliente_o_receptor.direccion,
+              cont: !!values.delivery_info
+                ? values.delivery_info.address
+                : dataForPrint.datos_del_cliente_o_receptor.direccion,
             },
 
             {
@@ -826,12 +851,13 @@ export default defineComponent({
               twoPoints: ":",
               cont: dataForPrint.fecha_de_emision,
             },
-            {
-              tittle: "TARADO EL QUE ATIENEDE:",
+            !!values.delivery_info && {
+              tittle: "REPARTIDOR",
               twoPoints: ":",
-              cont: "NOMBRE DE UN TARAO QUE ATIENDE",
+              cont: values.delivery_info.deliveryman,
             },
           ],
+          line: true,
         },
         {
           col: [
@@ -864,14 +890,30 @@ export default defineComponent({
               unit: val.unidad_de_medida,
               description: val.descripcion,
               price: parseFloat(val.precio_unitario).toFixed("2"),
-              total: parseFloat(val.total_item).toFixed("2"),
+              total: (val.cantidad * parseFloat(val.total_item)).toFixed("2"),
             };
           }),
+          line: true,
         },
         {
           dat: datTotals,
+          line: true,
         },
-
+        // {
+        //   dat: [
+        //     [
+        //       {
+        //         content: null,
+        //         styles: {
+        //           img: code_qr,
+        //           fontStyle: "bold",
+        //           halign: "center",
+        //           fontSize: 9,
+        //         },
+        //       },
+        //     ],
+        //   ],
+        // },
         {
           dat: [
             [
@@ -886,8 +928,7 @@ export default defineComponent({
             ],
             [
               {
-                content:
-                  "Puede verificarla usando su clave sol o ingresando a la pagina web:",
+                content: `Puede verificarla usando su clave sol o ingresando a la pagina web: ${businnessStore.business.website}`,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -897,7 +938,7 @@ export default defineComponent({
             ],
             [
               {
-                content: "Correo de la empresa",
+                content: businnessStore.business.email,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -924,20 +965,187 @@ export default defineComponent({
             {
               tittle: "CONSULTOR/VENDEDOR",
               twoPoints: ":",
-              cont: "UNA PERSONA",
+              cont: businnessStore.business.legal_representative,
             },
             {
               tittle: "TIPO DE PAGO",
               twoPoints: ":",
-              cont: "TIPO DE PAGO",
+              cont: saleStore.getPaymentMethodDescription(
+                values.payment_method
+              ),
             },
           ],
         },
       ];
 
-      generatePrint(structure);
+      generatePrint(urlImg.value, data, structure);
+      print(values);
 
       message.success("Imprimir");
+    };
+
+    const print = (responseData) => {
+      let lC = 0;
+
+      let lengthData = 0;
+
+      let structure = [
+        {
+          dat: [
+            [
+              {
+                content: `ORDEN: ${responseData.order}`,
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 20,
+                },
+              },
+            ],
+          ],
+        },
+      ];
+
+      responseData.order_details.map((val) => {
+        let ind = "";
+        let PL = [];
+
+        val.indication.map((v, i) => {
+          if (!!v.takeAway && v.takeAway && !!v.description === false) {
+            PL.push(v.takeAway);
+          }
+
+          let cadenaConCaracteres = "";
+          if (!!v.description) {
+            let longitudCadena = v.description.length;
+
+            for (let i = 0; i < longitudCadena; i += 40) {
+              if (i + 40 < longitudCadena) {
+                cadenaConCaracteres +=
+                  v.description.substring(i, i + 40) + "\n";
+                lC += v.description.length / 40;
+              } else {
+                cadenaConCaracteres += v.description.substring(
+                  i,
+                  longitudCadena
+                );
+              }
+            }
+
+            ind = `${ind}${i + 1}-${cadenaConCaracteres}\n`;
+          }
+        });
+
+        lengthData += 6.5 * 3;
+
+        structure.push(
+          {
+            line: true,
+            dat: [
+              [
+                {
+                  content: `PEDIDO`,
+                  colSpan: "2",
+                  rowSpan: "1",
+                  styles: {
+                    fontStyle: "bold",
+                    fontSize: 8,
+                  },
+                },
+                {
+                  content: `CANT.`,
+                  colSpan: "2",
+                  rowSpan: "1",
+                  styles: {
+                    fontStyle: "bold",
+                    fontSize: 8,
+                  },
+                },
+              ],
+            ],
+          },
+
+          {
+            dat: [
+              [
+                {
+                  content: val.product_name,
+                  colSpan: "2",
+                  rowSpan: "1",
+                  styles: {
+                    fontStyle: "bold",
+                    fontSize: 8,
+                  },
+                },
+                {
+                  content: val.quantity,
+                  colSpan: "2",
+                  rowSpan: "1",
+                  styles: {
+                    fontStyle: "bold",
+                    fontSize: 8,
+                  },
+                },
+              ],
+            ],
+          }
+        );
+        if (ind) {
+          lengthData += 6.5 * 2 + lC;
+          structure.push({
+            dat: [
+              [
+                {
+                  content: `INDICACIONES`,
+                  styles: {
+                    fontStyle: "bold",
+                    fontSize: 8,
+                  },
+                },
+              ],
+              [
+                {
+                  content: ind,
+                  styles: {
+                    fontStyle: "bold",
+                    fontSize: 8,
+                  },
+                },
+              ],
+            ],
+          });
+        }
+      });
+
+      structure.push({
+        dat: [
+          {
+            tittle: "Fecha",
+            twoPoints: ":",
+            cont: dateNow.value,
+          },
+        ],
+      });
+
+      let myHeaders = new Headers();
+      myHeaders.append("Content-Type", "application/json");
+
+      let requestOptions = {
+        method: "POST",
+
+        headers: myHeaders,
+        body: JSON.stringify({
+          height: lengthData,
+          structure: structure,
+          printerName: "CHUPAME LA PINGA OSCAR",
+        }),
+        redirect: "follow",
+      };
+
+      fetch("http://localhost:5000/printer", requestOptions)
+        .then((response) => response.text())
+        .then((result) => console.log(result))
+        .catch((error) => console.log("error", error));
     };
 
     const performTakeAway = () => {
@@ -953,14 +1161,13 @@ export default defineComponent({
               takeAwayOrder(orderStore.orderList, sale.value)
                 .then((response) => {
                   if (response.status === 201) {
-                    console.log(response);
                     printSale(response.data);
                     message.success("Venta realizada correctamente!");
-                    // router.push({ name: "Orders" });
+                    router.push({ name: "Orders" });
                   }
                 })
                 .catch((error) => {
-                  console.error(error.response.data);
+                  console.error(error);
                   message.error("Algo salió mal...");
                 })
                 .finally(() => {
@@ -978,6 +1185,17 @@ export default defineComponent({
     onMounted(() => {
       document.title = "Realizar Pedido | App";
       obtainSaleNumber();
+
+      const fetch = new Date();
+      const dd = fetch.getDate();
+      const mm = fetch.getMonth();
+      const yy = fetch.getFullYear();
+      const hh = fetch.getHours();
+      const msms = fetch.getMinutes();
+
+      dateNow.value = `${dd}/${mm}/${yy} ${hh}:${msms}`;
+
+      urlImg.value = businnessStore.business.logo_url;
     });
 
     const onCloseModal = () => {

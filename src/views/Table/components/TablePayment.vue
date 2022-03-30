@@ -265,6 +265,8 @@ import format from "date-fns/format";
 
 import { generatePrint } from "./Prints/prints";
 
+import { useBusinessStore } from "@/store/modules/business";
+
 export default defineComponent({
   name: "TablePayment",
   directives: { autowidth: VueInputAutowidth },
@@ -275,6 +277,7 @@ export default defineComponent({
     const router = useRouter();
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
+
     const message = useMessage();
     const loading = ref(false);
     const dialog = useDialog();
@@ -347,12 +350,16 @@ export default defineComponent({
       }
     };
 
+    const urlImg = ref(null);
+
+    const businnessStore = useBusinessStore();
+
     const printSale = (val) => {
-      console.log(val);
       let dataForPrint = JSON.parse(val.json_sale);
-      console.log(dataForPrint);
 
       let typeDoc = dataForPrint.serie_documento.split("");
+
+      let data = `${businnessStore.business.ruc}|${dataForPrint.serie_documento}|${dataForPrint.totales.total_igv}|${dataForPrint.hora_de_emision}|${dataForPrint.datos_del_cliente_o_receptor.numero_documento}|${dataForPrint.numero_documento}|${dataForPrint.totales.total_venta}|${dataForPrint.datos_del_cliente_o_receptor.codigo_tipo_documento_identidad}|`;
 
       if (typeDoc[0] === "F") {
         typeDoc = "FACTURA ELECTRONICA";
@@ -360,16 +367,14 @@ export default defineComponent({
         typeDoc = "BOLETA ELECTRONICA";
       }
 
-      let datTotals = [
-        { img: "IMG", tittle: null, twoPoints: null, cont: null },
-      ];
+      let datTotals = [];
 
       let newTotal = {
         "OP.GRAVADA": dataForPrint.totales.total_operaciones_gravadas,
         "OP.EXONERADA": dataForPrint.totales.total_operaciones_exoneradas,
         "OP.GRATUITAS": dataForPrint.totales.total_operaciones_gratuitas,
         "IGV(18%)": dataForPrint.totales.total_igv,
-        DESCUENTOS: "Este webon no poene descuentos",
+        DESCUENTOS: val.discount,
         "IMPORTE TOTAL": dataForPrint.totales.total_venta,
       };
 
@@ -384,16 +389,9 @@ export default defineComponent({
       let structure = [
         {
           dat: [
-            {
-              img: "ACA IRA UNA IMAGEN DE MRD",
-            },
-          ],
-        },
-        {
-          dat: [
             [
               {
-                content: "ACA IRA UN TITULO DE MIERDA",
+                content: businnessStore.business.commercial_name,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -403,7 +401,7 @@ export default defineComponent({
             ],
             [
               {
-                content: "Jr. Chumape las bolas Av. de los Webones",
+                content: businnessStore.business.fiscal_address,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -423,7 +421,7 @@ export default defineComponent({
             ],
             [
               {
-                content: `RUC: 001CHUAPALA`,
+                content: businnessStore.business.ruc,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -471,6 +469,7 @@ export default defineComponent({
               cont: dataForPrint.fecha_de_emision,
             },
           ],
+          line: true,
         },
         {
           col: [
@@ -503,12 +502,14 @@ export default defineComponent({
               unit: val.unidad_de_medida,
               description: val.descripcion,
               price: parseFloat(val.precio_unitario).toFixed("2"),
-              total: parseFloat(val.total_item).toFixed("2"),
+              total: (val.cantidad * parseFloat(val.total_item)).toFixed("2"),
             };
           }),
+          line: true,
         },
         {
           dat: datTotals,
+          line: true,
         },
 
         {
@@ -525,8 +526,7 @@ export default defineComponent({
             ],
             [
               {
-                content:
-                  "Puede verificarla usando su clave sol o ingresando a la pagina web:",
+                content: `Puede verificarla usando su clave sol o ingresando a la pagina web: ${businnessStore.business.website}`,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -536,7 +536,7 @@ export default defineComponent({
             ],
             [
               {
-                content: "Correo de la empresa",
+                content: businnessStore.business.email,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -563,20 +563,18 @@ export default defineComponent({
             {
               tittle: "CONSULTOR/VENDEDOR",
               twoPoints: ":",
-              cont: "UNA PERSONA",
+              cont: businnessStore.business.legal_representative,
             },
             {
               tittle: "TIPO DE PAGO",
               twoPoints: ":",
-              cont: "TIPO DE PAGO",
+              cont: saleStore.getPaymentMethodDescription(val.payment_method),
             },
           ],
         },
       ];
 
-      console.log(structure);
-
-      generatePrint(structure);
+      generatePrint(urlImg.value, data, structure);
 
       message.success("Imprimir");
     };
@@ -708,6 +706,8 @@ export default defineComponent({
     onMounted(async () => {
       document.title = "Venta | App";
       await obtainSaleNumber();
+
+      urlImg.value = businnessStore.business.logo_url;
     });
 
     const onCloseModal = () => {
