@@ -18,7 +18,11 @@ export async function listOrdersByPage(filterParams, page, pageSize) {
                 till: filterParams.till,
                 created__range: filterParams.created !== null ? `${filterParams.created[0]}, ${filterParams.created[1]}` : null,
                 page: page,
-                page_size: pageSize
+                page_size: pageSize,
+                take_aways: filterParams.take_aways,
+                tables: filterParams.tables,
+                deliverys: filterParams.deliverys,
+                status: filterParams.status,
             }
         })
     } else {
@@ -43,7 +47,11 @@ export async function searchOrders(filterParams, page, pageSize) {
             till: filterParams.till,
             created__range: filterParams.created !== null ? `${filterParams.created[0]}, ${filterParams.created[1]}` : null,
             page: page,
-            page_size: pageSize
+            page_size: pageSize,
+            take_aways: filterParams.take_aways,
+            tables: filterParams.tables,
+            deliverys: filterParams.deliverys,
+            status: filterParams.status,
         }
     })
 }

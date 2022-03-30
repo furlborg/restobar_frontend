@@ -74,6 +74,7 @@ export async function updateTableOrder(idTable, orderId, details) {
     return await http.put(`tables/${idTable}/change_order/`, {
         id: orderId,
         till: tillStore.currentTillID,
+        order_type: 'M',
         order_details: order_details,
     })
 }

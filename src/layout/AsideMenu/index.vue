@@ -35,184 +35,156 @@ export default defineComponent({
       return getOpenKeys.length ? getOpenKeys[1] : null;
     });
 
-    const routesToOptions = [
-      {
-        label: () =>
-          h(
-            RouterLink,
-            {
-              to: { name: "Dashboard" },
-            },
-            () => h("span", "Dashboard")
-          ),
-        key: "Dashboard",
-        icon: renderIcon("md-spacedashboard-twotone"),
-        exclude: [],
-        tillOpened: false,
-      },
-      {
-        label: () =>
-          h(
-            RouterLink,
-            {
-              to: { name: "Till" },
-            },
-            () => h("span", "Caja")
-          ),
-        key: "Till",
-        icon: renderIcon("md-pointofsale-twotone"),
-        exclude: [],
-        tillOpened: false,
-      },
-      {
-        label: () =>
-          h(
-            RouterLink,
-            {
-              to: { name: "Table" },
-            },
-            () => h("span", "Mesas")
-          ),
-        key: "Table",
-        icon: renderIcon("md-dining-twotone"),
-        exclude: [],
-        tillOpened: true,
-      },
-      {
-        label: () =>
-          h(
-            RouterLink,
-            {
-              to: { name: "Orders" },
-            },
-            () => h("span", "Pedidos")
-          ),
-        key: "Orders",
-        icon: renderIcon("md-pendingactions-twotone"),
-        exclude: [],
-        tillOpened: true,
-      },
-      {
-        label: () =>
-          h(
-            RouterLink,
-            {
-              to: { name: "Sales" },
-            },
-            () => h("span", "Ventas")
-          ),
-        key: "Sales",
-        icon: renderIcon("md-description-twotone"),
-        exclude: [],
-        tillOpened: false,
-      },
-      {
-        label: () =>
-          h(
-            RouterLink,
-            {
-              to: { name: "Product" },
-            },
-            () => h("span", "Productos")
-          ),
-        key: "Product",
-        icon: renderIcon("md-fastfood-twotone"),
-        exclude: [],
-        tillOpened: false,
-      },
-      /* {
-        label: () =>
-          h(
-            RouterLink,
-            {
-              to: { name: "Shopping" },
-            },
-            () => h("span", "Compras")
-          ),
-        key: "Shopping",
-        icon: renderIcon("md-shoppingcart-twotone"),
-      }, */
-      {
-        label: () =>
-          h(
-            RouterLink,
-            {
-              to: { name: "Supplier" },
-            },
-            () => h("span", "Proveedores")
-          ),
-        key: "Supplier",
-        icon: renderIcon("md-villa-twotone"),
-        exclude: [],
-        tillOpened: false,
-      },
-      {
-        label: () =>
-          h(
-            RouterLink,
-            {
-              to: { name: "Supplies" },
-            },
-            () => h("span", "Insumos")
-          ),
-        key: "Supplies",
-        icon: renderIcon("md-kitchen-twotone"),
-        exclude: [],
-        tillOpened: false,
-      },
-      {
-        label: () =>
-          h(
-            RouterLink,
-            {
-              to: { name: "Kardex" },
-            },
-            () => h("span", "Kardex")
-          ),
-        key: "Kardex",
-        icon: renderIcon("md-equalizer-twotone"),
-        exclude: [],
-        tillOpened: false,
-      },
-      {
-        label: () =>
-          h(
-            RouterLink,
-            {
-              to: { name: "Customer" },
-            },
-            () => h("span", "Clientes")
-          ),
-        key: "Customer",
-        icon: renderIcon("md-supervisedusercircle-twotone"),
-        exclude: [],
-        tillOpened: false,
-      },
-      {
-        label: () =>
-          h(
-            RouterLink,
-            {
-              to: { name: "Settings" },
-            },
-            () => h("span", "Configuración")
-          ),
-        key: "Settings",
-        icon: renderIcon("md-settings-twotone"),
-        exclude: ["CAJERO"],
-        tillOpened: false,
-      },
-    ];
-
     const menuOptions = computed(() => {
-      let routes = routesToOptions;
-      if (!tillStore.currentTillID) {
-        routes = routesToOptions.filter((option) => !option.tillOpened);
-      }
-      return routes.filter(
-        (option) =>
-          !option.exclude.find((item) => item === userStore.user.profile_des)
-      );
+      return [
+        {
+          label: () =>
+            h(
+              RouterLink,
+              {
+                to: { name: "Dashboard" },
+              },
+              () => h("span", "Dashboard")
+            ),
+          key: "Dashboard",
+          icon: renderIcon("md-spacedashboard-twotone"),
+        },
+        {
+          label: () =>
+            h(
+              RouterLink,
+              {
+                to: { name: "Till" },
+              },
+              () => h("span", "Caja")
+            ),
+          key: "Till",
+          icon: renderIcon("md-pointofsale-twotone"),
+        },
+        {
+          label: () =>
+            h(
+              RouterLink,
+              {
+                to: { name: "Table" },
+              },
+              () => h("span", "Mesas")
+            ),
+          key: "Table",
+          icon: renderIcon("md-dining-twotone"),
+          disabled: !tillStore.currentTillID,
+        },
+        {
+          label: () =>
+            h(
+              RouterLink,
+              {
+                to: { name: "Orders" },
+              },
+              () => h("span", "Pedidos")
+            ),
+          key: "Orders",
+          icon: renderIcon("md-pendingactions-twotone"),
+          disabled: !tillStore.currentTillID,
+        },
+        {
+          label: () =>
+            h(
+              RouterLink,
+              {
+                to: { name: "Sales" },
+              },
+              () => h("span", "Ventas")
+            ),
+          key: "Sales",
+          icon: renderIcon("md-description-twotone"),
+        },
+        {
+          label: () =>
+            h(
+              RouterLink,
+              {
+                to: { name: "Product" },
+              },
+              () => h("span", "Productos")
+            ),
+          key: "Product",
+          icon: renderIcon("md-fastfood-twotone"),
+        },
+        /* {
+          label: () =>
+            h(
+              RouterLink,
+              {
+                to: { name: "Shopping" },
+              },
+              () => h("span", "Compras")
+            ),
+          key: "Shopping",
+          icon: renderIcon("md-shoppingcart-twotone"),
+        }, */
+        {
+          label: () =>
+            h(
+              RouterLink,
+              {
+                to: { name: "Supplier" },
+              },
+              () => h("span", "Proveedores")
+            ),
+          key: "Supplier",
+          icon: renderIcon("md-villa-twotone"),
+        },
+        {
+          label: () =>
+            h(
+              RouterLink,
+              {
+                to: { name: "Supplies" },
+              },
+              () => h("span", "Insumos")
+            ),
+          key: "Supplies",
+          icon: renderIcon("md-kitchen-twotone"),
+        },
+        {
+          label: () =>
+            h(
+              RouterLink,
+              {
+                to: { name: "Kardex" },
+              },
+              () => h("span", "Kardex")
+            ),
+          key: "Kardex",
+          icon: renderIcon("md-equalizer-twotone"),
+        },
+        {
+          label: () =>
+            h(
+              RouterLink,
+              {
+                to: { name: "Customer" },
+              },
+              () => h("span", "Clientes")
+            ),
+          key: "Customer",
+          icon: renderIcon("md-supervisedusercircle-twotone"),
+        },
+        {
+          label: () =>
+            h(
+              RouterLink,
+              {
+                to: { name: "Settings" },
+              },
+              () => h("span", "Configuración")
+            ),
+          key: "Settings",
+          icon: renderIcon("md-settings-twotone"),
+          disabled: userStore.user.profile_des !== "ADMINISTRADOR",
+        },
+      ];
     });
 
     return {

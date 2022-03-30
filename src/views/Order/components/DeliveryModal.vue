@@ -21,7 +21,7 @@
       <n-text class="fs-6">Número de contacto:</n-text>
       <n-text v-if="delivery" class="fs-4">{{ delivery.phone }}</n-text>
       <n-skeleton v-else text />
-      <n-text class="fs-6">Persona:</n-text>
+      <n-text class="fs-6">Monto delivery:</n-text>
       <n-text v-if="delivery" class="fs-4">{{ delivery.amount }}</n-text>
       <n-skeleton v-else text />
     </n-space>
