@@ -229,7 +229,7 @@ export const routes = [
         next()
         return
       } else {
-        next({ name: 'App' })
+        next({ name: userStore.user.profile_des === 'MOZO' ? 'WaiterMode' : 'App' })
         return
       }
     }

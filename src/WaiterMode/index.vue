@@ -44,7 +44,7 @@
           <a href="#">Pricing</a>
         </li>
         <li>
-          <a href="#" class="suBtn">Sing Up</a>
+          <a href="#" class="suBtn">Cerrar sesión</a>
         </li>
       </ul>
     </div>
