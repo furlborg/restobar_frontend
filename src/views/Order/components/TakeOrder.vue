@@ -1137,7 +1137,7 @@ export default defineComponent({
         body: JSON.stringify({
           height: lengthData,
           structure: structure,
-          printerName: "CHUPAME LA PINGA OSCAR",
+          printerName: "POS-80-Series",
         }),
         redirect: "follow",
       };

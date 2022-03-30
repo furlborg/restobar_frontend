@@ -107,6 +107,8 @@
 import { defineComponent, ref, computed } from "vue";
 import { useTableStore } from "@/store/modules/table";
 import { useWaiterStore } from "@/store/modules/waiter";
+import { retrieveCurrentTill } from "@/api/modules/tills";
+import { useTillStore } from "@/store/modules/till";
 import { cloneDeep } from "@/utils";
 
 export default defineComponent({
@@ -114,6 +116,7 @@ export default defineComponent({
   setup() {
     const waiterStore = useWaiterStore();
     const tableStore = useTableStore();
+    const tillStore = useTillStore();
     const area = ref(1);
     const currentTableGrouping = ref(null);
     const currentGroup = ref([]);
@@ -125,6 +128,23 @@ export default defineComponent({
       }
       return [];
     });
+
+    const checkTill = () => {
+      retrieveCurrentTill()
+        .then((response) => {
+          if (response.status === 200) {
+            tillStore.currentTillID = response.data.id;
+            tillStore.currentTillOrders = response.data.orders_count;
+          }
+        })
+        .catch((error) => {
+          if (error.response.status === 404) {
+            tillStore.currentTillID = null;
+            tillStore.currentTillOrders = 0;
+          }
+        });
+    };
+    checkTill();
 
     const addToGroup = (table) => {
       currentGroup.value.push(cloneDeep(table));

@@ -312,9 +312,9 @@ export default defineComponent({
       userStore,
       tableColumns: createSaleColumns({
         printSale(val) {
-          console.log(val);
+          /* console.log(val); */
           let dataForPrint = JSON.parse(val.json_sale);
-          console.log(dataForPrint);
+          /* console.log(dataForPrint); */
 
           let typeDoc = dataForPrint.serie_documento.split("");
 
