@@ -160,11 +160,206 @@ export default defineComponent({
     const orderItemIndex = ref(null);
     const products = ref([]);
 
+    const print = (responseData) => {
+      message.success("Orden actualizada correctamente");
+
+      let lC = 0;
+
+      let lengthData = 0;
+
+      let structure = [
+        {
+          dat: [
+            [
+              {
+                content: `ORDEN: ${responseData.id}`,
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 20,
+                },
+              },
+            ],
+          ],
+        },
+        {
+          dat: [
+            [
+              {
+                content: `MESA: ${"CHUPAMELA"}`,
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 15,
+                },
+              },
+            ],
+          ],
+        },
+      ];
+
+      responseData.order_details.map((val) => {
+        let ind = "";
+        let PL = [];
+
+        val.indication.map((v, i) => {
+          if (!!v.takeAway && v.takeAway && !!v.description === false) {
+            PL.push(v.takeAway);
+          }
+
+          let cadenaConCaracteres = "";
+          if (!!v.description) {
+            let longitudCadena = v.description.length;
+
+            for (let i = 0; i < longitudCadena; i += 40) {
+              if (i + 40 < longitudCadena) {
+                cadenaConCaracteres +=
+                  v.description.substring(i, i + 40) + "\n";
+                lC += v.description.length / 40;
+              } else {
+                cadenaConCaracteres += v.description.substring(
+                  i,
+                  longitudCadena
+                );
+              }
+            }
+
+            ind = `${ind}${i + 1}-${cadenaConCaracteres}${
+              !!v.takeAway && v.takeAway ? " [¡PARA LLEVAR!]\n" : "\n"
+            }`;
+          }
+        });
+
+        if (ind && PL.length > 0) {
+          lengthData += 6.5 * 2 + lC;
+          ind = `${ind} \n y ${PL.length} para llevar`;
+        }
+        if (!!ind === false && PL.length > 0) {
+          lengthData += 6.5 * 2 + lC;
+          ind = `${PL.length} para llevar`;
+        }
+
+        lengthData += 6.5 * 3;
+
+        structure.push(
+          {
+            line: true,
+            dat: [
+              [
+                {
+                  content: `PEDIDO`,
+                  colSpan: "2",
+                  rowSpan: "1",
+                  styles: {
+                    fontStyle: "bold",
+                    fontSize: 8,
+                  },
+                },
+                {
+                  content: `CANT.`,
+                  colSpan: "2",
+                  rowSpan: "1",
+                  styles: {
+                    fontStyle: "bold",
+                    fontSize: 8,
+                  },
+                },
+              ],
+            ],
+          },
+
+          {
+            dat: [
+              [
+                {
+                  content: val.product_name,
+                  colSpan: "2",
+                  rowSpan: "1",
+                  styles: {
+                    fontStyle: "bold",
+                    fontSize: 8,
+                  },
+                },
+                {
+                  content: val.quantity,
+                  colSpan: "2",
+                  rowSpan: "1",
+                  styles: {
+                    fontStyle: "bold",
+                    fontSize: 8,
+                  },
+                },
+              ],
+            ],
+          }
+        );
+        if (ind) {
+          lengthData += 6.5 * 2 + lC;
+          structure.push({
+            dat: [
+              [
+                {
+                  content: `INDICACIONES`,
+                  styles: {
+                    fontStyle: "bold",
+                    fontSize: 8,
+                  },
+                },
+              ],
+              [
+                {
+                  content: ind,
+                  styles: {
+                    fontStyle: "bold",
+                    fontSize: 8,
+                  },
+                },
+              ],
+            ],
+          });
+        }
+      });
+
+      structure.push({
+        dat: [
+          {
+            tittle: "Fecha",
+            twoPoints: ":",
+            cont: dateNow.value,
+          },
+        ],
+      });
+
+      let myHeaders = new Headers();
+      myHeaders.append("Content-Type", "application/json");
+
+      let requestOptions = {
+        method: "POST",
+
+        headers: myHeaders,
+        body: JSON.stringify({
+          height: lengthData,
+          structure: structure,
+          printerName: "POS-80-Series",
+        }),
+        redirect: "follow",
+      };
+
+      fetch("http://192.168.1.222:5000/printer", requestOptions)
+        .then((response) => response.text())
+        .then((result) => console.log(result))
+        .catch((error) => console.log("error", error));
+
+      router.push({ name: "TableHome" });
+    };
+
     const performCreateTableOrder = () => {
       createTableOrder(route.params.table, orderStore.orderList)
         .then((response) => {
           if (response.status === 201) {
             message.success("Orden creada correctamente");
+            print(response.data);
+
             activeDrawer.value = false;
             router.push({ name: "WHome" });
           }
@@ -184,6 +379,7 @@ export default defineComponent({
         .then((response) => {
           if (response.status === 202) {
             message.success("Orden actualizada correctamente");
+            print(response.data);
             activeDrawer.value = false;
             router.push({ name: "WHome" });
           }
@@ -207,8 +403,18 @@ export default defineComponent({
         });
     };
 
+    const dateNow = ref(null);
+
     onMounted(() => {
       loadProducts();
+
+      const fetch = new Date();
+      const dd = fetch.getDate();
+      const mm = fetch.getMonth();
+      const yy = fetch.getFullYear();
+      const hh = fetch.getHours();
+      const msms = fetch.getMinutes();
+      dateNow.value = `${dd}/${mm}/${yy} ${hh}:${msms}`;
     });
 
     const addToList = () => {
