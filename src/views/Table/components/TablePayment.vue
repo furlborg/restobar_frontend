@@ -478,7 +478,7 @@ export default defineComponent({
               header: "CANT.",
               dataKey: "amount",
             },
-            {
+            !val.by_consumption && {
               header: "U.M",
               dataKey: "unit",
             },
@@ -487,7 +487,7 @@ export default defineComponent({
               header: "DESCRIPCIÓN",
               dataKey: "description",
             },
-            {
+            !val.by_consumption && {
               header: "P.U",
               dataKey: "price",
             },
@@ -497,15 +497,25 @@ export default defineComponent({
               dataKey: "total",
             },
           ],
-          dat: dataForPrint.items.map((val) => {
-            return {
-              amount: val.cantidad,
-              unit: val.unidad_de_medida,
-              description: val.descripcion,
-              price: parseFloat(val.precio_unitario).toFixed("2"),
-              total: (val.cantidad * parseFloat(val.total_item)).toFixed("2"),
-            };
-          }),
+          dat: !val.by_consumption
+            ? dataForPrint.items.map((val) => {
+                return {
+                  amount: val.cantidad,
+                  unit: val.unidad_de_medida,
+                  description: val.descripcion,
+                  price: parseFloat(val.precio_unitario).toFixed("2"),
+                  total: (val.cantidad * parseFloat(val.total_item)).toFixed(
+                    "2"
+                  ),
+                };
+              })
+            : [
+                {
+                  amount: 1,
+                  description: "POR CONSUMO DE ALIMENTOS",
+                  total: dataForPrint.totales.total_venta,
+                },
+              ],
           line: true,
         },
         {
