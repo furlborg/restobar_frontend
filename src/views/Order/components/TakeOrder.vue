@@ -1142,7 +1142,7 @@ export default defineComponent({
         redirect: "follow",
       };
 
-      fetch("http://localhost:5000/printer", requestOptions)
+      fetch("http://192.168.1.222:5000/printer", requestOptions)
         .then((response) => response.text())
         .then((result) => console.log(result))
         .catch((error) => console.log("error", error));
