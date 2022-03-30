@@ -24,7 +24,8 @@
               : ($router.push({ name: 'WOrder', params: { table: table.id } }),
                 cleanParams())
           "
-          class="position-relative table"
+          class="position-relative"
+          :class="{ 'bg-occuped': table.status === '3' }"
           style="cursor: pointer"
           embedded
         >
@@ -56,9 +57,16 @@
               height="64"
             />
           </n-space>
-          <n-text class="position-absolute top-50 start-50 translate-middle">{{
-            table.code
-          }}</n-text>
+          <n-text
+            class="
+              black-outline
+              position-absolute
+              top-50
+              start-50
+              translate-middle
+            "
+            >{{ table.code }}</n-text
+          >
         </n-card>
       </n-gi>
     </n-grid>
@@ -156,7 +164,14 @@ export default defineComponent({
 </script>
 
 <style lang="scss">
-.table img {
-  opacity: 0.1;
+.bg-occuped {
+  background-color: rgb(255, 128, 128);
+}
+
+.black-outline {
+  -webkit-text-stroke: 0.75px black;
+  color: Gainsboro;
+  -webkit-font-smoothing: antialiased;
+  font-weight: bold;
 }
 </style>

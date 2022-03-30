@@ -182,7 +182,9 @@ export default defineComponent({
             ),
           key: "Settings",
           icon: renderIcon("md-settings-twotone"),
-          disabled: userStore.user.profile_des !== "ADMINISTRADOR",
+          disabled:
+            userStore.user.profile_des &&
+            userStore.user.profile_des !== "ADMINISTRADOR",
         },
       ];
     });
