@@ -30,6 +30,13 @@ export const generatePrint = (urlImg, objSunat, structure) => {
       finalY += 30;
     }
 
+    if (val.line) {
+      doc.setLineDash([1, 1], 1);
+      doc.setDrawColor(0, 0, 0);
+      doc.line(3, finalY + 5, 77, finalY + 5);
+      finalY += 5;
+    }
+
     doc.autoTable({
       startY: finalY,
       theme: "plain",
@@ -55,15 +62,6 @@ export const generatePrint = (urlImg, objSunat, structure) => {
         tittleSec: {
           fontStyle: "bold",
         },
-      },
-      didDrawCell: (data) => {
-        // console.log(data.row.raw.indication);
-
-        if (!!data.row.raw.styles.line) {
-          doc.setLineDash([1, 1], 1);
-          doc.setDrawColor(0, 0, 0);
-          doc.line(3, finalY, 77, finalY);
-        }
       },
     });
   });
