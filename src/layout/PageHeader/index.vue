@@ -12,8 +12,6 @@
           <v-icon name="oi-sidebar-collapse" flip="horizontal" />
         </n-icon>
       </div>
-    </div>
-    <div class="layout-header-right">
       <div class="layout-header-trigger layout-header-trigger-min">
         <n-tooltip placement="bottom">
           <template #trigger>
@@ -24,7 +22,17 @@
           <span>Pantalla completa</span>
         </n-tooltip>
       </div>
-      <div
+    </div>
+    <div class="layout-header-right">
+      <n-space align="end" vertical :size="0">
+        <n-text v-if="userStore.user.names" class="fw-bold">{{
+          userStore.user.names
+        }}</n-text>
+        <n-text v-if="userStore.user.branchoffice_des">{{
+          userStore.user.branchoffice_des
+        }}</n-text>
+      </n-space>
+      <!-- <div
         class="layout-header-trigger layout-header-trigger-min"
         @click="openSetting"
       >
@@ -36,7 +44,7 @@
           </template>
           <span>Tema</span>
         </n-tooltip>
-      </div>
+      </div> -->
       <div class="layout-header-trigger layout-header-trigger-min">
         <n-dropdown
           trigger="hover"
@@ -145,7 +153,7 @@ export default defineComponent({
     };
 
     const doLogout = () => {
-      dialog.info({
+      dialog.error({
         title: "Cerrar sesión",
         content: "¿Desea cerrar sesión?",
         positiveText: "Si",
@@ -168,6 +176,7 @@ export default defineComponent({
 
     return {
       ...toRefs(state),
+      userStore,
       toggleFullScreen,
       doLogout,
       avatarOptions,

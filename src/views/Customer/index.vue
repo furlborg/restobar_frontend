@@ -53,11 +53,7 @@
             />
           </n-form-item-gi>
           <n-form-item-gi label="Nº Documento" :span="3">
-            <n-input-number
-              v-model:value="searchParams.doc_num"
-              :show-button="false"
-              placeholder=""
-            />
+            <n-input v-model:value="searchParams.doc_num" placeholder="" />
           </n-form-item-gi>
           <n-form-item-gi label="Nombre" :span="6">
             <n-input v-model:value="searchParams.names" placeholder="" />
@@ -85,7 +81,7 @@
       class="mt-2"
       :columns="tableColumns"
       :data="customers"
-      :pagination="customers.length > 10 ? pagination : {}"
+      :pagination="pagination"
       :loading="isTableLoading"
       :scroll-x="1500"
       remote
@@ -158,7 +154,10 @@ export default defineComponent({
             pagination.value.pageCount = Math.trunc(
               Number(response.data.count) / pagination.value.pageSize
             );
-            if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+            if (
+              Number(response.data.count) % pagination.value.pageSize !== 0 ||
+              pagination.value.pageCount === 0
+            ) {
               ++pagination.value.pageCount;
             }
             customers.value = response.data.results;
@@ -186,7 +185,10 @@ export default defineComponent({
             pagination.value.pageCount = Math.trunc(
               Number(response.data.count) / pagination.value.pageSize
             );
-            if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+            if (
+              Number(response.data.count) % pagination.value.pageSize !== 0 ||
+              pagination.value.pageCount === 0
+            ) {
               ++pagination.value.pageCount;
             }
             customers.value = response.data.results;
@@ -211,7 +213,10 @@ export default defineComponent({
           pagination.value.pageCount = Math.trunc(
             Number(response.data.count) / pagination.value.pageSize
           );
-          if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+          if (
+            Number(response.data.count) % pagination.value.pageSize !== 0 ||
+            pagination.value.pageCount === 0
+          ) {
             ++pagination.value.pageCount;
           }
           customers.value = response.data.results;
@@ -240,7 +245,10 @@ export default defineComponent({
           pagination.value.pageCount = Math.trunc(
             Number(response.data.count) / pagination.value.pageSize
           );
-          if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+          if (
+            Number(response.data.count) % pagination.value.pageSize !== 0 ||
+            pagination.value.pageCount === 0
+          ) {
             ++pagination.value.pageCount;
           }
           customers.value = response.data.results;

@@ -34,27 +34,26 @@
           </n-button>
         </n-space>
       </template>
-      <n-space justify="space-between">
-        <n-input-group>
-          <n-input
-            v-model:value="search"
-            @keypress.enter="performSearch"
-            placeholder="Buscar..."
-            clearable
-          />
-          <n-button type="primary" @click="performSearch" secondary>
-            <v-icon name="md-search-round" />
-          </n-button>
-        </n-input-group>
-        <n-radio-group v-model:value="listType" name="listType" size="small">
+      <n-input-group>
+        <n-input
+          class="w-25"
+          v-model:value="search"
+          @keypress.enter="performSearch"
+          placeholder="Buscar..."
+          clearable
+        />
+        <n-button type="primary" @click="performSearch" secondary>
+          <v-icon name="md-search-round" />
+        </n-button>
+      </n-input-group>
+      <!-- <n-radio-group v-model:value="listType" name="listType" size="small">
           <n-radio-button class="p-0" value="list" key="list">
             <v-icon class="m-1" name="md-list-round" />
           </n-radio-button>
           <n-radio-button class="p-0" value="grid" key="grid">
             <v-icon class="m-1" name="md-gridview-round" />
           </n-radio-button>
-        </n-radio-group>
-      </n-space>
+        </n-radio-group> -->
       <n-spin class="mt-2" :show="isLoadingData">
         <n-scrollbar style="height: 70vh; min-height: 650px">
           <!-- Products List -->
@@ -229,7 +228,7 @@ export default defineComponent({
       (type.value = value),
         (itemsMovement.product = undefined),
         (itemsMovement.type = value),
-        (itemsMovement.branchoffice = 1),
+        (itemsMovement.branchoffice = null),
         (itemsMovement.concept = undefined),
         (itemsMovement.amount = undefined);
     };
@@ -256,7 +255,10 @@ export default defineComponent({
             pagination.value.pageCount = Math.trunc(
               Number(response.data.count) / pagination.value.pageSize
             );
-            if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+            if (
+              Number(response.data.count) % pagination.value.pageSize !== 0 ||
+              pagination.value.pageCount === 0
+            ) {
               ++pagination.value.pageCount;
             }
             products.value = response.data.results;
@@ -284,7 +286,10 @@ export default defineComponent({
             pagination.value.pageCount = Math.trunc(
               Number(response.data.count) / pagination.value.pageSize
             );
-            if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+            if (
+              Number(response.data.count) % pagination.value.pageSize !== 0 ||
+              pagination.value.pageCount === 0
+            ) {
               ++pagination.value.pageCount;
             }
             products.value = response.data.results;
@@ -309,7 +314,10 @@ export default defineComponent({
           pagination.value.pageCount = Math.trunc(
             Number(response.data.count) / pagination.value.pageSize
           );
-          if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+          if (
+            Number(response.data.count) % pagination.value.pageSize !== 0 ||
+            pagination.value.pageCount === 0
+          ) {
             ++pagination.value.pageCount;
           }
           products.value = response.data.results;
@@ -343,7 +351,10 @@ export default defineComponent({
           pagination.value.pageCount = Math.trunc(
             Number(response.data.count) / pagination.value.pageSize
           );
-          if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+          if (
+            Number(response.data.count) % pagination.value.pageSize !== 0 ||
+            pagination.value.pageCount === 0
+          ) {
             ++pagination.value.pageCount;
           }
           products.value = response.data.results;

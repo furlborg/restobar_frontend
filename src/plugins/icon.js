@@ -28,6 +28,7 @@ import {
     LaUserEditSolid,
     LaUserSlashSolid,
     LaUserTimesSolid,
+    LaUserCheckSolid,
     MdDeleteforever,
     MdDisabledbydefaultRound,
     MdLightmodeTwotone,
@@ -94,6 +95,10 @@ import {
     MdCancelTwotone,
     RiMailSendFill,
     MdLogoutRound,
+    MdPendingactionsTwotone,
+    MdFeedRound,
+    FaDollarSign,
+    MdDeliverydiningRound,
 } from "oh-vue-icons/icons";
 OhVueIcon.add(
     BiThreeDots,
@@ -124,6 +129,7 @@ OhVueIcon.add(
     LaUserEditSolid,
     LaUserSlashSolid,
     LaUserTimesSolid,
+    LaUserCheckSolid,
     MdDeleteforever,
     MdDisabledbydefaultRound,
     MdLightmodeTwotone,
@@ -190,5 +196,9 @@ OhVueIcon.add(
     MdCancelTwotone,
     RiMailSendFill,
     MdLogoutRound,
+    MdPendingactionsTwotone,
+    MdFeedRound,
+    FaDollarSign,
+    MdDeliverydiningRound,
 );
 export { OhVueIcon }

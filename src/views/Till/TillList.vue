@@ -108,7 +108,7 @@
         :columns="tableColumns"
         :data="tills"
         :loading="isTableLoading"
-        :pagination="tills.length > 20 ? pagination : {}"
+        :pagination="pagination"
         remote
       />
     </n-card>
@@ -193,7 +193,10 @@ export default defineComponent({
             pagination.value.pageCount = Math.trunc(
               Number(response.data.count) / pagination.value.pageSize
             );
-            if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+            if (
+              Number(response.data.count) % pagination.value.pageSize !== 0 ||
+              pagination.value.pageCount === 0
+            ) {
               ++pagination.value.pageCount;
             }
             tills.value = response.data.results;
@@ -218,7 +221,10 @@ export default defineComponent({
             pagination.value.pageCount = Math.trunc(
               Number(response.data.count) / pagination.value.pageSize
             );
-            if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+            if (
+              Number(response.data.count) % pagination.value.pageSize !== 0 ||
+              pagination.value.pageCount === 0
+            ) {
               ++pagination.value.pageCount;
             }
             tills.value = response.data.results;
@@ -243,7 +249,10 @@ export default defineComponent({
           pagination.value.pageCount = Math.trunc(
             Number(response.data.count) / pagination.value.pageSize
           );
-          if (Number(response.data.count) % pagination.value.pageSize !== 0) {
+          if (
+            Number(response.data.count) % pagination.value.pageSize !== 0 ||
+            pagination.value.pageCount === 0
+          ) {
             ++pagination.value.pageCount;
           }
           tills.value = response.data.results;

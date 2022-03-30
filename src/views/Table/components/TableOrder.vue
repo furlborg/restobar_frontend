@@ -107,7 +107,8 @@
                       text
                       @click="
                         !order.id
-                          ? orderStore.orderList.splice(index, 1)
+                          ? (orderStore.orderList.splice(index, 1),
+                            nullifyTableOrder())
                           : deleteOrderDetail(index, order.id)
                       "
                     >
@@ -175,18 +176,18 @@ import {
   onBeforeRouteLeave,
   onBeforeRouteUpdate,
 } from "vue-router";
-import { useDialog, useMessage } from "naive-ui";
+import { NSpace, useDialog, useMessage } from "naive-ui";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import {
   retrieveTableOrder,
   createTableOrder,
   updateTableOrder,
+  cancelTableOrder,
   performDeleteOrderDetail,
 } from "@/api/modules/tables";
 import { searchProductByName } from "@/api/modules/products";
 import { cloneDeep } from "@/utils";
-import { generatePrint } from "./prints";
 
 export default defineComponent({
   name: "TableOrder",
@@ -213,7 +214,7 @@ export default defineComponent({
 
     watchEffect(() => {
       checkState.value =
-        JSON.stringify(saleStore.sale_details) ===
+        JSON.stringify(saleStore.order_initial) ===
         JSON.stringify(orderStore.orderList);
     });
 
@@ -227,6 +228,7 @@ export default defineComponent({
             negativeText: "No",
             onPositiveClick: () => {
               checkState.value = true;
+              orderStore.orders = saleStore.order_initial;
               router.push(to);
             },
           });
@@ -244,8 +246,10 @@ export default defineComponent({
             positiveText: "Sí",
             onPositiveClick: () => {
               checkState.value = true;
+              orderStore.orders = saleStore.order_initial;
               router.push(to);
             },
+            closable: false,
           });
           return false;
         }
@@ -257,14 +261,14 @@ export default defineComponent({
         .then((response) => {
           if (response.status === 200) {
             orderStore.orders = response.data.order_details;
-            saleStore.sale_details = cloneDeep(orderStore.orderList);
+            saleStore.order_initial = cloneDeep(orderStore.orderList);
             orderStore.orderId = response.data.id;
           }
         })
         .catch((error) => {
           if (error.response.status === 404) {
             orderStore.orders = [];
-            saleStore.sale_details = [];
+            saleStore.order_initial = [];
             orderStore.orderId = null;
           } else {
             console.error(error);
@@ -286,77 +290,205 @@ export default defineComponent({
       dateNow.value = `${dd}/${mm}/${yy} ${hh}:${msms}`;
     });
 
+    const print = (responseData) => {
+      message.success("Orden actualizada correctamente");
+      checkState.value = true;
+
+      let lC = 0;
+
+      let lengthData = 0;
+
+      let structure = [
+        {
+          dat: [
+            [
+              {
+                content: `ORDEN: ${responseData.id}`,
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 20,
+                },
+              },
+            ],
+          ],
+        },
+        {
+          dat: [
+            [
+              {
+                content: `MESA: ${"CHUPAMELA"}`,
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 15,
+                },
+              },
+            ],
+          ],
+        },
+      ];
+
+      responseData.order_details.map((val) => {
+        let ind = "";
+        let PL = [];
+
+        val.indication.map((v, i) => {
+          if (!!v.takeAway && v.takeAway && !!v.description === false) {
+            PL.push(v.takeAway);
+          }
+
+          let cadenaConCaracteres = "";
+          if (!!v.description) {
+            let longitudCadena = v.description.length;
+
+            for (let i = 0; i < longitudCadena; i += 40) {
+              if (i + 40 < longitudCadena) {
+                cadenaConCaracteres +=
+                  v.description.substring(i, i + 40) + "\n";
+                lC += v.description.length / 40;
+              } else {
+                cadenaConCaracteres += v.description.substring(
+                  i,
+                  longitudCadena
+                );
+              }
+            }
+
+            ind = `${ind}${i + 1}-${cadenaConCaracteres}${
+              !!v.takeAway && v.takeAway ? " [¡PARA LLEVAR!]\n" : "\n"
+            }`;
+          }
+        });
+
+        if (ind && PL.length > 0) {
+          lengthData += 6.5 * 2 + lC;
+          ind = `${ind} \n y ${PL.length} para llevar`;
+        }
+        if (!!ind === false && PL.length > 0) {
+          lengthData += 6.5 * 2 + lC;
+          ind = `${PL.length} para llevar`;
+        }
+
+        lengthData += 6.5 * 3;
+
+        structure.push(
+          {
+            line: true,
+            dat: [
+              [
+                {
+                  content: `PEDIDO`,
+                  colSpan: "2",
+                  rowSpan: "1",
+                  styles: {
+                    fontStyle: "bold",
+                    fontSize: 8,
+                  },
+                },
+                {
+                  content: `CANT.`,
+                  colSpan: "2",
+                  rowSpan: "1",
+                  styles: {
+                    fontStyle: "bold",
+                    fontSize: 8,
+                  },
+                },
+              ],
+            ],
+          },
+
+          {
+            dat: [
+              [
+                {
+                  content: val.product_name,
+                  colSpan: "2",
+                  rowSpan: "1",
+                  styles: {
+                    fontStyle: "bold",
+                    fontSize: 8,
+                  },
+                },
+                {
+                  content: val.quantity,
+                  colSpan: "2",
+                  rowSpan: "1",
+                  styles: {
+                    fontStyle: "bold",
+                    fontSize: 8,
+                  },
+                },
+              ],
+            ],
+          }
+        );
+        if (ind) {
+          lengthData += 6.5 * 2 + lC;
+          structure.push({
+            dat: [
+              [
+                {
+                  content: `INDICACIONES`,
+                  styles: {
+                    fontStyle: "bold",
+                    fontSize: 8,
+                  },
+                },
+              ],
+              [
+                {
+                  content: ind,
+                  styles: {
+                    fontStyle: "bold",
+                    fontSize: 8,
+                  },
+                },
+              ],
+            ],
+          });
+        }
+      });
+
+      structure.push({
+        dat: [
+          {
+            tittle: "Fecha",
+            twoPoints: ":",
+            cont: dateNow.value,
+          },
+        ],
+      });
+
+      let myHeaders = new Headers();
+      myHeaders.append("Content-Type", "application/json");
+
+      let requestOptions = {
+        method: "POST",
+
+        headers: myHeaders,
+        body: JSON.stringify({
+          height: lengthData,
+          structure: structure,
+          printerName: "CHUPAME LA PINGA OSCAR",
+        }),
+        redirect: "follow",
+      };
+
+      fetch("http://192.168.1.222:5000/printer", requestOptions)
+        .then((response) => response.text())
+        .then((result) => console.log(result))
+        .catch((error) => console.log("error", error));
+
+      router.push({ name: "TableHome" });
+    };
+
     const performCreateTableOrder = async () => {
       createTableOrder(route.params.table, orderStore.orderList)
         .then((response) => {
           if (response.status === 201) {
-            message.success("Orden creada correctamente");
-            checkState.value = true;
-            generatePrint([
-              {
-                dat: [
-                  [
-                    {
-                      content: "ACA IRA UN TITULO DE MIERDA",
-                      styles: {
-                        fontStyle: "bold",
-                        halign: "center",
-                        fontSize: 10,
-                      },
-                    },
-                  ],
-                ],
-              },
-              {
-                dat: [
-                  {
-                    tittle: "MESA/PEDIDO",
-                    twoPoints: ":",
-                    cont: "CHUPAMELA",
-                  },
-                ],
-              },
-              {
-                theme: "grid",
-                col: [
-                  {
-                    header: "Comida",
-                    dataKey: "product_name",
-                  },
-                  {
-                    header: "Cant.",
-                    dataKey: "quantity",
-                  },
-
-                  {
-                    header: "Detalle",
-                    dataKey: "indication",
-                  },
-                ],
-                dat: response.data.order_details.map((val) => {
-                  return {
-                    product_name: val.product_name,
-                    quantity: val.quantity,
-                    indication: val.indication,
-                  };
-                }),
-              },
-              {
-                dat: [
-                  {
-                    tittle: "Fecha",
-                    twoPoints: ":",
-                    cont: dateNow.value,
-                  },
-                  {
-                    tittle: "Número",
-                    twoPoints: ":",
-                    cont: response.data.id,
-                  },
-                ],
-              },
-            ]);
-            router.push({ name: "TableHome" });
+            print(response.data);
           }
         })
         .catch((error) => {
@@ -373,75 +505,35 @@ export default defineComponent({
       )
         .then((response) => {
           if (response.status === 202) {
-            message.success("Orden actualizada correctamente");
-            checkState.value = true;
-            console.log(response.data);
-            generatePrint([
-              {
-                dat: [
-                  [
-                    {
-                      content: "ACA IRA UN TITULO DE MIERDA",
-                      styles: {
-                        fontStyle: "bold",
-                        halign: "center",
-                        fontSize: 10,
-                      },
-                    },
-                  ],
-                ],
-              },
-              {
-                dat: [
-                  {
-                    tittle: "MESA/PEDIDO",
-                    twoPoints: ":",
-                    cont: "CHUPAMELA",
-                  },
-                ],
-              },
-              {
-                theme: "grid",
-                col: [
-                  {
-                    header: "Comida",
-                    dataKey: "product_name",
-                  },
-                  {
-                    header: "Cant.",
-                    dataKey: "quantity",
-                  },
+            print(response.data);
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        });
+    };
 
-                  {
-                    header: "Detalle",
-                    dataKey: "indication",
-                  },
-                ],
-                dat: response.data.order_details.map((val) => {
-                  return {
-                    product_name: val.product_name,
-                    quantity: val.quantity,
-                    indication: val.indication.map((v) => {
-                      return v.description;
-                    }),
-                  };
-                }),
-              },
-              {
-                dat: [
-                  {
-                    tittle: "Fecha",
-                    twoPoints: ":",
-                    cont: dateNow.value,
-                  },
-                  {
-                    tittle: "Número",
-                    twoPoints: ":",
-                    cont: response.data.id,
-                  },
-                ],
-              },
-            ]);
+    const nullifyTableOrder = () => {
+      if (!orderStore.orderList.length && orderStore.orderId) {
+        dialog.error({
+          title: "Anular pedido",
+          content: "¿Está seguro?",
+          positiveText: "Sí",
+          negativeText: "No",
+          onPositiveClick: () => {
+            performNullifyTableOrder();
+          },
+        });
+      }
+    };
+
+    const performNullifyTableOrder = () => {
+      cancelTableOrder(table)
+        .then((response) => {
+          if (response.status === 202) {
+            message.success("Pedido anulado correctamente!");
+            checkState.value = true;
             router.push({ name: "TableHome" });
           }
         })
@@ -462,6 +554,7 @@ export default defineComponent({
               if (response.status === 202) {
                 orderStore.orderList.splice(detailIndex, 1);
                 message.success("Comanda eliminada");
+                nullifyTableOrder();
               }
             }
           );
@@ -531,6 +624,7 @@ export default defineComponent({
       productOptions,
       showOptions,
       selectProduct,
+      nullifyTableOrder,
     };
   },
 });

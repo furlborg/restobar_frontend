@@ -131,6 +131,7 @@
                     size="small"
                     block
                     secondary
+                    :disabled="table.status === '1'"
                     @click="
                       $router.push({
                         name: 'TablePayment',
@@ -139,9 +140,8 @@
                     "
                   >
                     Cobrar pedido
-                    <!-- <v-icon name="bi-coin"/> -->
                   </n-button>
-                  <n-button
+                  <!-- <n-button
                     class="mb-1"
                     type="warning"
                     size="small"
@@ -158,17 +158,23 @@
                     "
                   >
                     Unir mesa
-                    <!-- <v-icon name="md-search-round"/> -->
-                  </n-button>
+                  </n-button> -->
                   <n-button
                     class="mb-1"
                     type="error"
                     size="small"
                     block
                     secondary
+                    :disabled="table.status === '1'"
+                    @click="
+                      openOptions.splice(
+                        openOptions.findIndex((i) => i === table.id),
+                        1
+                      ),
+                        nullifyTableOrder(table.id)
+                    "
                   >
                     Anular pedido
-                    <!-- <v-icon name="md-search-round"/> -->
                   </n-button>
                   <n-space vertical align="center">
                     <n-button
@@ -198,8 +204,9 @@
 
 <script>
 import { defineComponent, ref, onMounted } from "vue";
-import { useMessage } from "naive-ui";
+import { useMessage, useDialog } from "naive-ui";
 import { useTableStore } from "@/store/modules/table";
+import { cancelTableOrder } from "@/api/modules/tables";
 import { cloneDeep } from "@/utils";
 
 export default defineComponent({
@@ -208,6 +215,7 @@ export default defineComponent({
     const groupMode = ref(false);
     const isLoading = ref(false);
     const message = useMessage();
+    const dialog = useDialog();
     const openOptions = ref([]);
     const tableGroups = ref([]);
     const currentTableGrouping = ref(null);
@@ -219,6 +227,34 @@ export default defineComponent({
       tableStore.refreshData().then(() => {
         isLoading.value = false;
       });
+    };
+
+    const nullifyTableOrder = (id) => {
+      dialog.error({
+        title: "Anular pedido",
+        content: "¿Está seguro?",
+        positiveText: "Sí",
+        negativeText: "No",
+        onPositiveClick: () => {
+          performNullifyTableOrder(id);
+        },
+      });
+    };
+
+    const performNullifyTableOrder = (id) => {
+      isLoading.value = true;
+      cancelTableOrder(id)
+        .then((response) => {
+          if (response.status === 202) {
+            message.success("Pedido anulado correctamente!");
+            loadTablesData();
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+          isLoading.value = false;
+        });
     };
 
     const addToGroup = (table) => {
@@ -252,6 +288,7 @@ export default defineComponent({
       saveGroup,
       tableGroups,
       currentTableGrouping,
+      nullifyTableOrder,
     };
   },
 });

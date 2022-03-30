@@ -1,6 +1,6 @@
 import { h } from "vue"
 import { NButton, NTag, NPopover, NText, NSpace } from "naive-ui"
-import { renderIcon } from "@/utils"
+import { renderIcon, lighten } from "@/utils"
 import { OhVueIcon } from '@/plugins/icon'
 import { useSaleStore } from '@/store/modules/sale';
 import { useTillStore } from '@/store/modules/till';
@@ -163,10 +163,10 @@ export const createCustomerColumns = ({ editCustomer, deleteCustomer }) => {
         },
         {
             title: 'Estado',
-            key: 'isDisabled',
+            key: 'is_disabled',
             render(row) {
                 let type, text
-                if (row.isDisabled) {
+                if (row.is_disabled) {
                     type = "error"
                     text = "Inactivo"
                 } else {
@@ -207,11 +207,11 @@ export const createCustomerColumns = ({ editCustomer, deleteCustomer }) => {
                         NButton,
                         {
                             size: 'small',
-                            type: 'error',
+                            type: row.is_disabled ? 'success' : 'error',
                             secondary: true,
                             onClick: () => deleteCustomer(row)
                         },
-                        renderIcon('la-user-slash-solid')
+                        row.is_disabled ? renderIcon('la-user-check-solid') : renderIcon('la-user-times-solid')
                     )
                 ]
             }
@@ -529,8 +529,20 @@ export const createMovementsColumns = ({ hasSells, editMovement, deleteMovement 
             }
         },
         {
-            title: 'Monto',
-            key: 'amount',
+            title: 'Ingreso',
+            key: 'income',
+            render(row) {
+                let concept_type = tillStore.getConceptType(row.concept)
+                return concept_type == '0' ? row.amount : '----'
+            }
+        },
+        {
+            title: 'Egreso',
+            key: 'outcome',
+            render(row) {
+                let concept_type = tillStore.getConceptType(row.concept)
+                return concept_type == '1' ? row.amount : '----'
+            }
         },
         {
             title: 'Concepto',
@@ -946,6 +958,9 @@ export const createSaleColumns = ({ printSale, miscSale, sendSale, nullifySale }
                 } else if (row.status === 'A') {
                     type = "error"
                     text = "ANULADO"
+                } else if (row.status === 'X') {
+                    type = "warning"
+                    text = "¡ERROR!"
                 } else {
                     type = "warning"
                     text = "-"
@@ -977,7 +992,7 @@ export const createSaleColumns = ({ printSale, miscSale, sendSale, nullifySale }
                             size: 'small',
                             type: 'info',
                             secondary: true,
-                            disabled: row.status === 'E',
+                            disabled: row.status !== 'N',
                             onClick: () => sendSale(row)
                         },
                         renderIcon('ri-send-plane-fill')
@@ -989,7 +1004,7 @@ export const createSaleColumns = ({ printSale, miscSale, sendSale, nullifySale }
                             size: 'small',
                             type: 'error',
                             secondary: true,
-                            disabled: row.status === 'N',
+                            disabled: row.status !== 'E',
                             onClick: () => nullifySale(row)
                         },
                         renderIcon('md-cancel-twotone')
@@ -1014,6 +1029,178 @@ export const createSaleColumns = ({ printSale, miscSale, sendSale, nullifySale }
                             onClick: () => miscSale(row)
                         },
                         renderIcon('ri-mail-send-fill')
+                    )
+                ]
+            }
+        },
+    ]
+}
+
+export const createOrderColumns = ({ showDetails, showDeliveryInfo, payDeliver, nullifyOrder }) => {
+    return [
+        {
+            title: '#',
+            key: 'number',
+            width: 'auto',
+            render(row, index) {
+                return index + 1
+            }
+        },
+        {
+            title: 'Cliente',
+            key: 'sale_customer',
+            align: 'center',
+            width: 'auto',
+        },
+        {
+            title: 'Usuario',
+            key: 'user',
+            align: 'center',
+            width: 'auto',
+        },
+        {
+            title: 'Monto',
+            key: 'amount',
+            align: 'center',
+            width: 'auto',
+            render(row) {
+                return `S/. ${parseFloat(row.amount).toFixed(2)}`
+            }
+        },
+        {
+            title: 'Fecha',
+            key: 'created',
+            align: 'center',
+            width: 'auto',
+        },
+        {
+            title: 'Tipo',
+            key: 'type',
+            align: 'center',
+            width: 'auto',
+            render(row) {
+                let color, text;
+                switch (row.order_type) {
+                    case 'M':
+                        color = "#3B689F"
+                        text = "EN MESA"
+                        break;
+                    case 'P':
+                        color = "#926ED7"
+                        text = "PARA LLEVAR"
+                        break;
+                    case 'D':
+                        color = "#995C4E"
+                        text = "DELIVERY"
+                        break;
+                    default:
+                        color = "#D03050"
+                        text = "ERROR"
+                        break;
+                }
+
+                return h(
+                    NTag,
+                    {
+                        size: 'small',
+                        color: { color: lighten(color, 48), textColor: color, borderColor: lighten(color, 24) },
+                        round: false
+                    },
+                    {
+                        default: () => text
+                    }
+                )
+            }
+        },
+        {
+            title: 'Estado',
+            key: 'status',
+            align: 'center',
+            width: 'auto',
+            render(row) {
+                let type, text;
+                switch (row.status) {
+                    case '1':
+                        type = "warning"
+                        text = "PENDIENTE"
+                        break
+                    case '2':
+                        type = "success"
+                        text = "COBRADO"
+                        break
+                    case '3':
+                        type = "error"
+                        text = "ANULADO"
+                        break
+                    default:
+                        break
+                }
+
+                return h(
+                    NTag,
+                    {
+                        size: 'small',
+                        type: type,
+                        round: true
+                    },
+                    {
+                        default: () => text
+                    }
+                )
+            }
+        },
+        {
+            title: 'Acciones',
+            key: 'actions',
+            width: 'auto',
+            align: 'center',
+            render(row) {
+                return [
+                    h(
+                        NButton,
+                        {
+                            class: 'me-2',
+                            size: 'small',
+                            type: 'info',
+                            secondary: true,
+                            onClick: () => showDetails(row)
+                        },
+                        renderIcon('md-feed-round')
+                    ),
+                    row.is_delivery ? h(
+                        NButton,
+                        {
+                            class: 'me-2',
+                            size: 'small',
+                            type: 'warning',
+                            secondary: true,
+                            onClick: () => showDeliveryInfo(row)
+                        },
+                        renderIcon('md-deliverydining-round')
+                    ) : null,
+                    row.is_delivery ? h(
+                        NButton,
+                        {
+                            class: 'me-2',
+                            size: 'small',
+                            type: 'success',
+                            secondary: true,
+                            disabled: row.status === '2',
+                            onClick: () => payDeliver(row)
+                        },
+                        renderIcon('fa-dollar-sign')
+                    ) : null,
+                    h(
+                        NButton,
+                        {
+                            class: 'me-2',
+                            size: 'small',
+                            type: 'error',
+                            secondary: true,
+                            disabled: row.status !== '1',
+                            onClick: () => nullifyOrder(row)
+                        },
+                        renderIcon('md-cancel-twotone')
                     )
                 ]
             }

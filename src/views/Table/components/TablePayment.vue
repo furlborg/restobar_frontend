@@ -144,7 +144,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(detail, index) in sale.sale_details" :key="index">
+            <tr v-for="(detail, index) in saleStore.toSale" :key="index">
               <td>{{ index + 1 }}</td>
               <td>{{ detail.quantity }}</td>
               <td>
@@ -213,7 +213,8 @@
                   class="custom-input fw-bold"
                   type="number"
                   min="0"
-                  step=".01"
+                  :max="subTotal"
+                  step=".1"
                   v-model="sale.discount"
                   v-autowidth
                   @click="$event.target.select()"
@@ -228,7 +229,7 @@
         <n-button
           class="fs-1 py-5 mt-2"
           type="success"
-          :disabled="changing > 0"
+          :disabled="!saleStore.toSale.length || payment_amount < sale.amount"
           secondary
           block
           @click.prevent="performCreateSale"
@@ -262,6 +263,10 @@ import { useDialog, useMessage } from "naive-ui";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
 import format from "date-fns/format";
 
+import { generatePrint } from "./Prints/prints";
+
+import { useBusinessStore } from "@/store/modules/business";
+
 export default defineComponent({
   name: "TablePayment",
   directives: { autowidth: VueInputAutowidth },
@@ -272,11 +277,12 @@ export default defineComponent({
     const router = useRouter();
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
+
     const message = useMessage();
     const loading = ref(false);
     const dialog = useDialog();
     const showModal = ref(false);
-    const payment_amount = ref(saleStore.saleTotal.toFixed(2));
+    const payment_amount = ref(parseFloat(0).toFixed(2));
     const saleForm = ref();
     const changing = computed(() => {
       return payment_amount.value > total.value
@@ -287,13 +293,13 @@ export default defineComponent({
     const showObservations = ref(false);
 
     const subTotal = computed(() => {
-      return sale.value.sale_details.reduce((acc, curVal) => {
+      return saleStore.toSale.reduce((acc, curVal) => {
         return (acc += curVal.price_sale * curVal.quantity);
       }, 0);
     });
 
     const products_count = computed(() => {
-      return sale.value.sale_details.reduce((acc, curVal) => {
+      return saleStore.toSale.reduce((acc, curVal) => {
         return (acc += curVal.quantity);
       }, 0);
     });
@@ -303,7 +309,7 @@ export default defineComponent({
     });
 
     const sale = ref({
-      order: orderStore.orderId,
+      order: null,
       serie: saleStore.getFirstOption(3),
       number: "",
       date_sale: format(new Date(Date.now()), "dd/MM/yyyy hh:mm:ss"),
@@ -318,7 +324,7 @@ export default defineComponent({
       discount: "0.00",
       observations: "",
       by_consumption: false,
-      sale_details: saleStore.toSale,
+      sale_details: [],
     });
 
     const selectSerie = (v) => {
@@ -344,6 +350,246 @@ export default defineComponent({
       }
     };
 
+    const urlImg = ref(null);
+
+    const businnessStore = useBusinessStore();
+
+    const printSale = (val) => {
+      console.log(val);
+      let dataForPrint = JSON.parse(val.json_sale);
+
+      let typeDoc = dataForPrint.serie_documento.split("");
+
+      let data = `${businnessStore.business.ruc}|${dataForPrint.serie_documento}|${dataForPrint.totales.total_igv}|${dataForPrint.hora_de_emision}|${dataForPrint.datos_del_cliente_o_receptor.numero_documento}|${dataForPrint.numero_documento}|${dataForPrint.totales.total_venta}|${dataForPrint.datos_del_cliente_o_receptor.codigo_tipo_documento_identidad}|`;
+
+      if (typeDoc[0] === "F") {
+        typeDoc = "FACTURA ELECTRONICA";
+      } else {
+        typeDoc = "BOLETA ELECTRONICA";
+      }
+
+      let datTotals = [];
+
+      let newTotal = {
+        "OP.GRAVADA": dataForPrint.totales.total_operaciones_gravadas,
+        "OP.EXONERADA": dataForPrint.totales.total_operaciones_exoneradas,
+        "OP.GRATUITAS": dataForPrint.totales.total_operaciones_gratuitas,
+        "IGV(18%)": dataForPrint.totales.total_igv,
+        DESCUENTOS: val.discount,
+        "IMPORTE TOTAL": dataForPrint.totales.total_venta,
+      };
+
+      for (let i in newTotal) {
+        datTotals.push({
+          tittle: i,
+          twoPoints: ":",
+          cont: newTotal[i],
+        });
+      }
+
+      let structure = [
+        {
+          dat: [
+            [
+              {
+                content: businnessStore.business.commercial_name,
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 11,
+                },
+              },
+            ],
+            [
+              {
+                content: businnessStore.business.fiscal_address,
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 9,
+                },
+              },
+            ],
+            [
+              {
+                content: typeDoc,
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 9,
+                },
+              },
+            ],
+            [
+              {
+                content: businnessStore.business.ruc,
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 11,
+                },
+              },
+            ],
+            [
+              {
+                content: `${dataForPrint.serie_documento} ${dataForPrint.codigo_tipo_operacion}`,
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 11,
+                },
+              },
+            ],
+          ],
+        },
+
+        {
+          dat: [
+            {
+              tittle: "CLIENTE",
+              twoPoints: ":",
+              cont: dataForPrint.datos_del_cliente_o_receptor
+                .apellidos_y_nombres_o_razon_social,
+            },
+
+            {
+              tittle: typeDoc[0] === "F" ? "RUC" : "DOCUMENTO",
+              twoPoints: ":",
+              cont: dataForPrint.datos_del_cliente_o_receptor.numero_documento,
+            },
+
+            {
+              tittle: "DIRECCION",
+              twoPoints: ":",
+              cont: dataForPrint.datos_del_cliente_o_receptor.direccion,
+            },
+
+            {
+              tittle: "F.EMICION",
+              twoPoints: ":",
+              cont: dataForPrint.fecha_de_emision,
+            },
+          ],
+          line: true,
+        },
+        {
+          col: [
+            {
+              header: "CANT.",
+              dataKey: "amount",
+            },
+            !val.by_consumption && {
+              header: "U.M",
+              dataKey: "unit",
+            },
+
+            {
+              header: "DESCRIPCIÓN",
+              dataKey: "description",
+            },
+            !val.by_consumption && {
+              header: "P.U",
+              dataKey: "price",
+            },
+
+            {
+              header: "TOTAL",
+              dataKey: "total",
+            },
+          ],
+          dat: !val.by_consumption
+            ? dataForPrint.items.map((val) => {
+                return {
+                  amount: val.cantidad,
+                  unit: val.unidad_de_medida,
+                  description: val.descripcion,
+                  price: parseFloat(val.precio_unitario).toFixed("2"),
+                  total: (val.cantidad * parseFloat(val.total_item)).toFixed(
+                    "2"
+                  ),
+                };
+              })
+            : [
+                {
+                  amount: 1,
+                  description: "POR CONSUMO DE ALIMENTOS",
+                  total: dataForPrint.totales.total_venta,
+                },
+              ],
+          line: true,
+        },
+        {
+          dat: datTotals,
+          line: true,
+        },
+
+        {
+          dat: [
+            [
+              {
+                content: "Representacion impresa de la boleta electronica",
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 9,
+                },
+              },
+            ],
+            [
+              {
+                content: `Puede verificarla usando su clave sol o ingresando a la pagina web: ${businnessStore.business.website}`,
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 9,
+                },
+              },
+            ],
+            [
+              {
+                content: businnessStore.business.email,
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 9,
+                },
+              },
+            ],
+            [
+              {
+                content:
+                  "BIENES CONSUMOS / SERVICIOS PRESTADOS EN LA AMAZONIA PARA SER CONSUMIDAS EN LA MISMA",
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 9,
+                },
+              },
+            ],
+          ],
+        },
+
+        {
+          dat: [
+            {
+              tittle: "CONSULTOR/VENDEDOR",
+              twoPoints: ":",
+              cont: businnessStore.business.legal_representative,
+            },
+            {
+              tittle: "TIPO DE PAGO",
+              twoPoints: ":",
+              cont: saleStore.getPaymentMethodDescription(val.payment_method),
+            },
+          ],
+        },
+      ];
+
+      generatePrint(urlImg.value, data, structure);
+
+      message.success("Imprimir");
+    };
+
     const performCreateSale = () => {
       saleForm.value.validate((errors) => {
         if (!errors) {
@@ -351,17 +597,20 @@ export default defineComponent({
             title: "Venta",
             content: "Realizar venta?",
             positiveText: "Sí",
-            onPositiveClick: () => {
+            onPositiveClick: async () => {
               loading.value = true;
-              createSale(sale.value)
+              sale.value.order = orderStore.orderId;
+              sale.value.sale_details = saleStore.toSale;
+              await createSale(sale.value)
                 .then((response) => {
                   if (response.status === 201) {
+                    printSale(response.data);
                     message.success("Venta realizada correctamente!");
                     router.push({ name: "TableHome" });
                   }
                 })
                 .catch((error) => {
-                  console.error(error.response.data);
+                  console.error(error);
                   message.error("Algo salió mal...");
                 })
                 .finally(() => {
@@ -376,16 +625,16 @@ export default defineComponent({
       });
     };
 
-    const obtainSaleNumber = () => {
+    const obtainSaleNumber = async () => {
       loading.value = true;
-      getSaleNumber(sale.value.serie)
+      await getSaleNumber(sale.value.serie)
         .then((response) => {
           if (response.status === 200) {
             sale.value.number = Number(response.data.number) + 1;
           }
         })
         .catch((error) => {
-          console.log(error);
+          console.error(error);
           message.error("Algo salió mal...");
         })
         .finally(() => {
@@ -461,13 +710,15 @@ export default defineComponent({
 
     const { serie } = toRefs(sale.value);
 
-    watch(serie, () => {
-      obtainSaleNumber();
+    watch(serie, async () => {
+      await obtainSaleNumber();
     });
 
-    onMounted(() => {
+    onMounted(async () => {
       document.title = "Venta | App";
-      obtainSaleNumber();
+      await obtainSaleNumber();
+
+      urlImg.value = businnessStore.business.logo_url;
     });
 
     const onCloseModal = () => {

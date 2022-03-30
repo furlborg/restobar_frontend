@@ -25,6 +25,50 @@ export const routes = [
         component: () => import(/* webpackChunkName: "customer" */ '@/views/Customer')
       },
       {
+        path: '/orders',
+        name: 'Orders',
+        component: () => import(/* webpackChunkName: "customer" */ '@/views/Order'),
+        beforeEnter: async (to, from, next) => {
+          const tillStore = useTillStore()
+          await retrieveCurrentTill()
+            .then(response => {
+              if (response.status === 200) {
+                tillStore.currentTillID = response.data.id
+                tillStore.currentTillOrders = response.data.orders_count
+              }
+            })
+            .catch(error => {
+              if (error.response.status === 404) {
+                tillStore.currentTillID = null
+                tillStore.currentTillOrders = 0
+              }
+            })
+          tillStore.currentTillID !== null ? next() : next({ name: 'TillList' })
+        },
+      },
+      {
+        name: "TakeOrder",
+        path: '/take-order',
+        component: () => import(/* webpackChunkName: "table-home" */ '@/views/Order/components/TakeOrder'),
+        beforeEnter: async (to, from, next) => {
+          const tillStore = useTillStore()
+          await retrieveCurrentTill()
+            .then(response => {
+              if (response.status === 200) {
+                tillStore.currentTillID = response.data.id
+                tillStore.currentTillOrders = response.data.orders_count
+              }
+            })
+            .catch(error => {
+              if (error.response.status === 404) {
+                tillStore.currentTillID = null
+                tillStore.currentTillOrders = 0
+              }
+            })
+          tillStore.currentTillID !== null ? next() : next({ name: 'TillList' })
+        },
+      },
+      {
         path: '/sales',
         name: 'Sales',
         component: () => import(/* webpackChunkName: "customer" */ '@/views/Sale')
@@ -178,6 +222,17 @@ export const routes = [
     path: '/login',
     name: 'Login',
     component: () => import(/* webpackChunkName: "waiter-mode" */ '@/views/login'),
+    beforeEnter: async (to, from, next) => {
+      const userStore = useUserStore()
+      await userStore.checkAuthentication()
+      if (!userStore.isAuthenticated) {
+        next()
+        return
+      } else {
+        next({ name: userStore.user.profile_des === 'MOZO' ? 'WaiterMode' : 'App' })
+        return
+      }
+    }
   },
   {
     path: '/initial-setup',
@@ -194,6 +249,7 @@ export const routes = [
     component: () => import(/* webpackChunkName: "waiter-mode" */ '@/WaiterMode'),
     meta: {
       requiresAuth: true,
+      onlyWaiter: true,
     },
     children: [
       {

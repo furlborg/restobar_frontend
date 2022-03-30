@@ -1,15 +1,34 @@
 import jspdf from "jspdf";
 import autoTable from "jspdf-autotable";
 
-export const generatePrint = (structure) => {
+import qr from "qrcode";
+
+export const generatePrint = (urlImg, objSunat, structure) => {
   const doc = new jspdf({
     orientation: "p",
     unit: "mm",
     format: [80, 350],
   });
 
+  let code_qr = null;
+
+  qr.toDataURL(objSunat, function (err, code) {
+    if (err) return console.log("error occurred");
+    code_qr = code;
+  });
+
   structure.map((val, index) => {
     var finalY = doc.lastAutoTable.finalY || 10;
+
+    if (index === 0) {
+      doc.addImage(urlImg, "png", 30, finalY, 25, 25);
+      finalY += 30;
+    }
+
+    if (index === 5) {
+      doc.addImage(code_qr, "png", 25, finalY, 30, 30);
+      finalY += 30;
+    }
 
     doc.autoTable({
       startY: finalY,
@@ -36,21 +55,11 @@ export const generatePrint = (structure) => {
         tittleSec: {
           fontStyle: "bold",
         },
-        img: {
-          fontStyle: "bold",
-          halign: "center",
-        },
       },
-
       didDrawCell: (data) => {
-        if (!!data.row.raw.img) {
-          // let img = data.row.raw.img;
-          // let dim = data.cell.height - data.cell.padding("vertical");
-          // let textPos = data.cell.textPos;
-          // doc.addImage(img.src, textPos.x, textPos.y, dim, dim);
-        }
+        // console.log(data.row.raw.indication);
 
-        if (!!data.row.raw.img === false) {
+        if (!!data.row.raw.styles.line) {
           doc.setLineDash([1, 1], 1);
           doc.setDrawColor(0, 0, 0);
           doc.line(3, finalY, 77, finalY);
@@ -59,6 +68,14 @@ export const generatePrint = (structure) => {
     });
   });
 
-  // doc.save("ReporteGeneral.pdf");
-  window.open(URL.createObjectURL(doc.output("blob")));
+  doc.autoPrint();
+
+  const hiddFrame = document.createElement("iframe");
+  hiddFrame.style.position = "fixed";
+
+  hiddFrame.style.width = "1px";
+  hiddFrame.style.height = "1px";
+  hiddFrame.style.opacity = "0.01";
+  hiddFrame.src = doc.output("bloburl");
+  document.body.appendChild(hiddFrame);
 };

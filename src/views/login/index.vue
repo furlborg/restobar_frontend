@@ -23,6 +23,8 @@
               v-model:value="formInline.username"
               placeholder="Usuario"
               :disabled="loading"
+              @input="formInline.username = $event.toUpperCase()"
+              @keypress.enter="handleSubmit"
             >
               <template #prefix>
                 <v-icon name="md-personoutline-twotone" fill="#808695" />
@@ -36,6 +38,7 @@
               showPasswordOn="click"
               placeholder="Contraseña"
               :disabled="loading"
+              @keypress.enter="handleSubmit"
             >
               <template #prefix>
                 <v-icon name="md-lockopen-twotone" fill="#808695" />
@@ -106,7 +109,12 @@ export default defineComponent({
               userStore.login(response.data);
               message.success("¡Inicio de sesión correcto!");
               loading.value = false;
-              router.push({ name: "Dashboard" });
+              router.push({
+                name:
+                  userStore.user.profile_des === "MOZO"
+                    ? "WaiterMode"
+                    : "Dashboard",
+              });
             })
             .catch((error) => {
               console.error(error);

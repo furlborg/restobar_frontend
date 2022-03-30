@@ -63,6 +63,7 @@ export async function createTableOrder(idTable, details) {
     let order_details = details.map(order => ({ product: order.product, indication: order.indication, quantity: order.quantity }))
     return await http.post(`tables/${idTable}/take_order/`, {
         till: tillStore.currentTillID,
+        order_type: 'M',
         order_details: order_details,
     })
 }
@@ -73,8 +74,13 @@ export async function updateTableOrder(idTable, orderId, details) {
     return await http.put(`tables/${idTable}/change_order/`, {
         id: orderId,
         till: tillStore.currentTillID,
+        order_type: 'M',
         order_details: order_details,
     })
+}
+
+export async function cancelTableOrder(idTable) {
+    return http.delete(`tables/${idTable}/cancel_order/`)
 }
 
 export async function performDeleteOrderDetail(idTable, orderId) {
