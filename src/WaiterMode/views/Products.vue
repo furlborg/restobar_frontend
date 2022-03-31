@@ -345,7 +345,10 @@ export default defineComponent({
         redirect: "follow",
       };
 
-      fetch("http://192.168.1.222:5000/printer", requestOptions)
+      fetch(
+        "http://daa1-2001-1388-782b-5fd3-58e-8a4f-a74e-850e.ngrok.io/printer",
+        requestOptions
+      )
         .then((response) => response.text())
         .then((result) => console.log(result))
         .catch((error) => console.log("error", error));
