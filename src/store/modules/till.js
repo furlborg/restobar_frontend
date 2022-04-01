@@ -24,8 +24,8 @@ export const useTillStore = defineStore('till', {
         },
     },
     actions: {
-        initializeStore() {
-            retrieveCurrentTill()
+        async initializeStore() {
+            await retrieveCurrentTill()
                 .then(response => {
                     if (response.status === 200) {
                         this.currentTillID = response.data.id
@@ -37,7 +37,7 @@ export const useTillStore = defineStore('till', {
                         this.currentTillID = null
                     }
                 })
-            getConcepts()
+            await getConcepts()
                 .then(response => {
                     this.concepts = response.data
                 })
@@ -45,8 +45,8 @@ export const useTillStore = defineStore('till', {
                     console.error(error)
                 })
         },
-        refreshConcepts() {
-            return getConcepts()
+        async refreshConcepts() {
+            return await getConcepts()
                 .then(response => {
                     this.concepts = response.data
                 })

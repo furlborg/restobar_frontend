@@ -241,11 +241,11 @@ export default defineComponent({
       pageSize: 10,
       showSizePicker: true,
       pageSizes: [10, 25, 50, 100],
-      onChange: (page) => {
+      onChange: async (page) => {
         isLoadingData.value = true;
         pagination.value.page = page;
         pagination.value.offset = --page * pagination.value.pageSize;
-        searchProduct(
+        await searchProduct(
           pagination.value.search,
           pagination.value.pageSize,
           pagination.value.offset
@@ -271,12 +271,12 @@ export default defineComponent({
             isLoadingData.value = false;
           });
       },
-      onPageSizeChange: (pageSize) => {
+      onPageSizeChange: async (pageSize) => {
         isLoadingData.value = true;
         pagination.value.offset = 0;
         pagination.value.page = 1;
         pagination.value.pageSize = pageSize;
-        searchProduct(
+        await searchProduct(
           pagination.value.search,
           pageSize,
           pagination.value.offset
@@ -304,11 +304,11 @@ export default defineComponent({
       },
     });
 
-    const loadProductsData = () => {
+    const loadProductsData = async () => {
       isLoadingData.value = true;
       pagination.value.offset = 0;
       pagination.value.page = 1;
-      getProducts()
+      await getProducts()
         .then((response) => {
           pagination.value.total = response.data.count;
           pagination.value.pageCount = Math.trunc(
@@ -336,12 +336,12 @@ export default defineComponent({
       idProduct.value = id;
     };
 
-    const performSearch = () => {
+    const performSearch = async () => {
       isLoadingData.value = true;
       pagination.value.search = search.value;
       pagination.value.offset = 0;
       pagination.value.page = 1;
-      searchProduct(
+      await searchProduct(
         pagination.value.search,
         pagination.value.pageSize,
         pagination.value.offset
@@ -367,14 +367,14 @@ export default defineComponent({
           isLoadingData.value = false;
         });
     };
-    const refreshProducts = () => {
+    const refreshProducts = async () => {
       pagination.value.search = null;
-      loadProductsData();
+      await loadProductsData();
     };
 
-    onMounted(() => {
+    onMounted(async () => {
       document.title = "Productos | App";
-      loadProductsData();
+      await loadProductsData();
     });
 
     const onCloseModal = () => {
@@ -382,10 +382,10 @@ export default defineComponent({
       idProduct.value = 0;
     };
 
-    const onSuccess = () => {
+    const onSuccess = async () => {
       showModal.value = false;
       onCloseModal();
-      loadProductsData();
+      await loadProductsData();
     };
 
     onMounted(() => {

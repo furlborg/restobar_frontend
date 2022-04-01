@@ -277,8 +277,8 @@ export default defineComponent({
         });
     };
 
-    onMounted(() => {
-      performRetrieveTableOrder();
+    onMounted(async () => {
+      await performRetrieveTableOrder();
 
       const fetch = new Date();
       const dd = fetch.getDate();
@@ -485,7 +485,7 @@ export default defineComponent({
     };
 
     const performCreateTableOrder = async () => {
-      createTableOrder(route.params.table, orderStore.orderList)
+      await createTableOrder(route.params.table, orderStore.orderList)
         .then((response) => {
           if (response.status === 201) {
             print(response.data);
@@ -497,8 +497,8 @@ export default defineComponent({
         });
     };
 
-    const performUpdateTableOrder = () => {
-      updateTableOrder(
+    const performUpdateTableOrder = async () => {
+      await updateTableOrder(
         route.params.table,
         orderStore.orderId,
         orderStore.orderList
@@ -521,15 +521,15 @@ export default defineComponent({
           content: "¿Está seguro?",
           positiveText: "Sí",
           negativeText: "No",
-          onPositiveClick: () => {
-            performNullifyTableOrder();
+          onPositiveClick: async () => {
+            await performNullifyTableOrder();
           },
         });
       }
     };
 
-    const performNullifyTableOrder = () => {
-      cancelTableOrder(table)
+    const performNullifyTableOrder = async () => {
+      await cancelTableOrder(table)
         .then((response) => {
           if (response.status === 202) {
             message.success("Pedido anulado correctamente!");
@@ -548,8 +548,8 @@ export default defineComponent({
         title: "Eliminando comanda",
         content: "¿Está seguro?",
         positiveText: "Sí",
-        onPositiveClick: () => {
-          performDeleteOrderDetail(route.params.table, detailId).then(
+        onPositiveClick: async () => {
+          await performDeleteOrderDetail(route.params.table, detailId).then(
             (response) => {
               if (response.status === 202) {
                 orderStore.orderList.splice(detailIndex, 1);
@@ -576,10 +576,10 @@ export default defineComponent({
       }));
     });
 
-    const showOptions = (value) => {
+    const showOptions = async (value) => {
       if (value.length >= 3) {
         searching.value = true;
-        searchProductByName(value)
+        await searchProductByName(value)
           .then((response) => {
             if (response.status === 200) {
               products.value = response.data;

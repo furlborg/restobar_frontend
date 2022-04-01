@@ -236,10 +236,10 @@ export default defineComponent({
     };
 
     const performCreateDetail = () => {
-      detailRef.value.validate((errors) => {
+      detailRef.value.validate(async (errors) => {
         if (!errors) {
           isLoading.value = true;
-          createTillDetails(detail.value)
+          await createTillDetails(detail.value)
             .then((response) => {
               if (response.status === 201) {
                 cleanDetail();
@@ -267,9 +267,9 @@ export default defineComponent({
       concept_type: movementType.value,
     });
 
-    const performCreateConcept = () => {
+    const performCreateConcept = async () => {
       concept.value.concept_type = movementType.value;
-      createConcept(concept.value)
+      await createConcept(concept.value)
         .then((response) => {
           if (response.status === 201) {
             tillStore.refreshConcepts().then(() => {
@@ -288,8 +288,8 @@ export default defineComponent({
         });
     };
 
-    const performUpdateConcept = () => {
-      updateConcept(concept.value.id, concept.value)
+    const performUpdateConcept = async () => {
+      await updateConcept(concept.value.id, concept.value)
         .then((response) => {
           if (response.status === 202) {
             tillStore.refreshConcepts();
@@ -311,8 +311,8 @@ export default defineComponent({
       description: null,
     });
 
-    const performCreatePayment = () => {
-      createPaymentMethod(payment.value)
+    const performCreatePayment = async () => {
+      await createPaymentMethod(payment.value)
         .then((response) => {
           if (response.status === 201) {
             saleStore.refreshPaymentMethods().then(() => {
@@ -331,8 +331,8 @@ export default defineComponent({
         });
     };
 
-    const performUpdatePayment = () => {
-      updatePaymentMethod(payment.value.id, payment.value)
+    const performUpdatePayment = async () => {
+      await updatePaymentMethod(payment.value.id, payment.value)
         .then((response) => {
           if (response.status === 202) {
             saleStore.refreshPaymentMethods();

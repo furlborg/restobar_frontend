@@ -63,11 +63,11 @@ export default defineComponent({
     const isLoadingData = ref(false);
     const details = ref([]);
 
-    watch(show, () => {
+    watch(show, async () => {
       if (show.value === true) {
         document.title = "Detalle de Pedido | App";
         isLoadingData.value = true;
-        listOrderDetails(idOrder.value)
+        await listOrderDetails(idOrder.value)
           .then((response) => {
             if (response.status === 200) {
               details.value = response.data;

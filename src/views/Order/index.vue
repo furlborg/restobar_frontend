@@ -177,10 +177,10 @@ export default defineComponent({
       pageSize: 20,
       showSizePicker: true,
       pageSizes: [20, 50, 100],
-      onChange: (page) => {
+      onChange: async (page) => {
         isTableLoading.value = true;
         pagination.value.page = page;
-        listOrdersByPage(
+        await listOrdersByPage(
           pagination.value.pageSearchParams,
           pagination.value.page,
           pagination.value.pageSize
@@ -206,10 +206,10 @@ export default defineComponent({
             isTableLoading.value = false;
           });
       },
-      onPageSizeChange: (pageSize) => {
+      onPageSizeChange: async (pageSize) => {
         isTableLoading.value = true;
         pagination.value.pageSize = pageSize;
-        listOrdersByPage(
+        await listOrdersByPage(
           pagination.value.pageSearchParams,
           pagination.value.page,
           pagination.value.pageSize
@@ -237,10 +237,10 @@ export default defineComponent({
       },
     });
 
-    const loadOrders = () => {
+    const loadOrders = async () => {
       isTableLoading.value = true;
       // pagination.value.pageSize = 20;
-      listOrders(filterParams.value)
+      await listOrders(filterParams.value)
         .then((response) => {
           pagination.value.total = response.data.count;
           pagination.value.pageCount = Math.trunc(
@@ -263,11 +263,11 @@ export default defineComponent({
         });
     };
 
-    const performFilter = () => {
+    const performFilter = async () => {
       isTableLoading.value = true;
       pagination.value.pageSearchParams = filterParams.value;
       pagination.value.page = 1;
-      searchOrders(
+      await searchOrders(
         pagination.value.pageSearchParams,
         pagination.value.page,
         pagination.value.pageSize
@@ -294,7 +294,7 @@ export default defineComponent({
         });
     };
 
-    const refreshTable = () => {
+    const refreshTable = async () => {
       filterParams.value.till = tillStore.currentTillID;
       filterParams.value.created = [
         format(today, "dd/MM/yyyy HH:mm:ss"),
@@ -309,7 +309,7 @@ export default defineComponent({
       filterParams.value.status = null;
       pagination.value.pageSearchParams = null;
       pagination.value.page = 1;
-      loadOrders();
+      await loadOrders();
     };
 
     const statusOptions = [
@@ -333,9 +333,9 @@ export default defineComponent({
       delivery.value = null;
     };
 
-    onMounted(() => {
+    onMounted(async () => {
       document.title = "Pedidos | App";
-      loadOrders();
+      await loadOrders();
     });
 
     return {

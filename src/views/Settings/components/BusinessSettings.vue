@@ -361,9 +361,9 @@ export default defineComponent({
       showSeries: false,
     });
 
-    const performUpdateBusiness = () => {
+    const performUpdateBusiness = async () => {
       loadingBusiness.value = true;
-      updateBusiness(business.value)
+      await updateBusiness(business.value)
         .then((response) => {
           if (response.status === 202) {
             businessStore
@@ -402,13 +402,13 @@ export default defineComponent({
       currentBranch.value.showSeries = false;
     };
 
-    const performUpdateBranch = () => {
+    const performUpdateBranch = async () => {
       let branch = business.value.branchs.find(
         (branch) => branch.id === currentBranch.value.id
       );
       if (branch) {
         loadingBranch.value = true;
-        updateBranch(currentBranch.value.id, branch)
+        await updateBranch(currentBranch.value.id, branch)
           .then((response) => {
             if (response.status === 202) {
               businessStore
@@ -470,10 +470,10 @@ export default defineComponent({
       }
     };
 
-    const performCreateDocumentSerie = () => {
+    const performCreateDocumentSerie = async () => {
       loadingSeries.value = true;
       serie.value.sucursal = currentBranch.value.id;
-      createDocumentSerie(serie.value)
+      await createDocumentSerie(serie.value)
         .then((response) => {
           if (response.status === 201) {
             cleanSerie();
@@ -500,9 +500,9 @@ export default defineComponent({
         });
     };
 
-    const performUpdateDocumentSerie = () => {
+    const performUpdateDocumentSerie = async () => {
       loadingSeries.value = true;
-      updateDocumentSerie(serie.value.id, serie.value)
+      await updateDocumentSerie(serie.value.id, serie.value)
         .then((response) => {
           if (response.status === 202) {
             cleanSerie();
@@ -540,11 +540,11 @@ export default defineComponent({
       // idProduct.value = 0
     };
 
-    const onSuccess = () => {
+    const onSuccess = async () => {
       showModal.value = false;
       onCloseModal();
       loadingBranch.value = true;
-      businessStore
+      await businessStore
         .refreshBusiness()
         .then(() => {
           business.value = cloneDeep(businessStore.business);

@@ -181,10 +181,10 @@ export default defineComponent({
       pageCount: 1,
       pageSize: 20,
       total: 0,
-      onChange: (page) => {
+      onChange: async (page) => {
         isTableLoading.value = true;
         pagination.value.page = page;
-        getTillsByPageNumber(
+        await getTillsByPageNumber(
           pagination.value.page,
           pagination.value.filterParams
         )
@@ -211,10 +211,10 @@ export default defineComponent({
       },
     });
 
-    const loadTills = () => {
+    const loadTills = async () => {
       isTableLoading.value = true;
       pagination.value.page = 1;
-      getTills(filterParams.value.branch)
+      await getTills(filterParams.value.branch)
         .then((response) => {
           if (response.status === 200) {
             pagination.value.total = response.data.count;
@@ -239,11 +239,11 @@ export default defineComponent({
         });
     };
 
-    const performFilter = () => {
+    const performFilter = async () => {
       isTableLoading.value = true;
       pagination.value.filterParams = filterParams.value;
       pagination.value.page = 1;
-      filterTills(pagination.value.page, pagination.value.filterParams)
+      await filterTills(pagination.value.page, pagination.value.filterParams)
         .then((response) => {
           pagination.value.total = response.data.count;
           pagination.value.pageCount = Math.trunc(
@@ -266,7 +266,7 @@ export default defineComponent({
         });
     };
 
-    const refreshTable = () => {
+    const refreshTable = async () => {
       filterParams.value.opening_responsable = null;
       filterParams.value.closing_responsable = null;
       filterParams.value.opening_amount = null;
@@ -274,12 +274,12 @@ export default defineComponent({
       filterParams.value.created = null;
       filterParams.value.modified = null;
       pagination.value.filterParams = null;
-      loadTills();
+      await loadTills();
     };
 
-    onMounted(() => {
+    onMounted(async () => {
       document.title = "Aperturas y Cierres | App";
-      loadTills();
+      await loadTills();
     });
 
     const onCloseModal = () => {
@@ -293,10 +293,10 @@ export default defineComponent({
       // loadProductsData()
     };
 
-    const onClosureSuccess = () => {
+    const onClosureSuccess = async () => {
       showClosureModal.value = false;
       onCloseModal();
-      loadTills();
+      await loadTills();
       // loadProductsData()
     };
 

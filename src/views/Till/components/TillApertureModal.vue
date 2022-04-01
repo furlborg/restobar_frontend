@@ -71,9 +71,9 @@ export default defineComponent({
       opening_observations: "",
     });
 
-    const apertureTill = () => {
+    const apertureTill = async () => {
       isLoading.value = true;
-      createTill(till.value)
+      await createTill(till.value)
         .then((response) => {
           if (response.status === 201) {
             message.success("Caja aperturada!");

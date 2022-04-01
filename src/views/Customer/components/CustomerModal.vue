@@ -255,12 +255,12 @@ export default defineComponent({
       return customerStore.ubigee;
     });
 
-    watch(show, () => {
+    watch(show, async () => {
       if (show.value === true && idCustomer.value !== 0) {
         document.title = "Modificar Cliente | App";
         modalTitle.value = "Modificar Cliente";
         isLoadingData.value = true;
-        retrieveCustomer(idCustomer.value)
+        await retrieveCustomer(idCustomer.value)
           .then((response) => {
             customer.value = response.data;
           })
@@ -318,13 +318,13 @@ export default defineComponent({
 
     const performCreate = (e) => {
       e.preventDefault();
-      customerRef.value.validate((errors) => {
+      customerRef.value.validate(async (errors) => {
         if (!errors) {
           isLoadingData.value = true;
           customer.value.addresses.forEach((address) =>
             address.description.toUpperCase()
           );
-          createCustomer(customer.value)
+          await createCustomer(customer.value)
             .then((response) => {
               if (response.status === 201) {
                 message.success("Cliente registrado!");
@@ -351,13 +351,13 @@ export default defineComponent({
 
     const performUpdate = (e) => {
       e.preventDefault();
-      customerRef.value.validate((errors) => {
+      customerRef.value.validate(async (errors) => {
         if (!errors) {
           isLoadingData.value = true;
           customer.value.addresses.forEach((address) =>
             address.description.toUpperCase()
           );
-          updateCustomer(idCustomer.value, customer.value)
+          await updateCustomer(idCustomer.value, customer.value)
             .then((response) => {
               if (response.status === 202) {
                 message.success("Cliente actualizado!");
@@ -378,7 +378,7 @@ export default defineComponent({
       });
     };
 
-    const performSearchByDoc = () => {
+    const performSearchByDoc = async () => {
       if (customer.value.doc_num) {
         if (
           customer.value.doc_num.length === 8 ||
@@ -388,7 +388,7 @@ export default defineComponent({
             duration: 0,
           });
           isSearchingDoc.value = true;
-          requestCustomerData(customer.value.doc_num)
+          await requestCustomerData(customer.value.doc_num)
             .then((response) => {
               if (response.status === 200) {
                 message.success("Éxito");
