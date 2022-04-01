@@ -916,7 +916,8 @@ export const saleRules = {
         required: true,
         trigger: ['blur'],
         message: 'Cliente es requerido'
-    }
+    },
+    delivery_info: null
 }
 
 export const createSaleColumns = ({ printSale, miscSale, sendSale, nullifySale }) => {
