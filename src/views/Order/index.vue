@@ -240,7 +240,7 @@ export default defineComponent({
     const loadOrders = () => {
       isTableLoading.value = true;
       // pagination.value.pageSize = 20;
-      listOrders(filterParams.value.till)
+      listOrders(filterParams.value)
         .then((response) => {
           pagination.value.total = response.data.count;
           pagination.value.pageCount = Math.trunc(
@@ -295,10 +295,18 @@ export default defineComponent({
     };
 
     const refreshTable = () => {
-      filterParams.value.created = null;
+      filterParams.value.till = tillStore.currentTillID;
+      filterParams.value.created = [
+        format(today, "dd/MM/yyyy HH:mm:ss"),
+        format(
+          set(today, { hours: 23, minutes: 59, seconds: 59 }),
+          "dd/MM/yyyy HH:mm:ss"
+        ),
+      ];
       filterParams.value.take_aways = true;
       filterParams.value.tables = false;
       filterParams.value.deliverys = true;
+      filterParams.value.status = null;
       pagination.value.pageSearchParams = null;
       pagination.value.page = 1;
       loadOrders();

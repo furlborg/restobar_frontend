@@ -209,7 +209,7 @@ export default defineComponent({
     const dateNow = ref(null);
 
     orderStore.orders = [];
-    saleStore.sale_details = [];
+    saleStore.order_initial = [];
     orderStore.orderId = null;
 
     watchEffect(() => {

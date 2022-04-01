@@ -55,7 +55,7 @@
       v-model:show="showModal"
       preset="card"
       title="Indicaciones"
-      :product="orderStore.orders[orderItemIndex]"
+      :product="preOrderList[orderItemIndex]"
       @success="showModal = false"
     ></ProductIndications>
     <teleport to="body">
@@ -69,13 +69,13 @@
             v-if="products.some((product) => product.quantity > 0)"
             type="success"
             round
-            @click="addToList"
+            @click="addToPreList"
             ><v-icon class="me-1" name="md-add-round" /> Agregar</n-button
           >
         </transition>
         <n-button
           type="info"
-          :disabled="!(orderStore.orders.length > 0)"
+          :disabled="!(preOrderList.length > 0)"
           round
           @click="activeDrawer = true"
           ><v-icon class="me-1" name="md-shoppingcart-round" />Ver
@@ -86,10 +86,7 @@
     <n-drawer height="50%" v-model:show="activeDrawer" placement="bottom">
       <n-drawer-content title="Pedidos" closable>
         <n-list>
-          <n-list-item
-            v-for="(orderItem, index) in orderStore.orders"
-            :key="index"
-          >
+          <n-list-item v-for="(orderItem, index) in preOrderList" :key="index">
             <n-thing
               :title="`${orderItem.quantity} - ${orderItem.product_name}`"
               :title-extra="`S/. ${
@@ -134,8 +131,8 @@ import { useRoute } from "vue-router";
 import { useRouter } from "vue-router";
 import { useMessage } from "naive-ui";
 import ProductIndications from "./ProductIndications";
-import { useWaiterStore } from "@/store/modules/waiter";
 import { useProductStore } from "@/store/modules/product";
+import { useTableStore } from "@/store/modules/table";
 import { useOrderStore } from "@/store/modules/order";
 import { getProductsByCategory } from "@/api/modules/products";
 import {
@@ -155,17 +152,20 @@ export default defineComponent({
     const router = useRouter();
     const productStore = useProductStore();
     const orderStore = useOrderStore();
+    const tableStore = useTableStore();
     const activeDrawer = ref(false);
     const showModal = ref(false);
     const orderItemIndex = ref(null);
     const products = ref([]);
 
     const performCreateTableOrder = () => {
+      addToList();
       createTableOrder(route.params.table, orderStore.orderList)
         .then((response) => {
           if (response.status === 201) {
             message.success("Orden creada correctamente");
             activeDrawer.value = false;
+            tableStore.refreshData();
             router.push({ name: "WHome" });
           }
         })
@@ -176,6 +176,7 @@ export default defineComponent({
     };
 
     const performUpdateTableOrder = () => {
+      addToList();
       updateTableOrder(
         route.params.table,
         orderStore.orderId,
@@ -185,6 +186,7 @@ export default defineComponent({
           if (response.status === 202) {
             message.success("Orden actualizada correctamente");
             activeDrawer.value = false;
+            tableStore.refreshData();
             router.push({ name: "WHome" });
           }
         })
@@ -211,13 +213,35 @@ export default defineComponent({
       loadProducts();
     });
 
-    const addToList = () => {
+    const preOrderList = ref([]);
+
+    const addToPreList = () => {
       products.value.forEach((product) => {
         if (product.quantity > 0) {
-          orderStore.addOrderItem(product);
-          product.quantity = 0;
-          product.indications = [];
+          const existence = preOrderList.value.find(
+            (order) => order.id === product.id
+          );
+          if (typeof existence !== "undefined") {
+            existence.quantity += product.quantity;
+          } else {
+            let order = {
+              id: product.id,
+              product_name: product.name,
+              price: product.prices,
+              quantity: Number(product.quantity),
+              indication: [],
+            };
+            preOrderList.value.push(order);
+          }
         }
+        product.quantity = 0;
+        product.indications = [];
+      });
+    };
+
+    const addToList = () => {
+      preOrderList.value.forEach((product) => {
+        orderStore.addOrderItem(product);
       });
     };
 
@@ -227,7 +251,8 @@ export default defineComponent({
       productStore,
       orderItemIndex,
       products,
-      addToList,
+      preOrderList,
+      addToPreList,
       orderStore,
       performCreateTableOrder,
       performUpdateTableOrder,

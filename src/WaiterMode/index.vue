@@ -44,7 +44,7 @@
           <a href="#">Pricing</a>
         </li>
         <li>
-          <a href="#" class="suBtn">Cerrar sesión</a>
+          <a href="#" class="suBtn" @click="doLogout">Cerrar sesión</a>
         </li>
       </ul>
     </div>
@@ -53,20 +53,64 @@
 
 <script>
 import { defineComponent, ref } from "vue";
+import { useRouter } from "vue-router";
+import { useDialog } from "naive-ui";
+import { retrieveCurrentTill } from "@/api/modules/tills";
 import { useTableStore } from "@/store/modules/table";
 import { useWaiterStore } from "@/store/modules/waiter";
+import { useUserStore } from "@/store/modules/user";
+import { useTillStore } from "@/store/modules/till";
 
 export default defineComponent({
   name: "WaiterMode",
   setup() {
     const active = ref(false);
+    const dialog = useDialog();
+    const router = useRouter();
     const waiterStore = useWaiterStore();
     const tableStore = useTableStore();
+    const tillStore = useTillStore();
+    const userStore = useUserStore();
     tableStore.initializeStore();
+
+    const checkTill = () => {
+      retrieveCurrentTill()
+        .then((response) => {
+          if (response.status === 200) {
+            tillStore.currentTillID = response.data.id;
+            tillStore.currentTillOrders = response.data.orders_count;
+          }
+        })
+        .catch((error) => {
+          if (error.response.status === 404) {
+            tillStore.currentTillID = null;
+            tillStore.currentTillOrders = 0;
+          }
+        });
+    };
+    checkTill();
+
+    const doLogout = () => {
+      dialog.error({
+        title: "Cerrar sesión",
+        content: "¿Desea cerrar sesión?",
+        positiveText: "Si",
+        negativeText: "No",
+        onPositiveClick: async () => {
+          await userStore.blacklistToken().then((v) => {
+            if (v) {
+              router.push({ name: "Login" });
+            }
+          });
+        },
+        onNegativeClick: () => {},
+      });
+    };
 
     return {
       active,
       waiterStore,
+      doLogout,
     };
   },
 });

@@ -69,6 +69,8 @@ import { defineComponent, reactive, ref, computed, toRefs } from "vue";
 import { useDialog, useMessage } from "naive-ui";
 import { useRouter } from "vue-router";
 import { useUserStore } from "@/store/modules/user";
+import { retrieveCurrentTill } from "@/api/modules/tills";
+import { useTillStore } from "@/store/modules/till";
 import { useBusinessStore } from "@/store/modules/business";
 import ProjectSetting from "./ProjectSetting";
 import { renderIcon } from "@/utils";
@@ -90,6 +92,7 @@ export default defineComponent({
     const drawerSetting = ref();
     const userStore = useUserStore();
     const businessStore = useBusinessStore();
+    const tillStore = useTillStore();
 
     const state = reactive({
       fullscreenIcon: "bi-fullscreen",
@@ -136,6 +139,22 @@ export default defineComponent({
       return options;
     });
 
+    const performRetrieveCurrentTill = () => {
+      retrieveCurrentTill()
+        .then((response) => {
+          if (response.status === 200) {
+            tillStore.currentTillID = response.data.id;
+            tillStore.currentTillOrders = response.data.orders_count;
+          }
+        })
+        .catch((error) => {
+          if (error.response.status === 404) {
+            tillStore.currentTillID = null;
+            tillStore.currentTillOrders = 0;
+          }
+        });
+    };
+
     const avatarSelect = (key) => {
       switch (key) {
         case 0:
@@ -147,6 +166,7 @@ export default defineComponent({
         default:
           if (key > 0) {
             businessStore.currentBranch = key;
+            performRetrieveCurrentTill();
             router.push({ name: "Dashboard" });
           }
       }
