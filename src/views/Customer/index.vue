@@ -140,11 +140,11 @@ export default defineComponent({
       pageSize: 10,
       showSizePicker: true,
       pageSizes: [10, 25, 50, 100],
-      onChange: (page) => {
+      onChange: async (page) => {
         isTableLoading.value = true;
         pagination.value.page = page;
         pagination.value.offset = --page * pagination.value.pageSize;
-        getCustomersByPageNumber(
+        await getCustomersByPageNumber(
           pagination.value.pageSearchParams,
           pagination.value.pageSize,
           pagination.value.offset
@@ -170,12 +170,12 @@ export default defineComponent({
             isTableLoading.value = false;
           });
       },
-      onPageSizeChange: (pageSize) => {
+      onPageSizeChange: async (pageSize) => {
         isTableLoading.value = true;
         pagination.value.offset = 0;
         pagination.value.page = 1;
         pagination.value.pageSize = pageSize;
-        getCustomersByPageNumber(
+        await getCustomersByPageNumber(
           pagination.value.pageSearchParams,
           pageSize,
           pagination.value.offset
@@ -203,11 +203,11 @@ export default defineComponent({
       },
     });
 
-    const loadCustomersData = () => {
+    const loadCustomersData = async () => {
       isTableLoading.value = true;
       pagination.value.offset = 0;
       pagination.value.page = 1;
-      getCustomers()
+      await getCustomers()
         .then((response) => {
           pagination.value.total = response.data.count;
           pagination.value.pageCount = Math.trunc(
@@ -230,12 +230,12 @@ export default defineComponent({
         });
     };
 
-    const performSearch = () => {
+    const performSearch = async () => {
       isTableLoading.value = true;
       pagination.value.pageSearchParams = searchParams.value;
       pagination.value.offset = 0;
       pagination.value.page = 1;
-      searchCustomers(
+      await searchCustomers(
         pagination.value.pageSearchParams,
         pagination.value.pageSize,
         pagination.value.offset
@@ -262,9 +262,9 @@ export default defineComponent({
         });
     };
 
-    const performDisableCustomer = (id) => {
+    const performDisableCustomer = async (id) => {
       isTableLoading.value = true;
-      disableCustomer(id)
+      await disableCustomer(id)
         .then((response) => {
           if (response.status === 202) {
             message.success("Cliente deshabilitado con éxito!");
@@ -279,9 +279,15 @@ export default defineComponent({
         });
     };
 
-    const refreshTable = () => {
+    const refreshTable = async () => {
+      searchParams.value.doc_type = null;
+      searchParams.value.doc_num = null;
+      searchParams.value.names = null;
+      searchParams.value.address = null;
+      searchParams.value.email = null;
+      searchParams.value.phone = null;
       pagination.value.pageSearchParams = null;
-      loadCustomersData();
+      await loadCustomersData();
     };
 
     const onCloseModal = () => {
@@ -289,15 +295,15 @@ export default defineComponent({
       idCustomer.value = 0;
     };
 
-    const onSuccess = () => {
+    const onSuccess = async () => {
       showModal.value = false;
       onCloseModal();
-      loadCustomersData();
+      await loadCustomersData();
     };
 
-    onMounted(() => {
+    onMounted(async () => {
       document.title = "Clientes | App";
-      loadCustomersData();
+      await loadCustomersData();
     });
 
     return {
@@ -323,8 +329,8 @@ export default defineComponent({
             title: "Deshabilitando cliente",
             content: "¿Está seguro?",
             positiveText: "Sí",
-            onPositiveClick: () => {
-              performDisableCustomer(rowData.id);
+            onPositiveClick: async () => {
+              await performDisableCustomer(rowData.id);
             },
           });
         },

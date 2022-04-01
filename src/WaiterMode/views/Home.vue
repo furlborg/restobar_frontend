@@ -4,13 +4,23 @@
       <n-select
         v-model:value="area"
         :options="tableStore.getAreasOptions"
-        :disabled="waiterStore.groupMode"
+        placeholder="Seleccione area"
+        :disabled="!tillStore.currentTillID || waiterStore.groupMode"
       ></n-select>
-      <n-button type="info" :disabled="waiterStore.groupMode"
+      <n-button
+        type="info"
+        :disabled="waiterStore.groupMode"
+        @click="tableStore.refreshData()"
         ><v-icon name="hi-solid-refresh"
       /></n-button>
     </n-input-group>
-    <n-grid class="mt-3" cols="3" :x-gap="6" :y-gap="6">
+    <n-grid
+      v-if="tillStore.currentTillID"
+      class="mt-3"
+      cols="3"
+      :x-gap="6"
+      :y-gap="6"
+    >
       <n-gi v-for="table in tables" :key="table.id">
         <n-card
           @click="
@@ -70,6 +80,15 @@
         </n-card>
       </n-gi>
     </n-grid>
+    <div v-else>
+      <n-space align="center" vertical>
+        <v-icon label="No Open Till" scale="6">
+          <v-icon name="md-pointofsale-twotone" />
+          <v-icon name="md-notinterested-round" scale="2" fill="#fC644d" />
+        </v-icon>
+        <n-text class="fs-3">NO SE HA APERTURADO CAJA</n-text>
+      </n-space>
+    </div>
     <teleport to="body">
       <n-space
         v-if="waiterStore.groupMode"
@@ -107,7 +126,6 @@
 import { defineComponent, ref, computed } from "vue";
 import { useTableStore } from "@/store/modules/table";
 import { useWaiterStore } from "@/store/modules/waiter";
-import { retrieveCurrentTill } from "@/api/modules/tills";
 import { useTillStore } from "@/store/modules/till";
 import { cloneDeep } from "@/utils";
 
@@ -117,7 +135,7 @@ export default defineComponent({
     const waiterStore = useWaiterStore();
     const tableStore = useTableStore();
     const tillStore = useTillStore();
-    const area = ref(1);
+    const area = ref(null);
     const currentTableGrouping = ref(null);
     const currentGroup = ref([]);
     const tableGroups = ref([]);
@@ -128,23 +146,6 @@ export default defineComponent({
       }
       return [];
     });
-
-    const checkTill = () => {
-      retrieveCurrentTill()
-        .then((response) => {
-          if (response.status === 200) {
-            tillStore.currentTillID = response.data.id;
-            tillStore.currentTillOrders = response.data.orders_count;
-          }
-        })
-        .catch((error) => {
-          if (error.response.status === 404) {
-            tillStore.currentTillID = null;
-            tillStore.currentTillOrders = 0;
-          }
-        });
-    };
-    checkTill();
 
     const addToGroup = (table) => {
       currentGroup.value.push(cloneDeep(table));
@@ -169,6 +170,7 @@ export default defineComponent({
     return {
       waiterStore,
       tableStore,
+      tillStore,
       area,
       tables,
       tableGroups,

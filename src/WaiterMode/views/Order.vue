@@ -12,7 +12,10 @@
       <n-card title="Pedido" size="small" :segmented="{ content: 'hard' }">
         <!-- <n-h2>Pedido</n-h2> -->
         <n-list class="m-0">
-          <n-list-item v-for="(order, index) in orderDetails" :key="index">
+          <n-list-item
+            v-for="(order, index) in orderStore.orderList"
+            :key="index"
+          >
             <n-thing
               :title="`${order.quantity} - ${order.product_name}`"
               :title-extra="`S/. ${order.quantity * order.price.toFixed(2)}`"
@@ -28,7 +31,7 @@
         v-model:show="showModal"
         preset="card"
         title="Indicaciones"
-        :product="orderDetails[itemIndex]"
+        :product="orderStore.orderList[itemIndex]"
         @success="showModal = false"
       ></ProductIndications>
     </n-tab-pane>
@@ -44,6 +47,7 @@ import { useWaiterStore } from "@/store/modules/waiter";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { retrieveTableOrder } from "@/api/modules/tables";
+import { cloneDeep } from "@/utils";
 
 export default defineComponent({
   name: "WOrder",
@@ -61,21 +65,22 @@ export default defineComponent({
     const orderDetails = ref([]);
 
     orderStore.orders = [];
-    saleStore.sale_details = [];
+    saleStore.order_initial = [];
     orderStore.orderId = null;
 
     const performRetrieveTableOrder = () => {
       retrieveTableOrder(route.params.table)
         .then((response) => {
           if (response.status === 200) {
-            orderDetails.value = response.data.order_details;
+            orderStore.orders = response.data.order_details;
+            saleStore.order_initial = cloneDeep(orderStore.orderList);
             orderStore.orderId = response.data.id;
           }
         })
         .catch((error) => {
           if (error.response.status === 404) {
             orderStore.orders = [];
-            saleStore.sale_details = [];
+            saleStore.order_initial = [];
             orderStore.orderId = null;
           } else {
             console.error(error);

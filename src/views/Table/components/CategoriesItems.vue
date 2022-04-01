@@ -122,8 +122,8 @@ export default defineComponent({
       },
     ];
 
-    const loadProducts = () => {
-      getProductsByCategory(route.params.category)
+    const loadProducts = async () => {
+      await getProductsByCategory(route.params.category)
         .then((response) => {
           if (response.status === 200) {
             products.value = response.data;
@@ -135,8 +135,8 @@ export default defineComponent({
         });
     };
 
-    onMounted(() => {
-      loadProducts();
+    onMounted(async () => {
+      await loadProducts();
     });
 
     const handleBack = () => {

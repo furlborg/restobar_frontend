@@ -93,8 +93,8 @@ export default defineComponent({
     const productStore = useProductStore();
     const listType = ref("grid");
 
-    onMounted(() => {
-      productStore.refreshCategories();
+    onMounted(async () => {
+      await productStore.refreshCategories();
     });
 
     const productOptions = [

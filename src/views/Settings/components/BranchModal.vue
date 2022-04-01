@@ -86,9 +86,9 @@ export default defineComponent({
     const message = useMessage();
     const branch = ref({});
 
-    const performCreateBranch = () => {
+    const performCreateBranch = async () => {
       isLoading.value = true;
-      createBranch(branch.value)
+      await createBranch(branch.value)
         .then((response) => {
           if (response.status === 201) {
             isLoading.value = false;

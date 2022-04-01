@@ -1,6 +1,10 @@
 <template>
   <n-card title="Mesas" :bordered="false" :segmented="{ content: 'hard' }">
     <template #header-extra>
+      <n-button type="info" text @click="refreshData">
+        <v-icon name="hi-solid-refresh" />
+        Recargar
+      </n-button>
       <!-- <n-button
         v-if="!groupMode"
         type="info"
@@ -222,9 +226,9 @@ export default defineComponent({
     const currentGroup = ref([]);
     const tableStore = useTableStore();
 
-    const loadTablesData = () => {
+    const loadTablesData = async () => {
       isLoading.value = true;
-      tableStore.refreshData().then(() => {
+      await tableStore.refreshData().then(() => {
         isLoading.value = false;
       });
     };
@@ -235,15 +239,15 @@ export default defineComponent({
         content: "¿Está seguro?",
         positiveText: "Sí",
         negativeText: "No",
-        onPositiveClick: () => {
-          performNullifyTableOrder(id);
+        onPositiveClick: async () => {
+          await performNullifyTableOrder(id);
         },
       });
     };
 
-    const performNullifyTableOrder = (id) => {
+    const performNullifyTableOrder = async (id) => {
       isLoading.value = true;
-      cancelTableOrder(id)
+      await cancelTableOrder(id)
         .then((response) => {
           if (response.status === 202) {
             message.success("Pedido anulado correctamente!");
@@ -273,22 +277,29 @@ export default defineComponent({
       currentTableGrouping.value = null;
     };
 
+    const refreshData = async () => {
+      isLoading.value = true;
+      await tableStore.refreshData();
+      isLoading.value = false;
+    };
+
     onMounted(() => {
       loadTablesData();
     });
 
     return {
       isLoading,
-      openOptions,
-      tableStore,
       groupMode,
+      tableStore,
+      openOptions,
       currentGroup,
-      addToGroup,
-      removeFromGroup,
       saveGroup,
+      addToGroup,
+      refreshData,
+      removeFromGroup,
+      nullifyTableOrder,
       tableGroups,
       currentTableGrouping,
-      nullifyTableOrder,
     };
   },
 });

@@ -69,9 +69,9 @@ export default defineComponent({
       closing_observations: "",
     });
 
-    const closureTill = () => {
+    const closureTill = async () => {
       isLoading.value = true;
-      updateTill(idTill.value, till.value)
+      await updateTill(idTill.value, till.value)
         .then((response) => {
           if (response.status === 202) {
             tillStore.currentTillID = null;

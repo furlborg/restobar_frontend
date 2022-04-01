@@ -469,10 +469,10 @@ export default defineComponent({
     const productCategory = ref(null);
     const selectedCategory = ref(null);
 
-    const performCreateTable = (e) => {
+    const performCreateTable = async (e) => {
       e.preventDefault();
       isLoadingData.value = true;
-      createTable(currentArea.value, table.value)
+      await createTable(currentArea.value, table.value)
         .then((response) => {
           if (response.status === 201) {
             tableStore.refreshData().then(() => {
@@ -497,10 +497,10 @@ export default defineComponent({
       };
     };
 
-    const performCreateArea = (e) => {
+    const performCreateArea = async (e) => {
       e.preventDefault();
       isLoadingData.value = true;
-      createArea(area.value)
+      await createArea(area.value)
         .then((response) => {
           if (response.status === 201) {
             tableStore
@@ -523,10 +523,10 @@ export default defineComponent({
         });
     };
 
-    const performUpdateArea = (e) => {
+    const performUpdateArea = async (e) => {
       e.preventDefault();
       isLoadingData.value = true;
-      updateArea(area.value.id, area.value)
+      await updateArea(area.value.id, area.value)
         .then((response) => {
           if (response.status === 202) {
             tableStore
@@ -578,8 +578,8 @@ export default defineComponent({
       }
     };
 
-    const loadPreparationPlaces = () => {
-      getProductPlaces()
+    const loadPreparationPlaces = async () => {
+      await getProductPlaces()
         .then((response) => {
           if (response.status === 200) {
             preparationPlaces.value = response.data;
@@ -591,8 +591,8 @@ export default defineComponent({
         });
     };
 
-    const performCreatePreparationPlace = () => {
-      createProductPlace(preparationPlace.value)
+    const performCreatePreparationPlace = async () => {
+      await createProductPlace(preparationPlace.value)
         .then((response) => {
           if (response.status === 201) {
             loadPreparationPlaces();
@@ -607,8 +607,8 @@ export default defineComponent({
         });
     };
 
-    const performUpdatePreparationPlace = () => {
-      updateProductPlace(selectedPlace.value, preparationPlace.value)
+    const performUpdatePreparationPlace = async () => {
+      await updateProductPlace(selectedPlace.value, preparationPlace.value)
         .then((response) => {
           if (response.status === 202) {
             loadPreparationPlaces();
@@ -639,8 +639,8 @@ export default defineComponent({
       }
     };
 
-    const loadProductCategories = () => {
-      getProductCategories()
+    const loadProductCategories = async () => {
+      await getProductCategories()
         .then((response) => {
           if (response.status === 200) {
             productCategories.value = response.data;
@@ -652,8 +652,8 @@ export default defineComponent({
         });
     };
 
-    const performCreateProductCategory = () => {
-      createProductCategory(productCategory.value)
+    const performCreateProductCategory = async () => {
+      await createProductCategory(productCategory.value)
         .then((response) => {
           if (response.status === 201) {
             loadProductCategories();
@@ -668,8 +668,8 @@ export default defineComponent({
         });
     };
 
-    const performUpdateProductCategory = () => {
-      updateProductCategory(selectedCategory.value, productCategory.value)
+    const performUpdateProductCategory = async () => {
+      await updateProductCategory(selectedCategory.value, productCategory.value)
         .then((response) => {
           if (response.status === 202) {
             loadProductCategories();
@@ -704,8 +704,8 @@ export default defineComponent({
       }
     };
 
-    const loadPaymentMethods = () => {
-      getPaymentMethods()
+    const loadPaymentMethods = async () => {
+      await getPaymentMethods()
         .then((response) => {
           if (response.status === 200) {
             paymentMethods.value = response.data;
@@ -717,8 +717,8 @@ export default defineComponent({
         });
     };
 
-    const performCreatePaymentMethod = () => {
-      createPaymentMethodDesc(paymentMethod.value)
+    const performCreatePaymentMethod = async () => {
+      await createPaymentMethodDesc(paymentMethod.value)
         .then((response) => {
           if (response.status === 201) {
             loadPaymentMethods();
@@ -733,8 +733,8 @@ export default defineComponent({
         });
     };
 
-    const performUpdatePaymentMethod = () => {
-      updatePaymentMethodDesc(selectedPayment.value, paymentMethod.value)
+    const performUpdatePaymentMethod = async () => {
+      await updatePaymentMethodDesc(selectedPayment.value, paymentMethod.value)
         .then((response) => {
           if (response.status === 202) {
             loadPaymentMethods();
@@ -786,8 +786,8 @@ export default defineComponent({
       }
     };
 
-    const loadConcepts = () => {
-      getConcepts()
+    const loadConcepts = async () => {
+      await getConcepts()
         .then((response) => {
           if (response.status === 200) {
             concepts.value = response.data;
@@ -799,8 +799,8 @@ export default defineComponent({
         });
     };
 
-    const performCreateConcept = () => {
-      createConcept(concept.value)
+    const performCreateConcept = async () => {
+      await createConcept(concept.value)
         .then((response) => {
           if (response.status === 201) {
             loadConcepts();
@@ -815,8 +815,8 @@ export default defineComponent({
         });
     };
 
-    const performUpdateConcept = () => {
-      updateConcept(selectedConcept.value, concept.value)
+    const performUpdateConcept = async () => {
+      await updateConcept(selectedConcept.value, concept.value)
         .then((response) => {
           if (response.status === 202) {
             loadConcepts();

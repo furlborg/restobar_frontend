@@ -258,9 +258,9 @@ export default defineComponent({
       }
     });
 
-    const loadMovements = () => {
+    const loadMovements = async () => {
       isLoading.value = true;
-      getCurrentTillDetails(tillStore.currentTillID)
+      await getCurrentTillDetails(tillStore.currentTillID)
         .then((response) => {
           if (response.status === 200) {
             movements.value = response.data;
@@ -275,10 +275,13 @@ export default defineComponent({
         });
     };
 
-    const performFilter = () => {
+    const performFilter = async () => {
       isLoading.value = true;
       pagination.value.filterParams = filterParams.value;
-      filterTillDetails(tillStore.currentTillID, pagination.value.filterParams)
+      await filterTillDetails(
+        tillStore.currentTillID,
+        pagination.value.filterParams
+      )
         .then((response) => {
           movements.value = response.data;
         })
@@ -291,7 +294,7 @@ export default defineComponent({
         });
     };
 
-    const refreshTable = () => {
+    const refreshTable = async () => {
       filterParams.value = {
         document: null,
         description: null,
@@ -301,7 +304,7 @@ export default defineComponent({
         payment_method: null,
       };
       pagination.value.filterParams = null;
-      loadMovements();
+      await loadMovements();
     };
 
     const conceptTypeOptions = [
@@ -315,9 +318,9 @@ export default defineComponent({
       },
     ];
 
-    onMounted(() => {
+    onMounted(async () => {
       document.title = "Movimientos de Caja | App";
-      loadMovements();
+      await loadMovements();
     });
 
     const onCloseModal = () => {
@@ -325,9 +328,9 @@ export default defineComponent({
       // idProduct.value = 0
     };
 
-    const onSuccess = () => {
+    const onSuccess = async () => {
       showModal.value = false;
-      loadMovements();
+      await loadMovements();
       onCloseModal();
       // loadProductsData()
     };
@@ -371,9 +374,9 @@ export default defineComponent({
             title: "Anular",
             content: "¿Está seguro?",
             positiveText: "Sí",
-            onPositiveClick: () => {
+            onPositiveClick: async () => {
               isLoading.value = true;
-              nullifyDetail(rowData.id)
+              await nullifyDetail(rowData.id)
                 .then((response) => {
                   if (response.status === 202) {
                     message.success("Anulación exitosa!");

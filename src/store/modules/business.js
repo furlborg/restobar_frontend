@@ -34,8 +34,8 @@ export const useBusinessStore = defineStore('business', {
         }
     },
     actions: {
-        initializeStore() {
-            getBusinessBranchs()
+        async initializeStore() {
+            await getBusinessBranchs()
                 .then(response => {
                     this.business = response.data
                 })
@@ -43,8 +43,8 @@ export const useBusinessStore = defineStore('business', {
                     console.error(error)
                 })
         },
-        refreshBusiness() {
-            return getBusinessBranchs()
+        async refreshBusiness() {
+            return await getBusinessBranchs()
                 .then(response => {
                     this.business = response.data
                 })

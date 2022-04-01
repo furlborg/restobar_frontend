@@ -289,8 +289,13 @@ router.beforeEach(async (to, from, next) => {
   await userStore.checkAuthentication()
   if (to.matched.some((record) => record.meta.requiresAuth)) {
     if (userStore.isAuthenticated) {
-      next()
-      return
+      if (!to.matched.some((record) => record.meta.onlyWaiter) && userStore.user.profile_des === 'MOZO') {
+        next({ name: 'WaiterMode' })
+        return
+      } else {
+        next()
+        return
+      }
     } else {
       next({ name: 'Login' })
       return

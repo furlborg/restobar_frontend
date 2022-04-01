@@ -3,10 +3,15 @@ import { useBusinessStore } from "@/store/modules/business";
 import { useTillStore } from "@/store/modules/till";
 import { useUserStore } from "@/store/modules/user";
 
-export async function listOrders(till) {
+export async function listOrders(filterParams) {
     return await http.get('orders/', {
         params: {
-            till: till
+            till: filterParams.till,
+            created__range: filterParams.created !== null ? `${filterParams.created[0]}, ${filterParams.created[1]}` : null,
+            take_aways: filterParams.take_aways,
+            tables: filterParams.tables,
+            deliverys: filterParams.deliverys,
+            status: filterParams.status,
         }
     })
 }
@@ -17,12 +22,12 @@ export async function listOrdersByPage(filterParams, page, pageSize) {
             params: {
                 till: filterParams.till,
                 created__range: filterParams.created !== null ? `${filterParams.created[0]}, ${filterParams.created[1]}` : null,
-                page: page,
-                page_size: pageSize,
                 take_aways: filterParams.take_aways,
                 tables: filterParams.tables,
                 deliverys: filterParams.deliverys,
                 status: filterParams.status,
+                page: page,
+                page_size: pageSize,
             }
         })
     } else {
@@ -46,12 +51,12 @@ export async function searchOrders(filterParams, page, pageSize) {
         params: {
             till: filterParams.till,
             created__range: filterParams.created !== null ? `${filterParams.created[0]}, ${filterParams.created[1]}` : null,
-            page: page,
-            page_size: pageSize,
             take_aways: filterParams.take_aways,
             tables: filterParams.tables,
             deliverys: filterParams.deliverys,
             status: filterParams.status,
+            page: page,
+            page_size: pageSize,
         }
     })
 }

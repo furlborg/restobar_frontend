@@ -31,16 +31,16 @@ export const useTableStore = defineStore('table', {
         }
     },
     actions: {
-        initializeStore() {
-            getAreasTables()
+        async initializeStore() {
+            await getAreasTables()
                 .then(response => {
                     this.areas = response.data
                 }).catch(error => {
                     console.error(error)
                 })
         },
-        refreshData() {
-            return getAreasTables()
+        async refreshData() {
+            return await getAreasTables()
                 .then(response => {
                     this.areas = response.data
                 }).catch(error => {

@@ -582,10 +582,10 @@ export default defineComponent({
       }));
     });
 
-    const showOptions = (value) => {
+    const showOptions = async (value) => {
       if (value.length >= 3) {
         searching.value = true;
-        searchProductByName(value)
+        await searchProductByName(value)
           .then((response) => {
             if (response.status === 200) {
               products.value = response.data;
@@ -610,9 +610,9 @@ export default defineComponent({
       productSearch.value = "";
     };
 
-    const obtainSaleNumber = () => {
+    const obtainSaleNumber = async () => {
       loading.value = true;
-      getSaleNumber(sale.value.serie)
+      await getSaleNumber(sale.value.serie)
         .then((response) => {
           if (response.status === 200) {
             sale.value.number = Number(response.data.number) + 1;
@@ -696,8 +696,8 @@ export default defineComponent({
 
     const { serie } = toRefs(sale.value);
 
-    watch(serie, () => {
-      obtainSaleNumber();
+    watch(serie, async () => {
+      await obtainSaleNumber();
     });
     const handleDelivery = (v) => {
       v
@@ -1161,10 +1161,10 @@ export default defineComponent({
             title: "Pedido para llevar",
             content: "Realizar pedido?",
             positiveText: "Sí",
-            onPositiveClick: () => {
+            onPositiveClick: async () => {
               loading.value = true;
               sale.value.sale_details = saleStore.toSale;
-              takeAwayOrder(orderStore.orderList, sale.value)
+              await takeAwayOrder(orderStore.orderList, sale.value)
                 .then((response) => {
                   if (response.status === 201) {
                     printSale(response.data);
@@ -1188,9 +1188,9 @@ export default defineComponent({
       });
     };
 
-    onMounted(() => {
+    onMounted(async () => {
       document.title = "Realizar Pedido | App";
-      obtainSaleNumber();
+      await obtainSaleNumber();
 
       const fetch = new Date();
       const dd = fetch.getDate();

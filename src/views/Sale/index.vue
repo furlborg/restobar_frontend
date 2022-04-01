@@ -147,10 +147,10 @@ export default defineComponent({
       pageSize: 20,
       showSizePicker: true,
       pageSizes: [20, 50, 100],
-      onChange: (page) => {
+      onChange: async (page) => {
         isTableLoading.value = true;
         pagination.value.page = page;
-        listSalesByPage(
+        await listSalesByPage(
           pagination.value.pageSearchParams,
           pagination.value.page,
           pagination.value.pageSize
@@ -176,10 +176,10 @@ export default defineComponent({
             isTableLoading.value = false;
           });
       },
-      onPageSizeChange: (pageSize) => {
+      onPageSizeChange: async (pageSize) => {
         isTableLoading.value = true;
         pagination.value.pageSize = pageSize;
-        listSalesByPage(
+        await listSalesByPage(
           pagination.value.pageSearchParams,
           pagination.value.page,
           pagination.value.pageSize
@@ -207,10 +207,10 @@ export default defineComponent({
       },
     });
 
-    const loadSales = () => {
+    const loadSales = async () => {
       isTableLoading.value = true;
       // pagination.value.pageSize = 20;
-      listSales(filterParams.value.branch)
+      await listSales(filterParams.value.branch)
         .then((response) => {
           pagination.value.total = response.data.count;
           pagination.value.pageCount = Math.trunc(
@@ -233,11 +233,11 @@ export default defineComponent({
         });
     };
 
-    const performFilter = () => {
+    const performFilter = async () => {
       isTableLoading.value = true;
       pagination.value.pageSearchParams = filterParams.value;
       pagination.value.page = 1;
-      searchSales(
+      await searchSales(
         pagination.value.pageSearchParams,
         pagination.value.page,
         pagination.value.pageSize
@@ -264,7 +264,7 @@ export default defineComponent({
         });
     };
 
-    const refreshTable = () => {
+    const refreshTable = async () => {
       filterParams.value.customer = "";
       filterParams.value.serie = null;
       filterParams.value.number = "";
@@ -273,7 +273,7 @@ export default defineComponent({
       filterParams.value.status = null;
       pagination.value.pageSearchParams = null;
       pagination.value.page = 1;
-      loadSales();
+      await loadSales();
     };
 
     const statusOptions = [
@@ -291,9 +291,9 @@ export default defineComponent({
       },
     ];
 
-    onMounted(() => {
+    onMounted(async () => {
       document.title = "Ventas | App";
-      loadSales();
+      await loadSales();
     });
 
     return {
@@ -546,9 +546,9 @@ export default defineComponent({
         miscSale() {
           message.success("Miscelaneo");
         },
-        sendSale(row) {
+        async sendSale(row) {
           isTableLoading.value = true;
-          sendSale(row.id)
+          await sendSale(row.id)
             .then((response) => {
               if (response.status === 200) {
                 message.success("Enviado");
