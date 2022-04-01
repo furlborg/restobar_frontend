@@ -467,6 +467,7 @@ import {
 import format from "date-fns/format";
 
 import { generatePrint } from "./Prints/prints";
+import { generatePrintCopy } from "./PrintsCopy/printsCopy";
 
 const dateNow = ref(null);
 
@@ -1127,28 +1128,30 @@ export default defineComponent({
         ],
       });
 
-      let myHeaders = new Headers();
-      myHeaders.append("Content-Type", "application/json");
+      generatePrintCopy(structure, lengthData);
 
-      let requestOptions = {
-        method: "POST",
+      // let myHeaders = new Headers();
+      // myHeaders.append("Content-Type", "application/json");
 
-        headers: myHeaders,
-        body: JSON.stringify({
-          height: lengthData,
-          structure: structure,
-          printerName: "POS-80-Series",
-        }),
-        redirect: "follow",
-      };
+      // let requestOptions = {
+      //   method: "POST",
 
-      fetch(
-        "http://daa1-2001-1388-782b-5fd3-58e-8a4f-a74e-850e.ngrok.io/printer",
-        requestOptions
-      )
-        .then((response) => response.text())
-        .then((result) => console.log(result))
-        .catch((error) => console.log("error", error));
+      //   headers: myHeaders,
+      //   body: JSON.stringify({
+      //     height: lengthData,
+      //     structure: structure,
+      //     printerName: "POS-80-Series",
+      //   }),
+      //   redirect: "follow",
+      // };
+
+      // fetch(
+      //   "http://daa1-2001-1388-782b-5fd3-58e-8a4f-a74e-850e.ngrok.io/printer",
+      //   requestOptions
+      // )
+      //   .then((response) => response.text())
+      //   .then((result) => console.log(result))
+      //   .catch((error) => console.log("error", error));
     };
 
     const performTakeAway = () => {

@@ -355,7 +355,6 @@ export default defineComponent({
     const businnessStore = useBusinessStore();
 
     const printSale = (val) => {
-      console.log(val);
       let dataForPrint = JSON.parse(val.json_sale);
 
       let typeDoc = dataForPrint.serie_documento.split("");
