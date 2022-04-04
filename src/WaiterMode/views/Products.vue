@@ -159,8 +159,9 @@ export default defineComponent({
     const orderItemIndex = ref(null);
     const products = ref([]);
 
-    const print = (responseData) => {
+    const print = (val) => {
       message.success("Orden actualizada correctamente");
+      checkState.value = true;
 
       let lC = 0;
 
@@ -171,7 +172,7 @@ export default defineComponent({
           dat: [
             [
               {
-                content: `ORDEN: ${responseData.id}`,
+                content: `ORDEN: ${val.id}`,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -185,7 +186,7 @@ export default defineComponent({
           dat: [
             [
               {
-                content: `MESA: ${"CHUPAMELA"}`,
+                content: tableName.value,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -197,7 +198,7 @@ export default defineComponent({
         },
       ];
 
-      responseData.order_details.map((val) => {
+      val.order_details.map((val) => {
         let ind = "";
         let PL = [];
 
@@ -238,7 +239,24 @@ export default defineComponent({
           ind = `${PL.length} para llevar`;
         }
 
-        lengthData += 6.5 * 3;
+        let prodDetail = !!val.product_description
+          ? val.product_description.split(",")
+          : val.product_description;
+
+        let newNameProd = val.product_name;
+
+        let heightForNmae = 10;
+
+        let verifyNameCombo = val.product_name.toLowerCase().includes("combo");
+
+        if (verifyNameCombo && !!prodDetail && prodDetail.length > 0) {
+          prodDetail.map((val) => {
+            newNameProd += `\n *${val}`;
+            heightForNmae += 10;
+          });
+        }
+
+        lengthData += 6.5 * heightForNmae;
 
         structure.push(
           {
@@ -271,12 +289,12 @@ export default defineComponent({
             dat: [
               [
                 {
-                  content: val.product_name,
+                  content: newNameProd,
                   colSpan: "2",
                   rowSpan: "1",
                   styles: {
                     fontStyle: "bold",
-                    fontSize: 8,
+                    fontSize: 11,
                   },
                 },
                 {
@@ -285,7 +303,7 @@ export default defineComponent({
                   rowSpan: "1",
                   styles: {
                     fontStyle: "bold",
-                    fontSize: 8,
+                    fontSize: 11,
                   },
                 },
               ],
@@ -346,10 +364,7 @@ export default defineComponent({
       //   redirect: "follow",
       // };
 
-      // fetch(
-      //   "http://daa1-2001-1388-782b-5fd3-58e-8a4f-a74e-850e.ngrok.io/printer",
-      //   requestOptions
-      // )
+      // fetch("http://192.168.1.222:5000/printer", requestOptions)
       //   .then((response) => response.text())
       //   .then((result) => console.log(result))
       //   .catch((error) => console.log("error", error));
