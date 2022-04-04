@@ -1069,7 +1069,24 @@ export default defineComponent({
           }
         });
 
-        lengthData += 6.5 * 3;
+        let prodDetail = !!val.product_description
+          ? val.product_description.split(",")
+          : val.product_description;
+
+        let newNameProd = val.product_name;
+
+        let heightForNmae = 3;
+
+        let verifyNameCombo = val.product_name.toLowerCase().includes("combo");
+
+        if (verifyNameCombo && !!prodDetail && prodDetail.length > 0) {
+          prodDetail.map((val) => {
+            newNameProd += `\n *${val}`;
+            heightForNmae += 3;
+          });
+        }
+
+        lengthData += 6.5 * heightForNmae;
 
         structure.push(
           {
@@ -1102,7 +1119,7 @@ export default defineComponent({
             dat: [
               [
                 {
-                  content: val.product_name,
+                  content: newNameProd,
                   colSpan: "2",
                   rowSpan: "1",
                   styles: {

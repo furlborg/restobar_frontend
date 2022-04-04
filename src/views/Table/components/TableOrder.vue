@@ -177,6 +177,7 @@ import {
   onBeforeRouteUpdate,
 } from "vue-router";
 import { NSpace, useDialog, useMessage } from "naive-ui";
+import { useTableStore } from "@/store/modules/table";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import {
@@ -201,6 +202,7 @@ export default defineComponent({
     const message = useMessage();
     const dialog = useDialog();
     const table = route.params.table;
+    const tableStore = useTableStore();
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
     const listType = ref("grid");
@@ -208,6 +210,7 @@ export default defineComponent({
     const itemIndex = ref(null);
     const checkState = ref(false);
     const dateNow = ref(null);
+    const tableName = ref(null);
 
     orderStore.orders = [];
     saleStore.order_initial = [];
@@ -280,7 +283,7 @@ export default defineComponent({
 
     onMounted(async () => {
       await performRetrieveTableOrder();
-
+      tableName.value = await tableStore.getTableByID(table).description;
       const fetch = new Date();
       const dd = fetch.getDate();
       const mm = fetch.getMonth();
@@ -288,11 +291,10 @@ export default defineComponent({
       const hh = fetch.getHours();
       const msms = fetch.getMinutes();
 
-      dateNow.value = `${dd}/${mm}/${yy} ${hh}:${msms}`;
+      dateNow.value = `${dd}/${mm + 1}/${yy} ${hh}:${msms}`;
     });
 
     const print = (val) => {
-      console.log(val);
       message.success("Orden actualizada correctamente");
       checkState.value = true;
 
@@ -319,7 +321,7 @@ export default defineComponent({
           dat: [
             [
               {
-                content: `MESA: ${"CHUPAMELA"}`,
+                content: tableName.value,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -372,7 +374,24 @@ export default defineComponent({
           ind = `${PL.length} para llevar`;
         }
 
-        lengthData += 6.5 * 3;
+        let prodDetail = !!val.product_description
+          ? val.product_description.split(",")
+          : val.product_description;
+
+        let newNameProd = val.product_name;
+
+        let heightForNmae = 3;
+
+        let verifyNameCombo = val.product_name.toLowerCase().includes("combo");
+
+        if (verifyNameCombo && !!prodDetail && prodDetail.length > 0) {
+          prodDetail.map((val) => {
+            newNameProd += `\n *${val}`;
+            heightForNmae += 3;
+          });
+        }
+
+        lengthData += 6.5 * heightForNmae;
 
         structure.push(
           {
@@ -405,12 +424,12 @@ export default defineComponent({
             dat: [
               [
                 {
-                  content: val.product_name,
+                  content: newNameProd,
                   colSpan: "2",
                   rowSpan: "1",
                   styles: {
                     fontStyle: "bold",
-                    fontSize: 8,
+                    fontSize: 11,
                   },
                 },
                 {
@@ -419,7 +438,7 @@ export default defineComponent({
                   rowSpan: "1",
                   styles: {
                     fontStyle: "bold",
-                    fontSize: 8,
+                    fontSize: 11,
                   },
                 },
               ],
