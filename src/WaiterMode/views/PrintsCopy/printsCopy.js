@@ -97,16 +97,27 @@ export const generatePrintCopy = (structure, height) => {
       console.log(a);
     })
     .then((printers) => {
-      let a = doc.output("datauristring").split(",")[1];
-      let config = qz.configs.create(printers[1]);
-      return qz.print(config, [
-        {
-          type: "pixel",
-          format: "pdf",
-          flavor: "base64",
-          data: a,
-        },
-      ]);
+      if (!!printers) {
+        let searchPrinter = printers.find((val) => val === "POS-80-Series");
+
+        if (!!searchPrinter) {
+          let a = doc.output("datauristring").split(",")[1];
+
+          let config = qz.configs.create(searchPrinter);
+          return qz.print(config, [
+            {
+              type: "pixel",
+              format: "pdf",
+              flavor: "base64",
+              data: a,
+            },
+          ]);
+        } else {
+          console.log("impresora no encontrada");
+        }
+      } else {
+        console.log("no hay impresoras");
+      }
     })
     .then(() => {
       return qz.websocket.disconnect();
