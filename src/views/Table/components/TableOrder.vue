@@ -291,7 +291,8 @@ export default defineComponent({
       dateNow.value = `${dd}/${mm}/${yy} ${hh}:${msms}`;
     });
 
-    const print = (responseData) => {
+    const print = (val) => {
+      console.log(val);
       message.success("Orden actualizada correctamente");
       checkState.value = true;
 
@@ -304,7 +305,7 @@ export default defineComponent({
           dat: [
             [
               {
-                content: `ORDEN: ${responseData.id}`,
+                content: `ORDEN: ${val.id}`,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -330,7 +331,7 @@ export default defineComponent({
         },
       ];
 
-      responseData.order_details.map((val) => {
+      val.order_details.map((val) => {
         let ind = "";
         let PL = [];
 
