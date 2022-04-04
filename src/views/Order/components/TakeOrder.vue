@@ -12,12 +12,7 @@
         <n-gi :span="3">
           <n-spin :show="loading">
             <n-card>
-              <n-form
-                class="mb-2"
-                ref="saleForm"
-                :model="sale"
-                :rules="saleRules"
-              >
+              <n-form class="mb-2" ref="saleForm" :model="sale" :rules="rules">
                 <n-space class="mb-2" align="center" justify="space-between">
                   <div class="d-flex align-items-center">
                     <n-text class="fs-4">{{
@@ -164,19 +159,31 @@
                         cols="12"
                         :x-gap="12"
                       >
-                        <n-form-item-gi label="Nombres" :span="6">
+                        <n-form-item-gi
+                          label="Nombres"
+                          :span="6"
+                          path="delivery_info.person"
+                        >
                           <n-input
                             v-model:value="sale.delivery_info.person"
                             placeholder=""
                           />
                         </n-form-item-gi>
-                        <n-form-item-gi label="Dirección" :span="6">
+                        <n-form-item-gi
+                          label="Dirección"
+                          :span="6"
+                          path="delivery_info.address"
+                        >
                           <n-input
                             v-model:value="sale.delivery_info.address"
                             placeholder=""
                           />
                         </n-form-item-gi>
-                        <n-form-item-gi label="Teléfono" :span="6">
+                        <n-form-item-gi
+                          label="Teléfono"
+                          :span="6"
+                          path="delivery_info.phone"
+                        >
                           <n-input
                             v-model:value="sale.delivery_info.phone"
                             placeholder=""
@@ -540,6 +547,31 @@ export default defineComponent({
       by_consumption: false,
       sale_details: [],
       delivery_info: null,
+    });
+
+    const rules = computed(() => {
+      if (sale.value.delivery_info) {
+        saleRules.delivery_info = {
+          person: {
+            required: true,
+            trigger: ["blur", "input"],
+            message: "Campo requerido",
+          },
+          address: {
+            required: true,
+            trigger: ["blur", "change"],
+            message: "Campo requerido",
+          },
+          phone: {
+            required: true,
+            trigger: ["blur", "change"],
+            message: "Campo requerido",
+          },
+        };
+      } else {
+        saleRules.delivery_info = null;
+      }
+      return saleRules;
     });
 
     const selectSerie = (v) => {
@@ -1226,7 +1258,7 @@ export default defineComponent({
       changing,
       payment_amount,
       subTotal,
-      saleRules,
+      rules,
       saleForm,
       sale,
       changeSerie,
