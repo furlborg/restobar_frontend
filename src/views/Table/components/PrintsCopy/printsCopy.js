@@ -90,7 +90,7 @@ export const generatePrintCopy = (structure, height) => {
   });
 
   qz.websocket
-    .connect({ host: "192.168.1.222" })
+    .connect()
     .then(() => {
       return qz.printers.find();
     })
