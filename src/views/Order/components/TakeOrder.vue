@@ -1075,14 +1075,14 @@ export default defineComponent({
 
         let newNameProd = val.product_name;
 
-        let heightForNmae = 3;
+        let heightForNmae = 10;
 
         let verifyNameCombo = val.product_name.toLowerCase().includes("combo");
 
         if (verifyNameCombo && !!prodDetail && prodDetail.length > 0) {
           prodDetail.map((val) => {
             newNameProd += `\n *${val}`;
-            heightForNmae += 3;
+            heightForNmae += 10;
           });
         }
 
