@@ -308,6 +308,7 @@ export default defineComponent({
       isLoadingData.value = true;
       pagination.value.offset = 0;
       pagination.value.page = 1;
+      pagination.value.pageSize = 10;
       await getProducts()
         .then((response) => {
           pagination.value.total = response.data.count;
