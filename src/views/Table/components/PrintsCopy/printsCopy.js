@@ -1,6 +1,5 @@
 import jspdf from "jspdf";
 import autoTable from "jspdf-autotable";
-import archivodemierda from "./jsrsasign-all-min";
 
 import qz from "qz-tray";
 
