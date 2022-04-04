@@ -50,6 +50,16 @@ export const useTableStore = defineStore('table', {
         getAreaByID(id) {
             let area = this.areas.find(area => area.id === id)
             return area ? area.description : null
+        },
+        getTableByID(id) {
+            let table = null
+            this.areas.forEach(area => {
+                let t = area.tables.find(table => table.id = id)
+                if (typeof t !== 'undefined') {
+                    table = t
+                }
+            })
+            return table
         }
     }
 })
