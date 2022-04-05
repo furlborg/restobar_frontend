@@ -437,7 +437,6 @@ export default defineComponent({
 
     onMounted(async () => {
       loadProducts();
-      waiterStore.preOrderList = [];
       tableName.value = await tableStore.getTableByID(table).description;
 
       const fetch = new Date();

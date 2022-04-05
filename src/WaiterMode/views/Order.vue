@@ -99,6 +99,7 @@ export default defineComponent({
     }
 
     onMounted(() => {
+      waiterStore.preOrderList = [];
       performRetrieveTableOrder();
       setTabStyle();
     });
