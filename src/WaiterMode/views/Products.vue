@@ -55,7 +55,7 @@
       v-model:show="showModal"
       preset="card"
       title="Indicaciones"
-      :product="preOrderList[orderItemIndex]"
+      :product="waiterStore.preOrderList[orderItemIndex]"
       @success="showModal = false"
     ></ProductIndications>
     <teleport to="body">
@@ -75,7 +75,7 @@
         </transition>
         <n-button
           type="info"
-          :disabled="!(preOrderList.length > 0)"
+          :disabled="!(waiterStore.preOrderList.length > 0)"
           round
           @click="activeDrawer = true"
           ><v-icon class="me-1" name="md-shoppingcart-round" />Ver
@@ -86,7 +86,10 @@
     <n-drawer height="50%" v-model:show="activeDrawer" placement="bottom">
       <n-drawer-content title="Pedidos" closable>
         <n-list>
-          <n-list-item v-for="(orderItem, index) in preOrderList" :key="index">
+          <n-list-item
+            v-for="(orderItem, index) in waiterStore.preOrderList"
+            :key="index"
+          >
             <n-thing
               :title="`${orderItem.quantity} - ${orderItem.product_name}`"
               :title-extra="`S/. ${
@@ -134,6 +137,7 @@ import ProductIndications from "./ProductIndications";
 import { useProductStore } from "@/store/modules/product";
 import { useTableStore } from "@/store/modules/table";
 import { useOrderStore } from "@/store/modules/order";
+import { useWaiterStore } from "@/store/modules/waiter";
 import { getProductsByCategory } from "@/api/modules/products";
 import {
   createTableOrder,
@@ -154,14 +158,16 @@ export default defineComponent({
     const productStore = useProductStore();
     const orderStore = useOrderStore();
     const tableStore = useTableStore();
+    const waiterStore = useWaiterStore();
     const activeDrawer = ref(false);
     const showModal = ref(false);
     const orderItemIndex = ref(null);
     const products = ref([]);
+    const table = route.params.table;
+    const tableName = ref(null);
 
     const print = (val) => {
       message.success("Orden actualizada correctamente");
-      checkState.value = true;
 
       let lC = 0;
 
@@ -201,6 +207,7 @@ export default defineComponent({
       val.order_details.map((val) => {
         let ind = "";
         let PL = [];
+        console.log(val);
 
         val.indication.map((v, i) => {
           if (!!v.takeAway && v.takeAway && !!v.description === false) {
@@ -428,8 +435,10 @@ export default defineComponent({
 
     const dateNow = ref(null);
 
-    onMounted(() => {
+    onMounted(async () => {
       loadProducts();
+      waiterStore.preOrderList = [];
+      tableName.value = await tableStore.getTableByID(table).description;
 
       const fetch = new Date();
       const dd = fetch.getDate();
@@ -440,12 +449,10 @@ export default defineComponent({
       dateNow.value = `${dd}/${mm}/${yy} ${hh}:${msms}`;
     });
 
-    const preOrderList = ref([]);
-
     const addToPreList = () => {
       products.value.forEach((product) => {
         if (product.quantity > 0) {
-          const existence = preOrderList.value.find(
+          const existence = waiterStore.preOrderList.find(
             (order) => order.id === product.id
           );
           if (typeof existence !== "undefined") {
@@ -458,7 +465,7 @@ export default defineComponent({
               quantity: Number(product.quantity),
               indication: [],
             };
-            preOrderList.value.push(order);
+            waiterStore.preOrderList.push(order);
           }
         }
         product.quantity = 0;
@@ -467,7 +474,7 @@ export default defineComponent({
     };
 
     const addToList = () => {
-      preOrderList.value.forEach((product) => {
+      waiterStore.preOrderList.forEach((product) => {
         orderStore.addOrderItem(product);
       });
     };
@@ -476,9 +483,9 @@ export default defineComponent({
       activeDrawer,
       showModal,
       productStore,
+      waiterStore,
       orderItemIndex,
       products,
-      preOrderList,
       addToPreList,
       orderStore,
       performCreateTableOrder,
