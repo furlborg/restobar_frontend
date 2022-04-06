@@ -312,11 +312,11 @@ export default defineComponent({
       userStore,
       tableColumns: createSaleColumns({
         printSale(val) {
-          /* console.log(val); */
           let dataForPrint = JSON.parse(val.json_sale);
-          /* console.log(dataForPrint); */
 
           let typeDoc = dataForPrint.serie_documento.split("");
+
+          let data = `${businessStore.business.ruc}|${dataForPrint.serie_documento}|${dataForPrint.totales.total_igv}|${dataForPrint.hora_de_emision}|${dataForPrint.datos_del_cliente_o_receptor.numero_documento}|${dataForPrint.numero_documento}|${dataForPrint.totales.total_venta}|${dataForPrint.datos_del_cliente_o_receptor.codigo_tipo_documento_identidad}|`;
 
           if (typeDoc[0] === "F") {
             typeDoc = "FACTURA ELECTRONICA";
@@ -324,16 +324,14 @@ export default defineComponent({
             typeDoc = "BOLETA ELECTRONICA";
           }
 
-          let datTotals = [
-            { img: "IMG", tittle: null, twoPoints: null, cont: null },
-          ];
+          let datTotals = [];
 
           let newTotal = {
             "OP.GRAVADA": dataForPrint.totales.total_operaciones_gravadas,
             "OP.EXONERADA": dataForPrint.totales.total_operaciones_exoneradas,
             "OP.GRATUITAS": dataForPrint.totales.total_operaciones_gratuitas,
             "IGV(18%)": dataForPrint.totales.total_igv,
-            DESCUENTOS: "Este webon no poene descuentos",
+            DESCUENTOS: val.discount,
             "IMPORTE TOTAL": dataForPrint.totales.total_venta,
           };
 
@@ -348,16 +346,9 @@ export default defineComponent({
           let structure = [
             {
               dat: [
-                {
-                  img: "ACA IRA UNA IMAGEN DE MRD",
-                },
-              ],
-            },
-            {
-              dat: [
                 [
                   {
-                    content: "ACA IRA UN TITULO DE MIERDA",
+                    content: businessStore.business.commercial_name,
                     styles: {
                       fontStyle: "bold",
                       halign: "center",
@@ -367,7 +358,7 @@ export default defineComponent({
                 ],
                 [
                   {
-                    content: "Jr. Chumape las bolas Av. de los Webones",
+                    content: businessStore.business.fiscal_address,
                     styles: {
                       fontStyle: "bold",
                       halign: "center",
@@ -387,7 +378,7 @@ export default defineComponent({
                 ],
                 [
                   {
-                    content: `RUC: 001CHUAPALA`,
+                    content: businessStore.business.ruc,
                     styles: {
                       fontStyle: "bold",
                       halign: "center",
@@ -436,6 +427,7 @@ export default defineComponent({
                   cont: dataForPrint.fecha_de_emision,
                 },
               ],
+              line: true,
             },
             {
               col: [
@@ -443,7 +435,7 @@ export default defineComponent({
                   header: "CANT.",
                   dataKey: "amount",
                 },
-                {
+                !val.by_consumption && {
                   header: "U.M",
                   dataKey: "unit",
                 },
@@ -452,7 +444,7 @@ export default defineComponent({
                   header: "DESCRIPCIÓN",
                   dataKey: "description",
                 },
-                {
+                !val.by_consumption && {
                   header: "P.U",
                   dataKey: "price",
                 },
@@ -462,18 +454,30 @@ export default defineComponent({
                   dataKey: "total",
                 },
               ],
-              dat: dataForPrint.items.map((val) => {
-                return {
-                  amount: val.cantidad,
-                  unit: val.unidad_de_medida,
-                  description: val.descripcion,
-                  price: parseFloat(val.precio_unitario).toFixed("2"),
-                  total: parseFloat(val.total_item).toFixed("2"),
-                };
-              }),
+              dat: !val.by_consumption
+                ? dataForPrint.items.map((val) => {
+                    return {
+                      amount: val.cantidad,
+                      unit: val.unidad_de_medida,
+                      description: val.descripcion,
+                      price: parseFloat(val.precio_unitario).toFixed("2"),
+                      total: (
+                        val.cantidad * parseFloat(val.total_item)
+                      ).toFixed("2"),
+                    };
+                  })
+                : [
+                    {
+                      amount: 1,
+                      description: "POR CONSUMO DE ALIMENTOS",
+                      total: dataForPrint.totales.total_venta,
+                    },
+                  ],
+              line: true,
             },
             {
               dat: datTotals,
+              line: true,
             },
 
             {
@@ -490,8 +494,7 @@ export default defineComponent({
                 ],
                 [
                   {
-                    content:
-                      "Puede verificarla usando su clave sol o ingresando a la pagina web:",
+                    content: `Puede verificarla usando su clave sol o ingresando a la pagina web: ${businessStore.business.website}`,
                     styles: {
                       fontStyle: "bold",
                       halign: "center",
@@ -501,7 +504,7 @@ export default defineComponent({
                 ],
                 [
                   {
-                    content: "Correo de la empresa",
+                    content: businessStore.business.email,
                     styles: {
                       fontStyle: "bold",
                       halign: "center",
@@ -528,18 +531,17 @@ export default defineComponent({
                 {
                   tittle: "CONSULTOR/VENDEDOR",
                   twoPoints: ":",
-                  cont: "UNA PERSONA",
+                  cont: businessStore.business.legal_representative,
                 },
                 {
                   tittle: "TIPO DE PAGO",
                   twoPoints: ":",
-                  cont: "TIPO DE PAGO",
+                  cont: val.payment_method,
                 },
               ],
             },
           ];
-
-          generatePrint(structure);
+          generatePrint(data, structure);
 
           message.success("Imprimir");
         },

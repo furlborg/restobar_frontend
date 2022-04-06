@@ -88,17 +88,21 @@ export const generatePrintCopy = (structure, height) => {
     };
   });
 
+  qz.networking("192.168.1.222", 8082);
+  
+  qz.socket.open("192.168.1.222", 8082);
+
   qz.websocket
     .connect({ host: "192.168.1.222" })
     .then(() => {
       return qz.printers.find();
     })
-    .catch((a) => {
-      console.log(a);
-    })
+
     .then((printers) => {
       if (!!printers) {
-        let searchPrinter = printers.find((val) => val === "POS-80-Series");
+        let searchPrinter = printers.find(
+          (val) => val.toLowerCase() === "POS-80-Series".toLowerCase()
+        );
 
         if (!!searchPrinter) {
           let a = doc.output("datauristring").split(",")[1];
@@ -132,4 +136,6 @@ export const generatePrintCopy = (structure, height) => {
     .finally(() => {
       return qz.websocket.disconnect();
     });
+
+  qz.socket.close("192.168.1.222", 8082);
 };

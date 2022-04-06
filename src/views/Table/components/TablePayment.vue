@@ -350,8 +350,6 @@ export default defineComponent({
       }
     };
 
-    const urlImg = ref(null);
-
     const businnessStore = useBusinessStore();
 
     const printSale = (val) => {
@@ -584,7 +582,7 @@ export default defineComponent({
         },
       ];
 
-      generatePrint(urlImg.value, data, structure);
+      generatePrint(data, structure);
 
       message.success("Imprimir");
     };
@@ -716,8 +714,6 @@ export default defineComponent({
     onMounted(async () => {
       document.title = "Venta | App";
       await obtainSaleNumber();
-
-      urlImg.value = businnessStore.business.logo_url;
     });
 
     const onCloseModal = () => {

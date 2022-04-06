@@ -1,21 +1,13 @@
 import jspdf from "jspdf";
 import autoTable from "jspdf-autotable";
 
-import qr from "qrcode";
 import { useBusinessStore } from "@/store/modules/business";
 
-export const generatePrint = (urlImg, objSunat, structure) => {
+export const generatePrint = (structure) => {
   const doc = new jspdf({
     orientation: "p",
     unit: "mm",
-    format: [80, 350],
-  });
-
-  let code_qr = null;
-
-  qr.toDataURL(objSunat, function (err, code) {
-    if (err) return console.log("error occurred");
-    code_qr = code;
+    format: [80, 150],
   });
 
   structure.map((val, index) => {
@@ -27,15 +19,10 @@ export const generatePrint = (urlImg, objSunat, structure) => {
       finalY += 30;
     }
 
-    if (index === 5) {
-      doc.addImage(code_qr, "png", 25, finalY, 30, 30);
-      finalY += 30;
-    }
-
     if (val.line) {
       doc.setLineDash([1, 1], 1);
       doc.setDrawColor(0, 0, 0);
-      doc.line(3, finalY + 5, 77, finalY + 5);
+      doc.line(3, finalY + 2, 77, finalY + 2);
       finalY += 5;
     }
 

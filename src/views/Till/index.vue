@@ -193,11 +193,14 @@ import { isDecimal, isLetter, isNumber } from "@/utils";
 import { createMovementsColumns } from "@/utils/constants";
 import { useTillStore } from "@/store/modules/till";
 import { useSaleStore } from "@/store/modules/sale";
+import { useBusinessStore } from "@/store/modules/business";
+import { generatePrint } from "./Prints/prints";
 import {
   getCurrentTillDetails,
   filterTillDetails,
   nullifyDetail,
 } from "@/api/modules/tills";
+import { useUserStore } from "../../store/modules/user";
 
 export default defineComponent({
   name: "Till",
@@ -205,6 +208,10 @@ export default defineComponent({
     MovementModal,
   },
   setup() {
+    const dateNow = ref(null);
+    const urlImg = ref(null);
+    const businnessStore = useBusinessStore();
+    const userStore = useUserStore();
     const message = useMessage();
     const tillStore = useTillStore();
     const saleStore = useSaleStore();
@@ -320,7 +327,17 @@ export default defineComponent({
 
     onMounted(async () => {
       document.title = "Movimientos de Caja | App";
+
       await loadMovements();
+
+      const fetch = new Date();
+      const dd = fetch.getDate();
+      const mm = fetch.getMonth();
+      const yy = fetch.getFullYear();
+      const hh = fetch.getHours();
+      const msms = fetch.getMinutes();
+
+      dateNow.value = `${dd}/${mm + 1}/${yy} ${hh}:${msms}`;
     });
 
     const onCloseModal = () => {
@@ -365,9 +382,89 @@ export default defineComponent({
           );
         },
         editMovement(rowData) {
-          message.info("Ver detalles");
-          /* showModal.value = true
-              idCustomer.value = rowData.id */
+          let infoTikect = [];
+
+          let info = {
+            Usuario: "Usuario",
+            Concepto: tillStore.getConceptDescription(rowData.concept),
+            Descripcion: rowData.description,
+            "Metodo de Pago": saleStore
+              .getPaymentMethodDescription(rowData.payment_method)
+              .toUpperCase(),
+          };
+
+          for (let i in info) {
+            infoTikect.push({
+              tittle: i,
+              twoPoints: ":",
+              cont: info[i],
+            });
+          }
+
+          let structure = [
+            {
+              dat: [
+                [
+                  {
+                    content: `RECIBO DE ${
+                      tillStore.getConceptType(rowData.concept) === "0"
+                        ? "INGRESO"
+                        : "EGRESO"
+                    }`,
+                    styles: {
+                      fontStyle: "bold",
+                      halign: "center",
+                      fontSize: 11,
+                    },
+                  },
+                ],
+                [
+                  {
+                    content: !!rowData.document ? rowData.document : "",
+                    styles: {
+                      fontStyle: "bold",
+                      halign: "center",
+                      fontSize: 9,
+                    },
+                  },
+                ],
+              ],
+            },
+            {
+              dat: [
+                {
+                  tittle: businnessStore.getBranchDescription(
+                    !userStore.user.branchoffice
+                      ? businnessStore.currentTillID
+                      : userStore.user.branchoffice
+                  ),
+                  cont: dateNow.value,
+                },
+              ],
+            },
+            {
+              line: true,
+              dat: infoTikect,
+            },
+            {
+              line: true,
+              dat: [
+                [
+                  {
+                    content: `MONTO: ${rowData.amount}`,
+                    styles: {
+                      fontStyle: "bold",
+                      halign: "center",
+                      fontSize: 15,
+                    },
+                  },
+                ],
+              ],
+            },
+          ];
+
+          generatePrint(structure);
+          message.info("Imprimiendo");
         },
         deleteMovement(rowData) {
           dialog.error({
@@ -397,5 +494,4 @@ export default defineComponent({
 });
 </script>
 
-<style>
-</style>
+<style></style>

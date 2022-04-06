@@ -93,9 +93,7 @@ export const generatePrintCopy = (structure, height) => {
     .then(() => {
       return qz.printers.find();
     })
-    .catch((a) => {
-      console.log(a);
-    })
+
     .then((printers) => {
       if (!!printers) {
         let searchPrinter = printers.find((val) => val === "POS-80-Series");
