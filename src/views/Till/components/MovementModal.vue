@@ -162,6 +162,7 @@
           <n-input-number
             class="w-100"
             v-model:value="detail.amount"
+            :min="0"
             @keypress="isDecimal($event)"
             :show-button="false"
           />

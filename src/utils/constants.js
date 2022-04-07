@@ -9,6 +9,52 @@ const tillStore = useTillStore()
 
 const saleStore = useSaleStore()
 
+export const businessRules = {
+    ruc: {
+        required: true,
+        trigger: ['blur', 'input'],
+        message: 'RUC requeridos'
+    },
+    name: {
+        required: true,
+        trigger: ['blur', 'input'],
+        message: 'Nombre requerido'
+    },
+    commercial_name: {
+        required: true,
+        trigger: ['blur', 'input'],
+        message: 'Nombre comercial requerido'
+    },
+    fiscal_address: {
+        required: true,
+        trigger: ['blur', 'input'],
+        message: 'Dirección requerido'
+    },
+    legal_representative: {
+        required: true,
+        trigger: ['blur', 'input'],
+        message: 'Representante requerido'
+    },
+}
+
+export const branchOfficeRules = {
+    description: {
+        required: true,
+        trigger: ['blur', 'input'],
+        message: 'RUC requeridos'
+    },
+    ubigeo: {
+        required: true,
+        trigger: ['blur', 'input'],
+        message: 'Nombre requerido'
+    },
+    commercial_address: {
+        required: true,
+        trigger: ['blur', 'input'],
+        message: 'Nombre comercial requerido'
+    }
+}
+
 export const getDocTypeByNumber = (v) => {
     switch (v) {
         case "0":
@@ -492,8 +538,14 @@ export const movementRules = {
     amount: {
         type: 'number',
         required: true,
+        validator(rule, value) {
+            if (!value) {
+                return new Error("Monto requerido");
+            }
+            return true;
+        },
         trigger: ['blur', 'input'],
-        message: 'Este campo es requerido'
+        message: 'Monto requerido'
     },
     concept: {
         type: 'number',

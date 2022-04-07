@@ -25,13 +25,6 @@
             <v-icon name="hi-solid-refresh" />
             Recargar
           </n-button>
-          <n-select
-            v-if="!userStore.user.branchoffice"
-            class="ps-2"
-            v-model:value="filterParams.branch"
-            :options="businessStore.branchSelectOptions"
-            @update:value="refreshTable"
-          ></n-select>
         </div>
       </n-space>
       <n-collapse-transition class="mt-2" :show="showFilters">

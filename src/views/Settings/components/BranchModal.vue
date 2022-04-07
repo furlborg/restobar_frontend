@@ -16,13 +16,13 @@
     "
   >
     <n-spin :show="isLoading">
-      <n-form>
+      <n-form :model="branch" :rules="branchOfficeRules" ref="branchForm">
         <n-grid
           responsive="screen"
           cols="12 s:12 m:12 l:12 xl:24 2xl:24"
           :x-gap="12"
         >
-          <n-form-item-gi :span="12" label="Descripción">
+          <n-form-item-gi :span="12" label="Descripción" path="description">
             <n-input v-model:value="branch.description" placeholder="" />
           </n-form-item-gi>
           <n-form-item-gi :span="6" label="Celular">
@@ -31,7 +31,7 @@
           <n-form-item-gi :span="6" label="Email">
             <n-input v-model:value="branch.email" placeholder="" />
           </n-form-item-gi>
-          <n-form-item-gi :span="12" label="Ubigeo">
+          <n-form-item-gi :span="12" label="Ubigeo" path="ubigeo">
             <n-input-group>
               <n-input-group-label>PE</n-input-group-label>
               <n-cascader
@@ -42,7 +42,11 @@
               />
             </n-input-group>
           </n-form-item-gi>
-          <n-form-item-gi :span="12" label="Dirección comercial">
+          <n-form-item-gi
+            :span="12"
+            label="Dirección comercial"
+            path="commercial_address"
+          >
             <n-input v-model:value="branch.commercial_address" placeholder="" />
           </n-form-item-gi>
           <n-form-item-gi :span="12" label="Información adicional">
@@ -69,6 +73,7 @@ import { useMessage } from "naive-ui";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useCustomerStore } from "@/store/modules/customer";
 import { createBranch } from "@/api/modules/business";
+import { branchOfficeRules } from "@/utils/constants";
 
 export default defineComponent({
   name: "BranchModal",
@@ -84,22 +89,30 @@ export default defineComponent({
     const customerStore = useCustomerStore();
     const isLoading = ref(false);
     const message = useMessage();
+    const branchForm = ref(null);
     const branch = ref({});
 
-    const performCreateBranch = async () => {
-      isLoading.value = true;
-      await createBranch(branch.value)
-        .then((response) => {
-          if (response.status === 201) {
-            isLoading.value = false;
-            emit("on-success");
-          }
-        })
-        .catch((error) => {
-          console.error(error);
-          message.error("Algos salió mal...");
-        })
-        .finally(() => (isLoading.value = false));
+    const performCreateBranch = () => {
+      branchForm.value.validate(async (errors) => {
+        if (!errors) {
+          isLoading.value = true;
+          await createBranch(branch.value)
+            .then((response) => {
+              if (response.status === 201) {
+                isLoading.value = false;
+                emit("on-success");
+              }
+            })
+            .catch((error) => {
+              console.error(error);
+              message.error("Algos salió mal...");
+            })
+            .finally(() => (isLoading.value = false));
+        } else {
+          console.error(errors);
+          message.error("Datos incorrectos");
+        }
+      });
     };
 
     return {
@@ -107,6 +120,8 @@ export default defineComponent({
       isLoading,
       customerStore,
       branch,
+      branchForm,
+      branchOfficeRules,
       performCreateBranch,
     };
   },

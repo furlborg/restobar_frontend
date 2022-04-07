@@ -1,6 +1,6 @@
 <template>
   <div id="CategoriesItems">
-    <n-space class="mb-2" align="end" justify="space-between">
+    <n-space class="mb-2" align="end">
       <n-breadcrumb separator="⏵">
         <n-breadcrumb-item>
           <router-link :to="{ name: 'ProductCategories' }">
@@ -11,14 +11,14 @@
           productStore.getCategorieDescription($route.params.category)
         }}</n-breadcrumb-item>
       </n-breadcrumb>
-      <n-radio-group v-model:value="listType" name="listType" size="small">
+      <!-- <n-radio-group v-model:value="listType" name="listType" size="small">
         <n-radio-button class="p-0" value="list" key="list">
           <v-icon class="m-1" name="md-list-round" />
         </n-radio-button>
         <n-radio-button class="p-0" value="grid" key="grid">
           <v-icon class="m-1" name="md-gridview-round" />
         </n-radio-button>
-      </n-radio-group>
+      </n-radio-group> -->
     </n-space>
     <n-scrollbar v-if="products.length > 0" style="max-height: 700px">
       <n-list v-if="listType === 'list'" class="me-2">

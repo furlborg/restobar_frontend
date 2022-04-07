@@ -12,7 +12,7 @@
     :on-close="() => $emit('update:show')"
   >
     <n-spin :show="isLoadingData">
-      <n-form :rules="customerRules" :model="customer" ref="customerRef">
+      <n-form :rules="formRules" :model="customer" ref="customerRef">
         <n-tabs type="line">
           <n-tab-pane name="info" tab="Información General">
             <n-grid
@@ -37,7 +37,12 @@
                   @update:value="changeDocMax"
                 />
               </n-form-item-gi>
-              <n-form-item-gi label="Nº Documento" path="doc_num" :span="7">
+              <n-form-item-gi
+                label="Nº Documento"
+                :required="formRules.doc_num.required"
+                path="doc_num"
+                :span="7"
+              >
                 <n-input-group>
                   <n-input
                     v-model:value="customer.doc_num"
@@ -253,6 +258,16 @@ export default defineComponent({
     const countriesOptions = computed(() => customerStore.countries);
     const ubigeeOptions = computed(() => {
       return customerStore.ubigee;
+    });
+
+    const formRules = computed(() => {
+      let rules = customerRules;
+      if (customer.value.doc_type === "0") {
+        rules.doc_num.required = false;
+      } else {
+        rules.doc_num.required = true;
+      }
+      return rules;
     });
 
     watch(show, async () => {
@@ -475,7 +490,7 @@ export default defineComponent({
       modalTitle,
       customer,
       customerRef,
-      customerRules,
+      formRules,
       documentOptions,
       countriesOptions,
       ubigeeOptions,
