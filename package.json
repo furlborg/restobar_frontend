@@ -6,15 +6,12 @@
     "serve": "vue-cli-service serve",
     "dev": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "production": "serve -s dist",
-    "postinstall": "npm run build",
-    "start": "node server.js"
+    "production": "serve -s dist"
   },
   "dependencies": {
     "axios": "^0.26.1",
     "clone-deep": "^4.0.1",
     "exceljs": "^4.3.0",
-    "express": "^4.17.3",
     "file-saver": "^2.0.5",
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.5.23",
@@ -26,7 +23,6 @@
     "q": "^1.5.1",
     "qrcode": "^1.5.0",
     "qz-tray": "^2.2.1",
-    "serve-static": "^1.15.0",
     "vue": "^3.2.31",
     "vue-cookies": "^1.7.4",
     "vue-input-autowidth": "^2.2.0",
