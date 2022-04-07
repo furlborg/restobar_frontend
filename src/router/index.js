@@ -276,7 +276,13 @@ export const routes = [
         ]
       }
     ]
-  }
+  },
+  {
+    path: "/:catchAll(.*)",
+    name: "Page not found",
+    component: () => import(/* webpackChunkName: "NotFound" */ "@/views/exception/404"),
+    meta: { requireAuth: false },
+  },
 ]
 
 const router = createRouter({

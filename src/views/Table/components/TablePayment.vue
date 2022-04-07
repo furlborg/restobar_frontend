@@ -2,7 +2,7 @@
   <div id="TablePayment">
     <n-spin :show="loading">
       <n-card>
-        <n-form class="mb-2" ref="saleForm" :model="sale" :rules="saleRules">
+        <n-form class="mb-2" ref="saleForm" :model="sale" :rules="formRules">
           <n-space class="mb-2" align="center" justify="space-between">
             <div class="d-flex align-items-center">
               <n-text class="fs-4">{{
@@ -50,7 +50,12 @@
             cols="12 s:12 m:12 l:12 xl:12 2xl:12"
             :x-gap="12"
           >
-            <n-form-item-gi :span="9" label="Cliente" path="customer">
+            <n-form-item-gi
+              :span="9"
+              label="Cliente"
+              :show-require-mark="formRules.customer.required"
+              path="customer"
+            >
               <n-input-group>
                 <n-auto-complete
                   blur-after-select
@@ -86,7 +91,7 @@
                 </n-button>
               </n-input-group>
             </n-form-item-gi>
-            <n-form-item-gi :span="3" label="Fecha" path="date_sale">
+            <n-form-item-gi :span="3" label="Fecha">
               <n-date-picker
                 class="w-100"
                 v-model:formatted-value="sale.date_sale"
@@ -101,7 +106,7 @@
                 placeholder=""
               />
             </n-form-item-gi>
-            <n-form-item-gi :span="2" label="Método Pago" path="payment_method">
+            <n-form-item-gi :span="2" label="Método Pago">
               <n-select
                 v-model:value="sale.payment_method"
                 :options="saleStore.getPaymentMethodsOptions"
@@ -325,6 +330,16 @@ export default defineComponent({
       observations: "",
       by_consumption: false,
       sale_details: [],
+    });
+
+    const formRules = computed(() => {
+      let rules = saleRules;
+      if (sale.value.invoice_type === 80) {
+        rules.customer.required = false;
+      } else {
+        rules.customer.required = true;
+      }
+      return rules;
     });
 
     const selectSerie = (v) => {
@@ -737,7 +752,7 @@ export default defineComponent({
       isDecimal,
       loading,
       saleForm,
-      saleRules,
+      formRules,
       showOptions,
       customerOptions,
       searching,

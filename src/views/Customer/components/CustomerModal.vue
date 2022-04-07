@@ -91,6 +91,7 @@
                   v-model:formatted-value="customer.birthdate"
                   type="date"
                   placeholder=""
+                  :disabled="customer.doc_type === '6'"
                   clearable
                 ></n-date-picker>
               </n-form-item-gi>
@@ -470,6 +471,7 @@ export default defineComponent({
           docMaxLength.value = 12;
           break;
         case "6":
+          customer.value.birthdate = null;
           docMaxLength.value = 11;
           break;
         case "7":

@@ -64,7 +64,12 @@
                   cols="12 s:12 m:12 l:12 xl:12 2xl:12"
                   :x-gap="12"
                 >
-                  <n-form-item-gi :span="9" label="Cliente" path="customer">
+                  <n-form-item-gi
+                    :span="9"
+                    label="Cliente"
+                    :show-require-mark="rules.customer.required"
+                    path="customer"
+                  >
                     <n-input-group>
                       <n-auto-complete
                         blur-after-select
@@ -101,7 +106,7 @@
                       </n-button>
                     </n-input-group>
                   </n-form-item-gi>
-                  <n-form-item-gi :span="3" label="Fecha" path="date_sale">
+                  <n-form-item-gi :span="3" label="Fecha">
                     <n-date-picker
                       class="w-100"
                       v-model:formatted-value="sale.date_sale"
@@ -116,11 +121,7 @@
                       placeholder=""
                     />
                   </n-form-item-gi>
-                  <n-form-item-gi
-                    :span="2"
-                    label="Método Pago"
-                    path="payment_method"
-                  >
+                  <n-form-item-gi :span="2" label="Método Pago">
                     <n-select
                       v-model:value="sale.payment_method"
                       :options="saleStore.getPaymentMethodsOptions"
@@ -491,7 +492,7 @@ export default defineComponent({
     const router = useRouter();
     const saleStore = useSaleStore();
     const orderStore = useOrderStore();
-    const businnessStore = useBusinessStore();
+    const businessStore = useBusinessStore();
     orderStore.orders = [];
     saleStore.order_initial = [];
     orderStore.orderId = null;
@@ -550,6 +551,11 @@ export default defineComponent({
     });
 
     const rules = computed(() => {
+      if (sale.value.invoice_type === 80) {
+        saleRules.customer.required = false;
+      } else {
+        saleRules.customer.required = true;
+      }
       if (sale.value.delivery_info) {
         saleRules.delivery_info = {
           person: {
@@ -750,7 +756,7 @@ export default defineComponent({
 
       let typeDoc = dataForPrint.serie_documento.split("");
 
-      let data = `${businnessStore.business.ruc}|${dataForPrint.serie_documento}|${dataForPrint.totales.total_igv}|${dataForPrint.hora_de_emision}|${dataForPrint.datos_del_cliente_o_receptor.numero_documento}|${dataForPrint.numero_documento}|${dataForPrint.totales.total_venta}|${dataForPrint.datos_del_cliente_o_receptor.codigo_tipo_documento_identidad}|`;
+      let data = `${businessStore.business.ruc}|${dataForPrint.serie_documento}|${dataForPrint.totales.total_igv}|${dataForPrint.hora_de_emision}|${dataForPrint.datos_del_cliente_o_receptor.numero_documento}|${dataForPrint.numero_documento}|${dataForPrint.totales.total_venta}|${dataForPrint.datos_del_cliente_o_receptor.codigo_tipo_documento_identidad}|`;
 
       if (typeDoc[0] === "F") {
         typeDoc = "FACTURA ELECTRONICA";
@@ -790,7 +796,7 @@ export default defineComponent({
           dat: [
             [
               {
-                content: businnessStore.business.commercial_name,
+                content: businessStore.business.commercial_name,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -800,7 +806,7 @@ export default defineComponent({
             ],
             [
               {
-                content: businnessStore.business.fiscal_address,
+                content: businessStore.business.fiscal_address,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -820,7 +826,7 @@ export default defineComponent({
             ],
             [
               {
-                content: businnessStore.business.ruc,
+                content: businessStore.business.ruc,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -961,7 +967,7 @@ export default defineComponent({
             ],
             [
               {
-                content: `Puede verificarla usando su clave sol o ingresando a la pagina web: ${businnessStore.business.website}`,
+                content: `Puede verificarla usando su clave sol o ingresando a la pagina web: ${businessStore.business.website}`,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -971,7 +977,7 @@ export default defineComponent({
             ],
             [
               {
-                content: businnessStore.business.email,
+                content: businessStore.business.email,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -998,7 +1004,7 @@ export default defineComponent({
             {
               tittle: "CONSULTOR/VENDEDOR",
               twoPoints: ":",
-              cont: businnessStore.business.legal_representative,
+              cont: businessStore.business.legal_representative,
             },
             {
               tittle: "TIPO DE PAGO",
@@ -1250,7 +1256,7 @@ export default defineComponent({
 
       dateNow.value = `${dd}/${mm}/${yy} ${hh}:${msms}`;
 
-      urlImg.value = businnessStore.business.logo_url;
+      urlImg.value = businessStore.business.logo_url;
     });
 
     const onCloseModal = () => {
