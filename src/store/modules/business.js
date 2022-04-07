@@ -52,7 +52,7 @@ export const useBusinessStore = defineStore("business", {
     },
     getBranchDescription(id) {
       const existence = this.business.branchs.find(
-        (order) => order.product === id
+        (branch) => branch.id === id
       );
       if (typeof existence !== "undefined") {
         return existence.description;

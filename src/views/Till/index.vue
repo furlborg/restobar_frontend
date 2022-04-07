@@ -435,7 +435,7 @@ export default defineComponent({
                 {
                   tittle: businnessStore.getBranchDescription(
                     !userStore.user.branchoffice
-                      ? businnessStore.currentTillID
+                      ? businnessStore.currentBranch
                       : userStore.user.branchoffice
                   ),
                   cont: dateNow.value,

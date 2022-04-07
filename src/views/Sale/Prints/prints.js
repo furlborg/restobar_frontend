@@ -4,7 +4,7 @@ import autoTable from "jspdf-autotable";
 import qr from "qrcode";
 import { useBusinessStore } from "@/store/modules/business";
 
-export const generatePrint = (urlImg, objSunat, structure) => {
+export const generatePrint = (objSunat, structure) => {
   const doc = new jspdf({
     orientation: "p",
     unit: "mm",
