@@ -47,7 +47,13 @@ export const useOrderStore = defineStore('order', {
             const existence = this.orders.find(order => order.product === product.id)
             if (typeof existence !== "undefined") {
                 existence.quantity += product.quantity
-                existence.indication = product.indication;
+                if (!existence.indication.length && !!product.indication.length) {
+                    existence.indication = product.indication;
+                } else if (!!existence.indication.length && !!product.indication.length) {
+                    product.indication.forEach(item => {
+                        existence.indication.push(item)
+                    })
+                }
             } else {
                 let order = {
                     product: product.id,
