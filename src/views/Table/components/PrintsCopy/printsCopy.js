@@ -88,10 +88,6 @@ export const generatePrintCopy = (structure, height) => {
     };
   });
 
-  qz.networking("192.168.1.222", 8082);
-  
-  qz.socket.open("192.168.1.222", 8082);
-
   qz.websocket
     .connect({ host: "192.168.1.222" })
     .then(() => {
