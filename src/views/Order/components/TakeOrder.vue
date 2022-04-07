@@ -491,7 +491,7 @@ export default defineComponent({
     const router = useRouter();
     const saleStore = useSaleStore();
     const orderStore = useOrderStore();
-    const businnessStore = useBusinessStore();
+    const businessStore = useBusinessStore();
     orderStore.orders = [];
     saleStore.order_initial = [];
     orderStore.orderId = null;
@@ -750,7 +750,7 @@ export default defineComponent({
 
       let typeDoc = dataForPrint.serie_documento.split("");
 
-      let data = `${businnessStore.business.ruc}|${dataForPrint.serie_documento}|${dataForPrint.totales.total_igv}|${dataForPrint.hora_de_emision}|${dataForPrint.datos_del_cliente_o_receptor.numero_documento}|${dataForPrint.numero_documento}|${dataForPrint.totales.total_venta}|${dataForPrint.datos_del_cliente_o_receptor.codigo_tipo_documento_identidad}|`;
+      let data = `${businessStore.business.ruc}|${dataForPrint.serie_documento}|${dataForPrint.totales.total_igv}|${dataForPrint.hora_de_emision}|${dataForPrint.datos_del_cliente_o_receptor.numero_documento}|${dataForPrint.numero_documento}|${dataForPrint.totales.total_venta}|${dataForPrint.datos_del_cliente_o_receptor.codigo_tipo_documento_identidad}|`;
 
       if (typeDoc[0] === "F") {
         typeDoc = "FACTURA ELECTRONICA";
@@ -790,7 +790,7 @@ export default defineComponent({
           dat: [
             [
               {
-                content: businnessStore.business.commercial_name,
+                content: businessStore.business.commercial_name,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -800,7 +800,7 @@ export default defineComponent({
             ],
             [
               {
-                content: businnessStore.business.fiscal_address,
+                content: businessStore.business.fiscal_address,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -820,7 +820,7 @@ export default defineComponent({
             ],
             [
               {
-                content: businnessStore.business.ruc,
+                content: businessStore.business.ruc,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -961,7 +961,7 @@ export default defineComponent({
             ],
             [
               {
-                content: `Puede verificarla usando su clave sol o ingresando a la pagina web: ${businnessStore.business.website}`,
+                content: `Puede verificarla usando su clave sol o ingresando a la pagina web: ${businessStore.business.website}`,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -971,7 +971,7 @@ export default defineComponent({
             ],
             [
               {
-                content: businnessStore.business.email,
+                content: businessStore.business.email,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -998,7 +998,7 @@ export default defineComponent({
             {
               tittle: "CONSULTOR/VENDEDOR",
               twoPoints: ":",
-              cont: businnessStore.business.legal_representative,
+              cont: businessStore.business.legal_representative,
             },
             {
               tittle: "TIPO DE PAGO",
@@ -1250,7 +1250,7 @@ export default defineComponent({
 
       dateNow.value = `${dd}/${mm}/${yy} ${hh}:${msms}`;
 
-      urlImg.value = businnessStore.business.logo_url;
+      urlImg.value = businessStore.business.logo_url;
     });
 
     const onCloseModal = () => {
