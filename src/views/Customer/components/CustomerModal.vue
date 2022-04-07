@@ -107,6 +107,7 @@
                 <n-radio-group
                   v-model:value="customer.gender"
                   name="genderGroup"
+                  :disabled="customer.doc_type === '6'"
                 >
                   <n-radio-button key="gender" value="F">F</n-radio-button>
                   <n-radio-button key="gender" value="M">M</n-radio-button>
@@ -472,6 +473,7 @@ export default defineComponent({
           break;
         case "6":
           customer.value.birthdate = null;
+          customer.value.gender = null;
           docMaxLength.value = 11;
           break;
         case "7":
