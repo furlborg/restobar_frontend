@@ -321,7 +321,7 @@ export default defineComponent({
           dat: [
             [
               {
-                content: tableName.value,
+                content: `MESA: ${tableName.value}`,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",

@@ -1,9 +1,11 @@
 import jspdf from "jspdf";
 import autoTable from "jspdf-autotable";
 
+import { useBusinessStore } from "@/store/modules/business";
+
 import qr from "qrcode";
 
-export const generatePrint = (urlImg, objSunat, structure) => {
+export const generatePrint = (objSunat, structure) => {
   const doc = new jspdf({
     orientation: "p",
     unit: "mm",
@@ -20,14 +22,21 @@ export const generatePrint = (urlImg, objSunat, structure) => {
   structure.map((val, index) => {
     var finalY = doc.lastAutoTable.finalY || 10;
 
+    const businnessStore = useBusinessStore();
     if (index === 0) {
-      doc.addImage(urlImg, "png", 30, finalY, 25, 25);
+      doc.addImage(businnessStore.business.logo_url, "png", 30, finalY, 25, 25);
       finalY += 30;
     }
-
     if (index === 5) {
       doc.addImage(code_qr, "png", 25, finalY, 30, 30);
       finalY += 30;
+    }
+
+    if (val.line) {
+      doc.setLineDash([1, 1], 1);
+      doc.setDrawColor(0, 0, 0);
+      doc.line(3, finalY + 5, 77, finalY + 5);
+      finalY += 5;
     }
 
     doc.autoTable({
@@ -55,15 +64,6 @@ export const generatePrint = (urlImg, objSunat, structure) => {
         tittleSec: {
           fontStyle: "bold",
         },
-      },
-      didDrawCell: (data) => {
-        // console.log(data.row.raw.indication);
-
-        if (!!data.row.raw.styles.line) {
-          doc.setLineDash([1, 1], 1);
-          doc.setDrawColor(0, 0, 0);
-          doc.line(3, finalY, 77, finalY);
-        }
       },
     });
   });

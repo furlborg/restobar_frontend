@@ -497,8 +497,6 @@ export default defineComponent({
     saleStore.order_initial = [];
     orderStore.orderId = null;
 
-    const urlImg = ref(null);
-
     const loading = ref(false);
     const payment_amount = ref(parseFloat(0).toFixed(2));
 
@@ -1017,7 +1015,7 @@ export default defineComponent({
         },
       ];
 
-      generatePrint(urlImg.value, data, structure);
+      generatePrint(data, structure);
       print(values);
 
       message.success("Imprimir");
@@ -1255,8 +1253,6 @@ export default defineComponent({
       const msms = fetch.getMinutes();
 
       dateNow.value = `${dd}/${mm}/${yy} ${hh}:${msms}`;
-
-      urlImg.value = businessStore.business.logo_url;
     });
 
     const onCloseModal = () => {
