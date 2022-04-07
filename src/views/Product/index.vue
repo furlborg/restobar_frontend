@@ -38,9 +38,10 @@
         <n-input
           class="w-25"
           v-model:value="search"
-          @keypress.enter="performSearch"
           placeholder="Buscar..."
           clearable
+          @clear="(search = ''), performSearch()"
+          @keypress.enter="performSearch"
         />
         <n-button type="primary" @click="performSearch" secondary>
           <v-icon name="md-search-round" />
