@@ -389,8 +389,6 @@ export default defineComponent({
         let verifyNameCombo = "";
         if (
           (val.product_category.toLowerCase().includes("combo") ||
-            val.product_category.toLowerCase().includes("menu") ||
-            val.product_category.toLowerCase().includes("menus") ||
             val.product_category.toLowerCase().includes("combos")) &&
           !!prodDetail &&
           prodDetail.length > 0
@@ -399,6 +397,13 @@ export default defineComponent({
             verifyNameCombo += `${index !== 0 ? "\n-" : "-"} ${v.trim()}`;
             lengthData += 6.5;
           });
+        }
+
+        if (
+          val.product_category.toLowerCase().includes("menu") ||
+          val.product_category.toLowerCase().includes("menus")
+        ) {
+          newNameProd = `[MENU] ${newNameProd}`;
         }
 
         lengthData += 7 * heightForNmae;
