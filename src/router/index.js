@@ -303,7 +303,6 @@ router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
   const genericsStore = useGenericsStore()
   genericsStore.updateDevice()
-  console.log(genericsStore.device)
   await userStore.checkAuthentication()
   if (to.matched.some((record) => record.meta.requiresAuth)) {
     if (userStore.isAuthenticated) {
