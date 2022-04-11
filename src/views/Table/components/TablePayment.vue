@@ -444,7 +444,7 @@ export default defineComponent({
             ],
             [
               {
-                content: `${dataForPrint.serie_documento} ${dataForPrint.codigo_tipo_operacion}`,
+                content: `${dataForPrint.serie_documento}-${dataForPrint.codigo_tipo_operacion}`,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -570,7 +570,7 @@ export default defineComponent({
             [
               {
                 content:
-                  "BIENES CONSUMOS / SERVICIOS PRESTADOS EN LA AMAZONIA PARA SER CONSUMIDAS EN LA MISMA",
+                  "BIENES TRANSFERIDOS / SERVICIOS PRESTADOS EN LA AMAZONIA PARA SER CONSUMIDOS EN LA MISMA",
                 styles: {
                   fontStyle: "bold",
                   halign: "center",

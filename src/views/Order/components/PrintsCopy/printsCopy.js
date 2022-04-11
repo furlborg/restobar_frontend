@@ -11,54 +11,45 @@ export const generatePrintCopy = (structure, height) => {
     unit: "mm",
     format: [80, !!height && height > 80 ? Math.round(height) : 80],
   });
+
   structure.map((val) => {
-    let finalY = doc.lastAutoTable.finalY || 0;
+    if (!!val) {
+      let finalY = doc.lastAutoTable.finalY || 0;
+      if (val.line) {
+        doc.setLineDash([1, 1], 1);
+        doc.setDrawColor(0, 0, 0);
+        doc.line(3, finalY + 5, 77, finalY + 5);
+        finalY += 5;
+      }
 
-    doc.autoTable({
-      startY: finalY,
-      theme: "plain",
-      pageBreak: "auto",
-      showHead: "firstPage",
-      margin: { left: 3, right: 3 },
-      columns: !!val.col ? val.col : null,
-      styles: {
-        cellPadding: 0.7,
-      },
-      body: val.dat,
-      cellWidth: "auto",
-      headStyles: { fontSize: 9, font: "helvetica" },
-      bodyStyles: { fontSize: 9, font: "helvetica", fontStyle: "bold" },
-
-      columnStyles: {
-        fontSize: 9,
-        tittle: {
-          fontStyle: "bold",
+      doc.autoTable({
+        startY: finalY,
+        theme: "plain",
+        pageBreak: "auto",
+        showHead: "firstPage",
+        margin: { left: 3, right: 3 },
+        columns: !!val.col ? val.col : null,
+        styles: {
+          cellPadding: 0.7,
         },
-        cont: {
-          fontStyle: "bold",
+        body: val.dat,
+        cellWidth: "auto",
+        headStyles: { fontSize: 9, font: "helvetica" },
+
+        columnStyles: {
+          fontSize: 9,
+          tittle: {
+            fontStyle: "bold",
+          },
+          cont: {
+            fontStyle: "bold",
+          },
+          tittleSec: {
+            fontStyle: "bold",
+          },
         },
-        tittleSec: {
-          fontStyle: "bold",
-        },
-      },
-
-      didDrawCell: (data) => {
-        if (!!data.row.raw.img) {
-          // let img = data.row.raw.img;
-          // let dim = data.cell.height - data.cell.padding("vertical");
-          // let textPos = data.cell.textPos;
-          // doc.addImage(img.src, textPos.x, textPos.y, dim, dim);
-        }
-
-        // console.log(data.row.raw.indication);
-
-        if (!!data.row.raw.img === false) {
-          doc.setLineDash([1, 1], 1);
-          doc.setDrawColor(0, 0, 0);
-          doc.line(3, finalY, 77, finalY);
-        }
-      },
-    });
+      });
+    }
   });
 
   qz.security.setCertificatePromise(function (resolve, reject) {
@@ -94,7 +85,7 @@ export const generatePrintCopy = (structure, height) => {
         let searchPrinter = printers.find((val) => val === "POS-80-Series");
 
         if (!!searchPrinter) {
-          let a = doc.output("datauristring").split(",")[1];
+          let dataPdf = doc.output("datauristring").split(",")[1];
 
           let config = qz.configs.create(searchPrinter);
           return qz.print(config, [
@@ -102,7 +93,7 @@ export const generatePrintCopy = (structure, height) => {
               type: "pixel",
               format: "pdf",
               flavor: "base64",
-              data: a,
+              data: dataPdf,
             },
           ]);
         } else {
