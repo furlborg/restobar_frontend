@@ -366,11 +366,11 @@ export default defineComponent({
         });
 
         if (ind && PL.length > 0) {
-          lengthData += 6.5 * 2 + lC;
+          lengthData += 7 * 2 + lC;
           ind = `${ind} \n y ${PL.length} para llevar`;
         }
         if (!!ind === false && PL.length > 0) {
-          lengthData += 6.5 * 2 + lC;
+          lengthData += 7 * 2 + lC;
           ind = `${PL.length} para llevar`;
         }
 
@@ -382,16 +382,20 @@ export default defineComponent({
 
         let heightForNmae = 10;
 
-        let verifyNameCombo = val.product_name.toLowerCase().includes("combo");
+        let verifyNameCombo = "";
 
-        if (verifyNameCombo && !!prodDetail && prodDetail.length > 0) {
-          prodDetail.map((val) => {
-            newNameProd += `\n *${val}`;
-            heightForNmae += 10;
+        if (
+          val.product_name.toLowerCase().includes("combo") &&
+          !!prodDetail &&
+          prodDetail.length > 0
+        ) {
+          prodDetail.map((val, index) => {
+            verifyNameCombo += `${index !== 0 ? "\n-" : "-"} ${val.trim()}`;
+            lengthData += 6.5;
           });
         }
 
-        lengthData += 6.5 * heightForNmae;
+        lengthData += 7 * heightForNmae;
 
         structure.push(
           {
@@ -399,46 +403,35 @@ export default defineComponent({
             dat: [
               [
                 {
-                  content: `PEDIDO`,
-                  colSpan: "2",
-                  rowSpan: "1",
+                  content: `*${newNameProd}`,
                   styles: {
                     fontStyle: "bold",
-                    fontSize: 8,
-                  },
-                },
-                {
-                  content: `CANT.`,
-                  colSpan: "2",
-                  rowSpan: "1",
-                  styles: {
-                    fontStyle: "bold",
-                    fontSize: 8,
+                    fontSize: 10,
                   },
                 },
               ],
             ],
           },
-
+          verifyNameCombo && {
+            dat: [
+              [
+                {
+                  content: verifyNameCombo,
+                  styles: {
+                    fontSize: 9,
+                  },
+                },
+              ],
+            ],
+          },
           {
             dat: [
               [
                 {
-                  content: newNameProd,
-                  colSpan: "2",
-                  rowSpan: "1",
+                  content: `CANTIDAD: ${val.quantity}`,
                   styles: {
                     fontStyle: "bold",
-                    fontSize: 11,
-                  },
-                },
-                {
-                  content: val.quantity,
-                  colSpan: "2",
-                  rowSpan: "1",
-                  styles: {
-                    fontStyle: "bold",
-                    fontSize: 11,
+                    fontSize: 10,
                   },
                 },
               ],
@@ -446,18 +439,8 @@ export default defineComponent({
           }
         );
         if (ind) {
-          lengthData += 6.5 * 2 + lC;
           structure.push({
             dat: [
-              [
-                {
-                  content: `INDICACIONES`,
-                  styles: {
-                    fontStyle: "bold",
-                    fontSize: 8,
-                  },
-                },
-              ],
               [
                 {
                   content: ind,
@@ -473,6 +456,7 @@ export default defineComponent({
       });
 
       structure.push({
+        line: true,
         dat: [
           {
             tittle: "Fecha",
@@ -483,26 +467,6 @@ export default defineComponent({
       });
 
       generatePrintCopy(structure, lengthData);
-
-      // let myHeaders = new Headers();
-      // myHeaders.append("Content-Type", "application/json");
-
-      // let requestOptions = {
-      //   method: "POST",
-
-      //   headers: myHeaders,
-      //   body: JSON.stringify({
-      //     height: lengthData,
-      //     structure: structure,
-      //     printerName: "POS-80-Series",
-      //   }),
-      //   redirect: "follow",
-      // };
-
-      // fetch("http://192.168.1.222:5000/printer", requestOptions)
-      //   .then((response) => response.text())
-      //   .then((result) => console.log(result))
-      //   .catch((error) => console.log("error", error));
 
       router.push({ name: "TableHome" });
     };
