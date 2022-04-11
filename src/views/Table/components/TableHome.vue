@@ -1,10 +1,19 @@
 <template>
   <n-card title="Mesas" :bordered="false" :segmented="{ content: 'hard' }">
     <template #header-extra>
-      <n-button type="info" text @click="refreshData">
-        <v-icon name="hi-solid-refresh" />
-        Recargar
-      </n-button>
+      <n-space align="end">
+        <n-button type="info" text @click="refreshData">
+          <v-icon name="hi-solid-refresh" />
+          Recargar
+        </n-button>
+        <n-button
+          v-if="userStore.user.profile_des !== 'MOZO'"
+          type="info"
+          secondary
+          @click="$router.push({ name: 'DoOrder' })"
+          >Realizar pedido</n-button
+        >
+      </n-space>
       <!-- <n-button
         v-if="!groupMode"
         type="info"
@@ -87,6 +96,7 @@
                 {{ "MESA " + String(table.id) }}
               </div>
               <n-button
+                v-if="userStore.user.profile_des !== 'MOZO'"
                 @click.stop="openOptions.push(table.id)"
                 class="position-absolute top-0 end-0"
                 quaternary
@@ -210,6 +220,7 @@
 import { defineComponent, ref, onMounted } from "vue";
 import { useMessage, useDialog } from "naive-ui";
 import { useTableStore } from "@/store/modules/table";
+import { useUserStore } from "@/store/modules/user";
 import { cancelTableOrder } from "@/api/modules/tables";
 import { cloneDeep } from "@/utils";
 
@@ -225,6 +236,7 @@ export default defineComponent({
     const currentTableGrouping = ref(null);
     const currentGroup = ref([]);
     const tableStore = useTableStore();
+    const userStore = useUserStore();
 
     const loadTablesData = async () => {
       isLoading.value = true;
@@ -291,6 +303,7 @@ export default defineComponent({
       isLoading,
       groupMode,
       tableStore,
+      userStore,
       openOptions,
       currentGroup,
       saveGroup,

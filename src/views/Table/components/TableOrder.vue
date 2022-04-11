@@ -15,34 +15,36 @@
         <n-gi span="2">
           <n-card class="h-100" title="Pedidos" :bordered="false" embedded>
             <template #header-extra>
-              <n-button
-                v-if="!($route.name === 'TablePayment')"
-                type="success"
-                :disabled="!orderStore.orderId"
-                text
-                @click="
-                  $router.push({
-                    name: 'TablePayment',
-                    params: { table: $route.params.table },
-                  })
-                "
-              >
-                <v-icon class="me-1" name="fa-coins" />
-                <span class="fs-6">Cobrar</span>
-              </n-button>
-              <router-link
-                v-else
-                class="text-decoration-none"
-                :to="{
-                  name: 'ProductCategories',
-                  params: { table: $route.params.table },
-                }"
-              >
-                <n-button type="info" text>
-                  <v-icon class="me-1" name="md-add-round" />
-                  <span class="fs-6">Añadir pedido</span>
+              <div v-if="userStore.user.profile_des !== 'MOZO'">
+                <n-button
+                  v-if="!($route.name === 'TablePayment')"
+                  type="success"
+                  :disabled="!orderStore.orderId"
+                  text
+                  @click="
+                    $router.push({
+                      name: 'TablePayment',
+                      params: { table: $route.params.table },
+                    })
+                  "
+                >
+                  <v-icon class="me-1" name="fa-coins" />
+                  <span class="fs-6">Cobrar</span>
                 </n-button>
-              </router-link>
+                <router-link
+                  v-else
+                  class="text-decoration-none"
+                  :to="{
+                    name: 'ProductCategories',
+                    params: { table: $route.params.table },
+                  }"
+                >
+                  <n-button type="info" text>
+                    <v-icon class="me-1" name="md-add-round" />
+                    <span class="fs-6">Añadir pedido</span>
+                  </n-button>
+                </router-link>
+              </div>
             </template>
             <n-form v-if="!($route.name === 'TablePayment')">
               <n-form-item label="Buscar producto">
@@ -180,6 +182,7 @@ import { NSpace, useDialog, useMessage } from "naive-ui";
 import { useTableStore } from "@/store/modules/table";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
+import { useUserStore } from "@/store/modules/user";
 import {
   retrieveTableOrder,
   createTableOrder,
@@ -205,6 +208,7 @@ export default defineComponent({
     const tableStore = useTableStore();
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
+    const userStore = useUserStore();
     const listType = ref("grid");
     const showModal = ref(false);
     const itemIndex = ref(null);
@@ -599,10 +603,10 @@ export default defineComponent({
       }));
     });
 
-    const showOptions = async (value) => {
+    const showOptions = (value) => {
       if (value.length >= 3) {
         searching.value = true;
-        await searchProductByName(value)
+        searchProductByName(value)
           .then((response) => {
             if (response.status === 200) {
               products.value = response.data;
@@ -636,6 +640,7 @@ export default defineComponent({
       table,
       handleBack,
       listType,
+      userStore,
       orderStore,
       saleStore,
       performCreateTableOrder,

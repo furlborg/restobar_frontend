@@ -11,8 +11,8 @@
         class="layout-sider"
         @collapse="collapsed = true"
         @expand="collapsed = false"
-        :collapsed="collapsed"
-        :collapsed-width="64"
+        :collapsed="userStore.user.profile_des !== 'MOZO' ? collapsed : true"
+        :collapsed-width="userStore.user.profile_des !== 'MOZO' ? 64 : 0"
         collapse-mode="width"
         :width="200"
         :native-scrollbar="false"
@@ -154,6 +154,7 @@ export default defineComponent({
       getDarkTheme,
       darkTheme: createTheme([inputDark, datePickerDark]),
       collapsed,
+      userStore,
     };
   },
 });

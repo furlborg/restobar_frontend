@@ -1,6 +1,6 @@
 <template>
   <div id="TakeOrder">
-    <n-page-header class="mb-2" @back="$router.push({ name: 'Orders' })">
+    <n-page-header class="mb-2" @back="$router.push({ name: 'TableHome' })">
       <template #title>
         <n-space justify="space-between">
           <n-text class="fs-2">Realizar Pedido</n-text>
