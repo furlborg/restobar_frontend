@@ -257,7 +257,10 @@ export default defineComponent({
         let verifyNameCombo = "";
 
         if (
-          val.product_name.toLowerCase().includes("combo") &&
+          (val.product_category.toLowerCase().includes("combo") ||
+            val.product_category.toLowerCase().includes("menu") ||
+            val.product_category.toLowerCase().includes("menus") ||
+            val.product_category.toLowerCase().includes("combos")) &&
           !!prodDetail &&
           prodDetail.length > 0
         ) {
