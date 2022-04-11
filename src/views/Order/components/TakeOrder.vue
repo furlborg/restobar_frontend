@@ -1097,6 +1097,13 @@ export default defineComponent({
           });
         }
 
+        if (
+          val.product_category.toLowerCase().includes("menu") ||
+          val.product_category.toLowerCase().includes("menus")
+        ) {
+          newNameProd = `[MENU] ${newNameProd}`;
+        }
+
         lengthData += 7 * heightForNmae;
 
         structure.push(
