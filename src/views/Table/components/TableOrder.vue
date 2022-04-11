@@ -389,8 +389,8 @@ export default defineComponent({
           !!prodDetail &&
           prodDetail.length > 0
         ) {
-          prodDetail.map((val, index) => {
-            verifyNameCombo += `${index !== 0 ? "\n-" : "-"} ${val.trim()}`;
+          prodDetail.map((v, index) => {
+            verifyNameCombo += `${index !== 0 ? "\n-" : "-"} ${v.trim()}`;
             lengthData += 6.5;
           });
         }

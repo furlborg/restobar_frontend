@@ -256,9 +256,13 @@ export default defineComponent({
 
         let verifyNameCombo = "";
 
-        if (verifyNameCombo && !!prodDetail && prodDetail.length > 0) {
-          prodDetail.map((val, index) => {
-            verifyNameCombo += `${index !== 0 ? "\n-" : "-"} ${val.trim()}`;
+        if (
+          val.product_name.toLowerCase().includes("combo") &&
+          !!prodDetail &&
+          prodDetail.length > 0
+        ) {
+          prodDetail.map((v, index) => {
+            verifyNameCombo += `${index !== 0 ? "\n-" : "-"} ${v.trim()}`;
             lengthData += 6.5;
           });
         }
