@@ -84,8 +84,8 @@ export default defineComponent({
     userStore.initializeStore();
 
     const formInline = reactive({
-      username: "ADMIN",
-      password: "admin",
+      username: "",
+      password: "",
     });
 
     const rules = {
