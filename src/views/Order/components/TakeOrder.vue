@@ -16,7 +16,9 @@
                 <n-space class="mb-2" align="center" justify="space-between">
                   <div class="d-flex align-items-center">
                     <n-text class="fs-4">{{
-                      saleStore.getSerieDescription(sale.serie) + sale.number
+                      `${saleStore.getSerieDescription(sale.serie)}-${
+                        sale.number
+                      }`
                     }}</n-text>
                     <n-dropdown
                       trigger="click"
@@ -466,7 +468,7 @@ import {
   onMounted,
   h,
 } from "vue";
-import { NThing, useDialog, useMessage } from "naive-ui";
+import { NThing, NTag, NSpace, useDialog, useMessage } from "naive-ui";
 import { useRouter } from "vue-router";
 import { useProductStore } from "@/store/modules/product";
 import { useOrderStore } from "@/store/modules/order";
@@ -476,7 +478,7 @@ import { searchProductByName } from "@/api/modules/products";
 import { takeAwayOrder } from "@/api/modules/orders";
 import { createSale, getSaleNumber } from "@/api/modules/sales";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
-import { isDecimal, isNumber, isLetter } from "@/utils";
+import { isDecimal, isNumber, isLetter, lighten } from "@/utils";
 import { saleRules } from "@/utils/constants";
 import {
   searchCustomerByName,
@@ -630,10 +632,10 @@ export default defineComponent({
       }));
     });
 
-    const showOptions = async (value) => {
+    const showOptions = (value) => {
       if (value.length >= 3) {
         searching.value = true;
-        await searchProductByName(value)
+        searchProductByName(value)
           .then((response) => {
             if (response.status === 200) {
               products.value = response.data;
@@ -652,10 +654,73 @@ export default defineComponent({
     };
 
     const renderLabel = (option) => {
-      return h(NThing, {
-        title: option.label,
-        description: option.category,
-      });
+      const t = option.label.split("-");
+      let color = "#3B689F";
+      let text = "MESA";
+      if (t.length > 1) {
+        if (t[1].includes("LL")) {
+          color = "#926ED7";
+          text = "PARA LLEVAR";
+        } else if (t[1].includes("D")) {
+          color = "#995C4E";
+          text = "DELIVERY";
+        }
+        /* switch (t[1]) {
+          case " LL":
+            color = "#926ED7";
+            text = "PARA LLEVAR";
+            break;
+          case " D":
+            color = "#995C4E";
+            text = "DELIVERY";
+            break;
+          default:
+            console.error(t[1]);
+            break;
+        } */
+      }
+      return h(
+        NThing,
+        {
+          title: t[0],
+        },
+        {
+          default: () => "",
+          description: () =>
+            h(
+              NSpace,
+              {},
+              {
+                default: () => [
+                  h(
+                    NTag,
+                    {
+                      size: "small",
+                      type: "info",
+                    },
+                    {
+                      default: () => option.category,
+                    }
+                  ),
+                  h(
+                    NTag,
+                    {
+                      size: "small",
+                      color: {
+                        color: lighten(color, 48),
+                        textColor: color,
+                        borderColor: lighten(color, 24),
+                      },
+                    },
+                    {
+                      default: () => text,
+                    }
+                  ),
+                ],
+              }
+            ),
+        }
+      );
     };
 
     const selectProduct = (v) => {

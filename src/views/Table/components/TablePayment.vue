@@ -6,7 +6,7 @@
           <n-space class="mb-2" align="center" justify="space-between">
             <div class="d-flex align-items-center">
               <n-text class="fs-4">{{
-                saleStore.getSerieDescription(sale.serie) + sale.number
+                `${saleStore.getSerieDescription(sale.serie)}-${sale.number}`
               }}</n-text>
               <n-dropdown
                 trigger="click"

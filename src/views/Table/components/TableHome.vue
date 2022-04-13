@@ -95,7 +95,6 @@
                 {{ "MESA " + String(table.id) }}
               </div>
               <n-button
-                v-if="userStore.user.profile_des !== 'MOZO'"
                 @click.stop="openOptions.push(table.id)"
                 class="position-absolute top-0 end-0"
                 quaternary
@@ -139,6 +138,7 @@
               >
                 <n-drawer-content @click.stop>
                   <n-button
+                    v-if="userStore.user.profile_des !== 'MOZO'"
                     class="mb-1"
                     type="success"
                     size="small"
@@ -173,6 +173,18 @@
                     Unir mesa
                   </n-button> -->
                   <n-button
+                    class="mb-1"
+                    type="info"
+                    size="small"
+                    block
+                    secondary
+                    :disabled="table.status === '1'"
+                    @click="performRetrieveTableOrder(table.id)"
+                  >
+                    Pre-cuenta
+                  </n-button>
+                  <n-button
+                    v-if="userStore.user.profile_des !== 'MOZO'"
                     class="mb-1"
                     type="error"
                     size="small"
@@ -220,7 +232,7 @@ import { defineComponent, ref, onMounted } from "vue";
 import { useMessage, useDialog } from "naive-ui";
 import { useTableStore } from "@/store/modules/table";
 import { useUserStore } from "@/store/modules/user";
-import { cancelTableOrder } from "@/api/modules/tables";
+import { cancelTableOrder, retrieveTableOrder } from "@/api/modules/tables";
 import { cloneDeep } from "@/utils";
 
 export default defineComponent({
@@ -242,6 +254,22 @@ export default defineComponent({
       await tableStore.refreshData().then(() => {
         isLoading.value = false;
       });
+    };
+
+    const performRetrieveTableOrder = async (table) => {
+      await retrieveTableOrder(table)
+        .then((response) => {
+          if (response.status === 200) {
+            console.log(response.data);
+            /* code */
+          }
+        })
+        .catch((error) => {
+          if (error.response.status !== 404) {
+            console.error(error);
+            message.error("Algo salió mal...");
+          }
+        });
     };
 
     const nullifyTableOrder = (id) => {
@@ -312,6 +340,7 @@ export default defineComponent({
       nullifyTableOrder,
       tableGroups,
       currentTableGrouping,
+      performRetrieveTableOrder,
     };
   },
 });
