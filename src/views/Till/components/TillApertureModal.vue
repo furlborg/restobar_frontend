@@ -11,8 +11,8 @@
     @close="() => $emit('update:show')"
   >
     <n-spin :show="isLoading">
-      <n-form :rules="rules" :model="till" ref="apertureForm">
-        <n-form-item label="Monto Inicial" path="opening_amount">
+      <n-form>
+        <n-form-item label="Monto Inicial">
           <n-input
             v-model:value="till.opening_amount"
             @keypress="isDecimal($event)"
@@ -65,7 +65,6 @@ export default defineComponent({
     const userStore = useUserStore();
     const message = useMessage();
     const isLoading = ref(false);
-    const apertureForm = ref(null);
     const till = ref({
       opening_responsable: userStore.user.id,
       opening_amount: "0.00",
@@ -73,38 +72,22 @@ export default defineComponent({
     });
 
     const apertureTill = async () => {
-      apertureForm.value.validate(async (errors) => {
-        if (!errors) {
-          isLoading.value = true;
-          await createTill(till.value)
-            .then((response) => {
-              if (response.status === 201) {
-                message.success("Caja aperturada!");
-                emit("on-success");
-                tillStore.currentTillID = response.data.id;
-              }
-            })
-            .catch((error) => {
-              console.error(error);
-              message.error("Algo salió mal...");
-            })
-            .finally(() => {
-              isLoading.value = false;
-            });
-        } else {
-          console.error(errors);
+      isLoading.value = true;
+      await createTill(till.value)
+        .then((response) => {
+          if (response.status === 201) {
+            message.success("Caja aperturada!");
+            emit("on-success");
+            tillStore.currentTillID = response.data.id;
+          }
+        })
+        .catch((error) => {
+          console.error(error);
           message.error("Algo salió mal...");
-        }
-      });
-    };
-
-    const rules = {
-      opening_amount: {
-        type: "number",
-        required: true,
-        trigger: ["blur", "input"],
-        message: "Monto requerido",
-      },
+        })
+        .finally(() => {
+          isLoading.value = false;
+        });
     };
 
     return {
@@ -114,7 +97,6 @@ export default defineComponent({
       genericsStore,
       isLoading,
       till,
-      rules,
       apertureTill,
     };
   },

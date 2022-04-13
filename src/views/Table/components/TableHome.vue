@@ -7,10 +7,9 @@
           Recargar
         </n-button>
         <n-button
-          v-if="userStore.user.profile_des !== 'MOZO'"
           type="info"
           secondary
-          @click="$router.push({ name: 'DoOrder' })"
+          @click="$router.push({ name: 'TakeOrder' })"
           >Realizar pedido</n-button
         >
       </n-space>

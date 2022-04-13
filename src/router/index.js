@@ -48,28 +48,6 @@ export const routes = [
         },
       },
       {
-        name: "TakeOrder",
-        path: '/take-order',
-        component: () => import(/* webpackChunkName: "table-home" */ '@/views/Order/components/TakeOrder'),
-        beforeEnter: async (to, from, next) => {
-          const tillStore = useTillStore()
-          await retrieveCurrentTill()
-            .then(response => {
-              if (response.status === 200) {
-                tillStore.currentTillID = response.data.id
-                tillStore.currentTillOrders = response.data.orders_count
-              }
-            })
-            .catch(error => {
-              if (error.response.status === 404) {
-                tillStore.currentTillID = null
-                tillStore.currentTillOrders = 0
-              }
-            })
-          tillStore.currentTillID !== null ? next() : next({ name: 'TillList' })
-        },
-      },
-      {
         path: '/sales',
         name: 'Sales',
         component: () => import(/* webpackChunkName: "customer" */ '@/views/Sale')
@@ -133,8 +111,8 @@ export const routes = [
             component: () => import(/* webpackChunkName: "table-home" */ '@/views/Table/components/TableHome'),
           },
           {
-            name: "DoOrder",
-            path: '/do-order',
+            name: "TakeOrder",
+            path: '/take-order',
             component: () => import(/* webpackChunkName: "table-home" */ '@/views/Order/components/TakeOrder'),
           },
           {

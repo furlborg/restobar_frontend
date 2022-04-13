@@ -57,6 +57,8 @@
                     :options="productOptions"
                     :get-show="showOptions"
                     :loading="searching"
+                    placeholder=""
+                    :render-label="renderLabel"
                     @select="selectProduct"
                   />
                 </n-input-group>
@@ -171,14 +173,15 @@
 
 <script>
 import OrderIndications from "./OrderIndications";
-import { defineComponent, ref, computed, onMounted, watchEffect } from "vue";
+import { defineComponent, ref, computed, onMounted, watchEffect, h } from "vue";
 import {
   useRoute,
   useRouter,
   onBeforeRouteLeave,
   onBeforeRouteUpdate,
 } from "vue-router";
-import { NSpace, useDialog, useMessage } from "naive-ui";
+import { NThing, useDialog, useMessage } from "naive-ui";
+import { useProductStore } from "@/store/modules/product";
 import { useTableStore } from "@/store/modules/table";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
@@ -205,6 +208,7 @@ export default defineComponent({
     const message = useMessage();
     const dialog = useDialog();
     const table = route.params.table;
+    const productStore = useProductStore();
     const tableStore = useTableStore();
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
@@ -571,6 +575,7 @@ export default defineComponent({
         value: product.id,
         label: product.name,
         disabled: product.is_disabled,
+        category: productStore.getCategorieDescription(product.category),
       }));
     });
 
@@ -601,6 +606,13 @@ export default defineComponent({
       productSearch.value = "";
     };
 
+    const renderLabel = (option) => {
+      return h(NThing, {
+        title: option.label,
+        description: option.category,
+      });
+    };
+
     const handleBack = () => {
       router.push({ name: "TableHome" });
     };
@@ -614,6 +626,7 @@ export default defineComponent({
       userStore,
       orderStore,
       saleStore,
+      renderLabel,
       performCreateTableOrder,
       performUpdateTableOrder,
       deleteOrderDetail,

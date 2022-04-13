@@ -348,6 +348,7 @@
                     :options="productOptions"
                     :get-show="showOptions"
                     :loading="searching"
+                    :render-label="renderLabel"
                     placeholder="Buscar producto"
                     @select="selectProduct"
                   />
@@ -456,9 +457,18 @@
 <script>
 import CustomerModal from "@/views/Customer/components/CustomerModal";
 import OrderIndications from "./OrderIndications";
-import { defineComponent, ref, computed, toRefs, watch, onMounted } from "vue";
-import { useDialog, useMessage } from "naive-ui";
+import {
+  defineComponent,
+  ref,
+  computed,
+  toRefs,
+  watch,
+  onMounted,
+  h,
+} from "vue";
+import { NThing, useDialog, useMessage } from "naive-ui";
 import { useRouter } from "vue-router";
+import { useProductStore } from "@/store/modules/product";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { useBusinessStore } from "@/store/modules/business";
@@ -492,6 +502,7 @@ export default defineComponent({
     const router = useRouter();
     const saleStore = useSaleStore();
     const orderStore = useOrderStore();
+    const productStore = useProductStore();
     const businessStore = useBusinessStore();
     orderStore.orders = [];
     saleStore.order_initial = [];
@@ -615,6 +626,7 @@ export default defineComponent({
         value: product.id,
         label: product.name,
         disabled: product.is_disabled,
+        category: productStore.getCategorieDescription(product.category),
       }));
     });
 
@@ -637,6 +649,13 @@ export default defineComponent({
         return true;
       }
       return false;
+    };
+
+    const renderLabel = (option) => {
+      return h(NThing, {
+        title: option.label,
+        description: option.category,
+      });
     };
 
     const selectProduct = (v) => {
@@ -1257,6 +1276,7 @@ export default defineComponent({
       sale,
       changeSerie,
       selectSerie,
+      renderLabel,
       searching,
       productSearch,
       productOptions,
