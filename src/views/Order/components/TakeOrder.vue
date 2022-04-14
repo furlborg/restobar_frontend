@@ -512,6 +512,7 @@ import format from "date-fns/format";
 
 import { generatePrint } from "./Prints/prints";
 import { generatePrintCopy } from "./PrintsCopy/printsCopy";
+import { generatePrintCopyCopy } from "./PrintsCopyCopy/printsCopyCopy";
 
 const dateNow = ref(null);
 
@@ -523,10 +524,10 @@ export default defineComponent({
     CustomerModal,
   },
   setup() {
+    const userStore = useUserStore();
     const dialog = useDialog();
     const message = useMessage();
     const router = useRouter();
-    const userStore = useUserStore();
     const saleStore = useSaleStore();
     const orderStore = useOrderStore();
     const productStore = useProductStore();
@@ -857,6 +858,8 @@ export default defineComponent({
     };
 
     const printSale = (val) => {
+      let structureDelivery = null;
+
       let values = { ...val.order, ...val.sale };
 
       let dataForPrint = JSON.parse(values.json_sale);
@@ -865,22 +868,42 @@ export default defineComponent({
 
       let data = `${businessStore.business.ruc}|${dataForPrint.serie_documento}|${dataForPrint.totales.total_igv}|${dataForPrint.hora_de_emision}|${dataForPrint.datos_del_cliente_o_receptor.numero_documento}|${dataForPrint.numero_documento}|${dataForPrint.totales.total_venta}|${dataForPrint.datos_del_cliente_o_receptor.codigo_tipo_documento_identidad}|`;
 
+      let NoNoteSale = false;
+
       if (typeDoc[0] === "F") {
         typeDoc = "FACTURA ELECTRONICA";
-      } else {
+        NoNoteSale = true;
+      }
+
+      if (typeDoc[0] === "B") {
         typeDoc = "BOLETA ELECTRONICA";
+        NoNoteSale = true;
+      }
+
+      if (typeDoc[0] === "N") {
+        typeDoc = "NOTA DE VENTA";
+        NoNoteSale = false;
       }
 
       let datTotals = [];
 
-      let newTotal = {
-        "OP.GRAVADA": dataForPrint.totales.total_operaciones_gravadas,
-        "OP.EXONERADA": dataForPrint.totales.total_operaciones_exoneradas,
-        "OP.GRATUITAS": dataForPrint.totales.total_operaciones_gratuitas,
-        "IGV(18%)": dataForPrint.totales.total_igv,
-        DESCUENTOS: values.discount,
-        "IMPORTE TOTAL": dataForPrint.totales.total_venta,
-      };
+      let totalProdSum = 0;
+
+      let newTotal = NoNoteSale
+        ? {
+            "OP.GRAVADA":
+              dataForPrint.totales.total_operaciones_gravadas.toFixed("2"),
+            "OP.EXONERADA":
+              dataForPrint.totales.total_operaciones_exoneradas.toFixed("2"),
+            "OP.GRATUITAS":
+              dataForPrint.totales.total_operaciones_gratuitas.toFixed("2"),
+            "IGV(18%)": dataForPrint.totales.total_igv.toFixed("2"),
+            DESCUENTOS: !!val.discount ? val.discount.toFixed("2") : "0.00",
+            "IMPORTE TOTAL": dataForPrint.totales.total_venta.toFixed("2"),
+          }
+        : {
+            "IMPORTE TOTAL S/.": dataForPrint.totales.total_venta.toFixed("2"),
+          };
 
       for (let i in newTotal) {
         datTotals.push({
@@ -890,7 +913,7 @@ export default defineComponent({
         });
       }
 
-      if (!!values.delivery_info) {
+      if (!!sale.value.delivery_info) {
         datTotals.splice(5, 0, {
           tittle: "DELIVERY",
           twoPoints: ":",
@@ -918,6 +941,16 @@ export default defineComponent({
                   fontStyle: "bold",
                   halign: "center",
                   fontSize: 9,
+                },
+              },
+            ],
+            [
+              {
+                content: businessStore.business.phone,
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 8,
                 },
               },
             ],
@@ -951,16 +984,6 @@ export default defineComponent({
                 },
               },
             ],
-            [
-              {
-                content: values.order_type === "D" ? "DELIVERY" : "PEDIDO",
-                styles: {
-                  fontStyle: "bold",
-                  halign: "center",
-                  fontSize: 11,
-                },
-              },
-            ],
           ],
         },
 
@@ -972,11 +995,6 @@ export default defineComponent({
               cont: dataForPrint.datos_del_cliente_o_receptor
                 .apellidos_y_nombres_o_razon_social,
             },
-            !!values.delivery_info && {
-              tittle: "PREGUNTAR POR",
-              twoPoints: ":",
-              cont: values.delivery_info.person,
-            },
 
             {
               tittle: typeDoc[0] === "F" ? "RUC" : "DOCUMENTO",
@@ -987,20 +1005,13 @@ export default defineComponent({
             {
               tittle: "DIRECCION",
               twoPoints: ":",
-              cont: !!values.delivery_info
-                ? values.delivery_info.address
-                : dataForPrint.datos_del_cliente_o_receptor.direccion,
+              cont: dataForPrint.datos_del_cliente_o_receptor.direccion,
             },
 
             {
               tittle: "F.EMICION",
               twoPoints: ":",
-              cont: dataForPrint.fecha_de_emision,
-            },
-            !!values.delivery_info && {
-              tittle: "REPARTIDOR",
-              twoPoints: ":",
-              cont: values.delivery_info.deliveryman,
+              cont: dateNow.value,
             },
           ],
           line: true,
@@ -1030,37 +1041,33 @@ export default defineComponent({
               dataKey: "total",
             },
           ],
-          dat: dataForPrint.items.map((val) => {
-            return {
-              amount: val.cantidad,
-              unit: val.unidad_de_medida,
-              description: val.descripcion,
-              price: parseFloat(val.precio_unitario).toFixed("2"),
-              total: (val.cantidad * parseFloat(val.total_item)).toFixed("2"),
-            };
-          }),
+          dat: !val.by_consumption
+            ? dataForPrint.items.map((val) => {
+                return {
+                  amount: val.cantidad,
+                  unit: val.unidad_de_medida,
+                  description: val.descripcion,
+                  price: parseFloat(val.precio_unitario).toFixed("2"),
+                  total: (val.cantidad * parseFloat(val.total_item)).toFixed(
+                    "2"
+                  ),
+                };
+              })
+            : [
+                {
+                  amount: 1,
+                  description: "POR CONSUMO DE ALIMENTOS",
+                  total: totalProdSum.toFixed("2"),
+                },
+              ],
           line: true,
         },
         {
           dat: datTotals,
           line: true,
         },
-        // {
-        //   dat: [
-        //     [
-        //       {
-        //         content: null,
-        //         styles: {
-        //           img: code_qr,
-        //           fontStyle: "bold",
-        //           halign: "center",
-        //           fontSize: 9,
-        //         },
-        //       },
-        //     ],
-        //   ],
-        // },
-        {
+
+        NoNoteSale && {
           dat: [
             [
               {
@@ -1072,7 +1079,7 @@ export default defineComponent({
                 },
               },
             ],
-            [
+            !!businessStore.business.website && [
               {
                 content: `Puede verificarla usando su clave sol o ingresando a la pagina web: ${businessStore.business.website}`,
                 styles: {
@@ -1082,7 +1089,7 @@ export default defineComponent({
                 },
               },
             ],
-            [
+            !!businessStore.business.email && [
               {
                 content: businessStore.business.email,
                 styles: {
@@ -1107,6 +1114,7 @@ export default defineComponent({
         },
 
         {
+          line: true,
           dat: [
             {
               tittle: "CONSULTOR/VENDEDOR",
@@ -1124,15 +1132,163 @@ export default defineComponent({
         },
       ];
 
-      generatePrint(data, structure);
+      generatePrint(data, structure, NoNoteSale);
+
+      if (!!sale.value.delivery_info) {
+        let newTotals = [];
+
+        let lengthData = 0;
+
+        let totals = {
+          SUBTOTAL: totalProdSum.toFixed("2"),
+          "IGV(18%)": dataForPrint.totales.total_igv.toFixed("2"),
+          DESCUENTOS: !!val.discount ? val.discount.toFixed("2") : "0.00",
+          TOTAL: dataForPrint.totales.total_venta.toFixed("2"),
+        };
+
+        for (let i in totals) {
+          lengthData += 5 * 6.5;
+          newTotals.push({
+            tittle: i,
+            twoPoints: ":",
+            cont: totals[i],
+          });
+        }
+
+        structureDelivery = [
+          {
+            dat: [
+              [
+                {
+                  content: `DELIVERY ${dataForPrint.serie_documento}-${dataForPrint.codigo_tipo_operacion}`,
+                  styles: {
+                    fontStyle: "bold",
+                    halign: "center",
+                    fontSize: 12,
+                  },
+                },
+              ],
+            ],
+          },
+          {
+            line: true,
+            dat: [
+              {
+                tittle: "CLIENTE",
+                twoPoints: ":",
+                cont: dataForPrint.datos_del_cliente_o_receptor
+                  .apellidos_y_nombres_o_razon_social,
+              },
+              {
+                tittle: "PREGUNTAR POR",
+                twoPoints: ":",
+                cont: values.delivery_info.person,
+              },
+
+              {
+                tittle: "TELEFONO",
+                twoPoints: ":",
+                cont: values.delivery_info.phone,
+              },
+
+              {
+                tittle: "DIRECCION",
+                twoPoints: ":",
+                cont: values.delivery_info.address,
+              },
+
+              {
+                tittle: "F.EMICION",
+                twoPoints: ":",
+                cont: dateNow.value,
+              },
+              {
+                tittle: "PAGARA CON",
+                twoPoints: ":",
+                cont: payment_amount.value.toFixed("2"),
+              },
+              {
+                tittle: "VUELTO",
+                twoPoints: ":",
+                cont: changing.value.toFixed("2"),
+              },
+            ],
+          },
+          {
+            line: true,
+            col: [
+              {
+                header: "CANT.",
+                dataKey: "amount",
+              },
+              {
+                header: "U.M",
+                dataKey: "unit",
+              },
+
+              {
+                header: "DESCRIPCIÓN",
+                dataKey: "description",
+              },
+              {
+                header: "P.U",
+                dataKey: "price",
+              },
+
+              {
+                header: "TOTAL",
+                dataKey: "total",
+              },
+            ],
+            dat: !val.by_consumption
+              ? dataForPrint.items.map((val) => {
+                  lengthData += 10 * 6.5;
+                  return {
+                    amount: val.cantidad,
+                    unit: val.unidad_de_medida,
+                    description: val.descripcion,
+                    price: parseFloat(val.precio_unitario).toFixed("2"),
+                    total: (val.cantidad * parseFloat(val.total_item)).toFixed(
+                      "2"
+                    ),
+                  };
+                })
+              : [
+                  {
+                    amount: 1,
+                    description: "POR CONSUMO DE ALIMENTOS",
+                    total: dataForPrint.totales.total_venta.toFixed("2"),
+                  },
+                ],
+          },
+          {
+            dat: newTotals,
+            line: true,
+          },
+          {
+            dat: [
+              [
+                {
+                  content: `REPARTIDOR: ${values.delivery_info.deliveryman}`,
+                  styles: {
+                    fontStyle: "bold",
+                    halign: "center",
+                    fontSize: 12,
+                  },
+                },
+              ],
+            ],
+          },
+        ];
+        generatePrintCopyCopy(structureDelivery, lengthData);
+      }
+
       print(values);
 
       message.success("Imprimir");
     };
 
     const print = (responseData) => {
-      let lC = 0;
-
       let lengthData = 0;
 
       let structure = [
@@ -1150,17 +1306,29 @@ export default defineComponent({
             ],
           ],
         },
+
+        {
+          dat: [
+            [
+              {
+                content: !!sale.value.delivery_info
+                  ? "DELIVERY"
+                  : "PARA LLEVAR",
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 15,
+                },
+              },
+            ],
+          ],
+        },
       ];
 
       responseData.order_details.map((val) => {
         let ind = "";
-        let PL = [];
 
         val.indication.map((v, i) => {
-          if (!!v.takeAway && v.takeAway && !!v.description === false) {
-            PL.push(v.takeAway);
-          }
-
           let cadenaConCaracteres = "";
           if (!!v.description) {
             let longitudCadena = v.description.length;
@@ -1222,11 +1390,9 @@ export default defineComponent({
               [
                 {
                   content: `*${newNameProd}`,
-                  colSpan: "2",
-                  rowSpan: "1",
                   styles: {
                     fontStyle: "bold",
-                    fontSize: 10,
+                    fontSize: 14,
                   },
                 },
               ],
@@ -1238,7 +1404,20 @@ export default defineComponent({
                 {
                   content: verifyNameCombo,
                   styles: {
-                    fontSize: 9,
+                    fontSize: 12,
+                  },
+                },
+              ],
+            ],
+          },
+          ind && {
+            dat: [
+              [
+                {
+                  content: ind,
+                  styles: {
+                    fontStyle: "bold",
+                    fontSize: 12,
                   },
                 },
               ],
@@ -1249,32 +1428,15 @@ export default defineComponent({
               [
                 {
                   content: `Cant.: ${val.quantity}`,
-                  colSpan: "2",
-                  rowSpan: "1",
                   styles: {
                     fontStyle: "bold",
-                    fontSize: 10,
+                    fontSize: 12,
                   },
                 },
               ],
             ],
           }
         );
-        if (ind) {
-          structure.push({
-            dat: [
-              [
-                {
-                  content: ind,
-                  styles: {
-                    fontStyle: "bold",
-                    fontSize: 8,
-                  },
-                },
-              ],
-            ],
-          });
-        }
       });
 
       structure.push({
@@ -1287,6 +1449,24 @@ export default defineComponent({
           },
         ],
       });
+
+      if (userStore.user.names) {
+        structure.push({
+          dat: [
+            [
+              {
+                content: `MOZO: ${userStore.user.names}`,
+                styles: {
+                  fontStyle: "bold",
+                  halign: "right",
+                  fontSize: 16,
+                },
+              },
+            ],
+          ],
+        });
+      }
+
       generatePrintCopy(structure, lengthData);
     };
 
