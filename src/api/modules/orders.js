@@ -69,7 +69,7 @@ export async function listOrderDetails(order) {
     return await http.get(`orders/${order}/details/`)
 }
 
-export async function takeAwayOrder(order_details, sale_data) {
+export async function takeAwayOrder(order_details, sale_data, user) {
     const businessStore = useBusinessStore();
     const tillStore = useTillStore();
     const userStore = useUserStore();
@@ -78,7 +78,8 @@ export async function takeAwayOrder(order_details, sale_data) {
         till: tillStore.currentTillID,
         order_details: details,
         order_type: sale_data.delivery_info ? 'D' : 'P',
-        delivery_info: sale_data.delivery_info
+        delivery_info: sale_data.delivery_info,
+        user: user
     }
     let sale = {
         order: sale_data.order,

@@ -322,11 +322,11 @@
                 secondary
                 block
                 @click.prevent="performTakeAway"
-                ><v-icon
-                  class="me-2"
-                  name="fa-coins"
-                  scale="2"
-                />Cobrar</n-button
+                ><v-icon class="me-2" name="fa-coins" scale="2" />{{
+                  userStore.user.profile_des !== "MOZO"
+                    ? "Cobrar"
+                    : "Realizar pedido"
+                }}</n-button
               >
             </n-card>
           </n-spin>
@@ -445,6 +445,29 @@
           </n-card>
         </n-gi>
       </n-grid>
+      <n-modal
+        class="w-25"
+        preset="card"
+        v-model:show="showConfirm"
+        title="Registrar pedido"
+        :mask-closable="false"
+        closable
+      >
+        <n-form-item label="Ingrese código de verificación">
+          <n-input v-model:value="userConfirm" placeholder="" />
+        </n-form-item>
+        <template #action>
+          <n-space justify="end">
+            <n-button
+              type="success"
+              :disabled="!userConfirm"
+              secondary
+              @click.prevent="performCreateOrder"
+              >Confirmar</n-button
+            >
+          </n-space>
+        </template>
+      </n-modal>
       <OrderIndications
         v-model:show="showModal"
         preset="card"
@@ -468,10 +491,11 @@ import {
   onMounted,
   h,
 } from "vue";
-import { NThing, NTag, NSpace, useDialog, useMessage } from "naive-ui";
+import { NThing, NTag, NSpace, NInput, useDialog, useMessage } from "naive-ui";
 import { useRouter } from "vue-router";
 import { useProductStore } from "@/store/modules/product";
 import { useOrderStore } from "@/store/modules/order";
+import { useUserStore } from "@/store/modules/user";
 import { useSaleStore } from "@/store/modules/sale";
 import { useBusinessStore } from "@/store/modules/business";
 import { searchProductByName } from "@/api/modules/products";
@@ -502,6 +526,7 @@ export default defineComponent({
     const dialog = useDialog();
     const message = useMessage();
     const router = useRouter();
+    const userStore = useUserStore();
     const saleStore = useSaleStore();
     const orderStore = useOrderStore();
     const productStore = useProductStore();
@@ -1262,37 +1287,70 @@ export default defineComponent({
           },
         ],
       });
-
       generatePrintCopy(structure, lengthData);
+    };
+
+    const showConfirm = ref(false);
+
+    const userConfirm = ref("");
+
+    const performCreateOrder = async () => {
+      loading.value = true;
+      sale.value.sale_details = saleStore.toSale;
+      await takeAwayOrder(orderStore.orderList, sale.value, userConfirm.value)
+        .then((response) => {
+          if (response.status === 201) {
+            printSale(response.data);
+            message.success("Venta realizada correctamente!");
+            router.push({ name: "Orders" });
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          userConfirm.value = "";
+          showConfirm.value = false;
+          loading.value = false;
+        });
     };
 
     const performTakeAway = () => {
       saleForm.value.validate((errors) => {
         if (!errors) {
-          dialog.success({
-            title: "Pedido para llevar",
-            content: "Realizar pedido?",
-            positiveText: "Sí",
-            onPositiveClick: async () => {
-              loading.value = true;
-              sale.value.sale_details = saleStore.toSale;
-              await takeAwayOrder(orderStore.orderList, sale.value)
-                .then((response) => {
-                  if (response.status === 201) {
-                    printSale(response.data);
-                    message.success("Venta realizada correctamente!");
-                    router.push({ name: "Orders" });
-                  }
-                })
-                .catch((error) => {
-                  console.error(error);
-                  message.error("Algo salió mal...");
-                })
-                .finally(() => {
-                  loading.value = false;
-                });
-            },
-          });
+          if (userStore.user.profile_des === "MOZO") {
+            showConfirm.value = true;
+          } else {
+            dialog.success({
+              title: "Confirmar pedido",
+              content: "Realizar pedido?",
+              positiveText: "Sí",
+              onPositiveClick: async () => {
+                loading.value = true;
+                sale.value.sale_details = saleStore.toSale;
+                await takeAwayOrder(
+                  orderStore.orderList,
+                  sale.value,
+                  userConfirm.value
+                )
+                  .then((response) => {
+                    if (response.status === 201) {
+                      printSale(response.data);
+                      message.success("Venta realizada correctamente!");
+                      router.push({ name: "Orders" });
+                    }
+                  })
+                  .catch((error) => {
+                    console.error(error);
+                    message.error("Algo salió mal...");
+                  })
+                  .finally(() => {
+                    loading.value = false;
+                  });
+              },
+            });
+          }
         } else {
           console.error(errors);
           message.error("Datos Incorrectos");
@@ -1358,6 +1416,10 @@ export default defineComponent({
       handleDelivery,
       onCloseModal,
       onSuccess,
+      userConfirm,
+      showConfirm,
+      performCreateOrder,
+      userStore,
     };
   },
 });
