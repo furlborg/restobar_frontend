@@ -257,6 +257,7 @@ import CustomerModal from "@/views/Customer/components/CustomerModal";
 import { useRouter } from "vue-router";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
+import { useUserStore } from "@/store/modules/user";
 import { saleRules } from "@/utils/constants";
 import { isDecimal, isNumber, isLetter } from "@/utils";
 import {
@@ -283,7 +284,7 @@ export default defineComponent({
     const router = useRouter();
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
-
+   const userStore = useUserStore();
     const message = useMessage();
     const loading = ref(false);
     const dialog = useDialog();
@@ -474,7 +475,7 @@ export default defineComponent({
 
             [
               {
-                content: `${dataForPrint.serie_documento}-${dataForPrint.codigo_tipo_operacion}`,
+                  content: `${dataForPrint.serie_documento}-${dataForPrint.numero_documento}`,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -578,7 +579,7 @@ export default defineComponent({
                 },
               },
             ],
-            [
+         !!businessStore.business.website && [
               {
                 content: `Puede verificarla usando su clave sol o ingresando a la pagina web: ${businessStore.business.website}`,
                 styles: {
@@ -618,7 +619,7 @@ export default defineComponent({
             {
               tittle: "CONSULTOR/VENDEDOR",
               twoPoints: ":",
-              cont: businessStore.business.legal_representative,
+              cont: userStore.user.names,
             },
             {
               tittle: "TIPO DE PAGO",

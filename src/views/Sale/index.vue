@@ -430,7 +430,7 @@ export default defineComponent({
 
                 [
                   {
-                    content: `${dataForPrint.serie_documento}-${dataForPrint.codigo_tipo_operacion}`,
+                      content: `${dataForPrint.serie_documento}-${dataForPrint.numero_documento}`,
                     styles: {
                       fontStyle: "bold",
                       halign: "center",
@@ -535,16 +535,16 @@ export default defineComponent({
                     },
                   },
                 ],
-                !!businessStore.business.website && [
-                  {
-                    content: `Puede verificarla usando su clave sol o ingresando a la pagina web: ${businessStore.business.website}`,
-                    styles: {
-                      fontStyle: "bold",
-                      halign: "center",
-                      fontSize: 9,
-                    },
-                  },
-                ],
+       !!businessStore.business.website && [
+              {
+                content: `Puede verificarla usando su clave sol o ingresando a la pagina web: ${businessStore.business.website}`,
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 9,
+                },
+              },
+            ],
                 !!businessStore.business.email && [
                   {
                     content: businessStore.business.email,
@@ -575,7 +575,7 @@ export default defineComponent({
                 {
                   tittle: "CONSULTOR/VENDEDOR",
                   twoPoints: ":",
-                  cont: businessStore.business.legal_representative,
+                  cont: userStore.user.names,
                 },
                 {
                   tittle: "TIPO DE PAGO",

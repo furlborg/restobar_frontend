@@ -85,8 +85,9 @@ export const generatePrintCopy = (structure, height) => {
         let searchPrinter = printers.find((val) => val === "POS-80-Series");
 
         if (!!searchPrinter) {
+          let dataPdf = doc.output("datauristring").split(",")[1];
           let a = !!height && height > 100 ? Math.round(height) : 100
-          console.log(a);
+          console.log("ORDER");
           let config = qz.configs.create(searchPrinter, {
             scaleContent: true,
             size: {width: 70, height: !!height && height > 100 ? Math.round(height) : 100 },
