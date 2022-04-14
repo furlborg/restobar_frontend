@@ -5,7 +5,7 @@ import { useBusinessStore } from "@/store/modules/business";
 
 import qr from "qrcode";
 
-export const generatePrint = (objSunat, structure) => {
+export const generatePrint = (objSunat, structure, addImages) => {
   const doc = new jspdf({
     orientation: "p",
     unit: "mm",
@@ -23,11 +23,11 @@ export const generatePrint = (objSunat, structure) => {
     var finalY = doc.lastAutoTable.finalY || 10;
 
     const businnessStore = useBusinessStore();
-    if (index === 0) {
+    if (index === 0 && addImages) {
       doc.addImage(businnessStore.business.logo_url, "png", 8, finalY, 65, 25);
       finalY += 30;
     }
-    if (index === 5) {
+    if (index === 5 && addImages) {
       doc.addImage(code_qr, "png", 25, finalY, 30, 30);
       finalY += 30;
     }

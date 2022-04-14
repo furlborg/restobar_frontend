@@ -176,6 +176,7 @@ import {
   onBeforeRouteLeave,
   onBeforeRouteUpdate,
 } from "vue-router";
+import { useUserStore } from "@/store/modules/user";
 import { NSpace, useDialog, useMessage } from "naive-ui";
 import { useTableStore } from "@/store/modules/table";
 import { useOrderStore } from "@/store/modules/order";
@@ -197,6 +198,7 @@ export default defineComponent({
     OrderIndications,
   },
   setup() {
+    const userStore = useUserStore();
     const route = useRoute();
     const router = useRouter();
     const message = useMessage();
@@ -332,13 +334,14 @@ export default defineComponent({
           ],
         },
       ];
+      let thisIndicatesIfEverythingIsToGO = [];
 
-      val.order_details.map((val) => {
+      val.order_details.map((valOrder) => {
         let ind = "";
         let PL = [];
 
-        val.indication.map((v, i) => {
-          if (!!v.takeAway && v.takeAway && !!v.description === false) {
+        valOrder.indication.map((v, i) => {
+          if (!!v.takeAway && v.takeAway) {
             PL.push(v.takeAway);
           }
 
@@ -363,29 +366,29 @@ export default defineComponent({
               !!v.takeAway && v.takeAway ? " [¡PARA LLEVAR!]\n" : "\n"
             }`;
           }
+
+          if (!!v.description === false && !!v.takeAway && v.takeAway) {
+            ind = `${
+              PL.length !== valOrder.quantity ? PL.length : ""
+            } para llevar`;
+          }
         });
 
-        if (ind && PL.length > 0) {
-          lengthData += 7 * 2 + lC;
-          ind = `${ind} \n y ${PL.length} para llevar`;
-        }
-        if (!!ind === false && PL.length > 0) {
-          lengthData += 7 * 2 + lC;
-          ind = `${PL.length} para llevar`;
-        }
+        let prodDetail = !!valOrder.product_description
+          ? valOrder.product_description.split(",")
+          : valOrder.product_description;
 
-        let prodDetail = !!val.product_description
-          ? val.product_description.split(",")
-          : val.product_description;
-
-        let newNameProd = val.product_name;
+        let newNameProd = valOrder.product_name;
 
         let heightForNmae = 10;
 
         let verifyNameCombo = "";
+
         if (
-          (val.product_category.toLowerCase().includes("combo") ||
-            val.product_category.toLowerCase().includes("combos")) &&
+          (valOrder.product_category.toLowerCase().includes("combo") ||
+            valOrder.product_category.toLowerCase().includes("menu") ||
+            valOrder.product_category.toLowerCase().includes("menus") ||
+            valOrder.product_category.toLowerCase().includes("combos")) &&
           !!prodDetail &&
           prodDetail.length > 0
         ) {
@@ -396,13 +399,20 @@ export default defineComponent({
         }
 
         if (
-          val.product_category.toLowerCase().includes("menu") ||
-          val.product_category.toLowerCase().includes("menus")
+          valOrder.product_category.toLowerCase().includes("menu") ||
+          valOrder.product_category.toLowerCase().includes("menus")
         ) {
           newNameProd = `[MENU] ${newNameProd}`;
         }
 
         lengthData += 7 * heightForNmae;
+
+        if (
+          valOrder.indication.length > 0 &&
+          valOrder.indication.length === PL.length
+        ) {
+          thisIndicatesIfEverythingIsToGO.push(true);
+        }
 
         structure.push(
           {
@@ -410,10 +420,10 @@ export default defineComponent({
             dat: [
               [
                 {
-                  content: `*${newNameProd}`,
+                  content: `• ${newNameProd}`,
                   styles: {
                     fontStyle: "bold",
-                    fontSize: 10,
+                    fontSize: 14,
                   },
                 },
               ],
@@ -425,7 +435,20 @@ export default defineComponent({
                 {
                   content: verifyNameCombo,
                   styles: {
-                    fontSize: 9,
+                    fontSize: 12,
+                  },
+                },
+              ],
+            ],
+          },
+          ind && {
+            dat: [
+              [
+                {
+                  content: ind,
+                  styles: {
+                    fontStyle: "bold",
+                    fontSize: 12,
                   },
                 },
               ],
@@ -435,32 +458,37 @@ export default defineComponent({
             dat: [
               [
                 {
-                  content: `CANTIDAD: ${val.quantity}`,
+                  content: `Cant.: ${valOrder.quantity}`,
                   styles: {
                     fontStyle: "bold",
-                    fontSize: 10,
+                    fontSize: 12,
                   },
                 },
               ],
             ],
           }
         );
-        if (ind) {
-          structure.push({
-            dat: [
-              [
-                {
-                  content: ind,
-                  styles: {
-                    fontStyle: "bold",
-                    fontSize: 8,
-                  },
-                },
-              ],
-            ],
-          });
-        }
       });
+
+      console.log(val.order_details.length);
+      console.log(thisIndicatesIfEverythingIsToGO.length);
+
+      if (val.order_details.length === thisIndicatesIfEverythingIsToGO.length) {
+        structure.splice(1, 0, {
+          dat: [
+            [
+              {
+                content: "PARA LLEVAR",
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 14,
+                },
+              },
+            ],
+          ],
+        });
+      }
 
       structure.push({
         line: true,
@@ -472,6 +500,23 @@ export default defineComponent({
           },
         ],
       });
+
+      if (userStore.user.names) {
+        structure.push({
+          dat: [
+            [
+              {
+                content: `MOZO: ${userStore.user.names}`,
+                styles: {
+                  fontStyle: "bold",
+                  halign: "right",
+                  fontSize: 16,
+                },
+              },
+            ],
+          ],
+        });
+      }
 
       generatePrintCopy(structure, lengthData);
 

@@ -279,6 +279,7 @@ export default defineComponent({
     CustomerModal,
   },
   setup() {
+    const dateNow = ref(null);
     const router = useRouter();
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
@@ -365,31 +366,46 @@ export default defineComponent({
       }
     };
 
-    const businnessStore = useBusinessStore();
+    const businessStore = useBusinessStore();
 
     const printSale = (val) => {
       let dataForPrint = JSON.parse(val.json_sale);
 
       let typeDoc = dataForPrint.serie_documento.split("");
 
-      let data = `${businnessStore.business.ruc}|${dataForPrint.serie_documento}|${dataForPrint.totales.total_igv}|${dataForPrint.hora_de_emision}|${dataForPrint.datos_del_cliente_o_receptor.numero_documento}|${dataForPrint.numero_documento}|${dataForPrint.totales.total_venta}|${dataForPrint.datos_del_cliente_o_receptor.codigo_tipo_documento_identidad}|`;
+      let data = `${businessStore.business.ruc}|${dataForPrint.serie_documento}|${dataForPrint.totales.total_igv}|${dataForPrint.hora_de_emision}|${dataForPrint.datos_del_cliente_o_receptor.numero_documento}|${dataForPrint.numero_documento}|${dataForPrint.totales.total_venta}|${dataForPrint.datos_del_cliente_o_receptor.codigo_tipo_documento_identidad}|`;
+
+      let NoNoteSale = false;
 
       if (typeDoc[0] === "F") {
         typeDoc = "FACTURA ELECTRONICA";
-      } else {
+        NoNoteSale = true;
+      }
+
+      if (typeDoc[0] === "B") {
         typeDoc = "BOLETA ELECTRONICA";
+        NoNoteSale = true;
+      }
+
+      if (typeDoc[0] === "N") {
+        typeDoc = "NOTA DE VENTA";
+        NoNoteSale = false;
       }
 
       let datTotals = [];
 
-      let newTotal = {
-        "OP.GRAVADA": dataForPrint.totales.total_operaciones_gravadas,
-        "OP.EXONERADA": dataForPrint.totales.total_operaciones_exoneradas,
-        "OP.GRATUITAS": dataForPrint.totales.total_operaciones_gratuitas,
-        "IGV(18%)": dataForPrint.totales.total_igv,
-        DESCUENTOS: val.discount,
-        "IMPORTE TOTAL": dataForPrint.totales.total_venta,
-      };
+      let newTotal = NoNoteSale
+        ? {
+            "OP.GRAVADA": dataForPrint.totales.total_operaciones_gravadas,
+            "OP.EXONERADA": dataForPrint.totales.total_operaciones_exoneradas,
+            "OP.GRATUITAS": dataForPrint.totales.total_operaciones_gratuitas,
+            "IGV(18%)": dataForPrint.totales.total_igv,
+            DESCUENTOS: val.discount,
+            "IMPORTE TOTAL": dataForPrint.totales.total_venta,
+          }
+        : {
+            "IMPORTE TOTAL S/.": dataForPrint.totales.total_venta.toFixed("2"),
+          };
 
       for (let i in newTotal) {
         datTotals.push({
@@ -404,7 +420,7 @@ export default defineComponent({
           dat: [
             [
               {
-                content: businnessStore.business.commercial_name,
+                content: businessStore.business.commercial_name,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -414,11 +430,31 @@ export default defineComponent({
             ],
             [
               {
-                content: businnessStore.business.fiscal_address,
+                content: businessStore.business.ruc,
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 11,
+                },
+              },
+            ],
+            [
+              {
+                content: businessStore.business.fiscal_address,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
                   fontSize: 9,
+                },
+              },
+            ],
+            [
+              {
+                content: businessStore.business.phone,
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 8,
                 },
               },
             ],
@@ -432,16 +468,7 @@ export default defineComponent({
                 },
               },
             ],
-            [
-              {
-                content: businnessStore.business.ruc,
-                styles: {
-                  fontStyle: "bold",
-                  halign: "center",
-                  fontSize: 11,
-                },
-              },
-            ],
+
             [
               {
                 content: `${dataForPrint.serie_documento}-${dataForPrint.codigo_tipo_operacion}`,
@@ -479,7 +506,7 @@ export default defineComponent({
             {
               tittle: "F.EMICION",
               twoPoints: ":",
-              cont: dataForPrint.fecha_de_emision,
+              cont: dateNow.value,
             },
           ],
           line: true,
@@ -525,7 +552,7 @@ export default defineComponent({
                 {
                   amount: 1,
                   description: "POR CONSUMO DE ALIMENTOS",
-                  total: dataForPrint.totales.total_venta,
+                  total: dataForPrint.totales.total_venta.toFixed("2"),
                 },
               ],
           line: true,
@@ -535,7 +562,8 @@ export default defineComponent({
           line: true,
         },
 
-        {
+        NoNoteSale && {
+          line: true,
           dat: [
             [
               {
@@ -549,7 +577,7 @@ export default defineComponent({
             ],
             [
               {
-                content: `Puede verificarla usando su clave sol o ingresando a la pagina web: ${businnessStore.business.website}`,
+                content: `Puede verificarla usando su clave sol o ingresando a la pagina web: ${businessStore.business.website}`,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -559,7 +587,7 @@ export default defineComponent({
             ],
             [
               {
-                content: businnessStore.business.email,
+                content: businessStore.business.email,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -582,11 +610,12 @@ export default defineComponent({
         },
 
         {
+          line: true,
           dat: [
             {
               tittle: "CONSULTOR/VENDEDOR",
               twoPoints: ":",
-              cont: businnessStore.business.legal_representative,
+              cont: businessStore.business.legal_representative,
             },
             {
               tittle: "TIPO DE PAGO",
@@ -597,7 +626,7 @@ export default defineComponent({
         },
       ];
 
-      generatePrint(data, structure);
+      generatePrint(data, structure, NoNoteSale);
 
       message.success("Imprimir");
     };
@@ -729,6 +758,15 @@ export default defineComponent({
     onMounted(async () => {
       document.title = "Venta | App";
       await obtainSaleNumber();
+
+      const fetch = new Date();
+      const dd = fetch.getDate();
+      const mm = fetch.getMonth();
+      const yy = fetch.getFullYear();
+      const hh = fetch.getHours();
+      const msms = fetch.getMinutes();
+
+      dateNow.value = `${dd}/${mm}/${yy} ${hh}:${msms}`;
     });
 
     const onCloseModal = () => {
