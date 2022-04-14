@@ -68,11 +68,13 @@ import { useMessage } from "naive-ui";
 import { useRouter } from "vue-router";
 import { login } from "@/api/modules/users";
 import { useUserStore } from "@/store/modules/user";
+import { useGenericsStore } from "@/store/modules/generics";
 
 export default defineComponent({
   name: "login",
   setup() {
     const userStore = useUserStore();
+    const genericsStore = useGenericsStore();
     const formRef = ref();
     const message = useMessage();
     const loading = ref(false);
@@ -82,8 +84,8 @@ export default defineComponent({
     userStore.initializeStore();
 
     const formInline = reactive({
-      username: "ADMIN",
-      password: "admin",
+      username: "",
+      password: "",
     });
 
     const rules = {
@@ -112,7 +114,9 @@ export default defineComponent({
               router.push({
                 name:
                   userStore.user.profile_des === "MOZO"
-                    ? "WaiterMode"
+                    ? genericsStore.device === "desktop"
+                      ? "TableHome"
+                      : "WaiterMode"
                     : "Dashboard",
               });
             })

@@ -1,10 +1,18 @@
 <template>
   <n-card title="Mesas" :bordered="false" :segmented="{ content: 'hard' }">
     <template #header-extra>
-      <n-button type="info" text @click="refreshData">
-        <v-icon name="hi-solid-refresh" />
-        Recargar
-      </n-button>
+      <n-space align="end">
+        <n-button type="info" text @click="refreshData">
+          <v-icon name="hi-solid-refresh" />
+          Recargar
+        </n-button>
+        <n-button
+          type="info"
+          secondary
+          @click="$router.push({ name: 'TakeOrder' })"
+          >Realizar pedido</n-button
+        >
+      </n-space>
       <!-- <n-button
         v-if="!groupMode"
         type="info"
@@ -74,15 +82,7 @@
                 class="position-absolute top-0 start-0 m-2"
               />
               <div
-                class="
-                  black-outline
-                  text-center
-                  position-absolute
-                  top-50
-                  start-50
-                  translate-middle
-                  fs-4
-                "
+                class="black-outline text-center position-absolute top-50 start-50 translate-middle fs-4"
               >
                 {{ "MESA " + String(table.id) }}
               </div>
@@ -130,6 +130,7 @@
               >
                 <n-drawer-content @click.stop>
                   <n-button
+                    v-if="userStore.user.profile_des !== 'MOZO'"
                     class="mb-1"
                     type="success"
                     size="small"
@@ -164,6 +165,18 @@
                     Unir mesa
                   </n-button> -->
                   <n-button
+                    class="mb-1"
+                    type="info"
+                    size="small"
+                    block
+                    secondary
+                    :disabled="table.status === '1'"
+                    @click="performRetrieveTableOrder(table.id)"
+                  >
+                    Pre-cuenta
+                  </n-button>
+                  <n-button
+                    v-if="userStore.user.profile_des !== 'MOZO'"
                     class="mb-1"
                     type="error"
                     size="small"
@@ -210,8 +223,12 @@
 import { defineComponent, ref, onMounted } from "vue";
 import { useMessage, useDialog } from "naive-ui";
 import { useTableStore } from "@/store/modules/table";
-import { cancelTableOrder } from "@/api/modules/tables";
+import { useUserStore } from "@/store/modules/user";
+import { cancelTableOrder, retrieveTableOrder } from "@/api/modules/tables";
 import { cloneDeep } from "@/utils";
+import { useBusinessStore } from "@/store/modules/business";
+
+import { PrintsCopyCopyCopy } from "./PrintsCopyCopyCopy/PrintsCopyCopyCopy";
 
 export default defineComponent({
   name: "Tables",
@@ -225,12 +242,164 @@ export default defineComponent({
     const currentTableGrouping = ref(null);
     const currentGroup = ref([]);
     const tableStore = useTableStore();
+    const userStore = useUserStore();
+    const businessStore = useBusinessStore();
+
+    const dateNow = ref(null);
 
     const loadTablesData = async () => {
       isLoading.value = true;
       await tableStore.refreshData().then(() => {
         isLoading.value = false;
       });
+    };
+
+    const performRetrieveTableOrder = async (table) => {
+      await retrieveTableOrder(table)
+        .then((response) => {
+          if (response.status === 200) {
+            let val = response.data;
+
+            let lengthData = 0;
+
+            let totalProdSum = 0;
+
+            let structure = [
+              {
+                dat: [
+                  [
+                    {
+                      content: businessStore.business.commercial_name,
+                      styles: {
+                        fontStyle: "bold",
+                        halign: "center",
+                        fontSize: 11,
+                      },
+                    },
+                  ],
+                  [
+                    {
+                      content: businessStore.business.fiscal_address,
+                      styles: {
+                        fontStyle: "bold",
+                        halign: "center",
+                        fontSize: 9,
+                      },
+                    },
+                  ],
+
+                  [
+                    {
+                      content: businessStore.business.ruc,
+                      styles: {
+                        fontStyle: "bold",
+                        halign: "center",
+                        fontSize: 11,
+                      },
+                    },
+                  ],
+                  [
+                    {
+                      content: "PRE CUENTA",
+                      styles: {
+                        fontStyle: "bold",
+                        halign: "center",
+                        fontSize: 11,
+                      },
+                    },
+                  ],
+                  [
+                    {
+                      content: `N° ${val.id}`,
+                      styles: {
+                        fontStyle: "bold",
+                        halign: "center",
+                        fontSize: 11,
+                      },
+                    },
+                  ],
+                ],
+              },
+              {
+                col: [
+                  {
+                    header: "CANT.",
+                    dataKey: "amount",
+                  },
+
+                  {
+                    header: "DESCRIPCIÓN",
+                    dataKey: "description",
+                  },
+                  {
+                    header: "P.U",
+                    dataKey: "price",
+                  },
+
+                  {
+                    header: "TOTAL",
+                    dataKey: "total",
+                  },
+                ],
+                dat: val.order_details.map((val) => {
+                  lengthData += 10 * 6.5;
+                  totalProdSum += val.quantity * parseFloat(val.price);
+
+                  return {
+                    amount: val.quantity,
+                    description: val.product_name,
+                    price: parseFloat(val.price).toFixed("2"),
+                    total: (val.quantity * parseFloat(val.price)).toFixed("2"),
+                  };
+                }),
+                line: true,
+              },
+            ];
+            lengthData += 10 * 6.5;
+            structure.push(
+              {
+                line: true,
+                dat: [
+                  [
+                    {
+                      content: `TOTAL: ${totalProdSum.toFixed("2")}`,
+                      styles: {
+                        fontStyle: "bold",
+                        halign: "right",
+                        fontSize: 11,
+                      },
+                    },
+                  ],
+                ],
+              },
+              {
+                dat: [
+                  {
+                    tittle: "F.EMICION",
+                    twoPoints: ":",
+                    cont: dateNow.value,
+                  },
+                  {
+                    tittle: "MOZO",
+                    twoPoints: ":",
+                    cont: val.username,
+                  },
+                  {
+                    tittle: "MESA",
+                    twoPoints: ":",
+                    cont: val.table,
+                  },
+                ],
+                line: true,
+              }
+            );
+
+            PrintsCopyCopyCopy(structure, lengthData);
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+        });
     };
 
     const nullifyTableOrder = (id) => {
@@ -285,12 +454,22 @@ export default defineComponent({
 
     onMounted(() => {
       loadTablesData();
+
+      const fetch = new Date();
+      const dd = fetch.getDate();
+      const mm = fetch.getMonth();
+      const yy = fetch.getFullYear();
+      const hh = fetch.getHours();
+      const msms = fetch.getMinutes();
+
+      dateNow.value = `${dd}/${mm}/${yy} ${hh}:${msms}`;
     });
 
     return {
       isLoading,
       groupMode,
       tableStore,
+      userStore,
       openOptions,
       currentGroup,
       saveGroup,
@@ -300,6 +479,7 @@ export default defineComponent({
       nullifyTableOrder,
       tableGroups,
       currentTableGrouping,
+      performRetrieveTableOrder,
     };
   },
 });

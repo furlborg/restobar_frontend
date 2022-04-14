@@ -349,14 +349,17 @@ export default defineComponent({
 
           let newTotal = NoNoteSale
             ? {
-                "OP.GRAVADA": dataForPrint.totales.total_operaciones_gravadas,
+                "OP.GRAVADA":
+                  dataForPrint.totales.total_operaciones_gravadas.toFixed("2"),
                 "OP.EXONERADA":
-                  dataForPrint.totales.total_operaciones_exoneradas,
+                  dataForPrint.totales.total_operaciones_exoneradas.toFixed(
+                    "2"
+                  ),
                 "OP.GRATUITAS":
-                  dataForPrint.totales.total_operaciones_gratuitas,
-                "IGV(18%)": dataForPrint.totales.total_igv,
-                DESCUENTOS: val.discount,
-                "IMPORTE TOTAL": dataForPrint.totales.total_venta,
+                  dataForPrint.totales.total_operaciones_gratuitas.toFixed("2"),
+                "IGV(18%)": dataForPrint.totales.total_igv.toFixed("2"),
+                DESCUENTOS: !!val.discount ? val.discount.toFixed("2") : "0.00",
+                "IMPORTE TOTAL": dataForPrint.totales.total_venta.toFixed("2"),
               }
             : {
                 "IMPORTE TOTAL S/.":

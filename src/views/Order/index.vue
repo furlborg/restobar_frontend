@@ -1,14 +1,14 @@
 <template>
   <div id="Order">
     <n-card title="Pedidos" :segmented="{ content: 'hard' }">
-      <template #header-extra>
+      <!-- <template #header-extra>
         <n-button
           type="info"
           secondary
           @click="$router.push({ name: 'TakeOrder' })"
           >Realizar pedido</n-button
         >
-      </template>
+      </template> -->
       <n-space justify="space-between">
         <n-button
           type="info"

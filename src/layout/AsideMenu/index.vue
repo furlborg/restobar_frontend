@@ -3,7 +3,7 @@
     :collapsed-width="64"
     :collapsed-icon-size="22"
     :options="menuOptions"
-    :collapsed="collapsed"
+    :collapsed="userStore.user.profile_des !== 'MOZO' ? collapsed : true"
     :value="openKey"
   />
 </template>
@@ -190,6 +190,7 @@ export default defineComponent({
     });
 
     return {
+      userStore,
       menuOptions,
       openKey,
     };

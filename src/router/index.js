@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useTillStore } from "@/store/modules/till";
 import { useUserStore } from '@/store/modules/user';
+import { useGenericsStore } from "@/store/modules/generics";
 import { retrieveCurrentTill } from '@/api/modules/tills'
 const useCookie = require('vue-cookies')
 
@@ -28,28 +29,6 @@ export const routes = [
         path: '/orders',
         name: 'Orders',
         component: () => import(/* webpackChunkName: "customer" */ '@/views/Order'),
-        beforeEnter: async (to, from, next) => {
-          const tillStore = useTillStore()
-          await retrieveCurrentTill()
-            .then(response => {
-              if (response.status === 200) {
-                tillStore.currentTillID = response.data.id
-                tillStore.currentTillOrders = response.data.orders_count
-              }
-            })
-            .catch(error => {
-              if (error.response.status === 404) {
-                tillStore.currentTillID = null
-                tillStore.currentTillOrders = 0
-              }
-            })
-          tillStore.currentTillID !== null ? next() : next({ name: 'TillList' })
-        },
-      },
-      {
-        name: "TakeOrder",
-        path: '/take-order',
-        component: () => import(/* webpackChunkName: "table-home" */ '@/views/Order/components/TakeOrder'),
         beforeEnter: async (to, from, next) => {
           const tillStore = useTillStore()
           await retrieveCurrentTill()
@@ -105,6 +84,9 @@ export const routes = [
         name: 'Table',
         redirect: { name: "TableHome" },
         component: () => import(/* webpackChunkName: "table" */ '@/views/Table'),
+        meta: {
+          onlyWaiter: true,
+        },
         beforeEnter: async (to, from, next) => {
           const tillStore = useTillStore()
           await retrieveCurrentTill()
@@ -127,6 +109,11 @@ export const routes = [
             name: "TableHome",
             path: '',
             component: () => import(/* webpackChunkName: "table-home" */ '@/views/Table/components/TableHome'),
+          },
+          {
+            name: "TakeOrder",
+            path: '/take-order',
+            component: () => import(/* webpackChunkName: "table-home" */ '@/views/Order/components/TakeOrder'),
           },
           {
             name: "TableOrder",
@@ -292,11 +279,13 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
+  const genericsStore = useGenericsStore()
+  genericsStore.updateDevice()
   await userStore.checkAuthentication()
   if (to.matched.some((record) => record.meta.requiresAuth)) {
     if (userStore.isAuthenticated) {
       if (!to.matched.some((record) => record.meta.onlyWaiter) && userStore.user.profile_des === 'MOZO') {
-        next({ name: 'WaiterMode' })
+        next({ name: genericsStore.device === 'desktop' ? 'TableHome' : 'WaiterMode' })
         return
       } else {
         next()

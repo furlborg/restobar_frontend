@@ -6,7 +6,7 @@
           <n-space class="mb-2" align="center" justify="space-between">
             <div class="d-flex align-items-center">
               <n-text class="fs-4">{{
-                saleStore.getSerieDescription(sale.serie) + sale.number
+                `${saleStore.getSerieDescription(sale.serie)}-${sale.number}`
               }}</n-text>
               <n-dropdown
                 trigger="click"
@@ -396,12 +396,15 @@ export default defineComponent({
 
       let newTotal = NoNoteSale
         ? {
-            "OP.GRAVADA": dataForPrint.totales.total_operaciones_gravadas,
-            "OP.EXONERADA": dataForPrint.totales.total_operaciones_exoneradas,
-            "OP.GRATUITAS": dataForPrint.totales.total_operaciones_gratuitas,
-            "IGV(18%)": dataForPrint.totales.total_igv,
-            DESCUENTOS: val.discount,
-            "IMPORTE TOTAL": dataForPrint.totales.total_venta,
+            "OP.GRAVADA":
+              dataForPrint.totales.total_operaciones_gravadas.toFixed("2"),
+            "OP.EXONERADA":
+              dataForPrint.totales.total_operaciones_exoneradas.toFixed("2"),
+            "OP.GRATUITAS":
+              dataForPrint.totales.total_operaciones_gratuitas.toFixed("2"),
+            "IGV(18%)": dataForPrint.totales.total_igv.toFixed("2"),
+            DESCUENTOS: !!val.discount ? val.discount.toFixed("2") : "0.00",
+            "IMPORTE TOTAL": dataForPrint.totales.total_venta.toFixed("2"),
           }
         : {
             "IMPORTE TOTAL S/.": dataForPrint.totales.total_venta.toFixed("2"),

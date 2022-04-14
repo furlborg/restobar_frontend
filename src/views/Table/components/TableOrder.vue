@@ -15,34 +15,36 @@
         <n-gi span="2">
           <n-card class="h-100" title="Pedidos" :bordered="false" embedded>
             <template #header-extra>
-              <n-button
-                v-if="!($route.name === 'TablePayment')"
-                type="success"
-                :disabled="!orderStore.orderId"
-                text
-                @click="
-                  $router.push({
-                    name: 'TablePayment',
-                    params: { table: $route.params.table },
-                  })
-                "
-              >
-                <v-icon class="me-1" name="fa-coins" />
-                <span class="fs-6">Cobrar</span>
-              </n-button>
-              <router-link
-                v-else
-                class="text-decoration-none"
-                :to="{
-                  name: 'ProductCategories',
-                  params: { table: $route.params.table },
-                }"
-              >
-                <n-button type="info" text>
-                  <v-icon class="me-1" name="md-add-round" />
-                  <span class="fs-6">Añadir pedido</span>
+              <div v-if="userStore.user.profile_des !== 'MOZO'">
+                <n-button
+                  v-if="!($route.name === 'TablePayment')"
+                  type="success"
+                  :disabled="!orderStore.orderId"
+                  text
+                  @click="
+                    $router.push({
+                      name: 'TablePayment',
+                      params: { table: $route.params.table },
+                    })
+                  "
+                >
+                  <v-icon class="me-1" name="fa-coins" />
+                  <span class="fs-6">Cobrar</span>
                 </n-button>
-              </router-link>
+                <router-link
+                  v-else
+                  class="text-decoration-none"
+                  :to="{
+                    name: 'ProductCategories',
+                    params: { table: $route.params.table },
+                  }"
+                >
+                  <n-button type="info" text>
+                    <v-icon class="me-1" name="md-add-round" />
+                    <span class="fs-6">Añadir pedido</span>
+                  </n-button>
+                </router-link>
+              </div>
             </template>
             <n-form v-if="!($route.name === 'TablePayment')">
               <n-form-item label="Buscar producto">
@@ -55,6 +57,8 @@
                     :options="productOptions"
                     :get-show="showOptions"
                     :loading="searching"
+                    placeholder=""
+                    :render-label="renderLabel"
                     @select="selectProduct"
                   />
                 </n-input-group>
@@ -169,7 +173,7 @@
 
 <script>
 import OrderIndications from "./OrderIndications";
-import { defineComponent, ref, computed, onMounted, watchEffect } from "vue";
+import { defineComponent, ref, computed, onMounted, watchEffect, h } from "vue";
 import {
   useRoute,
   useRouter,
@@ -179,6 +183,7 @@ import {
 import { useUserStore } from "@/store/modules/user";
 import { NSpace, useDialog, useMessage } from "naive-ui";
 import { useTableStore } from "@/store/modules/table";
+import { useProductStore } from "@/store/modules/product";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import {
@@ -204,6 +209,7 @@ export default defineComponent({
     const message = useMessage();
     const dialog = useDialog();
     const table = route.params.table;
+    const productStore = useProductStore();
     const tableStore = useTableStore();
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
@@ -470,9 +476,6 @@ export default defineComponent({
         );
       });
 
-      console.log(val.order_details.length);
-      console.log(thisIndicatesIfEverythingIsToGO.length);
-
       if (val.order_details.length === thisIndicatesIfEverythingIsToGO.length) {
         structure.splice(1, 0, {
           dat: [
@@ -612,13 +615,14 @@ export default defineComponent({
         value: product.id,
         label: product.name,
         disabled: product.is_disabled,
+        category: productStore.getCategorieDescription(product.category),
       }));
     });
 
-    const showOptions = async (value) => {
+    const showOptions = (value) => {
       if (value.length >= 3) {
         searching.value = true;
-        await searchProductByName(value)
+        searchProductByName(value)
           .then((response) => {
             if (response.status === 200) {
               products.value = response.data;
@@ -642,6 +646,13 @@ export default defineComponent({
       productSearch.value = "";
     };
 
+    const renderLabel = (option) => {
+      return h(NThing, {
+        title: option.label,
+        description: option.category,
+      });
+    };
+
     const handleBack = () => {
       router.push({ name: "TableHome" });
     };
@@ -652,8 +663,10 @@ export default defineComponent({
       table,
       handleBack,
       listType,
+      userStore,
       orderStore,
       saleStore,
+      renderLabel,
       performCreateTableOrder,
       performUpdateTableOrder,
       deleteOrderDetail,

@@ -1,6 +1,6 @@
 <template>
   <div id="TakeOrder">
-    <n-page-header class="mb-2" @back="$router.push({ name: 'Orders' })">
+    <n-page-header class="mb-2" @back="$router.push({ name: 'TableHome' })">
       <template #title>
         <n-space justify="space-between">
           <n-text class="fs-2">Realizar Pedido</n-text>
@@ -16,7 +16,9 @@
                 <n-space class="mb-2" align="center" justify="space-between">
                   <div class="d-flex align-items-center">
                     <n-text class="fs-4">{{
-                      saleStore.getSerieDescription(sale.serie) + sale.number
+                      `${saleStore.getSerieDescription(sale.serie)}-${
+                        sale.number
+                      }`
                     }}</n-text>
                     <n-dropdown
                       trigger="click"
@@ -320,11 +322,11 @@
                 secondary
                 block
                 @click.prevent="performTakeAway"
-                ><v-icon
-                  class="me-2"
-                  name="fa-coins"
-                  scale="2"
-                />Cobrar</n-button
+                ><v-icon class="me-2" name="fa-coins" scale="2" />{{
+                  userStore.user.profile_des !== "MOZO"
+                    ? "Cobrar"
+                    : "Realizar pedido"
+                }}</n-button
               >
             </n-card>
           </n-spin>
@@ -348,6 +350,7 @@
                     :options="productOptions"
                     :get-show="showOptions"
                     :loading="searching"
+                    :render-label="renderLabel"
                     placeholder="Buscar producto"
                     @select="selectProduct"
                   />
@@ -442,6 +445,29 @@
           </n-card>
         </n-gi>
       </n-grid>
+      <n-modal
+        class="w-25"
+        preset="card"
+        v-model:show="showConfirm"
+        title="Registrar pedido"
+        :mask-closable="false"
+        closable
+      >
+        <n-form-item label="Ingrese código de verificación">
+          <n-input v-model:value="userConfirm" placeholder="" />
+        </n-form-item>
+        <template #action>
+          <n-space justify="end">
+            <n-button
+              type="success"
+              :disabled="!userConfirm"
+              secondary
+              @click.prevent="performCreateOrder"
+              >Confirmar</n-button
+            >
+          </n-space>
+        </template>
+      </n-modal>
       <OrderIndications
         v-model:show="showModal"
         preset="card"
@@ -456,18 +482,27 @@
 <script>
 import CustomerModal from "@/views/Customer/components/CustomerModal";
 import OrderIndications from "./OrderIndications";
-import { defineComponent, ref, computed, toRefs, watch, onMounted } from "vue";
-import { useDialog, useMessage } from "naive-ui";
+import {
+  defineComponent,
+  ref,
+  computed,
+  toRefs,
+  watch,
+  onMounted,
+  h,
+} from "vue";
+import { NThing, NTag, NSpace, NInput, useDialog, useMessage } from "naive-ui";
 import { useRouter } from "vue-router";
+import { useProductStore } from "@/store/modules/product";
 import { useOrderStore } from "@/store/modules/order";
-import { useSaleStore } from "@/store/modules/sale";
 import { useUserStore } from "@/store/modules/user";
+import { useSaleStore } from "@/store/modules/sale";
 import { useBusinessStore } from "@/store/modules/business";
 import { searchProductByName } from "@/api/modules/products";
 import { takeAwayOrder } from "@/api/modules/orders";
 import { createSale, getSaleNumber } from "@/api/modules/sales";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
-import { isDecimal, isNumber, isLetter } from "@/utils";
+import { isDecimal, isNumber, isLetter, lighten } from "@/utils";
 import { saleRules } from "@/utils/constants";
 import {
   searchCustomerByName,
@@ -495,6 +530,7 @@ export default defineComponent({
     const router = useRouter();
     const saleStore = useSaleStore();
     const orderStore = useOrderStore();
+    const productStore = useProductStore();
     const businessStore = useBusinessStore();
     orderStore.orders = [];
     saleStore.order_initial = [];
@@ -618,13 +654,14 @@ export default defineComponent({
         value: product.id,
         label: product.name,
         disabled: product.is_disabled,
+        category: productStore.getCategorieDescription(product.category),
       }));
     });
 
-    const showOptions = async (value) => {
+    const showOptions = (value) => {
       if (value.length >= 3) {
         searching.value = true;
-        await searchProductByName(value)
+        searchProductByName(value)
           .then((response) => {
             if (response.status === 200) {
               products.value = response.data;
@@ -640,6 +677,76 @@ export default defineComponent({
         return true;
       }
       return false;
+    };
+
+    const renderLabel = (option) => {
+      const t = option.label.split("-");
+      let color = "#3B689F";
+      let text = "MESA";
+      if (t.length > 1) {
+        if (t[1].includes("LL")) {
+          color = "#926ED7";
+          text = "PARA LLEVAR";
+        } else if (t[1].includes("D")) {
+          color = "#995C4E";
+          text = "DELIVERY";
+        }
+        /* switch (t[1]) {
+          case " LL":
+            color = "#926ED7";
+            text = "PARA LLEVAR";
+            break;
+          case " D":
+            color = "#995C4E";
+            text = "DELIVERY";
+            break;
+          default:
+            console.error(t[1]);
+            break;
+        } */
+      }
+      return h(
+        NThing,
+        {
+          title: t[0],
+        },
+        {
+          default: () => "",
+          description: () =>
+            h(
+              NSpace,
+              {},
+              {
+                default: () => [
+                  h(
+                    NTag,
+                    {
+                      size: "small",
+                      type: "info",
+                    },
+                    {
+                      default: () => option.category,
+                    }
+                  ),
+                  h(
+                    NTag,
+                    {
+                      size: "small",
+                      color: {
+                        color: lighten(color, 48),
+                        textColor: color,
+                        borderColor: lighten(color, 24),
+                      },
+                    },
+                    {
+                      default: () => text,
+                    }
+                  ),
+                ],
+              }
+            ),
+        }
+      );
     };
 
     const selectProduct = (v) => {
@@ -782,18 +889,17 @@ export default defineComponent({
 
       let totalProdSum = 0;
 
-      dataForPrint.items.map((val) => {
-        totalProdSum += val.cantidad * parseFloat(val.total_item);
-      });
-
       let newTotal = NoNoteSale
         ? {
-            "OP.GRAVADA": dataForPrint.totales.total_operaciones_gravadas,
-            "OP.EXONERADA": dataForPrint.totales.total_operaciones_exoneradas,
-            "OP.GRATUITAS": dataForPrint.totales.total_operaciones_gratuitas,
-            "IGV(18%)": dataForPrint.totales.total_igv,
-            DESCUENTOS: val.discount,
-            "IMPORTE TOTAL": dataForPrint.totales.total_venta,
+            "OP.GRAVADA":
+              dataForPrint.totales.total_operaciones_gravadas.toFixed("2"),
+            "OP.EXONERADA":
+              dataForPrint.totales.total_operaciones_exoneradas.toFixed("2"),
+            "OP.GRATUITAS":
+              dataForPrint.totales.total_operaciones_gratuitas.toFixed("2"),
+            "IGV(18%)": dataForPrint.totales.total_igv.toFixed("2"),
+            DESCUENTOS: !!val.discount ? val.discount.toFixed("2") : "0.00",
+            "IMPORTE TOTAL": dataForPrint.totales.total_venta.toFixed("2"),
           }
         : {
             "IMPORTE TOTAL S/.": dataForPrint.totales.total_venta.toFixed("2"),
@@ -889,11 +995,6 @@ export default defineComponent({
               cont: dataForPrint.datos_del_cliente_o_receptor
                 .apellidos_y_nombres_o_razon_social,
             },
-            !!values.delivery_info && {
-              tittle: "PREGUNTAR POR",
-              twoPoints: ":",
-              cont: values.delivery_info.person,
-            },
 
             {
               tittle: typeDoc[0] === "F" ? "RUC" : "DOCUMENTO",
@@ -904,9 +1005,7 @@ export default defineComponent({
             {
               tittle: "DIRECCION",
               twoPoints: ":",
-              cont: !!values.delivery_info
-                ? values.delivery_info.address
-                : dataForPrint.datos_del_cliente_o_receptor.direccion,
+              cont: dataForPrint.datos_del_cliente_o_receptor.direccion,
             },
 
             {
@@ -1034,7 +1133,6 @@ export default defineComponent({
       ];
 
       generatePrint(data, structure, NoNoteSale);
-      print(values);
 
       if (!!sale.value.delivery_info) {
         let newTotals = [];
@@ -1042,31 +1140,34 @@ export default defineComponent({
         let lengthData = 0;
 
         let totals = {
-          SUBTOTAL: totalProdSum.toFixed(2),
-          "IGV(18%)": dataForPrint.totales.total_igv,
-          DESCUENTOS: val.discount,
-          TOTAL: dataForPrint.totales.total_venta,
+          SUBTOTAL: totalProdSum.toFixed("2"),
+          "IGV(18%)": dataForPrint.totales.total_igv.toFixed("2"),
+          DESCUENTOS: !!val.discount ? val.discount.toFixed("2") : "0.00",
+          TOTAL: dataForPrint.totales.total_venta.toFixed("2"),
         };
 
         for (let i in totals) {
+          lengthData += 5 * 6.5;
           newTotals.push({
             tittle: i,
             twoPoints: ":",
-            cont: newTotal[i],
+            cont: totals[i],
           });
         }
 
         structureDelivery = [
           {
             dat: [
-              {
-                content: `DELIVERY ${dataForPrint.serie_documento}-${dataForPrint.codigo_tipo_operacion}`,
-                styles: {
-                  fontStyle: "bold",
-                  halign: "center",
-                  fontSize: 12,
+              [
+                {
+                  content: `DELIVERY ${dataForPrint.serie_documento}-${dataForPrint.codigo_tipo_operacion}`,
+                  styles: {
+                    fontStyle: "bold",
+                    halign: "center",
+                    fontSize: 12,
+                  },
                 },
-              },
+              ],
             ],
           },
           {
@@ -1104,12 +1205,12 @@ export default defineComponent({
               {
                 tittle: "PAGARA CON",
                 twoPoints: ":",
-                cont: payment_amount.value,
+                cont: payment_amount.value.toFixed("2"),
               },
               {
                 tittle: "VUELTO",
                 twoPoints: ":",
-                cont: changing.value,
+                cont: changing.value.toFixed("2"),
               },
             ],
           },
@@ -1141,7 +1242,7 @@ export default defineComponent({
             ],
             dat: !val.by_consumption
               ? dataForPrint.items.map((val) => {
-                  lengthData += 6.5;
+                  lengthData += 10 * 6.5;
                   return {
                     amount: val.cantidad,
                     unit: val.unidad_de_medida,
@@ -1166,19 +1267,23 @@ export default defineComponent({
           },
           {
             dat: [
-              {
-                content: `REPARTIDOR: ${values.delivery_info.deliveryman}`,
-                styles: {
-                  fontStyle: "bold",
-                  halign: "center",
-                  fontSize: 12,
+              [
+                {
+                  content: `REPARTIDOR: ${values.delivery_info.deliveryman}`,
+                  styles: {
+                    fontStyle: "bold",
+                    halign: "center",
+                    fontSize: 12,
+                  },
                 },
-              },
+              ],
             ],
           },
         ];
-        generatePrintCopyCopy(structure, lengthData);
+        generatePrintCopyCopy(structureDelivery, lengthData);
       }
+
+      print(values);
 
       message.success("Imprimir");
     };
@@ -1365,33 +1470,67 @@ export default defineComponent({
       generatePrintCopy(structure, lengthData);
     };
 
+    const showConfirm = ref(false);
+
+    const userConfirm = ref("");
+
+    const performCreateOrder = async () => {
+      loading.value = true;
+      sale.value.sale_details = saleStore.toSale;
+      await takeAwayOrder(orderStore.orderList, sale.value, userConfirm.value)
+        .then((response) => {
+          if (response.status === 201) {
+            printSale(response.data);
+            message.success("Venta realizada correctamente!");
+            router.push({ name: "Orders" });
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          userConfirm.value = "";
+          showConfirm.value = false;
+          loading.value = false;
+        });
+    };
+
     const performTakeAway = () => {
       saleForm.value.validate((errors) => {
         if (!errors) {
-          dialog.success({
-            title: "Pedido para llevar",
-            content: "Realizar pedido?",
-            positiveText: "Sí",
-            onPositiveClick: async () => {
-              loading.value = true;
-              sale.value.sale_details = saleStore.toSale;
-              await takeAwayOrder(orderStore.orderList, sale.value)
-                .then((response) => {
-                  if (response.status === 201) {
-                    printSale(response.data);
-                    message.success("Venta realizada correctamente!");
-                    router.push({ name: "Orders" });
-                  }
-                })
-                .catch((error) => {
-                  console.error(error);
-                  message.error("Algo salió mal...");
-                })
-                .finally(() => {
-                  loading.value = false;
-                });
-            },
-          });
+          if (userStore.user.profile_des === "MOZO") {
+            showConfirm.value = true;
+          } else {
+            dialog.success({
+              title: "Confirmar pedido",
+              content: "Realizar pedido?",
+              positiveText: "Sí",
+              onPositiveClick: async () => {
+                loading.value = true;
+                sale.value.sale_details = saleStore.toSale;
+                await takeAwayOrder(
+                  orderStore.orderList,
+                  sale.value,
+                  userConfirm.value
+                )
+                  .then((response) => {
+                    if (response.status === 201) {
+                      printSale(response.data);
+                      message.success("Venta realizada correctamente!");
+                      router.push({ name: "Orders" });
+                    }
+                  })
+                  .catch((error) => {
+                    console.error(error);
+                    message.error("Algo salió mal...");
+                  })
+                  .finally(() => {
+                    loading.value = false;
+                  });
+              },
+            });
+          }
         } else {
           console.error(errors);
           message.error("Datos Incorrectos");
@@ -1440,6 +1579,7 @@ export default defineComponent({
       sale,
       changeSerie,
       selectSerie,
+      renderLabel,
       searching,
       productSearch,
       productOptions,
@@ -1456,6 +1596,10 @@ export default defineComponent({
       handleDelivery,
       onCloseModal,
       onSuccess,
+      userConfirm,
+      showConfirm,
+      performCreateOrder,
+      userStore,
     };
   },
 });
