@@ -454,7 +454,7 @@
         closable
       >
         <n-form-item label="Ingrese código de verificación">
-          <n-input v-model:value="userConfirm" placeholder="" />
+          <n-input type="password" v-model:value="userConfirm" placeholder="" />
         </n-form-item>
         <template #action>
           <n-space justify="end">

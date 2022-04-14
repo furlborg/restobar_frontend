@@ -79,6 +79,17 @@
                 <n-form-item-gi :span="6" label="Sitio web">
                   <n-input v-model:value="business.website" placeholder="" />
                 </n-form-item-gi>
+                <n-form-item-gi
+                  :span="6"
+                  label="Clave de seguridad"
+                  path="general_pass"
+                >
+                  <n-input
+                    type="password"
+                    v-model:value="business.general_pass"
+                    placeholder=""
+                  />
+                </n-form-item-gi>
                 <!-- <n-form-item-gi :span="6" label="URL CPE">
                 <n-input />
               </n-form-item-gi> -->

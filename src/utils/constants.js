@@ -1,7 +1,6 @@
 import { h } from "vue"
 import { NButton, NTag, NPopover, NText, NSpace } from "naive-ui"
 import { renderIcon, lighten } from "@/utils"
-import { OhVueIcon } from '@/plugins/icon'
 import { useSaleStore } from '@/store/modules/sale';
 import { useTillStore } from '@/store/modules/till';
 
@@ -34,6 +33,11 @@ export const businessRules = {
         required: true,
         trigger: ['blur', 'input'],
         message: 'Representante requerido'
+    },
+    general_pass: {
+        required: true,
+        trigger: ['blur', 'input'],
+        message: 'Clave requerida'
     },
 }
 
@@ -1231,7 +1235,7 @@ export const createOrderColumns = ({ showDetails, showDeliveryInfo, payDeliver, 
                         },
                         renderIcon('md-deliverydining-round')
                     ) : null,
-                    row.is_delivery ? h(
+                    !row.table ? h(
                         NButton,
                         {
                             class: 'me-2',

@@ -160,6 +160,29 @@
           </n-card>
         </n-gi>
       </n-grid>
+      <n-modal
+        class="w-25"
+        preset="card"
+        v-model:show="showConfirm"
+        title="Eliminando comanda"
+        :mask-closable="false"
+        closable
+      >
+        <n-form-item label="Ingrese clave de seguridad">
+          <n-input type="password" v-model:value="userConfirm" placeholder="" />
+        </n-form-item>
+        <template #action>
+          <n-space justify="end">
+            <n-button
+              type="success"
+              :disabled="!userConfirm"
+              secondary
+              @click.prevent="performDeleteDetail"
+              >Confirmar</n-button
+            >
+          </n-space>
+        </template>
+      </n-modal>
       <OrderIndications
         v-model:show="showModal"
         preset="card"
@@ -545,23 +568,38 @@ export default defineComponent({
         });
     };
 
+    const showConfirm = ref(false);
+
+    const userConfirm = ref("");
+
+    const removingItem = ref({ ind: null, id: null });
+
+    const performDeleteDetail = async () => {
+      await performDeleteOrderDetail(
+        route.params.table,
+        removingItem.value.id,
+        userConfirm.value
+      )
+        .then((response) => {
+          if (response.status === 202) {
+            orderStore.orderList.splice(removingItem.value.ind, 1);
+            message.success("Comanda eliminada");
+            removingItem.value.ind = "";
+            removingItem.value.id = "";
+            showConfirm.value = false;
+            nullifyTableOrder();
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal");
+        });
+    };
+
     const deleteOrderDetail = (detailIndex, detailId) => {
-      dialog.error({
-        title: "Eliminando comanda",
-        content: "¿Está seguro?",
-        positiveText: "Sí",
-        onPositiveClick: async () => {
-          await performDeleteOrderDetail(route.params.table, detailId).then(
-            (response) => {
-              if (response.status === 202) {
-                orderStore.orderList.splice(detailIndex, 1);
-                message.success("Comanda eliminada");
-                nullifyTableOrder();
-              }
-            }
-          );
-        },
-      });
+      removingItem.value.ind = detailIndex;
+      removingItem.value.id = detailId;
+      showConfirm.value = true;
     };
 
     const searching = ref(false);
@@ -637,6 +675,9 @@ export default defineComponent({
       showOptions,
       selectProduct,
       nullifyTableOrder,
+      showConfirm,
+      userConfirm,
+      performDeleteDetail,
     };
   },
 });
