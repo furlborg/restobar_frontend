@@ -898,7 +898,7 @@ export default defineComponent({
             "OP.GRATUITAS":
               dataForPrint.totales.total_operaciones_gratuitas.toFixed("2"),
             "IGV(18%)": dataForPrint.totales.total_igv.toFixed("2"),
-            DESCUENTOS: !!val.discount ? val.discount.toFixed("2") : "0.00",
+            DESCUENTOS: !!val.discount ? parseFloat(val.discount).toFixed("2") : "0.00",
             "IMPORTE TOTAL": dataForPrint.totales.total_venta.toFixed("2"),
           }
         : {
@@ -1071,7 +1071,7 @@ export default defineComponent({
           dat: [
             [
               {
-                content: "Representacion impresa de la boleta electronica",
+                content: "Representacion impresa del comprobante electronico",
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -1142,7 +1142,7 @@ export default defineComponent({
         let totals = {
           SUBTOTAL: totalProdSum.toFixed("2"),
           "IGV(18%)": dataForPrint.totales.total_igv.toFixed("2"),
-          DESCUENTOS: !!val.discount ? val.discount.toFixed("2") : "0.00",
+          DESCUENTOS: !!val.discount ? parseFloat(val.discount).toFixed("2") : "0.00",
           TOTAL: dataForPrint.totales.total_venta.toFixed("2"),
         };
 
