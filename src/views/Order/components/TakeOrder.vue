@@ -454,13 +454,14 @@
         closable
       >
         <n-form-item label="Ingrese código de verificación">
-          <n-input type="password" v-model:value="userConfirm" placeholder="" />
+          <n-input type="password" v-model:value="userConfirm" :disabled="loading" placeholder="" />
         </n-form-item>
         <template #action>
           <n-space justify="end">
             <n-button
               type="success"
-              :disabled="!userConfirm"
+              :loading="loading"
+              :disabled="!userConfirm || loading"
               secondary
               @click.prevent="performCreateOrder"
               >Confirmar</n-button
