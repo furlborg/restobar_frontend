@@ -108,7 +108,7 @@ export default defineComponent({
       branchForm.value.validate(async (errors) => {
         if (!errors) {
           isLoading.value = true;
-          await updateBranch(branch.value.id, branch)
+          await updateBranch(branch.value.id, branch.value)
             .then((response) => {
               if (response.status === 202) {
                 businessStore
@@ -127,7 +127,7 @@ export default defineComponent({
               }
             })
             .catch((error) => {
-              console.error(error);
+              console.error(error.response.data);
               message.error("Algo salió mal...");
             });
         } else {

@@ -203,7 +203,7 @@ import {
   onBeforeRouteLeave,
   onBeforeRouteUpdate,
 } from "vue-router";
-import { NThing, useDialog, useMessage } from "naive-ui";
+import { NThing, NTag, NSpace, NInput, useDialog, useMessage } from "naive-ui";
 import { useProductStore } from "@/store/modules/product";
 import { useTableStore } from "@/store/modules/table";
 import { useOrderStore } from "@/store/modules/order";
@@ -217,7 +217,7 @@ import {
   performDeleteOrderDetail,
 } from "@/api/modules/tables";
 import { searchProductByName } from "@/api/modules/products";
-import { cloneDeep } from "@/utils";
+import { cloneDeep, lighten } from "@/utils";
 import { generatePrintCopy } from "./PrintsCopy/printsCopy";
 
 export default defineComponent({
@@ -645,10 +645,73 @@ export default defineComponent({
     };
 
     const renderLabel = (option) => {
-      return h(NThing, {
-        title: option.label,
-        description: option.category,
-      });
+      const t = option.label.split("-");
+      let color = "#3B689F";
+      let text = "MESA";
+      if (t.length > 1) {
+        if (t[1].includes("LL")) {
+          color = "#926ED7";
+          text = "PARA LLEVAR";
+        } else if (t[1].includes("D")) {
+          color = "#995C4E";
+          text = "DELIVERY";
+        }
+        /* switch (t[1]) {
+          case " LL":
+            color = "#926ED7";
+            text = "PARA LLEVAR";
+            break;
+          case " D":
+            color = "#995C4E";
+            text = "DELIVERY";
+            break;
+          default:
+            console.error(t[1]);
+            break;
+        } */
+      }
+      return h(
+        NThing,
+        {
+          title: t[0],
+        },
+        {
+          default: () => "",
+          description: () =>
+            h(
+              NSpace,
+              {},
+              {
+                default: () => [
+                  h(
+                    NTag,
+                    {
+                      size: "small",
+                      type: "info",
+                    },
+                    {
+                      default: () => option.category,
+                    }
+                  ),
+                  h(
+                    NTag,
+                    {
+                      size: "small",
+                      color: {
+                        color: lighten(color, 48),
+                        textColor: color,
+                        borderColor: lighten(color, 24),
+                      },
+                    },
+                    {
+                      default: () => text,
+                    }
+                  ),
+                ],
+              }
+            ),
+        }
+      );
     };
 
     const handleBack = () => {
