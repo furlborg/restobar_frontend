@@ -453,7 +453,7 @@
         :mask-closable="false"
         closable
       >
-        <n-form-item label="Ingrese código de verificación">
+        <n-form-item label="Ingrese código de usuario">
           <n-input type="password" v-model:value="userConfirm" placeholder="" />
         </n-form-item>
         <template #action>
@@ -725,7 +725,12 @@ export default defineComponent({
                       type: "info",
                     },
                     {
-                      default: () => option.category,
+                      default: () =>
+                        option.category.toLowerCase().includes("menu")
+                          ? "MENU"
+                          : option.category.toLowerCase().includes("comb")
+                          ? "COMBO"
+                          : "CARTA",
                     }
                   ),
                   h(
@@ -898,7 +903,9 @@ export default defineComponent({
             "OP.GRATUITAS":
               dataForPrint.totales.total_operaciones_gratuitas.toFixed("2"),
             "IGV(18%)": dataForPrint.totales.total_igv.toFixed("2"),
-            DESCUENTOS: !!val.discount ? parseFloat(val.discount).toFixed("2") : "0.00",
+            DESCUENTOS: !!val.discount
+              ? parseFloat(val.discount).toFixed("2")
+              : "0.00",
             "IMPORTE TOTAL": dataForPrint.totales.total_venta.toFixed("2"),
           }
         : {
@@ -976,7 +983,7 @@ export default defineComponent({
             ],
             [
               {
-                 content: `${dataForPrint.serie_documento}-${dataForPrint.numero_documento}`,
+                content: `${dataForPrint.serie_documento}-${dataForPrint.numero_documento}`,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -1079,7 +1086,7 @@ export default defineComponent({
                 },
               },
             ],
-       !!businessStore.business.website && [
+            !!businessStore.business.website && [
               {
                 content: `Puede verificarla usando su clave sol o ingresando a la pagina web: ${businessStore.business.website}`,
                 styles: {
@@ -1142,7 +1149,9 @@ export default defineComponent({
         let totals = {
           SUBTOTAL: totalProdSum.toFixed("2"),
           "IGV(18%)": dataForPrint.totales.total_igv.toFixed("2"),
-          DESCUENTOS: !!val.discount ? parseFloat(val.discount).toFixed("2") : "0.00",
+          DESCUENTOS: !!val.discount
+            ? parseFloat(val.discount).toFixed("2")
+            : "0.00",
           TOTAL: dataForPrint.totales.total_venta.toFixed("2"),
         };
 

@@ -730,7 +730,12 @@ export default defineComponent({
                       type: "info",
                     },
                     {
-                      default: () => option.category,
+                      default: () =>
+                        option.category.toLowerCase().includes("menu")
+                          ? "MENU"
+                          : option.category.toLowerCase().includes("comb")
+                          ? "COMBO"
+                          : "CARTA",
                     }
                   ),
                   h(

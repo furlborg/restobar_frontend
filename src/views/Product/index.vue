@@ -82,6 +82,11 @@
                     <n-text class="fs-6" type="success"
                       >S/. {{ Number(product.prices).toFixed(2) }}</n-text
                     >
+                    <n-space>
+                      <n-tag>{{
+                        productStore.getCategorieDescription(product.category)
+                      }}</n-tag>
+                    </n-space>
                     <div v-if="product.amount.length > 0">
                       <div v-if="product.amount.length == 1">
                         <n-text class="fs-6"
@@ -192,6 +197,7 @@ import { defineComponent, ref, onMounted, reactive } from "vue";
 import { useMessage } from "naive-ui";
 import { renderIcon } from "@/utils";
 import ProductModal from "./components/ProductModal";
+import { useProductStore } from "@/store/modules/product";
 import { getProducts, searchProduct } from "@/api/modules/products";
 import MoveModal from "./components/MoveModal.vue";
 
@@ -202,6 +208,7 @@ export default defineComponent({
     MoveModal,
   },
   setup() {
+    const productStore = useProductStore();
     const isLoadingData = ref(false);
     const message = useMessage();
     const listType = ref("list");
@@ -396,6 +403,7 @@ export default defineComponent({
 
     return {
       isLoadingData,
+      productStore,
       listType,
       type,
       showModal,
