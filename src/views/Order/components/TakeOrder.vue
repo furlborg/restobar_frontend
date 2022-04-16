@@ -350,6 +350,7 @@
                     :options="productOptions"
                     :get-show="showOptions"
                     :loading="searching"
+                    clear-after-select
                     :render-label="renderLabel"
                     placeholder="Buscar producto"
                     @select="selectProduct"
@@ -758,7 +759,6 @@ export default defineComponent({
       const item = products.value.find((product) => product.id === v);
       orderStore.addOrder(item);
       saleStore.sale_details = orderStore.orderList;
-      productSearch.value = "";
     };
 
     const obtainSaleNumber = async () => {
