@@ -75,7 +75,7 @@ export const generatePrintCopy = (structure, height) => {
   });
 
   qz.websocket
-    .connect({ host: "192.168.1.200" })
+    .connect({ host: "192.168.1.222" })
     .then(() => {
       return qz.printers.find();
     })
@@ -89,7 +89,7 @@ export const generatePrintCopy = (structure, height) => {
           console.log("TABLE");
           let config = qz.configs.create(searchPrinter, {
             scaleContent: true,
-            size: {width: 70, height: !!height && height > 100 ? Math.round(height) : 100 },
+            size: { width: 70, height: !!height && height > 100 ? Math.round(height) : 100 },
             units: "mm",
           });
 
