@@ -76,11 +76,9 @@ export const generatePrintCopy = (structure, height) => {
       }
     };
   });
-  let a = !!height && height > 100 ? Math.round(height) : 100;
-  console.log(Math.round(a));
 
   qz.websocket
-    .connect({ host: "192.168.1.222" })
+    .connect({ host: process.env.VUE_APP_QZ_URL })
     .then(() => {
       return qz.printers.find();
     })
@@ -94,7 +92,7 @@ export const generatePrintCopy = (structure, height) => {
           let config = qz.configs.create(searchPrinter, {
             size: {
               width: 70,
-              height: a,
+              height: !!height && height > 100 ? Math.round(height) : 100,
             },
             units: "mm",
           });

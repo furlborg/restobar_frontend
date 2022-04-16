@@ -1384,12 +1384,22 @@ export default defineComponent({
         }
 
         if (
-          val.product_category.toLowerCase().includes("menu") ||
-          val.product_category.toLowerCase().includes("menus")
+          valOrder.product_category.toLowerCase().includes("menu") ||
+          valOrder.product_category.toLowerCase().includes("menus")
         ) {
           newNameProd = `[MENU] ${newNameProd}`;
+        } else if (
+          (!!valOrder.product_category.toLowerCase().includes("menu") ===
+            false ||
+            !!valOrder.product_category.toLowerCase().includes("menus") ===
+              false) &&
+          (!!valOrder.product_category.toLowerCase().includes("combo") ===
+            false ||
+            !!valOrder.product_category.toLowerCase().includes("combo") ===
+              false)
+        ) {
+          newNameProd = `[CARTA] ${newNameProd}`;
         }
-
         lengthData += 7 * heightForNmae;
 
         structure.push(
@@ -1401,7 +1411,7 @@ export default defineComponent({
                   content: `*${newNameProd}`,
                   styles: {
                     fontStyle: "bold",
-                    fontSize: 14,
+                    fontSize: process.env.VUE_APP_PRODUCT_SIZE,
                   },
                 },
               ],
