@@ -898,7 +898,9 @@ export default defineComponent({
             "OP.GRATUITAS":
               dataForPrint.totales.total_operaciones_gratuitas.toFixed("2"),
             "IGV(18%)": dataForPrint.totales.total_igv.toFixed("2"),
-            DESCUENTOS: !!val.discount ? parseFloat(val.discount).toFixed("2") : "0.00",
+            DESCUENTOS: !!val.discount
+              ? parseFloat(val.discount).toFixed("2")
+              : "0.00",
             "IMPORTE TOTAL": dataForPrint.totales.total_venta.toFixed("2"),
           }
         : {
@@ -976,7 +978,7 @@ export default defineComponent({
             ],
             [
               {
-                 content: `${dataForPrint.serie_documento}-${dataForPrint.numero_documento}`,
+                content: `${dataForPrint.serie_documento}-${dataForPrint.numero_documento}`,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -1079,7 +1081,7 @@ export default defineComponent({
                 },
               },
             ],
-       !!businessStore.business.website && [
+            !!businessStore.business.website && [
               {
                 content: `Puede verificarla usando su clave sol o ingresando a la pagina web: ${businessStore.business.website}`,
                 styles: {
@@ -1142,7 +1144,9 @@ export default defineComponent({
         let totals = {
           SUBTOTAL: totalProdSum.toFixed("2"),
           "IGV(18%)": dataForPrint.totales.total_igv.toFixed("2"),
-          DESCUENTOS: !!val.discount ? parseFloat(val.discount).toFixed("2") : "0.00",
+          DESCUENTOS: !!val.discount
+            ? parseFloat(val.discount).toFixed("2")
+            : "0.00",
           TOTAL: dataForPrint.totales.total_venta.toFixed("2"),
         };
 
@@ -1375,12 +1379,22 @@ export default defineComponent({
         }
 
         if (
-          val.product_category.toLowerCase().includes("menu") ||
-          val.product_category.toLowerCase().includes("menus")
+          valOrder.product_category.toLowerCase().includes("menu") ||
+          valOrder.product_category.toLowerCase().includes("menus")
         ) {
           newNameProd = `[MENU] ${newNameProd}`;
+        } else if (
+          (!!valOrder.product_category.toLowerCase().includes("menu") ===
+            false ||
+            !!valOrder.product_category.toLowerCase().includes("menus") ===
+              false) &&
+          (!!valOrder.product_category.toLowerCase().includes("combo") ===
+            false ||
+            !!valOrder.product_category.toLowerCase().includes("combo") ===
+              false)
+        ) {
+          newNameProd = `[CARTA] ${newNameProd}`;
         }
-
         lengthData += 7 * heightForNmae;
 
         structure.push(
@@ -1392,7 +1406,7 @@ export default defineComponent({
                   content: `*${newNameProd}`,
                   styles: {
                     fontStyle: "bold",
-                    fontSize: 14,
+                    fontSize: process.env.VUE_APP_PRODUCT_SIZE,
                   },
                 },
               ],

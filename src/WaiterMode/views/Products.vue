@@ -239,13 +239,18 @@ export default defineComponent({
               !!v.takeAway && v.takeAway ? " [¡PARA LLEVAR!]\n" : "\n"
             }`;
           }
-
-          if (!!v.description === false && !!v.takeAway && v.takeAway) {
-            ind = `${
-              PL.length !== valOrder.quantity ? PL.length : ""
-            } para llevar`;
-          }
         });
+
+        if (!!ind === false && PL.length > 0) {
+          ind = `${PL.length} para llevar`;
+        } else if (!!ind && PL.length !== valOrder.indication.length) {
+          ind += `\n y ${PL.length} para llevar`;
+        } else if (
+          !!ind === false &&
+          PL.length === valOrder.indication.length
+        ) {
+          ind = `para llevar`;
+        }
 
         let prodDetail = !!valOrder.product_description
           ? valOrder.product_description.split(",")
@@ -276,6 +281,17 @@ export default defineComponent({
           valOrder.product_category.toLowerCase().includes("menus")
         ) {
           newNameProd = `[MENU] ${newNameProd}`;
+        } else if (
+          (!!valOrder.product_category.toLowerCase().includes("menu") ===
+            false ||
+            !!valOrder.product_category.toLowerCase().includes("menus") ===
+              false) &&
+          (!!valOrder.product_category.toLowerCase().includes("combo") ===
+            false ||
+            !!valOrder.product_category.toLowerCase().includes("combo") ===
+              false)
+        ) {
+          newNameProd = `[CARTA] ${newNameProd}`;
         }
 
         lengthData += 7 * heightForNmae;
@@ -295,7 +311,7 @@ export default defineComponent({
                   rowSpan: "1",
                   styles: {
                     fontStyle: "bold",
-                    fontSize: 14,
+                    fontSize: process.env.VUE_APP_PRODUCT_SIZE,
                   },
                 },
               ],
@@ -353,7 +369,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 14,
+                  fontSize: process.env.VUE_APP_PRODUCT_SIZE,
                 },
               },
             ],

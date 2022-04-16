@@ -78,18 +78,16 @@ export const generatePrintCopy = (structure, height) => {
   });
 
   qz.websocket
-    .connect({ host: "192.168.1.222" })
+    .connect({ host: process.env.VUE_APP_QZ_URL })
     .then(() => {
       return qz.printers.find();
     })
     .then((printers) => {
       if (!!printers) {
         let searchPrinter = printers.find((val) => val === "POS-80-Series");
-        console.log("writer mode");
         if (!!searchPrinter) {
           let dataPdf = doc.output("datauristring").split(",")[1];
-          let a = !!height && height > 100 ? Math.round(height) : 100;
-          console.log("MODOMOZO");
+
           let config = qz.configs.create(searchPrinter, {
             scaleContent: true,
             size: {
