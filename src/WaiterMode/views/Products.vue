@@ -336,7 +336,7 @@ export default defineComponent({
                   content: ind,
                   styles: {
                     fontStyle: "bold",
-                    fontSize: 1212,
+                    fontSize: 12,
                   },
                 },
               ],
@@ -351,7 +351,7 @@ export default defineComponent({
                   rowSpan: "1",
                   styles: {
                     fontStyle: "bold",
-                    fontSize: 1212,
+                    fontSize: 12,
                   },
                 },
               ],
