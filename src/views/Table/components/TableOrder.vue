@@ -648,6 +648,7 @@ export default defineComponent({
             message.success("Comanda eliminada");
             removingItem.value.ind = "";
             removingItem.value.id = "";
+            userConfirm.value = "";
             showConfirm.value = false;
             nullifyTableOrder();
           }
