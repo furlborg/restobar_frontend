@@ -407,6 +407,8 @@ export default defineComponent({
           lengthData += 6.5;
         } else if (
           !!ind === false &&
+          valOrder.indication.length !== 0 &&
+          PL.length !== 0 &&
           PL.length === valOrder.indication.length
         ) {
           ind = `para llevar`;

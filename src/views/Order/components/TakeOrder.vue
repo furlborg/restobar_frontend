@@ -1384,18 +1384,18 @@ export default defineComponent({
         }
 
         if (
-          valOrder.product_category.toLowerCase().includes("menu") ||
-          valOrder.product_category.toLowerCase().includes("menus")
+          val.product_category.toLowerCase().includes("menu") ||
+          val.product_category.toLowerCase().includes("menus")
         ) {
           newNameProd = `[MENU] ${newNameProd}`;
         } else if (
-          (!!valOrder.product_category.toLowerCase().includes("menu") ===
+          (!!val.product_category.toLowerCase().includes("menu") ===
             false ||
-            !!valOrder.product_category.toLowerCase().includes("menus") ===
+            !!val.product_category.toLowerCase().includes("menus") ===
               false) &&
-          (!!valOrder.product_category.toLowerCase().includes("combo") ===
+          (!!val.product_category.toLowerCase().includes("combo") ===
             false ||
-            !!valOrder.product_category.toLowerCase().includes("combo") ===
+            !!val.product_category.toLowerCase().includes("combo") ===
               false)
         ) {
           newNameProd = `[CARTA] ${newNameProd}`;
