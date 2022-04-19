@@ -79,7 +79,7 @@ export async function takeAwayOrder(order_details, sale_data, user) {
         order_details: details,
         order_type: sale_data.delivery_info ? 'D' : 'P',
         delivery_info: sale_data.delivery_info,
-        user: user
+        user: !user ? null : user
     }
     let sale = {
         order: sale_data.order,

@@ -169,7 +169,6 @@ export default defineComponent({
     const tableName = ref(null);
 
     const print = (val) => {
-      console.log(val);
       message.success("Orden actualizada correctamente");
 
       let lC = 0;
@@ -238,14 +237,25 @@ export default defineComponent({
             ind = `${ind}${i + 1}-${cadenaConCaracteres}${
               !!v.takeAway && v.takeAway ? " [¡PARA LLEVAR!]\n" : "\n"
             }`;
-          }
-
-          if (!!v.description === false && !!v.takeAway && v.takeAway) {
-            ind = `${
-              PL.length !== valOrder.quantity ? PL.length : ""
-            } para llevar`;
+            lengthData += 6.5;
           }
         });
+
+        if (!!ind === false && PL.length > 0) {
+          ind = `${PL.length} para llevar`;
+          lengthData += 6.5;
+        } else if (!!ind && PL.length !== valOrder.indication.length) {
+          ind += `\n y ${PL.length} para llevar`;
+          lengthData += 6.5;
+        } else if (
+          !!ind === false &&
+          valOrder.indication.length !== 0 &&
+          PL.length !== 0 &&
+          PL.length === valOrder.indication.length
+        ) {
+          ind = `para llevar`;
+          lengthData += 6.5;
+        }
 
         let prodDetail = !!valOrder.product_description
           ? valOrder.product_description.split(",")
@@ -276,6 +286,17 @@ export default defineComponent({
           valOrder.product_category.toLowerCase().includes("menus")
         ) {
           newNameProd = `[MENU] ${newNameProd}`;
+        } else if (
+          (!!valOrder.product_category.toLowerCase().includes("menu") ===
+            false ||
+            !!valOrder.product_category.toLowerCase().includes("menus") ===
+              false) &&
+          (!!valOrder.product_category.toLowerCase().includes("combo") ===
+            false ||
+            !!valOrder.product_category.toLowerCase().includes("combo") ===
+              false)
+        ) {
+          newNameProd = `[CARTA] ${newNameProd}`;
         }
 
         lengthData += 7 * heightForNmae;
@@ -295,7 +316,7 @@ export default defineComponent({
                   rowSpan: "1",
                   styles: {
                     fontStyle: "bold",
-                    fontSize: 14,
+                    fontSize: process.env.VUE_APP_PRODUCT_SIZE,
                   },
                 },
               ],
@@ -320,7 +341,7 @@ export default defineComponent({
                   content: ind,
                   styles: {
                     fontStyle: "bold",
-                    fontSize: 1212,
+                    fontSize: 12,
                   },
                 },
               ],
@@ -335,7 +356,7 @@ export default defineComponent({
                   rowSpan: "1",
                   styles: {
                     fontStyle: "bold",
-                    fontSize: 1212,
+                    fontSize: 12,
                   },
                 },
               ],
@@ -353,7 +374,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 14,
+                  fontSize: process.env.VUE_APP_PRODUCT_SIZE,
                 },
               },
             ],
@@ -371,7 +392,7 @@ export default defineComponent({
           },
         ],
       });
-      if (userStore.user.names) {
+      if (!!userStore.user.names) {
         structure.push({
           dat: [
             [

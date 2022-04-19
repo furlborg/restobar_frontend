@@ -58,6 +58,7 @@
                     :get-show="showOptions"
                     :loading="searching"
                     placeholder=""
+                    clear-after-select
                     :render-label="renderLabel"
                     @select="selectProduct"
                   />
@@ -375,6 +376,7 @@ export default defineComponent({
           }
 
           let cadenaConCaracteres = "";
+
           if (!!v.description) {
             let longitudCadena = v.description.length;
 
@@ -395,13 +397,23 @@ export default defineComponent({
               !!v.takeAway && v.takeAway ? " [¡PARA LLEVAR!]\n" : "\n"
             }`;
           }
-
-          if (!!v.description === false && !!v.takeAway && v.takeAway) {
-            ind = `${
-              PL.length !== valOrder.quantity ? PL.length : ""
-            } para llevar`;
-          }
         });
+
+        if (!!ind === false && PL.length > 0) {
+          ind = `${PL.length} para llevar`;
+          lengthData += 6.5;
+        } else if (!!ind && PL.length !== valOrder.indication.length) {
+          ind += `\n y ${PL.length} para llevar`;
+          lengthData += 6.5;
+        } else if (
+          !!ind === false &&
+          valOrder.indication.length !== 0 &&
+          PL.length !== 0 &&
+          PL.length === valOrder.indication.length
+        ) {
+          ind = `para llevar`;
+          lengthData += 6.5;
+        }
 
         let prodDetail = !!valOrder.product_description
           ? valOrder.product_description.split(",")
@@ -432,6 +444,17 @@ export default defineComponent({
           valOrder.product_category.toLowerCase().includes("menus")
         ) {
           newNameProd = `[MENU] ${newNameProd}`;
+        } else if (
+          (!!valOrder.product_category.toLowerCase().includes("menu") ===
+            false ||
+            !!valOrder.product_category.toLowerCase().includes("menus") ===
+              false) &&
+          (!!valOrder.product_category.toLowerCase().includes("combo") ===
+            false ||
+            !!valOrder.product_category.toLowerCase().includes("combo") ===
+              false)
+        ) {
+          newNameProd = `[CARTA] ${newNameProd}`;
         }
 
         lengthData += 7 * heightForNmae;
@@ -442,7 +465,6 @@ export default defineComponent({
         ) {
           thisIndicatesIfEverythingIsToGO.push(true);
         }
-
         structure.push(
           {
             line: true,
@@ -452,7 +474,7 @@ export default defineComponent({
                   content: `• ${newNameProd}`,
                   styles: {
                     fontStyle: "bold",
-                    fontSize: 14,
+                    fontSize: process.env.VUE_APP_PRODUCT_SIZE,
                   },
                 },
               ],
@@ -526,8 +548,8 @@ export default defineComponent({
           },
         ],
       });
-
-      if (userStore.user.names) {
+      if (!!userStore.user.names) {
+        lengthData += 10;
         structure.push({
           dat: [
             [
@@ -626,6 +648,7 @@ export default defineComponent({
             message.success("Comanda eliminada");
             removingItem.value.ind = "";
             removingItem.value.id = "";
+            userConfirm.value = "";
             showConfirm.value = false;
             nullifyTableOrder();
           }
@@ -681,7 +704,6 @@ export default defineComponent({
     const selectProduct = (v) => {
       const item = products.value.find((product) => product.id === v);
       orderStore.addOrder(item);
-      productSearch.value = "";
     };
 
     const renderLabel = (option) => {
@@ -730,7 +752,12 @@ export default defineComponent({
                       type: "info",
                     },
                     {
-                      default: () => option.category,
+                      default: () =>
+                        option.category.toLowerCase().includes("menu")
+                          ? "MENU"
+                          : option.category.toLowerCase().includes("comb")
+                          ? "COMBO"
+                          : "CARTA",
                     }
                   ),
                   h(

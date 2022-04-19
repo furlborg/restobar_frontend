@@ -24,7 +24,7 @@ export const generatePrint = (objSunat, structure, addImages) => {
 
     const businnessStore = useBusinessStore();
     if (index === 0 && addImages) {
-      doc.addImage(businnessStore.business.logo_url, "png", 8, finalY, 65, 25);
+      doc.addImage(businnessStore.business.logo_url, "png", 8, finalY, 65, 18);
       finalY += 30;
     }
     if (index === 5 && addImages) {

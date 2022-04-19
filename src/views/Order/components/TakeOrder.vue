@@ -350,6 +350,7 @@
                     :options="productOptions"
                     :get-show="showOptions"
                     :loading="searching"
+                    clear-after-select
                     :render-label="renderLabel"
                     placeholder="Buscar producto"
                     @select="selectProduct"
@@ -453,8 +454,8 @@
         :mask-closable="false"
         closable
       >
-        <n-form-item label="Ingrese código de verificación">
-          <n-input type="password" v-model:value="userConfirm" :disabled="loading" placeholder="" />
+        <n-form-item label="Ingrese código de usuario">
+          <n-input type="password" v-model:value="userConfirm" placeholder="" />
         </n-form-item>
         <template #action>
           <n-space justify="end">
@@ -726,7 +727,12 @@ export default defineComponent({
                       type: "info",
                     },
                     {
-                      default: () => option.category,
+                      default: () =>
+                        option.category.toLowerCase().includes("menu")
+                          ? "MENU"
+                          : option.category.toLowerCase().includes("comb")
+                          ? "COMBO"
+                          : "CARTA",
                     }
                   ),
                   h(
@@ -754,7 +760,6 @@ export default defineComponent({
       const item = products.value.find((product) => product.id === v);
       orderStore.addOrder(item);
       saleStore.sale_details = orderStore.orderList;
-      productSearch.value = "";
     };
 
     const obtainSaleNumber = async () => {
@@ -899,7 +904,9 @@ export default defineComponent({
             "OP.GRATUITAS":
               dataForPrint.totales.total_operaciones_gratuitas.toFixed("2"),
             "IGV(18%)": dataForPrint.totales.total_igv.toFixed("2"),
-            DESCUENTOS: !!val.discount ? parseFloat(val.discount).toFixed("2") : "0.00",
+            DESCUENTOS: !!val.discount
+              ? parseFloat(val.discount).toFixed("2")
+              : "0.00",
             "IMPORTE TOTAL": dataForPrint.totales.total_venta.toFixed("2"),
           }
         : {
@@ -977,7 +984,7 @@ export default defineComponent({
             ],
             [
               {
-                 content: `${dataForPrint.serie_documento}-${dataForPrint.numero_documento}`,
+                content: `${dataForPrint.serie_documento}-${dataForPrint.numero_documento}`,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -1080,7 +1087,7 @@ export default defineComponent({
                 },
               },
             ],
-       !!businessStore.business.website && [
+            !!businessStore.business.website && [
               {
                 content: `Puede verificarla usando su clave sol o ingresando a la pagina web: ${businessStore.business.website}`,
                 styles: {
@@ -1143,7 +1150,9 @@ export default defineComponent({
         let totals = {
           SUBTOTAL: totalProdSum.toFixed("2"),
           "IGV(18%)": dataForPrint.totales.total_igv.toFixed("2"),
-          DESCUENTOS: !!val.discount ? parseFloat(val.discount).toFixed("2") : "0.00",
+          DESCUENTOS: !!val.discount
+            ? parseFloat(val.discount).toFixed("2")
+            : "0.00",
           TOTAL: dataForPrint.totales.total_venta.toFixed("2"),
         };
 
@@ -1380,8 +1389,14 @@ export default defineComponent({
           val.product_category.toLowerCase().includes("menus")
         ) {
           newNameProd = `[MENU] ${newNameProd}`;
+        } else if (
+          (!!val.product_category.toLowerCase().includes("menu") === false ||
+            !!val.product_category.toLowerCase().includes("menus") === false) &&
+          (!!val.product_category.toLowerCase().includes("combo") === false ||
+            !!val.product_category.toLowerCase().includes("combo") === false)
+        ) {
+          newNameProd = `[CARTA] ${newNameProd}`;
         }
-
         lengthData += 7 * heightForNmae;
 
         structure.push(
@@ -1393,7 +1408,7 @@ export default defineComponent({
                   content: `*${newNameProd}`,
                   styles: {
                     fontStyle: "bold",
-                    fontSize: 14,
+                    fontSize: process.env.VUE_APP_PRODUCT_SIZE,
                   },
                 },
               ],
@@ -1450,8 +1465,7 @@ export default defineComponent({
           },
         ],
       });
-
-      if (userStore.user.names) {
+      if (!!userStore.user.names) {
         structure.push({
           dat: [
             [

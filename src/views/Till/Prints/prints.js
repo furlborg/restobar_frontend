@@ -15,7 +15,7 @@ export const generatePrint = (structure) => {
 
     const businnessStore = useBusinessStore();
     if (index === 0) {
-      doc.addImage(businnessStore.business.logo_url, "png", 8, finalY, 65, 25);
+      doc.addImage(businnessStore.business.logo_url, "png", 8, finalY, 65, 18);
       finalY += 30;
     }
 
