@@ -58,6 +58,7 @@
                     :get-show="showOptions"
                     :loading="searching"
                     placeholder=""
+                    clear-after-select
                     :render-label="renderLabel"
                     @select="selectProduct"
                   />
@@ -701,7 +702,6 @@ export default defineComponent({
     const selectProduct = (v) => {
       const item = products.value.find((product) => product.id === v);
       orderStore.addOrder(item);
-      productSearch.value = "";
     };
 
     const renderLabel = (option) => {
@@ -750,7 +750,12 @@ export default defineComponent({
                       type: "info",
                     },
                     {
-                      default: () => option.category,
+                      default: () =>
+                        option.category.toLowerCase().includes("menu")
+                          ? "MENU"
+                          : option.category.toLowerCase().includes("comb")
+                          ? "COMBO"
+                          : "CARTA",
                     }
                   ),
                   h(

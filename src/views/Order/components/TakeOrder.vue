@@ -350,6 +350,7 @@
                     :options="productOptions"
                     :get-show="showOptions"
                     :loading="searching"
+                    clear-after-select
                     :render-label="renderLabel"
                     placeholder="Buscar producto"
                     @select="selectProduct"
@@ -453,7 +454,7 @@
         :mask-closable="false"
         closable
       >
-        <n-form-item label="Ingrese código de verificación">
+        <n-form-item label="Ingrese código de usuario">
           <n-input type="password" v-model:value="userConfirm" placeholder="" />
         </n-form-item>
         <template #action>
@@ -725,7 +726,12 @@ export default defineComponent({
                       type: "info",
                     },
                     {
-                      default: () => option.category,
+                      default: () =>
+                        option.category.toLowerCase().includes("menu")
+                          ? "MENU"
+                          : option.category.toLowerCase().includes("comb")
+                          ? "COMBO"
+                          : "CARTA",
                     }
                   ),
                   h(
@@ -753,7 +759,6 @@ export default defineComponent({
       const item = products.value.find((product) => product.id === v);
       orderStore.addOrder(item);
       saleStore.sale_details = orderStore.orderList;
-      productSearch.value = "";
     };
 
     const obtainSaleNumber = async () => {
