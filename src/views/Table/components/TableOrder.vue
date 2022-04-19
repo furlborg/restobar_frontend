@@ -400,13 +400,16 @@ export default defineComponent({
 
         if (!!ind === false && PL.length > 0) {
           ind = `${PL.length} para llevar`;
+          lengthData += 6.5;
         } else if (!!ind && PL.length !== valOrder.indication.length) {
           ind += `\n y ${PL.length} para llevar`;
+          lengthData += 6.5;
         } else if (
           !!ind === false &&
           PL.length === valOrder.indication.length
         ) {
           ind = `para llevar`;
+          lengthData += 6.5;
         }
 
         let prodDetail = !!valOrder.product_description
@@ -544,6 +547,7 @@ export default defineComponent({
       });
 
       if (userStore.user.names) {
+        lengthData += 10;
         structure.push({
           dat: [
             [

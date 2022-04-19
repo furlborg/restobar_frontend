@@ -169,7 +169,6 @@ export default defineComponent({
     const tableName = ref(null);
 
     const print = (val) => {
-      console.log(val);
       message.success("Orden actualizada correctamente");
 
       let lC = 0;
@@ -238,18 +237,22 @@ export default defineComponent({
             ind = `${ind}${i + 1}-${cadenaConCaracteres}${
               !!v.takeAway && v.takeAway ? " [¡PARA LLEVAR!]\n" : "\n"
             }`;
+            lengthData += 6.5;
           }
         });
 
         if (!!ind === false && PL.length > 0) {
           ind = `${PL.length} para llevar`;
+          lengthData += 6.5;
         } else if (!!ind && PL.length !== valOrder.indication.length) {
           ind += `\n y ${PL.length} para llevar`;
+          lengthData += 6.5;
         } else if (
           !!ind === false &&
           PL.length === valOrder.indication.length
         ) {
           ind = `para llevar`;
+          lengthData += 6.5;
         }
 
         let prodDetail = !!valOrder.product_description
@@ -336,7 +339,7 @@ export default defineComponent({
                   content: ind,
                   styles: {
                     fontStyle: "bold",
-                    fontSize: 1212,
+                    fontSize: 12,
                   },
                 },
               ],
@@ -351,7 +354,7 @@ export default defineComponent({
                   rowSpan: "1",
                   styles: {
                     fontStyle: "bold",
-                    fontSize: 1212,
+                    fontSize: 12,
                   },
                 },
               ],
