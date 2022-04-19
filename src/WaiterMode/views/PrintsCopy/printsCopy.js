@@ -5,7 +5,10 @@ import qz from "qz-tray";
 
 import rs from "jsrsasign";
 
+import { useGenericsStore } from "@/store/modules/generics";
+
 export const generatePrintCopy = (structure, height) => {
+  const genericStore = useGenericsStore();
   const doc = new jspdf({
     orientation: "p",
     unit: "mm",
@@ -78,7 +81,10 @@ export const generatePrintCopy = (structure, height) => {
   });
 
   qz.websocket
-    .connect({ host: process.env.VUE_APP_QZ_URL })
+    .connect({
+      host: process.env.VUE_APP_QZ_URL,
+      usingSecure: genericStore.device === "desktop",
+    })
     .then(() => {
       return qz.printers.find();
     })
