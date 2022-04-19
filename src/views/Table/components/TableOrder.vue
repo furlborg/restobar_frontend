@@ -548,8 +548,7 @@ export default defineComponent({
           },
         ],
       });
-
-      if (userStore.user.names) {
+      if (!!userStore.user.names) {
         lengthData += 10;
         structure.push({
           dat: [

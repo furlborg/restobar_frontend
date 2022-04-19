@@ -392,7 +392,7 @@ export default defineComponent({
           },
         ],
       });
-      if (userStore.user.names) {
+      if (!!userStore.user.names) {
         structure.push({
           dat: [
             [

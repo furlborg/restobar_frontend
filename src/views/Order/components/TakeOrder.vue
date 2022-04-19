@@ -1389,14 +1389,10 @@ export default defineComponent({
         ) {
           newNameProd = `[MENU] ${newNameProd}`;
         } else if (
-          (!!val.product_category.toLowerCase().includes("menu") ===
-            false ||
-            !!val.product_category.toLowerCase().includes("menus") ===
-              false) &&
-          (!!val.product_category.toLowerCase().includes("combo") ===
-            false ||
-            !!val.product_category.toLowerCase().includes("combo") ===
-              false)
+          (!!val.product_category.toLowerCase().includes("menu") === false ||
+            !!val.product_category.toLowerCase().includes("menus") === false) &&
+          (!!val.product_category.toLowerCase().includes("combo") === false ||
+            !!val.product_category.toLowerCase().includes("combo") === false)
         ) {
           newNameProd = `[CARTA] ${newNameProd}`;
         }
@@ -1468,8 +1464,7 @@ export default defineComponent({
           },
         ],
       });
-
-      if (userStore.user.names) {
+      if (!!userStore.user.names) {
         structure.push({
           dat: [
             [
