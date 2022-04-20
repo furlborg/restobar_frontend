@@ -143,5 +143,9 @@ export const useSaleStore = defineStore("sale", {
         return series[0].id;
       }
     },
+    getOrderQuantity(id) {
+      const order = this.order_initial.find((order) => order.id === id);
+      return order ? order.quantity : null;
+    },
   },
 });
