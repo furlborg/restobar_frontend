@@ -240,11 +240,16 @@ export default defineComponent({
             lengthData += 6.5;
           }
         });
+        console.log("siu");
 
         if (!!ind === false && PL.length > 0) {
           ind = `${PL.length} para llevar`;
           lengthData += 6.5;
-        } else if (!!ind && PL.length !== valOrder.indication.length) {
+        } else if (
+          !!ind &&
+          PL.length > 0 &&
+          PL.length !== valOrder.indication.length
+        ) {
           ind += `\n y ${PL.length} para llevar`;
           lengthData += 6.5;
         } else if (
