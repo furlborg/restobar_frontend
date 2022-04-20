@@ -309,12 +309,6 @@ export const productRules = {
         trigger: ['blur', 'input'],
         message: 'Categoría requerido'
     },
-    preparation_place: {
-        type: 'number',
-        required: true,
-        trigger: ['blur', 'input'],
-        message: 'Lugar de preparación requerido'
-    },
 }
 
 export const createUserColumns = ({ editUser, deleteUser, changePassword }) => {
@@ -986,7 +980,7 @@ export const createSaleColumns = ({ printSale, miscSale, sendSale, nullifySale }
             title: 'Documento',
             key: 'document',
             render(row) {
-                return row.serie + row.number
+                return `${row.serie}-${row.number}`
             }
         },
         {

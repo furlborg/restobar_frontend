@@ -97,7 +97,7 @@
                       v-if="!($route.name === 'TablePayment')"
                       class="border-top-0"
                       size="small"
-                      :min="1"
+                      :min="order.id ? saleStore.getOrderQuantity(order.id) : 1"
                       v-model:value="order.quantity"
                     />
                     <template v-else>
@@ -169,9 +169,25 @@
         :mask-closable="false"
         closable
       >
-        <n-form-item label="Ingrese clave de seguridad">
-          <n-input type="password" v-model:value="userConfirm" placeholder="" />
-        </n-form-item>
+        <n-form>
+          <n-grid cols="2" :x-gap="12">
+            <n-form-item-gi label="Cantidad">
+              <n-input-number
+                v-model:value="deleteQuantity"
+                min="1"
+                :max="maxQuantity"
+                placeholder=""
+              />
+            </n-form-item-gi>
+            <n-form-item-gi label="Clave de seguridad">
+              <n-input
+                type="password"
+                v-model:value="userConfirm"
+                placeholder=""
+              />
+            </n-form-item-gi>
+          </n-grid>
+        </n-form>
         <template #action>
           <n-space justify="end">
             <n-button
@@ -204,7 +220,7 @@ import {
   onBeforeRouteLeave,
   onBeforeRouteUpdate,
 } from "vue-router";
-import { NThing, NTag, NSpace, NInput, useDialog, useMessage } from "naive-ui";
+import { NThing, NTag, NSpace, useDialog, useMessage } from "naive-ui";
 import { useUserStore } from "@/store/modules/user";
 import { useTableStore } from "@/store/modules/table";
 import { useProductStore } from "@/store/modules/product";
@@ -599,6 +615,19 @@ export default defineComponent({
         });
     };
 
+    const evalOrderList = () => {
+      let list = [];
+      saleStore.order_initial.forEach((order, index) => {
+        if (order.quantity < orderStore.orderList[index].quantity) {
+          let newOrder = cloneDeep(order);
+          newOrder.quantity =
+            orderStore.orderList[index].quantity - order.quantity;
+          list.push(newOrder);
+        }
+      });
+      return list;
+    };
+
     const performUpdateTableOrder = async () => {
       await updateTableOrder(
         route.params.table,
@@ -607,6 +636,7 @@ export default defineComponent({
       )
         .then((response) => {
           if (response.status === 202) {
+            response.data.order_details = evalOrderList();
             print(response.data);
           }
         })
@@ -649,22 +679,46 @@ export default defineComponent({
 
     const userConfirm = ref("");
 
+    const deleteQuantity = ref(1);
+
+    const maxQuantity = ref(1);
+
     const removingItem = ref({ ind: null, id: null });
 
     const performDeleteDetail = async () => {
       await performDeleteOrderDetail(
         route.params.table,
         removingItem.value.id,
-        userConfirm.value
+        userConfirm.value,
+        deleteQuantity.value
       )
         .then((response) => {
-          if (response.status === 202) {
+          if (response.status === 204) {
             orderStore.orderList.splice(removingItem.value.ind, 1);
+            saleStore.order_initial.splice(removingItem.value.ind, 1);
             message.success("Comanda eliminada");
             removingItem.value.ind = "";
             removingItem.value.id = "";
+            userConfirm.value = "";
+            deleteQuantity.value = 1;
+            maxQuantity.value = 1;
             showConfirm.value = false;
             nullifyTableOrder();
+          } else if (response.status === 202) {
+            orderStore.orderList[removingItem.value.ind].quantity -=
+              response.data.quantity;
+            saleStore.order_initial[removingItem.value.ind].quantity -=
+              response.data.quantity;
+            saleStore.order_initial[removingItem.value.ind].subTotal =
+              saleStore.order_initial[removingItem.value.ind].quantity *
+              saleStore.order_initial[removingItem.value.ind].price;
+            message.success("Comanda actualizada correctamente");
+            removingItem.value.ind = "";
+            removingItem.value.id = "";
+            userConfirm.value = "";
+            deleteQuantity.value = 1;
+            maxQuantity.value = 1;
+            showConfirm.value = false;
           }
         })
         .catch((error) => {
@@ -676,6 +730,8 @@ export default defineComponent({
     const deleteOrderDetail = (detailIndex, detailId) => {
       removingItem.value.ind = detailIndex;
       removingItem.value.id = detailId;
+      deleteQuantity.value = saleStore.getOrderQuantity(detailId);
+      maxQuantity.value = saleStore.getOrderQuantity(detailId);
       showConfirm.value = true;
     };
 
@@ -732,19 +788,6 @@ export default defineComponent({
           color = "#995C4E";
           text = "DELIVERY";
         }
-        /* switch (t[1]) {
-          case " LL":
-            color = "#926ED7";
-            text = "PARA LLEVAR";
-            break;
-          case " D":
-            color = "#995C4E";
-            text = "DELIVERY";
-            break;
-          default:
-            console.error(t[1]);
-            break;
-        } */
       }
       return h(
         NThing,
@@ -822,6 +865,8 @@ export default defineComponent({
       showConfirm,
       userConfirm,
       performDeleteDetail,
+      deleteQuantity,
+      maxQuantity,
     };
   },
 });

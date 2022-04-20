@@ -83,9 +83,10 @@ export async function cancelTableOrder(idTable) {
     return http.delete(`tables/${idTable}/cancel_order/`)
 }
 
-export async function performDeleteOrderDetail(idTable, orderId, pass) {
+export async function performDeleteOrderDetail(idTable, orderId, pass, quantity) {
     return await http.post(`tables/${idTable}/remove_detail/`, {
         id: orderId,
-        pass: pass
+        pass: pass,
+        quantity: quantity,
     })
 }

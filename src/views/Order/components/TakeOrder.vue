@@ -461,7 +461,8 @@
           <n-space justify="end">
             <n-button
               type="success"
-              :disabled="!userConfirm"
+              :loading="loading"
+              :disabled="!userConfirm || loading"
               secondary
               @click.prevent="performCreateOrder"
               >Confirmar</n-button
