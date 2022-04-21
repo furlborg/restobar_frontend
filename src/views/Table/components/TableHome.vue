@@ -82,7 +82,15 @@
                 class="position-absolute top-0 start-0 m-2"
               />
               <div
-                class="black-outline text-center position-absolute top-50 start-50 translate-middle fs-4"
+                class="
+                  black-outline
+                  text-center
+                  position-absolute
+                  top-50
+                  start-50
+                  translate-middle
+                  fs-4
+                "
               >
                 {{ "MESA " + String(table.id) }}
               </div>
@@ -176,7 +184,6 @@
                     Pre-cuenta
                   </n-button>
                   <n-button
-                    v-if="userStore.user.profile_des !== 'MOZO'"
                     class="mb-1"
                     type="error"
                     size="small"
@@ -216,12 +223,36 @@
         </n-grid>
       </n-card>
     </n-spin>
+    <n-modal
+      class="w-25"
+      preset="card"
+      v-model:show="showConfirm"
+      title="Anular pedido"
+      :mask-closable="false"
+      closable
+    >
+      <n-form-item label="Ingrese clave de seguridad">
+        <n-input type="password" v-model:value="passConfirm" placeholder="" />
+      </n-form-item>
+      <template #action>
+        <n-space justify="end">
+          <n-button
+            type="success"
+            :loading="isLoading"
+            :disabled="!passConfirm || isLoading"
+            secondary
+            @click.prevent="performNullifyTableOrder"
+            >Confirmar</n-button
+          >
+        </n-space>
+      </template>
+    </n-modal>
   </n-card>
 </template>
 
 <script>
 import { defineComponent, ref, onMounted } from "vue";
-import { useMessage, useDialog } from "naive-ui";
+import { useMessage } from "naive-ui";
 import { useTableStore } from "@/store/modules/table";
 import { useUserStore } from "@/store/modules/user";
 import { cancelTableOrder, retrieveTableOrder } from "@/api/modules/tables";
@@ -236,7 +267,6 @@ export default defineComponent({
     const groupMode = ref(false);
     const isLoading = ref(false);
     const message = useMessage();
-    const dialog = useDialog();
     const openOptions = ref([]);
     const tableGroups = ref([]);
     const currentTableGrouping = ref(null);
@@ -402,30 +432,33 @@ export default defineComponent({
         });
     };
 
+    const showConfirm = ref(false);
+
+    const passConfirm = ref("");
+
+    const deleteId = ref(null);
+
     const nullifyTableOrder = (id) => {
-      dialog.error({
-        title: "Anular pedido",
-        content: "¿Está seguro?",
-        positiveText: "Sí",
-        negativeText: "No",
-        onPositiveClick: async () => {
-          await performNullifyTableOrder(id);
-        },
-      });
+      deleteId.value = id;
+      showConfirm.value = true;
     };
 
-    const performNullifyTableOrder = async (id) => {
+    const performNullifyTableOrder = async () => {
       isLoading.value = true;
-      await cancelTableOrder(id)
+      await cancelTableOrder(deleteId.value, passConfirm.value)
         .then((response) => {
           if (response.status === 202) {
             message.success("Pedido anulado correctamente!");
+            showConfirm.value = false;
+            deleteId.value = null;
+            passConfirm.value = "";
             loadTablesData();
           }
         })
         .catch((error) => {
           console.error(error);
           message.error("Algo salió mal...");
+          passConfirm.value = "";
           isLoading.value = false;
         });
     };
@@ -477,9 +510,12 @@ export default defineComponent({
       refreshData,
       removeFromGroup,
       nullifyTableOrder,
+      performNullifyTableOrder,
       tableGroups,
       currentTableGrouping,
       performRetrieveTableOrder,
+      showConfirm,
+      passConfirm,
     };
   },
 });

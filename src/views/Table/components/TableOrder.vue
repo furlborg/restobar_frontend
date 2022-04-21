@@ -616,14 +616,16 @@ export default defineComponent({
         });
     };
 
-    const evalOrderList = () => {
+    const evalOrderList = (details) => {
       let list = [];
-      saleStore.order_initial.forEach((order, index) => {
-        if (order.quantity < orderStore.orderList[index].quantity) {
+      details.forEach((order) => {
+        let item = saleStore.order_initial.find((v) => v.id === order.id);
+        if (!!item && order.quantity > item.quantity) {
           let newOrder = cloneDeep(order);
-          newOrder.quantity =
-            orderStore.orderList[index].quantity - order.quantity;
+          newOrder.quantity = item.quantity - order.quantity;
           list.push(newOrder);
+        } else if (typeof item === "undefined") {
+          list.push(order);
         }
       });
       return list;
@@ -637,8 +639,15 @@ export default defineComponent({
       )
         .then((response) => {
           if (response.status === 202) {
+<<<<<<< HEAD
             response.data.order_details = evalOrderList();
             print(response.data, true);
+=======
+            response.data.order_details = evalOrderList(
+              response.data.order_details
+            );
+            print(response.data);
+>>>>>>> dev
           }
         })
         .catch((error) => {

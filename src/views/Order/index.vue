@@ -89,6 +89,30 @@
         remote
       />
     </n-card>
+    <n-modal
+      class="w-25"
+      preset="card"
+      v-model:show="showConfirm"
+      title="Anular pedido"
+      :mask-closable="false"
+      closable
+    >
+      <n-form-item label="Ingrese clave de seguridad">
+        <n-input type="password" v-model:value="passConfirm" placeholder="" />
+      </n-form-item>
+      <template #action>
+        <n-space justify="end">
+          <n-button
+            type="success"
+            :loading="isLoading"
+            :disabled="!passConfirm || isLoading"
+            secondary
+            @click.prevent="performNullifyTableOrder"
+            >Confirmar</n-button
+          >
+        </n-space>
+      </template>
+    </n-modal>
     <!-- Details Modal -->
     <details-modal
       v-model:show="showDetailsModal"
@@ -136,6 +160,7 @@ export default defineComponent({
     const businessStore = useBusinessStore();
     const userStore = useUserStore();
     const tillStore = useTillStore();
+    const isLoading = ref(false);
     const isTableLoading = ref(false);
     const showDetailsModal = ref(false);
     const showDeliveryModal = ref(false);
@@ -326,6 +351,55 @@ export default defineComponent({
       delivery.value = null;
     };
 
+    const showConfirm = ref(false);
+
+    const passConfirm = ref("");
+
+    const deleteTable = ref(null);
+
+    const deleteId = ref(null);
+
+    const performNullifyTableOrder = async () => {
+      isLoading.value = true;
+      if (!deleteTable.value) {
+        await nullOrder(deleteId.value, passConfirm.value)
+          .then((response) => {
+            if (response.status === 202) {
+              message.success("Pedido anulado correctamente!");
+              showConfirm.value = false;
+              deleteId.value = null;
+              passConfirm.value = "";
+              isLoading.value = false;
+              loadOrders();
+            }
+          })
+          .catch((error) => {
+            console.error(error);
+            message.error("Algo salió mal...");
+            passConfirm.value = "";
+            isLoading.value = false;
+          });
+      } else {
+        await cancelTableOrder(deleteTable.value, passConfirm.value)
+          .then((response) => {
+            if (response.status === 202) {
+              message.success("Pedido anulado correctamente!");
+              showConfirm.value = false;
+              deleteTable.value = null;
+              passConfirm.value = "";
+              isLoading.value = false;
+              loadOrders();
+            }
+          })
+          .catch((error) => {
+            console.error(error);
+            message.error("Algo salió mal...");
+            passConfirm.value = "";
+            isLoading.value = false;
+          });
+      }
+    };
+
     onMounted(async () => {
       document.title = "Pedidos | App";
       await loadOrders();
@@ -349,6 +423,10 @@ export default defineComponent({
       delivery,
       showDeliveryModal,
       onCloseModal,
+      isLoading,
+      showConfirm,
+      passConfirm,
+      performNullifyTableOrder,
       tableColumns: createOrderColumns({
         showDetails(row) {
           idOrder.value = row.id;
@@ -384,44 +462,12 @@ export default defineComponent({
           });
         },
         nullifyOrder(row) {
-          dialog.error({
-            title: "Anular venta",
-            content: "¿Desea anular venta?",
-            positiveText: "Si",
-            negativeText: "No",
-            onPositiveClick: async () => {
-              isTableLoading.value = true;
-              if (row.table) {
-                await cancelTableOrder(row.table)
-                  .then((response) => {
-                    if (response.status === 204) {
-                      message.success("Anulado");
-                    }
-                  })
-                  .catch((error) => {
-                    console.error(error);
-                    message.error("Algo salió mal...");
-                  })
-                  .finally(() => {
-                    loadOrders();
-                  });
-              }
-              await nullOrder(row.id)
-                .then((response) => {
-                  if (response.status === 204) {
-                    message.success("Anulado");
-                  }
-                })
-                .catch((error) => {
-                  console.error(error);
-                  message.error("Algo salió mal...");
-                })
-                .finally(() => {
-                  loadOrders();
-                });
-            },
-            onNegativeClick: () => {},
-          });
+          showConfirm.value = true;
+          if (row.table) {
+            deleteTable.value = row.table;
+          } else {
+            deleteId.value = row.id;
+          }
         },
       }),
     };

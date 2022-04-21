@@ -858,7 +858,7 @@ export default defineComponent({
             address: "",
             phone: "",
             deliveryman: "",
-            amount: parseFloat(3).toFixed(2),
+            amount: parseFloat(0).toFixed(2),
           })
         : (sale.value.delivery_info = null);
     };
