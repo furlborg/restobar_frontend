@@ -494,6 +494,27 @@ export default defineComponent({
           console.error("Error: Tipo de Documento inválido");
           break;
       }
+      resetCustomer();
+      customerRef.value.restoreValidation();
+    };
+
+    const resetCustomer = () => {
+      customer.value = {
+        names: null,
+        doc_type: customer.value.doc_type,
+        doc_num: "",
+        email: null,
+        phone: null,
+        birthdate: null,
+        gender: null,
+        addresses: [
+          {
+            description: "",
+            ubigeo: null,
+            is_disabled: false,
+          },
+        ],
+      };
     };
 
     return {
