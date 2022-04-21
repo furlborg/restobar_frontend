@@ -622,7 +622,7 @@ export default defineComponent({
         let item = saleStore.order_initial.find((v) => v.id === order.id);
         if (!!item && order.quantity > item.quantity) {
           let newOrder = cloneDeep(order);
-          newOrder.quantity = item.quantity - order.quantity;
+          newOrder.quantity = order.quantity - item.quantity;
           list.push(newOrder);
         } else if (typeof item === "undefined") {
           list.push(order);
@@ -642,7 +642,7 @@ export default defineComponent({
             response.data.order_details = evalOrderList(
               response.data.order_details
             );
-            print(response.data);
+            print(response.data, true);
           }
         })
         .catch((error) => {
