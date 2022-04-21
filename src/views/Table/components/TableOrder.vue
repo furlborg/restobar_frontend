@@ -418,8 +418,6 @@ export default defineComponent({
             }
           });
 
-          console.log("siu1");
-
           if (!!ind === false && PL.length > 0) {
             ind = `${PL.length} para llevar`;
             lengthData += 6.5;

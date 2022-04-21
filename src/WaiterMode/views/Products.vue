@@ -171,8 +171,9 @@ export default defineComponent({
     const table = route.params.table;
     const tableName = ref(null);
 
-    const print = (val) => {
+    const print = (val, update = false) => {
       message.success("Orden actualizada correctamente");
+      checkState.value = true;
 
       let lC = 0;
 
@@ -197,7 +198,9 @@ export default defineComponent({
           dat: [
             [
               {
-                content: `MESA: ${tableName.value}`,
+                content: `${update ? "ACTUALIZACION DE " : ""}MESA: ${
+                  tableName.value
+                }`,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -208,8 +211,6 @@ export default defineComponent({
           ],
         },
       ];
-
-      let thisIndicatesIfEverythingIsToGO = [];
 
       val.order_details.map((valOrder) => {
         let ind = "";
@@ -470,7 +471,7 @@ export default defineComponent({
             response.data.order_details = evalOrderList(
               response.data.order_details
             );
-            print(response.data);
+            print(response.data, true);
             activeDrawer.value = false;
             tableStore.refreshData();
             router.push({ name: "WHome" });
