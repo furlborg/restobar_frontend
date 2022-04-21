@@ -62,8 +62,10 @@
                         type="info"
                         :disabled="
                           !(
-                            customer.doc_num.length === 8 ||
-                            customer.doc_num.length === 11
+                            (customer.doc_num.length === 8 &&
+                              customer.doc_type === '1') ||
+                            (customer.doc_num.length === 11 &&
+                              customer.doc_type === '6')
                           ) || isSearchingDoc
                         "
                         :loading="isSearchingDoc"
