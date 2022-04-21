@@ -642,7 +642,7 @@ export default defineComponent({
             response.data.order_details = evalOrderList(
               response.data.order_details
             );
-            print(response.data);
+            print(response.data, true);
           }
         })
         .catch((error) => {
