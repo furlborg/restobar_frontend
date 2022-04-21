@@ -61,8 +61,10 @@ export async function searchOrders(filterParams, page, pageSize) {
     })
 }
 
-export async function nullOrder(order) {
-    return await http.delete(`orders/${order}/`)
+export async function nullOrder(order, pass) {
+    return await http.post(`orders/${order}/secure_delete/`, {
+        pass: pass
+    })
 }
 
 export async function listOrderDetails(order) {

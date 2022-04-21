@@ -139,6 +139,7 @@ import { useProductStore } from "@/store/modules/product";
 import { useTableStore } from "@/store/modules/table";
 import { useOrderStore } from "@/store/modules/order";
 import { useWaiterStore } from "@/store/modules/waiter";
+import { useSaleStore } from "@/store/modules/sale";
 import { getProductsByCategory } from "@/api/modules/products";
 import {
   createTableOrder,
@@ -146,6 +147,7 @@ import {
   performDeleteOrderDetail,
 } from "@/api/modules/tables";
 import { generatePrintCopy } from "./PrintsCopy/printsCopy";
+import { cloneDeep } from "@/utils";
 
 export default defineComponent({
   name: "WProducts",
@@ -160,6 +162,7 @@ export default defineComponent({
     const productStore = useProductStore();
     const orderStore = useOrderStore();
     const tableStore = useTableStore();
+    const saleStore = useSaleStore();
     const waiterStore = useWaiterStore();
     const activeDrawer = ref(false);
     const showModal = ref(false);
@@ -433,6 +436,22 @@ export default defineComponent({
         });
     };
 
+    const evalOrderList = (details) => {
+      let list = [];
+      details.forEach((order) => {
+        let item = saleStore.order_initial.find((v) => v.id === order.id);
+        if (!!item && order.quantity > item.quantity) {
+          let newOrder = cloneDeep(order);
+          newOrder.quantity = item.quantity - order.quantity;
+          list.push(newOrder);
+        } else if (typeof item === "undefined") {
+          list.push(order);
+        }
+      });
+      console.log(list);
+      return list;
+    };
+
     const performUpdateTableOrder = () => {
       addToList();
       updateTableOrder(
@@ -443,6 +462,9 @@ export default defineComponent({
         .then((response) => {
           if (response.status === 202) {
             message.success("Orden actualizada correctamente");
+            response.data.order_details = evalOrderList(
+              response.data.order_details
+            );
             print(response.data);
             activeDrawer.value = false;
             tableStore.refreshData();

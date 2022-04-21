@@ -79,8 +79,10 @@ export async function updateTableOrder(idTable, orderId, details) {
     })
 }
 
-export async function cancelTableOrder(idTable) {
-    return http.delete(`tables/${idTable}/cancel_order/`)
+export async function cancelTableOrder(idTable, pass) {
+    return http.post(`tables/${idTable}/cancel_order/`, {
+        pass: pass
+    })
 }
 
 export async function performDeleteOrderDetail(idTable, orderId, pass, quantity) {
