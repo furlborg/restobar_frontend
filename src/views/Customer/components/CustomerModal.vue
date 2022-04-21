@@ -422,7 +422,11 @@ export default defineComponent({
                   }
                 } else if (customer.value.doc_num.length === 11) {
                   customer.value.names = response.data.nombre_o_razon_social;
-                  customer.value.addresses[0].ubigeo = response.data.ubigeo[2];
+                  customer.value.addresses[0].ubigeo = isNaN(
+                    response.data.ubigeo[2]
+                  )
+                    ? null
+                    : response.data.ubigeo[2];
                   customer.value.addresses[0].description =
                     response.data.direccion;
                 }
