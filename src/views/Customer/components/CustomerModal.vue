@@ -62,8 +62,10 @@
                         type="info"
                         :disabled="
                           !(
-                            customer.doc_num.length === 8 ||
-                            customer.doc_num.length === 11
+                            (customer.doc_num.length === 8 &&
+                              customer.doc_type === '1') ||
+                            (customer.doc_num.length === 11 &&
+                              customer.doc_type === '6')
                           ) || isSearchingDoc
                         "
                         :loading="isSearchingDoc"
@@ -420,9 +422,20 @@ export default defineComponent({
                   } else if (response.data.sexo === "MASCULINO") {
                     customer.value.gender = "M";
                   }
+                  customer.value.addresses = [
+                    {
+                      description: "",
+                      ubigeo: null,
+                      is_disabled: false,
+                    },
+                  ];
                 } else if (customer.value.doc_num.length === 11) {
                   customer.value.names = response.data.nombre_o_razon_social;
-                  customer.value.addresses[0].ubigeo = response.data.ubigeo[2];
+                  customer.value.addresses[0].ubigeo = isNaN(
+                    response.data.ubigeo[2]
+                  )
+                    ? null
+                    : response.data.ubigeo[2];
                   customer.value.addresses[0].description =
                     response.data.direccion;
                 }
@@ -483,6 +496,27 @@ export default defineComponent({
           console.error("Error: Tipo de Documento inválido");
           break;
       }
+      resetCustomer();
+      customerRef.value.restoreValidation();
+    };
+
+    const resetCustomer = () => {
+      customer.value = {
+        names: null,
+        doc_type: customer.value.doc_type,
+        doc_num: "",
+        email: null,
+        phone: null,
+        birthdate: null,
+        gender: null,
+        addresses: [
+          {
+            description: "",
+            ubigeo: null,
+            is_disabled: false,
+          },
+        ],
+      };
     };
 
     return {

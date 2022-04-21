@@ -69,7 +69,9 @@
                   @update:value="
                     (v) => {
                       !v
-                        ? ((sale.customer = null), createAddressesOptions())
+                        ? ((sale.customer = null),
+                          (sale.address = null),
+                          (addressesOptions = []))
                         : null;
                     }
                   "
@@ -78,9 +80,6 @@
                       sale.customer = value;
                       sale.address = null;
                       createAddressesOptions();
-                      sale.invoice_type === 1
-                        ? (sale.address = addressesOptions[0].value)
-                        : null;
                     }
                   "
                   placeholder=""
@@ -581,7 +580,7 @@ export default defineComponent({
                 },
               },
             ],
-            [
+            businessStore.business.website && [
               {
                 content: `Puede verificarla usando su clave sol o ingresando a la pagina web: ${businessStore.business.website}`,
                 styles: {
@@ -591,7 +590,7 @@ export default defineComponent({
                 },
               },
             ],
-            [
+            businessStore.business.email && [
               {
                 content: businessStore.business.email,
                 styles: {
@@ -713,6 +712,9 @@ export default defineComponent({
           label: `${address.ubigeo} - ${address.description}`,
         }));
       }
+      if (addressesOptions.value.length) {
+        sale.value.address = addressesOptions.value[0].value;
+      }
     };
 
     const showOptions = async (value) => {
@@ -780,10 +782,17 @@ export default defineComponent({
     };
 
     const onSuccess = (customer) => {
-      customerResults.value.push(customer);
-      sale.value.customer_name = `${customer.doc_num} - ${customer.names}`;
-      sale.value.customer = customer.id;
-      createAddressesOptions();
+      if (sale.value.invoice_type === 1 && customer.doc_type === "6") {
+        customerResults.value.push(customer);
+        sale.value.customer_name = `${customer.doc_num} - ${customer.names}`;
+        sale.value.customer = customer.id;
+        createAddressesOptions();
+      } else if (sale.value.invoice_type !== 1) {
+        customerResults.value.push(customer);
+        sale.value.customer_name = `${customer.doc_num} - ${customer.names}`;
+        sale.value.customer = customer.id;
+        createAddressesOptions();
+      }
       showModal.value = false;
       onCloseModal();
     };
