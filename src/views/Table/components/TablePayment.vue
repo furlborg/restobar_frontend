@@ -80,9 +80,6 @@
                       sale.customer = value;
                       sale.address = null;
                       createAddressesOptions();
-                      sale.invoice_type === 1
-                        ? (sale.address = addressesOptions[0].value)
-                        : null;
                     }
                   "
                   placeholder=""
