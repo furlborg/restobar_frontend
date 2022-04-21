@@ -639,15 +639,10 @@ export default defineComponent({
       )
         .then((response) => {
           if (response.status === 202) {
-<<<<<<< HEAD
-            response.data.order_details = evalOrderList();
-            print(response.data, true);
-=======
             response.data.order_details = evalOrderList(
               response.data.order_details
             );
             print(response.data);
->>>>>>> dev
           }
         })
         .catch((error) => {
