@@ -342,8 +342,7 @@ export default defineComponent({
       dateNow.value = `${dd}/${mm + 1}/${yy} ${hh}:${msms}`;
     });
 
-    const print = (val) => {
-      console.log(val);
+    const print = (val, update = false) => {
       message.success("Orden actualizada correctamente");
       checkState.value = true;
 
@@ -370,7 +369,9 @@ export default defineComponent({
           dat: [
             [
               {
-                content: `MESA: ${tableName.value}`,
+                content: `${update ? "ACTUALIZACION DE " : ""}MESA: ${
+                  tableName.value
+                }`,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -637,7 +638,7 @@ export default defineComponent({
         .then((response) => {
           if (response.status === 202) {
             response.data.order_details = evalOrderList();
-            print(response.data);
+            print(response.data, true);
           }
         })
         .catch((error) => {
