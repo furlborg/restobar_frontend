@@ -581,7 +581,7 @@ export default defineComponent({
                 },
               },
             ],
-            !!businessStore.business.website && [
+            [
               {
                 content: `Puede verificarla usando su clave sol o ingresando a la pagina web: ${businessStore.business.website}`,
                 styles: {
@@ -591,7 +591,7 @@ export default defineComponent({
                 },
               },
             ],
-            !!businessStore.business.email && [
+            [
               {
                 content: businessStore.business.email,
                 styles: {
