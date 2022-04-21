@@ -420,6 +420,13 @@ export default defineComponent({
                   } else if (response.data.sexo === "MASCULINO") {
                     customer.value.gender = "M";
                   }
+                  customer.value.addresses = [
+                    {
+                      description: "",
+                      ubigeo: null,
+                      is_disabled: false,
+                    },
+                  ];
                 } else if (customer.value.doc_num.length === 11) {
                   customer.value.names = response.data.nombre_o_razon_social;
                   customer.value.addresses[0].ubigeo = isNaN(
