@@ -1,7 +1,7 @@
 <template>
   <div id="Till">
     <n-grid
-      cols="5 s:5 m:10 l:20 xl:20 2xl:20"
+      cols="5 xs:5 s:10 m:10 l:20 xl:20 2xl:20"
       responsive="screen"
       :x-gap="12"
       :y-gap="12"
@@ -113,31 +113,35 @@
         <n-form>
           <n-grid
             responsive="screen"
-            cols="6 s:6 m:12 l:12 xl:24 2xl:24"
+            cols="3 xs:3 s:12 m:12 l:12 xl:24 2xl:24"
             :x-gap="12"
+            :scroll-x="900"
           >
             <n-form-item-gi label="Documento" :span="3">
               <n-input
                 v-model:value="filterParams.document"
-                @keypress="isLetter($event)"
+                placeholder=""
+                @keypress="isLetterOrNumber($event)"
               />
             </n-form-item-gi>
             <n-form-item-gi label="Descripción" :span="3">
               <n-input
                 v-model:value="filterParams.description"
-                @keypress="isLetter($event)"
+                placeholder=""
+                @keypress="isLetterOrNumber($event)"
               />
             </n-form-item-gi>
             <n-form-item-gi label="Monto" :span="3">
-              <n-input-number
+              <n-input
                 v-model:value="filterParams.amount"
-                :show-button="false"
+                placeholder=""
                 @keypress="isDecimal($event)"
               />
             </n-form-item-gi>
             <n-form-item-gi label="Tipo Concepto" :span="3">
               <n-select
                 v-model:value="filterParams.concept_type"
+                placeholder=""
                 :options="conceptTypeOptions"
                 @update:value="filterParams.concept = null"
                 clearable
@@ -146,6 +150,7 @@
             <n-form-item-gi label="Concepto" :span="3">
               <n-select
                 v-model:value="filterParams.concept"
+                placeholder=""
                 :options="ConceptOptions"
                 clearable
               />
@@ -153,6 +158,7 @@
             <n-form-item-gi label="Método Pago" :span="3">
               <n-select
                 v-model:value="filterParams.payment_method"
+                placeholder=""
                 :options="saleStore.getPaymentMethodsOptions"
                 clearable
               />
@@ -189,7 +195,7 @@
 import { defineComponent, ref, onMounted, computed } from "vue";
 import { useMessage, useDialog } from "naive-ui";
 import MovementModal from "./components/MovementModal";
-import { isDecimal, isLetter, isNumber } from "@/utils";
+import { isDecimal, isLetter, isNumber, isLetterOrNumber } from "@/utils";
 import { createMovementsColumns } from "@/utils/constants";
 import { useTillStore } from "@/store/modules/till";
 import { useSaleStore } from "@/store/modules/sale";
@@ -356,6 +362,7 @@ export default defineComponent({
       isDecimal,
       isNumber,
       isLetter,
+      isLetterOrNumber,
       pagination,
       isLoading,
       showModal,

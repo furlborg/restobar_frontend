@@ -834,6 +834,16 @@ export default defineComponent({
                       default: () => text,
                     }
                   ),
+                  h(
+                    NTag,
+                    {
+                      size: "small",
+                      type: "info",
+                    },
+                    {
+                      default: () => option.category,
+                    }
+                  ),
                 ],
               }
             ),

@@ -99,6 +99,7 @@ import {
     MdFeedRound,
     FaDollarSign,
     MdDeliverydiningRound,
+    RiRotateLockFill,
 } from "oh-vue-icons/icons";
 OhVueIcon.add(
     BiThreeDots,
@@ -200,5 +201,6 @@ OhVueIcon.add(
     MdFeedRound,
     FaDollarSign,
     MdDeliverydiningRound,
+    RiRotateLockFill,
 );
 export { OhVueIcon }

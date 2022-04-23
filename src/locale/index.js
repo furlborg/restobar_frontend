@@ -33,7 +33,7 @@ const commonEsPE = {
         selectDate: 'Seleccione fecha',
         datePlaceholder: 'Seleccione fecha',
         datetimePlaceholder: 'Seleccionar fecha y hora',
-        startDatePlaceholder: 'Fecha de inicio',
+        startDatePlaceholder: 'Fecha inicial',
         endDatePlaceholder: 'Fecha final',
         startDatetimePlaceholder: 'Fecha y hora de inicio',
         endDatetimePlaceholder: 'Fecha y hora de finalización',

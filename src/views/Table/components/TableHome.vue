@@ -46,7 +46,7 @@
       >
         <n-grid
           responsive="screen"
-          cols="6 s:6 m:12 l:24 xl:24 2xl:24"
+          cols="3 xs:3 s:12 m:12 l:24 xl:24 2xl:24"
           :x-gap="12"
           :y-gap="12"
         >

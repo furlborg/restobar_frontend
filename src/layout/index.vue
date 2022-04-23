@@ -8,6 +8,7 @@
     <!-- <app-provider> -->
     <n-layout class="layout" position="absolute" has-sider>
       <n-layout-sider
+        v-if="genericsStore.device !== 'mobile'"
         class="layout-sider"
         @collapse="collapsed = true"
         @expand="collapsed = false"
@@ -21,6 +22,12 @@
         <Logo :collapsed="collapsed" />
         <AsideMenu v-model:collapsed="collapsed" />
       </n-layout-sider>
+      <n-drawer v-else v-model:show="collapsed" :width="200" placement="left">
+        <n-drawer-content :body-content-style="{ padding: 0 }">
+          <Logo :collapsed="false" />
+          <AsideMenu :collapsed="false" />
+        </n-drawer-content>
+      </n-drawer>
       <n-layout :native-scrollbar="false">
         <n-layout-header position="absolute" bordered>
           <PageHeader v-model:collapsed="collapsed" />
@@ -110,7 +117,7 @@ export default defineComponent({
 
     const watchWidth = () => {
       const Width = document.body.clientWidth;
-      collapsed.value = Width <= 950;
+      collapsed.value = Width <= 950 && genericsStore.device !== "mobile";
       genericsStore.updateDevice();
     };
 
@@ -155,6 +162,7 @@ export default defineComponent({
       darkTheme: createTheme([inputDark, datePickerDark]),
       collapsed,
       userStore,
+      genericsStore,
     };
   },
 });
