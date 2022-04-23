@@ -173,7 +173,6 @@ export default defineComponent({
 
     const print = (val, update = false) => {
       message.success("Orden actualizada correctamente");
-      checkState.value = true;
 
       let lC = 0;
 

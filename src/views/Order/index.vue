@@ -189,7 +189,20 @@ export default defineComponent({
       status: null,
     });
     const pagination = ref({
-      pageSearchParams: null,
+      pageSearchParams: {
+        till: tillStore.currentTillID,
+        created: [
+          format(today, "dd/MM/yyyy HH:mm:ss"),
+          format(
+            set(today, { hours: 23, minutes: 59, seconds: 59 }),
+            "dd/MM/yyyy HH:mm:ss"
+          ),
+        ],
+        take_aways: true,
+        tables: false,
+        deliverys: true,
+        status: null,
+      },
       total: 0,
       page: 1,
       pageCount: 1,
@@ -326,7 +339,20 @@ export default defineComponent({
       filterParams.value.tables = false;
       filterParams.value.deliverys = true;
       filterParams.value.status = null;
-      pagination.value.pageSearchParams = null;
+      pagination.value.pageSearchParams = {
+        till: tillStore.currentTillID,
+        created: [
+          format(today, "dd/MM/yyyy HH:mm:ss"),
+          format(
+            set(today, { hours: 23, minutes: 59, seconds: 59 }),
+            "dd/MM/yyyy HH:mm:ss"
+          ),
+        ],
+        take_aways: true,
+        tables: false,
+        deliverys: true,
+        status: null,
+      };
       pagination.value.page = 1;
       await loadOrders();
     };
