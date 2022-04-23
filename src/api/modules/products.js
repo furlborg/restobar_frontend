@@ -76,10 +76,11 @@ export async function searchProduct(search, pageLimit, pageOffset) {
     })
 }
 
-export async function searchProductByName(search) {
+export async function searchProductByName(search, takeaAway = false) {
     return await http.get('products/search_products/', {
         params: {
-            search: search
+            search: search,
+            types: takeaAway
         }
     })
 }
