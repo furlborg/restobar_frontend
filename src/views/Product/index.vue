@@ -34,19 +34,23 @@
           </n-button>
         </n-space>
       </template>
-      <n-input-group>
-        <n-input
-          class="w-25"
-          v-model:value="search"
-          placeholder="Buscar..."
-          clearable
-          @clear="(search = ''), performSearch()"
-          @keypress.enter="performSearch"
-        />
-        <n-button type="primary" @click="performSearch" secondary>
-          <v-icon name="md-search-round" />
-        </n-button>
-      </n-input-group>
+      <n-space align="center">
+        <n-input-group>
+          <n-input
+            v-model:value="search"
+            placeholder="Buscar..."
+            clearable
+            @clear="((search = ''), (show_disabled = false)), performSearch()"
+            @keypress.enter="performSearch"
+          />
+          <n-button type="primary" @click="performSearch" secondary>
+            <v-icon name="md-search-round" />
+          </n-button>
+        </n-input-group>
+        <n-checkbox v-model:checked="show_disabled"
+          >Mostrar deshabilitados</n-checkbox
+        >
+      </n-space>
       <!-- <n-radio-group v-model:value="listType" name="listType" size="small">
           <n-radio-button class="p-0" value="list" key="list">
             <v-icon class="m-1" name="md-list-round" />
@@ -75,7 +79,11 @@
               </template>
               <n-thing>
                 <template #header>
-                  <n-text class="fs-4">{{ product.name }}</n-text>
+                  <n-text
+                    class="fs-4"
+                    :type="product.is_disabled ? 'error' : 'default'"
+                    >{{ product.name }}</n-text
+                  >
                 </template>
                 <template #description>
                   <n-space vertical item-style="margin-top: -10px;">
@@ -115,8 +123,22 @@
                     >
                       <v-icon name="ri-edit-fill" scale="1.5" />
                     </n-button>
-                    <n-button class="p-4" type="error" tertiary>
-                      <v-icon name="ri-delete-bin-2-fill" scale="1.5" />
+                    <n-button
+                      class="p-4"
+                      :type="product.is_disabled ? 'success' : 'error'"
+                      tertiary
+                      @click="
+                        performDisableProduct(product.id, product.is_disabled)
+                      "
+                    >
+                      <v-icon
+                        :name="
+                          product.is_disabled
+                            ? 'md-publishedwithchanges-round'
+                            : 'ri-delete-bin-2-fill'
+                        "
+                        scale="1.5"
+                      />
                     </n-button>
                   </n-button-group>
                 </transition>
@@ -194,11 +216,15 @@
 
 <script>
 import { defineComponent, ref, onMounted, reactive } from "vue";
-import { useMessage } from "naive-ui";
+import { useMessage, useDialog } from "naive-ui";
 import { renderIcon } from "@/utils";
 import ProductModal from "./components/ProductModal";
 import { useProductStore } from "@/store/modules/product";
-import { getProducts, searchProduct } from "@/api/modules/products";
+import {
+  getProducts,
+  searchProduct,
+  disableProduct,
+} from "@/api/modules/products";
 import MoveModal from "./components/MoveModal.vue";
 
 export default defineComponent({
@@ -211,11 +237,13 @@ export default defineComponent({
     const productStore = useProductStore();
     const isLoadingData = ref(false);
     const message = useMessage();
+    const dialog = useDialog();
     const listType = ref("list");
     const showModal = ref(false);
     const showModalMovement = ref(false);
     const showButtons = ref(false);
     const search = ref(null);
+    const show_disabled = ref(false);
     const idProduct = ref(0);
     const type = ref(0);
     const products = ref([]);
@@ -242,6 +270,7 @@ export default defineComponent({
     };
     const pagination = ref({
       search: null,
+      show_disabled: false,
       total: 0,
       offset: 0,
       page: 1,
@@ -255,6 +284,7 @@ export default defineComponent({
         pagination.value.offset = --page * pagination.value.pageSize;
         await searchProduct(
           pagination.value.search,
+          pagination.value.show_disabled,
           pagination.value.pageSize,
           pagination.value.offset
         )
@@ -286,6 +316,7 @@ export default defineComponent({
         pagination.value.pageSize = pageSize;
         await searchProduct(
           pagination.value.search,
+          pagination.value.show_disabled,
           pageSize,
           pagination.value.offset
         )
@@ -348,10 +379,12 @@ export default defineComponent({
     const performSearch = async () => {
       isLoadingData.value = true;
       pagination.value.search = search.value;
+      pagination.value.show_disabled = show_disabled.value;
       pagination.value.offset = 0;
       pagination.value.page = 1;
       await searchProduct(
         pagination.value.search,
+        pagination.value.show_disabled,
         pagination.value.pageSize,
         pagination.value.offset
       )
@@ -376,6 +409,34 @@ export default defineComponent({
           isLoadingData.value = false;
         });
     };
+
+    const performDisableProduct = (id, disabled) => {
+      dialog.error({
+        title: disabled ? "Habilitar producto" : "Deshabilitar producto",
+        content: `¿Desea ${disabled ? "habilitar" : "deshabilitar"} producto?`,
+        positiveText: "Si",
+        negativeText: "No",
+        onPositiveClick: async () => {
+          await disableProduct(id)
+            .then((response) => {
+              if (response.status === 202) {
+                message.success(
+                  `Producto ${
+                    disabled ? "Habilitado" : "Deshabilitado"
+                  } correctamente`
+                );
+                performSearch();
+              }
+            })
+            .catch((error) => {
+              console.error(error);
+              message.error("Algo salió mal...");
+            });
+        },
+        onNegativeClick: () => {},
+      });
+    };
+
     const refreshProducts = async () => {
       pagination.value.search = null;
       await loadProductsData();
@@ -415,6 +476,7 @@ export default defineComponent({
       onSuccess,
       pagination,
       search,
+      show_disabled,
       products,
       idProduct,
       refreshProducts,
@@ -422,6 +484,7 @@ export default defineComponent({
       performSearch,
       itemsMovement,
       newMovement,
+      performDisableProduct,
     };
   },
 });
