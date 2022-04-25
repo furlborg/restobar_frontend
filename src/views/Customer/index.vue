@@ -83,7 +83,7 @@
       :data="customers"
       :pagination="pagination"
       :loading="isTableLoading"
-      :scroll-x="1500"
+      :scroll-x="900"
       remote
     />
     <!-- Customer Modal -->

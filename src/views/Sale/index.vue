@@ -91,6 +91,7 @@
       </n-collapse-transition>
       <n-data-table
         class="mt-2"
+        :scroll-x="900"
         :columns="tableColumns"
         :data="sales"
         :loading="isTableLoading"

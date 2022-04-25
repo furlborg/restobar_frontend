@@ -661,7 +661,7 @@ export default defineComponent({
     const showOptions = (value) => {
       if (value.length >= 3) {
         searching.value = true;
-        searchProductByName(value)
+        searchProductByName(value, true)
           .then((response) => {
             if (response.status === 200) {
               products.value = response.data;
@@ -745,6 +745,16 @@ export default defineComponent({
                     },
                     {
                       default: () => text,
+                    }
+                  ),
+                  h(
+                    NTag,
+                    {
+                      size: "small",
+                      type: "info",
+                    },
+                    {
+                      default: () => option.category,
                     }
                   ),
                 ],

@@ -48,34 +48,34 @@
         <n-form>
           <n-grid
             responsive="screen"
-            cols="6 s:6 m:12 l:12 xl:24 2xl:24"
+            cols="3 xs:3 s:12 m:12 l:12 xl:24 2xl:24"
             :x-gap="12"
           >
             <n-form-item-gi label="Responsable Apertura" :span="3">
               <n-input
                 v-model:value="filterParams.opening_responsable"
+                placeholder=""
                 @keypress="isLetter($event)"
               />
             </n-form-item-gi>
             <n-form-item-gi label="Responsable Cierre" :span="3">
               <n-input
                 v-model:value="filterParams.closing_responsable"
+                placeholder=""
                 @keypress="isLetter($event)"
               />
             </n-form-item-gi>
             <n-form-item-gi label="Saldo inicial" :span="3">
-              <n-input-number
-                class="w-100"
+              <n-input
                 v-model:value="filterParams.opening_amount"
-                :show-button="false"
+                placeholder=""
                 @keypress="isDecimal($event)"
               />
             </n-form-item-gi>
             <n-form-item-gi label="Saldo final" :span="3">
-              <n-input-number
-                class="w-100"
+              <n-input
                 v-model:value="filterParams.closing_amount"
-                :show-button="false"
+                placeholder=""
                 @keypress="isDecimal($event)"
               />
             </n-form-item-gi>
@@ -107,6 +107,7 @@
         class="mt-2"
         :columns="tableColumns"
         :data="tills"
+        :scroll-x="900"
         :loading="isTableLoading"
         :pagination="pagination"
         remote

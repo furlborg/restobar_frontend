@@ -1,7 +1,11 @@
 import { http } from "@/api"
 
-export async function getProducts() {
-    return await http.get('products/')
+export async function getProducts(disabled = false) {
+    return await http.get('products/', {
+        params: {
+            disabled: disabled
+        }
+    })
 }
 
 export async function getProductSimpleSearch(search) {
@@ -66,20 +70,23 @@ export async function disableProduct(id) {
     return await http.delete(`products/${id}/`)
 }
 
-export async function searchProduct(search, pageLimit, pageOffset) {
+export async function searchProduct(search, disabled = false, pageLimit, pageOffset) {
     return await http.get('products/', {
         params: {
             search: search,
+            disabled: disabled,
             limit: pageLimit,
             offset: pageOffset,
         }
     })
 }
 
-export async function searchProductByName(search) {
+export async function searchProductByName(search, takeaAway = false) {
     return await http.get('products/search_products/', {
         params: {
-            search: search
+            search: search,
+            disabled: true,
+            types: takeaAway
         }
     })
 }

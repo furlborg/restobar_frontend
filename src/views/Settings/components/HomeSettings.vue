@@ -3,7 +3,6 @@
     <n-h1>
       <n-text>Configuración</n-text>
     </n-h1>
-    <n-divider />
     <n-space justify="space-around">
       <router-link
         class="text-decoration-none"

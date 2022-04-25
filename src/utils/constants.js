@@ -3,10 +3,13 @@ import { NButton, NTag, NPopover, NText, NSpace } from "naive-ui"
 import { renderIcon, lighten } from "@/utils"
 import { useSaleStore } from '@/store/modules/sale';
 import { useTillStore } from '@/store/modules/till';
+import { useGenericsStore } from "@/store/modules/generics";
 
 const tillStore = useTillStore()
 
 const saleStore = useSaleStore()
+
+const genericsStore = useGenericsStore();
 
 export const businessRules = {
     ruc: {
@@ -168,26 +171,36 @@ export const createCustomerColumns = ({ editCustomer, deleteCustomer }) => {
     return [
         {
             title: 'ID',
-            key: 'id'
+            key: 'id',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 50 : 'auto'
         },
         {
             title: 'Documento',
-            key: 'doc_num'
+            key: 'doc_num',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 150 : 'auto'
         },
         {
             title: 'Tipo',
             key: 'doc_type',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 100 : 'auto',
             render(row) {
                 return getDocTypeByNumber(row.doc_type)
             }
         },
         {
             title: 'Nombre',
-            key: 'names'
+            key: 'names',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 300 : 'auto'
         },
         {
             title: 'Dirección',
             key: 'addresses',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 200 : 'auto',
             render(row) {
                 if (row.addresses.length > 0) {
                     return !row.addresses[0].description ? '-----' : row.addresses[0].description
@@ -197,23 +210,33 @@ export const createCustomerColumns = ({ editCustomer, deleteCustomer }) => {
         },
         {
             title: 'Género',
-            key: 'gender'
+            key: 'gender',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 50 : 'auto'
         },
         {
             title: 'F. Nacimiento',
-            key: 'birthdate'
+            key: 'birthdate',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 100 : 'auto'
         },
         {
             title: 'Celular',
-            key: 'phone'
+            key: 'phone',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 150 : 'auto'
         },
         {
             title: 'Correo',
-            key: 'email'
+            key: 'email',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 200 : 'auto'
         },
         {
             title: 'Estado',
             key: 'is_disabled',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 100 : 'auto',
             render(row) {
                 let type, text
                 if (row.is_disabled) {
@@ -240,6 +263,8 @@ export const createCustomerColumns = ({ editCustomer, deleteCustomer }) => {
         {
             title: 'Acciones',
             key: 'actions',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 150 : 'auto',
             render(row) {
                 return [
                     h(
@@ -392,7 +417,7 @@ export const createUserColumns = ({ editUser, deleteUser, changePassword }) => {
                             secondary: true,
                             onClick: () => changePassword(row)
                         },
-                        renderIcon('la-user-edit-solid')
+                        renderIcon('ri-rotate-lock-fill')
                     ),
                     h(
                         NButton,
@@ -423,6 +448,7 @@ export const createTillColumns = ({ generateReport, closeTill }) => {
         {
             title: 'Responsable Apertura',
             key: 'opening_responsable',
+            width: genericsStore.device !== 'desktop' ? 160 : 'auto',
             render(row) {
                 return !row.opening_responsable ? '-----' : row.opening_responsable
             }
@@ -430,6 +456,8 @@ export const createTillColumns = ({ generateReport, closeTill }) => {
         {
             title: 'Apertura',
             key: 'created',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 200 : 'auto',
             render(row) {
                 return !row.created ? '--/--/---- --:--:--' : row.created
             }
@@ -437,6 +465,8 @@ export const createTillColumns = ({ generateReport, closeTill }) => {
         {
             title: 'Saldo inicial',
             key: 'opening_amount',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 100 : 'auto',
             render(row) {
                 return !row.opening_amount ? 'S/. --.--' : `S/. ${row.opening_amount}`
             }
@@ -444,6 +474,8 @@ export const createTillColumns = ({ generateReport, closeTill }) => {
         {
             title: 'Responsable Cierre',
             key: 'closing_responsable',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 100 : 'auto',
             render(row) {
                 return !row.closing_responsable ? '-----' : row.closing_responsable
             }
@@ -451,6 +483,8 @@ export const createTillColumns = ({ generateReport, closeTill }) => {
         {
             title: 'Cierre',
             key: 'modified',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 200 : 'auto',
             render(row) {
                 return row.modified === row.created ? '--/--/---- --:--:--' : row.modified
             }
@@ -458,6 +492,8 @@ export const createTillColumns = ({ generateReport, closeTill }) => {
         {
             title: 'Saldo final',
             key: 'closing_amount',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 100 : 'auto',
             render(row) {
                 return !row.closing_amount ? 'S/. --.--' : `S/. ${row.closing_amount}`
             }
@@ -465,6 +501,8 @@ export const createTillColumns = ({ generateReport, closeTill }) => {
         {
             title: 'Estado',
             key: 'status',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 100 : 'auto',
             render(row) {
                 let type, text
                 if (row.status === true) {
@@ -491,6 +529,8 @@ export const createTillColumns = ({ generateReport, closeTill }) => {
         {
             title: 'Acciones',
             key: 'actions',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 125 : 'auto',
             render(row) {
                 return [
                     h(
@@ -557,7 +597,9 @@ export const createMovementsColumns = ({ hasSells, editMovement, deleteMovement 
     return [
         {
             title: 'Documento',
-            key: 'document'
+            key: 'document',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 100 : 'auto'
         },
         /* {
             title: 'Usuario',
@@ -570,10 +612,14 @@ export const createMovementsColumns = ({ hasSells, editMovement, deleteMovement 
         {
             title: 'Descripción',
             key: 'description',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 200 : 'auto'
         },
         {
             title: 'Método Pago',
             key: 'payment_method',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 200 : 'auto',
             render(row) {
                 return saleStore.getPaymentMethodDescription(row.payment_method)
             }
@@ -581,6 +627,8 @@ export const createMovementsColumns = ({ hasSells, editMovement, deleteMovement 
         {
             title: 'Ingreso',
             key: 'income',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 100 : 'auto',
             render(row) {
                 let concept_type = tillStore.getConceptType(row.concept)
                 return concept_type == '0' ? row.amount : '----'
@@ -589,6 +637,8 @@ export const createMovementsColumns = ({ hasSells, editMovement, deleteMovement 
         {
             title: 'Egreso',
             key: 'outcome',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 100 : 'auto',
             render(row) {
                 let concept_type = tillStore.getConceptType(row.concept)
                 return concept_type == '1' ? row.amount : '----'
@@ -597,6 +647,8 @@ export const createMovementsColumns = ({ hasSells, editMovement, deleteMovement 
         {
             title: 'Concepto',
             key: 'concept',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 225 : 'auto',
             render(row) {
                 return tillStore.getConceptDescription(row.concept)
             }
@@ -604,6 +656,8 @@ export const createMovementsColumns = ({ hasSells, editMovement, deleteMovement 
         {
             title: 'Tipo',
             key: 'concept_type',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 100 : 'auto',
             render(row) {
                 let concept_type = tillStore.getConceptType(row.concept)
 
@@ -623,10 +677,14 @@ export const createMovementsColumns = ({ hasSells, editMovement, deleteMovement 
         {
             title: 'Fecha',
             key: 'created',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 200 : 'auto',
         },
         {
             title: 'Acciones',
             key: 'actions',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 125 : 'auto',
             render(row) {
                 return [
                     h(
@@ -1101,19 +1159,19 @@ export const createOrderColumns = ({ showDetails, showDeliveryInfo, payDeliver, 
             title: 'Cliente',
             key: 'sale_customer',
             align: 'center',
-            width: 'auto',
+            width: genericsStore.device !== 'desktop' ? 200 : 'auto',
         },
         {
             title: 'Usuario',
             key: 'user',
             align: 'center',
-            width: 'auto',
+            width: genericsStore.device !== 'desktop' ? 200 : 'auto',
         },
         {
             title: 'Monto',
             key: 'amount',
             align: 'center',
-            width: 'auto',
+            width: genericsStore.device !== 'desktop' ? 100 : 'auto',
             render(row) {
                 return `S/. ${parseFloat(row.amount).toFixed(2)}`
             }
@@ -1122,13 +1180,13 @@ export const createOrderColumns = ({ showDetails, showDeliveryInfo, payDeliver, 
             title: 'Fecha',
             key: 'created',
             align: 'center',
-            width: 'auto',
+            width: genericsStore.device !== 'desktop' ? 200 : 'auto',
         },
         {
             title: 'Tipo',
             key: 'type',
             align: 'center',
-            width: 'auto',
+            width: genericsStore.device !== 'desktop' ? 150 : 'auto',
             render(row) {
                 let color, text;
                 switch (row.order_type) {
@@ -1167,7 +1225,7 @@ export const createOrderColumns = ({ showDetails, showDeliveryInfo, payDeliver, 
             title: 'Estado',
             key: 'status',
             align: 'center',
-            width: 'auto',
+            width: genericsStore.device !== 'desktop' ? 100 : 'auto',
             render(row) {
                 let type, text;
                 switch (row.status) {
@@ -1203,7 +1261,7 @@ export const createOrderColumns = ({ showDetails, showDeliveryInfo, payDeliver, 
         {
             title: 'Acciones',
             key: 'actions',
-            width: 'auto',
+            width: genericsStore.device !== 'desktop' ? 250 : 'auto',
             align: 'center',
             render(row) {
                 return [

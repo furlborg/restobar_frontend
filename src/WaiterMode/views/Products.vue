@@ -214,7 +214,7 @@ export default defineComponent({
       val.order_details.map((valOrder) => {
         let lC = 0;
 
-        if (!!val.preparation_place) {
+        if (!!valOrder.preparation_place) {
           let ind = "";
           let PL = [];
 
@@ -460,7 +460,6 @@ export default defineComponent({
           list.push(order);
         }
       });
-      console.log(list);
       return list;
     };
 

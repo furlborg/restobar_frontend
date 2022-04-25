@@ -54,6 +54,15 @@ export function isLetter(e) {
     }
 }
 
+export function isLetterOrNumber(e) {
+    let char = String.fromCharCode(e.keyCode)
+    if (/^[A-Za-zÀ-ÖØ-öø-ÿ0-9\-\s]+$/.test(char)) {
+        return true
+    } else {
+        e.preventDefault()
+    }
+}
+
 export function getDeviceType() {
     const ua = navigator.userAgent
     if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {

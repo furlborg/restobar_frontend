@@ -21,25 +21,27 @@
         </n-button>
       </template>
 
-      <n-form
-        label-placement="left"
-        style="width: 350px; margin-top: -8px; margin-bottom: 12px"
-      >
-        <n-input
-          placeholder="Buscar"
-          @keydown.enter="SearchFilter()"
-          v-model:value="textsearch"
-          round
-        >
-          <template #prefix>
-            <n-icon style="margin-top: -4px"
-              ><v-icon name="md-search-round"
-            /></n-icon>
-          </template>
-        </n-input>
+      <n-form label-placement="left">
+        <n-grid cols="1 xs:1 s:3 m:6" responsive="screen">
+          <n-gi>
+            <n-input
+              placeholder="Buscar"
+              @keydown.enter="SearchFilter()"
+              v-model:value="textsearch"
+              round
+            >
+              <template #prefix>
+                <n-icon style="margin-top: -4px"
+                  ><v-icon name="md-search-round"
+                /></n-icon>
+              </template>
+            </n-input>
+          </n-gi>
+        </n-grid>
       </n-form>
 
       <n-data-table
+        class="mt-2"
         :columns="tableColumns"
         :data="users.results"
         size="small"

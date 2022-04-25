@@ -5,7 +5,7 @@
         <n-text class="fs-2">Configuración General</n-text>
       </template>
     </n-page-header>
-    <n-card class="vh-82">
+    <n-card>
       <n-tabs type="card">
         <n-tab-pane name="areas-tables" tab="Areas y Mesas">
           <n-card :bordered="false" embedded>
@@ -13,7 +13,7 @@
               <n-gi>
                 <n-text class="fs-4">Editar Areas</n-text>
                 <n-form>
-                  <n-grid responsive="screen" cols="12" :x-gap="12">
+                  <n-grid responsive="screen" cols="4 xs:4 s:12" :x-gap="12">
                     <n-form-item-gi :span="4" label="Area">
                       <n-input-group>
                         <n-select
@@ -67,7 +67,7 @@
               <n-gi>
                 <n-text class="fs-4">Editar Mesas</n-text>
                 <n-form>
-                  <n-grid responsive="screen" cols="12" :x-gap="12">
+                  <n-grid responsive="screen" cols="4 xs:4 s:12" :x-gap="12">
                     <n-form-item-gi :span="4" label="Código">
                       <n-input v-model:value="table.code" placeholder="" />
                     </n-form-item-gi>
@@ -127,7 +127,7 @@
             :bordered="false"
             embedded
           >
-            <n-grid responsive="screen" cols="12" :x-gap="12">
+            <n-grid responsive="screen" cols="3 xs:3 s:12" :x-gap="12">
               <n-gi :span="3">
                 <n-list class="bg-white m-0" bordered>
                   <template #header
@@ -150,7 +150,11 @@
               </n-gi>
               <n-gi :span="9">
                 <n-form class="mt-2">
-                  <n-grid responsive="screen" cols="24" :x-gap="12">
+                  <n-grid
+                    responsive="screen"
+                    cols="4 xs:4 s:8 m:24"
+                    :x-gap="12"
+                  >
                     <n-form-item-gi :span="4" label="Descripción">
                       <n-input
                         v-model:value="preparationPlace"
@@ -193,7 +197,7 @@
             :bordered="false"
             embedded
           >
-            <n-grid responsive="screen" cols="12" :x-gap="12">
+            <n-grid responsive="screen" cols="3 xs:3 s:12" :x-gap="12">
               <n-gi :span="3">
                 <n-list class="bg-white m-0" bordered>
                   <template #header
@@ -216,7 +220,11 @@
               </n-gi>
               <n-gi :span="9">
                 <n-form class="mt-2">
-                  <n-grid responsive="screen" cols="24" :x-gap="12">
+                  <n-grid
+                    responsive="screen"
+                    cols="4 xs:4 s:8 m:24"
+                    :x-gap="12"
+                  >
                     <n-form-item-gi :span="4" label="Descripción">
                       <n-input v-model:value="productCategory" placeholder="" />
                     </n-form-item-gi>
@@ -254,7 +262,7 @@
         </n-tab-pane>
         <n-tab-pane name="PaymentMethods" tab="Métodos de Pago">
           <n-card title="Editar Métodos de Pago" :bordered="false" embedded>
-            <n-grid responsive="screen" cols="12" :x-gap="12">
+            <n-grid responsive="screen" cols="3 xs:3 s:12" :x-gap="12">
               <n-gi :span="3">
                 <n-list class="bg-white m-0" bordered>
                   <template #header
@@ -279,7 +287,11 @@
               </n-gi>
               <n-gi :span="9">
                 <n-form class="mt-2">
-                  <n-grid responsive="screen" cols="24" :x-gap="12">
+                  <n-grid
+                    responsive="screen"
+                    cols="4 xs:4 s:8 m:24"
+                    :x-gap="12"
+                  >
                     <n-form-item-gi :span="4" label="Descripción">
                       <n-input v-model:value="paymentMethod" placeholder="" />
                     </n-form-item-gi>
@@ -317,7 +329,7 @@
         </n-tab-pane>
         <n-tab-pane name="Concepts" tab="Conceptos">
           <n-card title="Editar Conceptos" :bordered="false" embedded>
-            <n-grid responsive="screen" cols="12" :x-gap="12">
+            <n-grid responsive="screen" cols="3 xs:3 s:12" :x-gap="12">
               <n-gi :span="3">
                 <n-list class="bg-white m-0" bordered>
                   <template #header
@@ -358,7 +370,11 @@
               </n-gi>
               <n-gi :span="9">
                 <n-form class="mt-2">
-                  <n-grid responsive="screen" cols="24" :x-gap="12">
+                  <n-grid
+                    responsive="screen"
+                    cols="4 xs:4 s:8 m:24"
+                    :x-gap="12"
+                  >
                     <n-form-item-gi :span="4" label="Tipo">
                       <n-select
                         :options="conceptTypeOptions"
