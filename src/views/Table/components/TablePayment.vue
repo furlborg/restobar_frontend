@@ -369,6 +369,7 @@ export default defineComponent({
     const businessStore = useBusinessStore();
 
     const printSale = (val) => {
+      let height = 0;
       let dataForPrint = JSON.parse(val.json_sale);
 
       let typeDoc = dataForPrint.serie_documento.split("");
@@ -418,6 +419,7 @@ export default defineComponent({
           twoPoints: ":",
           cont: newTotal[i],
         });
+        height += 7;
       }
 
       let structure = [
@@ -543,6 +545,7 @@ export default defineComponent({
           ],
           dat: !val.by_consumption
             ? dataForPrint.items.map((val) => {
+                height += 7;
                 return {
                   amount: val.cantidad,
                   unit: val.unidad_de_medida,
@@ -631,7 +634,7 @@ export default defineComponent({
         },
       ];
 
-      generatePrint(data, structure, NoNoteSale);
+      generatePrint(data, structure, NoNoteSale, height + 7 * 16);
 
       message.success("Imprimir");
     };

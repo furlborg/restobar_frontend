@@ -881,6 +881,7 @@ export default defineComponent({
     };
 
     const printSale = (val) => {
+      let height = 0;
       let structureDelivery = null;
 
       let values = { ...val.order, ...val.sale };
@@ -910,8 +911,6 @@ export default defineComponent({
 
       let datTotals = [];
 
-      let totalProdSum = 0;
-
       let newTotal = NoNoteSale
         ? {
             "OP.GRAVADA":
@@ -931,18 +930,11 @@ export default defineComponent({
           };
 
       for (let i in newTotal) {
+        height += 7;
         datTotals.push({
           tittle: i,
           twoPoints: ":",
           cont: newTotal[i],
-        });
-      }
-
-      if (!!sale.value.delivery_info) {
-        datTotals.splice(5, 0, {
-          tittle: "DELIVERY",
-          twoPoints: ":",
-          cont: values.delivery_info.amount,
         });
       }
 
@@ -952,6 +944,16 @@ export default defineComponent({
             [
               {
                 content: businessStore.business.commercial_name,
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 11,
+                },
+              },
+            ],
+            [
+              {
+                content: businessStore.business.ruc,
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
@@ -989,16 +991,7 @@ export default defineComponent({
                 },
               },
             ],
-            [
-              {
-                content: businessStore.business.ruc,
-                styles: {
-                  fontStyle: "bold",
-                  halign: "center",
-                  fontSize: 11,
-                },
-              },
-            ],
+
             [
               {
                 content: `${dataForPrint.serie_documento}-${dataForPrint.numero_documento}`,
@@ -1047,7 +1040,7 @@ export default defineComponent({
               header: "CANT.",
               dataKey: "amount",
             },
-            {
+            !val.by_consumption && {
               header: "U.M",
               dataKey: "unit",
             },
@@ -1056,7 +1049,7 @@ export default defineComponent({
               header: "DESCRIPCIÓN",
               dataKey: "description",
             },
-            {
+            !val.by_consumption && {
               header: "P.U",
               dataKey: "price",
             },
@@ -1068,6 +1061,7 @@ export default defineComponent({
           ],
           dat: !val.by_consumption
             ? dataForPrint.items.map((val) => {
+                height += 7;
                 return {
                   amount: val.cantidad,
                   unit: val.unidad_de_medida,
@@ -1082,7 +1076,7 @@ export default defineComponent({
                 {
                   amount: 1,
                   description: "POR CONSUMO DE ALIMENTOS",
-                  total: totalProdSum.toFixed("2"),
+                  total: dataForPrint.totales.total_venta.toFixed("2"),
                 },
               ],
           line: true,
@@ -1093,6 +1087,7 @@ export default defineComponent({
         },
 
         NoNoteSale && {
+          line: true,
           dat: [
             [
               {
@@ -1149,15 +1144,14 @@ export default defineComponent({
             {
               tittle: "TIPO DE PAGO",
               twoPoints: ":",
-              cont: saleStore.getPaymentMethodDescription(
-                values.payment_method
-              ),
+              cont: val.payment_method,
             },
           ],
         },
       ];
+      generatePrint(data, structure, NoNoteSale, height + 7 * 16);
 
-      generatePrint(data, structure, NoNoteSale);
+      message.success("Imprimir");
 
       if (!!sale.value.delivery_info) {
         let newTotals = [];
