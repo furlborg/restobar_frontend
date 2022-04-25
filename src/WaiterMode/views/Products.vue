@@ -456,6 +456,12 @@ export default defineComponent({
           let newOrder = cloneDeep(order);
           newOrder.quantity = order.quantity - item.quantity;
           list.push(newOrder);
+        } else if (
+          !!item &&
+          JSON.stringify(order.indication) !== JSON.stringify(item.indication)
+        ) {
+          let newOrder = cloneDeep(order);
+          list.push(newOrder);
         } else if (typeof item === "undefined") {
           list.push(order);
         }
