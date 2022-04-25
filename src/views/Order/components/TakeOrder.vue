@@ -1347,123 +1347,126 @@ export default defineComponent({
       ];
 
       responseData.order_details.map((val) => {
-        let ind = "";
+        if (!!val.preparation_place) {
+          let ind = "";
 
-        val.indication.map((v, i) => {
-          let cadenaConCaracteres = "";
-          if (!!v.description) {
-            let longitudCadena = v.description.length;
+          val.indication.map((v, i) => {
+            let cadenaConCaracteres = "";
+            if (!!v.description) {
+              let longitudCadena = v.description.length;
 
-            for (let i = 0; i < longitudCadena; i += 40) {
-              if (i + 40 < longitudCadena) {
-                cadenaConCaracteres +=
-                  v.description.substring(i, i + 40) + "\n";
-                lC += v.description.length / 40;
-              } else {
-                cadenaConCaracteres += v.description.substring(
-                  i,
-                  longitudCadena
-                );
+              for (let i = 0; i < longitudCadena; i += 40) {
+                if (i + 40 < longitudCadena) {
+                  cadenaConCaracteres +=
+                    v.description.substring(i, i + 40) + "\n";
+                  lC += v.description.length / 40;
+                } else {
+                  cadenaConCaracteres += v.description.substring(
+                    i,
+                    longitudCadena
+                  );
+                }
               }
+
+              ind = `${ind}${i + 1}-${cadenaConCaracteres}\n`;
             }
-
-            ind = `${ind}${i + 1}-${cadenaConCaracteres}\n`;
-          }
-        });
-
-        let prodDetail = !!val.product_description
-          ? val.product_description.split(",")
-          : val.product_description;
-
-        let newNameProd = val.product_name;
-
-        let heightForNmae = 10;
-
-        let verifyNameCombo = "";
-
-        if (
-          (val.product_category.toLowerCase().includes("combo") ||
-            val.product_category.toLowerCase().includes("menu") ||
-            val.product_category.toLowerCase().includes("menus") ||
-            val.product_category.toLowerCase().includes("combos")) &&
-          !!prodDetail &&
-          prodDetail.length > 0
-        ) {
-          prodDetail.map((v, index) => {
-            verifyNameCombo += `${index !== 0 ? "\n-" : "-"} ${v.trim()}`;
-            lengthData += 6.5;
           });
-        }
 
-        if (
-          val.product_category.toLowerCase().includes("menu") ||
-          val.product_category.toLowerCase().includes("menus")
-        ) {
-          newNameProd = `[MENU] ${newNameProd}`;
-        } else if (
-          (!!val.product_category.toLowerCase().includes("menu") === false ||
-            !!val.product_category.toLowerCase().includes("menus") === false) &&
-          (!!val.product_category.toLowerCase().includes("combo") === false ||
-            !!val.product_category.toLowerCase().includes("combo") === false)
-        ) {
-          newNameProd = `[CARTA] ${newNameProd}`;
-        }
-        lengthData += 7 * heightForNmae;
+          let prodDetail = !!val.product_description
+            ? val.product_description.split(",")
+            : val.product_description;
 
-        structure.push(
-          {
-            line: true,
-            dat: [
-              [
-                {
-                  content: `*${newNameProd}`,
-                  styles: {
-                    fontStyle: "bold",
-                    fontSize: process.env.VUE_APP_PRODUCT_SIZE,
-                  },
-                },
-              ],
-            ],
-          },
-          verifyNameCombo && {
-            dat: [
-              [
-                {
-                  content: verifyNameCombo,
-                  styles: {
-                    fontSize: 12,
-                  },
-                },
-              ],
-            ],
-          },
-          ind && {
-            dat: [
-              [
-                {
-                  content: ind,
-                  styles: {
-                    fontStyle: "bold",
-                    fontSize: 12,
-                  },
-                },
-              ],
-            ],
-          },
-          {
-            dat: [
-              [
-                {
-                  content: `Cant.: ${val.quantity}`,
-                  styles: {
-                    fontStyle: "bold",
-                    fontSize: 12,
-                  },
-                },
-              ],
-            ],
+          let newNameProd = val.product_name;
+
+          let heightForNmae = 10;
+
+          let verifyNameCombo = "";
+
+          if (
+            (val.product_category.toLowerCase().includes("combo") ||
+              val.product_category.toLowerCase().includes("menu") ||
+              val.product_category.toLowerCase().includes("menus") ||
+              val.product_category.toLowerCase().includes("combos")) &&
+            !!prodDetail &&
+            prodDetail.length > 0
+          ) {
+            prodDetail.map((v, index) => {
+              verifyNameCombo += `${index !== 0 ? "\n-" : "-"} ${v.trim()}`;
+              lengthData += 6.5;
+            });
           }
-        );
+
+          if (
+            val.product_category.toLowerCase().includes("menu") ||
+            val.product_category.toLowerCase().includes("menus")
+          ) {
+            newNameProd = `[MENU] ${newNameProd}`;
+          } else if (
+            (!!val.product_category.toLowerCase().includes("menu") === false ||
+              !!val.product_category.toLowerCase().includes("menus") ===
+                false) &&
+            (!!val.product_category.toLowerCase().includes("combo") === false ||
+              !!val.product_category.toLowerCase().includes("combo") === false)
+          ) {
+            newNameProd = `[CARTA] ${newNameProd}`;
+          }
+          lengthData += 7 * heightForNmae;
+
+          structure.push(
+            {
+              line: true,
+              dat: [
+                [
+                  {
+                    content: `*${newNameProd}`,
+                    styles: {
+                      fontStyle: "bold",
+                      fontSize: process.env.VUE_APP_PRODUCT_SIZE,
+                    },
+                  },
+                ],
+              ],
+            },
+            verifyNameCombo && {
+              dat: [
+                [
+                  {
+                    content: verifyNameCombo,
+                    styles: {
+                      fontSize: 12,
+                    },
+                  },
+                ],
+              ],
+            },
+            ind && {
+              dat: [
+                [
+                  {
+                    content: ind,
+                    styles: {
+                      fontStyle: "bold",
+                      fontSize: 12,
+                    },
+                  },
+                ],
+              ],
+            },
+            {
+              dat: [
+                [
+                  {
+                    content: `Cant.: ${val.quantity}`,
+                    styles: {
+                      fontStyle: "bold",
+                      fontSize: 12,
+                    },
+                  },
+                ],
+              ],
+            }
+          );
+        }
       });
 
       structure.push({
