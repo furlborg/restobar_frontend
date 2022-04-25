@@ -196,7 +196,7 @@ export default defineComponent({
             [
               {
                 content: `${update ? "ACTUALIZACION DE " : ""}MESA: ${
-                  tableName.value
+                  tableStore.getTableByID(table).description
                 }`,
                 styles: {
                   fontStyle: "bold",
@@ -407,12 +407,12 @@ export default defineComponent({
           },
         ],
       });
-      if (!!userStore.user.names) {
+      if (!!val.username) {
         structure.push({
           dat: [
             [
               {
-                content: `MOZO: ${userStore.user.names}`,
+                content: `MOZO: ${val.username}`,
                 styles: {
                   fontStyle: "bold",
                   halign: "right",
