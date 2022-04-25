@@ -343,6 +343,7 @@ export default defineComponent({
     });
 
     const print = (val, update = false) => {
+      console.log("asdasd");
       message.success("Orden actualizada correctamente");
       checkState.value = true;
 
@@ -419,7 +420,7 @@ export default defineComponent({
               } else {
                 ind = `${ind}${i + 1}-${cadenaConCaracteres}${"\n"}`;
               }
-              lengthData += lC + 6.5;
+              lengthData += lC * 6.5;
             }
           });
 

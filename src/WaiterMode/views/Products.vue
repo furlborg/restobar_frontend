@@ -247,7 +247,7 @@ export default defineComponent({
               } else {
                 ind = `${ind}${i + 1}-${cadenaConCaracteres}${"\n"}`;
               }
-              lengthData += lC + 6.5;
+              lengthData += lC * 6.5;
             }
           });
 
