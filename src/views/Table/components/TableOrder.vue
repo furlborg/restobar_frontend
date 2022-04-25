@@ -926,9 +926,9 @@ export default defineComponent({
         showUserConfirm.value = true;
       } else {
         if (!orderStore.orderId) {
-          performUpdateTableOrder();
-        } else {
           performCreateTableOrder();
+        } else {
+          performUpdateTableOrder();
         }
       }
     };
