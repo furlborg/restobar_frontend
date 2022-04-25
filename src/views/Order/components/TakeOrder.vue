@@ -1310,6 +1310,7 @@ export default defineComponent({
     };
 
     const print = (responseData) => {
+      console.log(responseData);
       let lengthData = 0;
 
       let structure = [
@@ -1479,12 +1480,12 @@ export default defineComponent({
           },
         ],
       });
-      if (!!userStore.user.names) {
+      if (!!responseData.username) {
         structure.push({
           dat: [
             [
               {
-                content: `MOZO: ${userStore.user.names}`,
+                content: `MOZO: ${responseData.username}`,
                 styles: {
                   fontStyle: "bold",
                   halign: "right",
