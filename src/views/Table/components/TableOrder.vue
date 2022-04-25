@@ -346,8 +346,6 @@ export default defineComponent({
       message.success("Orden actualizada correctamente");
       checkState.value = true;
 
-      let lC = 0;
-
       let lengthData = 0;
 
       let structure = [

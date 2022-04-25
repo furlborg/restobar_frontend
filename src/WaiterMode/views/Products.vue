@@ -173,9 +173,6 @@ export default defineComponent({
 
     const print = (val, update = false) => {
       message.success("Orden actualizada correctamente");
-      checkState.value = true;
-
-      let lC = 0;
 
       let lengthData = 0;
 
@@ -212,166 +209,169 @@ export default defineComponent({
         },
       ];
 
+      let thisIndicatesIfEverythingIsToGO = [];
+
       val.order_details.map((valOrder) => {
-        let ind = "";
-        let PL = [];
+        if (!!val.preparation_place) {
+          let ind = "";
+          let PL = [];
 
-        valOrder.indication.map((v, i) => {
-          if (!!v.takeAway && v.takeAway) {
-            PL.push(v.takeAway);
-          }
-
-          let cadenaConCaracteres = "";
-          if (!!v.description) {
-            let longitudCadena = v.description.length;
-
-            for (let i = 0; i < longitudCadena; i += 40) {
-              if (i + 40 < longitudCadena) {
-                cadenaConCaracteres +=
-                  v.description.substring(i, i + 40) + "\n";
-                lC += v.description.length / 40;
-              } else {
-                cadenaConCaracteres += v.description.substring(
-                  i,
-                  longitudCadena
-                );
-              }
+          valOrder.indication.map((v, i) => {
+            if (!!v.takeAway && v.takeAway) {
+              PL.push(v.takeAway);
             }
 
-            ind = `${ind}${i + 1}-${cadenaConCaracteres}${
-              !!v.takeAway && v.takeAway ? " [¡PARA LLEVAR!]\n" : "\n"
-            }`;
-            lengthData += 6.5;
-          }
-        });
-        console.log("siu");
+            let cadenaConCaracteres = "";
+            if (!!v.description) {
+              let longitudCadena = v.description.length;
 
-        if (!!ind === false && PL.length > 0) {
-          ind = `${PL.length} para llevar`;
-          lengthData += 6.5;
-        } else if (
-          !!ind &&
-          PL.length > 0 &&
-          PL.length !== valOrder.indication.length
-        ) {
-          ind += `\n y ${PL.length} para llevar`;
-          lengthData += 6.5;
-        } else if (
-          !!ind === false &&
-          valOrder.indication.length !== 0 &&
-          PL.length !== 0 &&
-          PL.length === valOrder.indication.length
-        ) {
-          ind = `para llevar`;
-          lengthData += 6.5;
-        }
+              for (let i = 0; i < longitudCadena; i += 40) {
+                if (i + 40 < longitudCadena) {
+                  cadenaConCaracteres +=
+                    v.description.substring(i, i + 40) + "\n";
+                  lC += v.description.length / 40;
+                } else {
+                  cadenaConCaracteres += v.description.substring(
+                    i,
+                    longitudCadena
+                  );
+                }
+              }
 
-        let prodDetail = !!valOrder.product_description
-          ? valOrder.product_description.split(",")
-          : valOrder.product_description;
-
-        let newNameProd = valOrder.product_name;
-
-        let heightForNmae = 10;
-
-        let verifyNameCombo = "";
-
-        if (
-          (valOrder.product_category.toLowerCase().includes("combo") ||
-            valOrder.product_category.toLowerCase().includes("menu") ||
-            valOrder.product_category.toLowerCase().includes("menus") ||
-            valOrder.product_category.toLowerCase().includes("combos")) &&
-          !!prodDetail &&
-          prodDetail.length > 0
-        ) {
-          prodDetail.map((v, index) => {
-            verifyNameCombo += `${index !== 0 ? "\n-" : "-"} ${v.trim()}`;
-            lengthData += 6.5;
+              ind = `${ind}${i + 1}-${cadenaConCaracteres}${
+                !!v.takeAway && v.takeAway ? " [¡PARA LLEVAR!]\n" : "\n"
+              }`;
+              lengthData += 6.5;
+            }
           });
-        }
 
-        if (
-          valOrder.product_category.toLowerCase().includes("menu") ||
-          valOrder.product_category.toLowerCase().includes("menus")
-        ) {
-          newNameProd = `[MENU] ${newNameProd}`;
-        } else if (
-          (!!valOrder.product_category.toLowerCase().includes("menu") ===
-            false ||
-            !!valOrder.product_category.toLowerCase().includes("menus") ===
-              false) &&
-          (!!valOrder.product_category.toLowerCase().includes("combo") ===
-            false ||
-            !!valOrder.product_category.toLowerCase().includes("combo") ===
-              false)
-        ) {
-          newNameProd = `[CARTA] ${newNameProd}`;
-        }
-
-        lengthData += 7 * heightForNmae;
-
-        if (valOrder.indication.length === PL.length) {
-          thisIndicatesIfEverythingIsToGO.push(true);
-        }
-
-        structure.push(
-          {
-            line: true,
-            dat: [
-              [
-                {
-                  content: `*${newNameProd}`,
-                  colSpan: "2",
-                  rowSpan: "1",
-                  styles: {
-                    fontStyle: "bold",
-                    fontSize: process.env.VUE_APP_PRODUCT_SIZE,
-                  },
-                },
-              ],
-            ],
-          },
-          verifyNameCombo && {
-            dat: [
-              [
-                {
-                  content: verifyNameCombo,
-                  styles: {
-                    fontSize: 12,
-                  },
-                },
-              ],
-            ],
-          },
-          ind && {
-            dat: [
-              [
-                {
-                  content: ind,
-                  styles: {
-                    fontStyle: "bold",
-                    fontSize: 12,
-                  },
-                },
-              ],
-            ],
-          },
-          {
-            dat: [
-              [
-                {
-                  content: `CANTIDAD: ${valOrder.quantity}`,
-                  colSpan: "2",
-                  rowSpan: "1",
-                  styles: {
-                    fontStyle: "bold",
-                    fontSize: 12,
-                  },
-                },
-              ],
-            ],
+          if (!!ind === false && PL.length > 0) {
+            ind = `${PL.length} para llevar`;
+            lengthData += 6.5;
+          } else if (
+            !!ind &&
+            PL.length > 0 &&
+            PL.length !== valOrder.indication.length
+          ) {
+            ind += `\n y ${PL.length} para llevar`;
+            lengthData += 6.5;
+          } else if (
+            !!ind === false &&
+            valOrder.indication.length !== 0 &&
+            PL.length !== 0 &&
+            PL.length === valOrder.indication.length
+          ) {
+            ind = `para llevar`;
+            lengthData += 6.5;
           }
-        );
+
+          let prodDetail = !!valOrder.product_description
+            ? valOrder.product_description.split(",")
+            : valOrder.product_description;
+
+          let newNameProd = valOrder.product_name;
+
+          let heightForNmae = 10;
+
+          let verifyNameCombo = "";
+
+          if (
+            (valOrder.product_category.toLowerCase().includes("combo") ||
+              valOrder.product_category.toLowerCase().includes("menu") ||
+              valOrder.product_category.toLowerCase().includes("menus") ||
+              valOrder.product_category.toLowerCase().includes("combos")) &&
+            !!prodDetail &&
+            prodDetail.length > 0
+          ) {
+            prodDetail.map((v, index) => {
+              verifyNameCombo += `${index !== 0 ? "\n-" : "-"} ${v.trim()}`;
+              lengthData += 6.5;
+            });
+          }
+
+          if (
+            valOrder.product_category.toLowerCase().includes("menu") ||
+            valOrder.product_category.toLowerCase().includes("menus")
+          ) {
+            newNameProd = `[MENU] ${newNameProd}`;
+          } else if (
+            (!!valOrder.product_category.toLowerCase().includes("menu") ===
+              false ||
+              !!valOrder.product_category.toLowerCase().includes("menus") ===
+                false) &&
+            (!!valOrder.product_category.toLowerCase().includes("combo") ===
+              false ||
+              !!valOrder.product_category.toLowerCase().includes("combo") ===
+                false)
+          ) {
+            newNameProd = `[CARTA] ${newNameProd}`;
+          }
+
+          lengthData += 7 * heightForNmae;
+
+          if (valOrder.indication.length === PL.length) {
+            thisIndicatesIfEverythingIsToGO.push(true);
+          }
+
+          structure.push(
+            {
+              line: true,
+              dat: [
+                [
+                  {
+                    content: `*${newNameProd}`,
+                    colSpan: "2",
+                    rowSpan: "1",
+                    styles: {
+                      fontStyle: "bold",
+                      fontSize: process.env.VUE_APP_PRODUCT_SIZE,
+                    },
+                  },
+                ],
+              ],
+            },
+            verifyNameCombo && {
+              dat: [
+                [
+                  {
+                    content: verifyNameCombo,
+                    styles: {
+                      fontSize: 12,
+                    },
+                  },
+                ],
+              ],
+            },
+            ind && {
+              dat: [
+                [
+                  {
+                    content: ind,
+                    styles: {
+                      fontStyle: "bold",
+                      fontSize: 12,
+                    },
+                  },
+                ],
+              ],
+            },
+            {
+              dat: [
+                [
+                  {
+                    content: `CANTIDAD: ${valOrder.quantity}`,
+                    colSpan: "2",
+                    rowSpan: "1",
+                    styles: {
+                      fontStyle: "bold",
+                      fontSize: 12,
+                    },
+                  },
+                ],
+              ],
+            }
+          );
+        }
       });
 
       if (val.order_details.length === thisIndicatesIfEverythingIsToGO.length) {
