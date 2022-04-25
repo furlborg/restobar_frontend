@@ -224,7 +224,11 @@
       </n-card>
     </n-spin>
     <n-modal
-      class="w-25"
+      :class="{
+        'w-100': genericsStore.device === 'mobile',
+        'w-50': genericsStore.device === 'tablet',
+        'w-25': genericsStore.device === 'desktop',
+      }"
       preset="card"
       v-model:show="showConfirm"
       title="Anular pedido"
@@ -253,6 +257,7 @@
 <script>
 import { defineComponent, ref, onMounted } from "vue";
 import { useMessage } from "naive-ui";
+import { useGenericsStore } from "@/store/modules/generics";
 import { useTableStore } from "@/store/modules/table";
 import { useUserStore } from "@/store/modules/user";
 import { cancelTableOrder, retrieveTableOrder } from "@/api/modules/tables";
@@ -271,6 +276,7 @@ export default defineComponent({
     const tableGroups = ref([]);
     const currentTableGrouping = ref(null);
     const currentGroup = ref([]);
+    const genericsStore = useGenericsStore();
     const tableStore = useTableStore();
     const userStore = useUserStore();
     const businessStore = useBusinessStore();
@@ -516,6 +522,7 @@ export default defineComponent({
       performRetrieveTableOrder,
       showConfirm,
       passConfirm,
+      genericsStore,
     };
   },
 });

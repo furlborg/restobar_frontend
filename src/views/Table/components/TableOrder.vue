@@ -162,7 +162,11 @@
         </n-gi>
       </n-grid>
       <n-modal
-        class="w-25"
+        :class="{
+          'w-100': genericsStore.device === 'mobile',
+          'w-50': genericsStore.device === 'tablet',
+          'w-25': genericsStore.device === 'desktop',
+        }"
         preset="card"
         v-model:show="showConfirm"
         title="Eliminando comanda"
@@ -223,6 +227,7 @@ import {
 import { NThing, NTag, NSpace, useDialog, useMessage } from "naive-ui";
 import { useUserStore } from "@/store/modules/user";
 import { useTableStore } from "@/store/modules/table";
+import { useGenericsStore } from "@/store/modules/generics";
 import { useProductStore } from "@/store/modules/product";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
@@ -249,6 +254,7 @@ export default defineComponent({
     const message = useMessage();
     const dialog = useDialog();
     const table = route.params.table;
+    const genericsStore = useGenericsStore();
     const productStore = useProductStore();
     const tableStore = useTableStore();
     const orderStore = useOrderStore();
@@ -884,6 +890,7 @@ export default defineComponent({
       performDeleteDetail,
       deleteQuantity,
       maxQuantity,
+      genericsStore,
     };
   },
 });
