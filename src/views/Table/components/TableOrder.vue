@@ -616,14 +616,15 @@ export default defineComponent({
       let list = [];
       details.forEach((order) => {
         let item = saleStore.order_initial.find((v) => v.id === order.id);
-        if (
-          !!item &&
-          (order.quantity > item.quantity ||
-            JSON.stringify(order.indication) !==
-              JSON.stringify(item.indication))
-        ) {
+        if (!!item && order.quantity > item.quantity) {
           let newOrder = cloneDeep(order);
           newOrder.quantity = order.quantity - item.quantity;
+          list.push(newOrder);
+        } else if (
+          !!item &&
+          JSON.stringify(order.indication) !== JSON.stringify(item.indication)
+        ) {
+          let newOrder = cloneDeep(order);
           list.push(newOrder);
         } else if (typeof item === "undefined") {
           list.push(order);
