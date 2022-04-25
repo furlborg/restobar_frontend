@@ -385,7 +385,7 @@ export default defineComponent({
           let infoTikect = [];
 
           let info = {
-            Usuario: "Usuario",
+            // Usuario: "Usuario",
             Concepto: tillStore.getConceptDescription(rowData.concept),
             Descripcion: rowData.description,
             "Metodo de Pago": saleStore

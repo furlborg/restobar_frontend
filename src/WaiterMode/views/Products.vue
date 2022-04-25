@@ -212,6 +212,8 @@ export default defineComponent({
       let thisIndicatesIfEverythingIsToGO = [];
 
       val.order_details.map((valOrder) => {
+        let lC = 0;
+
         if (!!val.preparation_place) {
           let ind = "";
           let PL = [];
@@ -238,10 +240,14 @@ export default defineComponent({
                 }
               }
 
-              ind = `${ind}${i + 1}-${cadenaConCaracteres}${
-                !!v.takeAway && v.takeAway ? " [¡PARA LLEVAR!]\n" : "\n"
-              }`;
-              lengthData += 6.5;
+              if (!!v.takeAway && v.takeAway) {
+                ind = `${ind}${
+                  i + 1
+                }-${cadenaConCaracteres}${"\n[¡PARA LLEVAR!]"}`;
+              } else {
+                ind = `${ind}${i + 1}-${cadenaConCaracteres}${"\n"}`;
+              }
+              lengthData += lC + 6.5;
             }
           });
 
