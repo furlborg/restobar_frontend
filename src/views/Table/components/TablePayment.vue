@@ -395,8 +395,15 @@ export default defineComponent({
 
       let datTotals = [];
 
+      let subtotal = 0;
+
+      dataForPrint.items.map((val) => {
+        subtotal += parseFloat(val.precio_unitario);
+      });
+
       let newTotal = NoNoteSale
         ? {
+            SUBTOTAL: subtotal.toFixed("2"),
             "OP.GRAVADA":
               dataForPrint.totales.total_operaciones_gravadas.toFixed("2"),
             "OP.EXONERADA":
