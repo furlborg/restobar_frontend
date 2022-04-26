@@ -22,7 +22,13 @@ export async function updateBusiness(business) {
     phone: business.phone,
     email: business.email,
     website: business.website,
-    general_pass: business.general_pass
+  });
+}
+
+export async function updateGeneralPass(general_pass, new_pass) {
+  return await http.post("business/change_general_pass/", {
+    general_pass: general_pass,
+    new_pass: new_pass
   });
 }
 

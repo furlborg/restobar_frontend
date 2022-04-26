@@ -37,11 +37,6 @@ export const businessRules = {
         trigger: ['blur', 'input'],
         message: 'Representante requerido'
     },
-    general_pass: {
-        required: true,
-        trigger: ['blur', 'input'],
-        message: 'Clave requerida'
-    },
 }
 
 export const branchOfficeRules = {

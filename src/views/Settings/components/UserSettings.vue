@@ -7,18 +7,27 @@
     </n-page-header>
     <n-card title="Usuarios" :segmented="{ content: 'hard' }">
       <template #header-extra>
-        <n-button
-          type="primary"
-          @click="newUser(), (showModal = true)"
-          secondary
-        >
-          <template #icon>
-            <n-icon>
-              <v-icon name="la-user-plus-solid" />
-            </n-icon>
-          </template>
-          Crear
-        </n-button>
+        <n-space>
+          <n-button
+            v-if="userStore.user.is_owner"
+            type="warning"
+            secondary
+            @click="showPassModal = true"
+            >Cambiar clave de seguridad</n-button
+          >
+          <n-button
+            type="primary"
+            @click="newUser(), (showModal = true)"
+            secondary
+          >
+            <template #icon>
+              <n-icon>
+                <v-icon name="la-user-plus-solid" />
+              </n-icon>
+            </template>
+            Crear
+          </n-button>
+        </n-space>
       </template>
 
       <n-form label-placement="left">
@@ -62,16 +71,78 @@
       @on-success="listUsers"
       :items="itemsUser"
     />
+    <n-modal
+      :class="{
+        'w-100': genericsStore.device === 'mobile',
+        'w-50': genericsStore.device === 'tablet',
+        'w-25': genericsStore.device === 'desktop',
+      }"
+      preset="card"
+      v-model:show="showPassModal"
+      title="Cambiar clave de seguridad"
+      :mask-closable="false"
+      closable
+      @close="onCloseSecurity"
+    >
+      <n-form ref="securityForm" :model="securityPass" :rules="securityRules">
+        <n-form-item label="Ingrese clave actual" path="currentPass">
+          <n-input
+            type="password"
+            v-model:value="securityPass.currentPass"
+            placeholder=""
+          />
+        </n-form-item>
+        <n-form-item label="Ingrese nueva clave" path="newPass">
+          <n-input
+            type="password"
+            v-model:value="securityPass.newPass"
+            @input="handlePasswordInput"
+            placeholder=""
+          />
+        </n-form-item>
+        <n-form-item
+          label="Reingrese nueva clave"
+          ref="rePassRef"
+          path="rePass"
+        >
+          <n-input
+            type="password"
+            v-model:value="securityPass.rePass"
+            placeholder=""
+          />
+        </n-form-item>
+      </n-form>
+      <template #action>
+        <n-space justify="end">
+          <n-button
+            type="success"
+            :loading="isLoading"
+            :disabled="
+              !securityPass.currentPass ||
+              !securityPass.newPass ||
+              !securityPass.rePass ||
+              isLoading
+            "
+            secondary
+            @click.prevent="performUpdateSecurityPass"
+            >Confirmar</n-button
+          >
+        </n-space>
+      </template>
+    </n-modal>
   </div>
 </template>
 
 <script>
 import { defineComponent, ref, onMounted, reactive } from "vue";
 import { useRouter } from "vue-router";
-import { useMessage, useDialog, NButton } from "naive-ui";
+import { useMessage, useDialog } from "naive-ui";
 import { createUserColumns } from "@/utils/constants";
 import UserSettingsModal from "./UserSettingsModal";
 import UserPassword from "./UserPassword";
+import { useGenericsStore } from "@/store/modules/generics";
+import { useUserStore } from "@/store/modules/user";
+import { updateGeneralPass } from "@/api/modules/business";
 import { getUsers, disableUsers } from "@/api/modules/users";
 
 export default defineComponent({
@@ -84,6 +155,8 @@ export default defineComponent({
     const router = useRouter();
     const message = useMessage();
     const dialog = useDialog();
+    const genericsStore = useGenericsStore();
+    const userStore = useUserStore();
     const showModal = ref(false);
     const showModalPass = ref(false);
     const itemsUser = ref({});
@@ -220,7 +293,96 @@ export default defineComponent({
       });
     };
 
+    const securityForm = ref(null);
+
+    const rePassRef = ref(null);
+
+    function handlePasswordInput() {
+      if (securityPass.value.rePass) {
+        rePassRef.value.validate({ trigger: "password-input" });
+      }
+    }
+
+    function validatePasswordStartWith(rule, value) {
+      return (
+        !!securityPass.value.newPass &&
+        securityPass.value.newPass.startsWith(value) &&
+        securityPass.value.newPass.length >= value.length
+      );
+    }
+
+    function validatePasswordSame(rule, value) {
+      return value === securityPass.value.newPass;
+    }
+
+    const securityRules = {
+      currentPass: {
+        required: true,
+        message: "Contraseña actual requerido",
+        trigger: ["input", "blur"],
+      },
+      newPass: {
+        required: true,
+        message: "Nueva contraseña requerido",
+        trigger: ["input", "blur"],
+      },
+      rePass: [
+        {
+          required: true,
+          message: "Reingreso de contraseña requerido",
+          trigger: ["input", "blur"],
+        },
+        {
+          validator: validatePasswordStartWith,
+          message: "Las contraseñas no son iguales!",
+          trigger: "input",
+        },
+        {
+          validator: validatePasswordSame,
+          message: "Las contraseñas no son iguales!",
+          trigger: ["blur", "password-input"],
+        },
+      ],
+    };
+
+    const securityPass = ref({
+      currentPass: "",
+      newPass: "",
+      rePass: "",
+    });
+
+    const showPassModal = ref(false);
+
+    const isLoading = ref(false);
+
+    const performUpdateSecurityPass = () => {
+      isLoading.value = true;
+      updateGeneralPass(
+        securityPass.value.currentPass,
+        securityPass.value.newPass
+      )
+        .then((response) => {
+          if (response.status === 204) {
+            message.success("Clave de seguridad actualizada correctamente!");
+            showPassModal.value = false;
+            isLoading.value = false;
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        });
+    };
+
+    const onCloseSecurity = () => {
+      securityPass.value.currentPass = "";
+      securityPass.value.newPass = "";
+      securityPass.value.rePass = "";
+    };
+
     return {
+      genericsStore,
+      userStore,
       handleBack,
       showModal,
       showModalPass,
@@ -233,6 +395,15 @@ export default defineComponent({
       itemsUser,
       items,
       users,
+      showPassModal,
+      isLoading,
+      securityForm,
+      rePassRef,
+      securityRules,
+      securityPass,
+      onCloseSecurity,
+      handlePasswordInput,
+      performUpdateSecurityPass,
       tableColumns: createUserColumns({
         editUser(data) {
           editUser(data);
