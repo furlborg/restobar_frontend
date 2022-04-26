@@ -1,6 +1,6 @@
 <template>
   <div id="CategoriesItems">
-    <n-space class="mb-2" align="end">
+    <n-space class="mb-2" align="end" justify="space-between">
       <n-breadcrumb separator="⏵">
         <n-breadcrumb-item>
           <router-link :to="{ name: 'ProductCategories' }">
@@ -11,6 +11,7 @@
           productStore.getCategorieDescription($route.params.category)
         }}</n-breadcrumb-item>
       </n-breadcrumb>
+      <n-input v-model:value="search" placeholder="Buscar..." />
       <!-- <n-radio-group v-model:value="listType" name="listType" size="small">
         <n-radio-button class="p-0" value="list" key="list">
           <v-icon class="m-1" name="md-list-round" />
@@ -24,7 +25,7 @@
       <n-list v-if="listType === 'list'" class="me-2">
         <n-list-item
           class="w-100 p-0"
-          v-for="(product, index) in products"
+          v-for="(product, index) in itemsList"
           :key="index"
           @click="orderStore.addOrder(product)"
           style="cursor: pointer"
@@ -88,7 +89,7 @@
 </template>
 
 <script>
-import { defineComponent, onMounted, ref } from "vue";
+import { defineComponent, computed, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import { useRouter } from "vue-router";
 import { useMessage } from "naive-ui";
@@ -108,6 +109,13 @@ export default defineComponent({
     const category = route.params.category;
     const listType = ref("list");
     const products = ref([]);
+    const search = ref("");
+
+    const itemsList = computed(() => {
+      return products.value.filter((product) =>
+        product.name.toLowerCase().includes(search.value)
+      );
+    });
 
     const productOptions = [
       {
@@ -151,6 +159,8 @@ export default defineComponent({
       category,
       products,
       orderStore,
+      search,
+      itemsList,
     };
   },
 });
