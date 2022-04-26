@@ -92,6 +92,7 @@
                     v-model:value="product.category"
                     :options="categoriesOptions"
                     placeholder=""
+                    filterable
                     clearable
                   />
                   <n-button
