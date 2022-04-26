@@ -440,15 +440,17 @@ export default defineComponent({
                     response.data.direccion;
                 }
                 customer_name.value.restoreValidation();
-              } else if (response.status === 404) {
-                message.error("Documento no encontrado");
               } else {
                 message.error("Algo salió mal...");
               }
             })
             .catch((error) => {
-              console.error(error);
-              message.error("Algo salió mal...");
+              if (error.response.status === 404) {
+                message.error("Documento no encontrado");
+              } else {
+                console.error(error);
+                message.error("Algo salió mal...");
+              }
             })
             .finally(() => {
               requestMessage.value.destroy();
