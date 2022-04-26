@@ -89,6 +89,7 @@ export async function createSale(sale) {
         date_sale: sale.date_sale,
         count: sale.count,
         amount: sale.amount,
+        given_amount: sale.given_amount,
         invoice_type: sale.invoice_type,
         payment_method: sale.payment_method,
         payment_condition: sale.payment_condition,

@@ -90,6 +90,7 @@ export async function takeAwayOrder(order_details, sale_data, user) {
         date_sale: sale_data.date_sale,
         count: sale_data.count,
         amount: sale_data.amount,
+        given_amount: sale_data.given_amount,
         invoice_type: sale_data.invoice_type,
         payment_method: sale_data.payment_method,
         payment_condition: sale_data.payment_condition,
