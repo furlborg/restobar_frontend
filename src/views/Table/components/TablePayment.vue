@@ -621,7 +621,7 @@ export default defineComponent({
           line: true,
           dat: [
             {
-              tittle: "CONSULTOR/VENDEDOR",
+              tittle: "USUARIO",
               twoPoints: ":",
               cont: userStore.user.names,
             },

@@ -1140,7 +1140,7 @@ export default defineComponent({
           line: true,
           dat: [
             {
-              tittle: "CONSULTOR/VENDEDOR",
+              tittle: "USUARIO",
               twoPoints: ":",
               cont: userStore.user.names,
             },
@@ -1313,7 +1313,6 @@ export default defineComponent({
     };
 
     const print = (responseData) => {
-      console.log(responseData);
       let lengthData = 0;
 
       let structure = [
