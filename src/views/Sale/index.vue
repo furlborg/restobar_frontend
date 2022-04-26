@@ -325,6 +325,7 @@ export default defineComponent({
       userStore,
       tableColumns: createSaleColumns({
         printSale(val) {
+          console.log(val);
           let height = 0;
           let dataForPrint = JSON.parse(val.json_sale);
 
@@ -351,8 +352,16 @@ export default defineComponent({
 
           let datTotals = [];
 
+          let subtotal = 0;
+
+          dataForPrint.items.map((val) => {
+            subtotal += val.cantidad * parseFloat(val.precio_unitario);
+          });
+
           let newTotal = NoNoteSale
             ? {
+                SUBTOTAL: subtotal.toFixed("2"),
+                "PAGO CON": val.given_amount,
                 "OP.GRAVADA":
                   dataForPrint.totales.total_operaciones_gravadas.toFixed("2"),
                 "OP.EXONERADA":
@@ -582,7 +591,7 @@ export default defineComponent({
               line: true,
               dat: [
                 {
-                  tittle: "CONSULTOR/VENDEDOR",
+                  tittle: "USUARIO",
                   twoPoints: ":",
                   cont: userStore.user.names,
                 },

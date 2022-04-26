@@ -882,8 +882,11 @@ export default defineComponent({
     };
 
     const printSale = (val) => {
+      console.log(val);
       let height = 0;
       let structureDelivery = null;
+
+      let totalProdSum = 0;
 
       let values = { ...val.order, ...val.sale };
 
@@ -912,8 +915,17 @@ export default defineComponent({
 
       let datTotals = [];
 
+      let subTo = 0;
+
+      dataForPrint.items.map((val) => {
+        subTo += val.cantidad * parseFloat(val.precio_unitario);
+      });
+
       let newTotal = NoNoteSale
         ? {
+            SUBTOTAL: subTo.toFixed("2"),
+            "PAGO CON": val.given_amount,
+            // VUELTO: changing.toFixed(2),
             "OP.GRAVADA":
               dataForPrint.totales.total_operaciones_gravadas.toFixed("2"),
             "OP.EXONERADA":
@@ -1062,6 +1074,7 @@ export default defineComponent({
           ],
           dat: !val.by_consumption
             ? dataForPrint.items.map((val) => {
+                totalProdSum += val.cantidad * parseFloat(val.precio_unitario);
                 height += 7;
                 return {
                   amount: val.cantidad,
@@ -1138,7 +1151,7 @@ export default defineComponent({
           line: true,
           dat: [
             {
-              tittle: "CONSULTOR/VENDEDOR",
+              tittle: "USUARIO",
               twoPoints: ":",
               cont: userStore.user.names,
             },
@@ -1311,7 +1324,6 @@ export default defineComponent({
     };
 
     const print = (responseData) => {
-      console.log(responseData);
       let lengthData = 0;
 
       let structure = [
