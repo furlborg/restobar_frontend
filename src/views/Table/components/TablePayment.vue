@@ -408,6 +408,8 @@ export default defineComponent({
       let newTotal = NoNoteSale
         ? {
             SUBTOTAL: subtotal.toFixed("2"),
+            "PAGO CON": val.given_amount,
+            // VUELTO: changing.toFixed(2),
             "OP.GRAVADA":
               dataForPrint.totales.total_operaciones_gravadas.toFixed("2"),
             "OP.EXONERADA":
