@@ -667,7 +667,7 @@ export default defineComponent({
     const showOptions = (value) => {
       if (value.length >= 3) {
         searching.value = true;
-        searchProductByName(value, true)
+        searchProductByName(value)
           .then((response) => {
             if (response.status === 200) {
               products.value = response.data;

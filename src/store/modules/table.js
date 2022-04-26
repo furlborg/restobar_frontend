@@ -67,6 +67,7 @@ export const useTableStore = defineStore("table", {
         let t = area.tables.find((table) => table.id == id);
         if (typeof t !== "undefined") {
           table = t;
+          return table;
         }
       });
       return table;

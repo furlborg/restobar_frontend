@@ -22,6 +22,7 @@ export async function updateBusiness(business) {
     phone: business.phone,
     email: business.email,
     website: business.website,
+    general_pass: business.general_pass
   });
 }
 
