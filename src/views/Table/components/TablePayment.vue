@@ -189,7 +189,7 @@
                     type="number"
                     min="0"
                     step=".01"
-                    v-model="payment_amount"
+                    v-model="sale.given_amount"
                     v-autowidth
                     @click="$event.target.select()"
                   />
@@ -233,7 +233,9 @@
         <n-button
           class="fs-1 py-5 mt-2"
           type="success"
-          :disabled="!saleStore.toSale.length || payment_amount < sale.amount"
+          :disabled="
+            !saleStore.toSale.length || sale.given_amount < sale.amount
+          "
           secondary
           block
           @click.prevent="performCreateSale"
@@ -291,8 +293,8 @@ export default defineComponent({
     const payment_amount = ref(parseFloat(0).toFixed(2));
     const saleForm = ref();
     const changing = computed(() => {
-      return payment_amount.value > total.value
-        ? total.value - payment_amount.value
+      return sale.value.given_amount > total.value
+        ? total.value - sale.value.given_amount
         : 0.0;
     });
 
@@ -321,6 +323,7 @@ export default defineComponent({
       date_sale: format(new Date(Date.now()), "dd/MM/yyyy hh:mm:ss"),
       count: products_count,
       amount: total,
+      given_amount: parseFloat(0).toFixed(2),
       invoice_type: 3,
       payment_method: 1,
       payment_condition: 1,
