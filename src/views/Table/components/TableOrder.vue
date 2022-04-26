@@ -133,11 +133,7 @@
                       :disabled="
                         orderStore.orderList.length ? checkState : true
                       "
-                      @click="
-                        orderStore.orderId
-                          ? performUpdateTableOrder()
-                          : performCreateTableOrder()
-                      "
+                      @click="validateSend()"
                     >
                       <v-icon
                         class="me-2"
@@ -162,7 +158,43 @@
         </n-gi>
       </n-grid>
       <n-modal
-        class="w-25"
+        :class="{
+          'w-100': genericsStore.device === 'mobile',
+          'w-50': genericsStore.device === 'tablet',
+          'w-25': genericsStore.device === 'desktop',
+        }"
+        preset="card"
+        v-model:show="showUserConfirm"
+        title="Registrar pedido"
+        :mask-closable="false"
+        closable
+      >
+        <n-form-item label="Ingrese código de usuario">
+          <n-input type="password" v-model:value="userConfirm" placeholder="" />
+        </n-form-item>
+        <template #action>
+          <n-space justify="end">
+            <n-button
+              type="success"
+              :loading="loadingConfirm"
+              :disabled="!userConfirm || loadingConfirm"
+              secondary
+              @click.prevent="
+                orderStore.orderId
+                  ? performUpdateTableOrder()
+                  : performCreateTableOrder()
+              "
+              >Confirmar</n-button
+            >
+          </n-space>
+        </template>
+      </n-modal>
+      <n-modal
+        :class="{
+          'w-100': genericsStore.device === 'mobile',
+          'w-50': genericsStore.device === 'tablet',
+          'w-25': genericsStore.device === 'desktop',
+        }"
         preset="card"
         v-model:show="showConfirm"
         title="Eliminando comanda"
@@ -182,7 +214,7 @@
             <n-form-item-gi label="Clave de seguridad">
               <n-input
                 type="password"
-                v-model:value="userConfirm"
+                v-model:value="passConfirm"
                 placeholder=""
               />
             </n-form-item-gi>
@@ -192,7 +224,7 @@
           <n-space justify="end">
             <n-button
               type="success"
-              :disabled="!userConfirm"
+              :disabled="!passConfirm"
               secondary
               @click.prevent="performDeleteDetail"
               >Confirmar</n-button
@@ -223,6 +255,7 @@ import {
 import { NThing, NTag, NSpace, useDialog, useMessage } from "naive-ui";
 import { useUserStore } from "@/store/modules/user";
 import { useTableStore } from "@/store/modules/table";
+import { useGenericsStore } from "@/store/modules/generics";
 import { useProductStore } from "@/store/modules/product";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
@@ -249,6 +282,7 @@ export default defineComponent({
     const message = useMessage();
     const dialog = useDialog();
     const table = route.params.table;
+    const genericsStore = useGenericsStore();
     const productStore = useProductStore();
     const tableStore = useTableStore();
     const orderStore = useOrderStore();
@@ -607,7 +641,11 @@ export default defineComponent({
     };
 
     const performCreateTableOrder = async () => {
-      await createTableOrder(route.params.table, orderStore.orderList)
+      await createTableOrder(
+        route.params.table,
+        orderStore.orderList,
+        userConfirm.value
+      )
         .then((response) => {
           if (response.status === 201) {
             print(response.data);
@@ -616,6 +654,11 @@ export default defineComponent({
         .catch((error) => {
           console.error(error);
           message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          userConfirm.value = "";
+          loadingConfirm.value = false;
+          showUserConfirm.value = false;
         });
     };
 
@@ -644,7 +687,8 @@ export default defineComponent({
       await updateTableOrder(
         route.params.table,
         orderStore.orderId,
-        orderStore.orderList
+        orderStore.orderList,
+        userConfirm.value
       )
         .then((response) => {
           if (response.status === 202) {
@@ -657,6 +701,11 @@ export default defineComponent({
         .catch((error) => {
           console.error(error);
           message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          userConfirm.value = "";
+          loadingConfirm.value = false;
+          showUserConfirm.value = false;
         });
     };
 
@@ -691,7 +740,7 @@ export default defineComponent({
 
     const showConfirm = ref(false);
 
-    const userConfirm = ref("");
+    const passConfirm = ref("");
 
     const deleteQuantity = ref(1);
 
@@ -703,7 +752,7 @@ export default defineComponent({
       await performDeleteOrderDetail(
         route.params.table,
         removingItem.value.id,
-        userConfirm.value,
+        passConfirm.value,
         deleteQuantity.value
       )
         .then((response) => {
@@ -713,7 +762,7 @@ export default defineComponent({
             message.success("Comanda eliminada");
             removingItem.value.ind = "";
             removingItem.value.id = "";
-            userConfirm.value = "";
+            passConfirm.value = "";
             deleteQuantity.value = 1;
             maxQuantity.value = 1;
             showConfirm.value = false;
@@ -729,7 +778,7 @@ export default defineComponent({
             message.success("Comanda actualizada correctamente");
             removingItem.value.ind = "";
             removingItem.value.id = "";
-            userConfirm.value = "";
+            passConfirm.value = "";
             deleteQuantity.value = 1;
             maxQuantity.value = 1;
             showConfirm.value = false;
@@ -862,19 +911,37 @@ export default defineComponent({
       );
     };
 
+    const showUserConfirm = ref(false);
+
+    const loadingConfirm = ref(false);
+
+    const userConfirm = ref("");
+
     const handleBack = () => {
       router.push({ name: "TableHome" });
+    };
+
+    const validateSend = () => {
+      if (userStore.user.profile_des === "MOZO") {
+        showUserConfirm.value = true;
+      } else {
+        if (!orderStore.orderId) {
+          performUpdateTableOrder();
+        } else {
+          performCreateTableOrder();
+        }
+      }
     };
 
     return {
       showModal,
       itemIndex,
       table,
-      handleBack,
       listType,
       userStore,
       orderStore,
       saleStore,
+      handleBack,
       renderLabel,
       performCreateTableOrder,
       performUpdateTableOrder,
@@ -887,10 +954,15 @@ export default defineComponent({
       selectProduct,
       nullifyTableOrder,
       showConfirm,
-      userConfirm,
+      passConfirm,
       performDeleteDetail,
       deleteQuantity,
       maxQuantity,
+      genericsStore,
+      showUserConfirm,
+      userConfirm,
+      loadingConfirm,
+      validateSend,
     };
   },
 });

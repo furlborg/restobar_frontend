@@ -58,17 +58,18 @@ export async function retrieveTableOrder(idTable) {
     return await http.get(`tables/${idTable}/order/`)
 }
 
-export async function createTableOrder(idTable, details) {
+export async function createTableOrder(idTable, details, user) {
     const tillStore = useTillStore();
     let order_details = details.map(order => ({ product: order.product, indication: order.indication, quantity: order.quantity }))
     return await http.post(`tables/${idTable}/take_order/`, {
         till: tillStore.currentTillID,
         order_type: 'M',
         order_details: order_details,
+        user: !user ? null : user
     })
 }
 
-export async function updateTableOrder(idTable, orderId, details) {
+export async function updateTableOrder(idTable, orderId, details, user) {
     const tillStore = useTillStore();
     let order_details = details.map(order => ({ id: order.id, product: order.product, indication: order.indication, quantity: order.quantity }))
     return await http.put(`tables/${idTable}/change_order/`, {
@@ -76,6 +77,7 @@ export async function updateTableOrder(idTable, orderId, details) {
         till: tillStore.currentTillID,
         order_type: 'M',
         order_details: order_details,
+        user: !user ? null : user
     })
 }
 

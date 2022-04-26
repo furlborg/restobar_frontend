@@ -91,7 +91,11 @@
       />
     </n-card>
     <n-modal
-      class="w-25"
+      :class="{
+        'w-100': genericsStore.device === 'mobile',
+        'w-50': genericsStore.device === 'tablet',
+        'w-25': genericsStore.device === 'desktop',
+      }"
       preset="card"
       v-model:show="showConfirm"
       title="Anular pedido"
@@ -137,6 +141,7 @@ import DetailsModal from "./components/DetailsModal";
 import DeliveryModal from "./components/DeliveryModal";
 import { createOrderColumns } from "@/utils/constants";
 import { useBusinessStore } from "@/store/modules/business";
+import { useGenericsStore } from "@/store/modules/generics";
 import { useTillStore } from "@/store/modules/till";
 import { useUserStore } from "@/store/modules/user";
 import { isNumber, isLetter } from "@/utils";
@@ -159,6 +164,7 @@ export default defineComponent({
     const message = useMessage();
     const dialog = useDialog();
     const businessStore = useBusinessStore();
+    const genericsStore = useGenericsStore();
     const userStore = useUserStore();
     const tillStore = useTillStore();
     const isLoading = ref(false);
@@ -453,6 +459,7 @@ export default defineComponent({
       isLoading,
       showConfirm,
       passConfirm,
+      genericsStore,
       performNullifyTableOrder,
       tableColumns: createOrderColumns({
         showDetails(row) {

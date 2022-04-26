@@ -445,7 +445,11 @@
         </n-gi>
       </n-grid>
       <n-modal
-        class="w-25"
+        :class="{
+          'w-100': genericsStore.device === 'mobile',
+          'w-50': genericsStore.device === 'tablet',
+          'w-25': genericsStore.device === 'desktop',
+        }"
         preset="card"
         v-model:show="showConfirm"
         title="Registrar pedido"
@@ -498,6 +502,7 @@ import { useOrderStore } from "@/store/modules/order";
 import { useUserStore } from "@/store/modules/user";
 import { useSaleStore } from "@/store/modules/sale";
 import { useBusinessStore } from "@/store/modules/business";
+import { useGenericsStore } from "@/store/modules/generics";
 import { searchProductByName } from "@/api/modules/products";
 import { takeAwayOrder } from "@/api/modules/orders";
 import { createSale, getSaleNumber } from "@/api/modules/sales";
@@ -530,6 +535,7 @@ export default defineComponent({
     const router = useRouter();
     const saleStore = useSaleStore();
     const orderStore = useOrderStore();
+    const genericsStore = useGenericsStore();
     const productStore = useProductStore();
     const businessStore = useBusinessStore();
     orderStore.orders = [];
@@ -878,6 +884,8 @@ export default defineComponent({
       let height = 0;
       let structureDelivery = null;
 
+      let totalProdSum = 0;
+
       let values = { ...val.order, ...val.sale };
 
       let dataForPrint = JSON.parse(values.json_sale);
@@ -1055,6 +1063,7 @@ export default defineComponent({
           ],
           dat: !val.by_consumption
             ? dataForPrint.items.map((val) => {
+                totalProdSum += val.cantidad * parseFloat(val.precio_unitario);
                 height += 7;
                 return {
                   amount: val.cantidad,
@@ -1631,6 +1640,7 @@ export default defineComponent({
       showConfirm,
       performCreateOrder,
       userStore,
+      genericsStore,
     };
   },
 });
