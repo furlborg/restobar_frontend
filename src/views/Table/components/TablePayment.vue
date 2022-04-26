@@ -369,6 +369,7 @@ export default defineComponent({
     const businessStore = useBusinessStore();
 
     const printSale = (val) => {
+      console.log(val);
       let height = 0;
       let dataForPrint = JSON.parse(val.json_sale);
 
@@ -398,7 +399,7 @@ export default defineComponent({
       let subtotal = 0;
 
       dataForPrint.items.map((val) => {
-        subtotal += parseFloat(val.precio_unitario);
+        subtotal += val.cantidad * parseFloat(val.precio_unitario);
       });
 
       let newTotal = NoNoteSale

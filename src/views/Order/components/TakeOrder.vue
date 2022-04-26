@@ -881,6 +881,7 @@ export default defineComponent({
     };
 
     const printSale = (val) => {
+      console.log(val);
       let height = 0;
       let structureDelivery = null;
 
@@ -916,7 +917,7 @@ export default defineComponent({
       let subTo = 0;
 
       dataForPrint.items.map((val) => {
-        subTo += parseFloat(val.precio_unitario);
+        subTo += val.cantidad * parseFloat(val.precio_unitario);
       });
 
       let newTotal = NoNoteSale
