@@ -1,7 +1,7 @@
 <template>
   <n-card title="Mesas" :bordered="false" :segmented="{ content: 'hard' }">
     <template #header-extra>
-      <n-space align="end">
+      <n-space v-if="tillStore.currentTillID" align="end">
         <n-button type="info" text @click="refreshData">
           <v-icon name="hi-solid-refresh" />
           Recargar
@@ -36,7 +36,7 @@
         >
       </n-space> -->
     </template>
-    <n-spin :show="isLoading">
+    <n-spin v-if="tillStore.currentTillID" :show="isLoading">
       <n-card
         class="my-2"
         v-for="area in tableStore.branchAreas"
@@ -223,6 +223,15 @@
         </n-grid>
       </n-card>
     </n-spin>
+    <div v-else>
+      <n-space align="center" vertical>
+        <v-icon label="No Open Till" scale="6">
+          <v-icon name="md-pointofsale-twotone" />
+          <v-icon name="md-notinterested-round" scale="2" fill="#fC644d" />
+        </v-icon>
+        <n-text class="fs-3">NO SE HA APERTURADO CAJA</n-text>
+      </n-space>
+    </div>
     <n-modal
       :class="{
         'w-100': genericsStore.device === 'mobile',
@@ -259,6 +268,7 @@ import { defineComponent, ref, onMounted } from "vue";
 import { useMessage } from "naive-ui";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useTableStore } from "@/store/modules/table";
+import { useTillStore } from "@/store/modules/till";
 import { useUserStore } from "@/store/modules/user";
 import { cancelTableOrder, retrieveTableOrder } from "@/api/modules/tables";
 import { cloneDeep } from "@/utils";
@@ -277,6 +287,7 @@ export default defineComponent({
     const currentTableGrouping = ref(null);
     const currentGroup = ref([]);
     const genericsStore = useGenericsStore();
+    const tillStore = useTillStore();
     const tableStore = useTableStore();
     const userStore = useUserStore();
     const businessStore = useBusinessStore();
@@ -523,6 +534,7 @@ export default defineComponent({
       showConfirm,
       passConfirm,
       genericsStore,
+      tillStore,
     };
   },
 });

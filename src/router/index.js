@@ -89,6 +89,7 @@ export const routes = [
         },
         beforeEnter: async (to, from, next) => {
           const tillStore = useTillStore()
+          const userStore = useUserStore()
           await retrieveCurrentTill()
             .then(response => {
               if (response.status === 200) {
@@ -102,7 +103,7 @@ export const routes = [
                 tillStore.currentTillOrders = 0
               }
             })
-          tillStore.currentTillID !== null ? next() : next({ name: 'TillList' })
+          tillStore.currentTillID !== null ? next() : userStore.user.profile_des === 'MOZO' ? next() : next({ name: 'TillList' })
         },
         children: [
           {
