@@ -45,7 +45,7 @@
       <n-grid
         v-if="listType === 'grid'"
         responsive="screen"
-        cols="4 s:4 m:20 l:20 xl:20 2xl:20"
+        cols="8 xs:8 s:12 m:20 l:20 xl:20 2xl:20"
         :x-gap="12"
         :y-gap="12"
       >

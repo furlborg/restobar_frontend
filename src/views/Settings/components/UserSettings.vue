@@ -366,6 +366,7 @@ export default defineComponent({
             message.success("Clave de seguridad actualizada correctamente!");
             showPassModal.value = false;
             isLoading.value = false;
+            onCloseSecurity();
           }
         })
         .catch((error) => {

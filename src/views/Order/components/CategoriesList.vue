@@ -4,7 +4,7 @@
       <n-grid
         v-if="!products.length"
         responsive="screen"
-        cols="4 s:4 m:20 l:20 xl:20 2xl:20"
+        cols="8 xs:8 s:12 m:20 l:20 xl:20 2xl:20"
         :x-gap="12"
         :y-gap="12"
       >
@@ -34,7 +34,7 @@
       <div v-else>
         <n-space align="center" justify="space-between">
           <n-input v-model:value="search" placeholder="Buscar..." />
-          <n-button type="info" text @click="products = []"
+          <n-button type="info" text @click="(products = []), (search = '')"
             >Volver a Categorias</n-button
           >
         </n-space>
