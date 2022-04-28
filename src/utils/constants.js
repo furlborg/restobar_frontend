@@ -1043,6 +1043,9 @@ export const createSaleColumns = ({ printSale, miscSale, sendSale, nullifySale }
         {
             title: 'Monto',
             key: 'amount',
+            render(row) {
+                return `S/. ${row.amount}`
+            }
         },
         {
             title: 'Emisión',
