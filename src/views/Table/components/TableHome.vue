@@ -82,15 +82,7 @@
                 class="position-absolute top-0 start-0 m-2"
               />
               <div
-                class="
-                  black-outline
-                  text-center
-                  position-absolute
-                  top-50
-                  start-50
-                  translate-middle
-                  fs-4
-                "
+                class="black-outline text-center position-absolute top-50 start-50 translate-middle fs-4"
               >
                 {{ "MESA " + String(table.id) }}
               </div>
@@ -422,7 +414,7 @@ export default defineComponent({
               {
                 dat: [
                   {
-                    tittle: "F.EMICION",
+                    tittle: "F.EMISIÓN",
                     twoPoints: ":",
                     cont: dateNow.value,
                   },

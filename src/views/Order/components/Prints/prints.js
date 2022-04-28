@@ -20,15 +20,15 @@ export const generatePrint = (objSunat, structure, addImages) => {
   });
 
   structure.map((val, index) => {
-    var finalY = doc.lastAutoTable.finalY || 10;
+    var finalY = doc.lastAutoTable.finalY - 5 || 10;
 
     const businnessStore = useBusinessStore();
     if (index === 0 && addImages) {
-      doc.addImage(businnessStore.business.logo_url, "png", 8, finalY, 65, 18);
-      finalY += 30;
+      doc.addImage(businnessStore.business.logo_url, "png", 5, finalY, 65, 18);
+      finalY += 20;
     }
     if (index === 5 && addImages) {
-      doc.addImage(code_qr, "png", 25, finalY, 30, 30);
+      doc.addImage(code_qr, "png", 25, finalY + 5, 30, 30);
       finalY += 30;
     }
 
@@ -50,11 +50,11 @@ export const generatePrint = (objSunat, structure, addImages) => {
       },
       body: val.dat,
       cellWidth: "auto",
-      headStyles: { fontSize: 9, font: "helvetica" },
-      bodyStyles: { fontSize: 9, font: "helvetica", fontStyle: "bold" },
+      headStyles: { fontSize: 8, font: "helvetica" },
+      bodyStyles: { fontSize: 8, font: "helvetica", fontStyle: "bold" },
 
       columnStyles: {
-        fontSize: 9,
+        fontSize: 8,
         tittle: {
           fontStyle: "bold",
         },
