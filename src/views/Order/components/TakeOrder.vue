@@ -10,324 +10,348 @@
     <n-card>
       <n-grid responsive="screen" cols="5 s:5 m:5 l:5 xl:5 2xl:5" :x-gap="12">
         <n-gi :span="3">
-          <n-spin :show="loading">
-            <n-card>
-              <n-form class="mb-2" ref="saleForm" :model="sale" :rules="rules">
-                <n-space class="mb-2" align="center" justify="space-between">
-                  <div class="d-flex align-items-center">
-                    <n-text class="fs-4">{{
-                      `${saleStore.getSerieDescription(sale.serie)}-${
-                        sale.number
-                      }`
-                    }}</n-text>
-                    <n-dropdown
-                      trigger="click"
-                      :options="
-                        saleStore.getDocumentSeriesOptions(sale.invoice_type)
-                      "
-                      :show-arrow="true"
-                      placement="bottom-end"
-                      size="huge"
-                      @select="selectSerie"
-                    >
-                      <n-button type="info" text>
-                        <v-icon
-                          class="p-0"
-                          name="md-arrowdropdown-round"
-                          scale="1.75"
-                        />
-                      </n-button>
-                    </n-dropdown>
-                  </div>
-                  <n-radio-group
-                    v-model:value="sale.invoice_type"
-                    name="docType"
-                    size="small"
-                    @update:value="changeSerie"
-                  >
-                    <n-radio-button :value="1" :key="1">FACTURA</n-radio-button>
-                    <n-radio-button :value="3" :key="3">BOLETA</n-radio-button>
-                    <n-radio-button :value="80" :key="80"
-                      >N. VENTA</n-radio-button
-                    >
-                  </n-radio-group>
-                  <n-radio-group
-                    v-model:value="sale.payment_condition"
-                    name="saleType"
-                    size="small"
-                  >
-                    <n-radio-button :value="1" :key="1">CONTADO</n-radio-button>
-                    <n-radio-button :value="2" :key="2">CRÉDITO</n-radio-button>
-                  </n-radio-group>
-                </n-space>
-
-                <n-grid
-                  responsive="screen"
-                  cols="12 s:12 m:12 l:12 xl:12 2xl:12"
-                  :x-gap="12"
+          <transition name="mode-fade" mode="out-in">
+            <n-spin v-if="selectProducts" :show="loading">
+              <n-card>
+                <n-form
+                  class="mb-2"
+                  ref="saleForm"
+                  :model="sale"
+                  :rules="rules"
                 >
-                  <n-form-item-gi
-                    :span="9"
-                    label="Cliente"
-                    :show-require-mark="rules.customer.required"
-                    path="customer"
-                  >
-                    <n-input-group>
-                      <n-auto-complete
-                        blur-after-select
-                        :input-props="{
-                          autocomplete: 'disabled',
-                        }"
-                        v-model:value="sale.customer_name"
-                        :options="customerOptions"
-                        :get-show="showCustomerOptions"
-                        :loading="searchingCustomer"
-                        @update:value="
-                          (v) => {
-                            !v
-                              ? ((sale.customer = null),
-                                (sale.address = null),
-                                (addressesOptions = []))
-                              : null;
-                          }
+                  <n-space class="mb-2" align="center" justify="space-between">
+                    <div class="d-flex align-items-center">
+                      <n-text class="fs-4">{{
+                        `${saleStore.getSerieDescription(sale.serie)}-${
+                          sale.number
+                        }`
+                      }}</n-text>
+                      <n-dropdown
+                        trigger="click"
+                        :options="
+                          saleStore.getDocumentSeriesOptions(sale.invoice_type)
                         "
-                        @select="
-                          (value) => {
-                            sale.customer = value;
-                            sale.address = null;
-                            createAddressesOptions();
-                          }
-                        "
-                        placeholder=""
-                        clearable
-                      />
-                      <n-button type="info" @click="showCustomerModal = true">
-                        <v-icon name="md-add-round" />
-                      </n-button>
-                    </n-input-group>
-                  </n-form-item-gi>
-                  <n-form-item-gi :span="3" label="Fecha">
-                    <n-date-picker
-                      class="w-100"
-                      v-model:formatted-value="sale.date_sale"
-                      type="datetime"
-                    />
-                  </n-form-item-gi>
-                  <n-form-item-gi :span="6" label="Dirección">
-                    <n-select
-                      v-model:value="sale.address"
-                      :options="addressesOptions"
-                      :disabled="!sale.customer"
-                      placeholder=""
-                    />
-                  </n-form-item-gi>
-                  <n-form-item-gi :span="2" label="Método Pago">
-                    <n-select
-                      v-model:value="sale.payment_method"
-                      :options="saleStore.getPaymentMethodsOptions"
-                      filterable
-                    />
-                  </n-form-item-gi>
-                  <n-form-item-gi :span="2">
-                    <n-checkbox @update:checked="handleDelivery">
-                      Delivery
-                    </n-checkbox>
-                  </n-form-item-gi>
-                  <n-form-item-gi :span="2">
-                    <n-button
-                      type="info"
-                      text
-                      @click="showObservations = !showObservations"
-                      >{{
-                        !showObservations ? "Ver" : "Ocultar"
-                      }}
-                      Observaciones</n-button
-                    >
-                  </n-form-item-gi>
-                  <n-gi :span="12">
-                    <n-collapse-transition :show="showObservations">
-                      <n-form-item label="Observaciones">
-                        <n-input type="textarea" />
-                      </n-form-item>
-                    </n-collapse-transition>
-                  </n-gi>
-                  <n-gi :span="12">
-                    <n-collapse-transition :show="!!sale.delivery_info">
-                      <n-text class="fs-5">Información de delivery</n-text>
-                      <n-grid
-                        class="mt-2"
-                        responsive="screen"
-                        cols="12"
-                        :x-gap="12"
+                        :show-arrow="true"
+                        placement="bottom-end"
+                        size="huge"
+                        @select="selectSerie"
                       >
-                        <n-form-item-gi
-                          label="Nombres"
-                          :span="6"
-                          path="delivery_info.person"
-                        >
-                          <n-input
-                            v-model:value="sale.delivery_info.person"
-                            placeholder=""
+                        <n-button type="info" text>
+                          <v-icon
+                            class="p-0"
+                            name="md-arrowdropdown-round"
+                            scale="1.75"
                           />
-                        </n-form-item-gi>
-                        <n-form-item-gi
-                          label="Dirección"
-                          :span="6"
-                          path="delivery_info.address"
-                        >
-                          <n-input
-                            v-model:value="sale.delivery_info.address"
-                            placeholder=""
-                          />
-                        </n-form-item-gi>
-                        <n-form-item-gi
-                          label="Teléfono"
-                          :span="6"
-                          path="delivery_info.phone"
-                        >
-                          <n-input
-                            v-model:value="sale.delivery_info.phone"
-                            placeholder=""
-                          />
-                        </n-form-item-gi>
-                        <n-form-item-gi label="Repartidor" :span="6">
-                          <n-input
-                            v-model:value="sale.delivery_info.deliveryman"
-                            placeholder=""
-                          />
-                        </n-form-item-gi>
-                      </n-grid>
-                    </n-collapse-transition>
-                  </n-gi>
-                </n-grid>
-              </n-form>
-              <n-table class="fs-6 m-auto text-center" :bordered="false">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Cantidad</th>
-                    <th>Producto</th>
-                    <th>Precio Unitario</th>
-                    <th>Precio Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(detail, index) in saleStore.toSale" :key="index">
-                    <td>{{ index + 1 }}</td>
-                    <td>{{ detail.quantity }}</td>
-                    <td>
-                      <input
-                        class="custom-input"
-                        v-model="detail.product_name"
-                        v-autowidth
-                        @click="$event.target.select()"
+                        </n-button>
+                      </n-dropdown>
+                    </div>
+                    <n-radio-group
+                      v-model:value="sale.invoice_type"
+                      name="docType"
+                      size="small"
+                      @update:value="changeSerie"
+                    >
+                      <n-radio-button :value="1" :key="1"
+                        >FACTURA</n-radio-button
+                      >
+                      <n-radio-button :value="3" :key="3"
+                        >BOLETA</n-radio-button
+                      >
+                      <n-radio-button :value="80" :key="80"
+                        >N. VENTA</n-radio-button
+                      >
+                    </n-radio-group>
+                    <n-radio-group
+                      v-model:value="sale.payment_condition"
+                      name="saleType"
+                      size="small"
+                    >
+                      <n-radio-button :value="1" :key="1"
+                        >CONTADO</n-radio-button
+                      >
+                      <n-radio-button :value="2" :key="2"
+                        >CRÉDITO</n-radio-button
+                      >
+                    </n-radio-group>
+                  </n-space>
+
+                  <n-grid
+                    responsive="screen"
+                    cols="12 s:12 m:12 l:12 xl:12 2xl:12"
+                    :x-gap="12"
+                  >
+                    <n-form-item-gi
+                      :span="9"
+                      label="Cliente"
+                      :show-require-mark="rules.customer.required"
+                      path="customer"
+                    >
+                      <n-input-group>
+                        <n-auto-complete
+                          blur-after-select
+                          :input-props="{
+                            autocomplete: 'disabled',
+                          }"
+                          v-model:value="sale.customer_name"
+                          :options="customerOptions"
+                          :get-show="showCustomerOptions"
+                          :loading="searchingCustomer"
+                          @update:value="
+                            (v) => {
+                              !v
+                                ? ((sale.customer = null),
+                                  (sale.address = null),
+                                  (addressesOptions = []))
+                                : null;
+                            }
+                          "
+                          @select="
+                            (value) => {
+                              sale.customer = value;
+                              sale.address = null;
+                              createAddressesOptions();
+                            }
+                          "
+                          placeholder=""
+                          clearable
+                        />
+                        <n-button type="info" @click="showCustomerModal = true">
+                          <v-icon name="md-add-round" />
+                        </n-button>
+                      </n-input-group>
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3" label="Fecha">
+                      <n-date-picker
+                        class="w-100"
+                        v-model:formatted-value="sale.date_sale"
+                        type="datetime"
                       />
-                    </td>
-                    <td>
-                      S/.
-                      <input
-                        class="custom-input"
-                        type="number"
-                        min="0"
-                        step=".01"
-                        v-model="detail.price_sale"
-                        v-autowidth
-                        @click="$event.target.select()"
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="6" label="Dirección">
+                      <n-select
+                        v-model:value="sale.address"
+                        :options="addressesOptions"
+                        :disabled="!sale.customer"
+                        placeholder=""
                       />
-                    </td>
-                    <td>
-                      {{
-                        parseFloat(detail.quantity * detail.price_sale).toFixed(
-                          2
-                        )
-                      }}
-                    </td>
-                  </tr>
-                </tbody>
-              </n-table>
-              <n-grid cols="3">
-                <n-gi :span="2">
-                  <n-space class="h-100" align="center" justify="space-around">
-                    <n-space align="center" vertical>
-                      <span class="fs-4">Pago</span>
-                      <div class="fs-5">
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="2" label="Método Pago">
+                      <n-select
+                        v-model:value="sale.payment_method"
+                        :options="saleStore.getPaymentMethodsOptions"
+                        filterable
+                      />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="2">
+                      <n-checkbox @update:checked="handleDelivery">
+                        Delivery
+                      </n-checkbox>
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="2">
+                      <n-button
+                        type="info"
+                        text
+                        @click="showObservations = !showObservations"
+                        >{{
+                          !showObservations ? "Ver" : "Ocultar"
+                        }}
+                        Observaciones</n-button
+                      >
+                    </n-form-item-gi>
+                    <n-gi :span="12">
+                      <n-collapse-transition :show="showObservations">
+                        <n-form-item label="Observaciones">
+                          <n-input type="textarea" />
+                        </n-form-item>
+                      </n-collapse-transition>
+                    </n-gi>
+                    <n-gi :span="12">
+                      <n-collapse-transition :show="!!sale.delivery_info">
+                        <n-text class="fs-5">Información de delivery</n-text>
+                        <n-grid
+                          class="mt-2"
+                          responsive="screen"
+                          cols="12"
+                          :x-gap="12"
+                        >
+                          <n-form-item-gi
+                            label="Nombres"
+                            :span="6"
+                            path="delivery_info.person"
+                          >
+                            <n-input
+                              v-model:value="sale.delivery_info.person"
+                              placeholder=""
+                            />
+                          </n-form-item-gi>
+                          <n-form-item-gi
+                            label="Dirección"
+                            :span="6"
+                            path="delivery_info.address"
+                          >
+                            <n-input
+                              v-model:value="sale.delivery_info.address"
+                              placeholder=""
+                            />
+                          </n-form-item-gi>
+                          <n-form-item-gi
+                            label="Teléfono"
+                            :span="6"
+                            path="delivery_info.phone"
+                          >
+                            <n-input
+                              v-model:value="sale.delivery_info.phone"
+                              placeholder=""
+                            />
+                          </n-form-item-gi>
+                          <n-form-item-gi label="Repartidor" :span="6">
+                            <n-input
+                              v-model:value="sale.delivery_info.deliveryman"
+                              placeholder=""
+                            />
+                          </n-form-item-gi>
+                        </n-grid>
+                      </n-collapse-transition>
+                    </n-gi>
+                  </n-grid>
+                </n-form>
+                <n-table class="fs-6 m-auto text-center" :bordered="false">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Cantidad</th>
+                      <th>Producto</th>
+                      <th>Precio Unitario</th>
+                      <th>Precio Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="(detail, index) in saleStore.toSale"
+                      :key="index"
+                    >
+                      <td>{{ index + 1 }}</td>
+                      <td>{{ detail.quantity }}</td>
+                      <td>
+                        <input
+                          class="custom-input"
+                          v-model="detail.product_name"
+                          v-autowidth
+                          @click="$event.target.select()"
+                        />
+                      </td>
+                      <td>
                         S/.
                         <input
-                          class="fs-1 custom-input"
+                          class="custom-input"
                           type="number"
                           min="0"
                           step=".01"
-                          v-model="sale.given_amount"
+                          v-model="detail.price_sale"
+                          v-autowidth
+                          @click="$event.target.select()"
+                        />
+                      </td>
+                      <td>
+                        {{
+                          parseFloat(
+                            detail.quantity * detail.price_sale
+                          ).toFixed(2)
+                        }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </n-table>
+                <n-grid cols="3">
+                  <n-gi :span="2">
+                    <n-space
+                      class="h-100"
+                      align="center"
+                      justify="space-around"
+                    >
+                      <n-space align="center" vertical>
+                        <span class="fs-4">Pago</span>
+                        <div class="fs-5">
+                          S/.
+                          <input
+                            class="fs-1 custom-input"
+                            type="number"
+                            min="0"
+                            step=".01"
+                            v-model="sale.given_amount"
+                            v-autowidth
+                            @click="$event.target.select()"
+                          />
+                        </div>
+                      </n-space>
+                      <n-space align="center" vertical>
+                        <span class="fs-4">Vuelto</span>
+                        <div class="fs-5">
+                          S/.
+                          <span class="fs-1">{{ changing.toFixed(2) }}</span>
+                        </div>
+                      </n-space>
+                    </n-space>
+                  </n-gi>
+                  <n-gi>
+                    <n-space class="mt-2 fs-6 fw-bold" align="end" vertical>
+                      <div>
+                        SUBTOTAL: <span>S/. {{ subTotal.toFixed(2) }}</span>
+                      </div>
+                      <div v-if="!!sale.delivery_info">
+                        DELIVERY:
+                        <span>S/.</span>
+                        <input
+                          class="custom-input fw-bold"
+                          type="number"
+                          min="0"
+                          step=".1"
+                          v-model="sale.delivery_info.amount"
                           v-autowidth
                           @click="$event.target.select()"
                         />
                       </div>
-                    </n-space>
-                    <n-space align="center" vertical>
-                      <span class="fs-4">Vuelto</span>
-                      <div class="fs-5">
-                        S/. <span class="fs-1">{{ changing.toFixed(2) }}</span>
+                      <div>ICBPER: <span>S/. 0.00</span></div>
+                      <div>IGV: <span>S/. 0.00</span></div>
+                      <div>
+                        DSCT:
+                        <span>S/.</span>
+                        <input
+                          class="custom-input fw-bold"
+                          type="number"
+                          min="0"
+                          :max="subTotal"
+                          step=".1"
+                          v-model="sale.discount"
+                          v-autowidth
+                          @click="$event.target.select()"
+                        />
+                      </div>
+                      <div>
+                        TOTAL: <span>S/. {{ sale.amount.toFixed(2) }}</span>
                       </div>
                     </n-space>
-                  </n-space>
-                </n-gi>
-                <n-gi>
-                  <n-space class="mt-2 fs-6 fw-bold" align="end" vertical>
-                    <div>
-                      SUBTOTAL: <span>S/. {{ subTotal.toFixed(2) }}</span>
-                    </div>
-                    <div v-if="!!sale.delivery_info">
-                      DELIVERY:
-                      <span>S/.</span>
-                      <input
-                        class="custom-input fw-bold"
-                        type="number"
-                        min="0"
-                        step=".1"
-                        v-model="sale.delivery_info.amount"
-                        v-autowidth
-                        @click="$event.target.select()"
-                      />
-                    </div>
-                    <div>ICBPER: <span>S/. 0.00</span></div>
-                    <div>IGV: <span>S/. 0.00</span></div>
-                    <div>
-                      DSCT:
-                      <span>S/.</span>
-                      <input
-                        class="custom-input fw-bold"
-                        type="number"
-                        min="0"
-                        :max="subTotal"
-                        step=".1"
-                        v-model="sale.discount"
-                        v-autowidth
-                        @click="$event.target.select()"
-                      />
-                    </div>
-                    <div>
-                      TOTAL: <span>S/. {{ sale.amount.toFixed(2) }}</span>
-                    </div>
-                  </n-space>
-                </n-gi>
-              </n-grid>
-              <n-button
-                class="fs-1 py-5 mt-2"
-                type="success"
-                :disabled="
-                  !saleStore.toSale.length || sale.given_amount < sale.amount
-                "
-                secondary
-                block
-                @click.prevent="performTakeAway"
-                ><v-icon class="me-2" name="fa-coins" scale="2" />{{
-                  userStore.user.profile_des !== "MOZO"
-                    ? "Cobrar"
-                    : "Realizar pedido"
-                }}</n-button
-              >
-            </n-card>
-          </n-spin>
+                  </n-gi>
+                </n-grid>
+                <n-button
+                  class="fs-1 py-5 mt-2"
+                  type="success"
+                  :disabled="
+                    !saleStore.toSale.length || sale.given_amount < sale.amount
+                  "
+                  secondary
+                  block
+                  @click.prevent="performTakeAway"
+                  ><v-icon class="me-2" name="fa-coins" scale="2" />{{
+                    userStore.user.profile_des !== "MOZO"
+                      ? "Cobrar"
+                      : "Realizar pedido"
+                  }}</n-button
+                >
+              </n-card>
+            </n-spin>
+            <CategoriesList v-else />
+          </transition>
           <!-- Customer Modal -->
           <customer-modal
             v-model:show="showCustomerModal"
@@ -337,26 +361,32 @@
         </n-gi>
         <n-gi span="2">
           <n-card class="h-100" :bordered="false" embedded>
-            <n-form>
-              <n-form-item>
-                <n-input-group>
-                  <n-auto-complete
-                    :input-props="{
-                      autocomplete: 'disabled',
-                    }"
-                    v-model:value="productSearch"
-                    :options="productOptions"
-                    :get-show="showOptions"
-                    :loading="searching"
-                    clear-after-select
-                    :render-label="renderLabel"
-                    placeholder="Buscar producto"
-                    @select="selectProduct"
-                  />
-                </n-input-group>
-              </n-form-item>
-            </n-form>
-            <n-table>
+            <template #header>
+              <n-button
+                type="info"
+                text
+                @click="selectProducts = !selectProducts"
+                >{{
+                  selectProducts ? "Seleccionar productos" : "Cobrar"
+                }}</n-button
+              >
+            </template>
+            <n-input-group>
+              <n-auto-complete
+                :input-props="{
+                  autocomplete: 'disabled',
+                }"
+                v-model:value="productSearch"
+                :options="productOptions"
+                :get-show="showOptions"
+                :loading="searching"
+                clear-after-select
+                :render-label="renderLabel"
+                placeholder="Buscar producto"
+                @select="selectProduct"
+              />
+            </n-input-group>
+            <n-table class="mt-3">
               <thead>
                 <tr>
                   <th width="10%"></th>
@@ -486,6 +516,7 @@
 <script>
 import CustomerModal from "@/views/Customer/components/CustomerModal";
 import OrderIndications from "./OrderIndications";
+import CategoriesList from "./CategoriesList";
 import {
   defineComponent,
   ref,
@@ -495,7 +526,7 @@ import {
   onMounted,
   h,
 } from "vue";
-import { NThing, NTag, NSpace, NInput, useDialog, useMessage } from "naive-ui";
+import { NThing, NTag, NSpace, useDialog, useMessage } from "naive-ui";
 import { useRouter } from "vue-router";
 import { useProductStore } from "@/store/modules/product";
 import { useOrderStore } from "@/store/modules/order";
@@ -527,6 +558,7 @@ export default defineComponent({
   components: {
     OrderIndications,
     CustomerModal,
+    CategoriesList,
   },
   setup() {
     const userStore = useUserStore();
@@ -1618,6 +1650,8 @@ export default defineComponent({
       onCloseModal();
     };
 
+    const selectProducts = ref(false);
+
     return {
       loading,
       saleStore,
@@ -1654,6 +1688,7 @@ export default defineComponent({
       performCreateOrder,
       userStore,
       genericsStore,
+      selectProducts,
     };
   },
 });
@@ -1679,5 +1714,15 @@ input::-webkit-inner-spin-button {
 
 input[type="number"] {
   -moz-appearance: textfield; /* Firefox */
+}
+
+.mode-fade-enter-active,
+.mode-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.mode-fade-enter-from,
+.mode-fade-leave-to {
+  opacity: 0;
 }
 </style>

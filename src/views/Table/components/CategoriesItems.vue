@@ -113,7 +113,7 @@ export default defineComponent({
 
     const itemsList = computed(() => {
       return products.value.filter((product) =>
-        product.name.toLowerCase().includes(search.value)
+        product.name.toLowerCase().includes(search.value.toLowerCase())
       );
     });
 

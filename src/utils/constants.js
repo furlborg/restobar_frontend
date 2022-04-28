@@ -37,11 +37,6 @@ export const businessRules = {
         trigger: ['blur', 'input'],
         message: 'Representante requerido'
     },
-    general_pass: {
-        required: true,
-        trigger: ['blur', 'input'],
-        message: 'Clave requerida'
-    },
 }
 
 export const branchOfficeRules = {
@@ -1101,7 +1096,7 @@ export const createSaleColumns = ({ printSale, miscSale, sendSale, nullifySale }
                             size: 'small',
                             type: 'info',
                             secondary: true,
-                            disabled: row.status !== 'N',
+                            disabled: row.status === 'E' || row.status === 'A',
                             onClick: () => sendSale(row)
                         },
                         renderIcon('ri-send-plane-fill')

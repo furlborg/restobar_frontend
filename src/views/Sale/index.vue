@@ -325,7 +325,6 @@ export default defineComponent({
       userStore,
       tableColumns: createSaleColumns({
         printSale(val) {
-          console.log(val);
           let height = 0;
           let dataForPrint = JSON.parse(val.json_sale);
 
@@ -621,8 +620,12 @@ export default defineComponent({
               }
             })
             .catch((error) => {
-              console.error(error);
-              message.error("Algo salió mal...");
+              if (error.response.status === 400) {
+                message.error(error.response.data.error);
+              } else {
+                console.error(error);
+                message.error("Algo salió mal...");
+              }
             })
             .finally(() => {
               loadSales();

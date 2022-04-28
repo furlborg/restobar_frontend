@@ -372,7 +372,6 @@ export default defineComponent({
     const businessStore = useBusinessStore();
 
     const printSale = (val) => {
-      console.log(val);
       let height = 0;
       let dataForPrint = JSON.parse(val.json_sale);
 
