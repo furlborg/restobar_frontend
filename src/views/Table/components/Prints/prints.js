@@ -29,18 +29,18 @@ export const generatePrint = (objSunat, structure, addImages) => {
     }
     if (index === 5 && addImages) {
       doc.addImage(code_qr, "png", 25, finalY, 30, 30);
-      finalY += 30;
+      finalY += 25;
     }
 
     if (val.line) {
       doc.setLineDash([1, 1], 1);
       doc.setDrawColor(0, 0, 0);
       doc.line(3, finalY + 5, 77, finalY + 5);
-      finalY += 5;
+      finalY += 3;
     }
 
     doc.autoTable({
-      startY: finalY,
+      startY: finalY - 2,
       theme: "plain",
       pageBreak: "auto",
       margin: { left: 3, right: 3 },

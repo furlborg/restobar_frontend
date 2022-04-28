@@ -882,7 +882,6 @@ export default defineComponent({
     };
 
     const printSale = (val) => {
-      console.log(val);
       let height = 0;
       let structureDelivery = null;
 
@@ -894,7 +893,7 @@ export default defineComponent({
 
       let typeDoc = dataForPrint.serie_documento.split("");
 
-      let data = `${businessStore.business.ruc}|${dataForPrint.serie_documento}|${dataForPrint.totales.total_igv}|${dataForPrint.hora_de_emision}|${dataForPrint.datos_del_cliente_o_receptor.numero_documento}|${dataForPrint.numero_documento}|${dataForPrint.totales.total_venta}|${dataForPrint.datos_del_cliente_o_receptor.codigo_tipo_documento_identidad}|`;
+      let data = `${businessStore.business.ruc}|${dataForPrint.serie_documento}|${dataForPrint.totales.total_igv}|${dataForPrint.hora_de_EMISIÓN}|${dataForPrint.datos_del_cliente_o_receptor.numero_documento}|${dataForPrint.numero_documento}|${dataForPrint.totales.total_venta}|${dataForPrint.datos_del_cliente_o_receptor.codigo_tipo_documento_identidad}|`;
 
       let NoNoteSale = false;
 
@@ -943,12 +942,14 @@ export default defineComponent({
           };
 
       for (let i in newTotal) {
-        height += 7;
-        datTotals.push({
-          tittle: i,
-          twoPoints: ":",
-          cont: newTotal[i],
-        });
+        if (!!parseFloat(newTotal[i]) || i === "IGV(18%)") {
+          height += 7;
+          datTotals.push({
+            tittle: i,
+            twoPoints: ":",
+            cont: newTotal[i],
+          });
+        }
       }
 
       let structure = [
@@ -1040,7 +1041,7 @@ export default defineComponent({
             },
 
             {
-              tittle: "F.EMICION",
+              tittle: "F.EMISIÓN",
               twoPoints: ":",
               cont: dateNow.value,
             },
@@ -1182,12 +1183,14 @@ export default defineComponent({
         };
 
         for (let i in totals) {
-          lengthData += 5 * 6.5;
-          newTotals.push({
-            tittle: i,
-            twoPoints: ":",
-            cont: totals[i],
-          });
+          if (!!parseFloat(newTotal[i]) || i === "IGV(18%)") {
+            lengthData += 5 * 6.5;
+            datTotals.push({
+              tittle: i,
+              twoPoints: ":",
+              cont: newTotal[i],
+            });
+          }
         }
 
         structureDelivery = [
@@ -1233,7 +1236,7 @@ export default defineComponent({
               },
 
               {
-                tittle: "F.EMICION",
+                tittle: "F.EMISIÓN",
                 twoPoints: ":",
                 cont: dateNow.value,
               },
