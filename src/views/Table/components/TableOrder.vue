@@ -8,7 +8,7 @@
       </template>
     </n-page-header>
     <n-card>
-      <n-grid responsive="screen" cols="5 s:5 m:5 l:5 xl:5 2xl:5" :x-gap="12">
+      <n-grid responsive="screen" cols="1 s:1 m:5 l:5 xl:5 2xl:5" :x-gap="12">
         <n-gi :span="3">
           <router-view />
         </n-gi>
@@ -65,95 +65,102 @@
                 </n-input-group>
               </n-form-item>
             </n-form>
-            <n-table>
-              <thead>
-                <tr>
-                  <th width="10%"></th>
-                  <th width="40%">Producto</th>
-                  <th width="25%">Cantidad</th>
-                  <th width="15%">SubTotal</th>
-                  <th width="10%"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(order, index) in orderStore.orderList" :key="index">
-                  <td>
-                    <n-button
-                      v-if="!($route.name === 'TablePayment')"
-                      type="info"
-                      text
-                      @click="
-                        itemIndex = index;
-                        showModal = true;
-                      "
-                      ><v-icon name="md-listalt-round"
-                    /></n-button>
-                  </td>
-                  <td>
-                    {{ order.product_name }}
-                  </td>
-                  <td>
-                    <n-input-number
-                      v-if="!($route.name === 'TablePayment')"
-                      class="border-top-0"
-                      size="small"
-                      :min="order.id ? saleStore.getOrderQuantity(order.id) : 1"
-                      v-model:value="order.quantity"
-                    />
-                    <template v-else>
-                      {{ order.quantity }}
-                    </template>
-                  </td>
-                  <td>S/. {{ order.subTotal.toFixed(2) }}</td>
-                  <td>
-                    <n-button
-                      v-if="!($route.name === 'TablePayment')"
-                      type="error"
-                      text
-                      @click="
-                        !order.id
-                          ? (orderStore.orderList.splice(index, 1),
-                            nullifyTableOrder())
-                          : deleteOrderDetail(index, order.id)
-                      "
-                    >
-                      <v-icon name="md-disabledbydefault-round" />
-                    </n-button>
-                  </td>
-                </tr>
-              </tbody>
-              <tfoot>
-                <tr>
-                  <td colspan="3">
-                    <n-button
-                      v-if="!($route.name === 'TablePayment')"
-                      :type="orderStore.orderId ? 'info' : 'primary'"
-                      text
-                      block
-                      :disabled="
-                        orderStore.orderList.length ? checkState : true
-                      "
-                      @click="validateSend()"
-                    >
-                      <v-icon
-                        class="me-2"
-                        name="md-notealt-twotone"
-                        scale="1.5"
+            <n-scrollbar :x-scrollable="true" style="max-width: 900px">
+              <n-table>
+                <thead>
+                  <tr>
+                    <th width="10%"></th>
+                    <th width="40%">Producto</th>
+                    <th width="25%">Cantidad</th>
+                    <th width="15%">SubTotal</th>
+                    <th width="10%"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="(order, index) in orderStore.orderList"
+                    :key="index"
+                  >
+                    <td>
+                      <n-button
+                        v-if="!($route.name === 'TablePayment')"
+                        type="info"
+                        text
+                        @click="
+                          itemIndex = index;
+                          showModal = true;
+                        "
+                        ><v-icon name="md-listalt-round"
+                      /></n-button>
+                    </td>
+                    <td>
+                      {{ order.product_name }}
+                    </td>
+                    <td>
+                      <n-input-number
+                        v-if="!($route.name === 'TablePayment')"
+                        class="border-top-0"
+                        size="small"
+                        :min="
+                          order.id ? saleStore.getOrderQuantity(order.id) : 1
+                        "
+                        v-model:value="order.quantity"
                       />
-                      <span class="fs-4"
-                        >{{
-                          orderStore.orderId ? "Actualizar" : "Realizar"
-                        }}
-                        pedido</span
+                      <template v-else>
+                        {{ order.quantity }}
+                      </template>
+                    </td>
+                    <td>S/. {{ order.subTotal.toFixed(2) }}</td>
+                    <td>
+                      <n-button
+                        v-if="!($route.name === 'TablePayment')"
+                        type="error"
+                        text
+                        @click="
+                          !order.id
+                            ? (orderStore.orderList.splice(index, 1),
+                              nullifyTableOrder())
+                            : deleteOrderDetail(index, order.id)
+                        "
                       >
-                    </n-button>
-                  </td>
-                  <td colspan="2" class="fs-6 fw-bold">
-                    S/. {{ orderStore.orderTotal.toFixed(2) }}
-                  </td>
-                </tr>
-              </tfoot>
-            </n-table>
+                        <v-icon name="md-disabledbydefault-round" />
+                      </n-button>
+                    </td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="3">
+                      <n-button
+                        v-if="!($route.name === 'TablePayment')"
+                        :type="orderStore.orderId ? 'info' : 'primary'"
+                        text
+                        block
+                        :disabled="
+                          orderStore.orderList.length ? checkState : true
+                        "
+                        @click="validateSend()"
+                      >
+                        <v-icon
+                          class="me-2"
+                          name="md-notealt-twotone"
+                          scale="1.5"
+                        />
+                        <span class="fs-4"
+                          >{{
+                            orderStore.orderId ? "Actualizar" : "Realizar"
+                          }}
+                          pedido</span
+                        >
+                      </n-button>
+                    </td>
+                    <td colspan="2" class="fs-6 fw-bold">
+                      S/. {{ orderStore.orderTotal.toFixed(2) }}
+                    </td>
+                  </tr>
+                </tfoot>
+              </n-table>
+            </n-scrollbar>
           </n-card>
         </n-gi>
       </n-grid>

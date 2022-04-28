@@ -2,52 +2,51 @@
   <div id="TablePayment">
     <n-spin :show="loading">
       <n-card>
+        <n-space class="mb-2" align="center" justify="space-between" vertical>
+          <div class="d-flex align-items-center">
+            <n-text class="fs-4">{{
+              `${saleStore.getSerieDescription(sale.serie)}-${sale.number}`
+            }}</n-text>
+            <n-dropdown
+              trigger="click"
+              :options="saleStore.getDocumentSeriesOptions(sale.invoice_type)"
+              :show-arrow="true"
+              placement="bottom-end"
+              size="huge"
+              @select="selectSerie"
+            >
+              <n-button type="info" text>
+                <v-icon
+                  class="p-0"
+                  name="md-arrowdropdown-round"
+                  scale="1.75"
+                />
+              </n-button>
+            </n-dropdown>
+          </div>
+          <n-radio-group
+            v-model:value="sale.invoice_type"
+            name="docType"
+            size="small"
+            @update:value="changeSerie"
+          >
+            <n-radio-button :value="1" :key="1">FACTURA</n-radio-button>
+            <n-radio-button :value="3" :key="3">BOLETA</n-radio-button>
+            <n-radio-button :value="80" :key="80">N. VENTA</n-radio-button>
+          </n-radio-group>
+          <n-radio-group
+            v-model:value="sale.payment_condition"
+            name="saleType"
+            size="small"
+          >
+            <n-radio-button :value="1" :key="1">CONTADO</n-radio-button>
+            <n-radio-button :value="2" :key="2">CRÉDITO</n-radio-button>
+          </n-radio-group>
+        </n-space>
         <n-form class="mb-2" ref="saleForm" :model="sale" :rules="formRules">
-          <n-space class="mb-2" align="center" justify="space-between">
-            <div class="d-flex align-items-center">
-              <n-text class="fs-4">{{
-                `${saleStore.getSerieDescription(sale.serie)}-${sale.number}`
-              }}</n-text>
-              <n-dropdown
-                trigger="click"
-                :options="saleStore.getDocumentSeriesOptions(sale.invoice_type)"
-                :show-arrow="true"
-                placement="bottom-end"
-                size="huge"
-                @select="selectSerie"
-              >
-                <n-button type="info" text>
-                  <v-icon
-                    class="p-0"
-                    name="md-arrowdropdown-round"
-                    scale="1.75"
-                  />
-                </n-button>
-              </n-dropdown>
-            </div>
-            <n-radio-group
-              v-model:value="sale.invoice_type"
-              name="docType"
-              size="small"
-              @update:value="changeSerie"
-            >
-              <n-radio-button :value="1" :key="1">FACTURA</n-radio-button>
-              <n-radio-button :value="3" :key="3">BOLETA</n-radio-button>
-              <n-radio-button :value="80" :key="80">N. VENTA</n-radio-button>
-            </n-radio-group>
-            <n-radio-group
-              v-model:value="sale.payment_condition"
-              name="saleType"
-              size="small"
-            >
-              <n-radio-button :value="1" :key="1">CONTADO</n-radio-button>
-              <n-radio-button :value="2" :key="2">CRÉDITO</n-radio-button>
-            </n-radio-group>
-          </n-space>
-
           <n-grid
             responsive="screen"
-            cols="12 s:12 m:12 l:12 xl:12 2xl:12"
+            cols="9 xs:1 s:12 m:12 l:12 xl:12 2xl:12"
             :x-gap="12"
           >
             <n-form-item-gi
@@ -137,46 +136,50 @@
             </n-gi>
           </n-grid>
         </n-form>
-        <n-table class="fs-6 m-auto text-center" :bordered="false">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Cantidad</th>
-              <th>Producto</th>
-              <th>Precio Unitario</th>
-              <th>Precio Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(detail, index) in saleStore.toSale" :key="index">
-              <td>{{ index + 1 }}</td>
-              <td>{{ detail.quantity }}</td>
-              <td>
-                <input
-                  class="custom-input"
-                  v-model="detail.product_name"
-                  v-autowidth
-                  @click="$event.target.select()"
-                />
-              </td>
-              <td>
-                S/.
-                <input
-                  class="custom-input"
-                  type="number"
-                  min="0"
-                  step=".01"
-                  v-model="detail.price_sale"
-                  v-autowidth
-                  @click="$event.target.select()"
-                />
-              </td>
-              <td>
-                {{ parseFloat(detail.quantity * detail.price_sale).toFixed(2) }}
-              </td>
-            </tr>
-          </tbody>
-        </n-table>
+        <n-scrollbar :x-scrollable="true" style="max-width: 900px">
+          <n-table class="fs-6 m-auto text-center" :bordered="false">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Cantidad</th>
+                <th>Producto</th>
+                <th>Precio Unitario</th>
+                <th>Precio Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(detail, index) in saleStore.toSale" :key="index">
+                <td>{{ index + 1 }}</td>
+                <td>{{ detail.quantity }}</td>
+                <td>
+                  <input
+                    class="custom-input"
+                    v-model="detail.product_name"
+                    v-autowidth
+                    @click="$event.target.select()"
+                  />
+                </td>
+                <td>
+                  S/.
+                  <input
+                    class="custom-input"
+                    type="number"
+                    min="0"
+                    step=".01"
+                    v-model="detail.price_sale"
+                    v-autowidth
+                    @click="$event.target.select()"
+                  />
+                </td>
+                <td>
+                  {{
+                    parseFloat(detail.quantity * detail.price_sale).toFixed(2)
+                  }}
+                </td>
+              </tr>
+            </tbody>
+          </n-table>
+        </n-scrollbar>
         <n-grid cols="3">
           <n-gi :span="2">
             <n-space class="h-100" align="center" justify="space-around">
@@ -259,6 +262,7 @@ import { useRouter } from "vue-router";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { useUserStore } from "@/store/modules/user";
+import { useGenericsStore } from "@/store/modules/generics";
 import { saleRules } from "@/utils/constants";
 import { isDecimal, isNumber, isLetter } from "@/utils";
 import {
@@ -286,6 +290,7 @@ export default defineComponent({
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
     const userStore = useUserStore();
+    const genericsStore = useGenericsStore();
     const message = useMessage();
     const loading = ref(false);
     const dialog = useDialog();
@@ -835,6 +840,7 @@ export default defineComponent({
       createAddressesOptions,
       onCloseModal,
       onSuccess,
+      genericsStore,
     };
   },
 });

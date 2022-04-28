@@ -8,73 +8,68 @@
       </template>
     </n-page-header>
     <n-card>
-      <n-grid responsive="screen" cols="5 s:5 m:5 l:5 xl:5 2xl:5" :x-gap="12">
+      <n-grid
+        responsive="screen"
+        cols="1 xs:1 s:1 m:5 l:5 xl:5 2xl:5"
+        :x-gap="12"
+      >
         <n-gi :span="3">
           <transition name="mode-fade" mode="out-in">
             <n-spin v-if="selectProducts" :show="loading">
               <n-card>
+                <n-space class="mb-2" align="center" justify="space-between">
+                  <div class="d-flex align-items-center">
+                    <n-text class="fs-4">{{
+                      `${saleStore.getSerieDescription(sale.serie)}-${
+                        sale.number
+                      }`
+                    }}</n-text>
+                    <n-dropdown
+                      trigger="click"
+                      :options="
+                        saleStore.getDocumentSeriesOptions(sale.invoice_type)
+                      "
+                      :show-arrow="true"
+                      placement="bottom-end"
+                      size="huge"
+                      @select="selectSerie"
+                    >
+                      <n-button type="info" text>
+                        <v-icon
+                          class="p-0"
+                          name="md-arrowdropdown-round"
+                          scale="1.75"
+                        />
+                      </n-button>
+                    </n-dropdown>
+                  </div>
+                  <n-radio-group
+                    v-model:value="sale.invoice_type"
+                    name="docType"
+                    size="small"
+                    @update:value="changeSerie"
+                  >
+                    <n-radio-button :value="1" :key="1">FACTURA</n-radio-button>
+                    <n-radio-button :value="3" :key="3">BOLETA</n-radio-button>
+                    <n-radio-button :value="80" :key="80"
+                      >N. VENTA</n-radio-button
+                    >
+                  </n-radio-group>
+                  <n-radio-group
+                    v-model:value="sale.payment_condition"
+                    name="saleType"
+                    size="small"
+                  >
+                    <n-radio-button :value="1" :key="1">CONTADO</n-radio-button>
+                    <n-radio-button :value="2" :key="2">CRÉDITO</n-radio-button>
+                  </n-radio-group>
+                </n-space>
                 <n-form
                   class="mb-2"
                   ref="saleForm"
                   :model="sale"
                   :rules="rules"
                 >
-                  <n-space class="mb-2" align="center" justify="space-between">
-                    <div class="d-flex align-items-center">
-                      <n-text class="fs-4">{{
-                        `${saleStore.getSerieDescription(sale.serie)}-${
-                          sale.number
-                        }`
-                      }}</n-text>
-                      <n-dropdown
-                        trigger="click"
-                        :options="
-                          saleStore.getDocumentSeriesOptions(sale.invoice_type)
-                        "
-                        :show-arrow="true"
-                        placement="bottom-end"
-                        size="huge"
-                        @select="selectSerie"
-                      >
-                        <n-button type="info" text>
-                          <v-icon
-                            class="p-0"
-                            name="md-arrowdropdown-round"
-                            scale="1.75"
-                          />
-                        </n-button>
-                      </n-dropdown>
-                    </div>
-                    <n-radio-group
-                      v-model:value="sale.invoice_type"
-                      name="docType"
-                      size="small"
-                      @update:value="changeSerie"
-                    >
-                      <n-radio-button :value="1" :key="1"
-                        >FACTURA</n-radio-button
-                      >
-                      <n-radio-button :value="3" :key="3"
-                        >BOLETA</n-radio-button
-                      >
-                      <n-radio-button :value="80" :key="80"
-                        >N. VENTA</n-radio-button
-                      >
-                    </n-radio-group>
-                    <n-radio-group
-                      v-model:value="sale.payment_condition"
-                      name="saleType"
-                      size="small"
-                    >
-                      <n-radio-button :value="1" :key="1"
-                        >CONTADO</n-radio-button
-                      >
-                      <n-radio-button :value="2" :key="2"
-                        >CRÉDITO</n-radio-button
-                      >
-                    </n-radio-group>
-                  </n-space>
-
                   <n-grid
                     responsive="screen"
                     cols="12 s:12 m:12 l:12 xl:12 2xl:12"
@@ -386,59 +381,63 @@
                 @select="selectProduct"
               />
             </n-input-group>
-            <n-table class="mt-3">
-              <thead>
-                <tr>
-                  <th width="10%"></th>
-                  <th width="40%">Producto</th>
-                  <th width="25%">Cantidad</th>
-                  <th width="15%">SubTotal</th>
-                  <th width="10%"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(order, index) in orderStore.orderList" :key="index">
-                  <td>
-                    <n-button
-                      type="info"
-                      text
-                      @click="
-                        itemIndex = index;
-                        showModal = true;
-                      "
-                      ><v-icon name="md-listalt-round"
-                    /></n-button>
-                  </td>
-                  <td>
-                    {{ order.product_name }}
-                  </td>
-                  <td>
-                    <n-input-number
-                      class="border-top-0"
-                      size="small"
-                      :min="1"
-                      v-model:value="order.quantity"
-                      @update:value="
-                        saleStore.sale_details = orderStore.orderList
-                      "
-                    />
-                  </td>
-                  <td>S/. {{ order.subTotal.toFixed(2) }}</td>
-                  <td>
-                    <n-button
-                      type="error"
-                      text
-                      @click="orderStore.orderList.splice(index, 1)"
-                    >
-                      <v-icon name="md-disabledbydefault-round" />
-                    </n-button>
-                  </td>
-                </tr>
-              </tbody>
-              <tfoot>
-                <tr>
-                  <td colspan="3">
-                    <!-- <n-button
+            <n-scrollbar :x-scrollable="true" style="max-width: 900px">
+              <n-table class="mt-3">
+                <thead>
+                  <tr>
+                    <th width="10%"></th>
+                    <th width="40%">Producto</th>
+                    <th width="25%">Cantidad</th>
+                    <th width="15%">SubTotal</th>
+                    <th width="10%"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="(order, index) in orderStore.orderList"
+                    :key="index"
+                  >
+                    <td>
+                      <n-button
+                        type="info"
+                        text
+                        @click="
+                          itemIndex = index;
+                          showModal = true;
+                        "
+                        ><v-icon name="md-listalt-round"
+                      /></n-button>
+                    </td>
+                    <td>
+                      {{ order.product_name }}
+                    </td>
+                    <td>
+                      <n-input-number
+                        class="border-top-0"
+                        size="small"
+                        :min="1"
+                        v-model:value="order.quantity"
+                        @update:value="
+                          saleStore.sale_details = orderStore.orderList
+                        "
+                      />
+                    </td>
+                    <td>S/. {{ order.subTotal.toFixed(2) }}</td>
+                    <td>
+                      <n-button
+                        type="error"
+                        text
+                        @click="orderStore.orderList.splice(index, 1)"
+                      >
+                        <v-icon name="md-disabledbydefault-round" />
+                      </n-button>
+                    </td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="3">
+                      <!-- <n-button
                       v-if="!($route.name === 'TablePayment')"
                       :type="orderStore.orderId ? 'info' : 'primary'"
                       text
@@ -464,13 +463,14 @@
                         pedido</span
                       >
                     </n-button> -->
-                  </td>
-                  <td colspan="2" class="fs-6 fw-bold">
-                    S/. {{ orderStore.orderTotal.toFixed(2) }}
-                  </td>
-                </tr>
-              </tfoot>
-            </n-table>
+                    </td>
+                    <td colspan="2" class="fs-6 fw-bold">
+                      S/. {{ orderStore.orderTotal.toFixed(2) }}
+                    </td>
+                  </tr>
+                </tfoot>
+              </n-table>
+            </n-scrollbar>
           </n-card>
         </n-gi>
       </n-grid>

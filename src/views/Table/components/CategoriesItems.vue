@@ -41,8 +41,14 @@
           <n-thing>
             <n-space vertical>
               <n-space align="center">
-                <n-text class="fs-4">{{ product.name }}</n-text>
-                <n-text class="fs-6" type="success"
+                <n-text
+                  :class="{
+                    'fs-4': genericsStore.device === 'desktop',
+                    'fs-6': genericsStore.device === 'mobile',
+                  }"
+                  >{{ product.name }}</n-text
+                >
+                <n-text :class="fs - 6" type="success"
                   >S/. {{ parseFloat(product.prices).toFixed(2) }}</n-text
                 >
               </n-space>
@@ -95,6 +101,7 @@ import { useRouter } from "vue-router";
 import { useMessage } from "naive-ui";
 import { renderIcon } from "@/utils";
 import { useOrderStore } from "@/store/modules/order";
+import { useGenericsStore } from "@/store/modules/generics";
 import { getProductsByCategory } from "@/api/modules/products";
 import { useProductStore } from "@/store/modules/product";
 
@@ -104,6 +111,7 @@ export default defineComponent({
     const message = useMessage();
     const route = useRoute();
     const router = useRouter();
+    const genericsStore = useGenericsStore();
     const orderStore = useOrderStore();
     const productStore = useProductStore();
     const category = route.params.category;
@@ -154,6 +162,7 @@ export default defineComponent({
     return {
       handleBack,
       listType,
+      genericsStore,
       productOptions,
       productStore,
       category,
