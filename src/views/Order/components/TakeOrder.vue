@@ -526,6 +526,7 @@ import {
   onMounted,
   h,
 } from "vue";
+import { numeroALetras } from "./Prints/numberText.js";
 import { NThing, NTag, NSpace, useDialog, useMessage } from "naive-ui";
 import { useRouter } from "vue-router";
 import { useProductStore } from "@/store/modules/product";
@@ -955,8 +956,8 @@ export default defineComponent({
       let newTotal = NoNoteSale
         ? {
             SUBTOTAL: subTo.toFixed("2"),
-            "PAGO CON": val.given_amount,
-            // VUELTO: changing.toFixed(2),
+            EFECTIVO: val.given_amount,
+            VUELTO: changing.value.toFixed(2),
             "OP.GRAVADA":
               dataForPrint.totales.total_operaciones_gravadas.toFixed("2"),
             "OP.EXONERADA":
@@ -970,11 +971,19 @@ export default defineComponent({
             "IMPORTE TOTAL": dataForPrint.totales.total_venta.toFixed("2"),
           }
         : {
-            "IMPORTE TOTAL S/.": dataForPrint.totales.total_venta.toFixed("2"),
+            "IMPORTE TOTAL": dataForPrint.totales.total_venta.toFixed("2"),
           };
-
       for (let i in newTotal) {
-        if (!!parseFloat(newTotal[i]) || i === "IGV(18%)") {
+        if (!!parseFloat(newTotal[i])) {
+          height += 7;
+          datTotals.push({
+            tittle: i,
+            twoPoints: ":",
+            cont: newTotal[i],
+          });
+        }
+
+        if (i === "IGV(18%)") {
           height += 7;
           datTotals.push({
             tittle: i,
@@ -993,7 +1002,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 11,
+                  fontSize: 10,
                 },
               },
             ],
@@ -1003,7 +1012,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 11,
+                  fontSize: 10,
                 },
               },
             ],
@@ -1013,7 +1022,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 9,
+                  fontSize: 8,
                 },
               },
             ],
@@ -1023,7 +1032,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 8,
+                  fontSize: 7,
                 },
               },
             ],
@@ -1033,7 +1042,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 9,
+                  fontSize: 8,
                 },
               },
             ],
@@ -1044,7 +1053,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 11,
+                  fontSize: 10,
                 },
               },
             ],
@@ -1086,10 +1095,6 @@ export default defineComponent({
               header: "CANT.",
               dataKey: "amount",
             },
-            !val.by_consumption && {
-              header: "U.M",
-              dataKey: "unit",
-            },
 
             {
               header: "DESCRIPCIÓN",
@@ -1111,7 +1116,6 @@ export default defineComponent({
                 height += 7;
                 return {
                   amount: val.cantidad,
-                  unit: val.unidad_de_medida,
                   description: val.descripcion,
                   price: parseFloat(val.precio_unitario).toFixed("2"),
                   total: (val.cantidad * parseFloat(val.total_item)).toFixed(
@@ -1138,11 +1142,26 @@ export default defineComponent({
           dat: [
             [
               {
+                content:
+                  "SON:" +
+                  numeroALetras(
+                    dataForPrint.totales.total_venta.toFixed("2"),
+                    "SOLES"
+                  ),
+                styles: {
+                  fontStyle: "bold",
+                  halign: "center",
+                  fontSize: 8,
+                },
+              },
+            ],
+            [
+              {
                 content: "Representacion impresa del comprobante electronico",
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 9,
+                  fontSize: 8,
                 },
               },
             ],
@@ -1152,7 +1171,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 9,
+                  fontSize: 8,
                 },
               },
             ],
@@ -1162,7 +1181,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 9,
+                  fontSize: 8,
                 },
               },
             ],
@@ -1173,7 +1192,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 9,
+                  fontSize: 8,
                 },
               },
             ],
