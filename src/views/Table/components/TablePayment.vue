@@ -2,7 +2,7 @@
   <div id="TablePayment">
     <n-spin :show="loading">
       <n-card>
-        <n-space class="mb-2" align="center" justify="space-between" vertical>
+        <n-space class="mb-2" align="center" justify="space-between">
           <div class="d-flex align-items-center">
             <n-text class="fs-4">{{
               `${saleStore.getSerieDescription(sale.serie)}-${sale.number}`

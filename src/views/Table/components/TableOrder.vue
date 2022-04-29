@@ -299,7 +299,6 @@ export default defineComponent({
     const itemIndex = ref(null);
     const checkState = ref(false);
     const dateNow = ref(null);
-    const tableName = ref(null);
 
     orderStore.orders = [];
     saleStore.order_initial = [];
@@ -372,7 +371,6 @@ export default defineComponent({
 
     onMounted(async () => {
       await performRetrieveTableOrder();
-      tableName.value = await tableStore.getTableByID(table).description;
       const fetch = new Date();
       const dd = fetch.getDate();
       const mm = fetch.getMonth();
@@ -661,8 +659,14 @@ export default defineComponent({
           }
         })
         .catch((error) => {
-          console.error(error);
-          message.error("Algo salió mal...");
+          if (error.response.status === 400) {
+            error.response.data.table.forEach((detail) => {
+              message.error(detail);
+            });
+          } else {
+            console.error(error);
+            message.error("Algo salió mal...");
+          }
         })
         .finally(() => {
           userConfirm.value = "";

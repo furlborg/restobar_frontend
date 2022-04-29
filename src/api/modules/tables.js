@@ -72,7 +72,7 @@ export async function createTableOrder(idTable, details, user) {
 export async function updateTableOrder(idTable, orderId, details, user) {
     const tillStore = useTillStore();
     let order_details = details.map(order => ({ id: order.id, product: order.product, indication: order.indication, quantity: order.quantity }))
-    return await http.put(`tables/${idTable}/change_order/`, {
+    return await http.patch(`tables/${idTable}/change_order/`, {
         id: orderId,
         till: tillStore.currentTillID,
         order_type: 'M',

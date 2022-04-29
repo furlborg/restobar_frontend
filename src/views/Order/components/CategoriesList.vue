@@ -33,10 +33,10 @@
       </n-grid>
       <div v-else>
         <n-space align="center" justify="space-between">
-          <n-input v-model:value="search" placeholder="Buscar..." />
           <n-button type="info" text @click="(products = []), (search = '')"
             >Volver a Categorias</n-button
           >
+          <n-input v-model:value="search" placeholder="Buscar..." />
         </n-space>
         <n-scrollbar style="max-height: 600px">
           <n-list class="me-2">

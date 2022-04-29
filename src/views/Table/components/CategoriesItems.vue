@@ -48,7 +48,7 @@
                   }"
                   >{{ product.name }}</n-text
                 >
-                <n-text :class="fs - 6" type="success"
+                <n-text type="success"
                   >S/. {{ parseFloat(product.prices).toFixed(2) }}</n-text
                 >
               </n-space>
