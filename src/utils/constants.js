@@ -710,6 +710,95 @@ export const createMovementsColumns = ({ hasSells, editMovement, deleteMovement 
     ]
 }
 
+export const createTillDetailsColumns = () => {
+    return [
+        {
+            title: 'Documento',
+            key: 'document',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 100 : 'auto'
+        },
+        /* {
+            title: 'Usuario',
+            key: 'user'
+        },
+        {
+            title: 'Sucursal',
+            key: 'sucursal'
+        }, */
+        {
+            title: 'Descripción',
+            key: 'description',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 200 : 'auto'
+        },
+        {
+            title: 'Método Pago',
+            key: 'payment_method',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 200 : 'auto',
+            render(row) {
+                return saleStore.getPaymentMethodDescription(row.payment_method)
+            }
+        },
+        {
+            title: 'Ingreso',
+            key: 'income',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 100 : 'auto',
+            render(row) {
+                let concept_type = tillStore.getConceptType(row.concept)
+                return concept_type == '0' ? row.amount : '----'
+            }
+        },
+        {
+            title: 'Egreso',
+            key: 'outcome',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 100 : 'auto',
+            render(row) {
+                let concept_type = tillStore.getConceptType(row.concept)
+                return concept_type == '1' ? row.amount : '----'
+            }
+        },
+        {
+            title: 'Concepto',
+            key: 'concept',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 225 : 'auto',
+            render(row) {
+                return tillStore.getConceptDescription(row.concept)
+            }
+        },
+        {
+            title: 'Tipo',
+            key: 'concept_type',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 100 : 'auto',
+            render(row) {
+                let concept_type = tillStore.getConceptType(row.concept)
+
+                return h(
+                    NTag,
+                    {
+                        size: 'small',
+                        type: concept_type == '0' ? 'success' : 'error',
+                        round: true
+                    },
+                    {
+                        default: () => concept_type == '0' ? 'INGRESO' : 'EGRESO'
+                    }
+                )
+            }
+        },
+        {
+            title: 'Fecha',
+            key: 'created',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 200 : 'auto',
+        }
+    ]
+}
 
 export const createSuppliersColumns = ({ editSupplier, deleteSupplier }) => {
     return [

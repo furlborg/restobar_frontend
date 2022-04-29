@@ -55,29 +55,42 @@ export const routes = [
       {
         path: '/till',
         name: 'Till',
+        redirect: { name: 'CurrentTill' },
         component: () => import(/* webpackChunkName: "till" */ '@/views/Till'),
-        beforeEnter: async (to, from, next) => {
-          const tillStore = useTillStore()
-          await retrieveCurrentTill()
-            .then(response => {
-              if (response.status === 200) {
-                tillStore.currentTillID = response.data.id
-                tillStore.currentTillOrders = response.data.orders_count
-              }
-            })
-            .catch(error => {
-              if (error.response.status === 404) {
-                tillStore.currentTillID = null
-                tillStore.currentTillOrders = 0
-              }
-            })
-          tillStore.currentTillID !== null ? next() : next({ name: 'TillList' })
-        }
-      },
-      {
-        path: '/till-list',
-        name: 'TillList',
-        component: () => import(/* webpackChunkName: "till-list" */ '@/views/Till/TillList')
+        children: [
+          {
+            path: '',
+            name: 'CurrentTill',
+            component: () => import(/* webpackChunkName: "currentTill" */ '@/views/Till/CurrentTill'),
+            beforeEnter: async (to, from, next) => {
+              const tillStore = useTillStore()
+              await retrieveCurrentTill()
+                .then(response => {
+                  if (response.status === 200) {
+                    tillStore.currentTillID = response.data.id
+                    tillStore.currentTillOrders = response.data.orders_count
+                  }
+                })
+                .catch(error => {
+                  if (error.response.status === 404) {
+                    tillStore.currentTillID = null
+                    tillStore.currentTillOrders = 0
+                  }
+                })
+              tillStore.currentTillID !== null ? next() : next({ name: 'TillList' })
+            }
+          },
+          {
+            path: '/till-list',
+            name: 'TillList',
+            component: () => import(/* webpackChunkName: "till-list" */ '@/views/Till/TillList')
+          },
+          {
+            path: ':till',
+            name: "TillDetails",
+            component: () => import(/* webpackChunkName: "till-list" */ '@/views/Till/TillDetails')
+          }
+        ]
       },
       {
         path: '/table',
