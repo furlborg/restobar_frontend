@@ -386,6 +386,16 @@ export default defineComponent({
       checkState.value = true;
 
       let lengthData = 0;
+      const createName = () => {
+        if (update) {
+          lengthData += 7 * 6.5;
+          return `ACTUALIZACION DE MESA: ${
+            tableStore.getTableByID(table).description
+          }`;
+        } else {
+          return `MESA: ${tableStore.getTableByID(table).description}`;
+        }
+      };
 
       let structure = [
         {
@@ -396,7 +406,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 20,
+                  fontSize: 15,
                 },
               },
             ],
@@ -406,13 +416,11 @@ export default defineComponent({
           dat: [
             [
               {
-                content: `${update ? "ACTUALIZACION DE " : ""}MESA: ${
-                  tableStore.getTableByID(table).description
-                }`,
+                content: createName(),
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 15,
+                  fontSize: 18,
                 },
               },
             ],
@@ -553,7 +561,7 @@ export default defineComponent({
                   {
                     content: verifyNameCombo,
                     styles: {
-                      fontSize: 12,
+                      fontSize: process.env.VUE_APP_PRODUCT_SIZE,
                     },
                   },
                 ],
@@ -563,10 +571,10 @@ export default defineComponent({
               dat: [
                 [
                   {
-                    content: ind,
+                    content: ind.toUpperCase(),
                     styles: {
                       fontStyle: "bold",
-                      fontSize: 12,
+                      fontSize: process.env.VUE_APP_PRODUCT_SIZE,
                     },
                   },
                 ],
@@ -579,7 +587,7 @@ export default defineComponent({
                     content: `Cant.: ${valOrder.quantity}`,
                     styles: {
                       fontStyle: "bold",
-                      fontSize: 12,
+                      fontSize: process.env.VUE_APP_PRODUCT_SIZE,
                     },
                   },
                 ],

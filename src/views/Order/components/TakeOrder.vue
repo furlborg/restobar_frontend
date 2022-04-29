@@ -1210,11 +1210,14 @@ export default defineComponent({
             {
               tittle: "TIPO DE PAGO",
               twoPoints: ":",
-              cont: val.payment_method,
+              cont: saleStore.getPaymentMethodDescription(
+                val.sale.payment_method
+              ),
             },
           ],
         },
       ];
+      console.log(val);
       generatePrint(data, structure, NoNoteSale, height + 7 * 16);
 
       message.success("Imprimir");
@@ -1389,7 +1392,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 20,
+                  fontSize: 15,
                 },
               },
             ],
@@ -1406,7 +1409,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 15,
+                  fontSize: 18,
                 },
               },
             ],
@@ -1478,7 +1481,7 @@ export default defineComponent({
           ) {
             newNameProd = `[CARTA] ${newNameProd}`;
           }
-          lengthData += 7 * heightForNmae;
+          lengthData += 10 * heightForNmae;
 
           structure.push(
             {
@@ -1501,7 +1504,7 @@ export default defineComponent({
                   {
                     content: verifyNameCombo,
                     styles: {
-                      fontSize: 12,
+                      fontSize: process.env.VUE_APP_PRODUCT_SIZE,
                     },
                   },
                 ],
@@ -1511,10 +1514,10 @@ export default defineComponent({
               dat: [
                 [
                   {
-                    content: ind,
+                    content: ind.toUpperCase(),
                     styles: {
                       fontStyle: "bold",
-                      fontSize: 12,
+                      fontSize: process.env.VUE_APP_PRODUCT_SIZE,
                     },
                   },
                 ],
@@ -1527,7 +1530,7 @@ export default defineComponent({
                     content: `Cant.: ${val.quantity}`,
                     styles: {
                       fontStyle: "bold",
-                      fontSize: 12,
+                      fontSize: process.env.VUE_APP_PRODUCT_SIZE,
                     },
                   },
                 ],
