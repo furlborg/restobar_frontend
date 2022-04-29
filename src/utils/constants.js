@@ -1231,6 +1231,126 @@ export const createSaleColumns = ({ printSale, miscSale, sendSale, nullifySale }
         },
     ]
 }
+/* { printSale, miscSale, sendSale, nullifySale } */
+export const createTillSalesColumns = () => {
+    return [
+        {
+            title: 'Cliente',
+            key: 'customer'
+        },
+        {
+            title: 'Documento',
+            key: 'document',
+            render(row) {
+                return `${row.serie}-${row.number}`
+            }
+        },
+        {
+            title: 'Método Pago',
+            key: 'payment_method',
+        },
+        {
+            title: 'Monto',
+            key: 'amount',
+            render(row) {
+                return `S/. ${row.amount}`
+            }
+        },
+        {
+            title: 'Emisión',
+            key: 'date_sale',
+        },
+        {
+            title: 'Estado',
+            key: 'status',
+            render(row) {
+                let type, text
+                if (row.status === 'N') {
+                    type = "info"
+                    text = "NUEVO"
+                } else if (row.status === 'E') {
+                    type = "success"
+                    text = "ENVIADO"
+                } else if (row.status === 'A') {
+                    type = "error"
+                    text = "ANULADO"
+                } else if (row.status === 'X') {
+                    type = "warning"
+                    text = "¡ERROR!"
+                } else {
+                    type = "warning"
+                    text = "-"
+                }
+
+                return h(
+                    NTag,
+                    {
+                        size: 'small',
+                        type: type,
+                        round: true
+                    },
+                    {
+                        default: () => text
+                    }
+                )
+            }
+        },
+        /* {
+            title: 'Acciones',
+            key: 'actions',
+            width: 200,
+            render(row) {
+                return [
+                    row.invoice_type !== "80" ? h(
+                        NButton,
+                        {
+                            class: 'me-2',
+                            size: 'small',
+                            type: 'info',
+                            secondary: true,
+                            disabled: row.status === 'E' || row.status === 'A',
+                            onClick: () => sendSale(row)
+                        },
+                        renderIcon('ri-send-plane-fill')
+                    ) : null,
+                    h(
+                        NButton,
+                        {
+                            class: 'me-2',
+                            size: 'small',
+                            type: 'error',
+                            secondary: true,
+                            disabled: row.status !== 'E',
+                            onClick: () => nullifySale(row)
+                        },
+                        renderIcon('md-cancel-twotone')
+                    ),
+                    h(
+                        NButton,
+                        {
+                            class: 'me-2',
+                            size: 'small',
+                            type: 'warning',
+                            secondary: true,
+                            onClick: () => printSale(row)
+                        },
+                        renderIcon('md-print-round')
+                    ),
+                    h(
+                        NButton,
+                        {
+                            size: 'small',
+                            type: 'success',
+                            secondary: true,
+                            onClick: () => miscSale(row)
+                        },
+                        renderIcon('ri-mail-send-fill')
+                    )
+                ]
+            }
+        }, */
+    ]
+}
 
 export const createOrderColumns = ({ showDetails, showDeliveryInfo, payDeliver, nullifyOrder }) => {
     return [
@@ -1398,6 +1518,118 @@ export const createOrderColumns = ({ showDetails, showDeliveryInfo, payDeliver, 
                         },
                         renderIcon('md-cancel-twotone')
                     )
+                ]
+            }
+        },
+    ]
+}
+
+export const createTillOrderColumns = ({ showDetails, showDeliveryInfo }) => {
+    return [
+        {
+            title: '#',
+            key: 'number',
+            width: 'auto',
+            render(row, index) {
+                return index + 1
+            }
+        },
+        {
+            title: 'Cliente',
+            key: 'sale_customer',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 200 : 'auto',
+        },
+        {
+            title: 'Usuario',
+            key: 'user',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 200 : 'auto',
+        },
+        {
+            title: 'Monto',
+            key: 'amount',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 100 : 'auto',
+            render(row) {
+                return `S/. ${parseFloat(row.amount).toFixed(2)}`
+            }
+        },
+        {
+            title: 'Fecha',
+            key: 'created',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 200 : 'auto',
+        },
+        {
+            title: 'Tipo',
+            key: 'type',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 150 : 'auto',
+            render(row) {
+                let color, text;
+                switch (row.order_type) {
+                    case 'M':
+                        color = "#3B689F"
+                        text = "EN MESA"
+                        break;
+                    case 'P':
+                        color = "#926ED7"
+                        text = "PARA LLEVAR"
+                        break;
+                    case 'D':
+                        color = "#995C4E"
+                        text = "DELIVERY"
+                        break;
+                    default:
+                        color = "#D03050"
+                        text = "ERROR"
+                        break;
+                }
+
+                return h(
+                    NTag,
+                    {
+                        size: 'small',
+                        color: { color: lighten(color, 48), textColor: color, borderColor: lighten(color, 24) },
+                        round: false
+                    },
+                    {
+                        default: () => text
+                    }
+                )
+            }
+        },
+        {
+            title: 'Acciones',
+            key: 'actions',
+            width: genericsStore.device !== 'desktop' ? 250 : 'auto',
+            align: 'center',
+            render(row) {
+                return [
+                    h(
+                        NButton,
+                        {
+                            class: 'me-2',
+                            size: 'small',
+                            type: 'info',
+                            secondary: true,
+                            onClick: () => showDetails(row)
+                        },
+                        renderIcon('md-feed-round')
+                    ),
+                    h(
+                        NButton,
+                        {
+                            class: 'me-2',
+                            size: 'small',
+                            type: 'warning',
+                            secondary: true,
+                            disabled: !row.is_delivery,
+                            onClick: () => showDeliveryInfo(row)
+                        },
+                        renderIcon('md-deliverydining-round')
+                    ),
                 ]
             }
         },

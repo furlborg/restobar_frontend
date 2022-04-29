@@ -81,7 +81,7 @@ export const routes = [
             }
           },
           {
-            path: '/till-list',
+            path: 'till-list',
             name: 'TillList',
             component: () => import(/* webpackChunkName: "till-list" */ '@/views/Till/TillList')
           },
