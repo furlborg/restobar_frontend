@@ -1389,7 +1389,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 20,
+                  fontSize: 15,
                 },
               },
             ],
