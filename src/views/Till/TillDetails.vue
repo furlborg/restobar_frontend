@@ -108,10 +108,13 @@
               <v-icon name="md-filteralt-round" />
               {{ showFilters ? "Ocultar Filtros" : "Mostrar filtros" }}
             </n-button>
-            <n-button type="info" text @click="refreshTable">
+            <n-button type="info" tertiary @click="makeReport"
+              >Reporte</n-button
+            >
+            <!-- <n-button type="info" text @click="refreshTable">
               <v-icon name="hi-solid-refresh" />
               Recargar
-            </n-button>
+            </n-button> -->
           </n-space>
           <n-collapse-transition class="mt-2" :show="showFilters">
             <n-form>
@@ -200,10 +203,12 @@
       @update:show="onCloseModal"
       @on-success="onSuccess"
     />
+    <!-- <iframe id="TillReport" name="TillReport"></iframe> -->
   </div>
 </template>
 
 <script>
+import jspdf from "jspdf";
 import { defineComponent, ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useMessage, useDialog } from "naive-ui";
@@ -219,7 +224,7 @@ import { generatePrint } from "./Prints/prints";
 import {
   getCurrentTillDetails,
   filterTillDetails,
-  nullifyDetail,
+  getTillReport,
 } from "@/api/modules/tills";
 import { useUserStore } from "../../store/modules/user";
 
@@ -368,6 +373,26 @@ export default defineComponent({
       // idProduct.value = 0
     };
 
+    const makeReport = () => {
+      getTillReport(till)
+        .then((response) => {
+          const doc = new jspdf({
+            format: [80, 300],
+          });
+          doc.html(response.data, {
+            html2canvas: { scale: "0.25" },
+            margin: [0, 2, 0, 2],
+            callback: function (doc) {
+              /* doc.autoPrint(); */
+              doc.save();
+            },
+          });
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    };
+
     const onSuccess = async () => {
       showModal.value = false;
       await loadMovements();
@@ -399,6 +424,7 @@ export default defineComponent({
       ConceptOptions,
       performFilter,
       refreshTable,
+      makeReport,
       tableColumns: createTillDetailsColumns(),
     };
   },
