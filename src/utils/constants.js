@@ -1260,7 +1260,7 @@ export const createTillSalesColumns = () => {
             title: 'Emisión',
             key: 'date_sale',
         },
-        {
+        /* {
             title: 'Estado',
             key: 'status',
             render(row) {
@@ -1294,8 +1294,7 @@ export const createTillSalesColumns = () => {
                     }
                 )
             }
-        },
-        /* {
+        },{
             title: 'Acciones',
             key: 'actions',
             width: 200,

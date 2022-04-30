@@ -55,14 +55,6 @@
               clearable
             />
           </n-form-item-gi>
-          <n-form-item-gi label="Estado" :span="2">
-            <n-select
-              v-model:value="filterParams.status"
-              :options="statusOptions"
-              placeholder=""
-              clearable
-            />
-          </n-form-item-gi>
           <n-form-item-gi label="Fecha" :span="6">
             <n-date-picker
               type="daterange"
@@ -129,7 +121,6 @@ export default defineComponent({
       number: "",
       payment_method: null,
       date_sale: null,
-      status: null,
     });
 
     const pagination = ref({
@@ -214,7 +205,7 @@ export default defineComponent({
     const loadSales = async () => {
       isTableLoading.value = true;
       // pagination.value.pageSize = 20;
-      await listSales(filterParams.value.branch)
+      await listSales(filterParams.value.branch, till)
         .then((response) => {
           pagination.value.total = response.data.count;
           pagination.value.pageCount = Math.trunc(
@@ -274,7 +265,6 @@ export default defineComponent({
       filterParams.value.number = "";
       filterParams.value.payment_method = null;
       filterParams.value.date_sale = null;
-      filterParams.value.status = null;
       pagination.value.pageSearchParams = {
         order__till: till,
         branch: !userStore.user.branchoffice
@@ -285,26 +275,10 @@ export default defineComponent({
         number: "",
         payment_method: null,
         date_sale: null,
-        status: null,
       };
       pagination.value.page = 1;
       await loadSales();
     };
-
-    const statusOptions = [
-      {
-        value: "N",
-        label: "NUEVO",
-      },
-      {
-        value: "E",
-        label: "ENVIADO",
-      },
-      {
-        value: "A",
-        label: "ANULADO",
-      },
-    ];
 
     onMounted(async () => {
       document.title = "Ventas | App";
@@ -325,7 +299,6 @@ export default defineComponent({
       isLetter,
       isNumber,
       isTableLoading,
-      statusOptions,
       pagination,
       showFilters,
       filterParams,

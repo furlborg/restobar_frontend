@@ -30,9 +30,10 @@ export async function updatePaymentMethodDesc(idPayment, description) {
     })
 }
 
-export async function listSales(branch) {
+export async function listSales(branch, till = null) {
     return await http.get('sales/', {
         params: {
+            order__till: till,
             branch_office: branch
         }
     })
