@@ -528,9 +528,7 @@ export default defineComponent({
 
                       description: val.descripcion,
                       price: parseFloat(val.precio_unitario).toFixed("2"),
-                      total: (
-                        val.cantidad * parseFloat(val.total_item)
-                      ).toFixed("2"),
+                      total: parseFloat(val.total_item).toFixed("2"),
                     };
                   })
                 : [
