@@ -354,7 +354,7 @@ export default defineComponent({
     ];
 
     onMounted(async () => {
-      document.title = "Movimientos de Caja | App";
+      document.title = "Reportes de Caja | App";
 
       await loadMovements();
 
@@ -377,7 +377,7 @@ export default defineComponent({
       getTillReport(till)
         .then((response) => {
           const doc = new jspdf({
-            format: [80, 300],
+            format: [80, 297],
           });
           doc.html(response.data, {
             html2canvas: { scale: "0.25" },
