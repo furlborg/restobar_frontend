@@ -1295,7 +1295,7 @@ export default defineComponent({
               {
                 tittle: "PAGARA CON",
                 twoPoints: ":",
-                cont: payment_amount.value.toFixed("2"),
+                cont: payment_amount.value,
               },
               {
                 tittle: "VUELTO",
@@ -1578,7 +1578,7 @@ export default defineComponent({
           if (response.status === 201) {
             printSale(response.data);
             message.success("Venta realizada correctamente!");
-            router.push({ name: "Orders" });
+            router.push({ name: "TableHome" });
           }
         })
         .catch((error) => {
@@ -1614,7 +1614,7 @@ export default defineComponent({
                     if (response.status === 201) {
                       printSale(response.data);
                       message.success("Venta realizada correctamente!");
-                      router.push({ name: "Orders" });
+                      router.push({ name: "TableHome" });
                     }
                   })
                   .catch((error) => {

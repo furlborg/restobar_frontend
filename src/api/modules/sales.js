@@ -30,9 +30,10 @@ export async function updatePaymentMethodDesc(idPayment, description) {
     })
 }
 
-export async function listSales(branch) {
+export async function listSales(branch, till = null) {
     return await http.get('sales/', {
         params: {
+            order__till: till,
             branch_office: branch
         }
     })
@@ -42,6 +43,7 @@ export async function listSalesByPage(filterParams, page, pageSize) {
     if (filterParams) {
         return await http.get('sales/', {
             params: {
+                order__till: filterParams.order__till,
                 branch_office: filterParams.branch,
                 customer__names__icontains: filterParams.customer,
                 serie: filterParams.serie,
@@ -66,7 +68,8 @@ export async function listSalesByPage(filterParams, page, pageSize) {
 export async function searchSales(filterParams, page, pageSize) {
     return await http.get('sales/', {
         params: {
-            branch: filterParams.branch,
+            order__till: filterParams.order__till,
+            branch_office: filterParams.branch,
             customer__names__icontains: filterParams.customer,
             serie: filterParams.serie,
             number__icontains: filterParams.number,

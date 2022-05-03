@@ -84,8 +84,10 @@
         </n-card>
       </n-gi>
     </n-grid>
-    <n-card class="mt-2" title="Movimientos" :segmented="{ content: 'hard' }">
-      <!-- <template #header-extra>
+    <n-card class="mt-2">
+      <n-tabs type="card">
+        <n-tab-pane name="movements" tab="Movimientos">
+          <!-- <template #header-extra>
         <n-button
           type="info"
           secondary
@@ -93,94 +95,107 @@
           >Lista de Cajas</n-button
         >
       </template> -->
-      <n-space justify="space-between">
-        <n-button
-          type="info"
-          text
-          @click="
-            showFilters === false ? (showFilters = true) : (showFilters = false)
-          "
-        >
-          <v-icon name="md-filteralt-round" />
-          {{ showFilters ? "Ocultar Filtros" : "Mostrar filtros" }}
-        </n-button>
-        <n-button type="info" text @click="refreshTable">
-          <v-icon name="hi-solid-refresh" />
-          Recargar
-        </n-button>
-      </n-space>
-      <n-collapse-transition class="mt-2" :show="showFilters">
-        <n-form>
-          <n-grid
-            responsive="screen"
-            cols="3 xs:3 s:12 m:12 l:12 xl:24 2xl:24"
-            :x-gap="12"
-            :scroll-x="900"
-          >
-            <n-form-item-gi label="Documento" :span="3">
-              <n-input
-                v-model:value="filterParams.document"
-                placeholder=""
-                @keypress="isLetterOrNumber($event)"
-              />
-            </n-form-item-gi>
-            <n-form-item-gi label="Descripción" :span="3">
-              <n-input
-                v-model:value="filterParams.description"
-                placeholder=""
-                @keypress="isLetterOrNumber($event)"
-              />
-            </n-form-item-gi>
-            <n-form-item-gi label="Monto" :span="3">
-              <n-input
-                v-model:value="filterParams.amount"
-                placeholder=""
-                @keypress="isDecimal($event)"
-              />
-            </n-form-item-gi>
-            <n-form-item-gi label="Tipo Concepto" :span="3">
-              <n-select
-                v-model:value="filterParams.concept_type"
-                placeholder=""
-                :options="conceptTypeOptions"
-                @update:value="filterParams.concept = null"
-                clearable
-              />
-            </n-form-item-gi>
-            <n-form-item-gi label="Concepto" :span="3">
-              <n-select
-                v-model:value="filterParams.concept"
-                placeholder=""
-                :options="ConceptOptions"
-                clearable
-              />
-            </n-form-item-gi>
-            <n-form-item-gi label="Método Pago" :span="3">
-              <n-select
-                v-model:value="filterParams.payment_method"
-                placeholder=""
-                :options="saleStore.getPaymentMethodsOptions"
-                clearable
-              />
-            </n-form-item-gi>
-            <!-- <n-form-item-gi label="Sucursal" :span="3">
+          <n-space class="mt-2" justify="space-between">
+            <n-button
+              type="info"
+              text
+              @click="
+                showFilters === false
+                  ? (showFilters = true)
+                  : (showFilters = false)
+              "
+            >
+              <v-icon name="md-filteralt-round" />
+              {{ showFilters ? "Ocultar Filtros" : "Mostrar filtros" }}
+            </n-button>
+            <n-button type="info" tertiary @click="makeReport"
+              >Reporte</n-button
+            >
+            <!-- <n-button type="info" text @click="refreshTable">
+              <v-icon name="hi-solid-refresh" />
+              Recargar
+            </n-button> -->
+          </n-space>
+          <n-collapse-transition class="mt-2" :show="showFilters">
+            <n-form>
+              <n-grid
+                responsive="screen"
+                cols="3 xs:3 s:12 m:12 l:12 xl:24 2xl:24"
+                :x-gap="12"
+                :scroll-x="900"
+              >
+                <n-form-item-gi label="Documento" :span="3">
+                  <n-input
+                    v-model:value="filterParams.document"
+                    placeholder=""
+                    @keypress="isLetterOrNumber($event)"
+                  />
+                </n-form-item-gi>
+                <n-form-item-gi label="Descripción" :span="3">
+                  <n-input
+                    v-model:value="filterParams.description"
+                    placeholder=""
+                    @keypress="isLetterOrNumber($event)"
+                  />
+                </n-form-item-gi>
+                <n-form-item-gi label="Monto" :span="3">
+                  <n-input
+                    v-model:value="filterParams.amount"
+                    placeholder=""
+                    @keypress="isDecimal($event)"
+                  />
+                </n-form-item-gi>
+                <n-form-item-gi label="Tipo Concepto" :span="3">
+                  <n-select
+                    v-model:value="filterParams.concept_type"
+                    placeholder=""
+                    :options="conceptTypeOptions"
+                    @update:value="filterParams.concept = null"
+                    clearable
+                  />
+                </n-form-item-gi>
+                <n-form-item-gi label="Concepto" :span="3">
+                  <n-select
+                    v-model:value="filterParams.concept"
+                    placeholder=""
+                    :options="ConceptOptions"
+                    clearable
+                  />
+                </n-form-item-gi>
+                <n-form-item-gi label="Método Pago" :span="3">
+                  <n-select
+                    v-model:value="filterParams.payment_method"
+                    placeholder=""
+                    :options="saleStore.getPaymentMethodsOptions"
+                    clearable
+                  />
+                </n-form-item-gi>
+                <!-- <n-form-item-gi label="Sucursal" :span="3">
               <n-select clearable />
             </n-form-item-gi> -->
-            <n-form-item-gi :span="3">
-              <n-button type="info" secondary @click="performFilter"
-                >Buscar</n-button
-              >
-            </n-form-item-gi>
-          </n-grid>
-        </n-form>
-      </n-collapse-transition>
-      <n-data-table
-        class="mt-2"
-        :columns="tableColumns"
-        :data="movements"
-        :loading="isLoading"
-        :pagination="pagination"
-      />
+                <n-form-item-gi :span="3">
+                  <n-button type="info" secondary @click="performFilter"
+                    >Buscar</n-button
+                  >
+                </n-form-item-gi>
+              </n-grid>
+            </n-form>
+          </n-collapse-transition>
+          <n-data-table
+            class="mt-2"
+            :columns="tableColumns"
+            :data="movements"
+            :loading="isLoading"
+            :pagination="pagination"
+          />
+        </n-tab-pane>
+        <n-tab-pane name="sales" tab="Ventas">
+          <TillSales />
+        </n-tab-pane>
+        <n-tab-pane name="orders" tab="Pedidos">
+          <TillOrders />
+        </n-tab-pane>
+      </n-tabs>
     </n-card>
     <movement-modal
       v-model:show="showModal"
@@ -188,14 +203,18 @@
       @update:show="onCloseModal"
       @on-success="onSuccess"
     />
+    <!-- <iframe id="TillReport" name="TillReport"></iframe> -->
   </div>
 </template>
 
 <script>
+import jspdf from "jspdf";
 import { defineComponent, ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useMessage, useDialog } from "naive-ui";
 import MovementModal from "./components/MovementModal";
+import TillOrders from "./components/TillOrders";
+import TillSales from "./components/TillSales";
 import { isDecimal, isLetter, isNumber, isLetterOrNumber } from "@/utils";
 import { createTillDetailsColumns } from "@/utils/constants";
 import { useTillStore } from "@/store/modules/till";
@@ -205,7 +224,7 @@ import { generatePrint } from "./Prints/prints";
 import {
   getCurrentTillDetails,
   filterTillDetails,
-  nullifyDetail,
+  getTillReport,
 } from "@/api/modules/tills";
 import { useUserStore } from "../../store/modules/user";
 
@@ -213,6 +232,8 @@ export default defineComponent({
   name: "TillDetails",
   components: {
     MovementModal,
+    TillOrders,
+    TillSales,
   },
   setup() {
     const route = useRoute();
@@ -352,6 +373,26 @@ export default defineComponent({
       // idProduct.value = 0
     };
 
+    const makeReport = () => {
+      getTillReport(till)
+        .then((response) => {
+          const doc = new jspdf({
+            format: [80, 300],
+          });
+          doc.html(response.data, {
+            html2canvas: { scale: "0.25" },
+            margin: [0, 2, 0, 2],
+            callback: function (doc) {
+              /* doc.autoPrint(); */
+              doc.save();
+            },
+          });
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    };
+
     const onSuccess = async () => {
       showModal.value = false;
       await loadMovements();
@@ -383,6 +424,7 @@ export default defineComponent({
       ConceptOptions,
       performFilter,
       refreshTable,
+      makeReport,
       tableColumns: createTillDetailsColumns(),
     };
   },
