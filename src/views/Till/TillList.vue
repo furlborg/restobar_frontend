@@ -323,6 +323,14 @@ export default defineComponent({
       businessStore,
       userStore,
       tableColumns: createTillColumns({
+        viewDetails(row) {
+          router.push({
+            name: "TillDetails",
+            params: {
+              till: row.id,
+            },
+          });
+        },
         generateReport(row) {
           getTillReport(row.id)
             .then((response) => {

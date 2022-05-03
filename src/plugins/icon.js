@@ -101,6 +101,7 @@ import {
     MdDeliverydiningRound,
     RiRotateLockFill,
     MdPublishedwithchangesRound,
+    BiEye,
 } from "oh-vue-icons/icons";
 OhVueIcon.add(
     BiThreeDots,
@@ -204,5 +205,6 @@ OhVueIcon.add(
     MdDeliverydiningRound,
     RiRotateLockFill,
     MdPublishedwithchangesRound,
+    BiEye,
 );
 export { OhVueIcon }

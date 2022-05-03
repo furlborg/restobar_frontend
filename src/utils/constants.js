@@ -430,7 +430,7 @@ export const createUserColumns = ({ editUser, deleteUser, changePassword }) => {
     ]
 }
 
-export const createTillColumns = ({ generateReport, closeTill }) => {
+export const createTillColumns = ({ viewDetails, generateReport, closeTill }) => {
     return [
         /* {
             title: 'Usuario',
@@ -528,6 +528,17 @@ export const createTillColumns = ({ generateReport, closeTill }) => {
             width: genericsStore.device !== 'desktop' ? 125 : 'auto',
             render(row) {
                 return [
+                    h(
+                        NButton,
+                        {
+                            class: 'me-2',
+                            size: 'small',
+                            type: 'info',
+                            secondary: true,
+                            onClick: () => viewDetails(row)
+                        },
+                        renderIcon('bi-eye')
+                    ),
                     h(
                         NButton,
                         {
