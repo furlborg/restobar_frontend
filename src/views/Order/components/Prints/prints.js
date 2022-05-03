@@ -39,6 +39,10 @@ export const generatePrint = (objSunat, structure, addImages) => {
       finalY += 5;
     }
 
+    if (index === structure.length - 1) {
+      finalY += 5;
+    }
+
     doc.autoTable({
       startY: finalY,
       theme: "plain",
