@@ -380,6 +380,7 @@ export default defineComponent({
     const printSale = (val) => {
       let height = 0;
       let dataForPrint = JSON.parse(val.json_sale);
+      console.log(dataForPrint);
 
       let typeDoc = dataForPrint.serie_documento.split("");
 
@@ -541,7 +542,7 @@ export default defineComponent({
             {
               tittle: "F.EMISIÓN",
               twoPoints: ":",
-              cont: dateNow.value,
+              cont: `${dataForPrint.fecha_de_emision} ${dataForPrint.hora_de_emision}`,
             },
           ],
           line: true,

@@ -291,7 +291,7 @@ export default defineComponent({
       const hh = fetch.getHours();
       const msms = fetch.getMinutes();
 
-      dateNow.value = `${dd}/${mm}/${yy} ${hh}:${msms}`;
+      dateNow.value = `${dd}/${mm + 1}/${yy} ${hh}:${msms}`;
     });
 
     return {

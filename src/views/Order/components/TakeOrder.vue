@@ -1084,7 +1084,7 @@ export default defineComponent({
             {
               tittle: "F.EMISIÓN",
               twoPoints: ":",
-              cont: dateNow.value,
+              cont: `${dataForPrint.fecha_de_emision} ${dataForPrint.hora_de_emision}`,
             },
           ],
           line: true,
@@ -1290,7 +1290,7 @@ export default defineComponent({
               {
                 tittle: "F.EMISIÓN",
                 twoPoints: ":",
-                cont: dateNow.value,
+                cont: `${dataForPrint.fecha_de_emision} ${dataForPrint.hora_de_emision}`,
               },
               {
                 tittle: "PAGARA CON",
@@ -1645,7 +1645,7 @@ export default defineComponent({
       const hh = fetch.getHours();
       const msms = fetch.getMinutes();
 
-      dateNow.value = `${dd}/${mm}/${yy} ${hh}:${msms}`;
+      dateNow.value = `${dd}/${mm + 1}/${yy} ${hh}:${msms}`;
     });
 
     const onCloseModal = () => {
