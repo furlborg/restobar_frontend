@@ -100,6 +100,10 @@ export async function getTillReport(id) {
     return await http.get(`tills/${id}/report`)
 }
 
+export async function getTillSaleReport(id) {
+    return await http.get(`tills/${id}/sale_report`)
+}
+
 export async function filterTillDetails(id, filterParams) {
     return await http.get(`tills/${id}/details/`, {
         params: {
