@@ -111,6 +111,9 @@
             <n-button type="info" tertiary @click="makeReport"
               >Reporte</n-button
             >
+            <n-button type="info" tertiary @click="makeSaleReport"
+              >Reporte ventas</n-button
+            >
             <!-- <n-button type="info" text @click="refreshTable">
               <v-icon name="hi-solid-refresh" />
               Recargar
@@ -225,6 +228,7 @@ import {
   getCurrentTillDetails,
   filterTillDetails,
   getTillReport,
+  getTillSaleReport,
 } from "@/api/modules/tills";
 import { useUserStore } from "../../store/modules/user";
 
@@ -400,6 +404,33 @@ export default defineComponent({
         });
     };
 
+    const makeSaleReport = () => {
+      getTillSaleReport(till)
+        .then((response) => {
+          const doc = new jspdf({
+            format: [80, 297],
+          });
+          doc.html(response.data, {
+            html2canvas: { scale: "0.25" },
+            margin: [0, 2, 0, 2],
+            callback: function (doc) {
+              /* doc.save(); */
+              doc.autoPrint();
+              const hiddFrame = document.createElement("iframe");
+              hiddFrame.style.position = "fixed";
+              hiddFrame.style.width = "1px";
+              hiddFrame.style.height = "1px";
+              hiddFrame.style.opacity = "0.01";
+              hiddFrame.src = doc.output("bloburl");
+              document.body.appendChild(hiddFrame);
+            },
+          });
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    };
+
     const onSuccess = async () => {
       showModal.value = false;
       await loadMovements();
@@ -432,6 +463,7 @@ export default defineComponent({
       performFilter,
       refreshTable,
       makeReport,
+      makeSaleReport,
       tableColumns: createTillDetailsColumns(),
     };
   },
