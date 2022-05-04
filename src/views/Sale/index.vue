@@ -328,6 +328,8 @@ export default defineComponent({
         printSale(val) {
           let height = 0;
           let dataForPrint = JSON.parse(val.json_sale);
+          console.log(val);
+          console.log(dataForPrint);
 
           let typeDoc = dataForPrint.serie_documento.split("");
 
