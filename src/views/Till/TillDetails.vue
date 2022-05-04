@@ -108,16 +108,16 @@
               <v-icon name="md-filteralt-round" />
               {{ showFilters ? "Ocultar Filtros" : "Mostrar filtros" }}
             </n-button>
-            <n-button type="info" tertiary @click="makeReport"
+            <!-- <n-button type="info" tertiary @click="makeReport"
               >Reporte</n-button
             >
             <n-button type="info" tertiary @click="makeSaleReport"
               >Reporte ventas</n-button
-            >
-            <!-- <n-button type="info" text @click="refreshTable">
+            > -->
+            <n-button type="info" text @click="refreshTable">
               <v-icon name="hi-solid-refresh" />
               Recargar
-            </n-button> -->
+            </n-button>
           </n-space>
           <n-collapse-transition class="mt-2" :show="showFilters">
             <n-form>
