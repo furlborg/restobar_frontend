@@ -198,6 +198,15 @@
         <n-tab-pane name="orders" tab="Pedidos">
           <TillOrders />
         </n-tab-pane>
+        <template #suffix>
+          <n-dropdown
+            trigger="click"
+            :options="reportOptions"
+            @select="selectReport"
+          >
+            <n-button type="info" size="small" secondary>Reportes</n-button>
+          </n-dropdown>
+        </template>
       </n-tabs>
     </n-card>
     <movement-modal
@@ -230,7 +239,7 @@ import {
   getTillReport,
   getTillSaleReport,
 } from "@/api/modules/tills";
-import { useUserStore } from "../../store/modules/user";
+import { useUserStore } from "@/store/modules/user";
 
 export default defineComponent({
   name: "TillDetails",
@@ -431,6 +440,31 @@ export default defineComponent({
         });
     };
 
+    const reportOptions = [
+      {
+        label: "Arqueo de caja",
+        key: 1,
+      },
+      {
+        label: "Resumen de ventas",
+        key: 2,
+      },
+    ];
+
+    const selectReport = (key) => {
+      switch (key) {
+        case 1:
+          makeReport();
+          break;
+        case 2:
+          makeSaleReport();
+          break;
+        default:
+          console.error("Algo salió mal...");
+          break;
+      }
+    };
+
     const onSuccess = async () => {
       showModal.value = false;
       await loadMovements();
@@ -464,6 +498,8 @@ export default defineComponent({
       refreshTable,
       makeReport,
       makeSaleReport,
+      reportOptions,
+      selectReport,
       tableColumns: createTillDetailsColumns(),
     };
   },
