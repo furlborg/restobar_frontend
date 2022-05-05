@@ -614,7 +614,7 @@ export default defineComponent({
                 {
                   tittle: "USUARIO",
                   twoPoints: ":",
-                  cont: userStore.user.names,
+                  cont: val.username,
                 },
                 {
                   tittle: "TIPO DE PAGO",

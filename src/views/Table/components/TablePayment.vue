@@ -380,7 +380,6 @@ export default defineComponent({
     const printSale = (val) => {
       let height = 0;
       let dataForPrint = JSON.parse(val.json_sale);
-      console.log(dataForPrint);
 
       let typeDoc = dataForPrint.serie_documento.split("");
 
@@ -660,7 +659,7 @@ export default defineComponent({
             {
               tittle: "USUARIO",
               twoPoints: ":",
-              cont: userStore.user.names,
+              cont: val.username,
             },
             {
               tittle: "TIPO DE PAGO",
