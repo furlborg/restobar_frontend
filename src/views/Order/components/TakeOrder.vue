@@ -1203,7 +1203,7 @@ export default defineComponent({
             {
               tittle: "USUARIO",
               twoPoints: ":",
-              cont: userStore.user.names,
+              cont: values.username,
             },
             {
               tittle: "TIPO DE PAGO",
@@ -1215,7 +1215,6 @@ export default defineComponent({
           ],
         },
       ];
-      console.log(val);
       generatePrint(data, structure, NoNoteSale, height + 7 * 16);
 
       message.success("Imprimir");
