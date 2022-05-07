@@ -82,7 +82,15 @@
                 class="position-absolute top-0 start-0 m-2"
               />
               <div
-                class="black-outline text-center position-absolute top-50 start-50 translate-middle fs-4"
+                class="
+                  black-outline
+                  text-center
+                  position-absolute
+                  top-50
+                  start-50
+                  translate-middle
+                  fs-4
+                "
               >
                 {{ "MESA " + String(table.id) }}
               </div>
@@ -128,7 +136,23 @@
                 :to="`#table-${table.id}`"
                 @maskClick.stop
               >
-                <n-drawer-content @click.stop>
+                <n-drawer-content :native-scrollbar="false" @click.stop>
+                  <n-space vertical align="center">
+                    <n-button
+                      type="error"
+                      size="small"
+                      tertiary
+                      circle
+                      @click="
+                        openOptions.splice(
+                          openOptions.findIndex((i) => i === table.id),
+                          1
+                        )
+                      "
+                    >
+                      <v-icon name="md-close-round" />
+                    </n-button>
+                  </n-space>
                   <n-button
                     v-if="userStore.user.profile_des !== 'MOZO'"
                     class="mb-1"
@@ -177,6 +201,25 @@
                   </n-button>
                   <n-button
                     class="mb-1"
+                    type="warning"
+                    size="small"
+                    block
+                    secondary
+                    :disabled="table.status === '1'"
+                    @click="
+                      openOptions.splice(
+                        openOptions.findIndex((i) => i === table.id),
+                        1
+                      );
+                      fromTable = table.id;
+                      currentArea = area.id;
+                      changeTable = true;
+                    "
+                  >
+                    Cambiar mesa
+                  </n-button>
+                  <n-button
+                    class="mb-1"
                     type="error"
                     size="small"
                     block
@@ -192,22 +235,6 @@
                   >
                     Anular pedido
                   </n-button>
-                  <n-space vertical align="center">
-                    <n-button
-                      type="error"
-                      size="small"
-                      tertiary
-                      circle
-                      @click="
-                        openOptions.splice(
-                          openOptions.findIndex((i) => i === table.id),
-                          1
-                        )
-                      "
-                    >
-                      <v-icon name="md-close-round" />
-                    </n-button>
-                  </n-space>
                 </n-drawer-content>
               </n-drawer>
             </n-card>
@@ -252,6 +279,54 @@
         </n-space>
       </template>
     </n-modal>
+    <n-modal
+      :class="{
+        'w-100': genericsStore.device === 'mobile',
+        'w-50': genericsStore.device === 'tablet',
+        'w-25': genericsStore.device === 'desktop',
+      }"
+      preset="card"
+      v-model:show="changeTable"
+      title="Cambiar mesa"
+      :mask-closable="false"
+      closable
+    >
+      <n-form-item label="Mesa actual">
+        <n-select
+          :value="fromTable"
+          disabled
+          :options="tableStore.getAreaTablesOptions(currentArea)"
+          placeholder=""
+        />
+      </n-form-item>
+      <n-form-item label="Area">
+        <n-select
+          v-model:value="currentArea"
+          :options="tableStore.getAreasOptions"
+          placeholder=""
+        />
+      </n-form-item>
+      <n-form-item label="Mesa">
+        <n-select
+          v-model:value="toTable"
+          :options="tableStore.getAreaTablesOptions(currentArea)"
+          placeholder=""
+          filterable
+        />
+      </n-form-item>
+      <template #action>
+        <n-space justify="end">
+          <n-button
+            type="success"
+            :loading="isLoading"
+            :disabled="!toTable || isLoading"
+            secondary
+            @click.prevent="performChangeTable"
+            >Confirmar</n-button
+          >
+        </n-space>
+      </template>
+    </n-modal>
   </n-card>
 </template>
 
@@ -262,7 +337,11 @@ import { useGenericsStore } from "@/store/modules/generics";
 import { useTableStore } from "@/store/modules/table";
 import { useTillStore } from "@/store/modules/till";
 import { useUserStore } from "@/store/modules/user";
-import { cancelTableOrder, retrieveTableOrder } from "@/api/modules/tables";
+import {
+  cancelTableOrder,
+  retrieveTableOrder,
+  changeOrderTable,
+} from "@/api/modules/tables";
 import { cloneDeep } from "@/utils";
 import { useBusinessStore } from "@/store/modules/business";
 
@@ -507,6 +586,33 @@ export default defineComponent({
       dateNow.value = `${dd}/${mm + 1}/${yy} ${hh}:${msms}`;
     });
 
+    const changeTable = ref(false);
+
+    const fromTable = ref(null);
+
+    const currentArea = ref(null);
+
+    const toTable = ref(null);
+
+    const performChangeTable = async () => {
+      isLoading.value = true;
+      await changeOrderTable(fromTable.value, toTable.value)
+        .then((response) => {
+          if (response.status === 200) {
+            message.success("Mesa cambiada!");
+            changeTable.value = false;
+            fromTable.value = null;
+            currentArea.value = null;
+            toTable.value = null;
+            loadTablesData();
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        });
+    };
+
     return {
       isLoading,
       groupMode,
@@ -527,6 +633,11 @@ export default defineComponent({
       passConfirm,
       genericsStore,
       tillStore,
+      changeTable,
+      fromTable,
+      currentArea,
+      toTable,
+      performChangeTable,
     };
   },
 });

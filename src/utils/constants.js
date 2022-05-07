@@ -430,7 +430,7 @@ export const createUserColumns = ({ editUser, deleteUser, changePassword }) => {
     ]
 }
 
-export const createTillColumns = ({ viewDetails, makeReport, makeSaleReport, closeTill }) => {
+export const createTillColumns = ({ viewDetails, makeTillReport, makeSimpleTillReport, makeSaleReport, closeTill }) => {
     return [
         /* {
             title: 'Usuario',
@@ -545,20 +545,27 @@ export const createTillColumns = ({ viewDetails, makeReport, makeSaleReport, clo
                             trigger: "click",
                             options: [
                                 {
-                                    label: "Arqueo de caja",
+                                    label: "Reporte de caja",
                                     key: 1,
                                 },
                                 {
-                                    label: "Resumen de ventas",
+                                    label: "Reporte simple de caja",
                                     key: 2,
+                                },
+                                {
+                                    label: "Reporte de ventas",
+                                    key: 3,
                                 },
                             ],
                             onSelect: (key) => {
                                 switch (key) {
                                     case 1:
-                                        makeReport(row);
+                                        makeTillReport(row);
                                         break;
                                     case 2:
+                                        makeSimpleTillReport(row);
+                                        break;
+                                    case 3:
                                         makeSaleReport(row);
                                         break;
                                     default:

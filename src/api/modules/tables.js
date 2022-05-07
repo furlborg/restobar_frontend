@@ -50,6 +50,12 @@ export async function disableTable(id) {
     return await http.delete(`tables/${id}/`)
 }
 
+export async function changeOrderTable(id, table) {
+    return await http.post(`tables/${id}/change_order_table/`, {
+        table: table
+    })
+}
+
 export async function getAreasTables() {
     return await http.get('areas/areas_tables/')
 }

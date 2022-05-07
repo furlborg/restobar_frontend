@@ -61,6 +61,17 @@ export const useTableStore = defineStore("table", {
       let area = this.areas.find((area) => area.id === id);
       return area ? area.description : null;
     },
+    getAreaTablesOptions(id) {
+      let areas = this.areas.find((area) => area.id === id);
+      if (typeof areas !== "undefined") {
+        return areas.tables.map((table) => ({
+          label: table.description,
+          value: table.id,
+          disabled: table.status === '3'
+        }));
+      }
+      return []
+    },
     getTableByID(id) {
       let table = null;
       this.areas.forEach((area) => {

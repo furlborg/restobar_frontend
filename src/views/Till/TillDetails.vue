@@ -238,6 +238,7 @@ import {
   filterTillDetails,
   getTillReport,
   getTillSaleReport,
+  getSimpleTillReport,
 } from "@/api/modules/tills";
 import { useUserStore } from "@/store/modules/user";
 
@@ -386,8 +387,35 @@ export default defineComponent({
       // idProduct.value = 0
     };
 
-    const makeReport = () => {
+    const makeTillReport = () => {
       getTillReport(till)
+        .then((response) => {
+          const doc = new jspdf({
+            format: [80, 297],
+          });
+          doc.html(response.data, {
+            html2canvas: { scale: "0.25" },
+            margin: [0, 2, 0, 2],
+            callback: function (doc) {
+              /* doc.save(); */
+              doc.autoPrint();
+              const hiddFrame = document.createElement("iframe");
+              hiddFrame.style.position = "fixed";
+              hiddFrame.style.width = "1px";
+              hiddFrame.style.height = "1px";
+              hiddFrame.style.opacity = "0.01";
+              hiddFrame.src = doc.output("bloburl");
+              document.body.appendChild(hiddFrame);
+            },
+          });
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    };
+
+    const makeSimpleTillReport = () => {
+      getSimpleTillReport(till)
         .then((response) => {
           const doc = new jspdf({
             format: [80, 297],
@@ -442,21 +470,28 @@ export default defineComponent({
 
     const reportOptions = [
       {
-        label: "Arqueo de caja",
+        label: "Reporte de caja",
         key: 1,
       },
       {
-        label: "Resumen de ventas",
+        label: "Reporte simple de caja",
         key: 2,
+      },
+      {
+        label: "Reporte de ventas",
+        key: 3,
       },
     ];
 
     const selectReport = (key) => {
       switch (key) {
         case 1:
-          makeReport();
+          makeTillReport();
           break;
         case 2:
+          makeSimpleTillReport();
+          break;
+        case 3:
           makeSaleReport();
           break;
         default:
@@ -496,7 +531,8 @@ export default defineComponent({
       ConceptOptions,
       performFilter,
       refreshTable,
-      makeReport,
+      makeTillReport,
+      makeSimpleTillReport,
       makeSaleReport,
       reportOptions,
       selectReport,

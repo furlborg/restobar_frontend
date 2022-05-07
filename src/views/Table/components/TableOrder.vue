@@ -624,8 +624,6 @@ export default defineComponent({
           },
         ],
       });
-      console.log(val);
-      console.log(val.username);
       if (!!val.username) {
         lengthData += 10;
         structure.push({
