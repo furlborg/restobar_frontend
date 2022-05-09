@@ -40,9 +40,10 @@ export const useTableStore = defineStore("table", {
   },
   actions: {
     async initializeStore() {
-      await getAreasTables()
+      return await getAreasTables()
         .then((response) => {
           this.areas = response.data;
+          return this.areas
         })
         .catch((error) => {
           console.error(error);

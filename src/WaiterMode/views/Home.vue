@@ -147,6 +147,12 @@ export default defineComponent({
       return [];
     });
 
+    tableStore.initializeStore().then((areas) => {
+      if (areas.length && tillStore.currentTillID) {
+        area.value = areas[0].id;
+      }
+    });
+
     const addToGroup = (table) => {
       currentGroup.value.push(cloneDeep(table));
     };
