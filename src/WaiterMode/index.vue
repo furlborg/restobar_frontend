@@ -71,6 +71,7 @@ export default defineComponent({
     const tableStore = useTableStore();
     const tillStore = useTillStore();
     const userStore = useUserStore();
+    tableStore.initializeStore();
 
     const checkTill = () => {
       retrieveCurrentTill()

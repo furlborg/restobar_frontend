@@ -123,7 +123,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed } from "vue";
+import { defineComponent, ref, computed, onMounted } from "vue";
 import { useTableStore } from "@/store/modules/table";
 import { useWaiterStore } from "@/store/modules/waiter";
 import { useTillStore } from "@/store/modules/till";
@@ -172,6 +172,12 @@ export default defineComponent({
       currentGroup.value = [];
       currentTableGrouping.value = null;
     };
+
+    onMounted(() => {
+      if (tableStore.getAreasOptions.length && tillStore.currentTillID) {
+        area.value = tableStore.getAreasOptions[0].id;
+      }
+    });
 
     return {
       waiterStore,

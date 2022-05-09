@@ -1,9 +1,6 @@
 <template>
   <div id="WProducts">
-    <n-page-header
-      class="border-bottom border-2 border-success p-2"
-      @back="$router.push({ name: 'WCategories' })"
-    >
+    <n-page-header class="border-bottom border-2 border-success p-2">
       <template #title>
         <n-text class="fs-4">{{
           productStore.getCategorieDescription($route.params.category)
@@ -520,7 +517,6 @@ export default defineComponent({
 
     onMounted(async () => {
       loadProducts();
-      tableName.value = await tableStore.getTableByID(table).description;
 
       const fetch = new Date();
       const dd = fetch.getDate();
