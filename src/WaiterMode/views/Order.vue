@@ -70,7 +70,6 @@ export default defineComponent({
     const showModal = ref(false);
     const itemIndex = ref(null);
     const orderDetails = ref([]);
-    const checkState = ref(false);
 
     orderStore.orders = [];
     saleStore.order_initial = [];

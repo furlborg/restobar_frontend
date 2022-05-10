@@ -57,6 +57,7 @@ import { createTheme, inputDark, datePickerDark, darkTheme } from "naive-ui";
 import { commonEsPE, dateEsPE } from "@/locale";
 import { useUserStore } from "@/store/modules/user";
 import { useBusinessStore } from "@/store/modules/business";
+import { useSettingsStore } from "@/store/modules/settings";
 import { useCustomerStore } from "@/store/modules/customer";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useTableStore } from "@/store/modules/table";
@@ -90,6 +91,10 @@ export default defineComponent({
     const businessStore = useBusinessStore();
 
     businessStore.initializeStore();
+
+    const settingsStore = useSettingsStore();
+
+    settingsStore.initializeStore();
 
     const customerStore = useCustomerStore();
 
