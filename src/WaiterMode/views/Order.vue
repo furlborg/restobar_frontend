@@ -105,7 +105,6 @@ export default defineComponent({
               waiterStore.preOrderList = [];
               router.push(to);
             },
-            closable: false,
           });
           return false;
         }
