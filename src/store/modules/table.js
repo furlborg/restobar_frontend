@@ -40,9 +40,10 @@ export const useTableStore = defineStore("table", {
   },
   actions: {
     async initializeStore() {
-      await getAreasTables()
+      return await getAreasTables()
         .then((response) => {
           this.areas = response.data;
+          return this.areas
         })
         .catch((error) => {
           console.error(error);
@@ -60,6 +61,17 @@ export const useTableStore = defineStore("table", {
     getAreaByID(id) {
       let area = this.areas.find((area) => area.id === id);
       return area ? area.description : null;
+    },
+    getAreaTablesOptions(id) {
+      let areas = this.areas.find((area) => area.id === id);
+      if (typeof areas !== "undefined") {
+        return areas.tables.map((table) => ({
+          label: table.description,
+          value: table.id,
+          disabled: table.status === '3'
+        }));
+      }
+      return []
     },
     getTableByID(id) {
       let table = null;

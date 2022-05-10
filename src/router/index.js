@@ -211,6 +211,11 @@ export const routes = [
             component: () => import(/* webpackChunkName: "business-settings" */ '@/views/Settings/components/BusinessSettings')
           },
           {
+            name: 'AdvancedSettings',
+            path: 'advanced-settings',
+            component: () => import(/* webpackChunkName: "business-settings" */ '@/views/Settings/components/AdvancedSettings')
+          },
+          {
             name: 'UserSettings',
             path: 'user-settings',
             component: () => import(/* webpackChunkName: "user-settings" */ '@/views/Settings/components/UserSettings')

@@ -97,11 +97,15 @@ export async function getTillDetails() {
 }
 
 export async function getTillReport(id) {
-    return await http.get(`tills/${id}/report`)
+    return await http.get(`tills/${id}/till_report/`)
+}
+
+export async function getSimpleTillReport(id) {
+    return await http.get(`tills/${id}/simple_till_report/`)
 }
 
 export async function getTillSaleReport(id) {
-    return await http.get(`tills/${id}/sale_report`)
+    return await http.get(`tills/${id}/sale_report/`)
 }
 
 export async function filterTillDetails(id, filterParams) {

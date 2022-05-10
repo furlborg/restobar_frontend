@@ -1,5 +1,5 @@
 import { h } from "vue"
-import { NButton, NTag, NPopover, NText, NSpace } from "naive-ui"
+import { NButton, NTag, NPopover, NDropdown, NText, NSpace } from "naive-ui"
 import { renderIcon, lighten } from "@/utils"
 import { useSaleStore } from '@/store/modules/sale';
 import { useTillStore } from '@/store/modules/till';
@@ -430,7 +430,7 @@ export const createUserColumns = ({ editUser, deleteUser, changePassword }) => {
     ]
 }
 
-export const createTillColumns = ({ viewDetails, generateReport, closeTill }) => {
+export const createTillColumns = ({ viewDetails, makeTillReport, makeSimpleTillReport, makeSaleReport, closeTill }) => {
     return [
         /* {
             title: 'Usuario',
@@ -540,6 +540,54 @@ export const createTillColumns = ({ viewDetails, generateReport, closeTill }) =>
                         renderIcon('bi-eye')
                     ),
                     h(
+                        NDropdown,
+                        {
+                            trigger: "click",
+                            options: [
+                                {
+                                    label: "Reporte de caja",
+                                    key: 1,
+                                },
+                                {
+                                    label: "Reporte simple de caja",
+                                    key: 2,
+                                },
+                                {
+                                    label: "Reporte de ventas",
+                                    key: 3,
+                                },
+                            ],
+                            onSelect: (key) => {
+                                switch (key) {
+                                    case 1:
+                                        makeTillReport(row);
+                                        break;
+                                    case 2:
+                                        makeSimpleTillReport(row);
+                                        break;
+                                    case 3:
+                                        makeSaleReport(row);
+                                        break;
+                                    default:
+                                        console.error("Algo salió mal...");
+                                        break;
+                                }
+                            }
+                        },
+                        {
+                            default: () => h(
+                                NButton,
+                                {
+                                    class: 'me-2',
+                                    size: 'small',
+                                    type: 'warning',
+                                    secondary: true,
+                                },
+                                renderIcon('md-insertchart-outlined')
+                            )
+                        }
+                    ),
+                    /* h(
                         NButton,
                         {
                             class: 'me-2',
@@ -549,7 +597,7 @@ export const createTillColumns = ({ viewDetails, generateReport, closeTill }) =>
                             onClick: () => generateReport(row)
                         },
                         renderIcon('md-insertchart-outlined')
-                    ),
+                    ), */
                     h(
                         NButton,
                         {

@@ -32,6 +32,17 @@ export async function updateGeneralPass(general_pass, new_pass) {
   });
 }
 
+export async function retrieveBusinessSettings() {
+  return await http.get("business/business_settings/");
+}
+
+export async function updateBusinessSettings(business_settings) {
+  return await http.put("business/business_settings/", {
+    printer: business_settings.printer,
+    sale: business_settings.sale
+  });
+}
+
 export async function getBranchs() {
   return await http.get("branchs/");
 }

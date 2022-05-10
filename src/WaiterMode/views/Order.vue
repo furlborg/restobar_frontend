@@ -1,7 +1,7 @@
 <template>
   <n-tabs type="line" justify-content="space-around">
     <template #prefix>
-      <n-button class="ms-2" text @click="$router.push({ name: 'WHome' })">
+      <n-button class="ms-2" text @click="$router.back()">
         <v-icon name="md-arrowback-round" />
       </n-button>
     </template>
@@ -40,8 +40,13 @@
 
 <script>
 import { defineComponent, ref, onUpdated, onMounted } from "vue";
-import { useMessage } from "naive-ui";
-import { useRoute } from "vue-router";
+import { useMessage, useDialog } from "naive-ui";
+import {
+  useRoute,
+  useRouter,
+  onBeforeRouteLeave,
+  onBeforeRouteUpdate,
+} from "vue-router";
 import ProductIndications from "./ProductIndications";
 import { useWaiterStore } from "@/store/modules/waiter";
 import { useOrderStore } from "@/store/modules/order";
@@ -59,7 +64,9 @@ export default defineComponent({
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
     const message = useMessage();
+    const dialog = useDialog();
     const route = useRoute();
+    const router = useRouter();
     const showModal = ref(false);
     const itemIndex = ref(null);
     const orderDetails = ref([]);
@@ -67,6 +74,41 @@ export default defineComponent({
     orderStore.orders = [];
     saleStore.order_initial = [];
     orderStore.orderId = null;
+
+    onBeforeRouteUpdate((to, from) => {
+      if (to.name !== "WCategories" && to.name !== "WProducts") {
+        if (waiterStore.preOrderList.length) {
+          dialog.error({
+            title: "Cambios sin guardar",
+            content: "¿Salir de todos modos?",
+            positiveText: "Sí",
+            negativeText: "No",
+            onPositiveClick: () => {
+              waiterStore.preOrderList = [];
+              router.push(to);
+            },
+          });
+          return false;
+        }
+      }
+    });
+
+    onBeforeRouteLeave((to, from) => {
+      if (to.name !== "WCategories" && to.name !== "WProducts") {
+        if (waiterStore.preOrderList.length) {
+          dialog.error({
+            title: "Cambios sin guardar",
+            content: "¿Salir de todos modos?",
+            positiveText: "Sí",
+            onPositiveClick: () => {
+              waiterStore.preOrderList = [];
+              router.push(to);
+            },
+          });
+          return false;
+        }
+      }
+    });
 
     const performRetrieveTableOrder = () => {
       retrieveTableOrder(route.params.table)

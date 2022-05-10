@@ -108,16 +108,16 @@
               <v-icon name="md-filteralt-round" />
               {{ showFilters ? "Ocultar Filtros" : "Mostrar filtros" }}
             </n-button>
-            <n-button type="info" tertiary @click="makeReport"
+            <!-- <n-button type="info" tertiary @click="makeReport"
               >Reporte</n-button
             >
             <n-button type="info" tertiary @click="makeSaleReport"
               >Reporte ventas</n-button
-            >
-            <!-- <n-button type="info" text @click="refreshTable">
+            > -->
+            <n-button type="info" text @click="refreshTable">
               <v-icon name="hi-solid-refresh" />
               Recargar
-            </n-button> -->
+            </n-button>
           </n-space>
           <n-collapse-transition class="mt-2" :show="showFilters">
             <n-form>
@@ -198,6 +198,15 @@
         <n-tab-pane name="orders" tab="Pedidos">
           <TillOrders />
         </n-tab-pane>
+        <template #suffix>
+          <n-dropdown
+            trigger="click"
+            :options="reportOptions"
+            @select="selectReport"
+          >
+            <n-button type="info" size="small" secondary>Reportes</n-button>
+          </n-dropdown>
+        </template>
       </n-tabs>
     </n-card>
     <movement-modal
@@ -229,8 +238,9 @@ import {
   filterTillDetails,
   getTillReport,
   getTillSaleReport,
+  getSimpleTillReport,
 } from "@/api/modules/tills";
-import { useUserStore } from "../../store/modules/user";
+import { useUserStore } from "@/store/modules/user";
 
 export default defineComponent({
   name: "TillDetails",
@@ -377,8 +387,35 @@ export default defineComponent({
       // idProduct.value = 0
     };
 
-    const makeReport = () => {
+    const makeTillReport = () => {
       getTillReport(till)
+        .then((response) => {
+          const doc = new jspdf({
+            format: [80, 297],
+          });
+          doc.html(response.data, {
+            html2canvas: { scale: "0.25" },
+            margin: [0, 2, 0, 2],
+            callback: function (doc) {
+              /* doc.save(); */
+              doc.autoPrint();
+              const hiddFrame = document.createElement("iframe");
+              hiddFrame.style.position = "fixed";
+              hiddFrame.style.width = "1px";
+              hiddFrame.style.height = "1px";
+              hiddFrame.style.opacity = "0.01";
+              hiddFrame.src = doc.output("bloburl");
+              document.body.appendChild(hiddFrame);
+            },
+          });
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    };
+
+    const makeSimpleTillReport = () => {
+      getSimpleTillReport(till)
         .then((response) => {
           const doc = new jspdf({
             format: [80, 297],
@@ -431,6 +468,38 @@ export default defineComponent({
         });
     };
 
+    const reportOptions = [
+      {
+        label: "Reporte de caja",
+        key: 1,
+      },
+      {
+        label: "Reporte simple de caja",
+        key: 2,
+      },
+      {
+        label: "Reporte de ventas",
+        key: 3,
+      },
+    ];
+
+    const selectReport = (key) => {
+      switch (key) {
+        case 1:
+          makeTillReport();
+          break;
+        case 2:
+          makeSimpleTillReport();
+          break;
+        case 3:
+          makeSaleReport();
+          break;
+        default:
+          console.error("Algo salió mal...");
+          break;
+      }
+    };
+
     const onSuccess = async () => {
       showModal.value = false;
       await loadMovements();
@@ -462,8 +531,11 @@ export default defineComponent({
       ConceptOptions,
       performFilter,
       refreshTable,
-      makeReport,
+      makeTillReport,
+      makeSimpleTillReport,
       makeSaleReport,
+      reportOptions,
+      selectReport,
       tableColumns: createTillDetailsColumns(),
     };
   },

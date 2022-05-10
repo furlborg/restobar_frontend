@@ -143,6 +143,8 @@ import {
   getTillsByPageNumber,
   filterTills,
   getTillReport,
+  getTillSaleReport,
+  getSimpleTillReport,
 } from "@/api/modules/tills";
 import { useTillStore } from "@/store/modules/till";
 import { useBusinessStore } from "@/store/modules/business";
@@ -331,7 +333,7 @@ export default defineComponent({
             },
           });
         },
-        generateReport(row) {
+        makeTillReport(row) {
           getTillReport(row.id)
             .then((response) => {
               const doc = new jspdf({
@@ -341,6 +343,59 @@ export default defineComponent({
                 html2canvas: { scale: "0.25" },
                 margin: [0, 2, 0, 2],
                 callback: function (doc) {
+                  /* doc.save(); */
+                  doc.autoPrint();
+                  const hiddFrame = document.createElement("iframe");
+                  hiddFrame.style.position = "fixed";
+                  hiddFrame.style.width = "1px";
+                  hiddFrame.style.height = "1px";
+                  hiddFrame.style.opacity = "0.01";
+                  hiddFrame.src = doc.output("bloburl");
+                  document.body.appendChild(hiddFrame);
+                },
+              });
+            })
+            .catch((error) => {
+              console.error(error);
+            });
+        },
+        makeSimpleTillReport(row) {
+          getSimpleTillReport(row.id)
+            .then((response) => {
+              const doc = new jspdf({
+                format: [80, 297],
+              });
+              doc.html(response.data, {
+                html2canvas: { scale: "0.25" },
+                margin: [0, 2, 0, 2],
+                callback: function (doc) {
+                  /* doc.save(); */
+                  doc.autoPrint();
+                  const hiddFrame = document.createElement("iframe");
+                  hiddFrame.style.position = "fixed";
+                  hiddFrame.style.width = "1px";
+                  hiddFrame.style.height = "1px";
+                  hiddFrame.style.opacity = "0.01";
+                  hiddFrame.src = doc.output("bloburl");
+                  document.body.appendChild(hiddFrame);
+                },
+              });
+            })
+            .catch((error) => {
+              console.error(error);
+            });
+        },
+        makeSaleReport(row) {
+          getTillSaleReport(row.id)
+            .then((response) => {
+              const doc = new jspdf({
+                format: [80, 297],
+              });
+              doc.html(response.data, {
+                html2canvas: { scale: "0.25" },
+                margin: [0, 2, 0, 2],
+                callback: function (doc) {
+                  /* doc.save(); */
                   doc.autoPrint();
                   const hiddFrame = document.createElement("iframe");
                   hiddFrame.style.position = "fixed";

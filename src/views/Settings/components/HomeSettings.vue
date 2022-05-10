@@ -26,6 +26,17 @@
           </n-space>
         </n-card>
       </router-link>
+      <router-link
+        class="text-decoration-none"
+        :to="{ name: 'AdvancedSettings' }"
+      >
+        <n-card hoverable>
+          <n-space align="center" vertical>
+            <v-icon name="gi-settings-knobs" scale="10" />
+            <n-text class="fs-5">Avanzado</n-text>
+          </n-space>
+        </n-card>
+      </router-link>
       <router-link class="text-decoration-none" :to="{ name: 'UserSettings' }">
         <n-card hoverable>
           <n-space align="center" vertical>
