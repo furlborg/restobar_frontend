@@ -1387,7 +1387,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 15,
+                  fontSize: 11,
                 },
               },
             ],
@@ -1404,7 +1404,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 18,
+                  fontSize: 11,
                 },
               },
             ],
@@ -1462,21 +1462,21 @@ export default defineComponent({
             });
           }
 
-          if (
-            val.product_category.toLowerCase().includes("menu") ||
-            val.product_category.toLowerCase().includes("menus")
-          ) {
-            newNameProd = `[MENU] ${newNameProd}`;
-          } else if (
-            (!!val.product_category.toLowerCase().includes("menu") === false ||
-              !!val.product_category.toLowerCase().includes("menus") ===
-                false) &&
-            (!!val.product_category.toLowerCase().includes("combo") === false ||
-              !!val.product_category.toLowerCase().includes("combo") === false)
-          ) {
-            newNameProd = `[CARTA] ${newNameProd}`;
-          }
-          lengthData += 10 * heightForNmae;
+          // if (
+          //   val.product_category.toLowerCase().includes("menu") ||
+          //   val.product_category.toLowerCase().includes("menus")
+          // ) {
+          //   newNameProd = `[MENU] ${newNameProd}`;
+          // } else if (
+          //   (!!val.product_category.toLowerCase().includes("menu") === false ||
+          //     !!val.product_category.toLowerCase().includes("menus") ===
+          //       false) &&
+          //   (!!val.product_category.toLowerCase().includes("combo") === false ||
+          //     !!val.product_category.toLowerCase().includes("combo") === false)
+          // ) {
+          //   newNameProd = `[CARTA] ${newNameProd}`;
+          // }
+          // lengthData += 10 * heightForNmae;
 
           structure.push(
             {
@@ -1505,7 +1505,7 @@ export default defineComponent({
                 ],
               ],
             },
-            ind && {
+            !!ind && {
               dat: [
                 [
                   {
@@ -1537,12 +1537,18 @@ export default defineComponent({
 
       structure.push({
         line: true,
+
         dat: [
-          {
-            tittle: "Fecha",
-            twoPoints: ":",
-            cont: dateNow.value,
-          },
+          [
+            {
+              content: `Fecha : ${dateNow.value}`,
+              styles: {
+                fontStyle: "bold",
+                halign: "right",
+                fontSize: 8,
+              },
+            },
+          ],
         ],
       });
       if (!!responseData.username) {
@@ -1554,7 +1560,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "right",
-                  fontSize: 16,
+                  fontSize: 8,
                 },
               },
             ],

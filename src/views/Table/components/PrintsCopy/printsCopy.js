@@ -9,9 +9,12 @@ export const generatePrintCopy = (structure, height) => {
   const doc = new jspdf({
     orientation: "p",
     unit: "mm",
-    format: [80, !!height && height > 80 ? Math.round(height) : 80],
+    format: [
+      /* !!height && height > 80 ? 54 : 45 */ 40,
+      !!height && height > 80 ? Math.round(height) : 80,
+    ],
   });
-  structure.map((val) => {
+  structure.map((val, index) => {
     if (!!val) {
       let finalY = doc.lastAutoTable.finalY || 0;
       if (val.line) {
@@ -21,22 +24,28 @@ export const generatePrintCopy = (structure, height) => {
         finalY += 5;
       }
 
+      if (structure.length === index) {
+        doc.setLineDash([1, 1], 1);
+        doc.setDrawColor(0, 0, 0);
+        doc.line(3, finalY + 30, 77, finalY + 30);
+      }
+
       doc.autoTable({
         startY: finalY,
         theme: "plain",
         pageBreak: "auto",
         showHead: "firstPage",
-        margin: { left: 3, right: 3 },
+        margin: { left: 1, right: 1 },
         columns: !!val.col ? val.col : null,
         styles: {
           cellPadding: 0.7,
         },
         body: val.dat,
         cellWidth: "auto",
-        headStyles: { fontSize: 9, font: "helvetica" },
+        headStyles: { fontSize: 7, font: "helvetica" },
 
         columnStyles: {
-          fontSize: 9,
+          fontSize: 7,
           tittle: {
             fontStyle: "bold",
           },
@@ -84,7 +93,7 @@ export const generatePrintCopy = (structure, height) => {
     })
     .then((printers) => {
       if (!!printers) {
-        let searchPrinter = printers.find((val) => val === "POS-80-Series");
+        let searchPrinter = printers.find((val) => val === "POS58-Printer");
 
         if (!!searchPrinter) {
           let dataPdf = doc.output("datauristring").split(",")[1];
