@@ -38,6 +38,7 @@ export async function retrieveBusinessSettings() {
 
 export async function updateBusinessSettings(business_settings) {
   return await http.put("business/business_settings/", {
+    qz_config: business_settings.qz_config,
     printer: business_settings.printer,
     sale: business_settings.sale
   });
