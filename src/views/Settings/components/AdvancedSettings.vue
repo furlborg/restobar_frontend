@@ -20,6 +20,30 @@
           cols="6 s:6 m:12 l:12 xl:24 2xl:24"
           :x-gap="12"
         >
+          <n-form-item-gi :span="3" label="QZ Host IP">
+            <n-input v-model:value="businessSettings.qz_config.host"></n-input>
+          </n-form-item-gi>
+          <n-form-item-gi :span="6" label="Signature">
+            <n-input
+              type="textarea"
+              v-model:value="businessSettings.qz_config.signature"
+            ></n-input>
+          </n-form-item-gi>
+          <n-form-item-gi :span="6" label="Certificate">
+            <n-input
+              type="textarea"
+              v-model:value="businessSettings.qz_config.certificate"
+            >
+              >Mostrar categoría producto</n-input
+            >
+          </n-form-item-gi>
+        </n-grid>
+        <n-divider />
+        <n-grid
+          responsive="screen"
+          cols="6 s:6 m:12 l:12 xl:24 2xl:24"
+          :x-gap="12"
+        >
           <n-form-item-gi :span="3" label="Formato ticket pedidos">
             <n-select
               v-model:value="businessSettings.printer.kitchen_printer_format"
