@@ -259,6 +259,7 @@
 import { numeroALetras } from "./Prints/numberText.js";
 import { defineComponent, ref, toRefs, computed, watch, onMounted } from "vue";
 import CustomerModal from "@/views/Customer/components/CustomerModal";
+import { useSettingsStore } from "@/store/modules/settings";
 import { useRouter } from "vue-router";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
@@ -270,7 +271,7 @@ import {
   searchCustomerByName,
   searchRucCustomer,
 } from "@/api/modules/customer";
-import { createSale, getSaleNumber } from "@/api/modules/sales";
+import { createSale, getSaleNumber, sendSale } from "@/api/modules/sales";
 import { useDialog, useMessage } from "naive-ui";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
 import format from "date-fns/format";
@@ -291,6 +292,7 @@ export default defineComponent({
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
     const userStore = useUserStore();
+    const settingsStore = useSettingsStore();
     const genericsStore = useGenericsStore();
     const message = useMessage();
     const loading = ref(false);
@@ -690,6 +692,22 @@ export default defineComponent({
                 .then((response) => {
                   if (response.status === 201) {
                     printSale(response.data);
+                    if (settingsStore.businessSettings.sale.auto_send) {
+                      sendSale(response.data.id)
+                        .then((response) => {
+                          if (response.status === 200) {
+                            message.success("Enviado");
+                          }
+                        })
+                        .catch((error) => {
+                          if (error.response.status === 400) {
+                            message.error(error.response.data.error);
+                          } else {
+                            console.error(error);
+                            message.error("Algo salió mal...");
+                          }
+                        });
+                    }
                     message.success("Venta realizada correctamente!");
                     router.push({ name: "TableHome" });
                   }

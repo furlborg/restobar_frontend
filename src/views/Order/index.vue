@@ -141,7 +141,9 @@ import DetailsModal from "./components/DetailsModal";
 import DeliveryModal from "./components/DeliveryModal";
 import { createOrderColumns } from "@/utils/constants";
 import { useBusinessStore } from "@/store/modules/business";
+import { useSettingsStore } from "@/store/modules/settings";
 import { useGenericsStore } from "@/store/modules/generics";
+import { sendSale } from "@/api/modules/sales";
 import { useTillStore } from "@/store/modules/till";
 import { useUserStore } from "@/store/modules/user";
 import { isNumber, isLetter } from "@/utils";
@@ -164,6 +166,7 @@ export default defineComponent({
     const message = useMessage();
     const dialog = useDialog();
     const businessStore = useBusinessStore();
+    const settingsStore = useSettingsStore();
     const genericsStore = useGenericsStore();
     const userStore = useUserStore();
     const tillStore = useTillStore();
@@ -482,6 +485,22 @@ export default defineComponent({
                 .then((response) => {
                   if (response.status === 202) {
                     message.success("¡Pedido cobrado!");
+                    if (settingsStore.businessSettings.sale.auto_send) {
+                      sendSale(row.sale_id)
+                        .then((response) => {
+                          if (response.status === 200) {
+                            message.success("Enviado!");
+                          }
+                        })
+                        .catch((error) => {
+                          if (error.response.status === 400) {
+                            message.error(error.response.data.error);
+                          } else {
+                            console.error(error);
+                            message.error("Algo salió mal...");
+                          }
+                        });
+                    }
                   }
                 })
                 .catch((error) => {
