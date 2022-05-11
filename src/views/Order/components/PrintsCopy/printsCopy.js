@@ -3,14 +3,14 @@ import autoTable from "jspdf-autotable";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useProductStore } from "@/store/modules/product";
 
-const SettingsStore = useSettingsStore();
-const ProductStore = useProductStore();
-
 import qz from "qz-tray";
 
 import rs from "jsrsasign";
 
-export const generatePrintCopy = (structure, height) => {
+const SettingsStore = useSettingsStore();
+const ProductStore = useProductStore();
+
+export const generatePrintCopy = async (structure, height, printerName) => {
   const doc = new jspdf({
     orientation: "p",
     unit: "mm",
@@ -62,7 +62,7 @@ export const generatePrintCopy = (structure, height) => {
       });
     }
   });
-
+  console.log(ProductStore.getPlacePrinterName());
   qz.security.setCertificatePromise(function (resolve, reject) {
     resolve(SettingsStore.business_settings.qz_config.certificate);
   });
@@ -86,6 +86,8 @@ export const generatePrintCopy = (structure, height) => {
     };
   });
 
+  const printer = await ProductStore.getPlacePrinterName(printerName);
+
   qz.websocket
     .connect({ host: SettingsStore.business_settings.qz_config.host })
     .then(() => {
@@ -93,9 +95,7 @@ export const generatePrintCopy = (structure, height) => {
     })
     .then((printers) => {
       if (!!printers) {
-        let searchPrinter = printers.find(
-          (val) => val === ProductStore.getPlacePrinterName()
-        );
+        let searchPrinter = printers.find((val) => val === printer);
 
         if (!!searchPrinter) {
           let dataPdf = doc.output("datauristring").split(",")[1];

@@ -1223,29 +1223,34 @@ export default defineComponent({
       message.success("Imprimir");
 
       if (!!sale.value.delivery_info) {
-        let newTotals = [];
+        // let newTotals = [];
 
         let lengthData = 0;
 
-        let totals = {
-          SUBTOTAL: totalProdSum.toFixed("2"),
-          "IGV(18%)": dataForPrint.totales.total_igv.toFixed("2"),
-          DESCUENTOS: !!val.discount
-            ? parseFloat(val.discount).toFixed("2")
-            : "0.00",
-          TOTAL: dataForPrint.totales.total_venta.toFixed("2"),
-        };
+        // let totals = {
+        //   SUBTOTAL: totalProdSum.toFixed("2"),
+        //   "IGV(18%)": dataForPrint.totales.total_igv.toFixed("2"),
+        //   DESCUENTOS: !!val.discount
+        //     ? parseFloat(val.discount).toFixed("2")
+        //     : "0.00",
+        //   TOTAL: dataForPrint.totales.total_venta.toFixed("2"),
+        // };
 
-        for (let i in totals) {
-          if (!!parseFloat(newTotal[i]) || i === "IGV(18%)") {
-            lengthData += 5 * 6.5;
-            datTotals.push({
-              tittle: i,
-              twoPoints: ":",
-              cont: newTotal[i],
-            });
-          }
-        }
+        // for (let i in totals) {
+        //   if (!!parseFloat(totals[i]) || i === "IGV(18%)") {
+        //     lengthData += 5 * 6.5;
+        //     datTotals.push({
+        //       tittle: i,
+        //       twoPoints: ":",
+        //       cont: totals[i],
+        //     });
+        //   }
+        // }
+
+        let vuleto = changing.value;
+        vuleto -= vuleto * 2;
+
+        let heightD = 0;
 
         structureDelivery = [
           {
@@ -1297,12 +1302,12 @@ export default defineComponent({
               {
                 tittle: "PAGARA CON",
                 twoPoints: ":",
-                cont: payment_amount.value,
+                cont: values.given_amount,
               },
               {
                 tittle: "VUELTO",
                 twoPoints: ":",
-                cont: changing.value.toFixed("2"),
+                cont: vuleto.toFixed("2"),
               },
             ],
           },
@@ -1334,7 +1339,7 @@ export default defineComponent({
             ],
             dat: !val.by_consumption
               ? dataForPrint.items.map((val) => {
-                  lengthData += 10 * 6.5;
+                  heightD += 7;
                   return {
                     amount: val.cantidad,
                     unit: val.unidad_de_medida,
@@ -1352,7 +1357,13 @@ export default defineComponent({
                 ],
           },
           {
-            dat: newTotals,
+            dat: [
+              {
+                tittle: "TOTAL",
+                twoPoints: ":",
+                cont: dataForPrint.totales.total_venta.toFixed("2"),
+              },
+            ],
             line: true,
           },
           {
@@ -1370,7 +1381,7 @@ export default defineComponent({
             ],
           },
         ];
-        generatePrintCopyCopy(structureDelivery, lengthData);
+        generatePrintCopyCopy(structureDelivery, lengthData + heightD + 7 * 16);
       }
 
       print(values);
@@ -1414,6 +1425,10 @@ export default defineComponent({
           ],
         },
       ];
+
+      let roscareresunamierda = responseData.order_details.find(
+        (v) => !!v.preparation_place
+      );
 
       responseData.order_details.map((val) => {
         if (!!val.preparation_place) {
@@ -1575,12 +1590,26 @@ export default defineComponent({
         });
       }
 
-      if (
-        settingsStore.business_settings.printer.kitchen_printer_format === 58
-      ) {
-        generatePrint58(structure, lengthData);
-      } else {
-        generatePrintCopy(structure, lengthData);
+      const a = responseData.order_details.filter(
+        (valOrd) => !!valOrd.preparation_place
+      );
+
+      if (a.length > 0) {
+        if (
+          settingsStore.business_settings.printer.kitchen_printer_format === 58
+        ) {
+          generatePrint58(
+            structure,
+            lengthData,
+            roscareresunamierda.preparation_place
+          );
+        } else {
+          generatePrintCopy(
+            structure,
+            lengthData,
+            roscareresunamierda.preparation_place
+          );
+        }
       }
     };
 

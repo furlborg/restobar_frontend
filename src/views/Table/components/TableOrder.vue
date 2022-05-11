@@ -432,6 +432,10 @@ export default defineComponent({
       ];
       let thisIndicatesIfEverythingIsToGO = [];
 
+      let roscareresunamierda = val.order_details.find(
+        (v) => !!v.preparation_place
+      );
+
       val.order_details.map((valOrder) => {
         let lC = 0;
 
@@ -660,9 +664,17 @@ export default defineComponent({
         if (
           settingsStore.business_settings.printer.kitchen_printer_format === 58
         ) {
-          generatePrint58(structure, lengthData);
+          generatePrint58(
+            structure,
+            lengthData,
+            roscareresunamierda.preparation_place
+          );
         } else {
-          generatePrintCopy(structure, lengthData);
+          generatePrintCopy(
+            structure,
+            lengthData,
+            roscareresunamierda.preparation_place
+          );
         }
       }
 

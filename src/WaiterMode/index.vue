@@ -56,6 +56,7 @@ import { defineComponent, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useDialog } from "naive-ui";
 import { retrieveCurrentTill } from "@/api/modules/tills";
+import { useSettingsStore } from "@/store/modules/settings";
 import { useTableStore } from "@/store/modules/table";
 import { useWaiterStore } from "@/store/modules/waiter";
 import { useUserStore } from "@/store/modules/user";
@@ -68,10 +69,12 @@ export default defineComponent({
     const dialog = useDialog();
     const router = useRouter();
     const waiterStore = useWaiterStore();
+    const settingsStore = useSettingsStore();
     const tableStore = useTableStore();
     const tillStore = useTillStore();
     const userStore = useUserStore();
     tableStore.initializeStore();
+    settingsStore.initializeStore();
 
     const checkTill = () => {
       retrieveCurrentTill()

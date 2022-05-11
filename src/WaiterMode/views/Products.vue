@@ -220,6 +220,10 @@ export default defineComponent({
 
       let thisIndicatesIfEverythingIsToGO = [];
 
+      let roscareresunamierda = val.order_details.find(
+        (v) => !!v.preparation_place
+      );
+
       val.order_details.map((valOrder) => {
         let lC = 0;
 
@@ -440,15 +444,26 @@ export default defineComponent({
         });
       }
 
-      console.log(
-        settingsStore.business_settings.printer.kitchen_printer_format
+      const a = val.order_details.filter(
+        (valOrd) => !!valOrd.preparation_place
       );
-      if (
-        settingsStore.business_settings.printer.kitchen_printer_format === 58
-      ) {
-        generatePrint58(structure, lengthData);
-      } else {
-        generatePrintCopy(structure, lengthData);
+
+      if (a.length > 0) {
+        if (
+          settingsStore.business_settings.printer.kitchen_printer_format === 58
+        ) {
+          generatePrint58(
+            structure,
+            lengthData,
+            roscareresunamierda.preparation_place
+          );
+        } else {
+          generatePrintCopy(
+            structure,
+            lengthData,
+            roscareresunamierda.preparation_place
+          );
+        }
       }
 
       router.push({ name: "TableHome" });
@@ -464,6 +479,7 @@ export default defineComponent({
 
             activeDrawer.value = false;
             tableStore.refreshData();
+            waiterStore.preOrderList = [];
             router.push({ name: "WHome" });
           }
         })
@@ -510,6 +526,7 @@ export default defineComponent({
             print(response.data, true);
             activeDrawer.value = false;
             tableStore.refreshData();
+            waiterStore.preOrderList = [];
             router.push({ name: "WHome" });
           }
         })
