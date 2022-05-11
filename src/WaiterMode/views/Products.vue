@@ -193,7 +193,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 15,
+                  fontSize: 11,
                 },
               },
             ],
@@ -207,7 +207,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 18,
+                  fontSize: 11,
                 },
               },
             ],
@@ -301,25 +301,25 @@ export default defineComponent({
             });
           }
 
-          if (
-            valOrder.product_category.toLowerCase().includes("menu") ||
-            valOrder.product_category.toLowerCase().includes("menus")
-          ) {
-            newNameProd = `[MENU] ${newNameProd}`;
-          } else if (
-            (!!valOrder.product_category.toLowerCase().includes("menu") ===
-              false ||
-              !!valOrder.product_category.toLowerCase().includes("menus") ===
-                false) &&
-            (!!valOrder.product_category.toLowerCase().includes("combo") ===
-              false ||
-              !!valOrder.product_category.toLowerCase().includes("combo") ===
-                false)
-          ) {
-            newNameProd = `[CARTA] ${newNameProd}`;
-          }
+          // if (
+          //   valOrder.product_category.toLowerCase().includes("menu") ||
+          //   valOrder.product_category.toLowerCase().includes("menus")
+          // ) {
+          //   newNameProd = `[MENU] ${newNameProd}`;
+          // } else if (
+          //   (!!valOrder.product_category.toLowerCase().includes("menu") ===
+          //     false ||
+          //     !!valOrder.product_category.toLowerCase().includes("menus") ===
+          //       false) &&
+          //   (!!valOrder.product_category.toLowerCase().includes("combo") ===
+          //     false ||
+          //     !!valOrder.product_category.toLowerCase().includes("combo") ===
+          //       false)
+          // ) {
+          //   newNameProd = `[CARTA] ${newNameProd}`;
+          // }
 
-          lengthData += 7 * heightForNmae;
+          // lengthData += 7 * heightForNmae;
 
           if (valOrder.indication.length === PL.length) {
             thisIndicatesIfEverythingIsToGO.push(true);
@@ -405,12 +405,18 @@ export default defineComponent({
 
       structure.push({
         line: true,
+
         dat: [
-          {
-            tittle: "Fecha",
-            twoPoints: ":",
-            cont: dateNow.value,
-          },
+          [
+            {
+              content: `Fecha : ${dateNow.value}`,
+              styles: {
+                fontStyle: "bold",
+                halign: "right",
+                fontSize: 8,
+              },
+            },
+          ],
         ],
       });
       if (!!val.username) {
@@ -422,7 +428,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "right",
-                  fontSize: 16,
+                  fontSize: 8,
                 },
               },
             ],
