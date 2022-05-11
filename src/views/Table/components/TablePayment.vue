@@ -346,7 +346,7 @@ export default defineComponent({
 
     const formRules = computed(() => {
       let rules = saleRules;
-      if (sale.value.invoice_type === 80) {
+      if (sale.value.invoice_type !== 1) {
         rules.customer.required = false;
       } else {
         rules.customer.required = true;
@@ -696,7 +696,7 @@ export default defineComponent({
                       sendSale(response.data.id)
                         .then((response) => {
                           if (response.status === 200) {
-                            message.success("Enviado");
+                            message.success("Enviado!");
                           }
                         })
                         .catch((error) => {

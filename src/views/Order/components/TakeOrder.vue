@@ -631,7 +631,7 @@ export default defineComponent({
     });
 
     const rules = computed(() => {
-      if (sale.value.invoice_type === 80) {
+      if (sale.value.invoice_type !== 1) {
         saleRules.customer.required = false;
       } else {
         saleRules.customer.required = true;
