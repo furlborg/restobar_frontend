@@ -516,26 +516,27 @@ export default defineComponent({
               lengthData += 6.5;
             });
           }
+          if (settingsStore.business_settings.printer.show_cat) {
+            if (
+              valOrder.product_category.toLowerCase().includes("menu") ||
+              valOrder.product_category.toLowerCase().includes("menus")
+            ) {
+              newNameProd = `[MENU] ${newNameProd}`;
+            } else if (
+              (!!valOrder.product_category.toLowerCase().includes("menu") ===
+                false ||
+                !!valOrder.product_category.toLowerCase().includes("menus") ===
+                  false) &&
+              (!!valOrder.product_category.toLowerCase().includes("combo") ===
+                false ||
+                !!valOrder.product_category.toLowerCase().includes("combo") ===
+                  false)
+            ) {
+              newNameProd = `[CARTA] ${newNameProd}`;
+            }
 
-          // if (
-          //   valOrder.product_category.toLowerCase().includes("menu") ||
-          //   valOrder.product_category.toLowerCase().includes("menus")
-          // ) {
-          //   newNameProd = `[MENU] ${newNameProd}`;
-          // } else if (
-          //   (!!valOrder.product_category.toLowerCase().includes("menu") ===
-          //     false ||
-          //     !!valOrder.product_category.toLowerCase().includes("menus") ===
-          //       false) &&
-          //   (!!valOrder.product_category.toLowerCase().includes("combo") ===
-          //     false ||
-          //     !!valOrder.product_category.toLowerCase().includes("combo") ===
-          //       false)
-          // ) {
-          //   newNameProd = `[CARTA] ${newNameProd}`;
-          // }
-
-          // lengthData += 7 * heightForNmae;
+            lengthData += 7 * heightForNmae;
+          }
 
           if (
             valOrder.indication.length > 0 &&

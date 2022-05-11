@@ -1464,22 +1464,26 @@ export default defineComponent({
               lengthData += 6.5;
             });
           }
-
-          // if (
-          //   val.product_category.toLowerCase().includes("menu") ||
-          //   val.product_category.toLowerCase().includes("menus")
-          // ) {
-          //   newNameProd = `[MENU] ${newNameProd}`;
-          // } else if (
-          //   (!!val.product_category.toLowerCase().includes("menu") === false ||
-          //     !!val.product_category.toLowerCase().includes("menus") ===
-          //       false) &&
-          //   (!!val.product_category.toLowerCase().includes("combo") === false ||
-          //     !!val.product_category.toLowerCase().includes("combo") === false)
-          // ) {
-          //   newNameProd = `[CARTA] ${newNameProd}`;
-          // }
-          // lengthData += 10 * heightForNmae;
+          if (settingsStore.business_settings.printer.show_cat) {
+            if (
+              val.product_category.toLowerCase().includes("menu") ||
+              val.product_category.toLowerCase().includes("menus")
+            ) {
+              newNameProd = `[MENU] ${newNameProd}`;
+            } else if (
+              (!!val.product_category.toLowerCase().includes("menu") ===
+                false ||
+                !!val.product_category.toLowerCase().includes("menus") ===
+                  false) &&
+              (!!val.product_category.toLowerCase().includes("combo") ===
+                false ||
+                !!val.product_category.toLowerCase().includes("combo") ===
+                  false)
+            ) {
+              newNameProd = `[CARTA] ${newNameProd}`;
+            }
+            lengthData += 10 * heightForNmae;
+          }
 
           structure.push(
             {
