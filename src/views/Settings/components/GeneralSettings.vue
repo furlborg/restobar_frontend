@@ -161,6 +161,9 @@
                         placeholder=""
                       />
                     </n-form-item-gi>
+                    <n-form-item-gi :span="4" label="Nombre de impresora">
+                      <n-input v-model:value="printerName" placeholder="" />
+                    </n-form-item-gi>
                     <n-form-item-gi :span="4">
                       <n-button
                         class="me-2"
@@ -480,6 +483,7 @@ export default defineComponent({
     });
     const preparationPlaces = ref([]);
     const preparationPlace = ref(null);
+    const printerName = ref(null);
     const selectedPlace = ref(null);
     const productCategories = ref([]);
     const productCategory = ref(null);
@@ -583,13 +587,16 @@ export default defineComponent({
       if (!selectedPlace) {
         selectedPlace.value = place.id;
         preparationPlace.value = cloneDeep(place.description);
+        printerName.value = cloneDeep(place.printer_name);
       } else {
         if (selectedPlace.value === place.id) {
           selectedPlace.value = null;
           preparationPlace.value = null;
+          printerName.value = null;
         } else {
           selectedPlace.value = place.id;
           preparationPlace.value = cloneDeep(place.description);
+          printerName.value = cloneDeep(place.printer_name);
         }
       }
     };
@@ -608,7 +615,7 @@ export default defineComponent({
     };
 
     const performCreatePreparationPlace = async () => {
-      await createProductPlace(preparationPlace.value)
+      await createProductPlace(preparationPlace.value, printerName.value)
         .then((response) => {
           if (response.status === 201) {
             loadPreparationPlaces();
@@ -624,7 +631,11 @@ export default defineComponent({
     };
 
     const performUpdatePreparationPlace = async () => {
-      await updateProductPlace(selectedPlace.value, preparationPlace.value)
+      await updateProductPlace(
+        selectedPlace.value,
+        preparationPlace.value,
+        printerName.value
+      )
         .then((response) => {
           if (response.status === 202) {
             loadPreparationPlaces();
@@ -876,6 +887,7 @@ export default defineComponent({
       performCreateTable,
       preparationPlaces,
       preparationPlace,
+      printerName,
       selectedPlace,
       selectPlace,
       performCreatePreparationPlace,

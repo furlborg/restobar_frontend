@@ -117,15 +117,17 @@ export async function getProductPlaces() {
     return await http.get('preparation-places/')
 }
 
-export async function createProductPlace(place) {
+export async function createProductPlace(place, printer_name) {
     return await http.post('preparation-places/', {
         description: place,
+        printer_name: printer_name,
     })
 }
 
-export async function updateProductPlace(idPlace, place) {
+export async function updateProductPlace(idPlace, place, printer_name) {
     return await http.put(`preparation-places/${idPlace}/`, {
         description: place,
+        printer_name: printer_name,
     })
 }
 
