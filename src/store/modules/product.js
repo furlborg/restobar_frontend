@@ -57,5 +57,13 @@ export const useProductStore = defineStore('product', {
                 return null
             }
         },
+        getPlacePrinterName(description) {
+            const place = this.places.find(place => place.description === description)
+            if (place) {
+                return place.priter_name
+            } else {
+                return null
+            }
+        }
     }
 })
