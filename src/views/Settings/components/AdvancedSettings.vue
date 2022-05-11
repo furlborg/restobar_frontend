@@ -32,6 +32,11 @@
               :options="printOptions"
             ></n-select>
           </n-form-item-gi>
+          <n-form-item-gi :span="6">
+            <n-checkbox v-model:checked="businessSettings.printer.show_cat"
+              >Mostrar categoría producto</n-checkbox
+            >
+          </n-form-item-gi>
         </n-grid>
         <n-divider />
         <n-text class="fs-4">Ventas</n-text>
