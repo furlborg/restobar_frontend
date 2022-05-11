@@ -264,6 +264,7 @@ import { useUserStore } from "@/store/modules/user";
 import { useTableStore } from "@/store/modules/table";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useProductStore } from "@/store/modules/product";
+import { useSettingsStore } from "@/store/modules/settings";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import {
@@ -276,6 +277,7 @@ import {
 import { searchProductByName } from "@/api/modules/products";
 import { cloneDeep, lighten } from "@/utils";
 import { generatePrintCopy } from "./PrintsCopy/printsCopy";
+import { generatePrint58 } from "./PrintsCopy58/printsCopy58";
 
 export default defineComponent({
   name: "TableOrder",
@@ -299,6 +301,7 @@ export default defineComponent({
     const itemIndex = ref(null);
     const checkState = ref(false);
     const dateNow = ref(null);
+    const settingsStore = useSettingsStore();
 
     orderStore.orders = [];
     saleStore.order_initial = [];
@@ -653,7 +656,13 @@ export default defineComponent({
       );
 
       if (a.length > 0) {
-        generatePrintCopy(structure, lengthData);
+        if (
+          settingsStore.business_settings.printer.kitchen_printer_format === 58
+        ) {
+          generatePrint58(structure, lengthData);
+        } else {
+          generatePrintCopy(structure, lengthData);
+        }
       }
 
       router.push({ name: "TableHome" });

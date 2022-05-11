@@ -529,6 +529,7 @@ import {
 import { numeroALetras } from "./Prints/numberText.js";
 import { NThing, NTag, NSpace, useDialog, useMessage } from "naive-ui";
 import { useRouter } from "vue-router";
+import { useSettingsStore } from "@/store/modules/settings";
 import { useProductStore } from "@/store/modules/product";
 import { useOrderStore } from "@/store/modules/order";
 import { useUserStore } from "@/store/modules/user";
@@ -550,6 +551,7 @@ import format from "date-fns/format";
 import { generatePrint } from "./Prints/prints";
 import { generatePrintCopy } from "./PrintsCopy/printsCopy";
 import { generatePrintCopyCopy } from "./PrintsCopyCopy/printsCopyCopy";
+import { generatePrint58 } from "./PrintsCopy58/printsCopy58";
 
 const dateNow = ref(null);
 
@@ -570,6 +572,7 @@ export default defineComponent({
     const orderStore = useOrderStore();
     const genericsStore = useGenericsStore();
     const productStore = useProductStore();
+    const settingsStore = useSettingsStore();
     const businessStore = useBusinessStore();
     orderStore.orders = [];
     saleStore.order_initial = [];
@@ -1568,7 +1571,13 @@ export default defineComponent({
         });
       }
 
-      generatePrintCopy(structure, lengthData);
+      if (
+        settingsStore.business_settings.printer.kitchen_printer_format === 58
+      ) {
+        generatePrint58(structure, lengthData);
+      } else {
+        generatePrintCopy(structure, lengthData);
+      }
     };
 
     const showConfirm = ref(false);

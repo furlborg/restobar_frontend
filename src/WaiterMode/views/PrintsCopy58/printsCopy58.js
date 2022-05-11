@@ -5,14 +5,14 @@ import qz from "qz-tray";
 
 import rs from "jsrsasign";
 
-import { useGenericsStore } from "@/store/modules/generics";
-
 export const generatePrintCopy = (structure, height) => {
-  const genericStore = useGenericsStore();
   const doc = new jspdf({
     orientation: "p",
     unit: "mm",
-    format: [80, !!height && height > 80 ? Math.round(height) : 80],
+    format: [
+      /* !!height && height > 80 ? 54 : 45 */ 40,
+      !!height && height > 80 ? Math.round(height) : 80,
+    ],
   });
   structure.map((val, index) => {
     if (!!val) {
@@ -87,24 +87,21 @@ export const generatePrintCopy = (structure, height) => {
   });
 
   qz.websocket
-    .connect({
-      host: process.env.VUE_APP_QZ_URL,
-      usingSecure: genericStore.device === "desktop",
-    })
+    .connect({ host: process.env.VUE_APP_QZ_URL })
     .then(() => {
       return qz.printers.find();
     })
     .then((printers) => {
       if (!!printers) {
         let searchPrinter = printers.find((val) => val === "POS58-Printer");
+
         if (!!searchPrinter) {
           let dataPdf = doc.output("datauristring").split(",")[1];
 
           let config = qz.configs.create(searchPrinter, {
-            scaleContent: true,
             size: {
               width: 70,
-              height: !!height && height > 100 ? Math.round(height) : 200,
+              height: !!height && height > 100 ? Math.round(height) : 100,
             },
             units: "mm",
           });

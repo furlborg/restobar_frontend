@@ -138,6 +138,7 @@ import { useOrderStore } from "@/store/modules/order";
 import { useWaiterStore } from "@/store/modules/waiter";
 import { useSaleStore } from "@/store/modules/sale";
 import { getProductsByCategory } from "@/api/modules/products";
+import { useSettingsStore } from "@/store/modules/settings";
 import {
   createTableOrder,
   updateTableOrder,
@@ -145,6 +146,7 @@ import {
 } from "@/api/modules/tables";
 import { generatePrintCopy } from "./PrintsCopy/printsCopy";
 import { cloneDeep } from "@/utils";
+import { generatePrint58 } from "./PrintsCopy58/printsCopy58";
 
 export default defineComponent({
   name: "WProducts",
@@ -166,6 +168,7 @@ export default defineComponent({
     const orderItemIndex = ref(null);
     const products = ref([]);
     const table = route.params.table;
+    const settingsStore = useSettingsStore();
     const tableName = ref(null);
 
     const print = (val, update = false) => {
@@ -436,7 +439,16 @@ export default defineComponent({
         });
       }
 
-      generatePrintCopy(structure, lengthData);
+      console.log(
+        settingsStore.business_settings.printer.kitchen_printer_format
+      );
+      if (
+        settingsStore.business_settings.printer.kitchen_printer_format === 58
+      ) {
+        generatePrint58(structure, lengthData);
+      } else {
+        generatePrintCopy(structure, lengthData);
+      }
 
       router.push({ name: "TableHome" });
     };

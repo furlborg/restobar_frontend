@@ -9,10 +9,7 @@ export const generatePrintCopy = (structure, height) => {
   const doc = new jspdf({
     orientation: "p",
     unit: "mm",
-    format: [
-      /*  !!height && height > 80 ? 54 : 45 */ 40,
-      !!height && height > 80 ? Math.round(height) : 80,
-    ],
+    format: [80, !!height && height > 80 ? Math.round(height) : 80],
   });
 
   structure.map((val, index) => {
