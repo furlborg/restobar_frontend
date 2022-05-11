@@ -58,6 +58,7 @@ import { useDialog } from "naive-ui";
 import { retrieveCurrentTill } from "@/api/modules/tills";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useTableStore } from "@/store/modules/table";
+import { useProductStore } from "@/store/modules/product";
 import { useWaiterStore } from "@/store/modules/waiter";
 import { useUserStore } from "@/store/modules/user";
 import { useTillStore } from "@/store/modules/till";
@@ -72,9 +73,11 @@ export default defineComponent({
     const settingsStore = useSettingsStore();
     const tableStore = useTableStore();
     const tillStore = useTillStore();
+    const productStore = useProductStore();
     const userStore = useUserStore();
     tableStore.initializeStore();
     settingsStore.initializeStore();
+    productStore.initializeStore();
 
     const checkTill = () => {
       retrieveCurrentTill()
