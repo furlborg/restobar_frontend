@@ -11,7 +11,6 @@ const SettingsStore = useSettingsStore();
 const ProductStore = useProductStore();
 
 export const generatePrintCopy = async (structure, height, printerName) => {
-  const genericStore = useGenericsStore();
   const doc = new jspdf({
     orientation: "p",
     unit: "mm",
