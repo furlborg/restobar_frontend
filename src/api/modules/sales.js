@@ -100,7 +100,7 @@ export async function createSale(sale) {
         address: sale.address,
         branch_office: !userStore.user.branchoffice ? businessStore.currentBranch : null,
         discount: sale.discount,
-        icbper: sale.icbper,
+        icbper: parseFloat(sale.icbper).toFixed(2),
         by_consumption: sale.by_consumption,
         observations: sale.observations,
         sale_details: sale.sale_details,

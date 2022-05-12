@@ -99,7 +99,7 @@ export async function takeAwayOrder(order_details, sale_data, user) {
         address: sale_data.address,
         branch_office: !userStore.user.branchoffice ? businessStore.currentBranch : null,
         discount: sale_data.discount,
-        icbper: sale_data.icbper,
+        icbper: parseFloat(sale_data.icbper).toFixed(2),
         observations: sale_data.observations,
         sale_details: sale_data.sale_details
     }
