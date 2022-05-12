@@ -70,11 +70,14 @@
           cols="6 s:6 m:12 l:12 xl:24 2xl:24"
           x-gap="12"
         >
-          <n-form-item-gi :span="3" label="Formato ticket pedidos">
+          <n-form-item-gi :span="3" label="Documento por defecto">
             <n-select
               v-model:value="businessSettings.sale.default_invoice"
               :options="invoiceOptions"
             ></n-select>
+          </n-form-item-gi>
+          <n-form-item-gi :span="3" label="Valor ICBPER">
+            <n-input v-model:value="businessSettings.sale.icbper_tax"></n-input>
           </n-form-item-gi>
           <n-form-item-gi :span="3">
             <n-checkbox v-model:checked="businessSettings.sale.auto_send"

@@ -1,4 +1,5 @@
 import { defineStore } from "pinia"
+import { useSettingsStore } from "@/store/modules/settings";
 
 export const useOrderStore = defineStore('order', {
     state: () => ({
@@ -7,10 +8,11 @@ export const useOrderStore = defineStore('order', {
     }),
     getters: {
         orderList(state) {
+            const settingsStore = useSettingsStore();
             state.orders.forEach(order => {
                 order.subTotal = Number(order.quantity) * parseFloat(order.price).toFixed(2)
                 if (order.icbper) {
-                    order.icbper_amount = Number(order.quantity) * 0.4
+                    order.icbper_amount = Number(order.quantity) * parseFloat(settingsStore.businessSettings.sale.icbper_tax)
                 } else {
                     order.icbper_amount = 0
                 }
