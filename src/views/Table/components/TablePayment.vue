@@ -447,6 +447,8 @@ export default defineComponent({
           }
         : {
             "IMPORTE TOTAL": dataForPrint.totales.total_venta.toFixed("2"),
+            ICPER:
+              dataForPrint.totales.total_impuestos_bolsa_plastica.toFixed("2"),
           };
       for (let i in newTotal) {
         if (!!parseFloat(newTotal[i])) {
