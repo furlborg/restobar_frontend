@@ -44,6 +44,7 @@ export const useSaleStore = defineStore("sale", {
         product_name: order.product_name,
         price_sale: parseFloat(order.price).toFixed(2),
         quantity: Number(order.quantity),
+        icbper: parseFloat(order.icbper_amount).toFixed(2)
       }));
       return state.sale_details;
     },

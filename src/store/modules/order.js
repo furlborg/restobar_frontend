@@ -7,7 +7,14 @@ export const useOrderStore = defineStore('order', {
     }),
     getters: {
         orderList(state) {
-            state.orders.forEach(order => (order.subTotal = Number(order.quantity) * parseFloat(order.price).toFixed(2)))
+            state.orders.forEach(order => {
+                order.subTotal = Number(order.quantity) * parseFloat(order.price).toFixed(2)
+                if (order.icbper) {
+                    order.icbper_amount = Number(order.quantity) * 0.4
+                } else {
+                    order.icbper_amount = 0
+                }
+            })
             return state.orders
         },
         orderTotal(state) {
@@ -20,7 +27,8 @@ export const useOrderStore = defineStore('order', {
                 product: order.product,
                 product_name: order.product_name,
                 price_sale: parseFloat(order.price).toFixed(2),
-                quantity: Number(order.quantity)
+                quantity: Number(order.quantity),
+                icbper: parseFloat(order.icbper_amount).toFixed(2)
             }))
         }
     },
@@ -38,7 +46,8 @@ export const useOrderStore = defineStore('order', {
                     product_name: product.name,
                     price: product.prices,
                     quantity: 1,
-                    indication: []
+                    indication: [],
+                    icbper: product.icbper
                 }
                 this.orders.push(order)
             }
@@ -60,7 +69,8 @@ export const useOrderStore = defineStore('order', {
                     product_name: product.name,
                     price: product.prices,
                     quantity: Number(product.quantity),
-                    indication: product.indication
+                    indication: product.indication,
+                    icbper: product.icbper
                 }
                 this.orders.push(order)
             }

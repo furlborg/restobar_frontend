@@ -211,7 +211,9 @@
               <div>
                 SUBTOTAL: <span>S/. {{ subTotal.toFixed(2) }}</span>
               </div>
-              <div>ICBPER: <span>S/. 0.00</span></div>
+              <div>
+                ICBPER: <span>S/. {{ icbper.toFixed(2) }}</span>
+              </div>
               <div>IGV: <span>S/. 0.00</span></div>
               <div>
                 DSCT:
@@ -306,6 +308,15 @@ export default defineComponent({
         : 0.0;
     });
 
+    const icbper = computed(() => {
+      return orderStore.orderList.reduce((acc, curVal) => {
+        if (curVal.icbper) {
+          return (acc += curVal.icbper_amount);
+        }
+        return (acc += 0);
+      }, 0);
+    });
+
     const showObservations = ref(false);
 
     const subTotal = computed(() => {
@@ -321,7 +332,7 @@ export default defineComponent({
     });
 
     const total = computed(() => {
-      return parseFloat(subTotal.value - sale.value.discount);
+      return parseFloat(subTotal.value - sale.value.discount + icbper.value);
     });
 
     const sale = ref({
@@ -339,6 +350,7 @@ export default defineComponent({
       customer: null,
       address: null,
       discount: "0.00",
+      icbper: icbper,
       observations: "",
       by_consumption: false,
       sale_details: [],
@@ -878,6 +890,7 @@ export default defineComponent({
       onCloseModal,
       onSuccess,
       genericsStore,
+      icbper,
     };
   },
 });

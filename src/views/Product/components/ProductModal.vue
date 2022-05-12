@@ -121,6 +121,7 @@
               v-model:value="product.preparation_place"
               :options="placesOptions"
               placeholder=""
+              clearable
             />
           </n-form-item-gi>
           <n-form-item-gi label="Unidad de medida" :span="5">
