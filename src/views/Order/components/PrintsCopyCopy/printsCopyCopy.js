@@ -6,7 +6,6 @@ import qz from "qz-tray";
 import rs from "jsrsasign";
 
 export const generatePrintCopyCopy = (structure, height) => {
-  console.log(height);
   const doc = new jspdf({
     orientation: "p",
     unit: "mm",
@@ -63,5 +62,5 @@ export const generatePrintCopyCopy = (structure, height) => {
   hiddFrame.style.opacity = "0.01";
   hiddFrame.src = doc.output("bloburl");
   document.body.appendChild(hiddFrame);
-  
+
 };

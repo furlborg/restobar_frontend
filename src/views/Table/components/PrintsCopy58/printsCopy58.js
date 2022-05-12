@@ -90,8 +90,6 @@ export const generatePrint58 = async (structure, height, printerName) => {
 
   const printer = await ProductStore.getPlacePrinterName(printerName);
 
-  console.log(printer);
-
   qz.websocket
     .connect({ host: SettingsStore.business_settings.qz_config.host })
     .then(() => {
