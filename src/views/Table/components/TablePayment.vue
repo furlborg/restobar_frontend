@@ -46,7 +46,7 @@
         <n-form class="mb-2" ref="saleForm" :model="sale" :rules="formRules">
           <n-grid
             responsive="screen"
-            cols="9 xs:1 s:12 m:12 l:12 xl:12 2xl:12"
+            cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12"
             :x-gap="12"
           >
             <n-form-item-gi
@@ -211,7 +211,9 @@
               <div>
                 SUBTOTAL: <span>S/. {{ subTotal.toFixed(2) }}</span>
               </div>
-              <div>ICBPER: <span>S/. 0.00</span></div>
+              <div>
+                ICBPER: <span>S/. {{ icbper.toFixed(2) }}</span>
+              </div>
               <div>IGV: <span>S/. 0.00</span></div>
               <div>
                 DSCT:
@@ -306,6 +308,15 @@ export default defineComponent({
         : 0.0;
     });
 
+    const icbper = computed(() => {
+      return orderStore.orderList.reduce((acc, curVal) => {
+        if (curVal.icbper) {
+          return (acc += curVal.icbper_amount);
+        }
+        return (acc += 0);
+      }, 0);
+    });
+
     const showObservations = ref(false);
 
     const subTotal = computed(() => {
@@ -321,24 +332,27 @@ export default defineComponent({
     });
 
     const total = computed(() => {
-      return parseFloat(subTotal.value - sale.value.discount);
+      return parseFloat(subTotal.value - sale.value.discount + icbper.value);
     });
 
     const sale = ref({
       order: null,
-      serie: saleStore.getFirstOption(3),
+      serie: saleStore.getFirstOption(
+        settingsStore.businessSettings.sale.default_invoice
+      ),
       number: "",
       date_sale: format(new Date(Date.now()), "dd/MM/yyyy hh:mm:ss"),
       count: products_count,
       amount: total,
       given_amount: parseFloat(0).toFixed(2),
-      invoice_type: 3,
+      invoice_type: settingsStore.businessSettings.sale.default_invoice,
       payment_method: 1,
       payment_condition: 1,
       customer_name: "",
       customer: null,
       address: null,
       discount: "0.00",
+      icbper: icbper,
       observations: "",
       by_consumption: false,
       sale_details: [],
@@ -880,6 +894,7 @@ export default defineComponent({
       onCloseModal,
       onSuccess,
       genericsStore,
+      icbper,
     };
   },
 });

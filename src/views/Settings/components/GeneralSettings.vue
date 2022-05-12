@@ -9,7 +9,7 @@
       <n-tabs type="card">
         <n-tab-pane name="areas-tables" tab="Areas y Mesas">
           <n-card :bordered="false" embedded>
-            <n-grid responsive="screen" cols="1 s:1 m:2 l:2 xl:2 2xl:2">
+            <n-grid responsive="screen" cols="1 s:1 m:1 l:2 xl:2 2xl:2">
               <n-gi>
                 <n-text class="fs-4">Editar Areas</n-text>
                 <n-form>
@@ -152,7 +152,7 @@
                 <n-form class="mt-2">
                   <n-grid
                     responsive="screen"
-                    cols="4 xs:4 s:8 m:24"
+                    cols="4 xs:4 s:8 m:12 l:24"
                     :x-gap="12"
                   >
                     <n-form-item-gi :span="4" label="Descripción">
@@ -225,7 +225,7 @@
                 <n-form class="mt-2">
                   <n-grid
                     responsive="screen"
-                    cols="4 xs:4 s:8 m:24"
+                    cols="4 xs:4 s:8 m:12 l:24"
                     :x-gap="12"
                   >
                     <n-form-item-gi :span="4" label="Descripción">
@@ -292,7 +292,7 @@
                 <n-form class="mt-2">
                   <n-grid
                     responsive="screen"
-                    cols="4 xs:4 s:8 m:24"
+                    cols="4 xs:4 s:8 m:12 l:24"
                     :x-gap="12"
                   >
                     <n-form-item-gi :span="4" label="Descripción">
@@ -375,7 +375,7 @@
                 <n-form class="mt-2">
                   <n-grid
                     responsive="screen"
-                    cols="4 xs:4 s:8 m:24"
+                    cols="4 xs:4 s:8 m:12 l:24"
                     :x-gap="12"
                   >
                     <n-form-item-gi :span="4" label="Tipo">

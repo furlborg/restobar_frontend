@@ -65,7 +65,6 @@ export const generatePrint58 = async (structure, height, printerName) => {
     }
   });
 
-  console.log(ProductStore.getPlacePrinterName());
   qz.security.setCertificatePromise(function (resolve, reject) {
     resolve(SettingsStore.business_settings.qz_config.certificate);
   });

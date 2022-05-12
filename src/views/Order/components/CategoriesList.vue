@@ -4,7 +4,7 @@
       <n-grid
         v-if="!products.length"
         responsive="screen"
-        cols="8 xs:8 s:12 m:20 l:20 xl:20 2xl:20"
+        cols="8 xs:8 s:16 m:16 l:20 xl:20 2xl:20"
         :x-gap="12"
         :y-gap="12"
       >

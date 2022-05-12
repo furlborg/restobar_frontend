@@ -14,7 +14,7 @@
       <n-form :model="product" :rules="productRules" ref="productRef">
         <n-grid
           responsive="screen"
-          cols="6 s:6 m:12 l:24 xl:24 2xl:24"
+          cols="6 s:6 m:24 l:24 xl:24 2xl:24"
           :x-gap="12"
         >
           <n-form-item-gi label="Nombre" path="name" :span="12">
@@ -121,6 +121,7 @@
               v-model:value="product.preparation_place"
               :options="placesOptions"
               placeholder=""
+              clearable
             />
           </n-form-item-gi>
           <n-form-item-gi label="Unidad de medida" :span="5">

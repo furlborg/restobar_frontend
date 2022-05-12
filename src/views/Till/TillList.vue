@@ -107,7 +107,6 @@
         class="mt-2"
         :columns="tableColumns"
         :data="tills"
-        :scroll-x="900"
         :loading="isTableLoading"
         :pagination="pagination"
         remote
