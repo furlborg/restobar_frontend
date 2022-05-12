@@ -72,7 +72,7 @@
                 >
                   <n-grid
                     responsive="screen"
-                    cols="12 s:12 m:12 l:12 xl:12 2xl:12"
+                    cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12"
                     :x-gap="12"
                   >
                     <n-form-item-gi

@@ -46,7 +46,7 @@
         <n-form class="mb-2" ref="saleForm" :model="sale" :rules="formRules">
           <n-grid
             responsive="screen"
-            cols="9 xs:1 s:12 m:12 l:12 xl:12 2xl:12"
+            cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12"
             :x-gap="12"
           >
             <n-form-item-gi

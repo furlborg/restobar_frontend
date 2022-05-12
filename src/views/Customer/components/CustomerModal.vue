@@ -17,7 +17,7 @@
           <n-tab-pane name="info" tab="Información General">
             <n-grid
               responsive="screen"
-              cols="6 s:6 m:12 l:24 xl:24 2xl:24"
+              cols="6 s:6 m:24 l:24 xl:24 2xl:24"
               :x-gap="12"
             >
               <n-form-item-gi
