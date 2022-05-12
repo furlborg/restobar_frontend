@@ -374,6 +374,10 @@ export default defineComponent({
                 "OP.GRATUITAS":
                   dataForPrint.totales.total_operaciones_gratuitas.toFixed("2"),
                 "IGV(18%)": dataForPrint.totales.total_igv.toFixed("2"),
+                ICPER:
+                  dataForPrint.totales.total_impuestos_bolsa_plastica.toFixed(
+                    "2"
+                  ),
                 DESCUENTOS: !!val.discount
                   ? parseFloat(val.discount).toFixed("2")
                   : "0.00",
