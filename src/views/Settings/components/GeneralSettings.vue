@@ -9,7 +9,7 @@
       <n-tabs type="card">
         <n-tab-pane name="areas-tables" tab="Areas y Mesas">
           <n-card :bordered="false" embedded>
-            <n-grid responsive="screen" cols="1 s:1 m:1 l:2 xl:2 2xl:2">
+            <n-grid responsive="screen" cols="1 s:1 m:1 l:1 xl:2 2xl:2">
               <n-gi>
                 <n-text class="fs-4">Editar Areas</n-text>
                 <n-form>
@@ -102,7 +102,7 @@
             <n-spin :show="isLoadingData">
               <n-grid
                 responsive="screen"
-                cols="2 s:6 m:10 l:20 xl:24 2xl:24"
+                cols="2 s:6 m:10 l:16 xl:24 2xl:24"
                 :x-gap="12"
                 :y-gap="12"
               >

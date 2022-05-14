@@ -103,6 +103,15 @@
                 >Indicaciones</n-button
               ></n-thing
             >
+            <template #suffix>
+              <n-button
+                type="error"
+                text
+                @click="waiterStore.preOrderList.splice(index, 1)"
+              >
+                <v-icon name="md-disabledbydefault-round" />
+              </n-button>
+            </template>
           </n-list-item>
         </n-list>
         <template #footer>
