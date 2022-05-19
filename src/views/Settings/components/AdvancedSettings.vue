@@ -57,7 +57,7 @@
               :options="printOptions"
             ></n-select>
           </n-form-item-gi>
-          <n-form-item-gi :span="2">
+          <n-form-item-gi :span="3" label="Tamaño letra cabecera">
             <n-input-number
               v-model:value="businessSettings.printer.header_font_size"
               placeholder=""
@@ -66,7 +66,7 @@
               step="0.1"
             ></n-input-number>
           </n-form-item-gi>
-          <n-form-item-gi :span="2">
+          <n-form-item-gi :span="3" label="Tamaño letra subtitulo">
             <n-input-number
               v-model:value="businessSettings.printer.sub_header_font_size"
               placeholder=""
@@ -75,7 +75,7 @@
               step="0.1"
             ></n-input-number>
           </n-form-item-gi>
-          <n-form-item-gi :span="2">
+          <n-form-item-gi :span="3" label="Tamaño letra cuerpo">
             <n-input-number
               v-model:value="businessSettings.printer.body_font_size"
               placeholder=""
@@ -84,7 +84,7 @@
               step="0.1"
             ></n-input-number>
           </n-form-item-gi>
-          <n-form-item-gi :span="2">
+          <n-form-item-gi :span="3" label="Tamaño letra pie de página">
             <n-input-number
               v-model:value="businessSettings.printer.footer_font_size"
               placeholder=""
