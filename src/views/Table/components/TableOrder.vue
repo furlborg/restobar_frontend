@@ -764,9 +764,10 @@ export default defineComponent({
         });
     };
 
-    const nullifyTableOrder = () => {
+    const nullifyTableOrder = async () => {
       if (!orderStore.orderList.length && orderStore.orderId) {
-        dialog.error({
+        await performNullifyTableOrder();
+        /* dialog.error({
           title: "Anular pedido",
           content: "¿Está seguro?",
           positiveText: "Sí",
@@ -774,7 +775,7 @@ export default defineComponent({
           onPositiveClick: async () => {
             await performNullifyTableOrder();
           },
-        });
+        }); */
       }
     };
 
@@ -1000,6 +1001,7 @@ export default defineComponent({
       renderLabel,
       performCreateTableOrder,
       performUpdateTableOrder,
+      performNullifyTableOrder,
       deleteOrderDetail,
       searching,
       checkState,
