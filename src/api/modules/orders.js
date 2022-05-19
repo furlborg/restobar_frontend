@@ -40,9 +40,11 @@ export async function listOrdersByPage(filterParams, page, pageSize) {
     }
 }
 
-export async function updateOrderStatus(order) {
+export async function updateOrderStatus(order, payments) {
     return await http.patch(`orders/${order}/`, {
-        status: '2'
+        status: '2',
+        payments: payments,
+        update_status: true,
     })
 }
 
@@ -101,7 +103,8 @@ export async function takeAwayOrder(order_details, sale_data, user) {
         discount: sale_data.discount,
         icbper: parseFloat(sale_data.icbper).toFixed(2),
         observations: sale_data.observations,
-        sale_details: sale_data.sale_details
+        sale_details: sale_data.sale_details,
+        payments: sale_data.payments
     }
     return await http.post('orders/take_away/', {
         order: order,

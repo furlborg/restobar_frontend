@@ -9,7 +9,7 @@
       <n-tabs type="card">
         <n-tab-pane name="areas-tables" tab="Areas y Mesas">
           <n-card :bordered="false" embedded>
-            <n-grid responsive="screen" cols="1 s:1 m:1 l:2 xl:2 2xl:2">
+            <n-grid responsive="screen" cols="1 s:1 m:1 l:1 xl:2 2xl:2">
               <n-gi>
                 <n-text class="fs-4">Editar Areas</n-text>
                 <n-form>
@@ -102,7 +102,7 @@
             <n-spin :show="isLoadingData">
               <n-grid
                 responsive="screen"
-                cols="2 s:6 m:10 l:20 xl:24 2xl:24"
+                cols="2 s:6 m:10 l:16 xl:24 2xl:24"
                 :x-gap="12"
                 :y-gap="12"
               >
@@ -438,6 +438,7 @@ import { useRouter } from "vue-router";
 import { useMessage } from "naive-ui";
 import { cloneDeep } from "@/utils";
 import { useTableStore } from "@/store/modules/table";
+import { useProductStore } from "@/store/modules/product";
 import { createArea, updateArea, createTable } from "@/api/modules/tables";
 import {
   getPaymentMethods,
@@ -460,6 +461,7 @@ export default defineComponent({
     const message = useMessage();
     const router = useRouter();
     const tableStore = useTableStore();
+    const productStore = useProductStore();
     const isLoadingData = ref(false);
     const currentArea = ref(null);
     const area = ref({
@@ -606,6 +608,7 @@ export default defineComponent({
         .then((response) => {
           if (response.status === 200) {
             preparationPlaces.value = response.data;
+            productStore.initializeStore();
           }
         })
         .catch((error) => {
@@ -619,6 +622,7 @@ export default defineComponent({
         .then((response) => {
           if (response.status === 201) {
             loadPreparationPlaces();
+            productStore.initializeStore();
           }
         })
         .catch((error) => {

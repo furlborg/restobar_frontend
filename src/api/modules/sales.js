@@ -104,6 +104,7 @@ export async function createSale(sale) {
         by_consumption: sale.by_consumption,
         observations: sale.observations,
         sale_details: sale.sale_details,
+        payments: sale.payments,
     })
 }
 

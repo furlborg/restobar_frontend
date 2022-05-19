@@ -46,7 +46,7 @@
       >
         <n-grid
           responsive="screen"
-          cols="3 xs:3 s:12 m:12 l:24 xl:24 2xl:24"
+          cols="3 xs:3 s:12 m:12 l:15 xl:24 2xl:24"
           :x-gap="12"
           :y-gap="12"
         >
@@ -82,7 +82,15 @@
                 class="position-absolute top-0 start-0 m-2"
               />
               <div
-                class="black-outline text-center position-absolute top-50 start-50 translate-middle fs-4"
+                class="
+                  black-outline
+                  text-center
+                  position-absolute
+                  top-50
+                  start-50
+                  translate-middle
+                  fs-4
+                "
               >
                 {{ "MESA " + String(table.id) }}
               </div>
@@ -511,6 +519,22 @@ export default defineComponent({
           }
         })
         .catch((error) => {
+          if (error.response.status === 400) {
+            for (const value in error.response.data) {
+              error.response.data[`${value}`].forEach((err) => {
+                if (typeof err === "object") {
+                  for (const v in err) {
+                    message.error(`${err[`${v}`]}`);
+                  }
+                } else {
+                  message.error(`${err}`);
+                }
+              });
+            }
+          } else {
+            console.error(error);
+            message.error("Algo salió mal...");
+          }
           console.error(error);
         });
     };
@@ -539,8 +563,22 @@ export default defineComponent({
           }
         })
         .catch((error) => {
-          console.error(error);
-          message.error("Algo salió mal...");
+          if (error.response.status === 400) {
+            for (const value in error.response.data) {
+              error.response.data[`${value}`].forEach((err) => {
+                if (typeof err === "object") {
+                  for (const v in err) {
+                    message.error(`${err[`${v}`]}`);
+                  }
+                } else {
+                  message.error(`${err}`);
+                }
+              });
+            }
+          } else {
+            console.error(error);
+            message.error("Algo salió mal...");
+          }
           passConfirm.value = "";
           isLoading.value = false;
         });
@@ -603,8 +641,22 @@ export default defineComponent({
           }
         })
         .catch((error) => {
-          console.error(error);
-          message.error("Algo salió mal...");
+          if (error.response.status === 400) {
+            for (const value in error.response.data) {
+              error.response.data[`${value}`].forEach((err) => {
+                if (typeof err === "object") {
+                  for (const v in err) {
+                    message.error(`${err[`${v}`]}`);
+                  }
+                } else {
+                  message.error(`${err}`);
+                }
+              });
+            }
+          } else {
+            console.error(error);
+            message.error("Algo salió mal...");
+          }
         });
     };
 

@@ -1,5 +1,8 @@
 <template>
   <div id="Dashboard">
+    <!-- <div class="logo">
+      <img draggable="false" src="~@/assets/images/account-logo.png" alt="" />
+    </div> -->
     <n-grid
       cols="6 xs:6 s:9 m:12 l:15 xl:18 2xl:21"
       responsive="screen"
@@ -88,4 +91,23 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
+.dashboard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* .logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: auto;
+  line-height: auto;
+  overflow: hidden;
+  white-space: nowrap;
+
+  img {
+    width: auto;
+    height: auto;
+  }
+} */
 </style>

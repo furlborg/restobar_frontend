@@ -233,7 +233,7 @@
               v-model:value="supplieItem.stock"
               :min="0"
               :show-button="false"
-              @keypress="isNumber($event)"
+              @keypress="isDecimal($event)"
             />
           </n-form-item-gi>
           <n-form-item-gi v-if="product.control_supplie" :span="4">
@@ -308,7 +308,7 @@ import { useBusinessStore } from "@/store/modules/business";
 import { useUserStore } from "@/store/modules/user";
 import { useMessage } from "naive-ui";
 import { productRules } from "@/utils/constants";
-import { isNumber } from "@/utils";
+import { isNumber, isDecimal } from "@/utils";
 import { getBranchs } from "@/api/modules/business";
 import SuppliesModal from "../../Supplies/components/SuppliesModal.vue";
 
@@ -699,6 +699,7 @@ export default defineComponent({
       performUpdateProductCategory,
       performCreateProductCategory,
       isNumber,
+      isDecimal,
       optionsSupplie,
       supplieSearch,
       addSupplie,
