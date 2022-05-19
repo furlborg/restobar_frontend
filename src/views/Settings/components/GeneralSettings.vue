@@ -438,6 +438,7 @@ import { useRouter } from "vue-router";
 import { useMessage } from "naive-ui";
 import { cloneDeep } from "@/utils";
 import { useTableStore } from "@/store/modules/table";
+import { useProductStore } from "@/store/modules/product";
 import { createArea, updateArea, createTable } from "@/api/modules/tables";
 import {
   getPaymentMethods,
@@ -460,6 +461,7 @@ export default defineComponent({
     const message = useMessage();
     const router = useRouter();
     const tableStore = useTableStore();
+    const productStore = useProductStore();
     const isLoadingData = ref(false);
     const currentArea = ref(null);
     const area = ref({
@@ -606,6 +608,7 @@ export default defineComponent({
         .then((response) => {
           if (response.status === 200) {
             preparationPlaces.value = response.data;
+            productStore.initializeStore();
           }
         })
         .catch((error) => {
@@ -619,6 +622,7 @@ export default defineComponent({
         .then((response) => {
           if (response.status === 201) {
             loadPreparationPlaces();
+            productStore.initializeStore();
           }
         })
         .catch((error) => {

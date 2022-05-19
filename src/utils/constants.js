@@ -1259,7 +1259,7 @@ export const createSaleColumns = ({ printSale, miscSale, sendSale, nullifySale }
                             size: 'small',
                             type: 'error',
                             secondary: true,
-                            disabled: row.status !== 'E',
+                            disabled: row.invoice_type !== "80" ? row.status !== 'E' : false,
                             onClick: () => nullifySale(row)
                         },
                         renderIcon('md-cancel-twotone')
@@ -1559,7 +1559,7 @@ export const createOrderColumns = ({ showDetails, showDeliveryInfo, payDeliver, 
                             size: 'small',
                             type: 'success',
                             secondary: true,
-                            disabled: row.status === '2',
+                            disabled: row.status !== '1',
                             onClick: () => payDeliver(row)
                         },
                         renderIcon('fa-dollar-sign')

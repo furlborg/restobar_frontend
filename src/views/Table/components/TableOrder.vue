@@ -136,8 +136,11 @@
                         :type="orderStore.orderId ? 'info' : 'primary'"
                         text
                         block
+                        :loading="loading"
                         :disabled="
-                          orderStore.orderList.length ? checkState : true
+                          orderStore.orderList.length
+                            ? checkState || loading
+                            : true
                         "
                         @click="validateSend()"
                       >
@@ -300,6 +303,7 @@ export default defineComponent({
     const showModal = ref(false);
     const itemIndex = ref(null);
     const checkState = ref(false);
+    const loading = ref(false);
     const dateNow = ref(null);
     const settingsStore = useSettingsStore();
 
@@ -682,6 +686,7 @@ export default defineComponent({
     };
 
     const performCreateTableOrder = async () => {
+      loading.value = true;
       await createTableOrder(
         route.params.table,
         orderStore.orderList,
@@ -706,6 +711,7 @@ export default defineComponent({
           userConfirm.value = "";
           loadingConfirm.value = false;
           showUserConfirm.value = false;
+          loading.value = false;
         });
     };
 
@@ -731,6 +737,7 @@ export default defineComponent({
     };
 
     const performUpdateTableOrder = async () => {
+      loading.value = true;
       await updateTableOrder(
         route.params.table,
         orderStore.orderId,
@@ -753,6 +760,7 @@ export default defineComponent({
           userConfirm.value = "";
           loadingConfirm.value = false;
           showUserConfirm.value = false;
+          loading.value = false;
         });
     };
 
@@ -1010,6 +1018,7 @@ export default defineComponent({
       userConfirm,
       loadingConfirm,
       validateSend,
+      loading,
     };
   },
 });

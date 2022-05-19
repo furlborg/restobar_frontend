@@ -235,7 +235,7 @@
             </n-space>
           </n-gi>
         </n-grid>
-        <n-button
+        <!-- <n-button
           class="fs-1 py-5 mt-2"
           type="success"
           :disabled="
@@ -245,9 +245,87 @@
           block
           @click.prevent="performCreateSale"
           ><v-icon class="me-2" name="fa-coins" scale="2" />Cobrar</n-button
+        > -->
+        <n-checkbox v-model:checked="isMultiple">Pago multiple</n-checkbox>
+        <n-button
+          class="fs-1 py-5 mt-2"
+          type="success"
+          :disabled="
+            !saleStore.toSale.length || sale.given_amount < sale.amount
+          "
+          secondary
+          block
+          @click.prevent="
+            isMultiple ? doMultiplePayment() : performCreateSale()
+          "
+          ><v-icon class="me-2" name="fa-coins" scale="2" />Cobrar</n-button
         >
       </n-card>
     </n-spin>
+    <n-modal
+      :class="{
+        'w-100': genericsStore.device === 'mobile',
+        'w-50': genericsStore.device === 'tablet',
+        'w-25': genericsStore.device === 'desktop',
+      }"
+      preset="card"
+      v-model:show="showPayments"
+      title="Realizar venta"
+      :mask-closable="false"
+      closable
+      @close="sale.payments = null"
+    >
+      <n-space justify="space-between">
+        <n-tag type="info"
+          >Total: S/. {{ showPayments ? sale.amount.toFixed(2) : null }}</n-tag
+        >
+        <n-tag :type="evalPayments ? 'error' : 'success'"
+          >Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}</n-tag
+        >
+        <n-tag :type="evalPayments ? 'error' : 'warning'"
+          >Faltante: S/.
+          {{
+            showPayments
+              ? parseFloat(sale.amount - currentPaymentsAmount).toFixed(2)
+              : null
+          }}</n-tag
+        >
+      </n-space>
+      <n-form-item class="mt-2" label="Pagos">
+        <n-dynamic-input
+          v-model:value="sale.payments"
+          :min="1"
+          @create="createPayment"
+        >
+          <template #default="{ value }">
+            <div style="display: flex; align-items: center; width: 100%">
+              <n-select
+                v-model:value="value.payment_method"
+                :options="filteredMethods"
+              />
+              <n-input
+                class="ms-2"
+                v-model:value="value.amount"
+                placeholder=""
+                @keypress="isDecimal($event)"
+              />
+            </div>
+          </template>
+        </n-dynamic-input>
+      </n-form-item>
+      <n-space justify="end">
+        <n-button
+          type="success"
+          :disabled="
+            evalPayments ||
+            sale.payments.some((pay) => pay.payment_method === null)
+          "
+          secondary
+          @click="performCreateSale"
+          >Confirmar</n-button
+        >
+      </n-space>
+    </n-modal>
     <!-- Customer Modal -->
     <customer-modal
       v-model:show="showModal"
@@ -268,7 +346,7 @@ import { useSaleStore } from "@/store/modules/sale";
 import { useUserStore } from "@/store/modules/user";
 import { useGenericsStore } from "@/store/modules/generics";
 import { saleRules } from "@/utils/constants";
-import { isDecimal, isNumber, isLetter } from "@/utils";
+import { isDecimal } from "@/utils";
 import {
   searchCustomerByName,
   searchRucCustomer,
@@ -341,7 +419,7 @@ export default defineComponent({
         settingsStore.businessSettings.sale.default_invoice
       ),
       number: "",
-      date_sale: format(new Date(Date.now()), "dd/MM/yyyy hh:mm:ss"),
+      date_sale: format(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss"),
       count: products_count,
       amount: total,
       given_amount: parseFloat(0).toFixed(2),
@@ -356,6 +434,7 @@ export default defineComponent({
       observations: "",
       by_consumption: false,
       sale_details: [],
+      payments: null,
     });
 
     const formRules = computed(() => {
@@ -731,8 +810,22 @@ export default defineComponent({
                   }
                 })
                 .catch((error) => {
-                  console.error(error);
-                  message.error("Algo salió mal...");
+                  if (error.response.status === 400) {
+                    for (const value in error.response.data) {
+                      error.response.data[`${value}`].forEach((err) => {
+                        if (typeof err === "object") {
+                          for (const v in err) {
+                            message.error(`${err[`${v}`]}`);
+                          }
+                        } else {
+                          message.error(`${err}`);
+                        }
+                      });
+                    }
+                  } else {
+                    console.error(error);
+                    message.error("Algo salió mal...");
+                  }
                 })
                 .finally(() => {
                   loading.value = false;
@@ -872,6 +965,60 @@ export default defineComponent({
       onCloseModal();
     };
 
+    const isMultiple = ref(false);
+
+    const showPayments = ref(false);
+
+    const createPayment = () => {
+      return {
+        payment_method: null,
+        amount: "",
+      };
+    };
+
+    const doMultiplePayment = () => {
+      sale.value.payments = [
+        {
+          payment_method: sale.value.payment_method,
+          amount: String(sale.value.amount),
+        },
+      ];
+      showPayments.value = true;
+    };
+
+    const filteredMethods = computed(() => {
+      return saleStore.getPaymentMethodsOptions.map((option) => ({
+        value: option.value,
+        label: option.label,
+        disabled: sale.value.payments.some(
+          (pay) => pay.payment_method === option.value
+        ),
+      }));
+    });
+
+    const evalPayments = computed(() => {
+      if (sale.value.payments) {
+        return (
+          sale.value.payments.reduce((acc, val) => {
+            return (acc += parseFloat(val.amount));
+          }, 0) !== sale.value.amount
+        );
+      } else {
+        return true;
+      }
+    });
+
+    const currentPaymentsAmount = computed(() => {
+      if (sale.value.payments) {
+        let sum = sale.value.payments.reduce((acc, val) => {
+          return (acc += parseFloat(val.amount));
+        }, 0);
+        return isNaN(sum) ? "0.00" : sum.toFixed(2);
+      } else {
+        return "0.00";
+      }
+    });
+
     return {
       showModal,
       orderStore,
@@ -897,6 +1044,13 @@ export default defineComponent({
       onSuccess,
       genericsStore,
       icbper,
+      isMultiple,
+      showPayments,
+      createPayment,
+      doMultiplePayment,
+      filteredMethods,
+      evalPayments,
+      currentPaymentsAmount,
     };
   },
 });

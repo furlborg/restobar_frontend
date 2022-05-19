@@ -33,6 +33,7 @@
                 <n-select
                   v-model:value="customer.doc_type"
                   :options="documentOptions"
+                  :disabled="!!doc_type"
                   placeholder=""
                   @update:value="changeDocMax"
                 />
@@ -231,20 +232,24 @@ export default defineComponent({
       type: Number,
       default: 0,
     },
+    doc_type: {
+      type: String,
+      default: null,
+    },
   },
   setup(props, { emit }) {
     const message = useMessage();
     const requestMessage = ref(null);
     const customerStore = useCustomerStore();
     const genericsStore = useGenericsStore();
-    const { idCustomer, show } = toRefs(props);
+    const { idCustomer, show, doc_type } = toRefs(props);
     const modalTitle = ref("Registrar Cliente");
     const isLoadingData = ref(false);
     const isSearchingDoc = ref(false);
     const customerRef = ref(null);
     const customer = ref({
       names: null,
-      doc_type: "0",
+      doc_type: !doc_type.value ? "0" : doc_type.value,
       doc_num: "",
       email: null,
       phone: null,
@@ -295,7 +300,7 @@ export default defineComponent({
         modalTitle.value = "Registrar Cliente";
         customer.value = {
           names: null,
-          doc_type: "0",
+          doc_type: !doc_type.value ? "0" : doc_type.value,
           doc_num: "",
           email: null,
           phone: null,
@@ -351,10 +356,17 @@ export default defineComponent({
               }
             })
             .catch((error) => {
-              for (const value in error.response.data) {
-                message.error(
-                  `${errorLabel(value)}: ${error.response.data[`${value}`][0]}`
-                );
+              if (error.response.status === 400) {
+                for (const value in error.response.data) {
+                  message.error(
+                    `${errorLabel(value)}: ${
+                      error.response.data[`${value}`][0]
+                    }`
+                  );
+                }
+              } else {
+                console.error(error);
+                message.error("Algo salió mal...");
               }
               /* message.error("Algo salió mal..."); */
             })
@@ -384,8 +396,18 @@ export default defineComponent({
               }
             })
             .catch((error) => {
-              console.error(error);
-              message.error("Algo salió mal...");
+              if (error.response.status === 400) {
+                for (const value in error.response.data) {
+                  message.error(
+                    `${errorLabel(value)}: ${
+                      error.response.data[`${value}`][0]
+                    }`
+                  );
+                }
+              } else {
+                console.error(error);
+                message.error("Algo salió mal...");
+              }
             })
             .finally(() => {
               isLoadingData.value = false;

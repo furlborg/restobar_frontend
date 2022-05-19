@@ -60,10 +60,10 @@ import { useBusinessStore } from "@/store/modules/business";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useCustomerStore } from "@/store/modules/customer";
 import { useGenericsStore } from "@/store/modules/generics";
+import { useProductStore } from "@/store/modules/product";
 import { useTableStore } from "@/store/modules/table";
 import { useTillStore } from "@/store/modules/till";
 import { useSaleStore } from "@/store/modules/sale";
-import { useProductStore } from "@/store/modules/product";
 import AppProvider from "@/components/Application";
 import Logo from "@/layout/Logo";
 import AsideMenu from "@/layout/AsideMenu";
@@ -122,7 +122,7 @@ export default defineComponent({
 
     const watchWidth = () => {
       const Width = document.body.clientWidth;
-      collapsed.value = Width <= 950 && genericsStore.device !== "mobile";
+      collapsed.value = Width <= 1280 && genericsStore.device !== "mobile";
       genericsStore.updateDevice();
     };
 

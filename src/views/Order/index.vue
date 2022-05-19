@@ -130,23 +130,93 @@
       :delivery="delivery"
       @update:show="onCloseModal"
     />
+    <n-modal
+      :class="{
+        'w-100': genericsStore.device === 'mobile',
+        'w-50': genericsStore.device === 'tablet',
+        'w-25': genericsStore.device === 'desktop',
+      }"
+      preset="card"
+      v-model:show="showPayments"
+      title="Realizar venta"
+      :mask-closable="false"
+      closable
+      @close="
+        (payments = null),
+          (paymentsTotal = null),
+          (currentOrder.order_id = null),
+          (currentOrder.sale_id = null)
+      "
+    >
+      <n-space justify="space-between">
+        <n-tag type="info"
+          >Total: S/.
+          {{ paymentsTotal ? paymentsTotal.toFixed(2) : null }}</n-tag
+        >
+        <n-tag :type="evalPayments ? 'error' : 'success'"
+          >Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}</n-tag
+        >
+        <n-tag :type="evalPayments ? 'error' : 'warning'"
+          >Faltante: S/.
+          {{
+            showPayments
+              ? parseFloat(paymentsTotal - currentPaymentsAmount).toFixed(2)
+              : null
+          }}</n-tag
+        >
+      </n-space>
+      <n-form-item class="mt-2" label="Pagos">
+        <n-dynamic-input
+          v-model:value="payments"
+          :min="1"
+          @create="createPayment"
+        >
+          <template #default="{ value }">
+            <div style="display: flex; align-items: center; width: 100%">
+              <n-select
+                v-model:value="value.payment_method"
+                :options="filteredMethods"
+              />
+              <n-input
+                class="ms-2"
+                v-model:value="value.amount"
+                placeholder=""
+                @keypress="isDecimal($event)"
+              />
+            </div>
+          </template>
+        </n-dynamic-input>
+      </n-form-item>
+      <n-space justify="end">
+        <n-button
+          type="success"
+          :disabled="
+            evalPayments || payments.some((pay) => pay.payment_method === null)
+          "
+          secondary
+          @click="performUpdateOrderStatus"
+          >Confirmar</n-button
+        >
+      </n-space>
+    </n-modal>
   </div>
 </template>
 
 <script>
-import { defineComponent, ref, onMounted } from "vue";
+import { defineComponent, ref, computed, onMounted } from "vue";
 import { useMessage, useDialog } from "naive-ui";
 import { set, format } from "date-fns";
 import DetailsModal from "./components/DetailsModal";
 import DeliveryModal from "./components/DeliveryModal";
 import { createOrderColumns } from "@/utils/constants";
+import { useSaleStore } from "@/store/modules/sale";
 import { useBusinessStore } from "@/store/modules/business";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useGenericsStore } from "@/store/modules/generics";
 import { sendSale } from "@/api/modules/sales";
 import { useTillStore } from "@/store/modules/till";
 import { useUserStore } from "@/store/modules/user";
-import { isNumber, isLetter } from "@/utils";
+import { isNumber, isLetter, isDecimal } from "@/utils";
 import {
   listOrders,
   listOrdersByPage,
@@ -165,6 +235,7 @@ export default defineComponent({
   setup() {
     const message = useMessage();
     const dialog = useDialog();
+    const saleStore = useSaleStore();
     const businessStore = useBusinessStore();
     const settingsStore = useSettingsStore();
     const genericsStore = useGenericsStore();
@@ -410,8 +481,13 @@ export default defineComponent({
             }
           })
           .catch((error) => {
-            console.error(error);
-            message.error("Algo salió mal...");
+            if (error.response.status === 409) {
+              message.error("Anulación incompleta");
+              message.error("Envio manual necesario");
+            } else {
+              console.error(error);
+              message.error("Algo salió mal...");
+            }
             passConfirm.value = "";
             isLoading.value = false;
           });
@@ -428,8 +504,13 @@ export default defineComponent({
             }
           })
           .catch((error) => {
-            console.error(error);
-            message.error("Algo salió mal...");
+            if (error.response.status === 409) {
+              message.error("Anulación incompleta");
+              message.error("Envio manual necesario");
+            } else {
+              console.error(error);
+              message.error("Algo salió mal...");
+            }
             passConfirm.value = "";
             isLoading.value = false;
           });
@@ -441,9 +522,95 @@ export default defineComponent({
       await loadOrders();
     });
 
+    const currentOrder = ref({
+      order_id: null,
+      sale_id: null,
+    });
+
+    const payments = ref(null);
+
+    const paymentsTotal = ref(null);
+
+    const showPayments = ref(false);
+
+    const createPayment = () => {
+      return {
+        payment_method: null,
+        amount: "",
+      };
+    };
+
+    const filteredMethods = computed(() => {
+      return saleStore.getPaymentMethodsOptions.map((option) => ({
+        value: option.value,
+        label: option.label,
+        disabled: payments.value.some(
+          (pay) => pay.payment_method === option.value
+        ),
+      }));
+    });
+
+    const evalPayments = computed(() => {
+      if (payments.value) {
+        return (
+          payments.value.reduce((acc, val) => {
+            return (acc += parseFloat(val.amount));
+          }, 0) !== paymentsTotal.value
+        );
+      } else {
+        return true;
+      }
+    });
+
+    const performUpdateOrderStatus = async () => {
+      isTableLoading.value = true;
+      await updateOrderStatus(currentOrder.value.order_id, payments.value)
+        .then((response) => {
+          if (response.status === 202) {
+            message.success("¡Pedido cobrado!");
+            showPayments.value = false;
+            if (settingsStore.businessSettings.sale.auto_send) {
+              sendSale(currentOrder.value.sale_id)
+                .then((response) => {
+                  if (response.status === 200) {
+                    message.success("Enviado!");
+                  }
+                })
+                .catch((error) => {
+                  if (error.response.status === 400) {
+                    message.error(error.response.data.error);
+                  } else {
+                    console.error(error);
+                    message.error("Algo salió mal...");
+                  }
+                });
+            }
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          loadOrders();
+        });
+    };
+
+    const currentPaymentsAmount = computed(() => {
+      if (payments.value) {
+        let sum = payments.value.reduce((acc, val) => {
+          return (acc += parseFloat(val.amount));
+        }, 0);
+        return isNaN(sum) ? "0.00" : sum.toFixed(2);
+      } else {
+        return "0.00";
+      }
+    });
+
     return {
       isLetter,
       isNumber,
+      isDecimal,
       isTableLoading,
       statusOptions,
       pagination,
@@ -464,6 +631,15 @@ export default defineComponent({
       passConfirm,
       genericsStore,
       performNullifyTableOrder,
+      currentOrder,
+      payments,
+      paymentsTotal,
+      showPayments,
+      createPayment,
+      filteredMethods,
+      evalPayments,
+      performUpdateOrderStatus,
+      currentPaymentsAmount,
       tableColumns: createOrderColumns({
         showDetails(row) {
           idOrder.value = row.id;
@@ -474,7 +650,17 @@ export default defineComponent({
           showDeliveryModal.value = true;
         },
         payDeliver(row) {
-          dialog.success({
+          paymentsTotal.value = row.amount;
+          currentOrder.value.order_id = row.id;
+          currentOrder.value.sale_id = row.sale_id;
+          payments.value = [
+            {
+              payment_method: Number(row.payment_method),
+              amount: String(row.amount),
+            },
+          ];
+          showPayments.value = true;
+          /* dialog.success({
             title: "Pedido cobrado",
             content: "¿El pedido ya ha sido cobrado?",
             positiveText: "Si",
@@ -512,7 +698,7 @@ export default defineComponent({
                 });
             },
             onNegativeClick: () => {},
-          });
+          }); */
         },
         nullifyOrder(row) {
           showConfirm.value = true;
