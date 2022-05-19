@@ -323,6 +323,7 @@
 </template>
 
 <script>
+import { CreatePdfFile } from "@/hooks/CreatePdfFile";
 import { defineComponent, ref, onMounted } from "vue";
 import { useMessage } from "naive-ui";
 import { useGenericsStore } from "@/store/modules/generics";
@@ -336,8 +337,6 @@ import {
 } from "@/api/modules/tables";
 import { cloneDeep } from "@/utils";
 import { useBusinessStore } from "@/store/modules/business";
-
-import { PrintsCopyCopyCopy } from "./PrintsCopyCopyCopy/PrintsCopyCopyCopy";
 
 export default defineComponent({
   name: "Tables",
@@ -504,7 +503,11 @@ export default defineComponent({
               }
             );
 
-            PrintsCopyCopyCopy(structure, lengthData);
+            CreatePdfFile({
+              show: true,
+              data: structure,
+              lengthOfData: lengthData,
+            });
           }
         })
         .catch((error) => {

@@ -251,6 +251,7 @@
 </template>
 
 <script>
+import { printPdf } from "@/hooks/PrintPdf.js";
 import OrderIndications from "./OrderIndications";
 import { defineComponent, ref, computed, onMounted, watchEffect, h } from "vue";
 import {
@@ -276,8 +277,6 @@ import {
 } from "@/api/modules/tables";
 import { searchProductByName } from "@/api/modules/products";
 import { cloneDeep, lighten } from "@/utils";
-import { generatePrintCopy } from "./PrintsCopy/printsCopy";
-import { generatePrint58 } from "./PrintsCopy58/printsCopy58";
 
 export default defineComponent({
   name: "TableOrder",
@@ -388,58 +387,61 @@ export default defineComponent({
       message.success("Orden actualizada correctamente");
       checkState.value = true;
 
-      let lengthData = 0;
-      const createName = () => {
-        if (update) {
-          lengthData += 7 * 6.5;
-          return `ACTUALIZACION DE MESA: ${
-            tableStore.getTableByID(table).description
-          }`;
-        } else {
-          return `MESA: ${tableStore.getTableByID(table).description}`;
-        }
-      };
+      let arrayDataPrint = [];
 
-      let structure = [
-        {
-          dat: [
-            [
-              {
-                content: `ORDEN: ${val.id}`,
-                styles: {
-                  fontStyle: "bold",
-                  halign: "center",
-                  fontSize: 11,
+      productStore.places.forEach(async (place) => {
+        let lengthData = 0;
+        const createName = () => {
+          if (update) {
+            lengthData += 7 * 6.5;
+            return `ACTUALIZACION DE MESA: ${
+              tableStore.getTableByID(table).description
+            }`;
+          } else {
+            return `MESA: ${tableStore.getTableByID(table).description}`;
+          }
+        };
+
+        let structure = [
+          {
+            dat: [
+              [
+                {
+                  content: `ORDEN: ${val.id}`,
+                  styles: {
+                    fontStyle: "bold",
+                    halign: "center",
+                    fontSize: process.env.VUE_APP_HEADERS_SIZE,
+                  },
                 },
-              },
+              ],
             ],
-          ],
-        },
-        {
-          dat: [
-            [
-              {
-                content: createName(),
-                styles: {
-                  fontStyle: "bold",
-                  halign: "center",
-                  fontSize: 11,
+          },
+          {
+            dat: [
+              [
+                {
+                  content: createName(),
+                  styles: {
+                    fontStyle: "bold",
+                    halign: "center",
+                    fontSize: process.env.VUE_APP_NAMETITLE_SIZE,
+                  },
                 },
-              },
+              ],
             ],
-          ],
-        },
-      ];
-      let thisIndicatesIfEverythingIsToGO = [];
+          },
+        ];
 
-      let roscareresunamierda = val.order_details.find(
-        (v) => !!v.preparation_place
-      );
+        let thisIndicatesIfEverythingIsToGO = [];
 
-      val.order_details.map((valOrder) => {
-        let lC = 0;
+        let info = val.order_details.filter(
+          (detail) => detail.preparation_place === place.description
+        );
 
-        if (!!valOrder.preparation_place) {
+        await info.map((valOrder) => {
+          let lC = 0;
+
           let ind = "";
           let PL = [];
 
@@ -602,81 +604,70 @@ export default defineComponent({
               ],
             }
           );
-        }
-      });
-
-      if (val.order_details.length === thisIndicatesIfEverythingIsToGO.length) {
-        structure.splice(1, 0, {
-          dat: [
-            [
-              {
-                content: "PARA LLEVAR",
-                styles: {
-                  fontStyle: "bold",
-                  halign: "center",
-                  fontSize: 10,
-                },
-              },
-            ],
-          ],
         });
-      }
 
-      structure.push({
-        line: true,
-
-        dat: [
-          [
-            {
-              content: `Fecha : ${dateNow.value}`,
-              styles: {
-                fontStyle: "bold",
-                halign: "right",
-                fontSize: 8,
-              },
-            },
-          ],
-        ],
-      });
-      if (!!val.username) {
-        lengthData += 10;
-        structure.push({
-          dat: [
-            [
-              {
-                content: `MOZO: ${val.username}`,
-                styles: {
-                  fontStyle: "bold",
-                  halign: "right",
-                  fontSize: 8,
-                },
-              },
-            ],
-          ],
-        });
-      }
-
-      const a = val.order_details.filter(
-        (valOrd) => !!valOrd.preparation_place
-      );
-
-      if (a.length > 0) {
         if (
-          settingsStore.business_settings.printer.kitchen_printer_format === 58
+          val.order_details.length === thisIndicatesIfEverythingIsToGO.length
         ) {
-          generatePrint58(
-            structure,
-            lengthData,
-            roscareresunamierda.preparation_place
-          );
-        } else {
-          generatePrintCopy(
-            structure,
-            lengthData,
-            roscareresunamierda.preparation_place
-          );
+          structure.splice(1, 0, {
+            dat: [
+              [
+                {
+                  content: "PARA LLEVAR",
+                  styles: {
+                    fontStyle: "bold",
+                    halign: "center",
+                    fontSize: 10,
+                  },
+                },
+              ],
+            ],
+          });
         }
-      }
+
+        structure.push({
+          line: true,
+
+          dat: [
+            [
+              {
+                content: `Fecha : ${dateNow.value /* .replace(" ", "\n") */}`,
+                styles: {
+                  fontStyle: "bold",
+                  fontSize: process.env.VUE_APP_FOOTER_SIZE,
+                },
+              },
+            ],
+          ],
+        });
+
+        if (!!val.username) {
+          lengthData += 10;
+          structure.push({
+            dat: [
+              [
+                {
+                  content: `MOZO: ${val.username}`,
+                  styles: {
+                    fontStyle: "bold",
+                    fontSize: process.env.VUE_APP_FOOTER_SIZE,
+                  },
+                },
+              ],
+            ],
+          });
+        }
+
+        if (info.length > 0) {
+          arrayDataPrint.push({
+            data: structure,
+            lengthOfData: lengthData,
+            printerName: place.printer_name,
+          });
+        }
+      });
+
+      printPdf(arrayDataPrint);
 
       router.push({ name: "TableHome" });
     };

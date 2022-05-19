@@ -14,9 +14,25 @@ export const generatePrint = (structure) => {
     var finalY = doc.lastAutoTable.finalY || 10;
 
     const businnessStore = useBusinessStore();
-    if (index === 0) {
-      doc.addImage(businnessStore.business.logo_url, "png", 8, finalY, 65, 18);
-      finalY += 30;
+    if (index === 0 && addImages) {
+      let img = doc.getImageProperties(businnessStore.business.logo_url);
+
+      let anchooriginal = img.width;
+      let altooriginal = img.height;
+
+      let anchonuevo = 50;
+
+      let altonuevo = (altooriginal * anchonuevo) / anchooriginal;
+
+      doc.addImage(
+        businnessStore.business.logo_url,
+        "png",
+        15,
+        finalY,
+        anchonuevo,
+        altonuevo
+      );
+      finalY += altonuevo + 1.5;
     }
 
     if (val.line) {

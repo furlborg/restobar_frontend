@@ -258,7 +258,9 @@
 </template>
 
 <script>
-import { numeroALetras } from "./Prints/numberText.js";
+import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
+import { CreatePdfFile } from "@/hooks/CreatePdfFile.js";
+import { numeroALetras } from "@/hooks/numberText.js";
 import { defineComponent, ref, toRefs, computed, watch, onMounted } from "vue";
 import CustomerModal from "@/views/Customer/components/CustomerModal";
 import { useSettingsStore } from "@/store/modules/settings";
@@ -277,8 +279,6 @@ import { createSale, getSaleNumber, sendSale } from "@/api/modules/sales";
 import { useDialog, useMessage } from "naive-ui";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
 import format from "date-fns/format";
-
-import { generatePrint } from "./Prints/prints";
 
 import { useBusinessStore } from "@/store/modules/business";
 
@@ -394,7 +394,6 @@ export default defineComponent({
     const businessStore = useBusinessStore();
 
     const printSale = (val) => {
-      let height = 0;
       let dataForPrint = JSON.parse(val.json_sale);
 
       let typeDoc = dataForPrint.serie_documento.split("");
@@ -452,7 +451,6 @@ export default defineComponent({
           };
       for (let i in newTotal) {
         if (!!parseFloat(newTotal[i])) {
-          height += 7;
           datTotals.push({
             tittle: i,
             twoPoints: ":",
@@ -461,7 +459,6 @@ export default defineComponent({
         }
 
         if (i === "IGV(18%)") {
-          height += 7;
           datTotals.push({
             tittle: i,
             twoPoints: ":",
@@ -479,7 +476,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 10,
+                  fontSize: 7,
                 },
               },
             ],
@@ -489,7 +486,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 10,
+                  fontSize: 7,
                 },
               },
             ],
@@ -499,7 +496,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 8,
+                  fontSize: 5,
                 },
               },
             ],
@@ -509,7 +506,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 7,
+                  fontSize: 4,
                 },
               },
             ],
@@ -519,7 +516,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 8,
+                  fontSize: 5,
                 },
               },
             ],
@@ -530,7 +527,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 10,
+                  fontSize: 7,
                 },
               },
             ],
@@ -589,7 +586,6 @@ export default defineComponent({
           ],
           dat: !val.by_consumption
             ? dataForPrint.items.map((val) => {
-                height += 7;
                 return {
                   amount: val.cantidad,
                   description: val.descripcion,
@@ -625,7 +621,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 8,
+                  fontSize: 5,
                 },
               },
             ],
@@ -635,7 +631,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 8,
+                  fontSize: 5,
                 },
               },
             ],
@@ -645,7 +641,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 8,
+                  fontSize: 5,
                 },
               },
             ],
@@ -655,7 +651,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 8,
+                  fontSize: 5,
                 },
               },
             ],
@@ -666,7 +662,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 8,
+                  fontSize: 5,
                 },
               },
             ],
@@ -690,7 +686,12 @@ export default defineComponent({
         },
       ];
 
-      generatePrint(data, structure, NoNoteSale, height + 7 * 16);
+      CreatePdfFile({
+        show: true,
+        data: structure,
+        objSunat: data,
+        addImages: true,
+      });
 
       message.success("Imprimir");
     };
@@ -710,6 +711,12 @@ export default defineComponent({
                 .then((response) => {
                   if (response.status === 201) {
                     printSale(response.data);
+                    // VoucherPrint({
+                    //   data: response.data,
+                    //   businessStore,
+                    //   saleStore,
+                    //   changing: changing.value,
+                    // });
                     if (settingsStore.businessSettings.sale.auto_send) {
                       sendSale(response.data.id)
                         .then((response) => {

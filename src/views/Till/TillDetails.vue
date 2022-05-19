@@ -232,7 +232,6 @@ import { createTillDetailsColumns } from "@/utils/constants";
 import { useTillStore } from "@/store/modules/till";
 import { useSaleStore } from "@/store/modules/sale";
 import { useBusinessStore } from "@/store/modules/business";
-import { generatePrint } from "./Prints/prints";
 import {
   getCurrentTillDetails,
   filterTillDetails,

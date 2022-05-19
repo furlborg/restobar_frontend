@@ -192,6 +192,7 @@
 </template>
 
 <script>
+import { CreatePdfFile } from "@/hooks/CreatePdfFile";
 import { defineComponent, ref, onMounted, computed } from "vue";
 import { useMessage, useDialog } from "naive-ui";
 import MovementModal from "./components/MovementModal";
@@ -200,7 +201,6 @@ import { createMovementsColumns } from "@/utils/constants";
 import { useTillStore } from "@/store/modules/till";
 import { useSaleStore } from "@/store/modules/sale";
 import { useBusinessStore } from "@/store/modules/business";
-import { generatePrint } from "./Prints/prints";
 import {
   getCurrentTillDetails,
   filterTillDetails,
@@ -470,7 +470,11 @@ export default defineComponent({
             },
           ];
 
-          generatePrint(structure);
+          CreatePdfFile({
+            show: true,
+            data: structure,
+          });
+
           message.info("Imprimiendo");
         },
         deleteMovement(rowData) {

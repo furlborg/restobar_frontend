@@ -126,6 +126,7 @@
 </template>
 
 <script>
+import { printPdf } from "@/hooks/PrintPdf.js";
 import { useUserStore } from "@/store/modules/user";
 import { defineComponent, ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
@@ -144,9 +145,8 @@ import {
   updateTableOrder,
   performDeleteOrderDetail,
 } from "@/api/modules/tables";
-import { generatePrintCopy } from "./PrintsCopy/printsCopy";
+
 import { cloneDeep } from "@/utils";
-import { generatePrint58 } from "./PrintsCopy58/printsCopy58";
 
 export default defineComponent({
   name: "WProducts",
@@ -174,60 +174,61 @@ export default defineComponent({
     const print = (val, update = false) => {
       message.success("Orden actualizada correctamente");
 
-      let lengthData = 0;
+      let arrayDataPrint = [];
 
-      const createName = () => {
-        if (update) {
-          lengthData += 7 * 6.5;
-          return `ACTUALIZACION DE MESA: ${
-            tableStore.getTableByID(table).description
-          }`;
-        } else {
-          return `MESA: ${tableStore.getTableByID(table).description}`;
-        }
-      };
+      productStore.places.forEach(async (place) => {
+        let lengthData = 0;
+        const createName = () => {
+          if (update) {
+            lengthData += 7 * 6.5;
+            return `ACTUALIZACION DE MESA: ${
+              tableStore.getTableByID(table).description
+            }`;
+          } else {
+            return `MESA: ${tableStore.getTableByID(table).description}`;
+          }
+        };
 
-      let structure = [
-        {
-          dat: [
-            [
-              {
-                content: `ORDEN: ${val.id}`,
-                styles: {
-                  fontStyle: "bold",
-                  halign: "center",
-                  fontSize: 11,
+        let structure = [
+          {
+            dat: [
+              [
+                {
+                  content: `ORDEN: ${val.id}`,
+                  styles: {
+                    fontStyle: "bold",
+                    halign: "center",
+                    fontSize: process.env.VUE_APP_HEADERS_SIZE,
+                  },
                 },
-              },
+              ],
             ],
-          ],
-        },
-        {
-          dat: [
-            [
-              {
-                content: createName(),
-                styles: {
-                  fontStyle: "bold",
-                  halign: "center",
-                  fontSize: 11,
+          },
+          {
+            dat: [
+              [
+                {
+                  content: createName(),
+                  styles: {
+                    fontStyle: "bold",
+                    halign: "center",
+                    fontSize: process.env.VUE_APP_NAMETITLE_SIZE,
+                  },
                 },
-              },
+              ],
             ],
-          ],
-        },
-      ];
+          },
+        ];
 
-      let thisIndicatesIfEverythingIsToGO = [];
+        let thisIndicatesIfEverythingIsToGO = [];
 
-      let roscareresunamierda = val.order_details.find(
-        (v) => !!v.preparation_place
-      );
+        let info = val.order_details.filter(
+          (detail) => detail.preparation_place === place.description
+        );
 
-      val.order_details.map((valOrder) => {
-        let lC = 0;
+        await info.map((valOrder) => {
+          let lC = 0;
 
-        if (!!valOrder.preparation_place) {
           let ind = "";
           let PL = [];
 
@@ -237,6 +238,7 @@ export default defineComponent({
             }
 
             let cadenaConCaracteres = "";
+
             if (!!v.description) {
               let longitudCadena = v.description.length;
 
@@ -329,19 +331,19 @@ export default defineComponent({
             lengthData += 7 * heightForNmae;
           }
 
-          if (valOrder.indication.length === PL.length) {
+          if (
+            valOrder.indication.length > 0 &&
+            valOrder.indication.length === PL.length
+          ) {
             thisIndicatesIfEverythingIsToGO.push(true);
           }
-
           structure.push(
             {
               line: true,
               dat: [
                 [
                   {
-                    content: `*${newNameProd}`,
-                    colSpan: "2",
-                    rowSpan: "1",
+                    content: `• ${newNameProd}`,
                     styles: {
                       fontStyle: "bold",
                       fontSize: process.env.VUE_APP_PRODUCT_SIZE,
@@ -379,9 +381,7 @@ export default defineComponent({
               dat: [
                 [
                   {
-                    content: `CANTIDAD: ${valOrder.quantity}`,
-                    colSpan: "2",
-                    rowSpan: "1",
+                    content: `Cant.: ${valOrder.quantity}`,
                     styles: {
                       fontStyle: "bold",
                       fontSize: process.env.VUE_APP_PRODUCT_SIZE,
@@ -391,80 +391,70 @@ export default defineComponent({
               ],
             }
           );
-        }
-      });
-
-      if (val.order_details.length === thisIndicatesIfEverythingIsToGO.length) {
-        structure.splice(1, 0, {
-          dat: [
-            [
-              {
-                content: "PARA LLEVAR",
-                styles: {
-                  fontStyle: "bold",
-                  halign: "center",
-                  fontSize: process.env.VUE_APP_PRODUCT_SIZE,
-                },
-              },
-            ],
-          ],
         });
-      }
 
-      structure.push({
-        line: true,
-
-        dat: [
-          [
-            {
-              content: `Fecha : ${dateNow.value}`,
-              styles: {
-                fontStyle: "bold",
-                halign: "right",
-                fontSize: 8,
-              },
-            },
-          ],
-        ],
-      });
-      if (!!val.username) {
-        structure.push({
-          dat: [
-            [
-              {
-                content: `MOZO: ${val.username}`,
-                styles: {
-                  fontStyle: "bold",
-                  halign: "right",
-                  fontSize: 8,
-                },
-              },
-            ],
-          ],
-        });
-      }
-
-      const a = val.order_details.filter(
-        (valOrd) => !!valOrd.preparation_place
-      );
-
-      if (a.length > 0) {
         if (
-          settingsStore.business_settings.printer.kitchen_printer_format === 58
+          val.order_details.length === thisIndicatesIfEverythingIsToGO.length
         ) {
-          generatePrint58(
-            structure,
-            lengthData,
-            roscareresunamierda.preparation_place
-          );
-        } else {
-          generatePrintCopy(
-            structure,
-            lengthData,
-            roscareresunamierda.preparation_place
-          );
+          structure.splice(1, 0, {
+            dat: [
+              [
+                {
+                  content: "PARA LLEVAR",
+                  styles: {
+                    fontStyle: "bold",
+                    halign: "center",
+                    fontSize: 10,
+                  },
+                },
+              ],
+            ],
+          });
         }
-      }
+
+        structure.push({
+          line: true,
+
+          dat: [
+            [
+              {
+                content: `Fecha : ${dateNow.value /* .replace(" ", "\n") */}`,
+                styles: {
+                  fontStyle: "bold",
+                  fontSize: process.env.VUE_APP_FOOTER_SIZE,
+                },
+              },
+            ],
+          ],
+        });
+
+        if (!!val.username) {
+          lengthData += 10;
+          structure.push({
+            dat: [
+              [
+                {
+                  content: `MOZO: ${val.username}`,
+                  styles: {
+                    fontStyle: "bold",
+                    fontSize: process.env.VUE_APP_FOOTER_SIZE,
+                  },
+                },
+              ],
+            ],
+          });
+        }
+
+        if (info.length > 0) {
+          arrayDataPrint.push({
+            data: structure,
+            lengthOfData: lengthData,
+            printerName: place.printer_name,
+          });
+        }
+      });
+
+      printPdf(arrayDataPrint);
 
       router.push({ name: "TableHome" });
     };

@@ -19,12 +19,28 @@ export const generatePrint = (objSunat, structure, addImages) => {
   });
 
   structure.map((val, index) => {
-    var finalY = doc.lastAutoTable.finalY - 5 || 10;
+    var finalY = doc.lastAutoTable.finalY - 5 || 5;
 
     const businnessStore = useBusinessStore();
     if (index === 0 && addImages) {
-      doc.addImage(businnessStore.business.logo_url, "png", 5, finalY, 65, 18);
-      finalY += 20;
+      let img = doc.getImageProperties(businnessStore.business.logo_url);
+
+      let anchooriginal = img.width;
+      let altooriginal = img.height;
+
+      let anchonuevo = 50;
+
+      let altonuevo = (altooriginal * anchonuevo) / anchooriginal;
+
+      doc.addImage(
+        businnessStore.business.logo_url,
+        "png",
+        15,
+        finalY,
+        anchonuevo,
+        altonuevo
+      );
+      finalY += altonuevo + 1.5;
     }
 
     if (index === 5 && addImages) {

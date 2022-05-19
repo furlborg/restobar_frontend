@@ -516,6 +516,9 @@
 </template>
 
 <script>
+import { CreatePdfFile } from "@/hooks/CreatePdfFile.js";
+import { numeroALetras } from "@/hooks/numberText.js";
+import { printPdf } from "@/hooks/PrintPdf.js";
 import CustomerModal from "@/views/Customer/components/CustomerModal";
 import OrderIndications from "./OrderIndications";
 import CategoriesList from "./CategoriesList";
@@ -528,7 +531,7 @@ import {
   onMounted,
   h,
 } from "vue";
-import { numeroALetras } from "./Prints/numberText.js";
+
 import { NThing, NTag, NSpace, useDialog, useMessage } from "naive-ui";
 import { useRouter } from "vue-router";
 import { useSettingsStore } from "@/store/modules/settings";
@@ -549,11 +552,6 @@ import {
   searchRucCustomer,
 } from "@/api/modules/customer";
 import format from "date-fns/format";
-
-import { generatePrint } from "./Prints/prints";
-import { generatePrintCopy } from "./PrintsCopy/printsCopy";
-import { generatePrintCopyCopy } from "./PrintsCopyCopy/printsCopyCopy";
-import { generatePrint58 } from "./PrintsCopy58/printsCopy58";
 
 const dateNow = ref(null);
 
@@ -1023,7 +1021,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 10,
+                  fontSize: 7,
                 },
               },
             ],
@@ -1033,7 +1031,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 10,
+                  fontSize: 7,
                 },
               },
             ],
@@ -1043,7 +1041,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 8,
+                  fontSize: 5,
                 },
               },
             ],
@@ -1053,7 +1051,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 7,
+                  fontSize: 4,
                 },
               },
             ],
@@ -1063,7 +1061,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 8,
+                  fontSize: 5,
                 },
               },
             ],
@@ -1074,7 +1072,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 10,
+                  fontSize: 7,
                 },
               },
             ],
@@ -1170,7 +1168,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 8,
+                  fontSize: 5,
                 },
               },
             ],
@@ -1180,7 +1178,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 8,
+                  fontSize: 5,
                 },
               },
             ],
@@ -1190,7 +1188,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 8,
+                  fontSize: 5,
                 },
               },
             ],
@@ -1200,7 +1198,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 8,
+                  fontSize: 5,
                 },
               },
             ],
@@ -1211,7 +1209,7 @@ export default defineComponent({
                 styles: {
                   fontStyle: "bold",
                   halign: "center",
-                  fontSize: 8,
+                  fontSize: 5,
                 },
               },
             ],
@@ -1236,34 +1234,17 @@ export default defineComponent({
           ],
         },
       ];
-      generatePrint(data, structure, NoNoteSale, height + 7 * 16);
+      CreatePdfFile({
+        show: true,
+        data: structure,
+        objSunat: data,
+        addImages: true,
+      });
 
       message.success("Imprimir");
 
       if (!!sale.value.delivery_info) {
-        // let newTotals = [];
-
         let lengthData = 0;
-
-        // let totals = {
-        //   SUBTOTAL: totalProdSum.toFixed("2"),
-        //   "IGV(18%)": dataForPrint.totales.total_igv.toFixed("2"),
-        //   DESCUENTOS: !!val.discount
-        //     ? parseFloat(val.discount).toFixed("2")
-        //     : "0.00",
-        //   TOTAL: dataForPrint.totales.total_venta.toFixed("2"),
-        // };
-
-        // for (let i in totals) {
-        //   if (!!parseFloat(totals[i]) || i === "IGV(18%)") {
-        //     lengthData += 5 * 6.5;
-        //     datTotals.push({
-        //       tittle: i,
-        //       twoPoints: ":",
-        //       cont: totals[i],
-        //     });
-        //   }
-        // }
 
         let vuleto = changing.value;
         vuleto -= vuleto * 2;
@@ -1399,7 +1380,10 @@ export default defineComponent({
             ],
           },
         ];
-        generatePrintCopyCopy(structureDelivery, lengthData + heightD + 7 * 16);
+        CreatePdfFile({
+          show: true,
+          data: structureDelivery,
+        });
       }
 
       print(values);
@@ -1408,227 +1392,217 @@ export default defineComponent({
     };
 
     const print = (responseData) => {
-      let lengthData = 0;
+      let arrayDataPrint = [];
 
-      let structure = [
-        {
-          dat: [
-            [
-              {
-                content: `ORDEN: ${responseData.order}`,
-                styles: {
-                  fontStyle: "bold",
-                  halign: "center",
-                  fontSize: 11,
+      productStore.places.forEach(async (place) => {
+        let lengthData = 0;
+
+        let structure = [
+          {
+            dat: [
+              [
+                {
+                  content: `ORDEN: ${responseData.id}`,
+                  styles: {
+                    fontStyle: "bold",
+                    halign: "center",
+                    fontSize: process.env.VUE_APP_HEADERS_SIZE,
+                  },
                 },
-              },
+              ],
             ],
-          ],
-        },
-
-        {
-          dat: [
-            [
-              {
-                content: !!sale.value.delivery_info
-                  ? "DELIVERY"
-                  : "PARA LLEVAR",
-                styles: {
-                  fontStyle: "bold",
-                  halign: "center",
-                  fontSize: 11,
+          },
+          {
+            dat: [
+              [
+                {
+                  content: !!sale.value.delivery_info
+                    ? "DELIVERY"
+                    : "PARA LLEVAR",
+                  styles: {
+                    fontStyle: "bold",
+                    halign: "center",
+                    fontSize: process.env.VUE_APP_NAMETITLE_SIZE,
+                  },
                 },
-              },
+              ],
             ],
-          ],
-        },
-      ];
+          },
+        ];
 
-      let roscareresunamierda = responseData.order_details.find(
-        (v) => !!v.preparation_place
-      );
+        let info = responseData.order_details.filter(
+          (detail) => detail.preparation_place === place.description
+        );
 
-      responseData.order_details.map((val) => {
-        if (!!val.preparation_place) {
-          let ind = "";
+        info.map((val) => {
+          if (!!val.preparation_place) {
+            let ind = "";
+            val.indication.map((v, i) => {
+              let cadenaConCaracteres = "";
+              if (!!v.description) {
+                let longitudCadena = v.description.length;
 
-          val.indication.map((v, i) => {
-            let cadenaConCaracteres = "";
-            if (!!v.description) {
-              let longitudCadena = v.description.length;
-
-              for (let i = 0; i < longitudCadena; i += 40) {
-                if (i + 40 < longitudCadena) {
-                  cadenaConCaracteres +=
-                    v.description.substring(i, i + 40) + "\n";
-                  lC += v.description.length / 40;
-                } else {
-                  cadenaConCaracteres += v.description.substring(
-                    i,
-                    longitudCadena
-                  );
+                for (let i = 0; i < longitudCadena; i += 40) {
+                  if (i + 40 < longitudCadena) {
+                    cadenaConCaracteres +=
+                      v.description.substring(i, i + 40) + "\n";
+                    lC += v.description.length / 40;
+                  } else {
+                    cadenaConCaracteres += v.description.substring(
+                      i,
+                      longitudCadena
+                    );
+                  }
                 }
+
+                ind = `${ind}${i + 1}-${cadenaConCaracteres}\n`;
               }
-
-              ind = `${ind}${i + 1}-${cadenaConCaracteres}\n`;
-            }
-          });
-
-          let prodDetail = !!val.product_description
-            ? val.product_description.split(",")
-            : val.product_description;
-
-          let newNameProd = val.product_name;
-
-          let heightForNmae = 10;
-
-          let verifyNameCombo = "";
-
-          if (
-            (val.product_category.toLowerCase().includes("combo") ||
-              val.product_category.toLowerCase().includes("menu") ||
-              val.product_category.toLowerCase().includes("menus") ||
-              val.product_category.toLowerCase().includes("combos")) &&
-            !!prodDetail &&
-            prodDetail.length > 0
-          ) {
-            prodDetail.map((v, index) => {
-              verifyNameCombo += `${index !== 0 ? "\n-" : "-"} ${v.trim()}`;
-              lengthData += 6.5;
             });
-          }
-          if (settingsStore.business_settings.printer.show_cat) {
+
+            let prodDetail = !!val.product_description
+              ? val.product_description.split(",")
+              : val.product_description;
+
+            let newNameProd = val.product_name;
+
+            let heightForNmae = 10;
+
+            let verifyNameCombo = "";
+
             if (
-              val.product_category.toLowerCase().includes("menu") ||
-              val.product_category.toLowerCase().includes("menus")
+              (val.product_category.toLowerCase().includes("combo") ||
+                val.product_category.toLowerCase().includes("menu") ||
+                val.product_category.toLowerCase().includes("menus") ||
+                val.product_category.toLowerCase().includes("combos")) &&
+              !!prodDetail &&
+              prodDetail.length > 0
             ) {
-              newNameProd = `[MENU] ${newNameProd}`;
-            } else if (
-              (!!val.product_category.toLowerCase().includes("menu") ===
-                false ||
-                !!val.product_category.toLowerCase().includes("menus") ===
-                  false) &&
-              (!!val.product_category.toLowerCase().includes("combo") ===
-                false ||
-                !!val.product_category.toLowerCase().includes("combo") ===
-                  false)
-            ) {
-              newNameProd = `[CARTA] ${newNameProd}`;
+              prodDetail.map((v, index) => {
+                verifyNameCombo += `${index !== 0 ? "\n-" : "-"} ${v.trim()}`;
+                lengthData += 6.5;
+              });
             }
-            lengthData += 10 * heightForNmae;
-          }
-
-          structure.push(
-            {
-              line: true,
-              dat: [
-                [
-                  {
-                    content: `*${newNameProd}`,
-                    styles: {
-                      fontStyle: "bold",
-                      fontSize: process.env.VUE_APP_PRODUCT_SIZE,
-                    },
-                  },
-                ],
-              ],
-            },
-            verifyNameCombo && {
-              dat: [
-                [
-                  {
-                    content: verifyNameCombo,
-                    styles: {
-                      fontSize: process.env.VUE_APP_PRODUCT_SIZE,
-                    },
-                  },
-                ],
-              ],
-            },
-            !!ind && {
-              dat: [
-                [
-                  {
-                    content: ind.toUpperCase(),
-                    styles: {
-                      fontStyle: "bold",
-                      fontSize: process.env.VUE_APP_PRODUCT_SIZE,
-                    },
-                  },
-                ],
-              ],
-            },
-            {
-              dat: [
-                [
-                  {
-                    content: `Cant.: ${val.quantity}`,
-                    styles: {
-                      fontStyle: "bold",
-                      fontSize: process.env.VUE_APP_PRODUCT_SIZE,
-                    },
-                  },
-                ],
-              ],
+            if (settingsStore.business_settings.printer.show_cat) {
+              if (
+                val.product_category.toLowerCase().includes("menu") ||
+                val.product_category.toLowerCase().includes("menus")
+              ) {
+                newNameProd = `[MENU] ${newNameProd}`;
+              } else if (
+                (!!val.product_category.toLowerCase().includes("menu") ===
+                  false ||
+                  !!val.product_category.toLowerCase().includes("menus") ===
+                    false) &&
+                (!!val.product_category.toLowerCase().includes("combo") ===
+                  false ||
+                  !!val.product_category.toLowerCase().includes("combo") ===
+                    false)
+              ) {
+                newNameProd = `[CARTA] ${newNameProd}`;
+              }
+              lengthData += 10 * heightForNmae;
             }
-          );
-        }
-      });
 
-      structure.push({
-        line: true,
-
-        dat: [
-          [
-            {
-              content: `Fecha : ${dateNow.value}`,
-              styles: {
-                fontStyle: "bold",
-                halign: "right",
-                fontSize: 8,
+            structure.push(
+              {
+                line: true,
+                dat: [
+                  [
+                    {
+                      content: `*${newNameProd}`,
+                      styles: {
+                        fontStyle: "bold",
+                        fontSize: process.env.VUE_APP_PRODUCT_SIZE,
+                      },
+                    },
+                  ],
+                ],
               },
-            },
-          ],
-        ],
-      });
-      if (!!responseData.username) {
+              verifyNameCombo && {
+                dat: [
+                  [
+                    {
+                      content: verifyNameCombo,
+                      styles: {
+                        fontSize: process.env.VUE_APP_PRODUCT_SIZE,
+                      },
+                    },
+                  ],
+                ],
+              },
+              !!ind && {
+                dat: [
+                  [
+                    {
+                      content: ind.toUpperCase(),
+                      styles: {
+                        fontStyle: "bold",
+                        fontSize: process.env.VUE_APP_PRODUCT_SIZE,
+                      },
+                    },
+                  ],
+                ],
+              },
+              {
+                dat: [
+                  [
+                    {
+                      content: `Cant.: ${val.quantity}`,
+                      styles: {
+                        fontStyle: "bold",
+                        fontSize: process.env.VUE_APP_PRODUCT_SIZE,
+                      },
+                    },
+                  ],
+                ],
+              }
+            );
+          }
+        });
+
         structure.push({
+          line: true,
+
           dat: [
             [
               {
-                content: `MOZO: ${responseData.username}`,
+                content: `Fecha : ${dateNow.value /* .replace(" ", "\n") */}`,
                 styles: {
                   fontStyle: "bold",
-                  halign: "right",
-                  fontSize: 8,
+                  fontSize: process.env.VUE_APP_FOOTER_SIZE,
                 },
               },
             ],
           ],
         });
-      }
 
-      const a = responseData.order_details.filter(
-        (valOrd) => !!valOrd.preparation_place
-      );
-
-      if (a.length > 0) {
-        if (
-          settingsStore.business_settings.printer.kitchen_printer_format === 58
-        ) {
-          generatePrint58(
-            structure,
-            lengthData,
-            roscareresunamierda.preparation_place
-          );
-        } else {
-          generatePrintCopy(
-            structure,
-            lengthData,
-            roscareresunamierda.preparation_place
-          );
+        if (!!responseData.username) {
+          lengthData += 10;
+          structure.push({
+            dat: [
+              [
+                {
+                  content: `MOZO: ${responseData.username}`,
+                  styles: {
+                    fontStyle: "bold",
+                    fontSize: process.env.VUE_APP_FOOTER_SIZE,
+                  },
+                },
+              ],
+            ],
+          });
         }
-      }
+
+        if (info.length > 0) {
+          arrayDataPrint.push({
+            data: structure,
+            lengthOfData: lengthData,
+            printerName: place.printer_name,
+          });
+        }
+      });
+
+      printPdf(arrayDataPrint);
     };
 
     const showConfirm = ref(false);
