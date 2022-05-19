@@ -398,7 +398,7 @@ export default defineComponent({
         const createName = () => {
           if (update) {
             lengthData += 7 * 6.5;
-            return `ACTUALIZACION DE MESA: ${
+            return `ACTUALIZACION: ${
               tableStore.getTableByID(table).description
             }`;
           } else {
@@ -415,7 +415,8 @@ export default defineComponent({
                   styles: {
                     fontStyle: "bold",
                     halign: "center",
-                    fontSize: process.env.VUE_APP_HEADERS_SIZE,
+                    fontSize:
+                      settingsStore.business_settings.printer.header_font_size,
                   },
                 },
               ],
@@ -429,7 +430,9 @@ export default defineComponent({
                   styles: {
                     fontStyle: "bold",
                     halign: "center",
-                    fontSize: process.env.VUE_APP_NAMETITLE_SIZE,
+                    fontSize:
+                      settingsStore.business_settings.printer
+                        .sub_header_font_size,
                   },
                 },
               ],
@@ -459,11 +462,11 @@ export default defineComponent({
             if (!!v.description) {
               let longitudCadena = v.description.length;
 
-              for (let i = 0; i < longitudCadena; i += 40) {
-                if (i + 40 < longitudCadena) {
+              for (let i = 0; i < longitudCadena; i += 15) {
+                if (i + 15 < longitudCadena) {
                   cadenaConCaracteres +=
-                    v.description.substring(i, i + 40) + "\n";
-                  lC += v.description.length / 40;
+                    v.description.substring(i, i + 15) + "\n";
+                  lC += v.description.length / 15;
                 } else {
                   cadenaConCaracteres += v.description.substring(
                     i,
@@ -563,7 +566,8 @@ export default defineComponent({
                     content: `• ${newNameProd}`,
                     styles: {
                       fontStyle: "bold",
-                      fontSize: process.env.VUE_APP_PRODUCT_SIZE,
+                      fontSize:
+                        settingsStore.business_settings.printer.body_font_size,
                     },
                   },
                 ],
@@ -575,7 +579,8 @@ export default defineComponent({
                   {
                     content: verifyNameCombo,
                     styles: {
-                      fontSize: process.env.VUE_APP_PRODUCT_SIZE,
+                      fontSize:
+                        settingsStore.business_settings.printer.body_font_size,
                     },
                   },
                 ],
@@ -588,7 +593,8 @@ export default defineComponent({
                     content: ind.toUpperCase(),
                     styles: {
                       fontStyle: "bold",
-                      fontSize: process.env.VUE_APP_PRODUCT_SIZE,
+                      fontSize:
+                        settingsStore.business_settings.printer.body_font_size,
                     },
                   },
                 ],
@@ -601,7 +607,8 @@ export default defineComponent({
                     content: `Cant.: ${valOrder.quantity}`,
                     styles: {
                       fontStyle: "bold",
-                      fontSize: process.env.VUE_APP_PRODUCT_SIZE,
+                      fontSize:
+                        settingsStore.business_settings.printer.body_font_size,
                     },
                   },
                 ],
@@ -635,10 +642,11 @@ export default defineComponent({
           dat: [
             [
               {
-                content: `Fecha : ${dateNow.value /* .replace(" ", "\n") */}`,
+                content: `Fecha : ${dateNow.value}`,
                 styles: {
                   fontStyle: "bold",
-                  fontSize: process.env.VUE_APP_FOOTER_SIZE,
+                  fontSize:
+                    settingsStore.business_settings.printer.footer_font_size,
                 },
               },
             ],
@@ -654,7 +662,8 @@ export default defineComponent({
                   content: `MOZO: ${val.username}`,
                   styles: {
                     fontStyle: "bold",
-                    fontSize: process.env.VUE_APP_FOOTER_SIZE,
+                    fontSize:
+                      settingsStore.business_settings.printer.footer_font_size,
                   },
                 },
               ],
