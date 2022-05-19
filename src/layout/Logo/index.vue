@@ -4,7 +4,7 @@
       draggable="false"
       src="~@/assets/images/account-logo.png"
       alt=""
-      :class="{ 'mr-2': !collapsed }"
+      :class="{ 'img-2': collapsed }"
     />
   </div>
 </template>
@@ -35,6 +35,10 @@ export default defineComponent({
   img {
     width: auto;
     height: 64px;
+  }
+
+  .img-2 {
+    height: 32px;
   }
 
   .title {
