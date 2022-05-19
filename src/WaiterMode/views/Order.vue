@@ -19,11 +19,11 @@
             <n-thing
               :title="`${order.quantity} - ${order.product_name}`"
               :title-extra="`S/. ${order.quantity * order.price.toFixed(2)}`"
-              @click="
+            />
+            <!-- @click="
                 itemIndex = index;
                 showModal = true;
-              "
-            />
+              " -->
           </n-list-item>
         </n-list>
       </n-card>

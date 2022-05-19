@@ -39,6 +39,7 @@
           </n-form-item-gi>
         </n-grid>
         <n-divider />
+        <n-text class="fs-4">Formatos</n-text>
         <n-grid
           responsive="screen"
           cols="6 s:6 m:12 l:12 xl:24 2xl:24"
@@ -55,6 +56,42 @@
               v-model:value="businessSettings.printer.invoice_printer_format"
               :options="printOptions"
             ></n-select>
+          </n-form-item-gi>
+          <n-form-item-gi :span="2">
+            <n-input-number
+              v-model:value="businessSettings.printer.header_font_size"
+              placeholder=""
+              :min="0"
+              :max="20"
+              step="0.1"
+            ></n-input-number>
+          </n-form-item-gi>
+          <n-form-item-gi :span="2">
+            <n-input-number
+              v-model:value="businessSettings.printer.sub_header_font_size"
+              placeholder=""
+              :min="0"
+              :max="20"
+              step="0.1"
+            ></n-input-number>
+          </n-form-item-gi>
+          <n-form-item-gi :span="2">
+            <n-input-number
+              v-model:value="businessSettings.printer.body_font_size"
+              placeholder=""
+              :min="0"
+              :max="20"
+              step="0.1"
+            ></n-input-number>
+          </n-form-item-gi>
+          <n-form-item-gi :span="2">
+            <n-input-number
+              v-model:value="businessSettings.printer.footer_font_size"
+              placeholder=""
+              :min="0"
+              :max="20"
+              step="0.1"
+            ></n-input-number>
           </n-form-item-gi>
           <n-form-item-gi :span="6">
             <n-checkbox v-model:checked="businessSettings.printer.show_cat"
