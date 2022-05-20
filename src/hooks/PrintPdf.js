@@ -35,8 +35,10 @@ export const printPdf = async (objOrArry) => {
     };
   });
 
+  const android = /(android)/i.test(navigator.userAgent);
+
   qz.websocket
-    .connect({ host: SettingsStore.business_settings.qz_config.host })
+    .connect({ host: SettingsStore.business_settings.qz_config.host, usingSecure: !android })
     .then(() => {
       return qz.printers.find();
     })
