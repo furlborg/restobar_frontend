@@ -34,52 +34,106 @@ export const printPdf = async (objOrArry) => {
     };
   });
 
-  qz.websocket
-    .connect({ host: SettingsStore.business_settings.qz_config.host })
-    .then(() => {
-      return qz.printers.find();
-    })
-    .then((printers) => {
-      if (!!printers) {
-        objOrArry.map(async (props) => {
-          let dataPdf = await CreatePdfFile(props, format);
+  const android = /(android)/i.test(navigator.userAgent);
 
-          let printerFindResult = printers.find(
-            (printer) => printer === props.printerName
-          );
+  if (android) {
+    qz.websocket
+      .connect({ host: SettingsStore.business_settings.qz_config.host, usingSecure: false })
+      .then(() => {
+        return qz.printers.find();
+      })
+      .then((printers) => {
+        if (!!printers) {
+          objOrArry.map(async (props) => {
+            let dataPdf = await CreatePdfFile(props, format);
 
-          if (!!printerFindResult) {
-            let config = qz.configs.create(printerFindResult, {
-              scaleContent: true,
-              size: {
-                width: format,
-                height:
-                  !!props.lengthOfData && props.lengthOfData > format
-                    ? Math.round(props.lengthOfData)
-                    : format,
-              },
-              units: "mm",
-            });
+            let printerFindResult = printers.find(
+              (printer) => printer === props.printerName
+            );
 
-            qz.print(config, [
-              {
-                type: "pixel",
-                format: "pdf",
-                flavor: "base64",
-                data: dataPdf,
-              },
-            ]).then(() => {
-              qz.websocket.disconnect();
-            });
-          } else {
-            console.log("La impresora especificada no se a encontrado");
-          }
-        });
-      } else {
-        console.log("no hay impresoras instalada");
-      }
-    })
-    .catch((error) => {
-      console.error(error);
-    });
+            if (!!printerFindResult) {
+              let config = qz.configs.create(printerFindResult, {
+                scaleContent: true,
+                size: {
+                  width: format,
+                  height:
+                    !!props.lengthOfData && props.lengthOfData > format
+                      ? Math.round(props.lengthOfData)
+                      : format,
+                },
+                units: "mm",
+              });
+
+              qz.print(config, [
+                {
+                  type: "pixel",
+                  format: "pdf",
+                  flavor: "base64",
+                  data: dataPdf,
+                },
+              ]).then(() => {
+                qz.websocket.disconnect();
+              });
+            } else {
+              console.log("La impresora especificada no se a encontrado");
+            }
+          });
+        } else {
+          console.log("no hay impresoras instalada");
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  } else {
+    qz.websocket
+      .connect({ host: SettingsStore.business_settings.qz_config.host })
+      .then(() => {
+        return qz.printers.find();
+      })
+      .then((printers) => {
+        if (!!printers) {
+          objOrArry.map(async (props) => {
+            let dataPdf = await CreatePdfFile(props, format);
+
+            let printerFindResult = printers.find(
+              (printer) => printer === props.printerName
+            );
+
+            if (!!printerFindResult) {
+              let config = qz.configs.create(printerFindResult, {
+                scaleContent: true,
+                size: {
+                  width: format,
+                  height:
+                    !!props.lengthOfData && props.lengthOfData > format
+                      ? Math.round(props.lengthOfData)
+                      : format,
+                },
+                units: "mm",
+              });
+
+              qz.print(config, [
+                {
+                  type: "pixel",
+                  format: "pdf",
+                  flavor: "base64",
+                  data: dataPdf,
+                },
+              ]).then(() => {
+                qz.websocket.disconnect();
+              });
+            } else {
+              console.log("La impresora especificada no se a encontrado");
+            }
+          });
+        } else {
+          console.log("no hay impresoras instalada");
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
+
 };
