@@ -23,6 +23,21 @@ export const CreatePdfFile = async (props, format) => {
     unit: "mm",
   });
 
+  //!Redimencion de imagen
+  const createNewImage = (newWidthImg, oldImg) => {
+    let img = doc.getImageProperties(oldImg);
+
+    let widthOriginal = img.width;
+    let heightOriginal = img.height;
+
+    let newWidth = newWidthImg;
+
+    let newHeigth = (heightOriginal * newWidth) / widthOriginal;
+    return { newHeigth, newWidth };
+  };
+
+  //!Creacion de QR
+
   let code_qr = null;
 
   if (props.objSunat) {
@@ -32,41 +47,46 @@ export const CreatePdfFile = async (props, format) => {
     });
   }
 
+  //!Creacion del Documento
   props.data.map((val, index) => {
     if (!!val) {
       let finalY = doc.lastAutoTable.finalY || 0;
 
-      const businnessStore = useBusinessStore();
       if (index === 0 && !!props.addImages) {
-        let img = doc.getImageProperties(businnessStore.business.logo_url);
+        const businnessStore = useBusinessStore();
 
-        let anchooriginal = img.width;
-        let altooriginal = img.height;
-
-        let anchonuevo = 50;
-
-        let altonuevo = (altooriginal * anchonuevo) / anchooriginal;
+        let newImgprops = createNewImage(50, businnessStore.business.logo_url);
 
         doc.addImage(
           businnessStore.business.logo_url,
           "png",
           15,
           finalY,
-          anchonuevo,
-          altonuevo
+          newImgprops.newWidth,
+          newImgprops.newHeigth
         );
-        finalY += altonuevo + 1.5;
+        finalY += newImgprops.newHeigth;
       }
 
-      if (index === 5 && !!props.addImages && !!props.objSunat) {
-        doc.addImage(code_qr, "png", 25, finalY + 5, 30, 30);
-        finalY += 30;
+      if (index === 10 && !!props.addImages && !!props.objSunat) {
+        let newImgprops = createNewImage(30, code_qr);
+
+        doc.addImage(
+          code_qr,
+          "png",
+          25,
+          finalY,
+          newImgprops.newWidth,
+          newImgprops.newHeigth
+        );
+
+        finalY += newImgprops.newHeigth;
       }
 
       if (val.line) {
         doc.setLineDash([1, 1], 1);
         doc.setDrawColor(0, 0, 0);
-        doc.line(3, finalY + 5, 77, finalY + 5);
+        doc.line(1, finalY + 2, 77, finalY + 2);
         finalY += 5;
       }
 
@@ -76,7 +96,6 @@ export const CreatePdfFile = async (props, format) => {
         pageBreak: "auto",
         showHead: "firstPage",
         margin: { left: 1, right: 1 },
-        /* !!format === false ? { left: 1, right: 1 } : { left: 3, right: 3 }, */
         columns: !!val.col ? val.col : null,
         styles: {
           cellPadding: 0.7,
@@ -84,7 +103,7 @@ export const CreatePdfFile = async (props, format) => {
         body: val.dat,
         cellWidth: "auto",
         headStyles: { fontSize: 7, font: "helvetica" },
-
+        bodyStyles: { fontSize: 7, font: "helvetica" },
         columnStyles: {
           fontSize: 7,
           tittle: {
@@ -100,6 +119,8 @@ export const CreatePdfFile = async (props, format) => {
       });
     }
   });
+
+  //!Imprecion
 
   if (!!props.show) {
     doc.autoPrint();

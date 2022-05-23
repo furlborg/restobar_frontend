@@ -104,6 +104,7 @@
 
 <script>
 import { numeroALetras } from "./Prints/numberText.js";
+import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 import { defineComponent, ref, onMounted } from "vue";
 import { useMessage, useDialog } from "naive-ui";
 import { createSaleColumns } from "@/utils/constants";
@@ -326,315 +327,320 @@ export default defineComponent({
       userStore,
       tableColumns: createSaleColumns({
         printSale(val) {
-          let height = 0;
-          let dataForPrint = JSON.parse(val.json_sale);
-
-          let typeDoc = dataForPrint.serie_documento.split("");
-
-          let data = `${businessStore.business.ruc}|${dataForPrint.serie_documento}|${dataForPrint.totales.total_igv}|${dataForPrint.hora_de_EMISIÓN}|${dataForPrint.datos_del_cliente_o_receptor.numero_documento}|${dataForPrint.numero_documento}|${dataForPrint.totales.total_venta}|${dataForPrint.datos_del_cliente_o_receptor.codigo_tipo_documento_identidad}|`;
-
-          let NoNoteSale = false;
-
-          if (typeDoc[0] === "F") {
-            typeDoc = "FACTURA ELECTRONICA";
-            NoNoteSale = true;
-          }
-
-          if (typeDoc[0] === "B") {
-            typeDoc = "BOLETA ELECTRONICA";
-            NoNoteSale = true;
-          }
-
-          if (typeDoc[0] === "N") {
-            typeDoc = "NOTA DE VENTA";
-            NoNoteSale = false;
-          }
-
-          let datTotals = [];
-
-          let subtotal = 0;
-
-          dataForPrint.items.map((val) => {
-            subtotal += val.cantidad * parseFloat(val.precio_unitario);
+          VoucherPrint({
+            data: val,
+            businessStore,
+            saleStore,
           });
+          // let height = 0;
+          // let dataForPrint = JSON.parse(val.json_sale);
 
-          let newTotal = NoNoteSale
-            ? {
-                SUBTOTAL: subtotal.toFixed("2"),
-                EFECTIVO: val.given_amount,
-                VUELTO: parseFloat(
-                  val.given_amount - dataForPrint.totales.total_venta
-                ).toFixed(2),
-                "OP.GRAVADA":
-                  dataForPrint.totales.total_operaciones_gravadas.toFixed("2"),
-                "OP.EXONERADA":
-                  dataForPrint.totales.total_operaciones_exoneradas.toFixed(
-                    "2"
-                  ),
-                "OP.GRATUITAS":
-                  dataForPrint.totales.total_operaciones_gratuitas.toFixed("2"),
-                "IGV(18%)": dataForPrint.totales.total_igv.toFixed("2"),
-                ICPER:
-                  dataForPrint.totales.total_impuestos_bolsa_plastica.toFixed(
-                    "2"
-                  ),
-                DESCUENTOS: !!val.discount
-                  ? parseFloat(val.discount).toFixed("2")
-                  : "0.00",
-                "IMPORTE TOTAL": dataForPrint.totales.total_venta.toFixed("2"),
-              }
-            : {
-                "IMPORTE TOTAL": dataForPrint.totales.total_venta.toFixed("2"),
-                ICPER:
-                  dataForPrint.totales.total_impuestos_bolsa_plastica.toFixed(
-                    "2"
-                  ),
-              };
-          for (let i in newTotal) {
-            if (!!parseFloat(newTotal[i])) {
-              height += 7;
-              datTotals.push({
-                tittle: i,
-                twoPoints: ":",
-                cont: newTotal[i],
-              });
-            }
+          // let typeDoc = dataForPrint.serie_documento.split("");
 
-            if (i === "IGV(18%)") {
-              height += 7;
-              datTotals.push({
-                tittle: i,
-                twoPoints: ":",
-                cont: newTotal[i],
-              });
-            }
-          }
+          // let data = `${businessStore.business.ruc}|${dataForPrint.serie_documento}|${dataForPrint.totales.total_igv}|${dataForPrint.hora_de_EMISIÓN}|${dataForPrint.datos_del_cliente_o_receptor.numero_documento}|${dataForPrint.numero_documento}|${dataForPrint.totales.total_venta}|${dataForPrint.datos_del_cliente_o_receptor.codigo_tipo_documento_identidad}|`;
 
-          let structure = [
-            {
-              dat: [
-                [
-                  {
-                    content: businessStore.business.commercial_name,
-                    styles: {
-                      fontStyle: "bold",
-                      halign: "center",
-                      fontSize: 10,
-                    },
-                  },
-                ],
-                [
-                  {
-                    content: businessStore.business.ruc,
-                    styles: {
-                      fontStyle: "bold",
-                      halign: "center",
-                      fontSize: 10,
-                    },
-                  },
-                ],
-                [
-                  {
-                    content: businessStore.business.fiscal_address,
-                    styles: {
-                      fontStyle: "bold",
-                      halign: "center",
-                      fontSize: 8,
-                    },
-                  },
-                ],
-                [
-                  {
-                    content: businessStore.business.phone,
-                    styles: {
-                      fontStyle: "bold",
-                      halign: "center",
-                      fontSize: 7,
-                    },
-                  },
-                ],
-                [
-                  {
-                    content: typeDoc,
-                    styles: {
-                      fontStyle: "bold",
-                      halign: "center",
-                      fontSize: 8,
-                    },
-                  },
-                ],
+          // let NoNoteSale = false;
 
-                [
-                  {
-                    content: `${dataForPrint.serie_documento}-${dataForPrint.numero_documento}`,
-                    styles: {
-                      fontStyle: "bold",
-                      halign: "center",
-                      fontSize: 10,
-                    },
-                  },
-                ],
-              ],
-            },
+          // if (typeDoc[0] === "F") {
+          //   typeDoc = "FACTURA ELECTRONICA";
+          //   NoNoteSale = true;
+          // }
 
-            {
-              dat: [
-                {
-                  tittle: "CLIENTE",
-                  twoPoints: ":",
-                  cont: dataForPrint.datos_del_cliente_o_receptor
-                    .apellidos_y_nombres_o_razon_social,
-                },
+          // if (typeDoc[0] === "B") {
+          //   typeDoc = "BOLETA ELECTRONICA";
+          //   NoNoteSale = true;
+          // }
 
-                {
-                  tittle: typeDoc[0] === "F" ? "RUC" : "DOCUMENTO",
-                  twoPoints: ":",
-                  cont: dataForPrint.datos_del_cliente_o_receptor
-                    .numero_documento,
-                },
+          // if (typeDoc[0] === "N") {
+          //   typeDoc = "NOTA DE VENTA";
+          //   NoNoteSale = false;
+          // }
 
-                {
-                  tittle: "DIRECCION",
-                  twoPoints: ":",
-                  cont: dataForPrint.datos_del_cliente_o_receptor.direccion,
-                },
+          // let datTotals = [];
 
-                {
-                  tittle: "F.EMISIÓN",
-                  twoPoints: ":",
-                  cont: `${dataForPrint.fecha_de_emision} ${dataForPrint.hora_de_emision}`,
-                },
-              ],
-              line: true,
-            },
-            {
-              col: [
-                {
-                  header: "CANT.",
-                  dataKey: "amount",
-                },
+          // let subtotal = 0;
 
-                {
-                  header: "DESCRIPCIÓN",
-                  dataKey: "description",
-                },
-                !val.by_consumption && {
-                  header: "P.U",
-                  dataKey: "price",
-                },
+          // dataForPrint.items.map((val) => {
+          //   subtotal += val.cantidad * parseFloat(val.precio_unitario);
+          // });
 
-                {
-                  header: "TOTAL",
-                  dataKey: "total",
-                },
-              ],
-              dat: !val.by_consumption
-                ? dataForPrint.items.map((val) => {
-                    height += 7;
-                    return {
-                      amount: val.cantidad,
+          // let newTotal = NoNoteSale
+          //   ? {
+          //       SUBTOTAL: subtotal.toFixed("2"),
+          //       EFECTIVO: val.given_amount,
+          //       VUELTO: parseFloat(
+          //         val.given_amount - dataForPrint.totales.total_venta
+          //       ).toFixed(2),
+          //       "OP.GRAVADA":
+          //         dataForPrint.totales.total_operaciones_gravadas.toFixed("2"),
+          //       "OP.EXONERADA":
+          //         dataForPrint.totales.total_operaciones_exoneradas.toFixed(
+          //           "2"
+          //         ),
+          //       "OP.GRATUITAS":
+          //         dataForPrint.totales.total_operaciones_gratuitas.toFixed("2"),
+          //       "IGV(18%)": dataForPrint.totales.total_igv.toFixed("2"),
+          //       ICPER:
+          //         dataForPrint.totales.total_impuestos_bolsa_plastica.toFixed(
+          //           "2"
+          //         ),
+          //       DESCUENTOS: !!val.discount
+          //         ? parseFloat(val.discount).toFixed("2")
+          //         : "0.00",
+          //       "IMPORTE TOTAL": dataForPrint.totales.total_venta.toFixed("2"),
+          //     }
+          //   : {
+          //       "IMPORTE TOTAL": dataForPrint.totales.total_venta.toFixed("2"),
+          //       ICPER:
+          //         dataForPrint.totales.total_impuestos_bolsa_plastica.toFixed(
+          //           "2"
+          //         ),
+          //     };
+          // for (let i in newTotal) {
+          //   if (!!parseFloat(newTotal[i])) {
+          //     height += 7;
+          //     datTotals.push({
+          //       tittle: i,
+          //       twoPoints: ":",
+          //       cont: newTotal[i],
+          //     });
+          //   }
 
-                      description: val.descripcion,
-                      price: parseFloat(val.precio_unitario).toFixed("2"),
-                      total: parseFloat(val.total_item).toFixed("2"),
-                    };
-                  })
-                : [
-                    {
-                      amount: 1,
-                      description: "POR CONSUMO DE ALIMENTOS",
-                      total: dataForPrint.totales.total_venta.toFixed("2"),
-                    },
-                  ],
-              line: true,
-            },
-            {
-              dat: datTotals,
-              line: true,
-            },
+          //   if (i === "IGV(18%)") {
+          //     height += 7;
+          //     datTotals.push({
+          //       tittle: i,
+          //       twoPoints: ":",
+          //       cont: newTotal[i],
+          //     });
+          //   }
+          // }
 
-            NoNoteSale && {
-              line: true,
-              dat: [
-                [
-                  {
-                    content:
-                      "SON:" +
-                      numeroALetras(
-                        dataForPrint.totales.total_venta.toFixed("2"),
-                        "SOLES"
-                      ),
-                    styles: {
-                      fontStyle: "bold",
-                      halign: "center",
-                      fontSize: 8,
-                    },
-                  },
-                ],
-                [
-                  {
-                    content:
-                      "Representacion impresa del comprobante electronico",
-                    styles: {
-                      fontStyle: "bold",
-                      halign: "center",
-                      fontSize: 8,
-                    },
-                  },
-                ],
-                !!businessStore.business.website && [
-                  {
-                    content: `Puede verificarla usando su clave sol o ingresando a la pagina web: ${businessStore.business.website}`,
-                    styles: {
-                      fontStyle: "bold",
-                      halign: "center",
-                      fontSize: 8,
-                    },
-                  },
-                ],
-                !!businessStore.business.email && [
-                  {
-                    content: businessStore.business.email,
-                    styles: {
-                      fontStyle: "bold",
-                      halign: "center",
-                      fontSize: 8,
-                    },
-                  },
-                ],
-                [
-                  {
-                    content:
-                      "BIENES TRANSFERIDOS / SERVICIOS PRESTADOS EN LA AMAZONIA PARA SER CONSUMIDOS EN LA MISMA",
-                    styles: {
-                      fontStyle: "bold",
-                      halign: "center",
-                      fontSize: 8,
-                    },
-                  },
-                ],
-              ],
-            },
+          // let structure = [
+          //   {
+          //     dat: [
+          //       [
+          //         {
+          //           content: businessStore.business.commercial_name,
+          //           styles: {
+          //             fontStyle: "bold",
+          //             halign: "center",
+          //             fontSize: 10,
+          //           },
+          //         },
+          //       ],
+          //       [
+          //         {
+          //           content: businessStore.business.ruc,
+          //           styles: {
+          //             fontStyle: "bold",
+          //             halign: "center",
+          //             fontSize: 10,
+          //           },
+          //         },
+          //       ],
+          //       [
+          //         {
+          //           content: businessStore.business.fiscal_address,
+          //           styles: {
+          //             fontStyle: "bold",
+          //             halign: "center",
+          //             fontSize: 8,
+          //           },
+          //         },
+          //       ],
+          //       [
+          //         {
+          //           content: businessStore.business.phone,
+          //           styles: {
+          //             fontStyle: "bold",
+          //             halign: "center",
+          //             fontSize: 7,
+          //           },
+          //         },
+          //       ],
+          //       [
+          //         {
+          //           content: typeDoc,
+          //           styles: {
+          //             fontStyle: "bold",
+          //             halign: "center",
+          //             fontSize: 8,
+          //           },
+          //         },
+          //       ],
 
-            {
-              line: true,
-              dat: [
-                {
-                  tittle: "USUARIO",
-                  twoPoints: ":",
-                  cont: val.username,
-                },
-                {
-                  tittle: "TIPO DE PAGO",
-                  twoPoints: ":",
-                  cont: val.payment_method,
-                },
-              ],
-            },
-          ];
-          generatePrint(data, structure, NoNoteSale, height + 7 * 16);
+          //       [
+          //         {
+          //           content: `${dataForPrint.serie_documento}-${dataForPrint.numero_documento}`,
+          //           styles: {
+          //             fontStyle: "bold",
+          //             halign: "center",
+          //             fontSize: 10,
+          //           },
+          //         },
+          //       ],
+          //     ],
+          //   },
 
-          message.success("Imprimir");
+          //   {
+          //     dat: [
+          //       {
+          //         tittle: "CLIENTE",
+          //         twoPoints: ":",
+          //         cont: dataForPrint.datos_del_cliente_o_receptor
+          //           .apellidos_y_nombres_o_razon_social,
+          //       },
+
+          //       {
+          //         tittle: typeDoc[0] === "F" ? "RUC" : "DOCUMENTO",
+          //         twoPoints: ":",
+          //         cont: dataForPrint.datos_del_cliente_o_receptor
+          //           .numero_documento,
+          //       },
+
+          //       {
+          //         tittle: "DIRECCION",
+          //         twoPoints: ":",
+          //         cont: dataForPrint.datos_del_cliente_o_receptor.direccion,
+          //       },
+
+          //       {
+          //         tittle: "F.EMISIÓN",
+          //         twoPoints: ":",
+          //         cont: `${dataForPrint.fecha_de_emision} ${dataForPrint.hora_de_emision}`,
+          //       },
+          //     ],
+          //     line: true,
+          //   },
+          //   {
+          //     col: [
+          //       {
+          //         header: "CANT.",
+          //         dataKey: "amount",
+          //       },
+
+          //       {
+          //         header: "DESCRIPCIÓN",
+          //         dataKey: "description",
+          //       },
+          //       !val.by_consumption && {
+          //         header: "P.U",
+          //         dataKey: "price",
+          //       },
+
+          //       {
+          //         header: "TOTAL",
+          //         dataKey: "total",
+          //       },
+          //     ],
+          //     dat: !val.by_consumption
+          //       ? dataForPrint.items.map((val) => {
+          //           height += 7;
+          //           return {
+          //             amount: val.cantidad,
+
+          //             description: val.descripcion,
+          //             price: parseFloat(val.precio_unitario).toFixed("2"),
+          //             total: parseFloat(val.total_item).toFixed("2"),
+          //           };
+          //         })
+          //       : [
+          //           {
+          //             amount: 1,
+          //             description: "POR CONSUMO DE ALIMENTOS",
+          //             total: dataForPrint.totales.total_venta.toFixed("2"),
+          //           },
+          //         ],
+          //     line: true,
+          //   },
+          //   {
+          //     dat: datTotals,
+          //     line: true,
+          //   },
+
+          //   NoNoteSale && {
+          //     line: true,
+          //     dat: [
+          //       [
+          //         {
+          //           content:
+          //             "SON:" +
+          //             numeroALetras(
+          //               dataForPrint.totales.total_venta.toFixed("2"),
+          //               "SOLES"
+          //             ),
+          //           styles: {
+          //             fontStyle: "bold",
+          //             halign: "center",
+          //             fontSize: 8,
+          //           },
+          //         },
+          //       ],
+          //       [
+          //         {
+          //           content:
+          //             "Representacion impresa del comprobante electronico",
+          //           styles: {
+          //             fontStyle: "bold",
+          //             halign: "center",
+          //             fontSize: 8,
+          //           },
+          //         },
+          //       ],
+          //       !!businessStore.business.website && [
+          //         {
+          //           content: `Puede verificarla usando su clave sol o ingresando a la pagina web: ${businessStore.business.website}`,
+          //           styles: {
+          //             fontStyle: "bold",
+          //             halign: "center",
+          //             fontSize: 8,
+          //           },
+          //         },
+          //       ],
+          //       !!businessStore.business.email && [
+          //         {
+          //           content: businessStore.business.email,
+          //           styles: {
+          //             fontStyle: "bold",
+          //             halign: "center",
+          //             fontSize: 8,
+          //           },
+          //         },
+          //       ],
+          //       [
+          //         {
+          //           content:
+          //             "BIENES TRANSFERIDOS / SERVICIOS PRESTADOS EN LA AMAZONIA PARA SER CONSUMIDOS EN LA MISMA",
+          //           styles: {
+          //             fontStyle: "bold",
+          //             halign: "center",
+          //             fontSize: 8,
+          //           },
+          //         },
+          //       ],
+          //     ],
+          //   },
+
+          //   {
+          //     line: true,
+          //     dat: [
+          //       {
+          //         tittle: "USUARIO",
+          //         twoPoints: ":",
+          //         cont: val.username,
+          //       },
+          //       {
+          //         tittle: "TIPO DE PAGO",
+          //         twoPoints: ":",
+          //         cont: val.payment_method,
+          //       },
+          //     ],
+          //   },
+          // ];
+          // generatePrint(data, structure, NoNoteSale, height + 7 * 16);
+
+          message.success("Imprecion creada");
         },
         miscSale() {
           message.success("Miscelaneo");

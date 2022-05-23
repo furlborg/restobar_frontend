@@ -254,7 +254,7 @@
 </template>
 
 <script>
-import { printPdf } from "@/hooks/PrintPdf.js";
+import printOrderTicket from "@/hooks/PrintsTemplates/Ticket/OrderTicket.js";
 import OrderIndications from "./OrderIndications";
 import { defineComponent, ref, computed, onMounted, watchEffect, h } from "vue";
 import {
@@ -265,10 +265,8 @@ import {
 } from "vue-router";
 import { NThing, NTag, NSpace, useDialog, useMessage } from "naive-ui";
 import { useUserStore } from "@/store/modules/user";
-import { useTableStore } from "@/store/modules/table";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useProductStore } from "@/store/modules/product";
-import { useSettingsStore } from "@/store/modules/settings";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import {
@@ -295,7 +293,6 @@ export default defineComponent({
     const table = route.params.table;
     const genericsStore = useGenericsStore();
     const productStore = useProductStore();
-    const tableStore = useTableStore();
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
     const listType = ref("grid");
@@ -304,7 +301,6 @@ export default defineComponent({
     const checkState = ref(false);
     const loading = ref(false);
     const dateNow = ref(null);
-    const settingsStore = useSettingsStore();
 
     orderStore.orders = [];
     saleStore.order_initial = [];
@@ -387,304 +383,6 @@ export default defineComponent({
       dateNow.value = `${dd}/${mm + 1}/${yy} ${hh}:${msms}`;
     });
 
-    const print = (val, update = false) => {
-      message.success("Orden actualizada correctamente");
-      checkState.value = true;
-
-      let arrayDataPrint = [];
-
-      productStore.places.forEach(async (place) => {
-        let lengthData = 0;
-        const createName = () => {
-          if (update) {
-            lengthData += 7 * 6.5;
-            return `ACTUALIZACION: ${
-              tableStore.getTableByID(table).description
-            }`;
-          } else {
-            return `MESA: ${tableStore.getTableByID(table).description}`;
-          }
-        };
-
-        let structure = [
-          {
-            dat: [
-              [
-                {
-                  content: `ORDEN: ${val.id}`,
-                  styles: {
-                    fontStyle: "bold",
-                    halign: "center",
-                    fontSize:
-                      settingsStore.business_settings.printer.header_font_size,
-                  },
-                },
-              ],
-            ],
-          },
-          {
-            dat: [
-              [
-                {
-                  content: createName(),
-                  styles: {
-                    fontStyle: "bold",
-                    halign: "center",
-                    fontSize:
-                      settingsStore.business_settings.printer
-                        .sub_header_font_size,
-                  },
-                },
-              ],
-            ],
-          },
-        ];
-
-        let thisIndicatesIfEverythingIsToGO = [];
-
-        let info = val.order_details.filter(
-          (detail) => detail.preparation_place === place.description
-        );
-
-        await info.map((valOrder) => {
-          let lC = 0;
-
-          let ind = "";
-          let PL = [];
-
-          valOrder.indication.map((v, i) => {
-            if (!!v.takeAway && v.takeAway) {
-              PL.push(v.takeAway);
-            }
-
-            let cadenaConCaracteres = "";
-
-            if (!!v.description) {
-              let longitudCadena = v.description.length;
-
-              for (let i = 0; i < longitudCadena; i += 15) {
-                if (i + 15 < longitudCadena) {
-                  cadenaConCaracteres +=
-                    v.description.substring(i, i + 15) + "\n";
-                  lC += v.description.length / 15;
-                } else {
-                  cadenaConCaracteres += v.description.substring(
-                    i,
-                    longitudCadena
-                  );
-                }
-              }
-
-              if (!!v.takeAway && v.takeAway) {
-                ind = `${ind}${
-                  i + 1
-                }-${cadenaConCaracteres}${"\n[¡PARA LLEVAR!]"}`;
-              } else {
-                ind = `${ind}${i + 1}-${cadenaConCaracteres}${"\n"}`;
-              }
-              lengthData += lC * 6.5;
-            }
-          });
-
-          if (!!ind === false && PL.length > 0) {
-            ind = `${PL.length} para llevar`;
-            lengthData += 6.5;
-          } else if (
-            !!ind &&
-            PL.length > 0 &&
-            PL.length !== valOrder.indication.length
-          ) {
-            ind += `\n y ${PL.length} para llevar`;
-            lengthData += 6.5;
-          } else if (
-            !!ind === false &&
-            valOrder.indication.length !== 0 &&
-            PL.length !== 0 &&
-            PL.length === valOrder.indication.length
-          ) {
-            ind = `para llevar`;
-            lengthData += 6.5;
-          }
-
-          let prodDetail = !!valOrder.product_description
-            ? valOrder.product_description.split(",")
-            : valOrder.product_description;
-
-          let newNameProd = valOrder.product_name;
-
-          let heightForNmae = 10;
-
-          let verifyNameCombo = "";
-
-          if (
-            (valOrder.product_category.toLowerCase().includes("combo") ||
-              valOrder.product_category.toLowerCase().includes("menu") ||
-              valOrder.product_category.toLowerCase().includes("menus") ||
-              valOrder.product_category.toLowerCase().includes("combos")) &&
-            !!prodDetail &&
-            prodDetail.length > 0
-          ) {
-            prodDetail.map((v, index) => {
-              verifyNameCombo += `${index !== 0 ? "\n-" : "-"} ${v.trim()}`;
-              lengthData += 6.5;
-            });
-          }
-          if (settingsStore.business_settings.printer.show_cat) {
-            if (
-              valOrder.product_category.toLowerCase().includes("menu") ||
-              valOrder.product_category.toLowerCase().includes("menus")
-            ) {
-              newNameProd = `[MENU] ${newNameProd}`;
-            } else if (
-              (!!valOrder.product_category.toLowerCase().includes("menu") ===
-                false ||
-                !!valOrder.product_category.toLowerCase().includes("menus") ===
-                  false) &&
-              (!!valOrder.product_category.toLowerCase().includes("combo") ===
-                false ||
-                !!valOrder.product_category.toLowerCase().includes("combo") ===
-                  false)
-            ) {
-              newNameProd = `[CARTA] ${newNameProd}`;
-            }
-
-            lengthData += 7 * heightForNmae;
-          }
-
-          if (
-            valOrder.indication.length > 0 &&
-            valOrder.indication.length === PL.length
-          ) {
-            thisIndicatesIfEverythingIsToGO.push(true);
-          }
-          structure.push(
-            {
-              line: true,
-              dat: [
-                [
-                  {
-                    content: `• ${newNameProd}`,
-                    styles: {
-                      fontStyle: "bold",
-                      fontSize:
-                        settingsStore.business_settings.printer.body_font_size,
-                    },
-                  },
-                ],
-              ],
-            },
-            verifyNameCombo && {
-              dat: [
-                [
-                  {
-                    content: verifyNameCombo,
-                    styles: {
-                      fontSize:
-                        settingsStore.business_settings.printer.body_font_size,
-                    },
-                  },
-                ],
-              ],
-            },
-            ind && {
-              dat: [
-                [
-                  {
-                    content: ind.toUpperCase(),
-                    styles: {
-                      fontStyle: "bold",
-                      fontSize:
-                        settingsStore.business_settings.printer.body_font_size,
-                    },
-                  },
-                ],
-              ],
-            },
-            {
-              dat: [
-                [
-                  {
-                    content: `Cant.: ${valOrder.quantity}`,
-                    styles: {
-                      fontStyle: "bold",
-                      fontSize:
-                        settingsStore.business_settings.printer.body_font_size,
-                    },
-                  },
-                ],
-              ],
-            }
-          );
-        });
-
-        if (
-          val.order_details.length === thisIndicatesIfEverythingIsToGO.length
-        ) {
-          structure.splice(1, 0, {
-            dat: [
-              [
-                {
-                  content: "PARA LLEVAR",
-                  styles: {
-                    fontStyle: "bold",
-                    halign: "center",
-                    fontSize: 10,
-                  },
-                },
-              ],
-            ],
-          });
-        }
-
-        structure.push({
-          line: true,
-
-          dat: [
-            [
-              {
-                content: `Fecha : ${dateNow.value}`,
-                styles: {
-                  fontStyle: "bold",
-                  fontSize:
-                    settingsStore.business_settings.printer.footer_font_size,
-                },
-              },
-            ],
-          ],
-        });
-
-        if (!!val.username) {
-          lengthData += 10;
-          structure.push({
-            dat: [
-              [
-                {
-                  content: `MOZO: ${val.username}`,
-                  styles: {
-                    fontStyle: "bold",
-                    fontSize:
-                      settingsStore.business_settings.printer.footer_font_size,
-                  },
-                },
-              ],
-            ],
-          });
-        }
-
-        if (info.length > 0) {
-          arrayDataPrint.push({
-            data: structure,
-            lengthOfData: lengthData,
-            printerName: place.printer_name,
-          });
-        }
-      });
-
-      printPdf(arrayDataPrint);
-
-      router.push({ name: "TableHome" });
-    };
-
     const performCreateTableOrder = async () => {
       loading.value = true;
       await createTableOrder(
@@ -692,9 +390,16 @@ export default defineComponent({
         orderStore.orderList,
         userConfirm.value
       )
-        .then((response) => {
+        .then(async (response) => {
           if (response.status === 201) {
-            print(response.data);
+            checkState.value = true;
+
+            printOrderTicket({
+              data: response.data,
+              table,
+            });
+
+            router.push({ name: "TableHome" });
           }
         })
         .catch((error) => {
@@ -744,12 +449,21 @@ export default defineComponent({
         orderStore.orderList,
         userConfirm.value
       )
-        .then((response) => {
+        .then(async (response) => {
           if (response.status === 202) {
             response.data.order_details = evalOrderList(
               response.data.order_details
             );
-            print(response.data, true);
+
+            checkState.value = true;
+
+            printOrderTicket({
+              data: response.data,
+              table,
+              updateOrder: true,
+            });
+
+            router.push({ name: "TableHome" });
           }
         })
         .catch((error) => {

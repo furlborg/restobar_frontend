@@ -82,15 +82,7 @@
                 class="position-absolute top-0 start-0 m-2"
               />
               <div
-                class="
-                  black-outline
-                  text-center
-                  position-absolute
-                  top-50
-                  start-50
-                  translate-middle
-                  fs-4
-                "
+                class="black-outline text-center position-absolute top-50 start-50 translate-middle fs-4"
               >
                 {{ "MESA " + String(table.id) }}
               </div>
@@ -332,6 +324,8 @@
 
 <script>
 import { CreatePdfFile } from "@/hooks/CreatePdfFile";
+import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
+import { isAxiosError } from "axios";
 import { defineComponent, ref, onMounted } from "vue";
 import { useMessage } from "naive-ui";
 import { useGenericsStore } from "@/store/modules/generics";
@@ -375,161 +369,163 @@ export default defineComponent({
       await retrieveTableOrder(table)
         .then((response) => {
           if (response.status === 200) {
-            let val = response.data;
-
-            let lengthData = 0;
-
-            let totalProdSum = 0;
-
-            let structure = [
-              {
-                dat: [
-                  [
-                    {
-                      content: businessStore.business.commercial_name,
-                      styles: {
-                        fontStyle: "bold",
-                        halign: "center",
-                        fontSize: 11,
-                      },
-                    },
-                  ],
-                  [
-                    {
-                      content: businessStore.business.fiscal_address,
-                      styles: {
-                        fontStyle: "bold",
-                        halign: "center",
-                        fontSize: 9,
-                      },
-                    },
-                  ],
-
-                  [
-                    {
-                      content: businessStore.business.ruc,
-                      styles: {
-                        fontStyle: "bold",
-                        halign: "center",
-                        fontSize: 11,
-                      },
-                    },
-                  ],
-                  [
-                    {
-                      content: "PRE CUENTA",
-                      styles: {
-                        fontStyle: "bold",
-                        halign: "center",
-                        fontSize: 11,
-                      },
-                    },
-                  ],
-                  [
-                    {
-                      content: `N° ${val.id}`,
-                      styles: {
-                        fontStyle: "bold",
-                        halign: "center",
-                        fontSize: 11,
-                      },
-                    },
-                  ],
-                ],
-              },
-              {
-                col: [
-                  {
-                    header: "CANT.",
-                    dataKey: "amount",
-                  },
-
-                  {
-                    header: "DESCRIPCIÓN",
-                    dataKey: "description",
-                  },
-                  {
-                    header: "P.U",
-                    dataKey: "price",
-                  },
-
-                  {
-                    header: "TOTAL",
-                    dataKey: "total",
-                  },
-                ],
-                dat: val.order_details.map((val) => {
-                  lengthData += 10 * 6.5;
-                  totalProdSum += val.quantity * parseFloat(val.price);
-
-                  return {
-                    amount: val.quantity,
-                    description: val.product_name,
-                    price: parseFloat(val.price).toFixed("2"),
-                    total: (val.quantity * parseFloat(val.price)).toFixed("2"),
-                  };
-                }),
-                line: true,
-              },
-            ];
-            lengthData += 10 * 6.5;
-            structure.push(
-              {
-                line: true,
-                dat: [
-                  [
-                    {
-                      content: `TOTAL: ${totalProdSum.toFixed("2")}`,
-                      styles: {
-                        fontStyle: "bold",
-                        halign: "right",
-                        fontSize: 11,
-                      },
-                    },
-                  ],
-                ],
-              },
-              {
-                dat: [
-                  {
-                    tittle: "F.EMISIÓN",
-                    twoPoints: ":",
-                    cont: dateNow.value,
-                  },
-                  {
-                    tittle: "MOZO",
-                    twoPoints: ":",
-                    cont: val.username,
-                  },
-                  {
-                    tittle: "MESA",
-                    twoPoints: ":",
-                    cont: val.table,
-                  },
-                ],
-                line: true,
-              }
-            );
-
-            CreatePdfFile({
-              show: true,
-              data: structure,
-              lengthOfData: lengthData,
+            VoucherPrint({
+              data: response.data,
+              businessStore,
+              prePayment: true,
             });
+            // let val = response.data;
+            // let lengthData = 0;
+            // let totalProdSum = 0;
+            // let structure = [
+            //   {
+            //     dat: [
+            //       [
+            //         {
+            //           content: businessStore.business.commercial_name,
+            //           styles: {
+            //             fontStyle: "bold",
+            //             halign: "center",
+            //             fontSize: 11,
+            //           },
+            //         },
+            //       ],
+            //       [
+            //         {
+            //           content: businessStore.business.fiscal_address,
+            //           styles: {
+            //             fontStyle: "bold",
+            //             halign: "center",
+            //             fontSize: 9,
+            //           },
+            //         },
+            //       ],
+            //       [
+            //         {
+            //           content: businessStore.business.ruc,
+            //           styles: {
+            //             fontStyle: "bold",
+            //             halign: "center",
+            //             fontSize: 11,
+            //           },
+            //         },
+            //       ],
+            // [
+            //   {
+            //     content: "PRE CUENTA",
+            //     styles: {
+            //       fontStyle: "bold",
+            //       halign: "center",
+            //       fontSize: 11,
+            //     },
+            //   },
+            // ],
+            //       [
+            //         {
+            //           content: `N° ${val.id}`,
+            //           styles: {
+            //             fontStyle: "bold",
+            //             halign: "center",
+            //             fontSize: 11,
+            //           },
+            //         },
+            //       ],
+            //     ],
+            //   },
+            //   {
+            //     col: [
+            //       {
+            //         header: "CANT.",
+            //         dataKey: "amount",
+            //       },
+            //       {
+            //         header: "DESCRIPCIÓN",
+            //         dataKey: "description",
+            //       },
+            //       {
+            //         header: "P.U",
+            //         dataKey: "price",
+            //       },
+            //       {
+            //         header: "TOTAL",
+            //         dataKey: "total",
+            //       },
+            //     ],
+            //     dat: val.order_details.map((val) => {
+            //       lengthData += 10 * 6.5;
+            //       totalProdSum += val.quantity * parseFloat(val.price);
+            //       return {
+            //         amount: val.quantity,
+            //         description: val.product_name,
+            // price: parseFloat(val.price).toFixed("2"),
+            // total: (val.quantity * parseFloat(val.price)).toFixed("2"),
+            //       };
+            //     }),
+            //     line: true,
+            //   },
+            // ];
+            // lengthData += 10 * 6.5;
+            // structure.push(
+            //   {
+            //     line: true,
+            //     dat: [
+            //       [
+            //         {
+            //           content: `TOTAL: ${totalProdSum.toFixed("2")}`,
+            //           styles: {
+            //             fontStyle: "bold",
+            //             halign: "right",
+            //             fontSize: 11,
+            //           },
+            //         },
+            //       ],
+            //     ],
+            //   },
+            //   {
+            //     dat: [
+            //       {
+            //         tittle: "F.EMISIÓN",
+            //         twoPoints: ":",
+            //         cont: dateNow.value,
+            //       },
+            //       {
+            //         tittle: "MOZO",
+            //         twoPoints: ":",
+            //         cont: val.username,
+            //       },
+            //       {
+            //         tittle: "MESA",
+            //         twoPoints: ":",
+            //         cont: val.table,
+            //       },
+            //     ],
+            //     line: true,
+            //   }
+            // );
+            // CreatePdfFile({
+            //   show: true,
+            //   data: structure,
+            //   lengthOfData: lengthData,
+            // });
           }
         })
         .catch((error) => {
-          if (error.response.status === 400) {
-            for (const value in error.response.data) {
-              error.response.data[`${value}`].forEach((err) => {
-                if (typeof err === "object") {
-                  for (const v in err) {
-                    message.error(`${err[`${v}`]}`);
+          if (isAxiosError(error)) {
+            if (error.response.status === 400) {
+              for (const value in error.response.data) {
+                error.response.data[`${value}`].forEach((err) => {
+                  if (typeof err === "object") {
+                    for (const v in err) {
+                      message.error(`${err[`${v}`]}`);
+                    }
+                  } else {
+                    message.error(`${err}`);
                   }
-                } else {
-                  message.error(`${err}`);
-                }
-              });
+                });
+              }
+            } else {
+              console.error(error);
+              message.error("Algo salió mal...");
             }
           } else {
             console.error(error);
