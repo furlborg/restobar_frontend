@@ -82,30 +82,59 @@ export async function searchSales(filterParams, page, pageSize) {
     })
 }
 
-export async function createSale(sale) {
+export async function retrieveSale(id) {
+    return await http.get(`sales/${id}/`)
+}
+
+export async function createSale(sale, pass = null) {
     const businessStore = useBusinessStore();
     const userStore = useUserStore();
-    return await http.post('sales/', {
-        order: sale.order,
-        serie: sale.serie,
-        number: sale.number,
-        date_sale: sale.date_sale,
-        count: sale.count,
-        amount: sale.amount,
-        given_amount: sale.given_amount,
-        invoice_type: sale.invoice_type,
-        payment_method: sale.payment_method,
-        payment_condition: sale.payment_condition,
-        customer: sale.customer,
-        address: sale.address,
-        branch_office: !userStore.user.branchoffice ? businessStore.currentBranch : null,
-        discount: sale.discount,
-        icbper: parseFloat(sale.icbper).toFixed(2),
-        by_consumption: sale.by_consumption,
-        observations: sale.observations,
-        sale_details: sale.sale_details,
-        payments: sale.payments,
-    })
+    if (!pass) {
+        return await http.post('sales/', {
+            order: sale.order,
+            serie: sale.serie,
+            number: sale.number,
+            date_sale: sale.date_sale,
+            count: sale.count,
+            amount: sale.amount,
+            given_amount: sale.given_amount,
+            invoice_type: sale.invoice_type,
+            payment_method: sale.payment_method,
+            payment_condition: sale.payment_condition,
+            customer: sale.customer,
+            address: sale.address,
+            branch_office: !userStore.user.branchoffice ? businessStore.currentBranch : null,
+            discount: sale.discount,
+            icbper: parseFloat(sale.icbper).toFixed(2),
+            by_consumption: sale.by_consumption,
+            observations: sale.observations,
+            sale_details: sale.sale_details,
+            payments: sale.payments,
+        })
+    } else {
+        return await http.post('sales/', {
+            pass: pass,
+            order: sale.order,
+            serie: sale.serie,
+            number: sale.number,
+            date_sale: sale.date_sale,
+            count: sale.count,
+            amount: sale.amount,
+            given_amount: sale.given_amount,
+            invoice_type: sale.invoice_type,
+            payment_method: sale.payment_method,
+            payment_condition: sale.payment_condition,
+            customer: sale.customer,
+            address: sale.address,
+            branch_office: !userStore.user.branchoffice ? businessStore.currentBranch : null,
+            discount: sale.discount,
+            icbper: parseFloat(sale.icbper).toFixed(2),
+            by_consumption: sale.by_consumption,
+            observations: sale.observations,
+            sale_details: sale.sale_details,
+            payments: sale.payments,
+        })
+    }
 }
 
 export async function getSaleNumber(serie) {

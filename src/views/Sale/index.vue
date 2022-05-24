@@ -99,12 +99,17 @@
         remote
       />
     </n-card>
+    <SaleUpdate
+      v-model:sale="saleId"
+      @update:sale="onCloseUpdate"
+      @on-success="updateSuccess"
+    />
   </div>
 </template>
 
 <script>
 import { numeroALetras } from "./Prints/numberText.js";
-import { defineComponent, ref, onMounted } from "vue";
+import { defineComponent, ref, h, onMounted } from "vue";
 import { useMessage, useDialog } from "naive-ui";
 import { createSaleColumns } from "@/utils/constants";
 import {
@@ -119,9 +124,13 @@ import { useBusinessStore } from "@/store/modules/business";
 import { useUserStore } from "@/store/modules/user";
 import { isNumber, isLetter } from "@/utils";
 import { generatePrint } from "./Prints/prints";
+import SaleUpdate from "./components/SaleUpdate";
 
 export default defineComponent({
   name: "Sale",
+  components: {
+    SaleUpdate,
+  },
   setup() {
     const dateNow = ref(null);
     const message = useMessage();
@@ -310,6 +319,19 @@ export default defineComponent({
       dateNow.value = `${dd}/${mm + 1}/${yy} ${hh}:${msms}`;
     });
 
+    const showModal = ref(false);
+
+    const saleId = ref(null);
+
+    const onCloseUpdate = async () => {
+      saleId.value = null;
+      await performFilter();
+    };
+
+    const updateSuccess = () => {
+      onCloseUpdate();
+    };
+
     return {
       saleStore,
       isLetter,
@@ -324,6 +346,10 @@ export default defineComponent({
       sales,
       businessStore,
       userStore,
+      showModal,
+      saleId,
+      onCloseUpdate,
+      updateSuccess,
       tableColumns: createSaleColumns({
         printSale(val) {
           let height = 0;
@@ -633,8 +659,15 @@ export default defineComponent({
             },
           ];
           generatePrint(data, structure, NoNoteSale, height + 7 * 16);
-
-          message.success("Imprimir");
+        },
+        updateSale(row) {
+          showModal.value = true;
+          saleId.value = row.id;
+          /* modal.value = h(SaleUpdate, {
+            show: true,
+            data: row,
+            onUpdateShow: () => (modal.value = null),
+          }); */
         },
         miscSale() {
           message.success("Miscelaneo");

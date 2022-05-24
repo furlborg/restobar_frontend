@@ -1171,8 +1171,12 @@ export const saleRules = {
     delivery_info: null
 }
 
-export const createSaleColumns = ({ printSale, miscSale, sendSale, nullifySale }) => {
+export const createSaleColumns = ({ printSale, miscSale, updateSale, sendSale, nullifySale }) => {
     return [
+        {
+            title: '#',
+            key: 'id'
+        },
         {
             title: 'Cliente',
             key: 'customer'
@@ -1237,7 +1241,7 @@ export const createSaleColumns = ({ printSale, miscSale, sendSale, nullifySale }
         {
             title: 'Acciones',
             key: 'actions',
-            width: 200,
+            width: 250,
             render(row) {
                 return [
                     row.invoice_type !== "80" ? h(
@@ -1263,6 +1267,18 @@ export const createSaleColumns = ({ printSale, miscSale, sendSale, nullifySale }
                             onClick: () => nullifySale(row)
                         },
                         renderIcon('md-cancel-twotone')
+                    ),
+                    h(
+                        NButton,
+                        {
+                            class: 'me-2',
+                            size: 'small',
+                            type: 'info',
+                            secondary: true,
+                            disabled: row.status !== 'A',
+                            onClick: () => updateSale(row)
+                        },
+                        renderIcon('gi-card-exchange')
                     ),
                     h(
                         NButton,
@@ -1414,11 +1430,8 @@ export const createOrderColumns = ({ showDetails, showDeliveryInfo, payDeliver, 
     return [
         {
             title: '#',
-            key: 'number',
-            width: 'auto',
-            render(row, index) {
-                return index + 1
-            }
+            key: 'id',
+            width: 'auto'
         },
         {
             title: 'Cliente',
