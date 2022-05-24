@@ -531,6 +531,7 @@ export default defineComponent({
             console.error(error);
             message.error("Algo salió mal...");
           }
+          message.error("Algo salió mal...");
           console.error(error);
         });
     };
@@ -559,21 +560,23 @@ export default defineComponent({
           }
         })
         .catch((error) => {
-          if (error.response.status === 400) {
-            for (const value in error.response.data) {
-              error.response.data[`${value}`].forEach((err) => {
-                if (typeof err === "object") {
-                  for (const v in err) {
-                    message.error(`${err[`${v}`]}`);
+          if (isAxiosError(error)) {
+            if (error.response.status === 400) {
+              for (const value in error.response.data) {
+                error.response.data[`${value}`].forEach((err) => {
+                  if (typeof err === "object") {
+                    for (const v in err) {
+                      message.error(`${err[`${v}`]}`);
+                    }
+                  } else {
+                    message.error(`${err}`);
                   }
-                } else {
-                  message.error(`${err}`);
-                }
-              });
+                });
+              }
+            } else {
+              console.error(error);
+              message.error("Algo salió mal...");
             }
-          } else {
-            console.error(error);
-            message.error("Algo salió mal...");
           }
           passConfirm.value = "";
           isLoading.value = false;

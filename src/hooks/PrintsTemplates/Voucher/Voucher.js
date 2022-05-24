@@ -23,7 +23,7 @@ const VoucherPrint = (props) => {
 
   let totalProdSum = 0;
 
-  let newTotal = "";
+  let newTotal = null;
 
   if (!!props.prePayment === false) {
     dataForPrint = JSON.parse(props.data.json_sale);
@@ -34,8 +34,23 @@ const VoucherPrint = (props) => {
 
     NoNoteSale = false;
 
+    if (typeDoc[0] === "F") {
+      typeDoc = "FACTURA ELECTRONICA";
+      NoNoteSale = true;
+    }
+
+    if (typeDoc[0] === "B") {
+      typeDoc = "BOLETA ELECTRONICA";
+      NoNoteSale = true;
+    }
+
+    if (typeDoc[0] === "N") {
+      typeDoc = "NOTA DE VENTA";
+      NoNoteSale = false;
+    }
+
     NoNoteSale
-      ? {
+      ? (newTotal = {
           "OP.GRAVADA":
             dataForPrint.totales.total_operaciones_gravadas.toFixed("2"),
           "OP.EXONERADA":
@@ -55,27 +70,12 @@ const VoucherPrint = (props) => {
             : parseFloat(
                 props.data.given_amount - dataForPrint.totales.total_venta
               ).toFixed("2"),
-        }
-      : {
+        })
+      : (newTotal = {
           "IMPORTE TOTAL": dataForPrint.totales.total_venta.toFixed("2"),
           ICPER:
             dataForPrint.totales.total_impuestos_bolsa_plastica.toFixed("2"),
-        };
-
-    if (typeDoc[0] === "F") {
-      typeDoc = "FACTURA ELECTRONICA";
-      NoNoteSale = true;
-    }
-
-    if (typeDoc[0] === "B") {
-      typeDoc = "BOLETA ELECTRONICA";
-      NoNoteSale = true;
-    }
-
-    if (typeDoc[0] === "N") {
-      typeDoc = "NOTA DE VENTA";
-      NoNoteSale = false;
-    }
+        });
 
     for (let i in newTotal) {
       if (!!parseFloat(newTotal[i])) {
@@ -316,7 +316,6 @@ const VoucherPrint = (props) => {
     dat: datProdsCons,
     line: true,
   });
-
   datTotals.length > 0 &&
     structure.push({
       dat: datTotals,

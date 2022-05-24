@@ -20,6 +20,8 @@ const dateNow = `${dd}/${mm + 1}/${yy} ${hh}:${msms}`;
 const printOrderTicket = (props) => {
   let arrayDataPrint = [];
 
+  let format = settingsStore.business_settings.printer.kitchen_printer_format;
+
   productStore.places.forEach(async (place) => {
     let lengthData = 0;
 
@@ -77,34 +79,73 @@ const printOrderTicket = (props) => {
 
     info.map((val) => {
       if (!!val.preparation_place) {
-        let ind = "";
-        val.indication.map((v, i) => {
-          let cadenaConCaracteres = "";
-          if (!!v.description) {
-            let longitudCadena = v.description.length;
+        let formatNewNameProd = "";
 
-            for (let i = 0; i < longitudCadena; i += 40) {
-              if (i + 40 < longitudCadena) {
-                cadenaConCaracteres +=
-                  v.description.substring(i, i + 40) + "\n";
-                lC += v.description.length / 40;
+        let rowFormatNewName = "";
+
+        val.product_name.split(" ").map((valString, indx) => {
+          if (indx === val.product_name.split(" ").length - 1) {
+            if (rowFormatNewName.length + `${valString} `.length <= 30) {
+              formatNewNameProd += `${rowFormatNewName} ${valString}`;
+            } else {
+              formatNewNameProd += `\n${rowFormatNewName} ${valString}`;
+            }
+          } else {
+            if (rowFormatNewName.length + `${valString} `.length >= 30) {
+              formatNewNameProd += `${rowFormatNewName}\n`;
+
+              return (rowFormatNewName = `${valString}`);
+            } else {
+              return (rowFormatNewName += `${valString} `);
+            }
+          }
+        });
+
+        let ind = "";
+
+        val.indication.map((v) => {
+          if (!!v.description) {
+            let rowInd = "";
+
+            v.description.split(" ").map((valString, indx) => {
+              if (indx === v.description.split(" ").length - 1) {
+                if (rowInd.length + `${valString} `.length <= 30) {
+                  ind += `${rowInd} ${valString}`;
+                } else {
+                  ind += `\n${rowInd} ${valString}`;
+                }
               } else {
-                cadenaConCaracteres += v.description.substring(
-                  i,
-                  longitudCadena
-                );
+                if (rowInd.length + `${valString} `.length >= 30) {
+                  ind += `${rowInd}\n`;
+
+                  return (rowInd = `${valString}`);
+                } else {
+                  return (rowInd += `${valString} `);
+                }
+              }
+            });
+
+            if (v.takeAway) {
+              if (ind.length + ` [PARA LLEVAR]`.length > 30) {
+                ind += `\n[PARA LLEVAR]`;
+              } else {
+                ind += ` [PARA LLEVAR]`;
               }
             }
 
-            ind = `${ind}${i + 1}-${cadenaConCaracteres}\n`;
+            lengthData += lengthData * 6.5;
+          } else {
+            if (v.takeAway) {
+              ind = "[PARA LLEVAR]";
+            }
           }
+
+          lengthData += lengthData * 6.5;
         });
 
         let prodDetail = !!val.product_description
           ? val.product_description.split(",")
           : val.product_description;
-
-        let newNameProd = val.product_name;
 
         let heightForNmae = 10;
 
@@ -147,7 +188,7 @@ const printOrderTicket = (props) => {
             dat: [
               [
                 {
-                  content: `*${newNameProd}`,
+                  content: `*${formatNewNameProd}`,
                   styles: {
                     fontStyle: "bold",
                     fontSize:

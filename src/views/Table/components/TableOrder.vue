@@ -255,6 +255,7 @@
 
 <script>
 import printOrderTicket from "@/hooks/PrintsTemplates/Ticket/OrderTicket.js";
+import printWEBADASDEBRASEROS from "@/hooks/PrintsTemplates/Ticket/WEBADASDEBRASEROS.js";
 import OrderIndications from "./OrderIndications";
 import { defineComponent, ref, computed, onMounted, watchEffect, h } from "vue";
 import {
@@ -394,7 +395,11 @@ export default defineComponent({
           if (response.status === 201) {
             checkState.value = true;
 
-            printOrderTicket({
+            // printOrderTicket({
+            //   data: response.data,
+            //   table,
+            // });
+            printWEBADASDEBRASEROS({
               data: response.data,
               table,
             });
@@ -457,7 +462,13 @@ export default defineComponent({
 
             checkState.value = true;
 
-            printOrderTicket({
+            // printOrderTicket({
+            //   data: response.data,
+            //   table,
+            //   updateOrder: true,
+            // });
+
+            printWEBADASDEBRASEROS({
               data: response.data,
               table,
               updateOrder: true,

@@ -595,6 +595,7 @@
 <script>
 import printOrderTicket from "@/hooks/PrintsTemplates/Ticket/OrderTicket.js";
 import printDeliveryInfo from "@/hooks/PrintsTemplates/Ticket/DeliveryInfo.js";
+import printWEBADASDEBRASEROS from "@/hooks/PrintsTemplates/Ticket/WEBADASDEBRASEROS.js";
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 import CustomerModal from "@/views/Customer/components/CustomerModal";
 import OrderIndications from "./OrderIndications";
@@ -1017,9 +1018,10 @@ export default defineComponent({
         changing: changing.value,
       });
 
-      printDeliveryInfo({ data: values, changing: changing.value });
+      // printDeliveryInfo({ data: values, changing: changing.value });
 
-      printOrderTicket({ data: values, saleInf: sale.value });
+      // printOrderTicket({ data: values, saleInf: sale.value });
+      printWEBADASDEBRASEROS({ data: values, saleInf: sale.value });
 
       message.success("Imprimir");
     };
