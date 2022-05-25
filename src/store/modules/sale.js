@@ -126,6 +126,10 @@ export const useSaleStore = defineStore("sale", {
       const serie = this.series.find((serie) => serie.id === id);
       return serie ? serie.description : null;
     },
+    getSerieID(description) {
+      const serie = this.series.find((serie) => serie.description === description);
+      return serie ? serie.id : null;
+    },
     getFirstOption(doc_type) {
       let series = this.series;
       if (!userStore.user.branchoffice) {

@@ -9,6 +9,10 @@ export async function retrieveCustomer(id) {
     return await http.get(`customers/${id}/`)
 }
 
+export async function retrieveCustomerAddresses(id) {
+    return await http.get(`customers/${id}/addresses/`)
+}
+
 export async function getCustomersByPageNumber(searchParams, pageLimit, pageOffset) {
     if (searchParams) {
         return await http.get('customers/', {

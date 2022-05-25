@@ -19,15 +19,49 @@ const printWEBADASDEBRASEROS = (props) => {
   productStore.places.forEach(async (place) => {
     let lengthData = 0;
 
-    const createName = () => {
-      if (props.updateOrder && !!props.table) {
+    const createNewText = (textToFormat = "") => {
+      let text = "";
+
+      if (!!textToFormat) text = textToFormat;
+
+      if (props.updateOrder && !!props.table && !!textToFormat === false) {
         lengthData += 7 * 6.5;
-        return `ACTUALIZACION: ${
+        text = `ACTUALIZACION: ${
           tableStore.getTableByID(props.table).description
         }`;
-      } else {
-        return `MESA: ${tableStore.getTableByID(props.table).description}`;
       }
+
+      if (
+        !!props.updateOrder === false &&
+        !!props.table &&
+        !!textToFormat === false
+      ) {
+        text = `MESA: ${tableStore.getTableByID(props.table).description}`;
+      }
+
+      let formatNewText = "";
+
+      let rowFormatNewText = "";
+
+      text.split(" ").map((valString, indx) => {
+        if (indx === text.split(" ").length - 1) {
+          if (rowFormatNewText.length + `${valString} `.length <= 30) {
+            formatNewText += `${rowFormatNewText} ${valString}`;
+          } else {
+            formatNewText += `\n${rowFormatNewText} ${valString}`;
+          }
+        } else {
+          if (rowFormatNewText.length + `${valString} `.length >= 30) {
+            formatNewText += `${rowFormatNewText}\n`;
+
+            return (rowFormatNewText = `${valString}`);
+          } else {
+            return (rowFormatNewText += `${valString} `);
+          }
+        }
+      });
+
+      return formatNewText;
     };
 
     let structure = [
@@ -53,7 +87,7 @@ const printWEBADASDEBRASEROS = (props) => {
         dat: [
           [
             {
-              content: createName(),
+              content: createNewText(),
               styles: {
                 fontStyle: "bold",
                 halign: "center",
@@ -154,57 +188,57 @@ const printWEBADASDEBRASEROS = (props) => {
       (detail) => detail.preparation_place === place.description
     );
 
-    info.map((val, index) => {
+    info.map((val) => {
       if (!!val.preparation_place) {
-        let newNameProd = `${val.quantity} x ${val.product_name}`;
+        // let newNameProd = `${val.quantity} x ${val.product_name}`;
 
-        let formatNewNameProd = "";
+        // let formatNewNameProd = "";
 
-        let rowFormatNewName = "";
+        // let rowFormatNewName = "";
 
-        newNameProd.split(" ").map((valString, indx) => {
-          if (indx === newNameProd.split(" ").length - 1) {
-            if (rowFormatNewName.length + `${valString} `.length <= 30) {
-              formatNewNameProd += `${rowFormatNewName} ${valString}`;
-            } else {
-              formatNewNameProd += `\n${rowFormatNewName} ${valString}`;
-            }
-          } else {
-            if (rowFormatNewName.length + `${valString} `.length >= 30) {
-              formatNewNameProd += `${rowFormatNewName}\n`;
+        // newNameProd.split(" ").map((valString, indx) => {
+        //   if (indx === newNameProd.split(" ").length - 1) {
+        //     if (rowFormatNewName.length + `${valString} `.length <= 30) {
+        //       formatNewNameProd += `${rowFormatNewName} ${valString}`;
+        //     } else {
+        //       formatNewNameProd += `\n${rowFormatNewName} ${valString}`;
+        //     }
+        //   } else {
+        //     if (rowFormatNewName.length + `${valString} `.length >= 30) {
+        //       formatNewNameProd += `${rowFormatNewName}\n`;
 
-              return (rowFormatNewName = `${valString}`);
-            } else {
-              return (rowFormatNewName += `${valString} `);
-            }
-          }
-        });
+        //       return (rowFormatNewName = `${valString}`);
+        //     } else {
+        //       return (rowFormatNewName += `${valString} `);
+        //     }
+        //   }
+        // });
 
         let ind = "";
 
         val.indication.map((v) => {
           if (!!v.description) {
-            ind = "*** ";
+            ind = createNewText(v.description);
 
-            let rowInd = "";
+            // let rowInd = "";
 
-            v.description.split(" ").map((valString, indx) => {
-              if (indx === v.description.split(" ").length - 1) {
-                if (rowInd.length + `${valString} `.length <= 30) {
-                  ind += `${rowInd} ${valString}`;
-                } else {
-                  ind += `\n${rowInd} ${valString}`;
-                }
-              } else {
-                if (rowInd.length + `${valString} `.length >= 30) {
-                  ind += `${rowInd}\n`;
+            // v.description.split(" ").map((valString, indx) => {
+            //   if (indx === v.description.split(" ").length - 1) {
+            //     if (rowInd.length + `${valString} `.length <= 30) {
+            //       ind += `${rowInd} ${valString}`;
+            //     } else {
+            //       ind += `\n${rowInd} ${valString}`;
+            //     }
+            //   } else {
+            //     if (rowInd.length + `${valString} `.length >= 30) {
+            //       ind += `${rowInd}\n`;
 
-                  return (rowInd = `${valString}`);
-                } else {
-                  return (rowInd += `${valString} `);
-                }
-              }
-            });
+            //       return (rowInd = `${valString}`);
+            //     } else {
+            //       return (rowInd += `${valString} `);
+            //     }
+            //   }
+            // });
 
             if (v.takeAway) {
               if (ind.length + ` [llevar]`.length > 30) {
@@ -230,7 +264,9 @@ const printWEBADASDEBRASEROS = (props) => {
             dat: [
               [
                 {
-                  content: formatNewNameProd,
+                  content: createNewText(
+                    `${val.quantity} x ${val.product_name}`
+                  ),
                   styles: {
                     fontStyle: "bold",
                     fontSize:

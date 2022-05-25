@@ -102,6 +102,7 @@ import {
     RiRotateLockFill,
     MdPublishedwithchangesRound,
     BiEye,
+    GiCardExchange,
 } from "oh-vue-icons/icons";
 OhVueIcon.add(
     BiThreeDots,
@@ -206,5 +207,6 @@ OhVueIcon.add(
     RiRotateLockFill,
     MdPublishedwithchangesRound,
     BiEye,
+    GiCardExchange,
 );
 export { OhVueIcon }

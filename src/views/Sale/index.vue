@@ -99,11 +99,15 @@
         remote
       />
     </n-card>
+    <SaleUpdate
+      v-model:sale="saleId"
+      @update:sale="onCloseUpdate"
+      @on-success="updateSuccess"
+    />
   </div>
 </template>
 
 <script>
-import { numeroALetras } from "./Prints/numberText.js";
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 import { defineComponent, ref, onMounted } from "vue";
 import { useMessage, useDialog } from "naive-ui";
@@ -119,10 +123,13 @@ import { useSaleStore } from "@/store/modules/sale";
 import { useBusinessStore } from "@/store/modules/business";
 import { useUserStore } from "@/store/modules/user";
 import { isNumber, isLetter } from "@/utils";
-import { generatePrint } from "./Prints/prints";
+import SaleUpdate from "./components/SaleUpdate";
 
 export default defineComponent({
   name: "Sale",
+  components: {
+    SaleUpdate,
+  },
   setup() {
     const dateNow = ref(null);
     const message = useMessage();
@@ -311,6 +318,19 @@ export default defineComponent({
       dateNow.value = `${dd}/${mm + 1}/${yy} ${hh}:${msms}`;
     });
 
+    const showModal = ref(false);
+
+    const saleId = ref(null);
+
+    const onCloseUpdate = async () => {
+      saleId.value = null;
+      await performFilter();
+    };
+
+    const updateSuccess = () => {
+      onCloseUpdate();
+    };
+
     return {
       saleStore,
       isLetter,
@@ -325,6 +345,10 @@ export default defineComponent({
       sales,
       businessStore,
       userStore,
+      showModal,
+      saleId,
+      onCloseUpdate,
+      updateSuccess,
       tableColumns: createSaleColumns({
         printSale(val) {
           VoucherPrint({
