@@ -223,6 +223,7 @@ import {
   searchOrders,
   nullOrder,
   updateOrderStatus,
+  retrieveOrder,
 } from "@/api/modules/orders";
 import { cancelTableOrder } from "@/api/modules/tables";
 
@@ -699,6 +700,32 @@ export default defineComponent({
             },
             onNegativeClick: () => {},
           }); */
+        },
+        async printOrder(row) {
+          await retrieveOrder(row.id)
+            .then((response) => {
+              if (response.status === 200) {
+                console.log(response.data);
+                //do smething
+              }
+            })
+            .catch((error) => {
+              console.error(error);
+              message.error("Algo salió mal...");
+            });
+        },
+        async printDelivery(row) {
+          await retrieveOrder(row.id)
+            .then((response) => {
+              if (response.status === 200) {
+                console.log(response.data);
+                //do smething
+              }
+            })
+            .catch((error) => {
+              console.error(error);
+              message.error("Algo salió mal...");
+            });
         },
         nullifyOrder(row) {
           showConfirm.value = true;

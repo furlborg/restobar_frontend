@@ -1,5 +1,5 @@
 import { h } from "vue"
-import { NButton, NTag, NPopover, NDropdown, NText, NSpace } from "naive-ui"
+import { NButton, NTag, NPopover, NDropdown, NText, NSpace, NPopselect } from "naive-ui"
 import { renderIcon, lighten } from "@/utils"
 import { useSaleStore } from '@/store/modules/sale';
 import { useTillStore } from '@/store/modules/till';
@@ -1426,7 +1426,7 @@ export const createTillSalesColumns = () => {
     ]
 }
 
-export const createOrderColumns = ({ showDetails, showDeliveryInfo, payDeliver, nullifyOrder }) => {
+export const createOrderColumns = ({ showDetails, showDeliveryInfo, payDeliver, printOrder, printDelivery, nullifyOrder }) => {
     return [
         {
             title: '#',
@@ -1542,6 +1542,18 @@ export const createOrderColumns = ({ showDetails, showDeliveryInfo, payDeliver, 
             width: genericsStore.device !== 'desktop' ? 250 : 'auto',
             align: 'center',
             render(row) {
+                const handleOption = async (option) => {
+                    switch (option) {
+                        case 1:
+                            await printOrder(row)
+                            break
+                        case 2:
+                            await printDelivery(row)
+                            break
+                        default:
+                            console.error('Opción inválida')
+                    }
+                }
                 return [
                     h(
                         NButton,
@@ -1577,6 +1589,44 @@ export const createOrderColumns = ({ showDetails, showDeliveryInfo, payDeliver, 
                         },
                         renderIcon('fa-dollar-sign')
                     ) : null,
+                    row.is_delivery ? h(
+                        NPopselect,
+                        {
+                            size: 'small',
+                            trigger: 'click',
+                            options: [
+                                {
+                                    value: 1,
+                                    label: 'Imprimir orden'
+                                },
+                                {
+                                    value: 2,
+                                    label: 'Imprimir delivery'
+                                }
+                            ],
+                            onUpdateValue: handleOption,
+                        },
+                        h(
+                            NButton,
+                            {
+                                class: 'me-2',
+                                size: 'small',
+                                type: 'warning',
+                                secondary: true,
+                            },
+                            renderIcon('md-print-round')
+                        )
+                    ) : h(
+                        NButton,
+                        {
+                            class: 'me-2',
+                            size: 'small',
+                            type: 'warning',
+                            secondary: true,
+                            onClick: () => printOrder(row)
+                        },
+                        renderIcon('md-print-round')
+                    ),
                     h(
                         NButton,
                         {

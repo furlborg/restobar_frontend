@@ -16,6 +16,10 @@ export async function listOrders(filterParams) {
     })
 }
 
+export async function retrieveOrder(id) {
+    return await http.get(`orders/${id}`)
+}
+
 export async function listOrdersByPage(filterParams, page, pageSize) {
     if (filterParams) {
         return await http.get('orders/', {
