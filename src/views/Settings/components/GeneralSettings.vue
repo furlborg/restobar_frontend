@@ -164,6 +164,13 @@
                     <n-form-item-gi :span="4" label="Nombre de impresora">
                       <n-input v-model:value="printerName" placeholder="" />
                     </n-form-item-gi>
+                    <n-form-item-gi :span="4" label="Formato de impresora">
+                      <n-select
+                        v-model:value="printerFormat"
+                        :options="printerFormatOptions"
+                        placeholder=""
+                      />
+                    </n-form-item-gi>
                     <n-form-item-gi :span="4">
                       <n-button
                         class="me-2"
@@ -185,6 +192,7 @@
                           selectedPlace = null;
                           preparationPlace = null;
                           printerName = null;
+                          printerFormat = null;
                         "
                         >Cancelar</n-button
                       >
@@ -484,10 +492,6 @@ export default defineComponent({
       }
       return [];
     });
-    const preparationPlaces = ref([]);
-    const preparationPlace = ref(null);
-    const printerName = ref(null);
-    const selectedPlace = ref(null);
     const productCategories = ref([]);
     const productCategory = ref(null);
     const selectedCategory = ref(null);
@@ -586,20 +590,39 @@ export default defineComponent({
       };
     };
 
+    const selectedPlace = ref(null);
+    const preparationPlaces = ref([]);
+    const preparationPlace = ref(null);
+    const printerName = ref(null);
+    const printerFormat = ref(null);
+    const printerFormatOptions = [
+      {
+        value: 58,
+        label: "58 mm",
+      },
+      {
+        value: 80,
+        label: "80 mm",
+      },
+    ];
+
     const selectPlace = (place) => {
-      if (!selectedPlace) {
+      if (!selectedPlace.value) {
         selectedPlace.value = place.id;
         preparationPlace.value = cloneDeep(place.description);
         printerName.value = cloneDeep(place.printer_name);
+        printerFormat.value = cloneDeep(place.printer_format);
       } else {
         if (selectedPlace.value === place.id) {
           selectedPlace.value = null;
           preparationPlace.value = null;
           printerName.value = null;
+          printerFormat.value = null;
         } else {
           selectedPlace.value = place.id;
           preparationPlace.value = cloneDeep(place.description);
           printerName.value = cloneDeep(place.printer_name);
+          printerFormat.value = cloneDeep(place.printer_format);
         }
       }
     };
@@ -619,7 +642,11 @@ export default defineComponent({
     };
 
     const performCreatePreparationPlace = async () => {
-      await createProductPlace(preparationPlace.value, printerName.value)
+      await createProductPlace(
+        preparationPlace.value,
+        printerName.value,
+        printerFormat.value
+      )
         .then((response) => {
           if (response.status === 201) {
             loadPreparationPlaces();
@@ -633,6 +660,7 @@ export default defineComponent({
         .finally(() => {
           preparationPlace.value = null;
           printerName.value = null;
+          printerFormat.value = null;
         });
     };
 
@@ -640,7 +668,8 @@ export default defineComponent({
       await updateProductPlace(
         selectedPlace.value,
         preparationPlace.value,
-        printerName.value
+        printerName.value,
+        printerFormat.value
       )
         .then((response) => {
           if (response.status === 202) {
@@ -655,11 +684,12 @@ export default defineComponent({
           selectedPlace.value = null;
           preparationPlace.value = null;
           printerName.value = null;
+          printerFormat.value = null;
         });
     };
 
     const selectCategory = (category) => {
-      if (!selectedCategory) {
+      if (!selectedCategory.value) {
         selectedCategory.value = category.id;
         productCategory.value = cloneDeep(category.description);
       } else {
@@ -724,7 +754,7 @@ export default defineComponent({
     const selectedPayment = ref(null);
 
     const selectPaymentMethod = (payment) => {
-      if (!selectedCategory) {
+      if (!selectedCategory.value) {
         selectedPayment.value = payment.id;
         paymentMethod.value = cloneDeep(payment.description);
       } else {
@@ -803,7 +833,7 @@ export default defineComponent({
     ];
 
     const selectConcept = (single_concept) => {
-      if (!selectedConcept) {
+      if (!selectedConcept.value) {
         selectedConcept.value = single_concept.id;
         concept.value.description = cloneDeep(single_concept.description);
         concept.value.concept_type = cloneDeep(single_concept.concept_type);
@@ -895,6 +925,8 @@ export default defineComponent({
       preparationPlaces,
       preparationPlace,
       printerName,
+      printerFormat,
+      printerFormatOptions,
       selectedPlace,
       selectPlace,
       performCreatePreparationPlace,
