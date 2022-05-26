@@ -34,9 +34,8 @@ const printOrderTicket = (props) => {
 
       if (props.updateOrder && !!props.table && !!textToFormat === false) {
         lengthData += lengthData * 6.5;
-        text = `ACTUALIZACION: ${
-          tableStore.getTableByID(props.table).description
-        }`;
+        text = `ACTUALIZACION: ${tableStore.getTableByID(props.table).description
+          }`;
       }
 
       if (
@@ -101,8 +100,8 @@ const printOrderTicket = (props) => {
               content: !!props.table
                 ? createNewText()
                 : !!props.saleInf.delivery_info
-                ? "DELIVERY"
-                : "PARA LLEVAR",
+                  ? "DELIVERY"
+                  : "PARA LLEVAR",
               styles: {
                 fontStyle: "bold",
                 halign: "center",
@@ -175,7 +174,7 @@ const printOrderTicket = (props) => {
           } else if (
             (!!val.product_category.toLowerCase().includes("menu") === false ||
               !!val.product_category.toLowerCase().includes("menus") ===
-                false) &&
+              false) &&
             (!!val.product_category.toLowerCase().includes("combo") === false ||
               !!val.product_category.toLowerCase().includes("combo") === false)
           ) {

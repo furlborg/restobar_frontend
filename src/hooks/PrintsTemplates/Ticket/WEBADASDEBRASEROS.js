@@ -36,9 +36,8 @@ const printWEBADASDEBRASEROS = (props) => {
 
       if (props.updateOrder && !!props.table && !!textToFormat === false) {
         lengthData += lengthData * 6.5;
-        text = `ACTUALIZACION: ${
-          tableStore.getTableByID(props.table).description
-        }`;
+        text = `ACTUALIZACION: ${tableStore.getTableByID(props.table).description
+          }`;
       }
 
       if (

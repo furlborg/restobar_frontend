@@ -82,9 +82,17 @@
                 class="position-absolute top-0 start-0 m-2"
               />
               <div
-                class="black-outline text-center position-absolute top-50 start-50 translate-middle fs-4"
+                class="
+                  black-outline
+                  text-center
+                  position-absolute
+                  top-50
+                  start-50
+                  translate-middle
+                  fs-4
+                "
               >
-                {{ "MESA " + String(table.id) }}
+                {{ table.description }}
               </div>
               <n-button
                 @click.stop="openOptions.push(table.id)"
@@ -509,20 +517,25 @@ export default defineComponent({
         .catch((error) => {
           if (error.response.status === 400) {
             for (const value in error.response.data) {
-              error.response.data[`${value}`].forEach((err) => {
-                if (typeof err === "object") {
-                  for (const v in err) {
-                    message.error(`${err[`${v}`]}`);
+              if (Array.isArray(error.response.data[`${value}`])) {
+                error.response.data[`${value}`].forEach((err) => {
+                  if (typeof err === "object") {
+                    for (const v in err) {
+                      message.error(`${err[`${v}`]}`);
+                    }
+                  } else {
+                    message.error(`${err}`);
                   }
-                } else {
-                  message.error(`${err}`);
-                }
-              });
+                });
+              } else {
+                message.error(error.response.data[`${value}`]);
+              }
             }
           } else {
             console.error(error);
             message.error("Algo salió mal...");
           }
+          isLoading.value = false;
         });
     };
 

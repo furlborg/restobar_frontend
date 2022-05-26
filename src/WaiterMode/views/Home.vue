@@ -6,6 +6,7 @@
         :options="tableStore.getAreasOptions"
         placeholder="Seleccione area"
         :disabled="!tillStore.currentTillID || waiterStore.groupMode"
+        @update:value="tableStore.refreshData()"
       ></n-select>
       <n-button
         type="info"
