@@ -203,6 +203,9 @@
 </template>
 
 <script>
+import printDeliveryInfo from "@/hooks/PrintsTemplates/Ticket/DeliveryInfo.js";
+import printOrderTicket from "@/hooks/PrintsTemplates/Ticket/OrderTicket.js";
+import printWEBADASDEBRASEROS from "@/hooks/PrintsTemplates/Ticket/WEBADASDEBRASEROS.js";
 import { defineComponent, ref, computed, onMounted } from "vue";
 import { useMessage, useDialog } from "naive-ui";
 import { set, format } from "date-fns";
@@ -705,8 +708,51 @@ export default defineComponent({
           await retrieveOrder(row.id)
             .then((response) => {
               if (response.status === 200) {
-                console.log(response.data);
                 //do smething
+
+                let objProps = {};
+                switch (row.order_type) {
+                  case "M":
+                    objProps = {
+                      data: response.data,
+                      table: response.data.table,
+                    };
+                    break;
+                  case "P":
+                    objProps = {
+                      data: response.data,
+                      saleInf: {},
+                    };
+                    break;
+                  case "D":
+                    objProps = {
+                      data: response.data,
+                      saleInf: { delivery_info: response.data.delivery_info },
+                      changing:
+                        response.data.amount -
+                        parseFloat(response.data.given_amount),
+                    };
+
+                    break;
+                  default:
+                    message.error(
+                      "Error al definir las propiedades de la imprecion"
+                    );
+                }
+
+                switch (
+                  settingsStore.business_settings.printer.kitchen_ticket_format
+                ) {
+                  case 1:
+                    printOrderTicket(objProps);
+                    break;
+                  case 2:
+                    printWEBADASDEBRASEROS(objProps);
+                    break;
+
+                  default:
+                    message.error("No se encontro el formato de impresion");
+                }
               }
             })
             .catch((error) => {
@@ -720,6 +766,17 @@ export default defineComponent({
               if (response.status === 200) {
                 console.log(response.data);
                 //do smething
+                if (
+                  !!response.data.delivery_info &&
+                  settingsStore.business_settings.printer.print_delivery_ticket
+                ) {
+                  printDeliveryInfo({
+                    data: response.data,
+                    changing:
+                      response.data.amount -
+                      parseFloat(response.data.given_amount),
+                  });
+                }
               }
             })
             .catch((error) => {
@@ -741,5 +798,4 @@ export default defineComponent({
 });
 </script>
 
-<style>
-</style>
+<style></style>
