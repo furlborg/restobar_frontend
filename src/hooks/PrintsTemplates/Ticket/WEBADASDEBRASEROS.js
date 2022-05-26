@@ -13,14 +13,11 @@ const dateNow = formatter(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss");
 
 // let format = settingsStore.business_settings.printer.kitchen_printer_format;
 
-const regex = /(\d+)/g;
-
 const printWEBADASDEBRASEROS = (props) => {
   let arrayDataPrint = [];
 
   productStore.places.forEach(async (place) => {
-    console.log(place.printer_name.match(regex));
-    let jumpLimiter = place.printer_name.match(regex)[0] === 58 ? 10 : 60;
+    let jumpLimiter = place.printer_format === 58 ? 10 : 60;
 
     let vuleto = props.changing || 0.0;
     vuleto -= vuleto * 2;
@@ -219,7 +216,7 @@ const printWEBADASDEBRASEROS = (props) => {
         lengthData += lengthData * 6.5;
         val.indication.map((v) => {
           if (!!v.description) {
-            ind += ` ${createNewText(v.description)}`;
+            ind += `${createNewText(`*** ${v.description}`)}`;
 
             if (v.takeAway) {
               if (ind.length + ` [llevar]`.length > 30) {
@@ -364,7 +361,7 @@ const printWEBADASDEBRASEROS = (props) => {
         data: structure,
         lengthOfData: lengthData,
         printerName: place.printer_name,
-        formatTemp: place.printer_name.match(regex),
+        formatTemp: place.printer_format,
       });
     }
   });

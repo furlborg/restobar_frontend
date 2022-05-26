@@ -50,7 +50,7 @@ export const printPdf = async (objOrArry) => {
       .then((printers) => {
         if (!!printers) {
           objOrArry.map(async (props) => {
-            let dataPdf = await CreatePdfFile(props, format);
+            let dataPdf = await CreatePdfFile(props, props.formatTemp);
 
             let printerFindResult = printers.find(
               (printer) => printer === props.printerName
@@ -62,9 +62,10 @@ export const printPdf = async (objOrArry) => {
                 size: {
                   width: format,
                   height:
-                    !!props.lengthOfData && props.lengthOfData > format
+                    !!props.lengthOfData &&
+                    props.lengthOfData > props.formatTemp
                       ? Math.round(props.lengthOfData)
-                      : format,
+                      : props.formatTemp,
                 },
                 units: "mm",
               });
@@ -99,7 +100,7 @@ export const printPdf = async (objOrArry) => {
       .then((printers) => {
         if (!!printers) {
           objOrArry.map(async (props) => {
-            let dataPdf = await CreatePdfFile(props, format);
+            let dataPdf = await CreatePdfFile(props, props.formatTemp);
 
             let printerFindResult = printers.find(
               (printer) => printer === props.printerName
@@ -109,11 +110,12 @@ export const printPdf = async (objOrArry) => {
               let config = qz.configs.create(printerFindResult, {
                 scaleContent: true,
                 size: {
-                  width: format,
+                  width: props.formatTemp,
                   height:
-                    !!props.lengthOfData && props.lengthOfData > format
+                    !!props.lengthOfData &&
+                    props.lengthOfData > props.formatTemp
                       ? Math.round(props.lengthOfData)
-                      : format,
+                      : props.formatTemp,
                 },
                 units: "mm",
               });

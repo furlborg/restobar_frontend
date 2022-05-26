@@ -13,13 +13,11 @@ const dateNow = formatter(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss");
 
 // let format = settingsStore.business_settings.printer.kitchen_printer_format;
 
-const regex = /(\d+)/g;
-
 const printOrderTicket = (props) => {
   let arrayDataPrint = [];
 
   productStore.places.forEach(async (place) => {
-    let jumpLimiter = place.printer_name.match(regex)[0] === 58 ? 10 : 60;
+    let jumpLimiter = place.printer_format === 58 ? 10 : 60;
 
     let lengthData = 0;
 
@@ -284,7 +282,7 @@ const printOrderTicket = (props) => {
         data: structure,
         lengthOfData: lengthData,
         printerName: place.printer_name,
-        formatTemp: place.printer_name.match(regex),
+        formatTemp: place.printer_format,
       });
     }
   });
