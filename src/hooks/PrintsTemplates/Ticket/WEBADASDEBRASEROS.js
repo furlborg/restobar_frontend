@@ -9,15 +9,17 @@ const settingsStore = useSettingsStore();
 const productStore = useProductStore();
 const tableStore = useTableStore();
 
-const dateNow = formatter(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss");
+let dateNow = formatter(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss");
 
 // let format = settingsStore.business_settings.printer.kitchen_printer_format;
 
 const printWEBADASDEBRASEROS = (props) => {
   let arrayDataPrint = [];
 
+  if (!!props.created) dateNow = props.created;
+
   productStore.places.forEach(async (place) => {
-    let jumpLimiter = place.printer_format === 58 ? 10 : 60;
+    let jumpLimiter = place.printer_format === 58 ? 10 : 55;
 
     let vuleto = props.changing || 0.0;
     vuleto -= vuleto * 2;
@@ -366,7 +368,7 @@ const printWEBADASDEBRASEROS = (props) => {
     }
   });
 
-  printPdf(arrayDataPrint);
+  if (arrayDataPrint.length > 0) printPdf(arrayDataPrint);
 };
 
 export default printWEBADASDEBRASEROS;

@@ -708,20 +708,20 @@ export default defineComponent({
           await retrieveOrder(row.id)
             .then((response) => {
               if (response.status === 200) {
-                //do smething
-
                 let objProps = {};
                 switch (row.order_type) {
                   case "M":
                     objProps = {
                       data: response.data,
                       table: response.data.table,
+                      created: row.created,
                     };
                     break;
                   case "P":
                     objProps = {
                       data: response.data,
                       saleInf: {},
+                      created: row.created,
                     };
                     break;
                   case "D":
@@ -731,6 +731,7 @@ export default defineComponent({
                       changing:
                         response.data.amount -
                         parseFloat(response.data.given_amount),
+                      created: row.created,
                     };
 
                     break;
