@@ -1,6 +1,7 @@
 import { useProductStore } from "@/store/modules/product";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useTableStore } from "@/store/modules/table";
+import { format as formatter } from "date-fns";
 
 import { printPdf } from "@/hooks/PrintPdf.js";
 
@@ -8,32 +9,73 @@ const settingsStore = useSettingsStore();
 const productStore = useProductStore();
 const tableStore = useTableStore();
 
-const fetch = new Date();
-const dd = fetch.getDate();
-const mm = fetch.getMonth();
-const yy = fetch.getFullYear();
-const hh = fetch.getHours();
-const msms = fetch.getMinutes();
+const dateNow = formatter(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss");
 
-const dateNow = `${dd}/${mm + 1}/${yy} ${hh}:${msms}`;
+// let format = settingsStore.business_settings.printer.kitchen_printer_format;
+
+const regex = /(\d+)/g;
 
 const printOrderTicket = (props) => {
   let arrayDataPrint = [];
 
-  let format = settingsStore.business_settings.printer.kitchen_printer_format;
-
   productStore.places.forEach(async (place) => {
+    let jumpLimiter = place.printer_name.match(regex)[0] === 58 ? 10 : 60;
+
     let lengthData = 0;
 
-    const createName = () => {
-      if (props.updateOrder && !!props.table) {
-        lengthData += 7 * 6.5;
-        return `ACTUALIZACION: ${
+    const createNewText = (textToFormat = "") => {
+      let text = "";
+
+      if (!!textToFormat) {
+        text = textToFormat;
+
+        lengthData += lengthData * 6.5;
+      }
+
+      if (props.updateOrder && !!props.table && !!textToFormat === false) {
+        lengthData += lengthData * 6.5;
+        text = `ACTUALIZACION: ${
           tableStore.getTableByID(props.table).description
         }`;
-      } else {
-        return `MESA: ${tableStore.getTableByID(props.table).description}`;
       }
+
+      if (
+        !!props.updateOrder === false &&
+        !!props.table &&
+        !!textToFormat === false
+      ) {
+        text = `MESA: ${tableStore.getTableByID(props.table).description}`;
+      }
+
+      let formatNewText = "";
+
+      let rowFormatNewText = "";
+
+      text.split(" ").map((valString, indx) => {
+        if (indx === text.split(" ").length - 1) {
+          if (
+            rowFormatNewText.length + `${valString} `.length <= jumpLimiter &&
+            `${valString} `.length >= 5
+          ) {
+            formatNewText += `${rowFormatNewText} ${valString}`;
+          } else {
+            formatNewText += `\n${rowFormatNewText} ${valString}`;
+          }
+        } else {
+          if (
+            rowFormatNewText.length + `${valString} `.length >= jumpLimiter &&
+            `${valString} `.length >= 5
+          ) {
+            formatNewText += `${rowFormatNewText}\n`;
+
+            return (rowFormatNewText = `${valString}`);
+          } else {
+            return (rowFormatNewText += `${valString} `);
+          }
+        }
+      });
+
+      return formatNewText;
     };
 
     let structure = [
@@ -57,7 +99,7 @@ const printOrderTicket = (props) => {
           [
             {
               content: !!props.table
-                ? createName()
+                ? createNewText()
                 : !!props.saleInf.delivery_info
                 ? "DELIVERY"
                 : "PARA LLEVAR",
@@ -79,51 +121,11 @@ const printOrderTicket = (props) => {
 
     info.map((val) => {
       if (!!val.preparation_place) {
-        let formatNewNameProd = "";
-
-        let rowFormatNewName = "";
-
-        val.product_name.split(" ").map((valString, indx) => {
-          if (indx === val.product_name.split(" ").length - 1) {
-            if (rowFormatNewName.length + `${valString} `.length <= 30) {
-              formatNewNameProd += `${rowFormatNewName} ${valString}`;
-            } else {
-              formatNewNameProd += `\n${rowFormatNewName} ${valString}`;
-            }
-          } else {
-            if (rowFormatNewName.length + `${valString} `.length >= 30) {
-              formatNewNameProd += `${rowFormatNewName}\n`;
-
-              return (rowFormatNewName = `${valString}`);
-            } else {
-              return (rowFormatNewName += `${valString} `);
-            }
-          }
-        });
-
         let ind = "";
 
         val.indication.map((v) => {
           if (!!v.description) {
-            let rowInd = "";
-
-            v.description.split(" ").map((valString, indx) => {
-              if (indx === v.description.split(" ").length - 1) {
-                if (rowInd.length + `${valString} `.length <= 30) {
-                  ind += `${rowInd} ${valString}`;
-                } else {
-                  ind += `\n${rowInd} ${valString}`;
-                }
-              } else {
-                if (rowInd.length + `${valString} `.length >= 30) {
-                  ind += `${rowInd}\n`;
-
-                  return (rowInd = `${valString}`);
-                } else {
-                  return (rowInd += `${valString} `);
-                }
-              }
-            });
+            ind = createNewText(v.description);
 
             if (v.takeAway) {
               if (ind.length + ` [PARA LLEVAR]`.length > 30) {
@@ -147,9 +149,9 @@ const printOrderTicket = (props) => {
           ? val.product_description.split(",")
           : val.product_description;
 
-        let heightForNmae = 10;
-
         let verifyNameCombo = "";
+
+        let newName = val.product_name;
 
         if (
           (val.product_category.toLowerCase().includes("combo") ||
@@ -169,7 +171,7 @@ const printOrderTicket = (props) => {
             val.product_category.toLowerCase().includes("menu") ||
             val.product_category.toLowerCase().includes("menus")
           ) {
-            newNameProd = `[MENU] ${newNameProd}`;
+            newName = `[MENU] ${newName}`;
           } else if (
             (!!val.product_category.toLowerCase().includes("menu") === false ||
               !!val.product_category.toLowerCase().includes("menus") ===
@@ -177,9 +179,8 @@ const printOrderTicket = (props) => {
             (!!val.product_category.toLowerCase().includes("combo") === false ||
               !!val.product_category.toLowerCase().includes("combo") === false)
           ) {
-            newNameProd = `[CARTA] ${newNameProd}`;
+            newName = `[CARTA] ${newName}`;
           }
-          lengthData += 10 * heightForNmae;
         }
 
         structure.push(
@@ -188,7 +189,7 @@ const printOrderTicket = (props) => {
             dat: [
               [
                 {
-                  content: `*${formatNewNameProd}`,
+                  content: createNewText(`*${newName}`),
                   styles: {
                     fontStyle: "bold",
                     fontSize:
@@ -202,7 +203,7 @@ const printOrderTicket = (props) => {
             dat: [
               [
                 {
-                  content: verifyNameCombo,
+                  content: createNewText(verifyNameCombo),
                   styles: {
                     fontSize:
                       settingsStore.business_settings.printer.body_font_size,
@@ -283,6 +284,7 @@ const printOrderTicket = (props) => {
         data: structure,
         lengthOfData: lengthData,
         printerName: place.printer_name,
+        formatTemp: place.printer_name.match(regex),
       });
     }
   });

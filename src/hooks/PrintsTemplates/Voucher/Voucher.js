@@ -1,14 +1,13 @@
 import { CreatePdfFile } from "@/hooks/CreatePdfFile.js";
 import { numeroALetras } from "@/hooks/numberText.js";
 
-const fetch = new Date();
-const dd = fetch.getDate();
-const mm = fetch.getMonth();
-const yy = fetch.getFullYear();
-const hh = fetch.getHours();
-const msms = fetch.getMinutes();
+import { useSaleStore } from "@/store/modules/sale";
 
-const dateNow = `${dd}/${mm + 1}/${yy} ${hh}:${msms}`;
+import { format as formatter } from "date-fns";
+
+const saleStore = useSaleStore();
+
+const dateNow = formatter(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss");
 
 const VoucherPrint = (props) => {
   let dataForPrint = "";
@@ -427,7 +426,12 @@ const VoucherPrint = (props) => {
         {
           tittle: "TIPO DE PAGO",
           twoPoints: ":",
-          cont: props.data.payment_method,
+          cont:
+            typeof props.data.payment_method === "string"
+              ? props.data.payment_method
+              : saleStore.getPaymentMethodDescription(
+                  props.data.payment_method
+                ),
         },
       ],
     });

@@ -10,6 +10,8 @@ const SettingsStore = useSettingsStore();
 export const printPdf = async (objOrArry) => {
   let format = SettingsStore.business_settings.printer.kitchen_printer_format;
 
+  if (!!objOrArry.formatTemp) format = objOrArry.formatTemp;
+
   qz.security.setCertificatePromise(function (resolve) {
     resolve(SettingsStore.business_settings.qz_config.certificate);
   });

@@ -136,6 +136,8 @@
 
 <script>
 import printOrderTicket from "@/hooks/PrintsTemplates/Ticket/OrderTicket.js";
+import printWEBADASDEBRASEROS from "@/hooks/PrintsTemplates/Ticket/WEBADASDEBRASEROS.js";
+import { useSettingsStore } from "@/store/modules/settings";
 import { defineComponent, ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useRouter } from "vue-router";
@@ -161,6 +163,7 @@ export default defineComponent({
     const route = useRoute();
     const router = useRouter();
     const productStore = useProductStore();
+    const settingsStore = useSettingsStore();
     const orderStore = useOrderStore();
     const tableStore = useTableStore();
     const saleStore = useSaleStore();
@@ -178,10 +181,26 @@ export default defineComponent({
           if (response.status === 201) {
             message.success("Orden creada correctamente");
 
-            printOrderTicket({
-              data: response.data,
-              table,
-            });
+            // printOrderTicket({
+            //   data: response.data,
+            //   table,
+            // });
+
+            switch (
+              settingsStore.business_settings.printer.kitchen_ticket_format
+            ) {
+              case 1:
+                console.log(1);
+                printOrderTicket({ data: response.data, table });
+                break;
+              case 2:
+                console.log(2);
+                printWEBADASDEBRASEROS({ data: response.data, table });
+                break;
+
+              default:
+                message.error("No se encontro el formato de impresion");
+            }
 
             activeDrawer.value = false;
             tableStore.refreshData();
@@ -230,11 +249,27 @@ export default defineComponent({
               response.data.order_details
             );
 
-            printOrderTicket({
-              data: response.data,
-              table,
-              updateOrder: true,
-            });
+            // printOrderTicket({
+            //   data: response.data,
+            //   table,
+            //   updateOrder: true,
+            // });
+
+            switch (
+              settingsStore.business_settings.printer.kitchen_ticket_format
+            ) {
+              case 1:
+                console.log(1);
+                printOrderTicket({ data: response.data, table });
+                break;
+              case 2:
+                console.log(2);
+                printWEBADASDEBRASEROS({ data: response.data, table });
+                break;
+
+              default:
+                message.error("No se encontro el formato de impresion");
+            }
 
             activeDrawer.value = false;
             tableStore.refreshData();

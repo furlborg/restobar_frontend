@@ -609,7 +609,7 @@ import {
   onMounted,
   h,
 } from "vue";
-
+import { isAxiosError } from "axios";
 import { NThing, NTag, NSpace, useDialog, useMessage } from "naive-ui";
 import { useRouter } from "vue-router";
 import { useSettingsStore } from "@/store/modules/settings";
@@ -1018,11 +1018,32 @@ export default defineComponent({
         changing: changing.value,
       });
 
-      // printDeliveryInfo({ data: values, changing: changing.value });
+      if (
+        !!values.delivery_info &&
+        settingsStore.business_settings.printer.print_delivery_ticket
+      ) {
+        printDeliveryInfo({ data: values, changing: changing.value });
+      }
 
-      // printOrderTicket({ data: values, saleInf: sale.value });
-      printWEBADASDEBRASEROS({ data: values, saleInf: sale.value });
+      switch (settingsStore.business_settings.printer.kitchen_ticket_format) {
+        case 1:
+          printOrderTicket({ data: values, saleInf: sale.value });
+          break;
+        case 2:
+          printWEBADASDEBRASEROS({
+            data: values,
+            saleInf: sale.value,
+            changing: changing.value,
+          });
+          break;
 
+        default:
+          message.error("No se encontro el formato de impresion");
+      }
+
+      // if (settingsStore.business_settings.printer.print_delivery_ticket) {
+      //   console.log("asdasdasdasd");
+      // }
       message.success("Imprimir");
     };
 
@@ -1065,23 +1086,25 @@ export default defineComponent({
           }
         })
         .catch((error) => {
-          if (error.response.status === 400) {
-            for (const value in error.response.data) {
-              for (const ser in error.response.data[`${value}`]) {
-                error.response.data[`${value}`][`${ser}`].forEach((err) => {
-                  if (typeof err === "object") {
-                    for (const v in err) {
-                      message.error(`${err[`${v}`]}`);
+          if (isAxiosError(error)) {
+            if (error.response.status === 400) {
+              for (const value in error.response.data) {
+                for (const ser in error.response.data[`${value}`]) {
+                  error.response.data[`${value}`][`${ser}`].forEach((err) => {
+                    if (typeof err === "object") {
+                      for (const v in err) {
+                        message.error(`${err[`${v}`]}`);
+                      }
+                    } else {
+                      message.error(`${err}`);
                     }
-                  } else {
-                    message.error(`${err}`);
-                  }
-                });
+                  });
+                }
               }
+            } else {
+              console.error(error);
+              message.error("Algo salió mal...");
             }
-          } else {
-            console.error(error);
-            message.error("Algo salió mal...");
           }
         })
         .finally(() => {
@@ -1117,25 +1140,27 @@ export default defineComponent({
                     }
                   })
                   .catch((error) => {
-                    if (error.response.status === 400) {
-                      for (const value in error.response.data) {
-                        for (const ser in error.response.data[`${value}`]) {
-                          error.response.data[`${value}`][`${ser}`].forEach(
-                            (err) => {
-                              if (typeof err === "object") {
-                                for (const v in err) {
-                                  message.error(`${err[`${v}`]}`);
+                    if (isAxiosError(error)) {
+                      if (error.response.status === 400) {
+                        for (const value in error.response.data) {
+                          for (const ser in error.response.data[`${value}`]) {
+                            error.response.data[`${value}`][`${ser}`].forEach(
+                              (err) => {
+                                if (typeof err === "object") {
+                                  for (const v in err) {
+                                    message.error(`${err[`${v}`]}`);
+                                  }
+                                } else {
+                                  message.error(`${err}`);
                                 }
-                              } else {
-                                message.error(`${err}`);
                               }
-                            }
-                          );
+                            );
+                          }
                         }
+                      } else {
+                        console.error(error);
+                        message.error("Algo salió mal...");
                       }
-                    } else {
-                      console.error(error);
-                      message.error("Algo salió mal...");
                     }
                   })
                   .finally(() => {

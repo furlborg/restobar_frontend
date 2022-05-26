@@ -265,6 +265,7 @@ import {
   onBeforeRouteUpdate,
 } from "vue-router";
 import { NThing, NTag, NSpace, useDialog, useMessage } from "naive-ui";
+import { useSettingsStore } from "@/store/modules/settings";
 import { useUserStore } from "@/store/modules/user";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useProductStore } from "@/store/modules/product";
@@ -292,6 +293,7 @@ export default defineComponent({
     const message = useMessage();
     const dialog = useDialog();
     const table = route.params.table;
+    const settingsStore = useSettingsStore();
     const genericsStore = useGenericsStore();
     const productStore = useProductStore();
     const orderStore = useOrderStore();
@@ -395,14 +397,19 @@ export default defineComponent({
           if (response.status === 201) {
             checkState.value = true;
 
-            // printOrderTicket({
-            //   data: response.data,
-            //   table,
-            // });
-            printWEBADASDEBRASEROS({
-              data: response.data,
-              table,
-            });
+            switch (
+              settingsStore.business_settings.printer.kitchen_ticket_format
+            ) {
+              case 1:
+                printOrderTicket({ data: response.data, table });
+                break;
+              case 2:
+                printWEBADASDEBRASEROS({ data: response.data, table });
+                break;
+
+              default:
+                message.error("No se encontro el formato de impresion");
+            }
 
             router.push({ name: "TableHome" });
           }
@@ -462,18 +469,27 @@ export default defineComponent({
 
             checkState.value = true;
 
-            // printOrderTicket({
-            //   data: response.data,
-            //   table,
-            //   updateOrder: true,
-            // });
+            switch (
+              settingsStore.business_settings.printer.kitchen_ticket_format
+            ) {
+              case 1:
+                printOrderTicket({
+                  data: response.data,
+                  table,
+                  updateOrder: true,
+                });
+                break;
+              case 2:
+                printWEBADASDEBRASEROS({
+                  data: response.data,
+                  table,
+                  updateOrder: true,
+                });
+                break;
 
-            printWEBADASDEBRASEROS({
-              data: response.data,
-              table,
-              updateOrder: true,
-            });
-
+              default:
+                message.error("No se encontro el formato de impresion");
+            }
             router.push({ name: "TableHome" });
           }
         })

@@ -17,14 +17,7 @@
             <div>
               <img src="~@/assets/images/category-bg.jpg" alt="" />
               <n-text
-                class="
-                  position-absolute
-                  top-50
-                  start-50
-                  translate-middle
-                  text-center
-                  fs-5
-                "
+                class="position-absolute top-50 start-50 translate-middle text-center fs-5"
                 >{{ category.description }}</n-text
               >
             </div>

@@ -50,7 +50,7 @@ export const CreatePdfFile = async (props, format) => {
   //!Creacion del Documento
   props.data.map((val, index) => {
     if (!!val) {
-      let finalY = doc.lastAutoTable.finalY || 0;
+      let finalY = doc.lastAutoTable.finalY || 3;
 
       if (index === 0 && !!props.addImages) {
         const businnessStore = useBusinessStore();
@@ -87,7 +87,7 @@ export const CreatePdfFile = async (props, format) => {
         doc.setLineDash([1, 1], 1);
         doc.setDrawColor(0, 0, 0);
         doc.line(1, finalY + 2, 77, finalY + 2);
-        finalY += 5;
+        finalY += 3;
       }
 
       doc.autoTable({
@@ -100,7 +100,7 @@ export const CreatePdfFile = async (props, format) => {
         body: val.dat,
         cellWidth: "auto",
         headStyles: { fontSize: 7, font: "helvetica" },
-        bodyStyles: { fontSize: 7, font: "helvetica" },
+        bodyStyles: { fontSize: 7, font: "helvetica", cellPadding: 0.5 },
         columnStyles: {
           fontSize: 7,
           tittle: {

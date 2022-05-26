@@ -3,7 +3,7 @@ import { CreatePdfFile } from "@/hooks/CreatePdfFile.js";
 const printDeliveryInfo = (props) => {
   let dataForPrint = JSON.parse(props.data.json_sale);
 
-  let vuleto = props.changing;
+  let vuleto = props.changing || 0.0;
   vuleto -= vuleto * 2;
 
   const structure = [

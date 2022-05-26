@@ -11,21 +11,32 @@ const tableStore = useTableStore();
 
 const dateNow = formatter(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss");
 
-let format = settingsStore.business_settings.printer.kitchen_printer_format;
+// let format = settingsStore.business_settings.printer.kitchen_printer_format;
+
+const regex = /(\d+)/g;
 
 const printWEBADASDEBRASEROS = (props) => {
   let arrayDataPrint = [];
 
   productStore.places.forEach(async (place) => {
+    console.log(place.printer_name.match(regex));
+    let jumpLimiter = place.printer_name.match(regex)[0] === 58 ? 10 : 60;
+
+    let vuleto = props.changing || 0.0;
+    vuleto -= vuleto * 2;
+
     let lengthData = 0;
 
     const createNewText = (textToFormat = "") => {
       let text = "";
 
-      if (!!textToFormat) text = textToFormat;
+      if (!!textToFormat) {
+        text = textToFormat;
+        lengthData += 7 * 6.5;
+      }
 
       if (props.updateOrder && !!props.table && !!textToFormat === false) {
-        lengthData += 7 * 6.5;
+        lengthData += lengthData * 6.5;
         text = `ACTUALIZACION: ${
           tableStore.getTableByID(props.table).description
         }`;
@@ -45,16 +56,28 @@ const printWEBADASDEBRASEROS = (props) => {
 
       text.split(" ").map((valString, indx) => {
         if (indx === text.split(" ").length - 1) {
-          if (rowFormatNewText.length + `${valString} `.length <= 30) {
-            formatNewText += `${rowFormatNewText} ${valString}`;
+          if (
+            rowFormatNewText.length + `${valString} `.length - jumpLimiter <=
+            5
+          ) {
+            formatNewText += `${rowFormatNewText}${valString}`;
           } else {
-            formatNewText += `\n${rowFormatNewText} ${valString}`;
+            formatNewText += `${rowFormatNewText}\n${valString}`;
+
+            lengthData += lengthData * 6.5;
+
+            rowFormatNewText = "";
           }
         } else {
-          if (rowFormatNewText.length + `${valString} `.length >= 30) {
+          if (
+            rowFormatNewText.length + `${valString} `.length - jumpLimiter >=
+            5
+          ) {
             formatNewText += `${rowFormatNewText}\n`;
 
-            return (rowFormatNewText = `${valString}`);
+            lengthData += lengthData * 6.5;
+
+            return (rowFormatNewText = `${valString} `);
           } else {
             return (rowFormatNewText += `${valString} `);
           }
@@ -99,13 +122,14 @@ const printWEBADASDEBRASEROS = (props) => {
         ],
       });
 
-    !!props.saleInf &&
+    settingsStore.business_settings.printer.show_delivery_kitchen &&
+      !!props.saleInf &&
       !!props.saleInf.delivery_info &&
       structure.push({
         dat: [
           [
             {
-              content: "N° DE TELEFONO",
+              content: props.saleInf.delivery_info.phone,
               styles: {
                 fontStyle: "bold",
                 halign: "center",
@@ -123,7 +147,7 @@ const printWEBADASDEBRASEROS = (props) => {
         dat: [
           [
             {
-              content: "PARA LLEVAR",
+              content: "LLEVAR",
               styles: {
                 fontStyle: "bold",
                 halign: "center",
@@ -190,55 +214,12 @@ const printWEBADASDEBRASEROS = (props) => {
 
     info.map((val) => {
       if (!!val.preparation_place) {
-        // let newNameProd = `${val.quantity} x ${val.product_name}`;
-
-        // let formatNewNameProd = "";
-
-        // let rowFormatNewName = "";
-
-        // newNameProd.split(" ").map((valString, indx) => {
-        //   if (indx === newNameProd.split(" ").length - 1) {
-        //     if (rowFormatNewName.length + `${valString} `.length <= 30) {
-        //       formatNewNameProd += `${rowFormatNewName} ${valString}`;
-        //     } else {
-        //       formatNewNameProd += `\n${rowFormatNewName} ${valString}`;
-        //     }
-        //   } else {
-        //     if (rowFormatNewName.length + `${valString} `.length >= 30) {
-        //       formatNewNameProd += `${rowFormatNewName}\n`;
-
-        //       return (rowFormatNewName = `${valString}`);
-        //     } else {
-        //       return (rowFormatNewName += `${valString} `);
-        //     }
-        //   }
-        // });
-
         let ind = "";
 
+        lengthData += lengthData * 6.5;
         val.indication.map((v) => {
           if (!!v.description) {
-            ind = createNewText(v.description);
-
-            // let rowInd = "";
-
-            // v.description.split(" ").map((valString, indx) => {
-            //   if (indx === v.description.split(" ").length - 1) {
-            //     if (rowInd.length + `${valString} `.length <= 30) {
-            //       ind += `${rowInd} ${valString}`;
-            //     } else {
-            //       ind += `\n${rowInd} ${valString}`;
-            //     }
-            //   } else {
-            //     if (rowInd.length + `${valString} `.length >= 30) {
-            //       ind += `${rowInd}\n`;
-
-            //       return (rowInd = `${valString}`);
-            //     } else {
-            //       return (rowInd += `${valString} `);
-            //     }
-            //   }
-            // });
+            ind += ` ${createNewText(v.description)}`;
 
             if (v.takeAway) {
               if (ind.length + ` [llevar]`.length > 30) {
@@ -297,8 +278,12 @@ const printWEBADASDEBRASEROS = (props) => {
       }
     });
 
-    if (!!props.saleInf && !!props.saleInf.delivery_info) {
-      lengthData += 4 * 6.75;
+    if (
+      settingsStore.business_settings.printer.show_delivery_kitchen &&
+      !!props.saleInf &&
+      !!props.saleInf.delivery_info
+    ) {
+      lengthData += lengthData * 6.5;
       structure.push(
         {
           dat: [
@@ -313,6 +298,7 @@ const printWEBADASDEBRASEROS = (props) => {
               },
             ],
           ],
+          line: true,
         },
         {
           dat: [
@@ -355,6 +341,20 @@ const printWEBADASDEBRASEROS = (props) => {
               },
             ],
           ],
+        },
+        {
+          dat: [
+            [
+              {
+                content: `Vuelto:${vuleto}`,
+                styles: {
+                  fontStyle: "italic",
+                  fontSize:
+                    settingsStore.business_settings.printer.footer_font_size,
+                },
+              },
+            ],
+          ],
         }
       );
     }
@@ -364,6 +364,7 @@ const printWEBADASDEBRASEROS = (props) => {
         data: structure,
         lengthOfData: lengthData,
         printerName: place.printer_name,
+        formatTemp: place.printer_name.match(regex),
       });
     }
   });

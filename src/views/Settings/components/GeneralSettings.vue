@@ -184,6 +184,7 @@
                         @click="
                           selectedPlace = null;
                           preparationPlace = null;
+                          printerName = null;
                         "
                         >Cancelar</n-button
                       >
@@ -631,6 +632,7 @@ export default defineComponent({
         })
         .finally(() => {
           preparationPlace.value = null;
+          printerName.value = null;
         });
     };
 
@@ -652,6 +654,7 @@ export default defineComponent({
         .finally(() => {
           selectedPlace.value = null;
           preparationPlace.value = null;
+          printerName.value = null;
         });
     };
 

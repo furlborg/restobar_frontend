@@ -21,13 +21,13 @@
           :x-gap="12"
         >
           <n-form-item-gi :span="3" label="QZ Host IP">
-            <n-input v-model:value="businessSettings.qz_config.host"></n-input>
+            <n-input v-model:value="businessSettings.qz_config.host" />
           </n-form-item-gi>
           <n-form-item-gi :span="6" label="Signature">
             <n-input
               type="textarea"
               v-model:value="businessSettings.qz_config.signature"
-            ></n-input>
+            />
           </n-form-item-gi>
           <n-form-item-gi :span="6" label="Certificate">
             <n-input
@@ -49,13 +49,13 @@
             <n-select
               v-model:value="businessSettings.printer.kitchen_printer_format"
               :options="printOptions"
-            ></n-select>
+            />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Formato ticket caja">
             <n-select
               v-model:value="businessSettings.printer.invoice_printer_format"
               :options="printOptions"
-            ></n-select>
+            />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Tamaño letra cabecera">
             <n-input-number
@@ -64,7 +64,7 @@
               :min="0"
               :max="20"
               step="0.1"
-            ></n-input-number>
+            />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Tamaño letra subtitulo">
             <n-input-number
@@ -73,7 +73,7 @@
               :min="0"
               :max="20"
               step="0.1"
-            ></n-input-number>
+            />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Tamaño letra cuerpo">
             <n-input-number
@@ -82,7 +82,7 @@
               :min="0"
               :max="20"
               step="0.1"
-            ></n-input-number>
+            />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Tamaño letra pie de página">
             <n-input-number
@@ -91,11 +91,29 @@
               :min="0"
               :max="20"
               step="0.1"
-            ></n-input-number>
+            />
           </n-form-item-gi>
-          <n-form-item-gi :span="6">
+          <n-form-item-gi :span="4">
             <n-checkbox v-model:checked="businessSettings.printer.show_cat"
               >Mostrar categoría producto</n-checkbox
+            >
+          </n-form-item-gi>
+          <n-form-item-gi :span="3" label="Formato ticket pedidos">
+            <n-select
+              v-model:value="businessSettings.printer.kitchen_ticket_format"
+              :options="kitchenPrinterFormatOptions"
+            />
+          </n-form-item-gi>
+          <n-form-item-gi :span="3">
+            <n-checkbox
+              v-model:checked="businessSettings.printer.print_delivery_ticket"
+              >Imprimir ticket delivery</n-checkbox
+            >
+          </n-form-item-gi>
+          <n-form-item-gi :span="4">
+            <n-checkbox
+              v-model:checked="businessSettings.printer.show_delivery_kitchen"
+              >Mostrar información de delivery</n-checkbox
             >
           </n-form-item-gi>
         </n-grid>
@@ -111,10 +129,10 @@
             <n-select
               v-model:value="businessSettings.sale.default_invoice"
               :options="invoiceOptions"
-            ></n-select>
+            />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Valor ICBPER">
-            <n-input v-model:value="businessSettings.sale.icbper_tax"></n-input>
+            <n-input v-model:value="businessSettings.sale.icbper_tax" />
           </n-form-item-gi>
           <n-form-item-gi :span="3">
             <n-checkbox v-model:checked="businessSettings.sale.auto_send"
@@ -189,6 +207,17 @@ export default defineComponent({
       },
     ];
 
+    const kitchenPrinterFormatOptions = [
+      {
+        label: "FORMATO 1",
+        value: 1,
+      },
+      {
+        label: "FORMATO 2",
+        value: 2,
+      },
+    ];
+
     const performUpdateBusinessSettings = () => {
       updateBusinessSettings(businessSettings.value)
         .then((response) => {
@@ -221,6 +250,7 @@ export default defineComponent({
       performUpdateBusinessSettings,
       editMode,
       resetSettings,
+      kitchenPrinterFormatOptions,
     };
   },
 });
