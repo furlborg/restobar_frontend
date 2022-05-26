@@ -71,5 +71,15 @@ export const useProductStore = defineStore("product", {
         return null;
       }
     },
+    getPlacePrinterFormat(description) {
+      const place = this.places.find(
+        (place) => place.description === description
+      );
+      if (place) {
+        return place.printer_format;
+      } else {
+        return null;
+      }
+    },
   },
 });

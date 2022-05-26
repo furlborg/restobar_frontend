@@ -416,9 +416,23 @@ export default defineComponent({
         })
         .catch((error) => {
           if (error.response.status === 400) {
-            error.response.data.table.forEach((detail) => {
-              message.error(detail);
-            });
+            for (const value in error.response.data) {
+              for (const ser in error.response.data[`${value}`]) {
+                if (Array.isArray(error.response.data[`${value}`][`${ser}`])) {
+                  error.response.data[`${value}`][`${ser}`].forEach((err) => {
+                    if (typeof err === "object") {
+                      for (const v in err) {
+                        message.error(`${err[`${v}`]}`);
+                      }
+                    } else {
+                      message.error(`${err}`);
+                    }
+                  });
+                } else {
+                  message.error(error.response.data[`${value}`][`${ser}`]);
+                }
+              }
+            }
           } else {
             console.error(error);
             message.error("Algo salió mal...");

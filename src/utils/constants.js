@@ -1263,7 +1263,7 @@ export const createSaleColumns = ({ printSale, miscSale, updateSale, sendSale, n
                             size: 'small',
                             type: 'error',
                             secondary: true,
-                            disabled: row.invoice_type !== "80" ? row.status !== 'E' : false,
+                            disabled: row.invoice_type !== "80" ? row.status !== 'E' : row.status === 'A',
                             onClick: () => nullifySale(row)
                         },
                         renderIcon('md-cancel-twotone')
