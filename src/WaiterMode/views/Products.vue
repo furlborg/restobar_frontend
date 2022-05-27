@@ -13,9 +13,27 @@
         <n-space vertical>
           <n-space
             justify="space-between"
-            @click="product.quantity ? null : (product.quantity = 1)"
+            @click="
+              product.quantity
+                ? null
+                : product.has_stock
+                ? product.has_supplies
+                  ? (product.quantity = 1)
+                  : null
+                : null
+            "
           >
-            <n-text>{{ product.name }}</n-text>
+            <n-text
+              :delete="!product.has_stock || !product.has_supplies"
+              :type="
+                product.has_stock
+                  ? product.has_supplies
+                    ? 'default'
+                    : 'error'
+                  : 'error'
+              "
+              >{{ product.name }}</n-text
+            >
             <n-text>S/. {{ parseFloat(product.prices).toFixed(2) }}</n-text>
           </n-space>
           <n-collapse-transition :show="product.quantity > 0">

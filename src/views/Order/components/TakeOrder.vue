@@ -610,7 +610,7 @@ import {
   h,
 } from "vue";
 import { isAxiosError } from "axios";
-import { NThing, NTag, NSpace, useDialog, useMessage } from "naive-ui";
+import { NThing, NTag, NSpace, NText, useDialog, useMessage } from "naive-ui";
 import { useRouter } from "vue-router";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useProductStore } from "@/store/modules/product";
@@ -813,6 +813,21 @@ export default defineComponent({
       return false;
     };
 
+    const selectProduct = (v) => {
+      const item = products.value.find((product) => product.id === v);
+      if (item.has_supplies) {
+        if (item.has_stock) {
+          orderStore.addOrder(item);
+          saleStore.sale_details = orderStore.orderList;
+        }
+      }
+    };
+
+    const searchProductOption = (v) => {
+      const item = products.value.find((product) => product.id === v);
+      return item ? item : null;
+    };
+
     const renderLabel = (option) => {
       const t = option.label.split("-");
       let color = "#3B689F";
@@ -841,11 +856,26 @@ export default defineComponent({
       }
       return h(
         NThing,
-        {
-          title: t[0],
-        },
+        {},
         {
           default: () => "",
+          header: () =>
+            h(
+              NText,
+              {
+                delete:
+                  !searchProductOption(option.value).has_stock ||
+                  !searchProductOption(option.value).has_supplies,
+                type: searchProductOption(option.value).has_supplies
+                  ? searchProductOption(option.value).has_stock
+                    ? "default"
+                    : "error"
+                  : "error",
+              },
+              {
+                default: () => t[0],
+              }
+            ),
           description: () =>
             h(
               NSpace,
@@ -896,12 +926,6 @@ export default defineComponent({
             ),
         }
       );
-    };
-
-    const selectProduct = (v) => {
-      const item = products.value.find((product) => product.id === v);
-      orderStore.addOrder(item);
-      saleStore.sale_details = orderStore.orderList;
     };
 
     const obtainSaleNumber = async () => {
