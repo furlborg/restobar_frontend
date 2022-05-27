@@ -117,12 +117,10 @@ export default defineComponent({
     const supplieSearch = async (search) => {
       getSupplies(`supplies/search/?search=${search}`)
         .then((response) => {
-          response.data.map((v) => {
-            optionsSupplies.value.push({
-              label: v.name,
-              value: v.id,
-            });
-          });
+          optionsSupplies.value = response.data.map((v) => ({
+            label: v.name,
+            value: v.id,
+          }));
         })
         .catch((error) => {
           console.error(error);

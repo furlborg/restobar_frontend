@@ -113,6 +113,32 @@ export async function disableProductCategory(id) {
     return await http.delete(`product-categories/${id}/`)
 }
 
+export async function getInventoryConcepts() {
+    return await http.get('inventoryconcept/')
+}
+
+export async function retrieveInventoryConcept(id) {
+    return await http.get(`inventoryconcept/${id}/`)
+}
+
+export async function createInventoryConcept(concept) {
+    return await http.post('inventoryconcept/', {
+        concept: concept.description,
+        concept_type: concept.concept_type,
+    })
+}
+
+export async function updateInventoryConcept(idConcept, concept) {
+    return await http.put(`inventoryconcept/${idConcept}/`, {
+        concept: concept.description,
+        concept_type: concept.concept_type,
+    })
+}
+
+export async function disableInventoryConcepts(id) {
+    return await http.delete(`inventoryconcept/${id}/`)
+}
+
 export async function getProductPlaces() {
     return await http.get('preparation-places/')
 }
