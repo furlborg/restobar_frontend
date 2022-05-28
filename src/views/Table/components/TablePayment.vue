@@ -318,7 +318,8 @@
           type="success"
           :disabled="
             evalPayments ||
-            sale.payments.some((pay) => pay.payment_method === null)
+            sale.payments.some((pay) => pay.payment_method === null) ||
+            sale.payments.some((pay) => Number(pay.amount) <= 0)
           "
           secondary
           @click="performCreateSale"
@@ -688,7 +689,7 @@ export default defineComponent({
     const createPayment = () => {
       return {
         payment_method: null,
-        amount: "",
+        amount: "0",
       };
     };
 
