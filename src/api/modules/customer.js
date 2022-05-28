@@ -99,6 +99,8 @@ export async function searchRucCustomer(names) {
 export async function requestCustomerData(document) {
     return await http.post('customers/request_data/', {
         document: document,
+    }, {
+        timeout: 10000,
     })
 }
 

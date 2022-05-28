@@ -325,7 +325,7 @@
                         />
                       </div>
                       <div>
-                        TOTAL: <span>S/. {{ sale.amount.toFixed(2) }}</span>
+                        TOTAL: <span>S/. {{ sale.amount }}</span>
                       </div>
                     </n-space>
                   </n-gi>
@@ -363,8 +363,8 @@
           <!-- Customer Modal -->
           <customer-modal
             v-model:show="showCustomerModal"
-            @update:show="onCloseModal"
             :doc_type="sale.invoice_type === 1 ? '6' : null"
+            @update:show="onCloseModal"
             @on-success="onSuccess"
           />
         </n-gi>
@@ -693,7 +693,7 @@ export default defineComponent({
       if (sale.value.delivery_info) {
         cal = cal + parseFloat(sale.value.delivery_info.amount);
       }
-      return cal;
+      return cal.toFixed(2);
     });
 
     const saleForm = ref();

@@ -418,6 +418,7 @@ export default defineComponent({
         .catch((error) => {
           if (isAxiosError(error)) {
             if (error.response.status === 400) {
+              console.error(error);
               for (const value in error.response.data) {
                 for (const ser in error.response.data[`${value}`]) {
                   if (
@@ -518,6 +519,7 @@ export default defineComponent({
         .catch((error) => {
           if (isAxiosError(error)) {
             if (error.response.status === 400) {
+              console.error(error);
               for (const value in error.response.data) {
                 for (const ser in error.response.data[`${value}`]) {
                   if (
