@@ -388,7 +388,7 @@ export default defineComponent({
               }
             })
             .finally(() => {
-              loadSales();
+              pagination.value.onChange(pagination.value.page);
             });
         },
         nullifySale(row) {
@@ -410,7 +410,7 @@ export default defineComponent({
                   message.error("Algo salió mal...");
                 })
                 .finally(() => {
-                  loadSales();
+                  pagination.value.onChange(pagination.value.page);
                 });
             },
             onNegativeClick: () => {},
