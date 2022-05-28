@@ -265,7 +265,7 @@ import {
   onBeforeRouteUpdate,
 } from "vue-router";
 import { isAxiosError } from "axios";
-import { NThing, NTag, NSpace, useDialog, useMessage } from "naive-ui";
+import { NThing, NTag, NSpace, NText, useDialog, useMessage } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useUserStore } from "@/store/modules/user";
 import { useGenericsStore } from "@/store/modules/generics";
@@ -418,6 +418,7 @@ export default defineComponent({
         .catch((error) => {
           if (isAxiosError(error)) {
             if (error.response.status === 400) {
+              console.error(error);
               for (const value in error.response.data) {
                 for (const ser in error.response.data[`${value}`]) {
                   if (
@@ -518,6 +519,7 @@ export default defineComponent({
         .catch((error) => {
           if (isAxiosError(error)) {
             if (error.response.status === 400) {
+              console.error(error);
               for (const value in error.response.data) {
                 for (const ser in error.response.data[`${value}`]) {
                   if (
@@ -682,7 +684,16 @@ export default defineComponent({
 
     const selectProduct = (v) => {
       const item = products.value.find((product) => product.id === v);
-      orderStore.addOrder(item);
+      if (item.has_supplies) {
+        if (item.has_stock) {
+          orderStore.addOrder(item);
+        }
+      }
+    };
+
+    const searchProductOption = (v) => {
+      const item = products.value.find((product) => product.id === v);
+      return item ? item : null;
     };
 
     const renderLabel = (option) => {
@@ -700,11 +711,26 @@ export default defineComponent({
       }
       return h(
         NThing,
-        {
-          title: t[0],
-        },
+        {},
         {
           default: () => "",
+          header: () =>
+            h(
+              NText,
+              {
+                delete:
+                  !searchProductOption(option.value).has_stock ||
+                  !searchProductOption(option.value).has_supplies,
+                type: searchProductOption(option.value).has_supplies
+                  ? searchProductOption(option.value).has_stock
+                    ? "default"
+                    : "error"
+                  : "error",
+              },
+              {
+                default: () => t[0],
+              }
+            ),
           description: () =>
             h(
               NSpace,

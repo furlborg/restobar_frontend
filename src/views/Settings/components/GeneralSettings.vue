@@ -436,6 +436,113 @@
             </n-grid>
           </n-card>
         </n-tab-pane>
+        <n-tab-pane name="Kardex" tab="Kardex">
+          <n-card
+            title="Editar Conceptos de Inventario"
+            :bordered="false"
+            embedded
+          >
+            <n-grid responsive="screen" cols="3 xs:3 s:12" :x-gap="12">
+              <n-gi :span="3">
+                <n-list class="bg-white m-0" bordered>
+                  <template #header
+                    ><n-text class="fs-5">Lista de Conceptos</n-text></template
+                  >
+                  <n-list-item
+                    v-for="inventory_concept in inventory_concepts"
+                    :class="{
+                      'bg-selected':
+                        selectedInventoryConcept === inventory_concept.id,
+                    }"
+                    :key="inventory_concept.id"
+                    @click="selectInventoryConcept(inventory_concept)"
+                  >
+                    <!-- <template #suffix v-if="selectedCategory === category.id">
+                      <n-button type="error" text>
+                        <v-icon name="md-disabledbydefault-round" />
+                      </n-button>
+                    </template> -->
+                    <n-space justify="space-between">
+                      {{ inventory_concept.concept }}
+                      <n-tag
+                        :type="
+                          inventory_concept.concept_type === '0'
+                            ? 'success'
+                            : 'error'
+                        "
+                        size="small"
+                        round
+                        >{{
+                          inventory_concept.concept_type === "0"
+                            ? "Ingreso"
+                            : "Egreso"
+                        }}</n-tag
+                      >
+                    </n-space>
+                  </n-list-item>
+                </n-list>
+              </n-gi>
+              <n-gi :span="9">
+                <n-form class="mt-2">
+                  <n-grid
+                    responsive="screen"
+                    cols="4 xs:4 s:8 m:12 l:24"
+                    :x-gap="12"
+                  >
+                    <n-form-item-gi :span="4" label="Tipo">
+                      <n-select
+                        :options="conceptTypeOptions"
+                        v-model:value="inventory_concept.concept_type"
+                        placeholder=""
+                      />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="4" label="Descripción">
+                      <n-input
+                        v-model:value="inventory_concept.description"
+                        placeholder=""
+                      />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="4">
+                      <n-button
+                        class="me-2"
+                        :type="!selectedInventoryConcept ? 'info' : 'warning'"
+                        :disabled="
+                          !inventory_concept.description ||
+                          !inventory_concept.concept_type
+                        "
+                        @click="
+                          !selectedInventoryConcept
+                            ? performCreateInventoryConcept()
+                            : performUpdateInventoryConcept()
+                        "
+                        secondary
+                        >{{
+                          !selectedInventoryConcept ? "Agregar" : "Guardar"
+                        }}</n-button
+                      >
+                      <n-button
+                        type="error"
+                        secondary
+                        :disabled="
+                          !inventory_concept.description ||
+                          !inventory_concept.concept_type
+                        "
+                        @click="
+                          selectedInventoryConcept = null;
+                          inventory_concept = {
+                            description: '',
+                            concept_type: null,
+                          };
+                        "
+                        >Cancelar</n-button
+                      >
+                    </n-form-item-gi>
+                  </n-grid>
+                </n-form>
+              </n-gi>
+            </n-grid>
+          </n-card>
+        </n-tab-pane>
       </n-tabs>
     </n-card>
   </div>
@@ -461,6 +568,9 @@ import {
   getProductCategories,
   createProductCategory,
   updateProductCategory,
+  getInventoryConcepts,
+  createInventoryConcept,
+  updateInventoryConcept,
 } from "@/api/modules/products";
 import { getConcepts, createConcept, updateConcept } from "@/api/modules/tills";
 
@@ -896,12 +1006,93 @@ export default defineComponent({
         });
     };
 
+    const inventory_concepts = ref([]);
+    const inventory_concept = ref({
+      description: "",
+      concept_type: null,
+    });
+    const selectedInventoryConcept = ref(null);
+
+    const selectInventoryConcept = (single_concept) => {
+      if (!selectedInventoryConcept.value) {
+        selectedInventoryConcept.value = single_concept.id;
+        inventory_concept.value.description = cloneDeep(single_concept.concept);
+        inventory_concept.value.concept_type = cloneDeep(
+          single_concept.concept_type
+        );
+      } else {
+        if (selectedInventoryConcept.value === single_concept.id) {
+          selectedInventoryConcept.value = null;
+          inventory_concept.value.description = null;
+          inventory_concept.value.concept_type = null;
+        } else {
+          selectedConcept.value = single_concept.id;
+          inventory_concept.value.description = cloneDeep(
+            single_concept.concept
+          );
+          inventory_concept.value.concept_type = cloneDeep(
+            single_concept.concept_type
+          );
+        }
+      }
+    };
+
+    const loadInventoryConcepts = async () => {
+      await getInventoryConcepts()
+        .then((response) => {
+          if (response.status === 200) {
+            inventory_concepts.value = response.data;
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        });
+    };
+
+    const performCreateInventoryConcept = async () => {
+      await createInventoryConcept(inventory_concept.value)
+        .then((response) => {
+          if (response.status === 201) {
+            loadInventoryConcepts();
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          inventory_concept.value = { description: "", concept_type: null };
+        });
+    };
+
+    const performUpdateInventoryConcept = async () => {
+      await updateInventoryConcept(
+        selectedInventoryConcept.value,
+        inventory_concept.value
+      )
+        .then((response) => {
+          if (response.status === 200) {
+            loadInventoryConcepts();
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          selectedInventoryConcept.value = null;
+          inventory_concept.value = { description: "", concept_type: null };
+        });
+    };
+
     onMounted(() => {
       tableStore.refreshData();
       loadPreparationPlaces();
       loadProductCategories();
       loadPaymentMethods();
       loadConcepts();
+      loadInventoryConcepts();
     });
 
     const handleBack = () => {
@@ -950,6 +1141,12 @@ export default defineComponent({
       selectConcept,
       performCreateConcept,
       performUpdateConcept,
+      inventory_concepts,
+      inventory_concept,
+      selectedInventoryConcept,
+      selectInventoryConcept,
+      performCreateInventoryConcept,
+      performUpdateInventoryConcept,
     };
   },
 });

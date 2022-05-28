@@ -27,7 +27,13 @@
           class="w-100 p-0"
           v-for="(product, index) in itemsList"
           :key="index"
-          @click="orderStore.addOrder(product)"
+          @click="
+            product.has_stock
+              ? product.has_supplies
+                ? orderStore.addOrder(product)
+                : null
+              : null
+          "
           style="cursor: pointer"
         >
           <template #prefix>
@@ -46,6 +52,14 @@
                     'fs-4': genericsStore.device === 'desktop',
                     'fs-6': genericsStore.device === 'mobile',
                   }"
+                  :delete="!product.has_stock || !product.has_supplies"
+                  :type="
+                    product.has_stock
+                      ? product.has_supplies
+                        ? 'default'
+                        : 'error'
+                      : 'error'
+                  "
                   >{{ product.name }}</n-text
                 >
                 <n-text type="success"

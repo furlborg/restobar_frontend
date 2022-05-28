@@ -17,7 +17,14 @@
             <div>
               <img src="~@/assets/images/category-bg.jpg" alt="" />
               <n-text
-                class="position-absolute top-50 start-50 translate-middle text-center fs-5"
+                class="
+                  position-absolute
+                  top-50
+                  start-50
+                  translate-middle
+                  text-center
+                  fs-5
+                "
                 >{{ category.description }}</n-text
               >
             </div>
@@ -37,7 +44,13 @@
               class="w-100 p-0"
               v-for="(product, index) in itemsList"
               :key="index"
-              @click="orderStore.addOrder(product)"
+              @click="
+                product.has_stock
+                  ? product.has_supplies
+                    ? orderStore.addOrder(product)
+                    : null
+                  : null
+              "
               style="cursor: pointer"
             >
               <template #prefix>
@@ -51,7 +64,21 @@
               <n-thing>
                 <n-space vertical>
                   <n-space align="center">
-                    <n-text class="fs-4">{{ product.name }}</n-text>
+                    <n-text
+                      :class="{
+                        'fs-4': genericsStore.device === 'desktop',
+                        'fs-6': genericsStore.device === 'mobile',
+                      }"
+                      :delete="!product.has_stock || !product.has_supplies"
+                      :type="
+                        product.has_stock
+                          ? product.has_supplies
+                            ? 'default'
+                            : 'error'
+                          : 'error'
+                      "
+                      >{{ product.name }}</n-text
+                    >
                     <n-text class="fs-6" type="success"
                       >S/. {{ parseFloat(product.prices).toFixed(2) }}</n-text
                     >
@@ -73,6 +100,7 @@ import { useMessage } from "naive-ui";
 import { useProductStore } from "@/store/modules/product";
 import { useOrderStore } from "@/store/modules/order";
 import { getProductsByCategory } from "@/api/modules/products";
+import { useGenericsStore } from "@/store/modules/generics";
 
 export default defineComponent({
   name: "CategoriesList",
@@ -81,6 +109,7 @@ export default defineComponent({
     const isLoading = ref(false);
 
     const productStore = useProductStore();
+    const genericsStore = useGenericsStore();
     const orderStore = useOrderStore();
 
     const products = ref([]);
@@ -114,6 +143,7 @@ export default defineComponent({
     });
 
     return {
+      genericsStore,
       isLoading,
       selectCategory,
       productStore,

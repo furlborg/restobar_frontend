@@ -481,7 +481,7 @@ export default defineComponent({
               deleteId.value = null;
               passConfirm.value = "";
               isLoading.value = false;
-              loadOrders();
+              pagination.value.onChange(pagination.value.page);
             }
           })
           .catch((error) => {
@@ -504,7 +504,7 @@ export default defineComponent({
               deleteTable.value = null;
               passConfirm.value = "";
               isLoading.value = false;
-              loadOrders();
+              pagination.value.onChange(pagination.value.page);
             }
           })
           .catch((error) => {
@@ -596,7 +596,8 @@ export default defineComponent({
           message.error("Algo salió mal...");
         })
         .finally(() => {
-          loadOrders();
+          pagination.value.onChange(pagination.value.page);
+          // loadOrders();
         });
     };
 
@@ -765,7 +766,6 @@ export default defineComponent({
           await retrieveOrder(row.id)
             .then((response) => {
               if (response.status === 200) {
-                console.log(response.data);
                 //do smething
                 if (
                   !!response.data.delivery_info &&

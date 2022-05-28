@@ -230,7 +230,7 @@
                 />
               </div>
               <div>
-                TOTAL: <span>S/. {{ sale.amount.toFixed(2) }}</span>
+                TOTAL: <span>S/. {{ sale.amount }}</span>
               </div>
             </n-space>
           </n-gi>
@@ -329,6 +329,7 @@
     <!-- Customer Modal -->
     <customer-modal
       v-model:show="showModal"
+      :doc_type="sale.invoice_type === 1 ? '6' : null"
       @update:show="onCloseModal"
       @on-success="onSuccess"
     />
@@ -408,7 +409,9 @@ export default defineComponent({
     });
 
     const total = computed(() => {
-      return parseFloat(subTotal.value - sale.value.discount + icbper.value);
+      return parseFloat(
+        subTotal.value - sale.value.discount + icbper.value
+      ).toFixed(2);
     });
 
     const sale = ref({
@@ -481,6 +484,7 @@ export default defineComponent({
               loading.value = true;
               sale.value.order = orderStore.orderId;
               sale.value.sale_details = saleStore.toSale;
+              console.log(sale.value.amount);
               await createSale(sale.value)
                 .then((response) => {
                   if (response.status === 201) {
@@ -500,7 +504,18 @@ export default defineComponent({
                         })
                         .catch((error) => {
                           if (error.response.status === 400) {
-                            message.error(error.response.data.error);
+                            console.error(error);
+                            for (const value in error.response.data) {
+                              error.response.data[`${value}`].forEach((err) => {
+                                if (typeof err === "object") {
+                                  for (const v in err) {
+                                    message.error(`${err[`${v}`]}`);
+                                  }
+                                } else {
+                                  message.error(`${err}`);
+                                }
+                              });
+                            }
                           } else {
                             console.error(error);
                             message.error("Algo salió mal...");
@@ -513,6 +528,7 @@ export default defineComponent({
                 })
                 .catch((error) => {
                   if (error.response.status === 400) {
+                    console.error(error);
                     for (const value in error.response.data) {
                       error.response.data[`${value}`].forEach((err) => {
                         if (typeof err === "object") {
