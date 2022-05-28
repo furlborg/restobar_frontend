@@ -68,7 +68,11 @@ export const CreatePdfFile = async (props, format) => {
         finalY += newImgprops.newHeigth;
       }
 
-      if (index === 10 && !!props.addImages && !!props.objSunat) {
+      if (
+        index === props.data.length - 1 &&
+        !!props.addImages &&
+        !!props.objSunat
+      ) {
         let newImgprops = createNewImage(30, code_qr);
 
         doc.addImage(
