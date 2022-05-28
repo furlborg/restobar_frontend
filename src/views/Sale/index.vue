@@ -357,7 +357,7 @@ export default defineComponent({
             saleStore,
           });
 
-          message.success("Imprecion creada");
+          message.success("Impresión creada");
         },
         updateSale(row) {
           showModal.value = true;

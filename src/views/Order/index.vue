@@ -738,7 +738,7 @@ export default defineComponent({
                     break;
                   default:
                     message.error(
-                      "Error al definir las propiedades de la imprecion"
+                      "Error al definir las propiedades de la impresión"
                     );
                 }
 

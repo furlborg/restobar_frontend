@@ -325,7 +325,7 @@
                         />
                       </div>
                       <div>
-                        TOTAL: <span>S/. {{ sale.amount }}</span>
+                        TOTAL: <span>S/. {{ sale.amount.toFixed(2) }}</span>
                       </div>
                     </n-space>
                   </n-gi>
@@ -693,7 +693,7 @@ export default defineComponent({
       if (sale.value.delivery_info) {
         cal = cal + parseFloat(sale.value.delivery_info.amount);
       }
-      return cal.toFixed(2);
+      return cal;
     });
 
     const saleForm = ref();

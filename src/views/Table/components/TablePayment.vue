@@ -230,7 +230,7 @@
                 />
               </div>
               <div>
-                TOTAL: <span>S/. {{ sale.amount }}</span>
+                TOTAL: <span>S/. {{ sale.amount.toFixed(2) }}</span>
               </div>
             </n-space>
           </n-gi>
@@ -409,9 +409,7 @@ export default defineComponent({
     });
 
     const total = computed(() => {
-      return parseFloat(
-        subTotal.value - sale.value.discount + icbper.value
-      ).toFixed(2);
+      return parseFloat(subTotal.value - sale.value.discount + icbper.value);
     });
 
     const sale = ref({
