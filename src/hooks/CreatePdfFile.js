@@ -123,8 +123,6 @@ export const CreatePdfFile = async (props, format) => {
     }
   });
 
-  //!Imprecion
-
   if (!!props.show) {
     doc.autoPrint();
 
