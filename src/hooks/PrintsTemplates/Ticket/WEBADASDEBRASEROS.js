@@ -11,15 +11,13 @@ const tableStore = useTableStore();
 
 let dateNow = formatter(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss");
 
-// let format = settingsStore.business_settings.printer.kitchen_printer_format;
-
 const printWEBADASDEBRASEROS = (props) => {
   let arrayDataPrint = [];
 
   if (!!props.created) dateNow = props.created;
 
   productStore.places.forEach(async (place) => {
-    let jumpLimiter = place.printer_format === 58 ? 10 : 55;
+    let format = place.printer_format;
 
     let vuleto = props.changing || 0.0;
     vuleto -= vuleto * 2;
@@ -27,58 +25,32 @@ const printWEBADASDEBRASEROS = (props) => {
     let lengthData = 0;
 
     const createNewText = (textToFormat = "") => {
-      let text = "";
-
-      if (!!textToFormat) {
-        text = textToFormat;
-        lengthData += 7 * 6.5;
-      }
-
-      if (props.updateOrder && !!props.table && !!textToFormat === false) {
-        lengthData += lengthData * 6.5;
-        text = `ACTUALIZACION: ${tableStore.getTableByID(props.table).description
-          }`;
-      }
-
-      if (
-        !!props.updateOrder === false &&
-        !!props.table &&
-        !!textToFormat === false
-      ) {
-        text = `MESA: ${tableStore.getTableByID(props.table).description}`;
-      }
+      let text = textToFormat;
+      lengthData += 10;
 
       let formatNewText = "";
 
       let rowFormatNewText = "";
 
       text.split(" ").map((valString, indx) => {
-        if (indx === text.split(" ").length - 1) {
-          if (
-            rowFormatNewText.length + `${valString} `.length - jumpLimiter <=
-            5
-          ) {
-            formatNewText += `${rowFormatNewText}${valString}`;
-          } else {
-            formatNewText += `${rowFormatNewText}\n${valString}`;
+        let FutureLength = rowFormatNewText.length + `${valString}`.length;
 
-            lengthData += lengthData * 6.5;
+        let jumpInd = format === 58 ? 12 : 20;
+
+        if ((FutureLength + jumpInd) / format <= 0.5) {
+          if (text.split(" ").length - 1 === indx) {
+            formatNewText += `${rowFormatNewText} ${valString}`;
 
             rowFormatNewText = "";
+          } else {
+            rowFormatNewText += `${valString} `;
           }
         } else {
-          if (
-            rowFormatNewText.length + `${valString} `.length - jumpLimiter >=
-            5
-          ) {
-            formatNewText += `${rowFormatNewText}\n`;
+          formatNewText += `${rowFormatNewText}\n${valString} `;
 
-            lengthData += lengthData * 6.5;
+          lengthData += 10;
 
-            return (rowFormatNewText = `${valString} `);
-          } else {
-            return (rowFormatNewText += `${valString} `);
-          }
+          rowFormatNewText = "";
         }
       });
 
@@ -103,12 +75,12 @@ const printWEBADASDEBRASEROS = (props) => {
       },
     ];
 
-    !!props.saleInf === false &&
+    !!props.updateOrder &&
       structure.push({
         dat: [
           [
             {
-              content: createNewText(),
+              content: "ACTUALIZACION:",
               styles: {
                 fontStyle: "bold",
                 halign: "center",
@@ -119,6 +91,22 @@ const printWEBADASDEBRASEROS = (props) => {
           ],
         ],
       });
+
+    structure.push({
+      dat: [
+        [
+          {
+            content: `${tableStore.getTableByID(props.table).description}`,
+            styles: {
+              fontStyle: "bold",
+              halign: "center",
+              fontSize:
+                settingsStore.business_settings.printer.sub_header_font_size,
+            },
+          },
+        ],
+      ],
+    });
 
     settingsStore.business_settings.printer.show_delivery_kitchen &&
       !!props.saleInf &&
@@ -214,7 +202,7 @@ const printWEBADASDEBRASEROS = (props) => {
       if (!!val.preparation_place) {
         let ind = "";
 
-        lengthData += lengthData * 6.5;
+        lengthData += 10;
         val.indication.map((v) => {
           if (!!v.description) {
             ind += `${createNewText(`*** ${v.description}`)}`;
@@ -227,14 +215,14 @@ const printWEBADASDEBRASEROS = (props) => {
               }
             }
 
-            lengthData += lengthData * 6.5;
+            lengthData += 10;
           } else {
             if (v.takeAway) {
               ind = "*** [llevar]";
             }
           }
 
-          lengthData += lengthData * 6.5;
+          lengthData += 10;
         });
 
         structure.push(
@@ -243,9 +231,7 @@ const printWEBADASDEBRASEROS = (props) => {
             dat: [
               [
                 {
-                  content: createNewText(
-                    `${val.quantity} x ${val.product_name}`
-                  ),
+                  content: createNewText(`${val.quantity}x${val.product_name}`),
                   styles: {
                     fontStyle: "bold",
                     fontSize:
@@ -264,8 +250,7 @@ const printWEBADASDEBRASEROS = (props) => {
                   content: ind.toLowerCase(),
                   styles: {
                     fontSize:
-                      settingsStore.business_settings.printer.body_font_size -
-                      2,
+                      settingsStore.business_settings.printer.body_font_size,
                     fontStyle: "italic",
                   },
                 },
@@ -281,7 +266,7 @@ const printWEBADASDEBRASEROS = (props) => {
       !!props.saleInf &&
       !!props.saleInf.delivery_info
     ) {
-      lengthData += lengthData * 6.5;
+      lengthData += 10;
       structure.push(
         {
           dat: [

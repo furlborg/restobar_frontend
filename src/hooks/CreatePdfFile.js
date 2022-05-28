@@ -99,8 +99,14 @@ export const CreatePdfFile = async (props, format) => {
         columns: !!val.col ? val.col : null,
         body: val.dat,
         cellWidth: "auto",
+
         headStyles: { fontSize: 7, font: "helvetica" },
-        bodyStyles: { fontSize: 7, font: "helvetica", cellPadding: 0.5 },
+        bodyStyles: {
+          fontSize: 7,
+          font: "helvetica",
+          cellPadding: 0.5,
+          overflow: "linebreak",
+        },
         columnStyles: {
           fontSize: 7,
           tittle: {

@@ -19,58 +19,37 @@ const printOrderTicket = (props) => {
   if (!!props.created) dateNow = props.created;
 
   productStore.places.forEach(async (place) => {
-    let jumpLimiter = place.printer_format === 58 ? 10 : 55;
+    let format = place.printer_format;
 
     let lengthData = 0;
 
     const createNewText = (textToFormat = "") => {
-      let text = "";
-
-      if (!!textToFormat) {
-        text = textToFormat;
-
-        lengthData += lengthData * 6.5;
-      }
-
-      if (props.updateOrder && !!props.table && !!textToFormat === false) {
-        lengthData += lengthData * 6.5;
-        text = `ACTUALIZACION: ${tableStore.getTableByID(props.table).description
-          }`;
-      }
-
-      if (
-        !!props.updateOrder === false &&
-        !!props.table &&
-        !!textToFormat === false
-      ) {
-        text = `MESA: ${tableStore.getTableByID(props.table).description}`;
-      }
+      let text = textToFormat;
+      lengthData += 10;
 
       let formatNewText = "";
 
       let rowFormatNewText = "";
 
       text.split(" ").map((valString, indx) => {
-        if (indx === text.split(" ").length - 1) {
-          if (
-            rowFormatNewText.length + `${valString} `.length <= jumpLimiter &&
-            `${valString} `.length >= 5
-          ) {
+        let FutureLength = rowFormatNewText.length + `${valString}`.length;
+
+        let jumpInd = format === 58 ? 12 : 20;
+
+        if ((FutureLength + jumpInd) / format <= 0.57) {
+          if (text.split(" ").length - 1 === indx) {
             formatNewText += `${rowFormatNewText} ${valString}`;
+
+            rowFormatNewText = "";
           } else {
-            formatNewText += `\n${rowFormatNewText} ${valString}`;
+            rowFormatNewText += `${valString} `;
           }
         } else {
-          if (
-            rowFormatNewText.length + `${valString} `.length >= jumpLimiter &&
-            `${valString} `.length >= 5
-          ) {
-            formatNewText += `${rowFormatNewText}\n`;
+          formatNewText += `${rowFormatNewText}\n${valString} `;
 
-            return (rowFormatNewText = `${valString}`);
-          } else {
-            return (rowFormatNewText += `${valString} `);
-          }
+          lengthData += 10;
+
+          rowFormatNewText = "";
         }
       });
 
@@ -93,15 +72,14 @@ const printOrderTicket = (props) => {
           ],
         ],
       },
-      {
+    ];
+
+    !!props.updateOrder &&
+      structure.push({
         dat: [
           [
             {
-              content: !!props.table
-                ? createNewText()
-                : !!props.saleInf.delivery_info
-                  ? "DELIVERY"
-                  : "PARA LLEVAR",
+              content: "ACTUALIZACION:",
               styles: {
                 fontStyle: "bold",
                 halign: "center",
@@ -111,8 +89,27 @@ const printOrderTicket = (props) => {
             },
           ],
         ],
-      },
-    ];
+      });
+
+    structure.push({
+      dat: [
+        [
+          {
+            content: !!props.table
+              ? `${tableStore.getTableByID(props.table).description}`
+              : !!props.saleInf.delivery_info
+              ? "DELIVERY"
+              : "PARA LLEVAR",
+            styles: {
+              fontStyle: "bold",
+              halign: "center",
+              fontSize:
+                settingsStore.business_settings.printer.sub_header_font_size,
+            },
+          },
+        ],
+      ],
+    });
 
     let info = props.data.order_details.filter(
       (detail) => detail.preparation_place === place.description
@@ -121,6 +118,8 @@ const printOrderTicket = (props) => {
     info.map((val) => {
       if (!!val.preparation_place) {
         let ind = "";
+
+        lengthData += 10;
 
         val.indication.map((v) => {
           if (!!v.description) {
@@ -134,14 +133,14 @@ const printOrderTicket = (props) => {
               }
             }
 
-            lengthData += lengthData * 6.5;
+            lengthData += 10;
           } else {
             if (v.takeAway) {
               ind = "[PARA LLEVAR]";
             }
           }
 
-          lengthData += lengthData * 6.5;
+          lengthData += 10;
         });
 
         let prodDetail = !!val.product_description
@@ -162,7 +161,7 @@ const printOrderTicket = (props) => {
         ) {
           prodDetail.map((v, index) => {
             verifyNameCombo += `${index !== 0 ? "\n-" : "-"} ${v.trim()}`;
-            lengthData += 6.5;
+            lengthData += 10;
           });
         }
         if (settingsStore.business_settings.printer.show_cat) {
@@ -174,7 +173,7 @@ const printOrderTicket = (props) => {
           } else if (
             (!!val.product_category.toLowerCase().includes("menu") === false ||
               !!val.product_category.toLowerCase().includes("menus") ===
-              false) &&
+                false) &&
             (!!val.product_category.toLowerCase().includes("combo") === false ||
               !!val.product_category.toLowerCase().includes("combo") === false)
           ) {
