@@ -325,7 +325,7 @@
                         />
                       </div>
                       <div>
-                        TOTAL: <span>S/. {{ sale.amount.toFixed(2) }}</span>
+                        TOTAL: <span>S/. {{ sale.amount }}</span>
                       </div>
                     </n-space>
                   </n-gi>
@@ -531,8 +531,7 @@
       >
         <n-space justify="space-between">
           <n-tag type="info"
-            >Total: S/.
-            {{ showPayments ? sale.amount.toFixed(2) : null }}</n-tag
+            >Total: S/. {{ showPayments ? sale.amount : null }}</n-tag
           >
           <n-tag :type="evalPayments ? 'error' : 'success'"
             >Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}</n-tag
@@ -692,7 +691,7 @@ export default defineComponent({
     const total = computed(() => {
       let cal = parseFloat(subTotal.value - sale.value.discount + icbper.value);
       if (sale.value.delivery_info) {
-        cal = cal + parseFloat(sale.value.delivery_info.amount);
+        cal = cal + parseFloat(sale.value.delivery_info.amount).toFixed(2);
       }
       return cal;
     });
@@ -1273,7 +1272,7 @@ export default defineComponent({
         return (
           sale.value.payments.reduce((acc, val) => {
             return (acc += parseFloat(val.amount));
-          }, 0) !== sale.value.amount
+          }, 0) !== Number(sale.value.amount)
         );
       } else {
         return true;

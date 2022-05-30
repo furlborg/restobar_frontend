@@ -195,6 +195,7 @@
                     v-model="sale.given_amount"
                     v-autowidth
                     @click="$event.target.select()"
+                    @input="testAmount"
                   />
                 </div>
               </n-space>
@@ -230,7 +231,7 @@
                 />
               </div>
               <div>
-                TOTAL: <span>S/. {{ sale.amount.toFixed(2) }}</span>
+                TOTAL: <span>S/. {{ sale.amount }}</span>
               </div>
             </n-space>
           </n-gi>
@@ -277,7 +278,7 @@
     >
       <n-space justify="space-between">
         <n-tag type="info"
-          >Total: S/. {{ showPayments ? sale.amount.toFixed(2) : null }}</n-tag
+          >Total: S/. {{ showPayments ? sale.amount : null }}</n-tag
         >
         <n-tag :type="evalPayments ? 'error' : 'success'"
           >Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}</n-tag
@@ -410,7 +411,9 @@ export default defineComponent({
     });
 
     const total = computed(() => {
-      return parseFloat(subTotal.value - sale.value.discount + icbper.value);
+      return parseFloat(
+        subTotal.value - sale.value.discount + icbper.value
+      ).toFixed(2);
     });
 
     const sale = ref({
@@ -483,7 +486,6 @@ export default defineComponent({
               loading.value = true;
               sale.value.order = orderStore.orderId;
               sale.value.sale_details = saleStore.toSale;
-              console.log(sale.value.amount);
               await createSale(sale.value)
                 .then((response) => {
                   if (response.status === 201) {
@@ -718,7 +720,7 @@ export default defineComponent({
         return (
           sale.value.payments.reduce((acc, val) => {
             return (acc += parseFloat(val.amount));
-          }, 0) !== sale.value.amount
+          }, 0) !== Number(sale.value.amount)
         );
       } else {
         return true;
@@ -768,6 +770,9 @@ export default defineComponent({
       filteredMethods,
       evalPayments,
       currentPaymentsAmount,
+      testAmount() {
+        console.log(sale.value.amount);
+      },
     };
   },
 });
