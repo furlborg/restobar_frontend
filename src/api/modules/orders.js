@@ -96,7 +96,7 @@ export async function takeAwayOrder(order_details, sale_data, user) {
         number: sale_data.number,
         date_sale: sale_data.date_sale,
         count: sale_data.count,
-        amount: sale_data.amount,
+        amount: sale_data.amount.toFixed(2),
         given_amount: sale_data.given_amount,
         invoice_type: sale_data.invoice_type,
         payment_method: sale_data.payment_method,
@@ -114,4 +114,8 @@ export async function takeAwayOrder(order_details, sale_data, user) {
         order: order,
         sale: sale
     })
+}
+
+export async function retrieveOrderTicket(id) {
+    return await http.get(`orders/${id}/order_ticket/`)
 }
