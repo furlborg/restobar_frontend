@@ -92,7 +92,7 @@ const printWEBADASDEBRASEROS = (props) => {
         ],
       });
 
-    structure.push({
+      !!props.table && structure.push({
       dat: [
         [
           {

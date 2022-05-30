@@ -91,7 +91,7 @@ const printOrderTicket = (props) => {
         ],
       });
 
-    structure.push({
+      !!props.table && structure.push({
       dat: [
         [
           {

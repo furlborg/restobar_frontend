@@ -691,9 +691,9 @@ export default defineComponent({
     const total = computed(() => {
       let cal = parseFloat(subTotal.value - sale.value.discount + icbper.value);
       if (sale.value.delivery_info) {
-        cal = cal + parseFloat(sale.value.delivery_info.amount).toFixed(2);
+        cal = cal + parseFloat(sale.value.delivery_info.amount);
       }
-      return cal;
+      return cal.toFixed(2);
     });
 
     const saleForm = ref();
