@@ -266,7 +266,7 @@ const printWEBADASDEBRASEROS = (props) => {
       !!props.saleInf &&
       !!props.saleInf.delivery_info
     ) {
-      lengthData += 10;
+      lengthData += 50;
       structure.push(
         {
           dat: [
