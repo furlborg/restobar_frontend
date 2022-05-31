@@ -1,4 +1,6 @@
 import { CreatePdfFile } from "@/hooks/CreatePdfFile.js";
+import { useSettingsStore } from "@/store/modules/settings";
+const settingsStore = useSettingsStore();
 
 const printDeliveryInfo = (props) => {
   console.log(props.data);
