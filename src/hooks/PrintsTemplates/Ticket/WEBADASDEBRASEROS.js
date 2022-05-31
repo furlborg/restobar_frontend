@@ -92,21 +92,22 @@ const printWEBADASDEBRASEROS = (props) => {
         ],
       });
 
-    structure.push({
-      dat: [
-        [
-          {
-            content: `${tableStore.getTableByID(props.table).description}`,
-            styles: {
-              fontStyle: "bold",
-              halign: "center",
-              fontSize:
-                settingsStore.business_settings.printer.sub_header_font_size,
+    !!props.table &&
+      structure.push({
+        dat: [
+          [
+            {
+              content: `${tableStore.getTableByID(props.table).description}`,
+              styles: {
+                fontStyle: "bold",
+                halign: "center",
+                fontSize:
+                  settingsStore.business_settings.printer.sub_header_font_size,
+              },
             },
-          },
+          ],
         ],
-      ],
-    });
+      });
 
     settingsStore.business_settings.printer.show_delivery_kitchen &&
       !!props.saleInf &&
@@ -266,7 +267,7 @@ const printWEBADASDEBRASEROS = (props) => {
       !!props.saleInf &&
       !!props.saleInf.delivery_info
     ) {
-      lengthData += 10;
+      lengthData += 50;
       structure.push(
         {
           dat: [
