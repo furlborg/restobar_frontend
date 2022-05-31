@@ -1,11 +1,14 @@
 import { CreatePdfFile } from "@/hooks/CreatePdfFile.js";
 import { numeroALetras } from "@/hooks/numberText.js";
+import { useSettingsStore } from "@/store/modules/settings";
 
 import { useSaleStore } from "@/store/modules/sale";
 
 import { format as formatter } from "date-fns";
 
 const saleStore = useSaleStore();
+
+const settingsStore = useSettingsStore();
 
 const dateNow = formatter(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss");
 
@@ -105,7 +108,9 @@ const VoucherPrint = (props) => {
           styles: {
             fontStyle: "bold",
             halign: "center",
-            fontSize: 8,
+            fontSize:
+              settingsStore.business_settings.printer
+                .pre_account_ticket_font_size,
           },
         },
       ],
@@ -120,7 +125,9 @@ const VoucherPrint = (props) => {
           styles: {
             fontStyle: "bold",
             halign: "center",
-            fontSize: 8,
+            fontSize:
+              settingsStore.business_settings.printer
+                .pre_account_ticket_font_size,
           },
         },
       ],
@@ -134,7 +141,9 @@ const VoucherPrint = (props) => {
           styles: {
             fontStyle: "bold",
             halign: "center",
-            fontSize: 8,
+            fontSize:
+              settingsStore.business_settings.printer
+                .pre_account_ticket_font_size,
           },
         },
       ],
@@ -150,7 +159,9 @@ const VoucherPrint = (props) => {
             styles: {
               fontStyle: "bold",
               halign: "center",
-              fontSize: 8,
+              fontSize:
+                settingsStore.business_settings.printer
+                  .pre_account_ticket_font_size,
             },
           },
         ],
@@ -166,7 +177,9 @@ const VoucherPrint = (props) => {
               styles: {
                 fontStyle: "bold",
                 halign: "center",
-                fontSize: 8,
+                fontSize:
+                  settingsStore.business_settings.printer
+                    .pre_account_ticket_font_size,
               },
             },
           ],
@@ -181,7 +194,9 @@ const VoucherPrint = (props) => {
             styles: {
               fontStyle: "bold",
               halign: "center",
-              fontSize: 8,
+              fontSize:
+                settingsStore.business_settings.printer
+                  .pre_account_ticket_font_size,
             },
           },
         ],
@@ -196,7 +211,9 @@ const VoucherPrint = (props) => {
             styles: {
               fontStyle: "bold",
               halign: "center",
-              fontSize: 8,
+              fontSize:
+                settingsStore.business_settings.printer
+                  .pre_account_ticket_font_size,
             },
           },
         ],
@@ -230,6 +247,8 @@ const VoucherPrint = (props) => {
           cont: `${dataForPrint.fecha_de_emision} ${dataForPrint.hora_de_emision}`,
         },
       ],
+      fontSize:
+        settingsStore.business_settings.printer.pre_account_ticket_font_size,
       line: true,
     });
   } else {
@@ -241,7 +260,9 @@ const VoucherPrint = (props) => {
             styles: {
               fontStyle: "bold",
               halign: "center",
-              fontSize: 8,
+              fontSize:
+                settingsStore.business_settings.printer
+                  .pre_account_ticket_font_size + 1,
             },
           },
         ],
@@ -251,7 +272,9 @@ const VoucherPrint = (props) => {
             styles: {
               fontStyle: "bold",
               halign: "center",
-              fontSize: 8,
+              fontSize:
+                settingsStore.business_settings.printer
+                  .pre_account_ticket_font_size + 2,
             },
           },
         ],
@@ -314,9 +337,13 @@ const VoucherPrint = (props) => {
     ],
     dat: datProdsCons,
     line: true,
+    fontSize:
+      settingsStore.business_settings.printer.pre_account_ticket_font_size,
   });
   datTotals.length > 0 &&
     structure.push({
+      fontSize:
+        settingsStore.business_settings.printer.pre_account_ticket_font_size,
       dat: datTotals,
       line: true,
     });
@@ -337,7 +364,9 @@ const VoucherPrint = (props) => {
             styles: {
               fontStyle: "bold",
               halign: "center",
-              fontSize: 7,
+              fontSize:
+                settingsStore.business_settings.printer
+                  .pre_account_ticket_font_size,
             },
           },
         ],
@@ -347,7 +376,9 @@ const VoucherPrint = (props) => {
             styles: {
               fontStyle: "bold",
               halign: "center",
-              fontSize: 7,
+              fontSize:
+                settingsStore.business_settings.printer
+                  .pre_account_ticket_font_size,
             },
           },
         ],
@@ -357,7 +388,9 @@ const VoucherPrint = (props) => {
             styles: {
               fontStyle: "bold",
               halign: "center",
-              fontSize: 7,
+              fontSize:
+                settingsStore.business_settings.printer
+                  .pre_account_ticket_font_size,
             },
           },
         ],
@@ -369,7 +402,9 @@ const VoucherPrint = (props) => {
             styles: {
               fontStyle: "bold",
               halign: "center",
-              fontSize: 7,
+              fontSize:
+                settingsStore.business_settings.printer
+                  .pre_account_ticket_font_size,
             },
           },
         ],
@@ -380,6 +415,8 @@ const VoucherPrint = (props) => {
     structure.push(
       !!totalProdSum && {
         line: true,
+        fontSize:
+          settingsStore.business_settings.printer.pre_account_ticket_font_size,
         dat: [
           [
             {
@@ -387,7 +424,9 @@ const VoucherPrint = (props) => {
               styles: {
                 fontStyle: "bold",
                 halign: "right",
-                fontSize: 11,
+                fontSize:
+                  settingsStore.business_settings.printer
+                    .pre_account_ticket_font_size,
               },
             },
           ],
@@ -411,12 +450,16 @@ const VoucherPrint = (props) => {
             cont: props.data.table,
           },
         ],
+        fontSize:
+          settingsStore.business_settings.printer.pre_account_ticket_font_size,
         line: true,
       }
     );
   } else {
     structure.push({
       line: true,
+      fontSize:
+        settingsStore.business_settings.printer.pre_account_ticket_font_size,
       dat: [
         {
           tittle: "USUARIO",
