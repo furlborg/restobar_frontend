@@ -93,6 +93,26 @@
               step="0.1"
             />
           </n-form-item-gi>
+          <n-form-item-gi :span="3" label="Tamaño letra delivery">
+            <n-input-number
+              v-model:value="businessSettings.printer.delivery_ticket_font_size"
+              placeholder=""
+              :min="0"
+              :max="20"
+              step="0.1"
+            />
+          </n-form-item-gi>
+          <n-form-item-gi :span="3" label="Tamaño letra pre-cuenta">
+            <n-input-number
+              v-model:value="
+                businessSettings.printer.pre_account_ticket_font_size
+              "
+              placeholder=""
+              :min="0"
+              :max="20"
+              step="0.1"
+            />
+          </n-form-item-gi>
           <n-form-item-gi :span="4">
             <n-checkbox v-model:checked="businessSettings.printer.show_cat"
               >Mostrar categoría producto</n-checkbox
