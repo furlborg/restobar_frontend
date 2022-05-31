@@ -115,3 +115,7 @@ export async function takeAwayOrder(order_details, sale_data, user) {
         sale: sale
     })
 }
+
+export async function retrieveOrderTicket(id) {
+    return await http.get(`orders/${id}/order_ticket/`)
+}

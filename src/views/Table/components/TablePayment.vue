@@ -195,6 +195,7 @@
                     v-model="sale.given_amount"
                     v-autowidth
                     @click="$event.target.select()"
+                    @input="testAmount"
                   />
                 </div>
               </n-space>
@@ -230,7 +231,7 @@
                 />
               </div>
               <div>
-                TOTAL: <span>S/. {{ sale.amount.toFixed(2) }}</span>
+                TOTAL: <span>S/. {{ sale.amount }}</span>
               </div>
             </n-space>
           </n-gi>
@@ -277,7 +278,7 @@
     >
       <n-space justify="space-between">
         <n-tag type="info"
-          >Total: S/. {{ showPayments ? sale.amount.toFixed(2) : null }}</n-tag
+          >Total: S/. {{ showPayments ? sale.amount : null }}</n-tag
         >
         <n-tag :type="evalPayments ? 'error' : 'success'"
           >Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}</n-tag
@@ -318,7 +319,8 @@
           type="success"
           :disabled="
             evalPayments ||
-            sale.payments.some((pay) => pay.payment_method === null)
+            sale.payments.some((pay) => pay.payment_method === null) ||
+            sale.payments.some((pay) => Number(pay.amount) <= 0)
           "
           secondary
           @click="performCreateSale"
@@ -339,6 +341,7 @@
 <script>
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 import { defineComponent, ref, toRefs, computed, watch, onMounted } from "vue";
+import { isAxiosError } from "axios";
 import CustomerModal from "@/views/Customer/components/CustomerModal";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useRouter } from "vue-router";
@@ -409,7 +412,9 @@ export default defineComponent({
     });
 
     const total = computed(() => {
-      return parseFloat(subTotal.value - sale.value.discount + icbper.value);
+      return parseFloat(
+        subTotal.value - sale.value.discount + icbper.value
+      ).toFixed(2);
     });
 
     const sale = ref({
@@ -482,7 +487,6 @@ export default defineComponent({
               loading.value = true;
               sale.value.order = orderStore.orderId;
               sale.value.sale_details = saleStore.toSale;
-              console.log(sale.value.amount);
               await createSale(sale.value)
                 .then((response) => {
                   if (response.status === 201) {
@@ -501,18 +505,25 @@ export default defineComponent({
                           }
                         })
                         .catch((error) => {
-                          if (error.response.status === 400) {
-                            console.error(error);
-                            for (const value in error.response.data) {
-                              error.response.data[`${value}`].forEach((err) => {
-                                if (typeof err === "object") {
-                                  for (const v in err) {
-                                    message.error(`${err[`${v}`]}`);
+                          if (isAxiosError(error)) {
+                            if (error.response.status === 400) {
+                              console.error(error);
+                              for (const value in error.response.data) {
+                                error.response.data[`${value}`].forEach(
+                                  (err) => {
+                                    if (typeof err === "object") {
+                                      for (const v in err) {
+                                        message.error(`${err[`${v}`]}`);
+                                      }
+                                    } else {
+                                      message.error(`${err}`);
+                                    }
                                   }
-                                } else {
-                                  message.error(`${err}`);
-                                }
-                              });
+                                );
+                              }
+                            } else {
+                              console.error(error);
+                              message.error("Algo salió mal...");
                             }
                           } else {
                             console.error(error);
@@ -525,18 +536,23 @@ export default defineComponent({
                   }
                 })
                 .catch((error) => {
-                  if (error.response.status === 400) {
-                    console.error(error);
-                    for (const value in error.response.data) {
-                      error.response.data[`${value}`].forEach((err) => {
-                        if (typeof err === "object") {
-                          for (const v in err) {
-                            message.error(`${err[`${v}`]}`);
+                  if (isAxiosError(error)) {
+                    if (error.response.status === 400) {
+                      console.error(error);
+                      for (const value in error.response.data) {
+                        error.response.data[`${value}`].forEach((err) => {
+                          if (typeof err === "object") {
+                            for (const v in err) {
+                              message.error(`${err[`${v}`]}`);
+                            }
+                          } else {
+                            message.error(`${err}`);
                           }
-                        } else {
-                          message.error(`${err}`);
-                        }
-                      });
+                        });
+                      }
+                    } else {
+                      console.error(error);
+                      message.error("Algo salió mal...");
                     }
                   } else {
                     console.error(error);
@@ -688,7 +704,7 @@ export default defineComponent({
     const createPayment = () => {
       return {
         payment_method: null,
-        amount: "",
+        amount: "0",
       };
     };
 
@@ -717,7 +733,7 @@ export default defineComponent({
         return (
           sale.value.payments.reduce((acc, val) => {
             return (acc += parseFloat(val.amount));
-          }, 0) !== sale.value.amount
+          }, 0) !== Number(sale.value.amount)
         );
       } else {
         return true;
@@ -767,6 +783,9 @@ export default defineComponent({
       filteredMethods,
       evalPayments,
       currentPaymentsAmount,
+      testAmount() {
+        console.log(sale.value.amount);
+      },
     };
   },
 });

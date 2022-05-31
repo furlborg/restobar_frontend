@@ -325,7 +325,7 @@
                         />
                       </div>
                       <div>
-                        TOTAL: <span>S/. {{ sale.amount.toFixed(2) }}</span>
+                        TOTAL: <span>S/. {{ sale.amount }}</span>
                       </div>
                     </n-space>
                   </n-gi>
@@ -531,8 +531,7 @@
       >
         <n-space justify="space-between">
           <n-tag type="info"
-            >Total: S/.
-            {{ showPayments ? sale.amount.toFixed(2) : null }}</n-tag
+            >Total: S/. {{ showPayments ? sale.amount : null }}</n-tag
           >
           <n-tag :type="evalPayments ? 'error' : 'success'"
             >Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}</n-tag
@@ -573,7 +572,8 @@
             type="success"
             :disabled="
               evalPayments ||
-              sale.payments.some((pay) => pay.payment_method === null)
+              sale.payments.some((pay) => pay.payment_method === null) ||
+              sale.payments.some((pay) => Number(pay.amount) <= 0)
             "
             secondary
             @click="performTakeAway"
@@ -693,7 +693,7 @@ export default defineComponent({
       if (sale.value.delivery_info) {
         cal = cal + parseFloat(sale.value.delivery_info.amount);
       }
-      return cal;
+      return cal.toFixed(2);
     });
 
     const saleForm = ref();
@@ -1243,7 +1243,7 @@ export default defineComponent({
     const createPayment = () => {
       return {
         payment_method: null,
-        amount: "",
+        amount: "0",
       };
     };
 
@@ -1272,7 +1272,7 @@ export default defineComponent({
         return (
           sale.value.payments.reduce((acc, val) => {
             return (acc += parseFloat(val.amount));
-          }, 0) !== sale.value.amount
+          }, 0) !== Number(sale.value.amount)
         );
       } else {
         return true;

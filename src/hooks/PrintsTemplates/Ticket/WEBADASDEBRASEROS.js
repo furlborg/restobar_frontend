@@ -92,18 +92,16 @@ const printWEBADASDEBRASEROS = (props) => {
         ],
       });
 
-    !!props.table &&
-      structure.push({
-        dat: [
-          [
-            {
-              content: `${tableStore.getTableByID(props.table).description}`,
-              styles: {
-                fontStyle: "bold",
-                halign: "center",
-                fontSize:
-                  settingsStore.business_settings.printer.sub_header_font_size,
-              },
+      !!props.table && structure.push({
+      dat: [
+        [
+          {
+            content: `${tableStore.getTableByID(props.table).description}`,
+            styles: {
+              fontStyle: "bold",
+              halign: "center",
+              fontSize:
+                settingsStore.business_settings.printer.sub_header_font_size,
             },
           ],
         ],

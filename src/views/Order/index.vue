@@ -191,7 +191,9 @@
         <n-button
           type="success"
           :disabled="
-            evalPayments || payments.some((pay) => pay.payment_method === null)
+            evalPayments ||
+            payments.some((pay) => pay.payment_method === null) ||
+            payments.some((pay) => Number(pay.amount) <= 0)
           "
           secondary
           @click="performUpdateOrderStatus"
@@ -540,7 +542,7 @@ export default defineComponent({
     const createPayment = () => {
       return {
         payment_method: null,
-        amount: "",
+        amount: "0",
       };
     };
 
