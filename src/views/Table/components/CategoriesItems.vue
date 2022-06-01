@@ -134,9 +134,22 @@ export default defineComponent({
     const search = ref("");
 
     const itemsList = computed(() => {
-      return products.value.filter((product) =>
+      const list = products.value.filter((product) =>
         product.name.toLowerCase().includes(search.value.toLowerCase())
       );
+      if (products.value.every((product) => !!product.order_index)) {
+        return list.sort((a, b) => {
+          if (a.order_index > b.order_index) {
+            return 1;
+          }
+          if (a.order_index < b.order_index) {
+            return -1;
+          }
+          return 0;
+        });
+      } else {
+        return list;
+      }
     });
 
     const productOptions = [
