@@ -1,4 +1,6 @@
 import { CreatePdfFile } from "@/hooks/CreatePdfFile.js";
+import { useSettingsStore } from "@/store/modules/settings";
+const settingsStore = useSettingsStore();
 
 const printDeliveryInfo = (props) => {
   console.log(props.data);
@@ -17,7 +19,9 @@ const printDeliveryInfo = (props) => {
             styles: {
               fontStyle: "bold",
               halign: "center",
-              fontSize: 9,
+              fontSize:
+                settingsStore.business_settings.printer
+                  .delivery_ticket_font_size + 2,
             },
           },
         ],
@@ -25,6 +29,8 @@ const printDeliveryInfo = (props) => {
     },
     {
       line: true,
+      fontSize:
+        settingsStore.business_settings.printer.delivery_ticket_font_size,
       dat: [
         {
           tittle: "CLIENTE",
@@ -69,6 +75,8 @@ const printDeliveryInfo = (props) => {
     },
     {
       line: true,
+      fontSize:
+        settingsStore.business_settings.printer.delivery_ticket_font_size,
       col: [
         {
           header: "CANT.",
@@ -119,6 +127,8 @@ const printDeliveryInfo = (props) => {
           cont: dataForPrint.totales.total_venta.toFixed("2"),
         },
       ],
+      fontSize:
+        settingsStore.business_settings.printer.delivery_ticket_font_size,
       line: true,
     },
     {
@@ -129,7 +139,9 @@ const printDeliveryInfo = (props) => {
             styles: {
               fontStyle: "bold",
               halign: "center",
-              fontSize: 9,
+              fontSize:
+                settingsStore.business_settings.printer
+                  .delivery_ticket_font_size,
             },
           },
         ],
