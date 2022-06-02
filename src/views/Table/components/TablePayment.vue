@@ -136,7 +136,7 @@
             </n-gi>
           </n-grid>
         </n-form>
-        <n-scrollbar :x-scrollable="true" style="max-width: 900px">
+        <n-scrollbar :x-scrollable="true" style="max-width: 1000px">
           <n-table class="fs-6 m-auto text-center" :bordered="false">
             <thead>
               <tr>
@@ -195,7 +195,6 @@
                     v-model="sale.given_amount"
                     v-autowidth
                     @click="$event.target.select()"
-                    @input="testAmount"
                   />
                 </div>
               </n-space>
@@ -441,6 +440,11 @@ export default defineComponent({
       payments: null,
     });
 
+    watch(total, () => {
+      sale.value.given_amount =
+        total.value > 0 ? total.value : parseFloat(0).toFixed(2);
+    });
+
     const formRules = computed(() => {
       let rules = saleRules;
       if (sale.value.invoice_type !== 1) {
@@ -665,6 +669,7 @@ export default defineComponent({
 
     onMounted(async () => {
       document.title = "Venta | App";
+      sale.value.given_amount = total.value;
       await obtainSaleNumber();
 
       const fetch = new Date();
@@ -783,9 +788,6 @@ export default defineComponent({
       filteredMethods,
       evalPayments,
       currentPaymentsAmount,
-      testAmount() {
-        console.log(sale.value.amount);
-      },
     };
   },
 });

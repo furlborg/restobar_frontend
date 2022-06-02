@@ -721,6 +721,11 @@ export default defineComponent({
       payments: null,
     });
 
+    watch(total, () => {
+      sale.value.given_amount =
+        total.value > 0 ? total.value : parseFloat(0).toFixed(2);
+    });
+
     const rules = computed(() => {
       if (sale.value.invoice_type !== 1) {
         saleRules.customer.required = false;
