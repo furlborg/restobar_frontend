@@ -1,6 +1,7 @@
 import { http } from "@/api"
 import { useBusinessStore } from "@/store/modules/business";
 import { useUserStore } from "@/store/modules/user";
+import { useTillStore } from "@/store/modules/till";
 
 export async function getPaymentMethods() {
     return await http.get('payment_methods/')
@@ -89,6 +90,7 @@ export async function retrieveSale(id) {
 export async function createSale(sale, pass = null) {
     const businessStore = useBusinessStore();
     const userStore = useUserStore();
+    const tillStore = useTillStore();
     if (!pass) {
         return await http.post('sales/', {
             order: sale.order,
@@ -110,6 +112,7 @@ export async function createSale(sale, pass = null) {
             observations: sale.observations,
             sale_details: sale.sale_details,
             payments: sale.payments,
+            till: tillStore.currentTillID,
         })
     } else {
         return await http.post('sales/', {
@@ -133,6 +136,7 @@ export async function createSale(sale, pass = null) {
             observations: sale.observations,
             sale_details: sale.sale_details,
             payments: sale.payments,
+            till: tillStore.currentTillID,
         })
     }
 }

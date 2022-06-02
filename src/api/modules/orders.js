@@ -108,6 +108,7 @@ export async function takeAwayOrder(order_details, sale_data, user) {
         icbper: parseFloat(sale_data.icbper).toFixed(2),
         observations: sale_data.observations,
         sale_details: sale_data.sale_details,
+        till: tillStore.currentTillID,
         payments: sale_data.payments
     }
     return await http.post('orders/take_away/', {
