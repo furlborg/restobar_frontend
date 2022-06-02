@@ -115,6 +115,9 @@ export const CreatePdfFile = async (props, format) => {
           overflow: "linebreak",
         },
         columnStyles: {
+          amount: {
+            halign: "center",
+          },
           tittle: {
             fontStyle: "bold",
             fontSize: !!val.fontSize ? val.fontSize : 7,

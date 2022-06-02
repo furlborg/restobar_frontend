@@ -13,6 +13,7 @@ const settingsStore = useSettingsStore();
 const dateNow = formatter(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss");
 
 const VoucherPrint = (props) => {
+  console.log(props.data);
   let dataForPrint = "";
 
   let typeDoc = "";
@@ -238,7 +239,9 @@ const VoucherPrint = (props) => {
         {
           tittle: "DIRECCION",
           twoPoints: ":",
-          cont: dataForPrint.datos_del_cliente_o_receptor.direccion,
+          cont: !!props.data.customer_address
+            ? props.data.customer_address
+            : dataForPrint.datos_del_cliente_o_receptor.direccion,
         },
 
         {
