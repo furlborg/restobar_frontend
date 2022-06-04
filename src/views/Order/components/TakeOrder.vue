@@ -621,7 +621,7 @@ import { useBusinessStore } from "@/store/modules/business";
 import { useGenericsStore } from "@/store/modules/generics";
 import { searchProductByName } from "@/api/modules/products";
 import { takeAwayOrder } from "@/api/modules/orders";
-import { createSale, getSaleNumber } from "@/api/modules/sales";
+import { sendSale, getSaleNumber } from "@/api/modules/sales";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
 import { isDecimal, isNumber, isLetter, lighten } from "@/utils";
 import { saleRules } from "@/utils/constants";
@@ -1165,6 +1165,43 @@ export default defineComponent({
                     if (response.status === 201) {
                       PrintsAfterTakeOrder(response.data);
                       message.success("Venta realizada correctamente!");
+                      if (
+                        settingsStore.businessSettings.sale.auto_send &&
+                        !sale.value.delivery_info
+                      ) {
+                        sendSale(response.data.sale.id)
+                          .then((response) => {
+                            if (response.status === 200) {
+                              message.success("Enviado!");
+                            }
+                          })
+                          .catch((error) => {
+                            if (isAxiosError(error)) {
+                              if (error.response.status === 400) {
+                                console.error(error);
+                                for (const value in error.response.data) {
+                                  error.response.data[`${value}`].forEach(
+                                    (err) => {
+                                      if (typeof err === "object") {
+                                        for (const v in err) {
+                                          message.error(`${err[`${v}`]}`);
+                                        }
+                                      } else {
+                                        message.error(`${err}`);
+                                      }
+                                    }
+                                  );
+                                }
+                              } else {
+                                console.error(error);
+                                message.error("Algo salió mal...");
+                              }
+                            } else {
+                              console.error(error);
+                              message.error("Algo salió mal...");
+                            }
+                          });
+                      }
                       router.push({ name: "TableHome" });
                     }
                   })
