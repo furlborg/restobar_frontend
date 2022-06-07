@@ -252,11 +252,15 @@ export default defineComponent({
         .reduce((prevValue, row) => prevValue + Number(row.amount), 0)
     );
 
-    const sells = computed(() =>
-      movements.value
+    const sells = computed(() => {
+      const sells_income = movements.value
         .filter((row) => row.concept === 3)
-        .reduce((prevValue, row) => prevValue + Number(row.amount), 0)
-    );
+        .reduce((prevValue, row) => prevValue + Number(row.amount), 0);
+      const sells_outcome = movements.value
+        .filter((row) => row.concept === 6)
+        .reduce((prevValue, row) => prevValue + Number(row.amount), 0);
+      return sells_income - sells_outcome;
+    });
 
     const total = computed(() => income.value - outcome.value);
 

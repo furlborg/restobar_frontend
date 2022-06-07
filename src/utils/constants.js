@@ -1606,16 +1606,18 @@ export const createOrderColumns = ({ showDetails, showDeliveryInfo, payDeliver, 
                             ],
                             onUpdateValue: handleOption,
                         },
-                        h(
-                            NButton,
-                            {
-                                class: 'me-2',
-                                size: 'small',
-                                type: 'warning',
-                                secondary: true,
-                            },
-                            renderIcon('md-print-round')
-                        )
+                        {
+                            default: () => h(
+                                NButton,
+                                {
+                                    class: 'me-2',
+                                    size: 'small',
+                                    type: 'warning',
+                                    secondary: true,
+                                },
+                                renderIcon('md-print-round')
+                            )
+                        }
                     ) : h(
                         NButton,
                         {
