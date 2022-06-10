@@ -325,6 +325,19 @@
                         />
                       </div>
                       <div>
+                        OTROS:
+                        <span>S/.</span>
+                        <input
+                          class="custom-input fw-bold"
+                          type="number"
+                          min="0"
+                          step=".1"
+                          v-model="sale.other_charges"
+                          v-autowidth
+                          @click="$event.target.select()"
+                        />
+                      </div>
+                      <div>
                         TOTAL: <span>S/. {{ sale.amount }}</span>
                       </div>
                     </n-space>
@@ -689,7 +702,12 @@ export default defineComponent({
     });
 
     const total = computed(() => {
-      let cal = parseFloat(subTotal.value - sale.value.discount + icbper.value);
+      let cal = parseFloat(
+        subTotal.value -
+          parseFloat(sale.value.discount) +
+          icbper.value +
+          parseFloat(sale.value.other_charges)
+      );
       if (sale.value.delivery_info) {
         cal = cal + parseFloat(sale.value.delivery_info.amount);
       }
@@ -714,6 +732,7 @@ export default defineComponent({
       address: null,
       discount: "0.00",
       icbper: icbper,
+      other_charges: "0.00",
       observations: "",
       by_consumption: false,
       sale_details: [],
