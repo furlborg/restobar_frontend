@@ -154,6 +154,9 @@
           <n-form-item-gi :span="3" label="Valor ICBPER">
             <n-input v-model:value="businessSettings.sale.icbper_tax" />
           </n-form-item-gi>
+          <n-form-item-gi :span="3" label="Comisión Tarjeta de Crédito(%)">
+            <n-input v-model:value="businessSettings.sale.card_comission" />
+          </n-form-item-gi>
           <n-form-item-gi :span="3">
             <n-checkbox v-model:checked="businessSettings.sale.auto_send"
               >Auto envío CPE</n-checkbox

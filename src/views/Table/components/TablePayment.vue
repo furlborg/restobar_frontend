@@ -230,6 +230,19 @@
                 />
               </div>
               <div>
+                DSCT:
+                <span>S/.</span>
+                <input
+                  class="custom-input fw-bold"
+                  type="number"
+                  min="0"
+                  step=".1"
+                  v-model="sale.other_charges"
+                  v-autowidth
+                  @click="$event.target.select()"
+                />
+              </div>
+              <div>
                 TOTAL: <span>S/. {{ sale.amount }}</span>
               </div>
             </n-space>
@@ -412,7 +425,10 @@ export default defineComponent({
 
     const total = computed(() => {
       return parseFloat(
-        subTotal.value - sale.value.discount + icbper.value
+        subTotal.value -
+          parseFloat(sale.value.discount) +
+          icbper.value +
+          parseFloat(sale.value.other_charges)
       ).toFixed(2);
     });
 
@@ -434,6 +450,7 @@ export default defineComponent({
       address: null,
       discount: "0.00",
       icbper: icbper,
+      other_charges: "0.00",
       observations: "",
       by_consumption: false,
       sale_details: [],
