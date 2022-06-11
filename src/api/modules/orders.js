@@ -87,6 +87,7 @@ export async function takeAwayOrder(order_details, sale_data, user) {
         order_details: details,
         order_type: sale_data.delivery_info ? 'D' : 'P',
         delivery_info: sale_data.delivery_info,
+        ask_for: sale_data.ask_for,
         user: !user ? null : user,
         status: sale_data.delivery_info || userStore.user.profile_des === 'MOZO' ? '1' : '2'
     }

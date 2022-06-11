@@ -69,26 +69,39 @@
                 <n-form>
                   <n-grid responsive="screen" cols="4 xs:4 s:12" :x-gap="12">
                     <n-form-item-gi :span="4" label="Código">
-                      <n-input v-model:value="table.code" placeholder="" />
+                      <n-input
+                        v-model:value="selectedTable.code"
+                        placeholder=""
+                      />
                     </n-form-item-gi>
                     <n-form-item-gi :span="4" label="Descripción">
                       <n-input
-                        v-model:value="table.description"
+                        v-model:value="selectedTable.description"
                         placeholder=""
                       />
                     </n-form-item-gi>
                     <n-form-item-gi :span="4">
                       <n-space>
                         <n-button
-                          type="info"
-                          :disabled="!(table.code && table.description)"
+                          :type="selectedTable.id ? 'warning' : 'info'"
+                          :disabled="
+                            !(selectedTable.code && selectedTable.description)
+                          "
                           secondary
-                          @click="performCreateTable"
-                          >Agregar</n-button
+                          @click.prevent="
+                            selectedTable.id
+                              ? performUpdateTable()
+                              : performCreateTable()
+                          "
+                          >{{
+                            selectedTable.id ? "Guardar" : "Agregar"
+                          }}</n-button
                         >
                         <n-button
                           type="error"
-                          :disabled="!(table.code && table.description)"
+                          :disabled="
+                            !(selectedTable.code && selectedTable.description)
+                          "
                           secondary
                           @click="cleanTable"
                           >Cancelar</n-button
@@ -107,11 +120,19 @@
                 :y-gap="12"
               >
                 <n-gi v-for="table in tables" :key="table.id" :span="2">
-                  <n-card :bordered="false" hoverable>
-                    <n-space align="center" vertical>
-                      <n-button class="position-absolute top-0 end-0 m-1" text>
+                  <n-card
+                    :class="{ 'bg-selected': table.id === selectedTable.id }"
+                    :bordered="false"
+                    hoverable
+                  >
+                    <n-space
+                      align="center"
+                      vertical
+                      @click="selectTable(table)"
+                    >
+                      <!-- <n-button class="position-absolute top-0 end-0 m-1" text>
                         <v-icon name="bi-three-dots" scale="1.25" />
-                      </n-button>
+                      </n-button> -->
                       <v-icon name="gi-table" scale="3" />
                       <n-text>{{ table.code }}</n-text>
                     </n-space>
@@ -555,7 +576,12 @@ import { useMessage } from "naive-ui";
 import { cloneDeep } from "@/utils";
 import { useTableStore } from "@/store/modules/table";
 import { useProductStore } from "@/store/modules/product";
-import { createArea, updateArea, createTable } from "@/api/modules/tables";
+import {
+  createArea,
+  updateArea,
+  createTable,
+  updateTable,
+} from "@/api/modules/tables";
 import {
   getPaymentMethods,
   createPaymentMethodDesc,
@@ -587,7 +613,7 @@ export default defineComponent({
       id: null,
       description: "",
     });
-    const table = ref({
+    const selectedTable = ref({
       id: null,
       code: "",
       description: "",
@@ -606,10 +632,29 @@ export default defineComponent({
     const productCategory = ref(null);
     const selectedCategory = ref(null);
 
-    const performCreateTable = async (e) => {
-      e.preventDefault();
+    const selectTable = (table) => {
+      if (!selectedTable.value.id) {
+        selectedTable.value = cloneDeep(table);
+      } else {
+        if (selectedTable.value.id === table.id) {
+          cleanTable();
+        } else {
+          selectedTable.value = cloneDeep(table);
+        }
+      }
+    };
+
+    const cleanTable = () => {
+      selectedTable.value = {
+        id: null,
+        code: "",
+        description: "",
+      };
+    };
+
+    const performCreateTable = async () => {
       isLoadingData.value = true;
-      await createTable(currentArea.value, table.value)
+      await createTable(currentArea.value, selectedTable.value)
         .then((response) => {
           if (response.status === 201) {
             tableStore.refreshData().then(() => {
@@ -618,7 +663,7 @@ export default defineComponent({
           }
         })
         .catch((error) => {
-          console.error(error.response.data);
+          console.error(error);
           message.error("Algo salió mal...");
         })
         .finally(() => {
@@ -626,12 +671,23 @@ export default defineComponent({
         });
     };
 
-    const cleanTable = () => {
-      table.value = {
-        id: null,
-        code: "",
-        description: "",
-      };
+    const performUpdateTable = async () => {
+      isLoadingData.value = true;
+      await updateTable(currentArea.value, selectedTable.value)
+        .then((response) => {
+          if (response.status === 202) {
+            tableStore.refreshData().then(() => {
+              cleanTable();
+            });
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          isLoadingData.value = false;
+        });
     };
 
     const performCreateArea = async (e) => {
@@ -1109,10 +1165,12 @@ export default defineComponent({
       editArea,
       performCreateArea,
       performUpdateArea,
+      selectTable,
       cleanTable,
-      table,
+      selectedTable,
       tables,
       performCreateTable,
+      performUpdateTable,
       preparationPlaces,
       preparationPlace,
       printerName,
