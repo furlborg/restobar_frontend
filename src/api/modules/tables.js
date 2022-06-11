@@ -42,7 +42,6 @@ export async function updateTable(areaID, table) {
         area: areaID,
         code: table.code,
         description: table.description,
-        is_disabled: table.is_disabled,
     })
 }
 
