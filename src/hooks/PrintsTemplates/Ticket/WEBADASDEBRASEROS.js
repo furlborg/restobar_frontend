@@ -58,9 +58,9 @@ const printWEBADASDEBRASEROS = (props) => {
     };
 
     let structure = [
-      {
+      !!props.data.ask_for && {
         dat: [
-          !!props.data.ask_for && [
+          [
             {
               content: `Cliente: ${props.data.ask_for}`,
               styles: {
@@ -71,6 +71,10 @@ const printWEBADASDEBRASEROS = (props) => {
               },
             },
           ],
+        ],
+      },
+      {
+        dat: [
           [
             {
               content: `ORDEN: ${props.data.id}`,
