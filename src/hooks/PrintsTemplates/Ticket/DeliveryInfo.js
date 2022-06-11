@@ -3,8 +3,6 @@ import { useSettingsStore } from "@/store/modules/settings";
 const settingsStore = useSettingsStore();
 
 const printDeliveryInfo = (props) => {
-  console.log(props.data);
-
   let dataForPrint = JSON.parse(props.data.json_sale);
 
   let vuleto = props.changing || 0.0;

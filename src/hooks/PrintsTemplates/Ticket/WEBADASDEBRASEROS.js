@@ -12,9 +12,10 @@ const tableStore = useTableStore();
 let dateNow = formatter(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss");
 
 const printWEBADASDEBRASEROS = (props) => {
+  console.log(props);
   let arrayDataPrint = [];
 
-  if (!!props.created) dateNow = props.created;
+  if (!!props.created && !!props.updateOrder === false) dateNow = props.created;
 
   productStore.places.forEach(async (place) => {
     let format = place.printer_format;

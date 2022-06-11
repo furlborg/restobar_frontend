@@ -14,9 +14,10 @@ let dateNow = formatter(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss");
 // let format = settingsStore.business_settings.printer.kitchen_printer_format;
 
 const printOrderTicket = (props) => {
+  console.log(props);
   let arrayDataPrint = [];
 
-  if (!!props.created) dateNow = props.created;
+  if (!!props.created && !!props.updateOrder === false) dateNow = props.created;
 
   productStore.places.forEach(async (place) => {
     let format = place.printer_format;
@@ -91,25 +92,26 @@ const printOrderTicket = (props) => {
         ],
       });
 
-      !!props.table && structure.push({
-      dat: [
-        [
-          {
-            content: !!props.table
-              ? `${tableStore.getTableByID(props.table).description}`
-              : !!props.saleInf.delivery_info
-              ? "DELIVERY"
-              : "PARA LLEVAR",
-            styles: {
-              fontStyle: "bold",
-              halign: "center",
-              fontSize:
-                settingsStore.business_settings.printer.sub_header_font_size,
+    !!props.table &&
+      structure.push({
+        dat: [
+          [
+            {
+              content: !!props.table
+                ? `${tableStore.getTableByID(props.table).description}`
+                : !!props.saleInf.delivery_info
+                ? "DELIVERY"
+                : "PARA LLEVAR",
+              styles: {
+                fontStyle: "bold",
+                halign: "center",
+                fontSize:
+                  settingsStore.business_settings.printer.sub_header_font_size,
+              },
             },
-          },
+          ],
         ],
-      ],
-    });
+      });
 
     let info = props.data.order_details.filter(
       (detail) => detail.preparation_place === place.description
