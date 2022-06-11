@@ -14,7 +14,6 @@ let dateNow = formatter(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss");
 // let format = settingsStore.business_settings.printer.kitchen_printer_format;
 
 const printOrderTicket = (props) => {
-  console.log(props);
   let arrayDataPrint = [];
 
   if (!!props.created && !!props.updateOrder === false) dateNow = props.created;
@@ -60,6 +59,17 @@ const printOrderTicket = (props) => {
     let structure = [
       {
         dat: [
+          !!props.data.ask_for && [
+            {
+              content: `Cliente: ${props.data.ask_for}`,
+              styles: {
+                fontStyle: "bold",
+                halign: "left",
+                fontSize:
+                  settingsStore.business_settings.printer.sub_header_font_size,
+              },
+            },
+          ],
           [
             {
               content: `ORDEN: ${props.data.id}`,

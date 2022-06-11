@@ -12,7 +12,6 @@ const tableStore = useTableStore();
 let dateNow = formatter(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss");
 
 const printWEBADASDEBRASEROS = (props) => {
-  console.log(props);
   let arrayDataPrint = [];
 
   if (!!props.created && !!props.updateOrder === false) dateNow = props.created;
@@ -61,6 +60,17 @@ const printWEBADASDEBRASEROS = (props) => {
     let structure = [
       {
         dat: [
+          !!props.data.ask_for && [
+            {
+              content: `Cliente: ${props.data.ask_for}`,
+              styles: {
+                fontStyle: "bold",
+                halign: "left",
+                fontSize:
+                  settingsStore.business_settings.printer.sub_header_font_size,
+              },
+            },
+          ],
           [
             {
               content: `ORDEN: ${props.data.id}`,
