@@ -122,7 +122,7 @@
                         type="datetime"
                       />
                     </n-form-item-gi>
-                    <n-form-item-gi :span="6" label="Dirección">
+                    <n-form-item-gi :span="4" label="Dirección">
                       <n-select
                         v-model:value="sale.address"
                         :options="addressesOptions"
@@ -136,6 +136,9 @@
                         :options="saleStore.getPaymentMethodsOptions"
                         filterable
                       />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="2" label="Preguntar por">
+                      <n-input v-model:value="sale.ask_for" placeholder="" />
                     </n-form-item-gi>
                     <n-form-item-gi :span="2">
                       <n-checkbox @update:checked="handleDelivery">
@@ -736,6 +739,7 @@ export default defineComponent({
       observations: "",
       by_consumption: false,
       sale_details: [],
+      ask_for: "",
       delivery_info: null,
       payments: null,
     });
