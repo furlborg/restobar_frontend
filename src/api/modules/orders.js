@@ -122,3 +122,13 @@ export async function takeAwayOrder(order_details, sale_data, user) {
 export async function retrieveOrderTicket(id) {
     return await http.get(`orders/${id}/order_ticket/`)
 }
+
+export async function listProductPreparation() {
+    return await http.get('product-preparation/')
+}
+
+export async function updateProductPreparation(id, status) {
+    return await http.patch(`product-preparation/${id}/`, {
+        status: status
+    })
+}

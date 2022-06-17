@@ -111,14 +111,22 @@ export default defineComponent({
               userStore.login(response.data);
               message.success("¡Inicio de sesión correcto!");
               loading.value = false;
-              router.push({
-                name:
-                  userStore.user.profile_des === "MOZO"
-                    ? genericsStore.device === "desktop"
-                      ? "TableHome"
-                      : "WaiterMode"
-                    : "Dashboard",
-              });
+              switch (userStore.user.profile_des) {
+                case "MOZO":
+                  router.push({
+                    name:
+                      genericsStore.device === "desktop"
+                        ? "TableHome"
+                        : "WaiterMode",
+                  });
+                  break;
+                case "COCINERO":
+                  router.push({ name: "ChefMode" });
+                  break;
+                default:
+                  router.push({ name: "Dashboard" });
+                  break;
+              }
             })
             .catch((error) => {
               console.error(error);

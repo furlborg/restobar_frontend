@@ -284,6 +284,23 @@ export const routes = [
     ]
   },
   {
+    path: '/chef-mode',
+    name: 'ChefMode',
+    redirect: { name: 'CHome' },
+    component: () => import(/* webpackChunkName: "chef-mode" */ '@/ChefMode'),
+    meta: {
+      requiresAuth: true,
+      onlyWaiter: true,
+    },
+    children: [
+      {
+        name: 'CHome',
+        path: '',
+        component: () => import(/* webpackChunkName: "waiter-mode" */ '@/ChefMode/views/Home'),
+      }
+    ]
+  },
+  {
     path: "/:catchAll(.*)",
     name: "Page not found",
     component: () => import(/* webpackChunkName: "NotFound" */ "@/views/exception/404"),
@@ -303,9 +320,14 @@ router.beforeEach(async (to, from, next) => {
   await userStore.checkAuthentication()
   if (to.matched.some((record) => record.meta.requiresAuth)) {
     if (userStore.isAuthenticated) {
-      if (!to.matched.some((record) => record.meta.onlyWaiter) && userStore.user.profile_des === 'MOZO') {
-        next({ name: genericsStore.device === 'desktop' ? 'TableHome' : 'WaiterMode' })
-        return
+      if (!to.matched.some((record) => record.meta.onlyWaiter)) {
+        if (userStore.user.profile_des === 'MOZO') {
+          next({ name: genericsStore.device === 'desktop' ? 'TableHome' : 'WaiterMode' })
+          return
+        } else if (userStore.user.profile_des === 'COCINERO') {
+          next({ name: 'ChefMode' })
+          return
+        }
       } else {
         next()
         return
