@@ -327,7 +327,9 @@ router.beforeEach(async (to, from, next) => {
         } else if (userStore.user.profile_des === 'COCINERO') {
           next({ name: 'ChefMode' })
           return
-        }
+        } else {
+          next()
+          return}
       } else {
         next()
         return
