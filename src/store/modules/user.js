@@ -55,6 +55,13 @@ export const useUserStore = defineStore('user', {
                 this.logout()
             }
         },
+        async checkToken() {
+            if (!useCookie.isKey('token') && localStorage.getItem('isAuthenticated') && useCookie.get('user-info') && useCookie.isKey('refresh') && localStorage.getItem('isAuthenticated') == 'true') {
+                await this.updateToken()
+            } else {
+                this.token = useCookie.get('token')
+            }
+        },
         async updateToken() {
             await refreshToken(this.refresh)
                 .then(response => {

@@ -7,7 +7,11 @@
         type="info"
         secondary
       >
-        <v-icon name="hi-solid-refresh" scale="1.5" />
+        <v-icon
+          name="hi-solid-refresh"
+          scale="1.5"
+          :animation="refreshing ? 'spin' : null"
+        />
       </n-button>
     </teleport>
     <n-grid class="h-100 mh-100" responsive="screen" cols="3 xs:1 s:3">
@@ -228,11 +232,21 @@ export default defineComponent({
         });
     };
 
-    onMounted(async () => {
+    const refreshing = ref(false);
+
+    const refresh = async () => {
+      refreshing.value = true;
       await loadProductPreparation();
+      refreshing.value = false;
+    };
+
+    onMounted(() => {
+      loadProductPreparation();
+      setInterval(refresh, 5000);
     });
 
     return {
+      refreshing,
       pendients,
       preparing,
       finished,

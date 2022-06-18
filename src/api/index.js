@@ -19,4 +19,19 @@ http.interceptors.response.use(async (response) => {
     await sleep();
   }
   return response;
+}, async function (error) {
+  const userStore = useUserStore();
+  const originalRequest = error.config;
+  if (error.response.status === 401 && !originalRequest._retry) {
+    if (error.response.data.code === 'token_not_valid') {
+      originalRequest._retry = true;
+      userStore.token = null
+      await userStore.updateToken();
+      originalRequest.headers.Authorization = `Bearer ${userStore.token}`
+      return http(originalRequest);
+    } else {
+      return Promise.reject(error);
+    }
+  }
+  return Promise.reject(error);
 });
