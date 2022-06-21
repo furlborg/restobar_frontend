@@ -95,11 +95,7 @@ export default defineComponent({
       getConcept(`?search=${type.value}`)
         .then((response) => {
           const json = response.data.filter((data) => {
-            if (
-              data.concept != "STOCK INICIAL" &&
-              data.concept != "VENTA" &&
-              data.concept != "COMPRA"
-            ) {
+            if (data.concept != "STOCK INICIAL") {
               return data;
             }
           });

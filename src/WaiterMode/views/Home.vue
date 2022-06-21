@@ -76,7 +76,7 @@
               start-50
               translate-middle
             "
-            >{{ table.code }}</n-text
+            >{{ table.description }}</n-text
           >
         </n-card>
       </n-gi>

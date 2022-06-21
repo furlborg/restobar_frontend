@@ -230,7 +230,7 @@
                 />
               </div>
               <div>
-                DSCT:
+                OTROS:
                 <span>S/.</span>
                 <input
                   class="custom-input fw-bold"
