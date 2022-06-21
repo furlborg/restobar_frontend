@@ -126,6 +126,10 @@ export default defineComponent({
         },
         {
           label: "Modo Mozo",
+          key: 1,
+        },
+        {
+          label: "Modo Chef",
           key: 0,
         },
         {
@@ -135,7 +139,7 @@ export default defineComponent({
         },
       ];
       if (userStore.user.branchoffice) {
-        return options.filter((option) => option.key === -1);
+        return options.filter((option) => option.key !== "branchs");
       }
       return options;
     });
@@ -158,8 +162,11 @@ export default defineComponent({
 
     const avatarSelect = (key) => {
       switch (key) {
-        case 0:
+        case 1:
           router.push({ name: "WaiterMode" });
+          break;
+        case 0:
+          router.push({ name: "ChefMode" });
           break;
         case -1:
           doLogout();
