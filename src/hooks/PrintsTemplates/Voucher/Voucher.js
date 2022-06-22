@@ -1,12 +1,15 @@
 import { CreatePdfFile } from "@/hooks/CreatePdfFile.js";
 import { numeroALetras } from "@/hooks/numberText.js";
 import { useSettingsStore } from "@/store/modules/settings";
+import { useTableStore } from "@/store/modules/table";
 
 import { useSaleStore } from "@/store/modules/sale";
 
 import { format as formatter } from "date-fns";
 
 const saleStore = useSaleStore();
+
+const tableStore = useTableStore();
 
 const settingsStore = useSettingsStore();
 
@@ -450,7 +453,7 @@ const VoucherPrint = (props) => {
           {
             tittle: "MESA",
             twoPoints: ":",
-            cont: props.data.table,
+            cont: `${tableStore.getTableByID(props.data.table).description}`,
           },
         ],
         fontSize:
