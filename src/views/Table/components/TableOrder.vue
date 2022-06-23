@@ -3,7 +3,7 @@
     <n-page-header class="mb-2" @back="handleBack">
       <template #title>
         <n-space justify="space-between">
-          <n-text class="fs-2">Mesa {{ table }}</n-text>
+          <n-text class="fs-2">{{ table }}</n-text>
         </n-space>
       </template>
     </n-page-header>
@@ -270,6 +270,7 @@ import { useSettingsStore } from "@/store/modules/settings";
 import { useUserStore } from "@/store/modules/user";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useProductStore } from "@/store/modules/product";
+import { useTableStore } from "@/store/modules/table";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import {
@@ -293,7 +294,8 @@ export default defineComponent({
     const router = useRouter();
     const message = useMessage();
     const dialog = useDialog();
-    const table = route.params.table;
+    const tableStore = useTableStore();
+    const table = tableStore.getTableByID(route.params.table).description;
     const settingsStore = useSettingsStore();
     const genericsStore = useGenericsStore();
     const productStore = useProductStore();
