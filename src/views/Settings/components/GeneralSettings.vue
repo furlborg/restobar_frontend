@@ -124,12 +124,9 @@
                     :class="{ 'bg-selected': table.id === selectedTable.id }"
                     :bordered="false"
                     hoverable
+                    @click="selectTable(table)"
                   >
-                    <n-space
-                      align="center"
-                      vertical
-                      @click="selectTable(table)"
-                    >
+                    <n-space align="center" vertical>
                       <!-- <n-button class="position-absolute top-0 end-0 m-1" text>
                         <v-icon name="bi-three-dots" scale="1.25" />
                       </n-button> -->

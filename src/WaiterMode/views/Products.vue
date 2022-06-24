@@ -253,9 +253,9 @@ export default defineComponent({
       return list;
     };
 
-    const performUpdateTableOrder = () => {
+    const performUpdateTableOrder = async () => {
       addToList();
-      updateTableOrder(
+      await updateTableOrder(
         route.params.table,
         orderStore.orderId,
         orderStore.orderList
@@ -278,11 +278,19 @@ export default defineComponent({
             ) {
               case 1:
                 console.log(1);
-                printOrderTicket({ data: response.data, table });
+                printOrderTicket({
+                  data: response.data,
+                  table,
+                  updateOrder: true,
+                });
                 break;
               case 2:
                 console.log(2);
-                printWEBADASDEBRASEROS({ data: response.data, table });
+                printWEBADASDEBRASEROS({
+                  data: response.data,
+                  table,
+                  updateOrder: true,
+                });
                 break;
 
               default:
