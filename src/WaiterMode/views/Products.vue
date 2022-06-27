@@ -136,6 +136,8 @@
           <n-space class="w-100" justify="center">
             <n-button type="error" secondary>Cancelar pedido</n-button>
             <n-button
+              :disabled="loading"
+              :loading="loading"
               type="info"
               secondary
               @click="
@@ -188,12 +190,14 @@ export default defineComponent({
     const waiterStore = useWaiterStore();
     const activeDrawer = ref(false);
     const showModal = ref(false);
+    const loading = ref(false);
     const orderItemIndex = ref(null);
     const products = ref([]);
     const table = route.params.table;
 
     const performCreateTableOrder = () => {
       addToList();
+      loading.value = true;
       createTableOrder(route.params.table, orderStore.orderList)
         .then((response) => {
           if (response.status === 201) {
@@ -229,6 +233,9 @@ export default defineComponent({
         .catch((error) => {
           console.error(error);
           message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          loading.value = false;
         });
     };
 
@@ -255,6 +262,7 @@ export default defineComponent({
 
     const performUpdateTableOrder = async () => {
       addToList();
+      loading.value = true;
       await updateTableOrder(
         route.params.table,
         orderStore.orderId,
@@ -306,6 +314,9 @@ export default defineComponent({
         .catch((error) => {
           console.error(error);
           message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          loading.value = false;
         });
     };
 
@@ -367,6 +378,7 @@ export default defineComponent({
     };
 
     return {
+      loading,
       activeDrawer,
       showModal,
       productStore,
