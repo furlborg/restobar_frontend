@@ -127,7 +127,7 @@ export const routes = [
           {
             name: "TakeOrder",
             path: '/take-order',
-            component: () => import(/* webpackChunkName: "table-home" */ '@/views/Order/components/TakeOrder'),
+            component: () => import(/* webpackChunkName: "take-order" */ '@/views/Order/components/TakeOrder'),
           },
           {
             name: "TableOrder",
@@ -138,12 +138,12 @@ export const routes = [
               {
                 name: "ProductCategories",
                 path: "product-categories",
-                component: () => import(/* webpackChunkName: "table-order" */ '@/views/Table/components/CategoriesList'),
+                component: () => import(/* webpackChunkName: "product-categories" */ '@/views/Table/components/CategoriesList'),
               },
               {
                 name: "CategoriesItems",
                 path: "product-categories/:category",
-                component: () => import(/* webpackChunkName: "table-order" */ '@/views/Table/components/CategoriesItems'),
+                component: () => import(/* webpackChunkName: "product-categories-get" */ '@/views/Table/components/CategoriesItems'),
               },
               {
                 name: "TablePayment",
