@@ -296,7 +296,7 @@
                       <div>
                         SUBTOTAL: <span>S/. {{ subTotal.toFixed(2) }}</span>
                       </div>
-                      <div v-if="!!sale.delivery_info">
+                      <div v-if="!!sale.delivery_info" key="delivery">
                         DELIVERY:
                         <span>S/.</span>
                         <input
@@ -309,10 +309,10 @@
                           @click="$event.target.select()"
                         />
                       </div>
+                      <div>IGV: <span>S/. 0.00</span></div>
                       <div>
                         ICBPER: <span>S/. {{ icbper.toFixed(2) }}</span>
                       </div>
-                      <div>IGV: <span>S/. 0.00</span></div>
                       <div>
                         DSCT:
                         <span>S/.</span>
