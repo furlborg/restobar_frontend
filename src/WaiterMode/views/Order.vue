@@ -12,19 +12,18 @@
       <n-card title="Pedido" size="small" :segmented="{ content: 'hard' }">
         <!-- <n-h2>Pedido</n-h2> -->
         <n-list class="m-0">
-          <n-list-item
-            v-for="(order, index) in orderStore.orderList"
-            :key="index"
-          >
-            <n-thing
-              :title="`${order.quantity} - ${order.product_name}`"
-              :title-extra="`S/. ${order.quantity * order.price.toFixed(2)}`"
-            />
-            <!-- @click="
+          <template v-for="(order, index) in orderStore.orderList">
+            <n-list-item v-if="order.quantity > 0" :key="index">
+              <n-thing
+                :title="`${order.quantity} - ${order.product_name}`"
+                :title-extra="`S/. ${order.quantity * order.price.toFixed(2)}`"
+              />
+              <!-- @click="
                 itemIndex = index;
                 showModal = true;
               " -->
-          </n-list-item>
+            </n-list-item>
+          </template>
         </n-list>
       </n-card>
       <ProductIndications

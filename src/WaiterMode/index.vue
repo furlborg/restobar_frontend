@@ -44,6 +44,16 @@
           <a href="#">Pricing</a>
         </li> -->
         <li>
+          <a
+            v-if="$route.name === 'WHome'"
+            @click="
+              waiterStore.changeTable = true;
+              active = false;
+            "
+            >Mover Mesa</a
+          >
+        </li>
+        <li>
           <a href="#" class="suBtn" @click="doLogout">Cerrar sesión</a>
         </li>
       </ul>
