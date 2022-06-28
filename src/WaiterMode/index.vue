@@ -5,7 +5,7 @@
         <div
           class="menuBtn"
           :class="{ act: active === true }"
-          @click="active ? (active = false) : (active = true)"
+          @click="active = !active"
         >
           <span class="lines"></span>
         </div>
@@ -33,7 +33,7 @@
             "
             >Unir Mesas</a
           >
-        </li> -->
+        </li>
         <li>
           <a href="#">Services</a>
         </li>
@@ -42,7 +42,7 @@
         </li>
         <li>
           <a href="#">Pricing</a>
-        </li>
+        </li> -->
         <li>
           <a href="#" class="suBtn" @click="doLogout">Cerrar sesión</a>
         </li>

@@ -1,5 +1,5 @@
 <template>
-  <div id="WProducts">
+  <div id="WProducts" class="position-relative w-100">
     <n-page-header class="border-bottom border-2 border-success p-2">
       <template #title>
         <n-text class="fs-4">{{
@@ -7,9 +7,12 @@
         }}</n-text>
       </template>
     </n-page-header>
+    <div class="m-2">
+      <n-input placeholder="Buscar" v-model:value="search" />
+    </div>
 
     <n-list class="m-0 px-2">
-      <n-list-item v-for="(product, index) in products" :key="product.id">
+      <n-list-item v-for="(product, index) in filteredProducts" :key="product.id">
         <n-space vertical>
           <n-space
             justify="space-between"
@@ -81,7 +84,7 @@
       >
         <transition name="slide-fade">
           <n-button
-            v-if="products.some((product) => product.quantity > 0)"
+            v-if="filteredProducts.some((product) => product.quantity > 0)"
             type="success"
             round
             @click="addToPreList"
@@ -158,7 +161,7 @@
 import printOrderTicket from "@/hooks/PrintsTemplates/Ticket/OrderTicket.js";
 import printWEBADASDEBRASEROS from "@/hooks/PrintsTemplates/Ticket/WEBADASDEBRASEROS.js";
 import { useSettingsStore } from "@/store/modules/settings";
-import { defineComponent, ref, onMounted } from "vue";
+import { defineComponent, ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useRouter } from "vue-router";
 import { useMessage } from "naive-ui";
@@ -192,8 +195,15 @@ export default defineComponent({
     const showModal = ref(false);
     const loading = ref(false);
     const orderItemIndex = ref(null);
+    const search = ref('');
     const products = ref([]);
     const table = route.params.table;
+
+    const filteredProducts = computed(() => {
+      return products.value.filter(
+        (product) => product.name.toLowerCase().startsWith(search.value.toLowerCase())
+      )
+    })
 
     const performCreateTableOrder = () => {
       addToList();
@@ -348,7 +358,7 @@ export default defineComponent({
     });
 
     const addToPreList = () => {
-      products.value.forEach((product) => {
+      filteredProducts.value.forEach((product) => {
         if (product.quantity > 0) {
           const existence = waiterStore.preOrderList.find(
             (order) => order.id === product.id
@@ -379,12 +389,13 @@ export default defineComponent({
 
     return {
       loading,
+      search,
       activeDrawer,
       showModal,
       productStore,
       waiterStore,
       orderItemIndex,
-      products,
+      filteredProducts,
       addToPreList,
       orderStore,
       performCreateTableOrder,
