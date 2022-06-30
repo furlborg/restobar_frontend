@@ -3,7 +3,9 @@
     <n-page-header class="mb-2" @back="handleBack">
       <template #title>
         <n-space justify="space-between">
-          <n-text class="fs-2">{{ table }}</n-text>
+          <n-text class="fs-2">{{
+            tableStore.getTableByID(table).description
+          }}</n-text>
         </n-space>
       </template>
     </n-page-header>
@@ -77,56 +79,55 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr
-                    v-for="(order, index) in orderStore.orderList"
-                    :key="index"
-                  >
-                    <td>
-                      <n-button
-                        v-if="!($route.name === 'TablePayment')"
-                        type="info"
-                        text
-                        @click="
-                          itemIndex = index;
-                          showModal = true;
-                        "
-                        ><v-icon name="md-listalt-round"
-                      /></n-button>
-                    </td>
-                    <td>
-                      {{ order.product_name }}
-                    </td>
-                    <td>
-                      <n-input-number
-                        v-if="!($route.name === 'TablePayment')"
-                        class="border-top-0"
-                        size="small"
-                        :min="
-                          order.id ? saleStore.getOrderQuantity(order.id) : 1
-                        "
-                        v-model:value="order.quantity"
-                      />
-                      <template v-else>
-                        {{ order.quantity }}
-                      </template>
-                    </td>
-                    <td>S/. {{ order.subTotal.toFixed(2) }}</td>
-                    <td>
-                      <n-button
-                        v-if="!($route.name === 'TablePayment')"
-                        type="error"
-                        text
-                        @click="
-                          !order.id
-                            ? (orderStore.orderList.splice(index, 1),
-                              nullifyTableOrder())
-                            : deleteOrderDetail(index, order.id)
-                        "
-                      >
-                        <v-icon name="md-disabledbydefault-round" />
-                      </n-button>
-                    </td>
-                  </tr>
+                  <template v-for="(order, index) in orderStore.orderList">
+                    <tr v-if="order.quantity > 0" :key="index">
+                      <td>
+                        <n-button
+                          v-if="!($route.name === 'TablePayment')"
+                          type="info"
+                          text
+                          @click="
+                            itemIndex = index;
+                            showModal = true;
+                          "
+                          ><v-icon name="md-listalt-round"
+                        /></n-button>
+                      </td>
+                      <td>
+                        {{ order.product_name }}
+                      </td>
+                      <td>
+                        <n-input-number
+                          v-if="!($route.name === 'TablePayment')"
+                          class="border-top-0"
+                          size="small"
+                          :min="
+                            order.id ? saleStore.getOrderQuantity(order.id) : 1
+                          "
+                          v-model:value="order.quantity"
+                        />
+                        <template v-else>
+                          {{ order.quantity }}
+                        </template>
+                      </td>
+                      <td>S/. {{ order.subTotal.toFixed(2) }}</td>
+                      <td>
+                        <n-button
+                          v-if="!($route.name === 'TablePayment')"
+                          type="error"
+                          text
+                          @click="
+                            !order.id
+                              ? (orderStore.orderList.splice(index, 1),
+                                nullifyTableOrder())
+                              : deleteOrderDetail(index, order.id)
+                          "
+                        >
+                          <v-icon name="md-disabledbydefault-round" />
+                        </n-button>
+                      </td>
+                    </tr>
+                  </template>
                 </tbody>
                 <tfoot>
                   <tr>
@@ -295,7 +296,7 @@ export default defineComponent({
     const message = useMessage();
     const dialog = useDialog();
     const tableStore = useTableStore();
-    const table = tableStore.getTableByID(route.params.table).description;
+    const table = route.params.table;
     const settingsStore = useSettingsStore();
     const genericsStore = useGenericsStore();
     const productStore = useProductStore();
@@ -839,6 +840,7 @@ export default defineComponent({
       loadingConfirm,
       validateSend,
       loading,
+      tableStore,
     };
   },
 });
