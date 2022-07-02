@@ -21,17 +21,46 @@
 
 <script>
 import { defineComponent } from "vue";
+import { useRouter } from "vue-router";
+import { useDialog } from "naive-ui";
+import { useUserStore } from "@/store/modules/user";
 
 export default defineComponent({
   name: "ChefMode",
   setup() {
+    const router = useRouter();
+    const dialog = useDialog();
+    const userStore = useUserStore();
+
     const handleSelect = (option) => {
       switch (option) {
         case 1:
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+          } else {
+            if (document.exitFullscreen) {
+              document.exitFullscreen();
+            }
+          }
           break;
         case 2:
+          router.push({ name: "Dashboard" });
           break;
         case 3:
+          dialog.error({
+            title: "Cerrar sesión",
+            content: "¿Desea cerrar sesión?",
+            positiveText: "Si",
+            negativeText: "No",
+            onPositiveClick: async () => {
+              await userStore.blacklistToken().then((v) => {
+                if (v) {
+                  router.push({ name: "Login" });
+                }
+              });
+            },
+            onNegativeClick: () => {},
+          });
           break;
         default:
           break;

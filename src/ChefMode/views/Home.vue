@@ -34,7 +34,14 @@
                     <div class="p-3">
                       <n-space justify="space-between">
                         <n-text type="info">{{ order.user }}</n-text>
-                        <n-text type="info">{{ order.table }}</n-text>
+                        <n-text type="info">{{ order.time }}</n-text>
+                        <n-text type="info">{{
+                          order.order_type === "M"
+                            ? order.table
+                            : order.order_type === "D"
+                            ? "DELIVERY"
+                            : "LLEVAR"
+                        }}</n-text>
                       </n-space>
                       <n-space class="mt-3" justify="space-between">
                         <n-text class="fs-6">{{ order.product }}</n-text>
@@ -50,6 +57,9 @@
                           <n-text>{{ indication.description }}</n-text>
                         </li>
                       </ul>
+                      <n-text v-if="order.ask_for" type="info"
+                        >CLIENTE: {{ order.ask_for }}</n-text
+                      >
                     </div>
                     <n-button
                       class="rounded-0"
@@ -86,7 +96,14 @@
                     <div class="p-3">
                       <n-space justify="space-between">
                         <n-text type="info">{{ order.user }}</n-text>
-                        <n-text type="info">{{ order.table }}</n-text>
+                        <n-text type="info">{{ order.time }}</n-text>
+                        <n-text type="info">{{
+                          order.order_type === "M"
+                            ? order.table
+                            : order.order_type === "D"
+                            ? "DELIVERY"
+                            : "LLEVAR"
+                        }}</n-text>
                       </n-space>
                       <n-space class="mt-3" justify="space-between">
                         <n-text class="fs-6">{{ order.product }}</n-text>
@@ -155,7 +172,14 @@
                     <div class="p-3">
                       <n-space justify="space-between">
                         <n-text type="info">{{ order.user }}</n-text>
-                        <n-text type="info">{{ order.table }}</n-text>
+                        <n-text type="info">{{ order.time }}</n-text>
+                        <n-text type="info">{{
+                          order.order_type === "M"
+                            ? order.table
+                            : order.order_type === "D"
+                            ? "DELIVERY"
+                            : "LLEVAR"
+                        }}</n-text>
                       </n-space>
                       <n-space class="mt-3" justify="space-between">
                         <n-text class="fs-6">{{ order.product }}</n-text>
