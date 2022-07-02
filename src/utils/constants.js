@@ -1335,7 +1335,7 @@ export const createTillSalesColumns = () => {
             title: 'Emisión',
             key: 'date_sale',
         },
-        /* {
+        {
             title: 'Estado',
             key: 'status',
             render(row) {
@@ -1369,7 +1369,7 @@ export const createTillSalesColumns = () => {
                     }
                 )
             }
-        },{
+        },/* {
             title: 'Acciones',
             key: 'actions',
             width: 200,
@@ -1716,6 +1716,43 @@ export const createTillOrderColumns = ({ showDetails, showDeliveryInfo }) => {
                         size: 'small',
                         color: { color: lighten(color, 48), textColor: color, borderColor: lighten(color, 24) },
                         round: false
+                    },
+                    {
+                        default: () => text
+                    }
+                )
+            }
+        },
+        {
+            title: 'Estado',
+            key: 'status',
+            align: 'center',
+            width: genericsStore.device !== 'desktop' ? 100 : 'auto',
+            render(row) {
+                let type, text;
+                switch (row.status) {
+                    case '1':
+                        type = "warning"
+                        text = "PENDIENTE"
+                        break
+                    case '2':
+                        type = "success"
+                        text = "COBRADO"
+                        break
+                    case '3':
+                        type = "error"
+                        text = "ANULADO"
+                        break
+                    default:
+                        break
+                }
+
+                return h(
+                    NTag,
+                    {
+                        size: 'small',
+                        type: type,
+                        round: true
                     },
                     {
                         default: () => text

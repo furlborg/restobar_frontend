@@ -106,6 +106,7 @@ import {
     GiCardExchange,
     LaPowerOffSolid,
     BiListNested,
+    SiSimpleanalytics,
 } from "oh-vue-icons/icons";
 OhVueIcon.add(
     BiThreeDots,
@@ -214,5 +215,6 @@ OhVueIcon.add(
     GiCardExchange,
     LaPowerOffSolid,
     BiListNested,
+    SiSimpleanalytics,
 );
 export { OhVueIcon }
