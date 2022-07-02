@@ -201,7 +201,7 @@ export default defineComponent({
 
     const filteredProducts = computed(() => {
       return products.value.filter(
-        (product) => product.name.toLowerCase().startsWith(search.value.toLowerCase())
+        (product) => product.name.toLowerCase().includes(search.value.toLowerCase())
       )
     })
 
