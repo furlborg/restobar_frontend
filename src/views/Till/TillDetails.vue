@@ -522,8 +522,12 @@ export default defineComponent({
             label: 'Pedidos',
             children: [
               {
-                label: "Pedidos",
+                label: "General",
                 key: 221,
+              },
+              {
+                label: "Usuarios",
+                key: 222,
               },
             ]
           },
@@ -542,10 +546,6 @@ export default defineComponent({
               {
                 label: "Categorías",
                 key: 233,
-              },
-              {
-                label: "Usuarios",
-                key: 234,
               },
             ]
           },
@@ -576,6 +576,9 @@ export default defineComponent({
         case 221:
           requestExcel('orders', 'Pedidos');
           break;
+        case 222:
+          requestExcel('users', 'Usuarios');
+          break;
         case 231:
           requestExcel('sales', 'Ventas');
           break;
@@ -584,9 +587,6 @@ export default defineComponent({
           break;
         case 233:
           requestExcel('categories', 'Categorías');
-          break;
-        case 234:
-          requestExcel('users', 'Usuarios');
           break;
         default:
           console.error("Algo salió mal...");

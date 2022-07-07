@@ -589,8 +589,12 @@ export const createTillColumns = ({ viewDetails, makeTillReport, makeSimpleTillR
                                       label: 'Pedidos',
                                       children: [
                                         {
-                                          label: "Pedidos",
+                                          label: "General",
                                           key: 221,
+                                        },
+                                        {
+                                          label: "Usuarios",
+                                          key: 222,
                                         },
                                       ]
                                     },
@@ -609,10 +613,6 @@ export const createTillColumns = ({ viewDetails, makeTillReport, makeSimpleTillR
                                         {
                                           label: "Categorías",
                                           key: 233,
-                                        },
-                                        {
-                                          label: "Usuarios",
-                                          key: 234,
                                         },
                                       ]
                                     },
@@ -642,6 +642,9 @@ export const createTillColumns = ({ viewDetails, makeTillReport, makeSimpleTillR
                                     case 221:
                                         requestExcel(row.id, 'orders', 'Pedidos');
                                         break;
+                                    case 222:
+                                        requestExcel(row.id, 'users', 'Usuarios');
+                                        break;
                                     case 231:
                                         requestExcel(row.id, 'sales', 'Ventas');
                                         break;
@@ -650,9 +653,6 @@ export const createTillColumns = ({ viewDetails, makeTillReport, makeSimpleTillR
                                         break;
                                     case 233:
                                         requestExcel(row.id, 'categories', 'Categorías');
-                                        break;
-                                    case 234:
-                                        requestExcel(row.id, 'users', 'Usuarios');
                                         break;
                                     default:
                                         console.error("Algo salió mal...");
