@@ -129,6 +129,7 @@
 </template>
 
 <script>
+import format from "date-fns/format";
 import { defineComponent, ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useDialog, useMessage } from "naive-ui";
@@ -144,6 +145,7 @@ import {
   getTillReport,
   getTillSaleReport,
   getSimpleTillReport,
+  getExcelReport,
 } from "@/api/modules/tills";
 import { useTillStore } from "@/store/modules/till";
 import { useBusinessStore } from "@/store/modules/business";
@@ -304,6 +306,15 @@ export default defineComponent({
       // loadProductsData()
     };
 
+    const downloadReport = (data, filename) => {
+          const url = window.URL.createObjectURL(new Blob([data]))
+          const link = document.createElement('a')
+          link.href = url
+          link.setAttribute('download', filename)
+          document.body.appendChild(link)
+          link.click()
+    }
+
     return {
       isDecimal,
       isNumber,
@@ -409,6 +420,16 @@ export default defineComponent({
             .catch((error) => {
               console.error(error);
             });
+        },
+        requestExcel(till, report, filename) {
+          getExcelReport(till, report)
+            .then(response => {
+              downloadReport(response.data, `Reporte ${filename} ${format(new Date(Date.now()), "yyyy-MM-dd")}.xlsx`)
+            })
+            .catch(error => {
+              console.error(error)
+              message.error('Algo salió mal')
+            })
         },
         closeTill(row) {
           if (tillStore.currentTillOrders) {

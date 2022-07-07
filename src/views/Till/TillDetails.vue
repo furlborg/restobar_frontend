@@ -204,7 +204,10 @@
             :options="reportOptions"
             @select="selectReport"
           >
-            <n-button type="info" size="small" secondary>Reportes</n-button>
+            <n-button type="info" tertiary>
+              <!-- <v-icon name="si-simpleanalytics" /> -->
+              Reportes
+            </n-button>
           </n-dropdown>
         </template>
       </n-tabs>
@@ -221,6 +224,7 @@
 
 <script>
 import jspdf from "jspdf";
+import format from "date-fns/format";
 import { defineComponent, ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useMessage, useDialog } from "naive-ui";
@@ -238,6 +242,7 @@ import {
   getTillReport,
   getTillSaleReport,
   getSimpleTillReport,
+  getExcelReport,
 } from "@/api/modules/tills";
 import { useUserStore } from "@/store/modules/user";
 
@@ -473,29 +478,115 @@ export default defineComponent({
 
     const reportOptions = [
       {
-        label: "Reporte de caja",
+        label: "Imprimir",
         key: 1,
+        children: [
+          {
+            key: 11,
+            label: "Reporte de caja",
+          },
+          {
+            key: 12,
+            label: "Reporte simple de caja",
+          },
+          {
+            key: 13,
+            label: "Reporte de ventas",
+          },
+        ]
       },
       {
-        label: "Reporte simple de caja",
+        label: "Excel",
         key: 2,
-      },
-      {
-        label: "Reporte de ventas",
-        key: 3,
-      },
+        children: [
+          {
+            key: 21,
+            label: 'Caja',
+            children: [
+              {
+                label: "Movimientos",
+                key: 211,
+              },
+              {
+                label: "Ingresos",
+                key: 212,
+              },
+              {
+                label: "Egresos",
+                key: 213,
+              },
+            ]
+          },
+          {
+            key: 22,
+            label: 'Pedidos',
+            children: [
+              {
+                label: "Pedidos",
+                key: 221,
+              },
+            ]
+          },
+          {
+            label: "Ventas",
+            key: 23,
+            children: [
+              {
+                label: "Ventas",
+                key: 231,
+              },
+              {
+                label: "Productos",
+                key: 232,
+              },
+              {
+                label: "Categorías",
+                key: 233,
+              },
+              {
+                label: "Usuarios",
+                key: 234,
+              },
+            ]
+          },
+        ]
+      }
     ];
 
     const selectReport = (key) => {
       switch (key) {
-        case 1:
+        case 11:
           makeTillReport();
           break;
-        case 2:
+        case 12:
           makeSimpleTillReport();
           break;
-        case 3:
+        case 13:
           makeSaleReport();
+          break;
+        case 211:
+          requestExcel('details', 'Movimientos');
+          break;
+        case 212:
+          requestExcel('income', 'Ingresos');
+          break;
+        case 213:
+          requestExcel('outcome', 'Egresos');
+          break;
+        case 221:
+          requestExcel('orders', 'Pedidos');
+          break;
+        case 231:
+          requestExcel('sales', 'Ventas');
+          break;
+        case 232:
+          requestExcel('products', 'Productos');
+          break;
+        case 233:
+          requestExcel('categories', 'Categorías');
+          break;
+        case 234:
+          requestExcel('users', 'Usuarios');
           break;
         default:
           console.error("Algo salió mal...");
@@ -509,6 +600,26 @@ export default defineComponent({
       onCloseModal();
       // loadProductsData()
     };
+
+    const downloadReport = (data, filename) => {
+          const url = window.URL.createObjectURL(new Blob([data]))
+          const link = document.createElement('a')
+          link.href = url
+          link.setAttribute('download', filename)
+          document.body.appendChild(link)
+          link.click()
+    }
+
+    const requestExcel = async (report, filename) => {
+      await getExcelReport(till, report)
+        .then(response => {
+          downloadReport(response.data, `Reporte ${filename} ${format(new Date(Date.now()), "yyyy-MM-dd")}.xlsx`)
+        })
+        .catch(error => {
+          console.error(error)
+          message.error('Algo salió mal')
+        })
+    }
 
     return {
       isDecimal,

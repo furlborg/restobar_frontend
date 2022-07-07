@@ -166,3 +166,9 @@ export async function updateConcept(idConcept, concept) {
         concept_type: concept.concept_type,
     })
 }
+
+export async function getExcelReport(id, report) {
+    return await http.get(`reports/${id}/${report}/`, {
+        responseType: 'arraybuffer'
+    })
+}
