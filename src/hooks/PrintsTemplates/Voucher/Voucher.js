@@ -81,6 +81,12 @@ const VoucherPrint = (props) => {
           "IMPORTE TOTAL": dataForPrint.totales.total_venta.toFixed("2"),
           ICPER:
             dataForPrint.totales.total_impuestos_bolsa_plastica.toFixed("2"),
+          EFECTIVO: props.data.given_amount,
+          VUELTO: !!props.changing
+            ? props.changing.toFixed("2")
+            : parseFloat(
+                props.data.given_amount - dataForPrint.totales.total_venta
+              ).toFixed("2"),
         });
 
     for (let i in newTotal) {
