@@ -1001,6 +1001,10 @@ export default defineComponent({
       if (addressesOptions.value.length) {
         sale.value.address = addressesOptions.value[0].value;
       }
+      if (sale.value.delivery_info) {
+        sale.value.delivery_info.person = customer.names;
+        sale.value.delivery_info.phone = customer.phone;
+      }
     };
 
     const showCustomerOptions = async (value) => {

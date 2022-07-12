@@ -238,8 +238,8 @@ export default defineComponent({
               if (v.ingress !== null) {
                 total.value.total =
                   v.type == "0"
-                    ? total.value.total + parseFloat(v.ingress)
-                    : total.value.total - parseFloat(v.egress);
+                    ? total.value.total + parseFloat(!v.ingress ? 0 : v.ingress)
+                    : total.value.total - parseFloat(!v.egress ? 0 : v.egress);
               }
             });
           })
@@ -262,8 +262,8 @@ export default defineComponent({
                 v.type == "1" ? total.value.egress + 1 : total.value.egress;
               total.value.total =
                 v.type == "0"
-                  ? total.value.total + parseFloat(v.ingress)
-                  : total.value.total - parseFloat(v.egress);
+                  ? total.value.total + parseFloat(!v.ingress ? 0 : v.ingress)
+                  : total.value.total - parseFloat(!v.egress ? 0 : v.egress);
             });
           })
           .catch((error) => {
