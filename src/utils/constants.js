@@ -622,13 +622,13 @@ export const createTillColumns = ({ viewDetails, makeTillReport, makeSimpleTillR
                             onSelect: (key) => {
                                 switch (key) {
                                     case 11:
-                                        makeTillReport();
+                                        makeTillReport(row);
                                         break;
                                     case 12:
-                                        makeSimpleTillReport();
+                                        makeSimpleTillReport(row);
                                         break;
                                     case 13:
-                                        makeSaleReport();
+                                        makeSaleReport(row);
                                         break;
                                     case 211:
                                         requestExcel(row.id, 'details', 'Movimientos');
