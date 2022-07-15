@@ -10,7 +10,7 @@
           type="info"
           secondary
           @click="$router.push({ name: 'TakeOrder' })"
-          >Realizar pedido</n-button
+          >Llevar / Delivery</n-button
         >
       </n-space>
       <!-- <n-button
