@@ -60,7 +60,6 @@ export default defineComponent({
           {
             label: "Imprimir",
             key: 1,
-            disabled: !userStore.hasPermission("make_ticket_report"),
             children: [
               {
                 key: 11,
@@ -75,7 +74,6 @@ export default defineComponent({
           {
             label: "Excel",
             key: 2,
-            disabled: !userStore.hasPermission("make_excel_report"),
             children: [
               {
                 key: 21,
