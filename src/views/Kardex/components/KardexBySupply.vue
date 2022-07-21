@@ -68,9 +68,9 @@
       <n-card :title="ProductInstance.product">
         <template #header-extra>
           <n-date-picker
-            type="daterange"
+            type="datetimerange"
             size="small"
-            value-format="yyyy-MM-dd"
+            value-format="yyyy-MM-dd HH:mm:ss"
             v-model:formatted-value="dateSearch"
             clearable
           />
@@ -153,7 +153,8 @@ import { getSupplies } from "@/api/modules/supplies";
 import { getSuplieKardex, getProductKardex } from "@/api/modules/kardex";
 import { getProducts, searchProduct } from "@/api/modules/products";
 import { useMessage } from "naive-ui";
-import { generateExcel } from "../Excel/Report.js";
+import { getExcelReport } from "@/api/modules/tills";
+import format from "date-fns/format";
 
 export default defineComponent({
   name: "KardexBySupply",
@@ -224,7 +225,7 @@ export default defineComponent({
       if (checkedValue.value == "product") {
         let filter = `?product=${id}`;
         if (date) {
-          filter += `&dfrom=${date[0]} 00:00:00&dto=${date[1]} 23:59:59`;
+          filter += `&dfrom=${date[0]}&dto=${date[1]}`;
         }
         getProductKardex(filter)
           .then((response) => {
@@ -236,10 +237,11 @@ export default defineComponent({
               total.value.egress =
                 v.type == "1" ? total.value.egress + 1 : total.value.egress;
               if (v.ingress !== null) {
+                console.log(v);
                 total.value.total =
                   v.type == "0"
-                    ? total.value.total + parseFloat(!v.ingress ? 0 : v.ingress)
-                    : total.value.total - parseFloat(!v.egress ? 0 : v.egress);
+                    ? total.value.total + parseFloat(v.ingress)
+                    : total.value.total - parseFloat(v.egress);
               }
             });
           })
@@ -249,7 +251,7 @@ export default defineComponent({
       } else {
         let filter = `?supplie=${id}`;
         if (date) {
-          filter += `&dfrom=${date[0]} 00:00:00&dto=${date[1]} 23:59:59`;
+          filter += `&dfrom=${date[0]}&dto=${date[1]}`;
         }
         getSuplieKardex(filter)
           .then((response) => {
@@ -305,62 +307,30 @@ export default defineComponent({
       },
     ]);
 
-    const generateReport = () => {
-      // let colums = createKardexBySupplyColumns();
-      // console.log(colums);
-
-      /* console.log(dataKardex.value); */
-
-      let c = [
-        {
-          col: "B",
-          header: "Fecha",
-          dataKey: "created",
-          key: "created",
-          width: 30,
-        },
-        {
-          col: "C",
-          header: "Descripción",
-          dataKey: "",
-          key: "concept_des",
-          width: 30,
-        },
-        {
-          col: "D",
-          header: "Documento",
-          dataKey: "associateddoc",
-          key: "associateddoc",
-          width: 30,
-        },
-        {
-          col: "E",
-          header: "Entrada",
-          dataKey: "ingress",
-          key: "ingress",
-          width: 30,
-        },
-        {
-          col: "F",
-          header: "Salida",
-          dataKey: "egress",
-          key: "egress",
-          width: 30,
-        },
-        {
-          col: "G",
-          header: "Stock",
-          dataKey: "balance",
-          key: "balance",
-          width: 30,
-        },
-      ];
-
-      generateExcel(
-        { title: "INSUMO", description: ProductInstance.value.product },
-        c,
-        dataKardex.value
-      );
+    const generateReport = async () => {
+      await getExcelReport(ProductInstance.value.id, "product_movements", {
+        date_range: dateSearch.value,
+      })
+        .then((response) => {
+          if (response.status === 200) {
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement("a");
+            link.href = url;
+            link.setAttribute(
+              "download",
+              `Reporte Kardex Producto ${format(
+                new Date(Date.now()),
+                "yyyy-MM-dd"
+              )}.xlsx`
+            );
+            document.body.appendChild(link);
+            link.click();
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal");
+        });
     };
 
     return {

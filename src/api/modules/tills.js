@@ -167,8 +167,42 @@ export async function updateConcept(idConcept, concept) {
     })
 }
 
-export async function getExcelReport(id, report) {
-    return await http.get(`reports/${id}/${report}/`, {
-        responseType: 'arraybuffer'
+export async function getExcelReport(id, report, queryParams = null) {
+    let baseRoute = 'reports/'
+    if (id) {
+        baseRoute += `${id}/`
+    }
+    if (report) {
+        baseRoute += `${report}/`
+    }
+    return await http.get(baseRoute, {
+        responseType: 'arraybuffer',
+        params: !!queryParams && {
+            date_range: !queryParams.date_range ? null : `${queryParams.date_range[0]},${queryParams.date_range[1]}`,
+            has_stock: queryParams.has_stock,
+            invoice_types: !queryParams.invoice_types ? null :transformInvoices(queryParams.invoice_types),
+        }
     })
+}
+
+export async function getTicketReport(id, report, queryParams = null) {
+    let baseRoute = 'reports/'
+    if (id) {
+        baseRoute += `${id}/`
+    }
+    if (report) {
+        baseRoute += `${report}/`
+    }
+    return await http.get(baseRoute, {
+        params: !!queryParams && {
+            date_range: !queryParams.date_range ? null : `${queryParams.date_range[0]},${queryParams.date_range[1]}`,
+            has_stock: queryParams.has_stock,
+        }
+    })
+}
+
+function transformInvoices(list) {
+    let val = ''
+    list.forEach(item => val += `${item},`)
+    return val
 }
