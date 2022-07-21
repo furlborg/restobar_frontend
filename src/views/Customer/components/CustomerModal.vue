@@ -314,6 +314,7 @@ export default defineComponent({
             },
           ],
         };
+        changeDocMax();
       }
     });
 
