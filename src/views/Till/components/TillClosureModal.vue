@@ -6,7 +6,7 @@
       'w-25': genericsStore.device === 'desktop',
     }"
     preset="card"
-    title="Apertura de Caja"
+    title="Cierre de Caja"
     :show="show"
     :on-close="() => $emit('update:show')"
   >
