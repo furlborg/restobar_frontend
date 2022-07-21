@@ -237,7 +237,6 @@ export default defineComponent({
               total.value.egress =
                 v.type == "1" ? total.value.egress + 1 : total.value.egress;
               if (v.ingress !== null) {
-                console.log(v);
                 total.value.total =
                   v.type == "0"
                     ? total.value.total + parseFloat(v.ingress)
