@@ -35,7 +35,7 @@
                   :options="documentOptions"
                   :disabled="!!doc_type"
                   placeholder=""
-                  @update:value="changeDocMax"
+                  @update:value="(v) => (changeDocMax(v), resetValidation())"
                 />
               </n-form-item-gi>
               <n-form-item-gi
@@ -521,6 +521,9 @@ export default defineComponent({
           console.error("Error: Tipo de Documento inválido");
           break;
       }
+    };
+
+    const resetValidation = () => {
       resetCustomer();
       customerRef.value.restoreValidation();
     };
@@ -565,6 +568,7 @@ export default defineComponent({
       performSearchByDoc,
       changeDocMax,
       docMaxLength,
+      resetValidation,
     };
   },
 });
