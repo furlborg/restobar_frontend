@@ -134,7 +134,7 @@ export default defineComponent({
           response.data.map((v) => {
             if (
               userStore.user.branchoffice == null ||
-              userStore.user.profile_des == "ADMINISTRADOR"
+              userStore.user.role == "ADMINISTRADOR"
             ) {
               optionsEstablishment.value.push({
                 label: v.description,

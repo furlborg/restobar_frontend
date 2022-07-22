@@ -53,7 +53,11 @@
         </n-form-item-gi>
       </n-grid>
       <n-space v-if="!editBranch" justify="end">
-        <n-button type="warning" secondary @click="editBranch = true"
+        <n-button
+          v-if="userStore.hasPermission('change_branchoffice')"
+          type="warning"
+          secondary
+          @click="editBranch = true"
           >Editar</n-button
         >
       </n-space>
@@ -83,6 +87,7 @@ import { defineComponent, ref, toRefs } from "vue";
 import { useMessage } from "naive-ui";
 import { useBusinessStore } from "@/store/modules/business";
 import { useCustomerStore } from "@/store/modules/customer";
+import { useUserStore } from "@/store/modules/user";
 import { updateBranch } from "@/api/modules/business";
 import { branchOfficeRules } from "@/utils/constants";
 
@@ -98,6 +103,7 @@ export default defineComponent({
   setup(props, { emit }) {
     const customerStore = useCustomerStore();
     const businessStore = useBusinessStore();
+    const userStore = useUserStore();
     const { branch } = toRefs(props);
     const isLoading = ref(false);
     const message = useMessage();
@@ -149,6 +155,7 @@ export default defineComponent({
       branchForm,
       branchOfficeRules,
       customerStore,
+      userStore,
       performUpdateBranch,
       cancelBranchEdit,
     };

@@ -7,7 +7,7 @@ export const useUserStore = defineStore('user', {
         user: {
             id: '',
             names: '',
-            profile_des: '',
+            role: '',
             branchoffice: '',
             branchoffice_des: '',
         },
@@ -34,6 +34,8 @@ export const useUserStore = defineStore('user', {
             this.refresh = refresh;
         },
         saveUserInfo(user) {
+            localStorage.setItem('perms', JSON.stringify(user.user_permissions));
+            delete user.user_permissions
             useCookie.set('user-info', user, '')
             this.user = user
         },
@@ -45,6 +47,7 @@ export const useUserStore = defineStore('user', {
             if (localStorage.getItem('isAuthenticated') && useCookie.get('user-info') && useCookie.isKey('refresh') && localStorage.getItem('isAuthenticated') == 'true') {
                 this.isAuthenticated = true
                 this.user = useCookie.get('user-info')
+                this.user.user_permissions = JSON.parse(localStorage.getItem('perms'));
                 this.refresh = useCookie.get('refresh')
                 if (!useCookie.isKey('token') && localStorage.getItem('isAuthenticated') && useCookie.get('user-info') && useCookie.isKey('refresh') && localStorage.getItem('isAuthenticated') == 'true') {
                     await this.updateToken()
@@ -98,7 +101,14 @@ export const useUserStore = defineStore('user', {
             useCookie.remove('token')
             useCookie.remove('refresh')
             this.isAuthenticated = false
+            localStorage.removeItem('perms')
             localStorage.setItem('isAuthenticated', this.isAuthenticated)
+        },
+        hasPermission(permission) {
+            if (this.user.is_superuser) {
+                return true
+            }
+            return this.user.user_permissions.some(perm => perm === permission)
         }
     }
 })

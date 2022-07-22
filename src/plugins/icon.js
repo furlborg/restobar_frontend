@@ -107,6 +107,7 @@ import {
     LaPowerOffSolid,
     BiListNested,
     SiSimpleanalytics,
+    MdFactcheckTwotone,
 } from "oh-vue-icons/icons";
 OhVueIcon.add(
     BiThreeDots,
@@ -216,5 +217,6 @@ OhVueIcon.add(
     LaPowerOffSolid,
     BiListNested,
     SiSimpleanalytics,
+    MdFactcheckTwotone,
 );
 export { OhVueIcon }

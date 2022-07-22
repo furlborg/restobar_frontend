@@ -2,7 +2,7 @@
   <div class="layout-header">
     <div class="layout-header-left">
       <div
-        v-if="userStore.user.profile_des !== 'MOZO'"
+        v-if="userStore.user.role !== 'MOZO'"
         class="layout-header-trigger layout-header-trigger-min"
         @click="() => $emit('update:collapsed', !collapsed)"
       >

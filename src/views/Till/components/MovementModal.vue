@@ -47,6 +47,7 @@
           <n-form-item v-else label="Concepto" path="concept">
             <n-input-group>
               <n-button
+                v-if="userStore.hasPermission('add_concept')"
                 type="info"
                 tertiary
                 @click="
@@ -68,7 +69,11 @@
                 clearable
               />
               <n-button
-                v-if="detail.concept"
+                v-if="
+                  userStore.hasPermission('change_concept')
+                    ? detail.concept
+                    : false
+                "
                 type="warning"
                 tertiary
                 @click="
@@ -119,6 +124,7 @@
           <n-form-item v-else label="Método Pago" path="payment_method">
             <n-input-group>
               <n-button
+                v-if="userStore.hasPermission('add_paymentmethodtype')"
                 type="info"
                 tertiary
                 @click="
@@ -136,7 +142,11 @@
                 clearable
               />
               <n-button
-                v-if="detail.payment_method"
+                v-if="
+                  userStore.hasPermission('change_paymentmethodtype')
+                    ? detail.payment_method
+                    : false
+                "
                 type="warning"
                 tertiary
                 @click="
@@ -180,6 +190,7 @@
 <script>
 import { defineComponent, ref, toRefs } from "vue";
 import { useMessage } from "naive-ui";
+import { useUserStore } from "@/store/modules/user";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useTillStore } from "@/store/modules/till";
 import { useSaleStore } from "@/store/modules/sale";
@@ -207,6 +218,7 @@ export default defineComponent({
   },
   setup(props, { emit }) {
     const { show, movementType } = toRefs(props);
+    const userStore = useUserStore();
     const genericsStore = useGenericsStore();
     const message = useMessage();
     const tillStore = useTillStore();
@@ -349,6 +361,7 @@ export default defineComponent({
     };
 
     return {
+      userStore,
       isDecimal,
       isNumber,
       isLetter,

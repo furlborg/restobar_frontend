@@ -10,7 +10,11 @@
             :options="businessStore.branchSelectOptions"
             @update:value="refreshTable"
           />
-          <n-button type="info" tertiary @click="showReport = true"
+          <n-button
+            v-if="userStore.hasPermission('make_excel_report')"
+            type="info"
+            tertiary
+            @click="showReport = true"
             >Reporte</n-button
           >
         </n-space>

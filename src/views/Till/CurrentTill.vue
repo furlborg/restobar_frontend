@@ -14,6 +14,7 @@
               <n-text class="fs-5">Ingresos</n-text>
             </n-space>
             <n-button
+              v-if="userStore.hasPermission('make_income_details')"
               type="success"
               tertiary
               circle
@@ -40,6 +41,7 @@
               <n-text class="fs-5">Egresos</n-text>
             </n-space>
             <n-button
+              v-if="userStore.hasPermission('make_outcome_details')"
               type="error"
               tertiary
               circle
@@ -87,6 +89,7 @@
     <n-card class="mt-2" title="Movimientos" :segmented="{ content: 'hard' }">
       <template #header-extra>
         <n-button
+          v-if="userStore.hasPermission('view_till')"
           type="info"
           secondary
           @click="$router.push({ name: 'TillList' })"
@@ -386,6 +389,7 @@ export default defineComponent({
       ConceptOptions,
       performFilter,
       refreshTable,
+      userStore,
       tableColumns: createMovementsColumns({
         hasSells() {
           return movements.value.some(

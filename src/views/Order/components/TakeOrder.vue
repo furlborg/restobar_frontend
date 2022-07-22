@@ -349,6 +349,7 @@
                 <n-checkbox
                   v-if="!sale.delivery_info"
                   v-model:checked="isMultiple"
+                  disabled
                   >Pago multiple</n-checkbox
                 >
                 <n-button
@@ -360,14 +361,14 @@
                   secondary
                   block
                   @click.prevent="
-                    userStore.user.profile_des !== 'MOZO'
+                    userStore.user.role !== 'MOZO'
                       ? isMultiple
                         ? doMultiplePayment()
                         : performTakeAway()
                       : performTakeAway()
                   "
                   ><v-icon class="me-2" name="fa-coins" scale="2" />{{
-                    userStore.user.profile_des !== "MOZO"
+                    userStore.user.role !== "MOZO"
                       ? "Cobrar"
                       : "Realizar pedido"
                   }}</n-button
@@ -1173,7 +1174,7 @@ export default defineComponent({
     const performTakeAway = () => {
       saleForm.value.validate((errors) => {
         if (!errors) {
-          if (userStore.user.profile_des === "MOZO") {
+          if (userStore.user.role === "MOZO") {
             showConfirm.value = true;
           } else {
             dialog.success({

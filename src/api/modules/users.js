@@ -12,12 +12,12 @@ export async function createUsers(user) {
     return await http.post('users/', {
         names: user.names,
         branchoffice: user.branchoffice,
-        profile: user.profile,
         username: user.username,
         password: user.password,
         email: user.email,
         dni: user.dni,
         user_permission: user.user_permission,
+        groups: [user.profile],
     })
 }
 
@@ -25,12 +25,11 @@ export async function updateUsers(id, user) {
     return await http.put(`users/${id}/`, {
         names: user.names,
         branchoffice: user.branchoffice,
-        profile: user.profile,
         username: user.username,
-        password: user.password,
         email: user.email,
         dni: user.dni,
         user_permission: user.user_permission,
+        groups: [user.profile],
     })
 }
 
@@ -64,5 +63,23 @@ export async function refreshToken(refresh) {
 export async function logout(refresh) {
     return await http.post('logout/', {
         refresh_token: refresh,
+    })
+}
+
+export async function listGroups() {
+    return await http.get('groups/')
+}
+
+export async function listPermissions() {
+    return await http.get('permissions/')
+}
+
+export async function listUserPermissions(id) {
+    return await http.get(`users/${id}/permissions/`)
+}
+
+export async function updateUserPermissions(id, perms) {
+    return await http.put(`users/${id}/permissions/`,{
+        user_permissions: perms
     })
 }

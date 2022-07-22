@@ -7,6 +7,7 @@
           Recargar
         </n-button>
         <n-button
+          v-if="userStore.hasPermission('take_away_order')"
           type="info"
           secondary
           @click="$router.push({ name: 'TakeOrder' })"
@@ -154,7 +155,7 @@
                     </n-button>
                   </n-space>
                   <n-button
-                    v-if="userStore.user.profile_des !== 'MOZO'"
+                    v-if="userStore.hasPermission('charge_order')"
                     class="mb-1"
                     type="success"
                     size="small"
@@ -219,6 +220,7 @@
                     Cambiar mesa
                   </n-button>
                   <n-button
+                    v-if="userStore.hasPermission('null_orders')"
                     class="mb-1"
                     type="error"
                     size="small"

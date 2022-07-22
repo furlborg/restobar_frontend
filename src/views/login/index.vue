@@ -111,7 +111,7 @@ export default defineComponent({
               userStore.login(response.data);
               message.success("¡Inicio de sesión correcto!");
               loading.value = false;
-              switch (userStore.user.profile_des) {
+              switch (userStore.user.role) {
                 case "MOZO":
                   router.push({
                     name:

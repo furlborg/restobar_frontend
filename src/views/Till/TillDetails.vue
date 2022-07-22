@@ -480,6 +480,7 @@ export default defineComponent({
       {
         label: "Imprimir",
         key: 1,
+        disabled: !userStore.hasPermission("make_ticket_report"),
         children: [
           {
             key: 11,
@@ -493,15 +494,16 @@ export default defineComponent({
             key: 13,
             label: "Reporte de ventas",
           },
-        ]
+        ],
       },
       {
         label: "Excel",
         key: 2,
+        disabled: !userStore.hasPermission("make_excel_report"),
         children: [
           {
             key: 21,
-            label: 'Caja',
+            label: "Caja",
             children: [
               {
                 label: "Movimientos",
@@ -515,11 +517,11 @@ export default defineComponent({
                 label: "Egresos",
                 key: 213,
               },
-            ]
+            ],
           },
           {
             key: 22,
-            label: 'Pedidos',
+            label: "Pedidos",
             children: [
               {
                 label: "General",
@@ -529,7 +531,7 @@ export default defineComponent({
                 label: "Usuarios",
                 key: 222,
               },
-            ]
+            ],
           },
           {
             label: "Ventas",
@@ -547,10 +549,10 @@ export default defineComponent({
                 label: "Categorías",
                 key: 233,
               },
-            ]
+            ],
           },
-        ]
-      }
+        ],
+      },
     ];
 
     const selectReport = (key) => {
@@ -565,28 +567,28 @@ export default defineComponent({
           makeSaleReport();
           break;
         case 211:
-          requestExcel('details', 'Movimientos');
+          requestExcel("details", "Movimientos");
           break;
         case 212:
-          requestExcel('income', 'Ingresos');
+          requestExcel("income", "Ingresos");
           break;
         case 213:
-          requestExcel('outcome', 'Egresos');
+          requestExcel("outcome", "Egresos");
           break;
         case 221:
-          requestExcel('orders', 'Pedidos');
+          requestExcel("orders", "Pedidos");
           break;
         case 222:
-          requestExcel('users', 'Usuarios');
+          requestExcel("users", "Usuarios");
           break;
         case 231:
-          requestExcel('sales', 'Ventas');
+          requestExcel("sales", "Ventas");
           break;
         case 232:
-          requestExcel('products', 'Productos');
+          requestExcel("products", "Productos");
           break;
         case 233:
-          requestExcel('categories', 'Categorías');
+          requestExcel("categories", "Categorías");
           break;
         default:
           console.error("Algo salió mal...");
@@ -602,24 +604,30 @@ export default defineComponent({
     };
 
     const downloadReport = (data, filename) => {
-          const url = window.URL.createObjectURL(new Blob([data]))
-          const link = document.createElement('a')
-          link.href = url
-          link.setAttribute('download', filename)
-          document.body.appendChild(link)
-          link.click()
-    }
+      const url = window.URL.createObjectURL(new Blob([data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+    };
 
     const requestExcel = async (report, filename) => {
       await getExcelReport(till, report)
-        .then(response => {
-          downloadReport(response.data, `Reporte ${filename} ${format(new Date(Date.now()), "yyyy-MM-dd")}.xlsx`)
+        .then((response) => {
+          downloadReport(
+            response.data,
+            `Reporte ${filename} ${format(
+              new Date(Date.now()),
+              "yyyy-MM-dd"
+            )}.xlsx`
+          );
         })
-        .catch(error => {
-          console.error(error)
-          message.error('Algo salió mal')
-        })
-    }
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal");
+        });
+    };
 
     return {
       isDecimal,

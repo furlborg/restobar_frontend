@@ -3,42 +3,69 @@
     <n-card title="Insumos" :segmented="{ content: 'hard' }">
       <template #header-extra>
         <n-space justify="space-around">
-          <n-button type="success" @click="newMovement(0), (showModalMovement = true)" secondary>
-            <template #icon><n-icon><v-icon name="hi-solid-arrow-sm-up" /></n-icon></template> Entrada
+          <n-button
+            v-if="userStore.hasPermission('add_supplies_stock')"
+            type="success"
+            @click="newMovement(0), (showModalMovement = true)"
+            secondary
+          >
+            <template #icon
+              ><n-icon><v-icon name="hi-solid-arrow-sm-up" /></n-icon
+            ></template>
+            Entrada
           </n-button>
-          <n-button type="error" secondary @click="newMovement(1), (showModalMovement = true)">
-            <template #icon><n-icon><v-icon name="hi-solid-arrow-sm-down" /></n-icon></template> Salida
+          <n-button
+            v-if="userStore.hasPermission('remove_supplies_stock')"
+            type="error"
+            secondary
+            @click="newMovement(1), (showModalMovement = true)"
+          >
+            <template #icon
+              ><n-icon><v-icon name="hi-solid-arrow-sm-down" /></n-icon
+            ></template>
+            Salida
           </n-button>
-          <n-button type="primary" @click="newSupplies(), (showModal = true)" secondary>
-            <template #icon><n-icon><v-icon name="la-user-plus-solid" /></n-icon></template> Crear
+          <n-button
+            v-if="userStore.hasPermission('add_supplies')"
+            type="primary"
+            @click="newSupplies(), (showModal = true)"
+            secondary
+          >
+            <template #icon
+              ><n-icon><v-icon name="la-user-plus-solid" /></n-icon
+            ></template>
+            Crear
           </n-button>
         </n-space>
       </template>
 
       <n-form
         label-placement="left"
-        style="maxWidth: 350px; margin-top: -8px; margin-bottom: 12px;"
+        style="maxwidth: 350px; margin-top: -8px; margin-bottom: 12px"
       >
-          
         <n-input
           placeholder="Buscar"
           @keydown.enter="SearchFilter()"
           v-model:value="textsearch"
-          round>
+          round
+        >
           <template #prefix>
-            <n-icon style="margin-top: -4px;"><v-icon name="md-search-round" /></n-icon>
+            <n-icon style="margin-top: -4px"
+              ><v-icon name="md-search-round"
+            /></n-icon>
           </template>
         </n-input>
       </n-form>
 
-      <n-data-table 
+      <n-data-table
         :columns="tableColumns"
-        :data="supplies.results" 
+        :data="supplies.results"
         size="small"
         :scroll-x="900"
-        :loading="isLoadingData" 
-        remote 
-        :pagination="pagination" />
+        :loading="isLoadingData"
+        remote
+        :pagination="pagination"
+      />
     </n-card>
     <!-- Customer Modal -->
     <supplies-modal
@@ -62,6 +89,7 @@ import { createSuppliesColumns } from "@/utils/constants";
 import SuppliesModal from "./components/SuppliesModal.vue";
 import { getSupplies, disableSupplies } from "@/api/modules/supplies";
 import MoveModal from "./components/MoveModal.vue";
+import { useUserStore } from "@/store/modules/user";
 
 export default defineComponent({
   name: "SupplieModal",
@@ -70,6 +98,7 @@ export default defineComponent({
     MoveModal,
   },
   setup() {
+    const userStore = useUserStore();
     const message = useMessage();
     const dialog = useDialog();
     const showModal = ref(false);
@@ -118,18 +147,18 @@ export default defineComponent({
     };
     const newMovement = (value) => {
       (type.value = value),
-      (itemsMovement.supplie = undefined),
-      (itemsMovement.type = value),
-      (itemsMovement.branchoffice = 1),
-      (itemsMovement.concept = undefined),
-      (itemsMovement.amount = undefined);
+        (itemsMovement.supplie = undefined),
+        (itemsMovement.type = value),
+        (itemsMovement.branchoffice = 1),
+        (itemsMovement.concept = undefined),
+        (itemsMovement.amount = undefined);
     };
 
     const listSupplies = (search) => {
       isLoadingData.value = true;
-      let filter = 'supplies/';
+      let filter = "supplies/";
       if (search) {
-          filter = 'supplies/' + search;
+        filter = "supplies/" + search;
       }
       getSupplies(filter)
         .then((response) => {
@@ -142,7 +171,7 @@ export default defineComponent({
         .finally(() => {
           isLoadingData.value = false;
         });
-    }
+    };
 
     const PaginationF = () => {
       let total = supplies.value.count / 15;
@@ -184,9 +213,9 @@ export default defineComponent({
     });
 
     const changeState = async (id, state) => {
-      const dial = state==false? dialog.success: dialog.error;
-      let titles = state==false?"Habilitar Insumo" :"Deshabilitar Insumo";
-      const button = state==false?"Habilitar":"Deshabilitar";
+      const dial = state == false ? dialog.success : dialog.error;
+      let titles = state == false ? "Habilitar Insumo" : "Deshabilitar Insumo";
+      const button = state == false ? "Habilitar" : "Deshabilitar";
 
       dial({
         title: titles,
@@ -195,18 +224,19 @@ export default defineComponent({
         negativeText: "Cancelar",
         onPositiveClick: async () => {
           disableSupplies(id)
-          .then((response) => {
-            listSupplies();
-            message.success( "Insumo deshabilitado correctamente.");
-          })
-          .catch((error) => {
-            message.error("Algo salió mal...");
-          })
+            .then((response) => {
+              listSupplies();
+              message.success("Insumo deshabilitado correctamente.");
+            })
+            .catch((error) => {
+              message.error("Algo salió mal...");
+            });
         },
-      })
+      });
     };
 
     return {
+      userStore,
       showModal,
       showModalMovement,
       textsearch,
@@ -227,8 +257,8 @@ export default defineComponent({
           showModal.value = true;
         },
         deleteSupplies(rowData) {
-          changeState(rowData.id, rowData.state)
-        }
+          changeState(rowData.id, rowData.state);
+        },
       }),
     };
   },

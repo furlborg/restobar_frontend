@@ -98,7 +98,7 @@
 import { defineComponent, onMounted, onUpdated, ref, toRefs } from "vue";
 import { useMessage } from "naive-ui";
 import { getBranchs } from "@/api/modules/business";
-import { getProfile, createUsers, updateUsers } from "@/api/modules/users";
+import { listGroups, createUsers, updateUsers } from "@/api/modules/users";
 
 export default defineComponent({
   name: "UserSettingsModal",
@@ -138,17 +138,17 @@ export default defineComponent({
             value: v.id,
           }));
           if (response.data.length > 0) {
-              formitem.value.branchoffice =  response.data[0].id;
+            formitem.value.branchoffice = response.data[0].id;
           }
         })
         .catch((error) => {
           message.error("Algo salió mal...");
         });
 
-      getProfile()
+      listGroups()
         .then((response) => {
           optionsProfile.value = response.data.map((v) => ({
-            label: v.description,
+            label: v.name,
             value: v.id,
           }));
         })

@@ -17,7 +17,7 @@
         <n-gi span="2">
           <n-card class="h-100" title="Pedidos" :bordered="false" embedded>
             <template #header-extra>
-              <div v-if="userStore.user.profile_des !== 'MOZO'">
+              <div v-if="userStore.hasPermission('charge_order')">
                 <n-button
                   v-if="!($route.name === 'TablePayment')"
                   type="success"
@@ -797,7 +797,7 @@ export default defineComponent({
     };
 
     const validateSend = () => {
-      if (userStore.user.profile_des === "MOZO") {
+      if (userStore.user.role === "MOZO") {
         showUserConfirm.value = true;
       } else {
         if (!orderStore.orderId) {

@@ -3,6 +3,7 @@
     <n-card title="Aperturas y Cierres" :segmented="{ content: 'hard' }">
       <template #header-extra>
         <n-button
+          v-if="userStore.hasPermission('add_till')"
           type="success"
           :disabled="
             userStore.user.branchoffice
@@ -307,13 +308,13 @@ export default defineComponent({
     };
 
     const downloadReport = (data, filename) => {
-          const url = window.URL.createObjectURL(new Blob([data]))
-          const link = document.createElement('a')
-          link.href = url
-          link.setAttribute('download', filename)
-          document.body.appendChild(link)
-          link.click()
-    }
+      const url = window.URL.createObjectURL(new Blob([data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+    };
 
     return {
       isDecimal,
@@ -423,13 +424,19 @@ export default defineComponent({
         },
         requestExcel(till, report, filename) {
           getExcelReport(till, report)
-            .then(response => {
-              downloadReport(response.data, `Reporte ${filename} ${format(new Date(Date.now()), "yyyy-MM-dd")}.xlsx`)
+            .then((response) => {
+              downloadReport(
+                response.data,
+                `Reporte ${filename} ${format(
+                  new Date(Date.now()),
+                  "yyyy-MM-dd"
+                )}.xlsx`
+              );
             })
-            .catch(error => {
-              console.error(error)
-              message.error('Algo salió mal')
-            })
+            .catch((error) => {
+              console.error(error);
+              message.error("Algo salió mal");
+            });
         },
         closeTill(row) {
           if (tillStore.currentTillOrders) {
