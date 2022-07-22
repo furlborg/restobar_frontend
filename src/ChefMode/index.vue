@@ -75,6 +75,7 @@ export default defineComponent({
       {
         key: 2,
         label: "Salir Modo Chef",
+        disabled: !userStore.user.role !== "COCINERO",
       },
       {
         key: 3,
