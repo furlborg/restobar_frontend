@@ -16,7 +16,6 @@ const settingsStore = useSettingsStore();
 const dateNow = formatter(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss");
 
 const VoucherPrint = (props) => {
-  // console.log(props.data);
   let dataForPrint = "";
 
   let typeDoc = "";

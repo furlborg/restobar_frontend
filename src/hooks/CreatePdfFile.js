@@ -42,7 +42,7 @@ export const CreatePdfFile = async (props, format) => {
 
   if (props.objSunat) {
     qr.toDataURL(props.objSunat, function (err, code) {
-      if (err) return console.log("error occurred");
+      if (err) return console.error("error occurred");
       code_qr = code;
     });
   }

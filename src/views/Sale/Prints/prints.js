@@ -14,7 +14,7 @@ export const generatePrint = (objSunat, structure, addImages) => {
   let code_qr = null;
 
   qr.toDataURL(objSunat, function (err, code) {
-    if (err) return console.log("error occurred");
+    if (err) return console.error("error occurred");
     code_qr = code;
   });
 

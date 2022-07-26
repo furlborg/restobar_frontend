@@ -743,6 +743,8 @@ export default defineComponent({
       ask_for: "",
       delivery_info: null,
       payments: null,
+      do_update: true,
+      is_change: true,
     });
 
     watch(total, () => {
@@ -1099,7 +1101,6 @@ export default defineComponent({
       }
 
       // if (settingsStore.business_settings.printer.print_delivery_ticket) {
-      //   console.log("asdasdasdasd");
       // }
       message.success("Imprimir");
     };
@@ -1360,6 +1361,10 @@ export default defineComponent({
       }
     });
 
+    const dateDisabled = (ts) => {
+      return ts > new Date(Date.now());
+    };
+
     return {
       isDecimal,
       loading,
@@ -1406,6 +1411,7 @@ export default defineComponent({
       filteredMethods,
       evalPayments,
       currentPaymentsAmount,
+      dateDisabled,
     };
   },
 });

@@ -94,6 +94,7 @@ export async function takeAwayOrder(order_details, sale_data, user) {
     product: order.product,
     indication: order.indication,
     quantity: order.quantity,
+    initial_quantity: order.quantity,
   }));
   let order = {
     till: tillStore.currentTillID,
@@ -128,6 +129,8 @@ export async function takeAwayOrder(order_details, sale_data, user) {
     sale_details: sale_data.sale_details,
     till: tillStore.currentTillID,
     payments: sale_data.payments,
+    do_update: sale_data.do_update,
+    is_change: sale_data.is_change,
   };
   return await http.post("orders/take_away/", {
     order: order,

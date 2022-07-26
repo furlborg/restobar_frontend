@@ -10,7 +10,7 @@
       <n-form-item-gi :span="3" label="Serie">
         <n-select
           placeholder=""
-          :options="saleStore.getSeriesOptions"
+          :options="saleStore.getDocumentSeriesOptions(sale.invoice_type)"
           v-model:value="sale.serie"
         />
       </n-form-item-gi>
@@ -187,6 +187,8 @@ export default defineComponent({
     const sale = reactive({
       ...props.data,
       number: null,
+      do_update: false,
+      is_change: false,
       date_sale: format(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss"),
     });
 

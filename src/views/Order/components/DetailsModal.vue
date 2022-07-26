@@ -26,7 +26,7 @@
               {{ detail.product_name }}
             </td>
             <td>
-              {{ detail.quantity }}
+              {{ detail.initial_quantity }}
             </td>
             <td>S/. {{ detail.subTotal.toFixed(2) }}</td>
           </tr>
@@ -37,10 +37,9 @@
 </template>
 
 <script>
-import { defineComponent, ref, toRefs, watch, computed } from "vue";
+import { defineComponent, ref, toRefs, watch } from "vue";
 import { useMessage } from "naive-ui";
 import { useGenericsStore } from "@/store/modules/generics";
-import { isNumber, isLetter } from "@/utils";
 import { listOrderDetails } from "@/api/modules/orders";
 
 export default defineComponent({
@@ -56,7 +55,7 @@ export default defineComponent({
       default: 0,
     },
   },
-  setup(props, { emit }) {
+  setup(props) {
     const message = useMessage();
     const genericsStore = useGenericsStore();
     const { show, idOrder } = toRefs(props);
@@ -74,7 +73,7 @@ export default defineComponent({
               details.value.forEach(
                 (detail) =>
                   (detail.subTotal =
-                    Number(detail.quantity) *
+                    Number(detail.initial_quantity) *
                     parseFloat(detail.price).toFixed(2))
               );
             }

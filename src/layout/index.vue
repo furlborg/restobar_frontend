@@ -134,7 +134,6 @@ export default defineComponent({
     });
 
     /* const watchCookies = ({ deleted }) => {
-      console.log(deleted);
       if (deleted.some((item) => item.name === "token")) {
         userStore.updateToken();
       }

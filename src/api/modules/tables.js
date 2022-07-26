@@ -76,7 +76,7 @@ export async function createTableOrder(idTable, details, user) {
 
 export async function updateTableOrder(idTable, orderId, details, user) {
     const tillStore = useTillStore();
-    let order_details = details.map(order => ({ id: order.id, product: order.product, indication: order.indication, quantity: order.quantity }))
+    let order_details = details.map(order => ({ id: order.id, product: order.product, indication: order.indication, quantity: order.quantity })).filter(detail => detail.quantity > 0)
     return await http.patch(`tables/${idTable}/change_order/`, {
         id: orderId,
         till: tillStore.currentTillID,

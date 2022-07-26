@@ -229,7 +229,6 @@ export default defineComponent({
         }
         getProductKardex(filter)
           .then((response) => {
-            // console.log(response.data);
             dataKardex.value = response.data;
             response.data.map(function (v) {
               total.value.ingress =
@@ -254,7 +253,6 @@ export default defineComponent({
         }
         getSuplieKardex(filter)
           .then((response) => {
-            // console.log(response.data);
             dataKardex.value = response.data;
             response.data.map(function (v) {
               total.value.ingress =

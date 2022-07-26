@@ -12,7 +12,10 @@
     </div>
 
     <n-list class="m-0 px-2">
-      <n-list-item v-for="(product, index) in filteredProducts" :key="product.id">
+      <n-list-item
+        v-for="(product, index) in filteredProducts"
+        :key="product.id"
+      >
         <n-space vertical>
           <n-space
             justify="space-between"
@@ -195,15 +198,15 @@ export default defineComponent({
     const showModal = ref(false);
     const loading = ref(false);
     const orderItemIndex = ref(null);
-    const search = ref('');
+    const search = ref("");
     const products = ref([]);
     const table = route.params.table;
 
     const filteredProducts = computed(() => {
-      return products.value.filter(
-        (product) => product.name.toLowerCase().includes(search.value.toLowerCase())
-      )
-    })
+      return products.value.filter((product) =>
+        product.name.toLowerCase().includes(search.value.toLowerCase())
+      );
+    });
 
     const performCreateTableOrder = () => {
       addToList();
@@ -293,7 +296,6 @@ export default defineComponent({
               settingsStore.business_settings.printer.kitchen_ticket_format
             ) {
               case 1:
-                console.log(1);
                 printOrderTicket({
                   data: response.data,
                   table,
@@ -301,7 +303,6 @@ export default defineComponent({
                 });
                 break;
               case 2:
-                console.log(2);
                 printWEBADASDEBRASEROS({
                   data: response.data,
                   table,

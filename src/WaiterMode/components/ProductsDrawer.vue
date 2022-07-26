@@ -431,7 +431,6 @@ export default defineComponent({
                   settingsStore.business_settings.printer.kitchen_ticket_format
                 ) {
                   case 1:
-                    console.log(1);
                     printOrderTicket({
                       data: response.data,
                       table,
@@ -439,7 +438,6 @@ export default defineComponent({
                     });
                     break;
                   case 2:
-                    console.log(2);
                     printWEBADASDEBRASEROS({
                       data: response.data,
                       table,

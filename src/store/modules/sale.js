@@ -44,7 +44,7 @@ export const useSaleStore = defineStore("sale", {
         product_name: order.product_name,
         price_sale: parseFloat(order.price).toFixed(2),
         quantity: Number(order.quantity),
-        icbper: parseFloat(order.icbper_amount).toFixed(2)
+        icbper: parseFloat(order.icbper_amount).toFixed(2),
       }));
       return state.sale_details;
     },
@@ -120,14 +120,16 @@ export const useSaleStore = defineStore("sale", {
       }
       return series
         .filter((serie) => serie.doc_type === String(doc_type))
-        .map((serie) => ({ label: serie.description, key: serie.id }));
+        .map((serie) => ({ label: serie.description, value: serie.id }));
     },
     getSerieDescription(id) {
       const serie = this.series.find((serie) => serie.id === id);
       return serie ? serie.description : null;
     },
     getSerieID(description) {
-      const serie = this.series.find((serie) => serie.description === description);
+      const serie = this.series.find(
+        (serie) => serie.description === description
+      );
       return serie ? serie.id : null;
     },
     getFirstOption(doc_type) {

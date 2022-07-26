@@ -8,11 +8,9 @@ const settingsStore = useSettingsStore();
 const productStore = useProductStore();
 const tableStore = useTableStore();
 
-
 // let format = settingsStore.business_settings.printer.kitchen_printer_format;
 
 const printOrderTicket = (props) => {
-  console.log(props);
   let arrayDataPrint = [];
 
   productStore.places.forEach(async (place) => {
@@ -261,7 +259,9 @@ const printOrderTicket = (props) => {
       dat: [
         [
           {
-            content: `Fecha : ${!props.updateOrder ? props.data.created : props.data.modified}`,
+            content: `Fecha : ${
+              !props.updateOrder ? props.data.created : props.data.modified
+            }`,
             styles: {
               fontStyle: "bold",
               fontSize:

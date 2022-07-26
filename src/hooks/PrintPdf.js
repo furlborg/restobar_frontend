@@ -82,11 +82,11 @@ export const printPdf = async (objOrArry) => {
               qz.websocket.disconnect();
             });
           } else {
-            console.log("La impresora especificada no se a encontrado");
+            console.error("La impresora especificada no se a encontrado");
           }
         });
       } else {
-        console.log("no hay impresoras instalada");
+        console.error("no hay impresoras instalada");
       }
     })
     .catch((error) => {

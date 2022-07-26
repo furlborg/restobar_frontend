@@ -657,13 +657,13 @@ export default defineComponent({
           showDeliveryModal.value = true;
         },
         payDeliver(row) {
-          paymentsTotal.value = row.sale_amount;
+          paymentsTotal.value = row.amount;
           currentOrder.value.order_id = row.id;
           currentOrder.value.sale_id = row.sale_id;
           payments.value = [
             {
               payment_method: Number(row.payment_method),
-              amount: String(row.sale_amount.toFixed(2)),
+              amount: String(row.amount.toFixed(2)),
             },
           ];
           showPayments.value = true;
