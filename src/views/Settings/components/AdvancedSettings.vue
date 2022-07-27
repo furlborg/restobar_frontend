@@ -163,6 +163,21 @@
             >
           </n-form-item-gi>
         </n-grid>
+        <n-divider />
+        <n-text class="fs-4">Clientes</n-text>
+        <n-grid
+          class="mt-2"
+          responsive="screen"
+          cols="6 s:6 m:12 l:12 xl:24 2xl:24"
+          x-gap="12"
+        >
+          <n-form-item-gi :span="6" label="API Token">
+            <n-input
+              type="textarea"
+              v-model:value="businessSettings.customers.api_token"
+            />
+          </n-form-item-gi>
+        </n-grid>
         <n-space justify="end">
           <n-space>
             <n-button
