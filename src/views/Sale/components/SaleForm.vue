@@ -114,7 +114,7 @@
       v-model:show="showCustomerModal"
       @update:show="onCloseModal"
       :doc_type="sale.invoice_type === 1 ? '6' : null"
-      @success="onSuccess"
+      @on-success="onSuccess"
     />
     <n-modal
       :class="{

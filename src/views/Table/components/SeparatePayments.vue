@@ -528,6 +528,7 @@ export default defineComponent({
       saleForm.value.validate((errors) => {
         if (!errors) {
           dialog.success({
+            closable: false,
             title: "Venta",
             content: "Realizar venta?",
             positiveText: "Sí",
@@ -542,7 +543,10 @@ export default defineComponent({
                       changing: changing.value,
                     });
 
-                    if (settingsStore.businessSettings.sale.auto_send) {
+                    if (
+                      settingsStore.businessSettings.sale.auto_send &&
+                      response.data.invoice_type !== "80"
+                    ) {
                       sendSale(response.data.id)
                         .then((response) => {
                           if (response.status === 200) {

@@ -575,7 +575,11 @@ export default defineComponent({
           if (response.status === 202) {
             message.success("¡Pedido cobrado!");
             showPayments.value = false;
-            if (settingsStore.businessSettings.sale.auto_send) {
+            const json = JSON.parse(response.data.json_sale);
+            if (
+              settingsStore.businessSettings.sale.auto_send &&
+              json.codigo_tipo_documento !== "80"
+            ) {
               sendSale(currentOrder.value.sale_id)
                 .then((response) => {
                   if (response.status === 200) {

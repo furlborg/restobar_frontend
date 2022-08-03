@@ -2,11 +2,13 @@
   <n-layout position="absolute">
     <n-layout-header style="height: 48px" position="absolute" bordered>
       <n-space class="h-100 m-0" align="center" justify="space-between">
-        <div class="d-flex ms-2 fs-6" v-if="$route.params.table" >
+        <div class="d-flex ms-2 fs-6" v-if="$route.params.table">
           <n-button text @click="$router.back()">
             <v-icon name="md-arrowback-round" />
           </n-button>
-          <div class="ms-2">{{tableStore.getTableByID($route.params.table).description}}</div>
+          <div class="ms-2">
+            {{ tableStore.getTableByID($route.params.table).description }}
+          </div>
         </div>
         <div
           class="menuBtn"
@@ -45,19 +47,18 @@
         </li>
         <li>
           <a href="#">Team</a>
-        </li>
-        <li>
-          <a href="#">Pricing</a>
         </li> -->
-        <li>
+        <li v-if="$route.name === 'WHome'">
           <a
-            v-if="$route.name === 'WHome'"
             @click="
               waiterStore.changeTable = true;
               active = false;
             "
             >Mover Mesa</a
           >
+        </li>
+        <li v-if="userStore.user.role !== 'MOZO'">
+          <a @click="$router.push({ name: 'Dashboard' })">Volver</a>
         </li>
         <li>
           <a href="#" class="suBtn" @click="doLogout">Cerrar sesión</a>
@@ -130,10 +131,11 @@ export default defineComponent({
     };
 
     return {
-      active,
       waiterStore,
       tableStore,
+      userStore,
       doLogout,
+      active,
     };
   },
 });

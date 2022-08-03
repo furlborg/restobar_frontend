@@ -192,7 +192,7 @@ export default defineComponent({
             ),
           key: "Settings",
           icon: renderIcon("md-settings-twotone"),
-          disabled: !userStore.hasPermission("add_group"),
+          disabled: !userStore.user.role === "ADMINISTRADOR",
         },
       ];
     });

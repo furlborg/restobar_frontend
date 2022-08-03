@@ -1179,6 +1179,7 @@ export default defineComponent({
             showConfirm.value = true;
           } else {
             dialog.success({
+              closable: false,
               title: "Confirmar pedido",
               content: "Realizar pedido?",
               positiveText: "Sí",
@@ -1196,7 +1197,8 @@ export default defineComponent({
                       message.success("Venta realizada correctamente!");
                       if (
                         settingsStore.businessSettings.sale.auto_send &&
-                        !sale.value.delivery_info
+                        !sale.value.delivery_info &&
+                        response.data.sale.invoice_type !== "80"
                       ) {
                         sendSale(response.data.sale.id)
                           .then((response) => {

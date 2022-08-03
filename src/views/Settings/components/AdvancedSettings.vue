@@ -61,45 +61,40 @@
             <n-input-number
               v-model:value="businessSettings.printer.header_font_size"
               placeholder=""
-              :min="0"
+              :min="6"
               :max="20"
-              step="0.1"
             />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Tamaño letra subtitulo">
             <n-input-number
               v-model:value="businessSettings.printer.sub_header_font_size"
               placeholder=""
-              :min="0"
+              :min="6"
               :max="20"
-              step="0.1"
             />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Tamaño letra cuerpo">
             <n-input-number
               v-model:value="businessSettings.printer.body_font_size"
               placeholder=""
-              :min="0"
+              :min="6"
               :max="20"
-              step="0.1"
             />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Tamaño letra pie de página">
             <n-input-number
               v-model:value="businessSettings.printer.footer_font_size"
               placeholder=""
-              :min="0"
+              :min="6"
               :max="20"
-              step="0.1"
             />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Tamaño letra delivery">
             <n-input-number
               v-model:value="businessSettings.printer.delivery_ticket_font_size"
               placeholder=""
-              :min="0"
+              :min="6"
               :max="20"
-              step="0.1"
             />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Tamaño letra pre-cuenta">
@@ -108,9 +103,8 @@
                 businessSettings.printer.pre_account_ticket_font_size
               "
               placeholder=""
-              :min="0"
+              :min="6"
               :max="20"
-              step="0.1"
             />
           </n-form-item-gi>
           <n-form-item-gi :span="4">
