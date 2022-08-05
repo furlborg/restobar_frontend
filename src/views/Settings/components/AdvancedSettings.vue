@@ -132,6 +132,27 @@
           </n-form-item-gi>
         </n-grid>
         <n-divider />
+        <n-text class="fs-4">Pedidos</n-text>
+        <n-grid
+          class="mt-2"
+          responsive="screen"
+          cols="6 s:6 m:12 l:12 xl:24 2xl:24"
+          x-gap="12"
+        >
+          <n-form-item-gi :span="3">
+            <n-checkbox
+              v-model:checked="businessSettings.order.order_customer_name"
+              >Nombre de Cliente</n-checkbox
+            >
+          </n-form-item-gi>
+          <n-form-item-gi :span="3">
+            <n-checkbox
+              v-model:checked="businessSettings.order.select_order_user"
+              >Seleccionar Usuario</n-checkbox
+            >
+          </n-form-item-gi>
+        </n-grid>
+        <n-divider />
         <n-text class="fs-4">Ventas</n-text>
         <n-grid
           class="mt-2"

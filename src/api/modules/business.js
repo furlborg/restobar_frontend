@@ -41,6 +41,7 @@ export async function updateBusinessSettings(business_settings) {
     qz_config: business_settings.qz_config,
     printer: business_settings.printer,
     sale: business_settings.sale,
+    order: business_settings.order,
     customers: business_settings.customers,
   });
 }

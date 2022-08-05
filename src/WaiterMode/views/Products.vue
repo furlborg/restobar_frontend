@@ -105,7 +105,11 @@
       </n-space>
     </teleport>
     <n-drawer height="50%" v-model:show="activeDrawer" placement="bottom">
-      <n-drawer-content title="Pedidos" closable>
+      <n-drawer-content
+        title="Pedidos"
+        footer-style="padding: 0; height: 50px"
+        closable
+      >
         <n-list>
           <n-list-item
             v-for="(orderItem, index) in waiterStore.preOrderList"
@@ -138,22 +142,47 @@
             </template>
           </n-list-item>
         </n-list>
+        <n-modal
+          preset="card"
+          title="Nombre de Cliente"
+          v-model:show="showAskFor"
+          :segmented="{ content: 'hard' }"
+        >
+          <n-input placeholder="" v-model:value="ask_for" />
+          <template #action>
+            <n-space justify="end">
+              <n-button
+                type="info"
+                :disabled="!showAskFor || loading"
+                :loading="loading"
+                secondary
+                @click="
+                  orderStore.orderId
+                    ? performUpdateTableOrder()
+                    : performCreateTableOrder()
+                "
+                >Guardar</n-button
+              >
+            </n-space>
+          </template>
+        </n-modal>
         <template #footer>
-          <n-space class="w-100" justify="center">
-            <n-button type="error" secondary>Cancelar pedido</n-button>
-            <n-button
-              :disabled="loading"
-              :loading="loading"
-              type="info"
-              secondary
-              @click="
-                orderStore.orderId
-                  ? performUpdateTableOrder()
-                  : performCreateTableOrder()
-              "
-              >{{ orderStore.orderId ? "Añadir" : "Realizar" }} pedido</n-button
-            >
-          </n-space>
+          <n-button
+            class="h-100"
+            :disabled="loading"
+            :loading="loading"
+            type="info"
+            secondary
+            block
+            @click="
+              orderStore.orderId
+                ? performUpdateTableOrder()
+                : settingsStore.business_settings.order.order_customer_name
+                ? (showAskFor = true)
+                : performCreateTableOrder()
+            "
+            >{{ orderStore.orderId ? "Añadir" : "Realizar" }} pedido</n-button
+          >
         </template>
       </n-drawer-content>
     </n-drawer>
@@ -211,7 +240,12 @@ export default defineComponent({
     const performCreateTableOrder = () => {
       addToList();
       loading.value = true;
-      createTableOrder(route.params.table, orderStore.orderList)
+      createTableOrder(
+        route.params.table,
+        orderStore.orderList,
+        undefined,
+        !ask_for.value ? undefined : ask_for.value
+      )
         .then((response) => {
           if (response.status === 201) {
             message.success("Orden creada correctamente");
@@ -277,7 +311,9 @@ export default defineComponent({
       await updateTableOrder(
         route.params.table,
         orderStore.orderId,
-        orderStore.orderList
+        orderStore.orderList,
+        undefined,
+        !ask_for.value ? undefined : ask_for.value
       )
         .then((response) => {
           if (response.status === 202) {
@@ -386,6 +422,10 @@ export default defineComponent({
       });
     };
 
+    const showAskFor = ref(false);
+
+    const ask_for = ref(null);
+
     return {
       loading,
       search,
@@ -399,6 +439,9 @@ export default defineComponent({
       orderStore,
       performCreateTableOrder,
       performUpdateTableOrder,
+      settingsStore,
+      showAskFor,
+      ask_for,
     };
   },
 });

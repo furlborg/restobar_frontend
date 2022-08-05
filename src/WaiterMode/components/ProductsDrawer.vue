@@ -98,6 +98,30 @@
           </template>
         </n-list-item>
       </n-list>
+      <n-modal
+        preset="card"
+        title="Nombre de Cliente"
+        v-model:show="showAskFor"
+        :segmented="{ content: 'hard' }"
+      >
+        <n-input placeholder="" v-model:value="ask_for" />
+        <template #action>
+          <n-space justify="end">
+            <n-button
+              type="info"
+              :disabled="!showAskFor || loading"
+              :loading="loading"
+              secondary
+              @click="
+                orderStore.orderId
+                  ? performUpdateTableOrder()
+                  : performCreateTableOrder()
+              "
+              >Guardar</n-button
+            >
+          </n-space>
+        </template>
+      </n-modal>
       <ProductIndications
         v-model:show="showModal"
         preset="card"
@@ -116,6 +140,8 @@
           @click="
             orderStore.orderId
               ? performUpdateTableOrder()
+              : settingsStore.business_settings.order.order_customer_name
+              ? (showAskFor = true)
               : performCreateTableOrder()
           "
           >{{ orderStore.orderId ? "Añadir" : "Realizar" }} pedido</n-button
@@ -337,7 +363,12 @@ export default defineComponent({
         onPositiveClick: async () => {
           addToList();
           loading.value = true;
-          await createTableOrder(route.params.table, orderStore.orderList)
+          await createTableOrder(
+            route.params.table,
+            orderStore.orderList,
+            undefined,
+            !ask_for.value ? undefined : ask_for.value
+          )
             .then((response) => {
               if (response.status === 201) {
                 message.success("Orden creada correctamente");
@@ -412,7 +443,9 @@ export default defineComponent({
           await updateTableOrder(
             route.params.table,
             orderStore.orderId,
-            orderStore.orderList
+            orderStore.orderList,
+            undefined,
+            !ask_for.value ? undefined : ask_for.value
           )
             .then((response) => {
               if (response.status === 202) {
@@ -473,6 +506,10 @@ export default defineComponent({
       });
     };
 
+    const showAskFor = ref(false);
+
+    const ask_for = ref(null);
+
     return {
       performCreateTableOrder,
       performUpdateTableOrder,
@@ -487,6 +524,9 @@ export default defineComponent({
       renderLabel,
       orderItemIndex,
       showModal,
+      settingsStore,
+      showAskFor,
+      ask_for,
     };
   },
 });

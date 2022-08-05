@@ -55,7 +55,7 @@
 import { computed, defineComponent, onMounted, ref } from "vue";
 import { createTheme, inputDark, datePickerDark, darkTheme } from "naive-ui";
 import { commonEsPE, dateEsPE } from "@/locale";
-import { useUserStore } from "@/store/modules/user";
+import { useUserStore, useActiveUsersStore } from "@/store/modules/user";
 import { useBusinessStore } from "@/store/modules/business";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useCustomerStore } from "@/store/modules/customer";
@@ -83,6 +83,10 @@ export default defineComponent({
     const collapsed = ref(false);
 
     const userStore = useUserStore();
+
+    const activeUsersStore = useActiveUsersStore();
+
+    activeUsersStore.initializeStore();
 
     const designStore = useDesignSettingStore();
 
