@@ -24,7 +24,7 @@
                 label="Nombres"
                 path="names"
                 :span="12"
-                @keypress="isLetter($event)"
+                @keypress="isLetterOrNumber($event)"
                 ref="customer_name"
               >
                 <n-input v-model:value="customer.names" placeholder="" />
@@ -207,7 +207,7 @@
 <script>
 import { defineComponent, ref, toRefs, watch, computed } from "vue";
 import format from "date-fns/format";
-import { isNumber, isLetter } from "@/utils";
+import { isNumber, isLetter, isLetterOrNumber } from "@/utils";
 import { toTimestamp } from "@/utils/dates";
 import { documentOptions, customerRules } from "@/utils/constants";
 import {
@@ -553,6 +553,7 @@ export default defineComponent({
       isSearchingDoc,
       isNumber,
       isLetter,
+      isLetterOrNumber,
       modalTitle,
       customer,
       customerRef,
