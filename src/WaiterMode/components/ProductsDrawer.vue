@@ -93,7 +93,7 @@
               text
               @click.stop="waiterStore.preOrderList.splice(index, 1)"
             >
-              <v-icon name="md-disabledbydefault-round" />
+              <v-icon name="md-disabledbydefault-round" scale="1.25" />
             </n-button>
           </template>
         </n-list-item>

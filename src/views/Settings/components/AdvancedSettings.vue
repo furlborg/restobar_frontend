@@ -151,6 +151,12 @@
               >Seleccionar Usuario</n-checkbox
             >
           </n-form-item-gi>
+          <n-form-item-gi :span="3">
+            <n-checkbox
+              v-model:checked="businessSettings.order.table_order_total"
+              >Mostrar total de pedido</n-checkbox
+            >
+          </n-form-item-gi>
         </n-grid>
         <n-divider />
         <n-text class="fs-4">Ventas</n-text>

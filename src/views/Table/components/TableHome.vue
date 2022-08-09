@@ -84,17 +84,40 @@
               />
               <div
                 class="
+                  ms-1
                   black-outline
-                  text-center
+                  text-center text-wrap
                   position-absolute
                   top-50
                   start-50
                   translate-middle
-                  fs-4
                 "
+                :class="{
+                  'fs-4': table.description.length <= 15,
+                  'fs-6': table.description.length > 15,
+                }"
               >
                 {{ table.description }}
               </div>
+              <n-button
+                v-if="
+                  table.order_amount &&
+                  settingsStore.business_settings.order.table_order_total
+                "
+                class="
+                  text-center
+                  position-absolute
+                  bottom-0
+                  start-50
+                  translate-middle-x
+                  fs-5
+                  fw-bolder
+                "
+                color="#901E00"
+                text
+              >
+                S/. {{ table.order_amount.toFixed(2) }}
+              </n-button>
               <n-button
                 @click.stop="openOptions.push(table.id)"
                 class="position-absolute top-0 end-0"
@@ -338,6 +361,7 @@ import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 import { isAxiosError } from "axios";
 import { defineComponent, ref, onMounted } from "vue";
 import { useMessage } from "naive-ui";
+import { useSettingsStore } from "@/store/modules/settings";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useTableStore } from "@/store/modules/table";
 import { useTillStore } from "@/store/modules/till";
@@ -360,6 +384,7 @@ export default defineComponent({
     const tableGroups = ref([]);
     const currentTableGrouping = ref(null);
     const currentGroup = ref([]);
+    const settingsStore = useSettingsStore();
     const genericsStore = useGenericsStore();
     const tillStore = useTillStore();
     const tableStore = useTableStore();
@@ -566,6 +591,7 @@ export default defineComponent({
       currentArea,
       toTable,
       performChangeTable,
+      settingsStore,
     };
   },
 });
@@ -573,7 +599,7 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 .bg-occuped {
-  background-color: rgb(255, 128, 128);
+  background-color: rgb(255, 196, 196);
 }
 
 .black-outline {

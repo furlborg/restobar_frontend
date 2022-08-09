@@ -108,36 +108,82 @@
       <n-drawer-content
         title="Pedidos"
         footer-style="padding: 0; height: 50px"
+        body-style="padding: 0"
+        body-content-style="padding: 6px"
         closable
       >
         <n-list>
           <n-list-item
+            class="py-1"
             v-for="(orderItem, index) in waiterStore.preOrderList"
             :key="index"
           >
-            <n-thing
-              :title="`${orderItem.quantity} - ${orderItem.product_name}`"
-              :title-extra="`S/. ${
-                Number(orderItem.quantity) *
-                parseFloat(orderItem.price).toFixed(2)
-              }`"
-              ><n-button
-                type="info"
-                text
-                @click="
-                  orderItemIndex = index;
-                  showModal = true;
-                "
-                >Indicaciones</n-button
-              ></n-thing
-            >
+            <n-thing>
+              <template #header>
+                <n-button
+                  class="fs-5"
+                  type="info"
+                  text
+                  @click="
+                    orderItemIndex = index;
+                    showModal = true;
+                  "
+                  >{{ orderItem.product_name }}</n-button
+                >
+              </template>
+              <n-space align="center" justify="space-between">
+                <n-input-group>
+                  <n-button
+                    type="warning"
+                    size="small"
+                    primary
+                    :disabled="orderItem.quantity <= 1"
+                    @click.stop="orderItem.quantity--"
+                  >
+                    <v-icon name="md-remove-round" />
+                  </n-button>
+                  <n-input-number
+                    v-model:value="orderItem.quantity"
+                    style="width: 50px"
+                    placeholder=""
+                    :min="1"
+                    :show-button="false"
+                    size="small"
+                    readonly
+                    @click.stop
+                  />
+                  <n-button
+                    type="warning"
+                    size="small"
+                    primary
+                    @click.stop="orderItem.quantity++"
+                  >
+                    <v-icon name="md-add-round" />
+                  </n-button>
+                </n-input-group>
+                <n-tag>{{
+                  `S/. ${
+                    Number(orderItem.quantity) *
+                    parseFloat(orderItem.price).toFixed(2)
+                  }`
+                }}</n-tag>
+                <!-- <n-text class="fs-6">
+                {{
+                  `S/. ${
+                    Number(orderItem.quantity) *
+                    parseFloat(orderItem.price).toFixed(2)
+                  }`
+                }}
+              </n-text> -->
+              </n-space>
+            </n-thing>
             <template #suffix>
               <n-button
                 type="error"
                 text
-                @click="waiterStore.preOrderList.splice(index, 1)"
+                @click.stop="waiterStore.preOrderList.splice(index, 1)"
               >
-                <v-icon name="md-disabledbydefault-round" />
+                <v-icon name="md-disabledbydefault-round" scale="1.25" />
               </n-button>
             </template>
           </n-list-item>
