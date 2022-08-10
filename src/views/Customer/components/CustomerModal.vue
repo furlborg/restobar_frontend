@@ -236,13 +236,17 @@ export default defineComponent({
       type: String,
       default: null,
     },
+    document: {
+      type: String,
+      default: "",
+    },
   },
   setup(props, { emit }) {
     const message = useMessage();
     const requestMessage = ref(null);
     const customerStore = useCustomerStore();
     const genericsStore = useGenericsStore();
-    const { idCustomer, show, doc_type } = toRefs(props);
+    const { idCustomer, show, doc_type, document } = toRefs(props);
     const modalTitle = ref("Registrar Cliente");
     const isLoadingData = ref(false);
     const isSearchingDoc = ref(false);
@@ -314,7 +318,18 @@ export default defineComponent({
             },
           ],
         };
-        changeDocMax();
+        if (document.value) {
+          if (document.value.length === 8) {
+            customer.value.doc_type = "1";
+          } else if (document.value.length === 11) {
+            customer.value.doc_type = "6";
+          }
+          changeDocMax();
+          customer.value.doc_num = document.value;
+          performSearchByDoc();
+        } else {
+          changeDocMax();
+        }
       }
     });
 

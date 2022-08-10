@@ -65,6 +65,7 @@
                   :options="customerOptions"
                   :get-show="showOptions"
                   :loading="searching"
+                  @keypress.enter="autoCreateCustomer"
                   @update:value="
                     (v) => {
                       !v
@@ -353,6 +354,7 @@
     <customer-modal
       v-model:show="showModal"
       :doc_type="sale.invoice_type === 1 ? '6' : null"
+      :document="customerDocument"
       @update:show="onCloseModal"
       @on-success="onSuccess"
     />
@@ -822,6 +824,22 @@ export default defineComponent({
       return ts > new Date(Date.now());
     };
 
+    const customerDocument = ref("");
+
+    const autoCreateCustomer = () => {
+      if (!searching.value && !customerResults.value.length) {
+        if (
+          !isNaN(sale.value.customer_name) &&
+          ((sale.value.customer_name.length === 8 &&
+            sale.value.invoice_type !== 1) ||
+            sale.value.customer_name.length === 11)
+        ) {
+          customerDocument.value = sale.value.customer_name;
+          showModal.value = true;
+        }
+      }
+    };
+
     return {
       showModal,
       orderStore,
@@ -833,6 +851,8 @@ export default defineComponent({
       formRules,
       showOptions,
       customerOptions,
+      autoCreateCustomer,
+      customerDocument,
       searching,
       changing,
       payment_amount,

@@ -107,6 +107,7 @@
                               createAddressesOptions();
                             }
                           "
+                          @keypress.enter="autoCreateCustomer"
                           placeholder=""
                           clearable
                         />
@@ -138,7 +139,11 @@
                       />
                     </n-form-item-gi>
                     <n-form-item-gi :span="2" label="Preguntar por">
-                      <n-input v-model:value="sale.ask_for" placeholder="" />
+                      <n-input
+                        v-model:value="sale.ask_for"
+                        placeholder=""
+                        :disabled="!!sale.delivery_info"
+                      />
                     </n-form-item-gi>
                     <n-form-item-gi :span="2">
                       <n-checkbox @update:checked="handleDelivery">
@@ -179,6 +184,7 @@
                           >
                             <n-input
                               v-model:value="sale.delivery_info.person"
+                              @update:value="(v) => (sale.ask_for = v)"
                               placeholder=""
                             />
                           </n-form-item-gi>
@@ -381,6 +387,7 @@
           <customer-modal
             v-model:show="showCustomerModal"
             :doc_type="sale.invoice_type === 1 ? '6' : null"
+            :document="customerDocument"
             @update:show="onCloseModal"
             @on-success="onSuccess"
           />
@@ -1050,6 +1057,22 @@ export default defineComponent({
       }
     };
 
+    const customerDocument = ref("");
+
+    const autoCreateCustomer = () => {
+      if (!searchingCustomer.value && !customerResults.value.length) {
+        if (
+          !isNaN(sale.value.customer_name) &&
+          ((sale.value.customer_name.length === 8 &&
+            sale.value.invoice_type !== 1) ||
+            sale.value.customer_name.length === 11)
+        ) {
+          showCustomerModal.value = true;
+          customerDocument.value = sale.value.customer_name;
+        }
+      }
+    };
+
     const { serie } = toRefs(sale.value);
 
     watch(serie, async () => {
@@ -1057,13 +1080,14 @@ export default defineComponent({
     });
     const handleDelivery = (v) => {
       v
-        ? (sale.value.delivery_info = {
+        ? ((sale.value.delivery_info = {
             person: "",
             address: "",
             phone: "",
             deliveryman: "",
             amount: parseFloat(0).toFixed(2),
-          })
+          }),
+          (sale.value.ask_for = ""))
         : (sale.value.delivery_info = null);
     };
 
@@ -1391,6 +1415,8 @@ export default defineComponent({
       showCustomerModal,
       customerOptions,
       showCustomerOptions,
+      customerDocument,
+      autoCreateCustomer,
       searchingCustomer,
       createAddressesOptions,
       addressesOptions,
