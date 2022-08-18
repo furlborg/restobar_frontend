@@ -223,8 +223,8 @@
           <n-space justify="end">
             <n-button
               type="success"
-              :loading="loadingConfirm"
-              :disabled="!userConfirm || loadingConfirm"
+              :loading="loading"
+              :disabled="!userConfirm || loading"
               secondary
               @click.prevent="
                 orderStore.orderId

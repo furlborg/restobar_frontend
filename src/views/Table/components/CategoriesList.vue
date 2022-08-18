@@ -70,8 +70,11 @@
                   start-50
                   translate-middle
                   text-center
-                  fs-5
                 "
+                :class="{
+                  'fs-4': category.description.length <= 10,
+                  'fs-5': category.description.length > 10,
+                }"
                 >{{ category.description }}</n-text
               >
             </router-link>
