@@ -243,6 +243,7 @@ import {
   getTillSaleReport,
   getSimpleTillReport,
   getExcelReport,
+  getAreaKardexReport,
 } from "@/api/modules/tills";
 import { useUserStore } from "@/store/modules/user";
 
@@ -476,6 +477,33 @@ export default defineComponent({
         });
     };
 
+    const makeAreaKardexReport = () => {
+      getAreaKardexReport(till)
+        .then((response) => {
+          const doc = new jspdf({
+            format: [80, 297],
+          });
+          doc.html(response.data, {
+            html2canvas: { scale: "0.25" },
+            margin: [0, 2, 0, 2],
+            callback: function (doc) {
+              /* doc.save(); */
+              doc.autoPrint();
+              const hiddFrame = document.createElement("iframe");
+              hiddFrame.style.position = "fixed";
+              hiddFrame.style.width = "1px";
+              hiddFrame.style.height = "1px";
+              hiddFrame.style.opacity = "0.01";
+              hiddFrame.src = doc.output("bloburl");
+              document.body.appendChild(hiddFrame);
+            },
+          });
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    };
+
     const reportOptions = [
       {
         label: "Imprimir",
@@ -493,6 +521,10 @@ export default defineComponent({
           {
             key: 13,
             label: "Reporte de ventas",
+          },
+          {
+            key: 14,
+            label: "Productos por Area",
           },
         ],
       },
@@ -565,6 +597,9 @@ export default defineComponent({
           break;
         case 13:
           makeSaleReport();
+          break;
+        case 14:
+          makeAreaKardexReport();
           break;
         case 211:
           requestExcel("details", "Movimientos");

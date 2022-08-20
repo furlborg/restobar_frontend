@@ -473,6 +473,7 @@ export const createTillColumns = ({
   makeTillReport,
   makeSimpleTillReport,
   makeSaleReport,
+  makeAreaKardexReport,
   requestExcel,
   closeTill,
 }) => {
@@ -609,6 +610,10 @@ export const createTillColumns = ({
                       key: 13,
                       label: "Reporte de ventas",
                     },
+                    {
+                      key: 14,
+                      label: "Productos por Area",
+                    },
                   ],
                 },
                 {
@@ -679,6 +684,9 @@ export const createTillColumns = ({
                     break;
                   case 13:
                     makeSaleReport(row);
+                    break;
+                  case 14:
+                    makeAreaKardexReport(row);
                     break;
                   case 211:
                     requestExcel(row.id, "details", "Movimientos");
@@ -1403,14 +1411,25 @@ export const createSaleColumns = ({
         }
 
         return h(
-          NTag,
+          NPopover,
           {
-            size: "small",
-            type: type,
-            round: true,
+            trigger: "hover",
+            disabled: !row.null_reason,
           },
           {
-            default: () => text,
+            default: () => row.null_reason,
+            trigger: () =>
+              h(
+                NTag,
+                {
+                  size: "small",
+                  type: type,
+                  round: true,
+                },
+                {
+                  default: () => text,
+                }
+              ),
           }
         );
       },
@@ -1542,14 +1561,25 @@ export const createTillSalesColumns = () => {
         }
 
         return h(
-          NTag,
+          NPopover,
           {
-            size: "small",
-            type: type,
-            round: true,
+            trigger: "hover",
+            disabled: !row.null_reason,
           },
           {
-            default: () => text,
+            default: () => row.null_reason,
+            trigger: () =>
+              h(
+                NTag,
+                {
+                  size: "small",
+                  type: type,
+                  round: true,
+                },
+                {
+                  default: () => text,
+                }
+              ),
           }
         );
       },
@@ -1719,14 +1749,25 @@ export const createOrderColumns = ({
         }
 
         return h(
-          NTag,
+          NPopover,
           {
-            size: "small",
-            type: type,
-            round: true,
+            trigger: "hover",
+            disabled: !row.null_reason,
           },
           {
-            default: () => text,
+            default: () => row.null_reason,
+            trigger: () =>
+              h(
+                NTag,
+                {
+                  size: "small",
+                  type: type,
+                  round: true,
+                },
+                {
+                  default: () => text,
+                }
+              ),
           }
         );
       },
@@ -1955,14 +1996,25 @@ export const createTillOrderColumns = ({ showDetails, showDeliveryInfo }) => {
         }
 
         return h(
-          NTag,
+          NPopover,
           {
-            size: "small",
-            type: type,
-            round: true,
+            trigger: "hover",
+            disabled: !row.null_reason,
           },
           {
-            default: () => text,
+            default: () => row.null_reason,
+            trigger: () =>
+              h(
+                NTag,
+                {
+                  size: "small",
+                  type: type,
+                  round: true,
+                },
+                {
+                  default: () => text,
+                }
+              ),
           }
         );
       },
