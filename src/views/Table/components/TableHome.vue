@@ -47,7 +47,7 @@
       >
         <n-grid
           responsive="screen"
-          cols="3 xs:3 s:12 m:12 l:15 xl:24 2xl:24"
+          cols="3 xs:3 s:12 m:12 l:15 xl:21 2xl:21"
           :x-gap="12"
           :y-gap="12"
         >
@@ -599,7 +599,7 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 .bg-occuped {
-  background-color: rgb(255, 196, 196);
+  background-color: rgb(255, 128, 128);
 }
 
 .black-outline {
