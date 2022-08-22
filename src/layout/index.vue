@@ -12,8 +12,8 @@
         class="layout-sider"
         @collapse="collapsed = true"
         @expand="collapsed = false"
-        :collapsed="userStore.user.profile_des !== 'MOZO' ? collapsed : true"
-        :collapsed-width="userStore.user.profile_des !== 'MOZO' ? 64 : 0"
+        :collapsed="userStore.user.role !== 'MOZO' ? collapsed : true"
+        :collapsed-width="userStore.user.role !== 'MOZO' ? 64 : 0"
         collapse-mode="width"
         :width="200"
         :native-scrollbar="false"
@@ -55,7 +55,7 @@
 import { computed, defineComponent, onMounted, ref } from "vue";
 import { createTheme, inputDark, datePickerDark, darkTheme } from "naive-ui";
 import { commonEsPE, dateEsPE } from "@/locale";
-import { useUserStore } from "@/store/modules/user";
+import { useUserStore, useActiveUsersStore } from "@/store/modules/user";
 import { useBusinessStore } from "@/store/modules/business";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useCustomerStore } from "@/store/modules/customer";
@@ -83,6 +83,10 @@ export default defineComponent({
     const collapsed = ref(false);
 
     const userStore = useUserStore();
+
+    const activeUsersStore = useActiveUsersStore();
+
+    activeUsersStore.initializeStore();
 
     const designStore = useDesignSettingStore();
 
@@ -134,7 +138,6 @@ export default defineComponent({
     });
 
     /* const watchCookies = ({ deleted }) => {
-      console.log(deleted);
       if (deleted.some((item) => item.name === "token")) {
         userStore.updateToken();
       }

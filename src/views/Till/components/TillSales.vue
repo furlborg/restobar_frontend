@@ -55,6 +55,14 @@
               clearable
             />
           </n-form-item-gi>
+          <n-form-item-gi label="Estado" :span="2">
+            <n-select
+              v-model:value="filterParams.status"
+              :options="statusOptions"
+              placeholder=""
+              clearable
+            />
+          </n-form-item-gi>
           <n-form-item-gi label="Fecha" :span="6">
             <n-date-picker
               type="daterange"
@@ -119,6 +127,7 @@ export default defineComponent({
       number: "",
       payment_method: null,
       date_sale: null,
+      status: null,
     });
 
     const pagination = ref({
@@ -257,12 +266,28 @@ export default defineComponent({
         });
     };
 
+    const statusOptions = [
+      {
+        value: "N",
+        label: "NUEVO",
+      },
+      {
+        value: "E",
+        label: "ENVIADO",
+      },
+      {
+        value: "A",
+        label: "ANULADO",
+      },
+    ];
+
     const refreshTable = async () => {
       filterParams.value.customer = "";
       filterParams.value.serie = null;
       filterParams.value.number = "";
       filterParams.value.payment_method = null;
       filterParams.value.date_sale = null;
+      filterParams.value.status = null;
       pagination.value.pageSearchParams = {
         order__till: till,
         branch: !userStore.user.branchoffice
@@ -273,6 +298,7 @@ export default defineComponent({
         number: "",
         payment_method: null,
         date_sale: null,
+        status: null,
       };
       pagination.value.page = 1;
       await loadSales();
@@ -305,6 +331,7 @@ export default defineComponent({
       sales,
       businessStore,
       userStore,
+      statusOptions,
       tableColumns: createTillSalesColumns(),
     };
   },

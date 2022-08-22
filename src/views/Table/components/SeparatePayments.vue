@@ -1,5 +1,5 @@
 <template>
-  <div id="TablePayment">
+  <div id="SeparatePayments">
     <n-spin :show="loading">
       <n-card>
         <n-space class="mb-2" align="center" justify="space-between">
@@ -65,7 +65,6 @@
                   :options="customerOptions"
                   :get-show="showOptions"
                   :loading="searching"
-                  @keypress.enter="autoCreateCustomer"
                   @update:value="
                     (v) => {
                       !v
@@ -138,7 +137,7 @@
             </n-gi>
           </n-grid>
         </n-form>
-        <n-scrollbar :x-scrollable="true" style="max-width: 1000px">
+        <n-scrollbar :x-scrollable="true" style="max-width: 1200px">
           <n-table class="fs-6 m-auto text-center" :bordered="false">
             <thead>
               <tr>
@@ -147,13 +146,21 @@
                 <th>Producto</th>
                 <th>Precio Unitario</th>
                 <th>Precio Total</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
-              <template v-for="(detail, index) in saleStore.toSale">
+              <template v-for="(detail, index) in sale.sale_details">
                 <tr v-if="detail.quantity > 0" :key="index">
                   <td>{{ index + 1 }}</td>
-                  <td>{{ detail.quantity }}</td>
+                  <td align="center">
+                    <n-input-number
+                      v-model:value="detail.quantity"
+                      style="width: 100px"
+                      :min="1"
+                      :max="detail.max"
+                    />
+                  </td>
                   <td>
                     <input
                       class="custom-input"
@@ -178,6 +185,15 @@
                     {{
                       parseFloat(detail.quantity * detail.price_sale).toFixed(2)
                     }}
+                  </td>
+                  <td>
+                    <n-button
+                      type="error"
+                      text
+                      @click="sale.sale_details.splice(index, 1)"
+                    >
+                      <v-icon name="md-disabledbydefault-round" />
+                    </n-button>
                   </td>
                 </tr>
               </template>
@@ -263,18 +279,16 @@
           @click.prevent="performCreateSale"
           ><v-icon class="me-2" name="fa-coins" scale="2" />Cobrar</n-button
         > -->
-        <n-space justify="space-between">
-          <n-checkbox v-model:checked="isMultiple">Pago multiple</n-checkbox>
-          <n-button type="info" text @click="openSeparatePaymentsModal"
-            >Nueva cuenta</n-button
-          >
-        </n-space>
+        <n-checkbox v-model:checked="isMultiple">Pago multiple</n-checkbox>
         <n-button
           class="fs-1 py-5 mt-2"
           type="success"
           :disabled="
-            !saleStore.toSale.filter((detail) => !!detail.quantity).length ||
-            sale.given_amount < sale.amount
+            list.length < count
+              ? !list.length || sale.given_amount < sale.amount
+              : !list.some((detail) => detail.quantity < detail.max)
+              ? true
+              : !list.length || sale.given_amount < sale.amount
           "
           secondary
           block
@@ -354,25 +368,25 @@
     <customer-modal
       v-model:show="showModal"
       :doc_type="sale.invoice_type === 1 ? '6' : null"
-      :document="customerDocument"
       @update:show="onCloseModal"
       @on-success="onSuccess"
-    />
-    <separate-payments-modal
-      v-model:show="showSeparateModal"
-      :data="separatePayments"
-      :on-close="closeSeparatePaymentsModal"
-      @success="successSeparatePaymentsModal"
     />
   </div>
 </template>
 
 <script>
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
-import { defineComponent, ref, toRefs, computed, watch, onMounted } from "vue";
+import {
+  defineComponent,
+  ref,
+  toRefs,
+  toRef,
+  computed,
+  watch,
+  onMounted,
+} from "vue";
 import { isAxiosError } from "axios";
 import CustomerModal from "@/views/Customer/components/CustomerModal";
-import SeparatePaymentsModal from "./SeparatePaymentsModal";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useRouter } from "vue-router";
 import { useOrderStore } from "@/store/modules/order";
@@ -381,6 +395,7 @@ import { useUserStore } from "@/store/modules/user";
 import { useGenericsStore } from "@/store/modules/generics";
 import { saleRules } from "@/utils/constants";
 import { cloneDeep, isDecimal } from "@/utils";
+import { retrieveOrder } from "@/api/modules/orders";
 import {
   searchCustomerByName,
   searchRucCustomer,
@@ -393,13 +408,18 @@ import format from "date-fns/format";
 import { useBusinessStore } from "@/store/modules/business";
 
 export default defineComponent({
-  name: "TablePayment",
+  name: "SeparatePayments",
   directives: { autowidth: VueInputAutowidth },
   components: {
     CustomerModal,
-    SeparatePaymentsModal,
   },
-  setup() {
+  props: {
+    data: {
+      type: Object,
+    },
+  },
+  emits: ["success"],
+  setup(props, { emit }) {
     const dateNow = ref(null);
     const router = useRouter();
     const orderStore = useOrderStore();
@@ -419,6 +439,14 @@ export default defineComponent({
         : 0.0;
     });
 
+    const count = props.data.sale_details.filter(
+      (detail) => !!detail.quantity
+    ).length;
+
+    const list = computed(() => {
+      return sale.value.sale_details.filter((detail) => !!detail.quantity);
+    });
+
     const icbper = computed(() => {
       return orderStore.orderList.reduce((acc, curVal) => {
         if (curVal.icbper) {
@@ -431,13 +459,13 @@ export default defineComponent({
     const showObservations = ref(false);
 
     const subTotal = computed(() => {
-      return saleStore.toSale.reduce((acc, curVal) => {
+      return sale.value.sale_details.reduce((acc, curVal) => {
         return (acc += curVal.price_sale * curVal.quantity);
       }, 0);
     });
 
     const products_count = computed(() => {
-      return saleStore.toSale.reduce((acc, curVal) => {
+      return sale.value.sale_details.reduce((acc, curVal) => {
         return (acc += curVal.quantity);
       }, 0);
     });
@@ -451,36 +479,14 @@ export default defineComponent({
       ).toFixed(2);
     });
 
-    const sale = ref({
-      order: null,
-      serie: saleStore.getFirstOption(
-        settingsStore.businessSettings.sale.default_invoice
-      ),
-      number: "",
-      date_sale: format(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss"),
-      count: products_count,
-      amount: total,
-      given_amount: parseFloat(0).toFixed(2),
-      invoice_type: settingsStore.businessSettings.sale.default_invoice,
-      payment_method: 1,
-      payment_condition: 1,
-      customer_name: "",
-      customer: null,
-      address: null,
-      discount: "0.00",
-      icbper: icbper,
-      other_charges: "0.00",
-      observations: "",
-      by_consumption: false,
-      sale_details: [],
-      payments: null,
-      do_update: true,
-      is_change: true,
-    });
+    const sale = toRef(props, "data");
 
     watch(total, () => {
+      sale.value.amount =
+        total.value > 0 ? total.value : parseFloat(0).toFixed(2);
       sale.value.given_amount =
         total.value > 0 ? total.value : parseFloat(0).toFixed(2);
+      sale.value.count = products_count.value;
     });
 
     const formRules = computed(() => {
@@ -528,15 +534,12 @@ export default defineComponent({
             positiveText: "Sí",
             onPositiveClick: async () => {
               loading.value = true;
-              sale.value.order = orderStore.orderId;
-              sale.value.sale_details = saleStore.toSale;
               await createSale(sale.value)
                 .then((response) => {
                   if (response.status === 201) {
                     VoucherPrint({
                       data: response.data,
                       businessStore,
-                      saleStore,
                       changing: changing.value,
                     });
 
@@ -577,14 +580,26 @@ export default defineComponent({
                           }
                         });
                     }
+                    retrieveOrder(orderStore.orderId)
+                      .then((response) => {
+                        if (response.status === 200) {
+                          orderStore.orders = response.data.order_details;
+                          saleStore.order_initial = cloneDeep(
+                            orderStore.orderList
+                          );
+                        }
+                      })
+                      .catch((error) => {
+                        console.error(error);
+                        message.error("Algo salió mal...");
+                      });
                     message.success("Venta realizada correctamente!");
-                    router.push({ name: "TableHome" });
+                    emit("success");
                   }
                 })
                 .catch((error) => {
                   if (isAxiosError(error)) {
                     if (error.response.status === 400) {
-                      console.error(error);
                       for (const value in error.response.data) {
                         error.response.data[`${value}`].forEach((err) => {
                           if (typeof err === "object") {
@@ -711,7 +726,11 @@ export default defineComponent({
 
     onMounted(async () => {
       document.title = "Venta | App";
+      sale.value.amount = total.value;
       sale.value.given_amount = total.value;
+      sale.value.count = products_count.value;
+      sale.value.do_update = false;
+      sale.value.is_change = true;
       await obtainSaleNumber();
 
       const fetch = new Date();
@@ -798,46 +817,8 @@ export default defineComponent({
       }
     });
 
-    const separatePayments = ref({});
-
-    const showSeparateModal = ref(false);
-
-    const openSeparatePaymentsModal = () => {
-      separatePayments.value = cloneDeep(sale.value);
-      separatePayments.value.order = cloneDeep(orderStore.orderId);
-      separatePayments.value.sale_details = cloneDeep(saleStore.toSale);
-      separatePayments.value.sale_details.forEach(
-        (detail) => (detail.max = detail.quantity)
-      );
-      showSeparateModal.value = true;
-    };
-
-    const closeSeparatePaymentsModal = () => {
-      // console.log(separatePayments.value);
-    };
-
-    const successSeparatePaymentsModal = () => {
-      obtainSaleNumber();
-    };
-
     const dateDisabled = (ts) => {
       return ts > new Date(Date.now());
-    };
-
-    const customerDocument = ref("");
-
-    const autoCreateCustomer = () => {
-      if (!searching.value && !customerResults.value.length) {
-        if (
-          !isNaN(sale.value.customer_name) &&
-          ((sale.value.customer_name.length === 8 &&
-            sale.value.invoice_type !== 1) ||
-            sale.value.customer_name.length === 11)
-        ) {
-          customerDocument.value = sale.value.customer_name;
-          showModal.value = true;
-        }
-      }
     };
 
     return {
@@ -851,12 +832,11 @@ export default defineComponent({
       formRules,
       showOptions,
       customerOptions,
-      autoCreateCustomer,
-      customerDocument,
       searching,
       changing,
       payment_amount,
       subTotal,
+      total,
       selectSerie,
       changeSerie,
       showObservations,
@@ -874,12 +854,9 @@ export default defineComponent({
       filteredMethods,
       evalPayments,
       currentPaymentsAmount,
-      openSeparatePaymentsModal,
-      closeSeparatePaymentsModal,
-      successSeparatePaymentsModal,
-      separatePayments,
-      showSeparateModal,
       dateDisabled,
+      count,
+      list,
     };
   },
 });

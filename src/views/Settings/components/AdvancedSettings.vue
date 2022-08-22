@@ -61,45 +61,40 @@
             <n-input-number
               v-model:value="businessSettings.printer.header_font_size"
               placeholder=""
-              :min="0"
+              :min="6"
               :max="20"
-              step="0.1"
             />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Tamaño letra subtitulo">
             <n-input-number
               v-model:value="businessSettings.printer.sub_header_font_size"
               placeholder=""
-              :min="0"
+              :min="6"
               :max="20"
-              step="0.1"
             />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Tamaño letra cuerpo">
             <n-input-number
               v-model:value="businessSettings.printer.body_font_size"
               placeholder=""
-              :min="0"
+              :min="6"
               :max="20"
-              step="0.1"
             />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Tamaño letra pie de página">
             <n-input-number
               v-model:value="businessSettings.printer.footer_font_size"
               placeholder=""
-              :min="0"
+              :min="6"
               :max="20"
-              step="0.1"
             />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Tamaño letra delivery">
             <n-input-number
               v-model:value="businessSettings.printer.delivery_ticket_font_size"
               placeholder=""
-              :min="0"
+              :min="6"
               :max="20"
-              step="0.1"
             />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Tamaño letra pre-cuenta">
@@ -108,9 +103,8 @@
                 businessSettings.printer.pre_account_ticket_font_size
               "
               placeholder=""
-              :min="0"
+              :min="6"
               :max="20"
-              step="0.1"
             />
           </n-form-item-gi>
           <n-form-item-gi :span="4">
@@ -138,6 +132,33 @@
           </n-form-item-gi>
         </n-grid>
         <n-divider />
+        <n-text class="fs-4">Pedidos</n-text>
+        <n-grid
+          class="mt-2"
+          responsive="screen"
+          cols="6 s:6 m:12 l:12 xl:24 2xl:24"
+          x-gap="12"
+        >
+          <n-form-item-gi :span="3">
+            <n-checkbox
+              v-model:checked="businessSettings.order.order_customer_name"
+              >Nombre de Cliente</n-checkbox
+            >
+          </n-form-item-gi>
+          <n-form-item-gi :span="3">
+            <n-checkbox
+              v-model:checked="businessSettings.order.select_order_user"
+              >Seleccionar Usuario</n-checkbox
+            >
+          </n-form-item-gi>
+          <n-form-item-gi :span="3">
+            <n-checkbox
+              v-model:checked="businessSettings.order.table_order_total"
+              >Mostrar total de pedido</n-checkbox
+            >
+          </n-form-item-gi>
+        </n-grid>
+        <n-divider />
         <n-text class="fs-4">Ventas</n-text>
         <n-grid
           class="mt-2"
@@ -161,6 +182,21 @@
             <n-checkbox v-model:checked="businessSettings.sale.auto_send"
               >Auto envío CPE</n-checkbox
             >
+          </n-form-item-gi>
+        </n-grid>
+        <n-divider />
+        <n-text class="fs-4">Clientes</n-text>
+        <n-grid
+          class="mt-2"
+          responsive="screen"
+          cols="6 s:6 m:12 l:12 xl:24 2xl:24"
+          x-gap="12"
+        >
+          <n-form-item-gi :span="6" label="API Token">
+            <n-input
+              type="textarea"
+              v-model:value="businessSettings.customers.api_token"
+            />
           </n-form-item-gi>
         </n-grid>
         <n-space justify="end">

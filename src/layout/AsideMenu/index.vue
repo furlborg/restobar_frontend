@@ -3,7 +3,7 @@
     :collapsed-width="64"
     :collapsed-icon-size="22"
     :options="menuOptions"
-    :collapsed="userStore.user.profile_des !== 'MOZO' ? collapsed : true"
+    :collapsed="userStore.user.role !== 'MOZO' ? collapsed : true"
     :value="openKey"
   />
 </template>
@@ -14,7 +14,6 @@ import { RouterLink, useRoute } from "vue-router";
 import { useUserStore } from "@/store/modules/user";
 import { useTillStore } from "@/store/modules/till";
 import { renderIcon } from "@/utils";
-import { routes } from "@/router";
 
 export default defineComponent({
   name: "AsideMenu",
@@ -60,6 +59,7 @@ export default defineComponent({
             ),
           key: "Till",
           icon: renderIcon("md-pointofsale-twotone"),
+          disabled: !userStore.hasPermission("view_till"),
         },
         {
           label: () =>
@@ -72,7 +72,9 @@ export default defineComponent({
             ),
           key: "Table",
           icon: renderIcon("md-dining-twotone"),
-          disabled: !tillStore.currentTillID,
+          disabled: !userStore.hasPermission("view_table")
+            ? true
+            : !tillStore.currentTillID,
         },
         {
           label: () =>
@@ -85,7 +87,9 @@ export default defineComponent({
             ),
           key: "Orders",
           icon: renderIcon("md-pendingactions-twotone"),
-          disabled: !tillStore.currentTillID,
+          disabled: !userStore.hasPermission("view_order")
+            ? true
+            : !tillStore.currentTillID,
         },
         {
           label: () =>
@@ -98,6 +102,7 @@ export default defineComponent({
             ),
           key: "Sales",
           icon: renderIcon("md-description-twotone"),
+          disabled: !userStore.hasPermission("view_sale"),
         },
         {
           label: () =>
@@ -110,6 +115,7 @@ export default defineComponent({
             ),
           key: "Product",
           icon: renderIcon("md-fastfood-twotone"),
+          disabled: !userStore.hasPermission("view_product"),
         },
         /* {
           label: () =>
@@ -134,6 +140,7 @@ export default defineComponent({
             ),
           key: "Supplier",
           icon: renderIcon("md-villa-twotone"),
+          disabled: !userStore.hasPermission("view_supplier"),
         },
         {
           label: () =>
@@ -146,6 +153,7 @@ export default defineComponent({
             ),
           key: "Supplies",
           icon: renderIcon("md-kitchen-twotone"),
+          disabled: !userStore.hasPermission("view_supplies"),
         },
         {
           label: () =>
@@ -158,6 +166,7 @@ export default defineComponent({
             ),
           key: "Kardex",
           icon: renderIcon("md-equalizer-twotone"),
+          disabled: !userStore.hasPermission("view_kardex"),
         },
         {
           label: () =>
@@ -170,6 +179,7 @@ export default defineComponent({
             ),
           key: "Customer",
           icon: renderIcon("md-supervisedusercircle-twotone"),
+          disabled: !userStore.hasPermission("view_customer"),
         },
         {
           label: () =>
@@ -182,9 +192,7 @@ export default defineComponent({
             ),
           key: "Settings",
           icon: renderIcon("md-settings-twotone"),
-          disabled:
-            userStore.user.profile_des &&
-            userStore.user.profile_des !== "ADMINISTRADOR",
+          disabled: !userStore.user.role === "ADMINISTRADOR",
         },
       ];
     });

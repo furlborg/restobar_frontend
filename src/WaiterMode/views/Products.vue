@@ -1,5 +1,5 @@
 <template>
-  <div id="WProducts">
+  <div id="WProducts" class="position-relative w-100">
     <n-page-header class="border-bottom border-2 border-success p-2">
       <template #title>
         <n-text class="fs-4">{{
@@ -7,9 +7,15 @@
         }}</n-text>
       </template>
     </n-page-header>
+    <div class="m-2">
+      <n-input placeholder="Buscar" v-model:value="search" />
+    </div>
 
     <n-list class="m-0 px-2">
-      <n-list-item v-for="(product, index) in products" :key="product.id">
+      <n-list-item
+        v-for="(product, index) in filteredProducts"
+        :key="product.id"
+      >
         <n-space vertical>
           <n-space
             justify="space-between"
@@ -81,7 +87,7 @@
       >
         <transition name="slide-fade">
           <n-button
-            v-if="products.some((product) => product.quantity > 0)"
+            v-if="filteredProducts.some((product) => product.quantity > 0)"
             type="success"
             round
             @click="addToPreList"
@@ -99,53 +105,130 @@
       </n-space>
     </teleport>
     <n-drawer height="50%" v-model:show="activeDrawer" placement="bottom">
-      <n-drawer-content title="Pedidos" closable>
+      <n-drawer-content
+        title="Pedidos"
+        footer-style="padding: 0; height: 50px"
+        body-style="padding: 0"
+        body-content-style="padding: 6px"
+        closable
+      >
         <n-list>
           <n-list-item
+            class="py-1"
             v-for="(orderItem, index) in waiterStore.preOrderList"
             :key="index"
           >
-            <n-thing
-              :title="`${orderItem.quantity} - ${orderItem.product_name}`"
-              :title-extra="`S/. ${
-                Number(orderItem.quantity) *
-                parseFloat(orderItem.price).toFixed(2)
-              }`"
-              ><n-button
-                type="info"
-                text
-                @click="
-                  orderItemIndex = index;
-                  showModal = true;
-                "
-                >Indicaciones</n-button
-              ></n-thing
-            >
+            <n-thing>
+              <template #header>
+                <n-button
+                  class="fs-5"
+                  type="info"
+                  text
+                  @click="
+                    orderItemIndex = index;
+                    showModal = true;
+                  "
+                  >{{ orderItem.product_name }}</n-button
+                >
+              </template>
+              <n-space align="center" justify="space-between">
+                <n-input-group>
+                  <n-button
+                    type="warning"
+                    size="small"
+                    primary
+                    :disabled="orderItem.quantity <= 1"
+                    @click.stop="orderItem.quantity--"
+                  >
+                    <v-icon name="md-remove-round" />
+                  </n-button>
+                  <n-input-number
+                    v-model:value="orderItem.quantity"
+                    style="width: 50px"
+                    placeholder=""
+                    :min="1"
+                    :show-button="false"
+                    size="small"
+                    readonly
+                    @click.stop
+                  />
+                  <n-button
+                    type="warning"
+                    size="small"
+                    primary
+                    @click.stop="orderItem.quantity++"
+                  >
+                    <v-icon name="md-add-round" />
+                  </n-button>
+                </n-input-group>
+                <n-tag>{{
+                  `S/. ${
+                    Number(orderItem.quantity) *
+                    parseFloat(orderItem.price).toFixed(2)
+                  }`
+                }}</n-tag>
+                <!-- <n-text class="fs-6">
+                {{
+                  `S/. ${
+                    Number(orderItem.quantity) *
+                    parseFloat(orderItem.price).toFixed(2)
+                  }`
+                }}
+              </n-text> -->
+              </n-space>
+            </n-thing>
             <template #suffix>
               <n-button
                 type="error"
                 text
-                @click="waiterStore.preOrderList.splice(index, 1)"
+                @click.stop="waiterStore.preOrderList.splice(index, 1)"
               >
-                <v-icon name="md-disabledbydefault-round" />
+                <v-icon name="md-disabledbydefault-round" scale="1.25" />
               </n-button>
             </template>
           </n-list-item>
         </n-list>
+        <n-modal
+          preset="card"
+          title="Nombre de Cliente"
+          v-model:show="showAskFor"
+          :segmented="{ content: 'hard' }"
+        >
+          <n-input placeholder="" v-model:value="ask_for" />
+          <template #action>
+            <n-space justify="end">
+              <n-button
+                type="info"
+                :disabled="!showAskFor || loading"
+                :loading="loading"
+                secondary
+                @click="
+                  orderStore.orderId
+                    ? performUpdateTableOrder()
+                    : performCreateTableOrder()
+                "
+                >Guardar</n-button
+              >
+            </n-space>
+          </template>
+        </n-modal>
         <template #footer>
-          <n-space class="w-100" justify="center">
-            <n-button type="error" secondary>Cancelar pedido</n-button>
-            <n-button
-              type="info"
-              secondary
-              @click="
-                orderStore.orderId
-                  ? performUpdateTableOrder()
-                  : performCreateTableOrder()
-              "
-              >{{ orderStore.orderId ? "Añadir" : "Realizar" }} pedido</n-button
-            >
-          </n-space>
+          <n-button
+            class="h-100"
+            :disabled="loading"
+            :loading="loading"
+            type="info"
+            secondary
+            block
+            @click="
+              orderStore.orderId
+                ? performUpdateTableOrder()
+                : settingsStore.business_settings.order.order_customer_name
+                ? (showAskFor = true)
+                : performCreateTableOrder()
+            "
+            >{{ orderStore.orderId ? "Añadir" : "Realizar" }} pedido</n-button
+          >
         </template>
       </n-drawer-content>
     </n-drawer>
@@ -156,7 +239,7 @@
 import printOrderTicket from "@/hooks/PrintsTemplates/Ticket/OrderTicket.js";
 import printWEBADASDEBRASEROS from "@/hooks/PrintsTemplates/Ticket/WEBADASDEBRASEROS.js";
 import { useSettingsStore } from "@/store/modules/settings";
-import { defineComponent, ref, onMounted } from "vue";
+import { defineComponent, ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useRouter } from "vue-router";
 import { useMessage } from "naive-ui";
@@ -188,13 +271,27 @@ export default defineComponent({
     const waiterStore = useWaiterStore();
     const activeDrawer = ref(false);
     const showModal = ref(false);
+    const loading = ref(false);
     const orderItemIndex = ref(null);
+    const search = ref("");
     const products = ref([]);
     const table = route.params.table;
 
+    const filteredProducts = computed(() => {
+      return products.value.filter((product) =>
+        product.name.toLowerCase().includes(search.value.toLowerCase())
+      );
+    });
+
     const performCreateTableOrder = () => {
       addToList();
-      createTableOrder(route.params.table, orderStore.orderList)
+      loading.value = true;
+      createTableOrder(
+        route.params.table,
+        orderStore.orderList,
+        undefined,
+        !ask_for.value ? undefined : ask_for.value
+      )
         .then((response) => {
           if (response.status === 201) {
             message.success("Orden creada correctamente");
@@ -208,11 +305,9 @@ export default defineComponent({
               settingsStore.business_settings.printer.kitchen_ticket_format
             ) {
               case 1:
-                console.log(1);
                 printOrderTicket({ data: response.data, table });
                 break;
               case 2:
-                console.log(2);
                 printWEBADASDEBRASEROS({ data: response.data, table });
                 break;
 
@@ -229,6 +324,9 @@ export default defineComponent({
         .catch((error) => {
           console.error(error);
           message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          loading.value = false;
         });
     };
 
@@ -253,12 +351,15 @@ export default defineComponent({
       return list;
     };
 
-    const performUpdateTableOrder = () => {
+    const performUpdateTableOrder = async () => {
       addToList();
-      updateTableOrder(
+      loading.value = true;
+      await updateTableOrder(
         route.params.table,
         orderStore.orderId,
-        orderStore.orderList
+        orderStore.orderList,
+        undefined,
+        !ask_for.value ? undefined : ask_for.value
       )
         .then((response) => {
           if (response.status === 202) {
@@ -277,12 +378,18 @@ export default defineComponent({
               settingsStore.business_settings.printer.kitchen_ticket_format
             ) {
               case 1:
-                console.log(1);
-                printOrderTicket({ data: response.data, table });
+                printOrderTicket({
+                  data: response.data,
+                  table,
+                  updateOrder: true,
+                });
                 break;
               case 2:
-                console.log(2);
-                printWEBADASDEBRASEROS({ data: response.data, table });
+                printWEBADASDEBRASEROS({
+                  data: response.data,
+                  table,
+                  updateOrder: true,
+                });
                 break;
 
               default:
@@ -298,6 +405,9 @@ export default defineComponent({
         .catch((error) => {
           console.error(error);
           message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          loading.value = false;
         });
     };
 
@@ -329,7 +439,7 @@ export default defineComponent({
     });
 
     const addToPreList = () => {
-      products.value.forEach((product) => {
+      filteredProducts.value.forEach((product) => {
         if (product.quantity > 0) {
           const existence = waiterStore.preOrderList.find(
             (order) => order.id === product.id
@@ -358,17 +468,26 @@ export default defineComponent({
       });
     };
 
+    const showAskFor = ref(false);
+
+    const ask_for = ref(null);
+
     return {
+      loading,
+      search,
       activeDrawer,
       showModal,
       productStore,
       waiterStore,
       orderItemIndex,
-      products,
+      filteredProducts,
       addToPreList,
       orderStore,
       performCreateTableOrder,
       performUpdateTableOrder,
+      settingsStore,
+      showAskFor,
+      ask_for,
     };
   },
 });

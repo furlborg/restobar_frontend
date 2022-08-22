@@ -87,7 +87,11 @@
           </n-spin>
           <template #action>
             <n-space v-if="!editBusiness" justify="end">
-              <n-button type="warning" secondary @click="editBusiness = true"
+              <n-button
+                v-if="userStore.hasPermission('change_business')"
+                type="warning"
+                secondary
+                @click="editBusiness = true"
                 >Editar</n-button
               >
             </n-space>
@@ -112,9 +116,17 @@
         </n-card>
       </n-gi>
       <n-gi :span="12">
-        <n-card title="Sucursales" :segmented="{ content: 'hard' }">
+        <n-card
+          v-if="userStore.hasPermission('view_branchoffice')"
+          title="Sucursales"
+          :segmented="{ content: 'hard' }"
+        >
           <template #header-extra>
-            <n-button type="info" secondary @click="showModal = true"
+            <n-button
+              v-if="userStore.hasPermission('add_branchoffice')"
+              type="info"
+              secondary
+              @click="showModal = true"
               >Agregar</n-button
             >
           </template>
@@ -134,12 +146,13 @@
                   :branch="branch"
                   @success="branchSuccess"
                   @cancel="branchCancel"
-                ></BranchForm>
+                />
                 <n-card class="mt-2" :bordered="false" embedded>
                   <n-spin :show="loadingSeries">
                     <n-space align="center">
                       <n-text class="fs-5">Series Documentos</n-text>
                       <n-button
+                        v-if="userStore.hasPermission('view_documentseries')"
                         class="text-decoration-underline"
                         type="info"
                         text
@@ -174,7 +187,11 @@
                           <tr
                             v-for="series in branch.document_series"
                             :key="series.id"
-                            @click="selectSerie(series)"
+                            @click="
+                              userStore.hasPermission(
+                                'change_documentseries'
+                              ) && selectSerie(series)
+                            "
                           >
                             <td
                               :style="{
@@ -208,7 +225,13 @@
                           </tr>
                         </tbody>
                       </n-table>
-                      <n-form class="mt-2">
+                      <n-form
+                        v-if="
+                          userStore.hasPermission('add_documentseries') ||
+                          serie.id
+                        "
+                        class="mt-2"
+                      >
                         <n-grid
                           responsive="screen"
                           cols="6 s:6 m:12 l:12 xl:18 2xl:18"
@@ -277,8 +300,8 @@ import {
   getSaleDocumentByNumber,
   saleDocumentOptions,
 } from "@/utils/constants";
+import { useUserStore } from "@/store/modules/user";
 import { useBusinessStore } from "@/store/modules/business";
-import { useCustomerStore } from "@/store/modules/customer";
 import {
   updateBusiness,
   createDocumentSerie,
@@ -296,7 +319,7 @@ export default defineComponent({
   setup() {
     const router = useRouter();
     const message = useMessage();
-    const customerStore = useCustomerStore();
+    const userStore = useUserStore();
     const loadingBusiness = ref(false);
     const refreshing = ref(false);
     const showModal = ref(false);
@@ -483,7 +506,7 @@ export default defineComponent({
     };
 
     return {
-      customerStore,
+      userStore,
       handleBack,
       showModal,
       onCloseModal,

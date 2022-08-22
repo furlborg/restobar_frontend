@@ -1,30 +1,47 @@
 <template>
   <n-tabs type="line" justify-content="space-around">
     <template #prefix>
-      <n-button class="ms-2" text @click="$router.back()">
-        <v-icon name="md-arrowback-round" />
+      <n-button
+        class="ms-2"
+        :disabled="$route.name !== 'WCategories'"
+        text
+        @click="showDrawer = true"
+      >
+        <v-icon name="md-search-round" />
       </n-button>
+      <ProductsDrawer v-model:show="showDrawer" />
     </template>
     <n-tab-pane class="p-0" name="menu" tab="Carta">
       <router-view></router-view>
     </n-tab-pane>
-    <n-tab-pane name="order" tab="Pedido" :disabled="!orderStore.orderId">
+    <n-tab-pane
+      id="OrderPane"
+      name="order"
+      tab="Pedido"
+      :disabled="!orderStore.orderId"
+    >
       <n-card title="Pedido" size="small" :segmented="{ content: 'hard' }">
         <!-- <n-h2>Pedido</n-h2> -->
         <n-list class="m-0">
-          <n-list-item
-            v-for="(order, index) in orderStore.orderList"
-            :key="index"
-          >
-            <n-thing
-              :title="`${order.quantity} - ${order.product_name}`"
-              :title-extra="`S/. ${order.quantity * order.price.toFixed(2)}`"
-            />
-            <!-- @click="
+          <template v-for="(order, index) in orderStore.orderList">
+            <n-list-item v-if="order.quantity > 0" :key="index">
+              <n-thing>
+                <template #header>
+                  <n-tag>{{ order.quantity }}</n-tag>
+                  <n-text class="ms-2">{{ order.product_name }}</n-text>
+                </template>
+                <template #header-extra>
+                  <n-text>{{
+                    `S/. ${order.quantity * order.price.toFixed(2)}`
+                  }}</n-text>
+                </template>
+              </n-thing>
+              <!-- @click="
                 itemIndex = index;
                 showModal = true;
               " -->
-          </n-list-item>
+            </n-list-item>
+          </template>
         </n-list>
       </n-card>
       <ProductIndications
@@ -40,6 +57,7 @@
 
 <script>
 import { defineComponent, ref, onUpdated, onMounted } from "vue";
+import ProductsDrawer from "../components/ProductsDrawer";
 import { useMessage, useDialog } from "naive-ui";
 import {
   useRoute,
@@ -58,6 +76,7 @@ export default defineComponent({
   name: "WOrder",
   components: {
     ProductIndications,
+    ProductsDrawer,
   },
   setup() {
     const waiterStore = useWaiterStore();
@@ -67,6 +86,7 @@ export default defineComponent({
     const dialog = useDialog();
     const route = useRoute();
     const router = useRouter();
+    const showDrawer = ref(false);
     const showModal = ref(false);
     const itemIndex = ref(null);
     const orderDetails = ref([]);
@@ -156,6 +176,7 @@ export default defineComponent({
       showModal,
       itemIndex,
       orderDetails,
+      showDrawer,
     };
   },
 });

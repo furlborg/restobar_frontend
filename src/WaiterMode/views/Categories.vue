@@ -219,6 +219,39 @@ export default defineComponent({
 .back-11 {
   background: -webkit-linear-gradient(-50deg, WhiteSmoke, HoneyDew);
 }
+.back-12 {
+  background: -webkit-linear-gradient(-50deg, WhiteSmoke, Azure);
+}
+.back-13 {
+  background: -webkit-linear-gradient(-50deg, WhiteSmoke, GhostWhite);
+}
+.back-14 {
+  background: -webkit-linear-gradient(-50deg, WhiteSmoke, Ivory);
+}
+.back-15 {
+  background: -webkit-linear-gradient(-50deg, WhiteSmoke, LavenderBlush);
+}
+.back-16 {
+  background: -webkit-linear-gradient(-50deg, WhiteSmoke, LightCyan);
+}
+.back-17 {
+  background: -webkit-linear-gradient(-50deg, WhiteSmoke, MintCream);
+}
+.back-18 {
+  background: -webkit-linear-gradient(-50deg, WhiteSmoke, Linen);
+}
+.back-19 {
+  background: -webkit-linear-gradient(-50deg, WhiteSmoke, MistyRose);
+}
+.back-20 {
+  background: -webkit-linear-gradient(-50deg, WhiteSmoke, OldLace);
+}
+.back-21 {
+  background: -webkit-linear-gradient(-50deg, WhiteSmoke, FloralWhite);
+}
+.back-22 {
+  background: -webkit-linear-gradient(-50deg, WhiteSmoke, HoneyDew);
+}
 .box {
   height: 116px;
   position: relative;

@@ -62,13 +62,13 @@ export const useTableStore = defineStore("table", {
       let area = this.areas.find((area) => area.id === id);
       return area ? area.description : null;
     },
-    getAreaTablesOptions(id) {
+    getAreaTablesOptions(id, inverted = false) {
       let areas = this.areas.find((area) => area.id === id);
       if (typeof areas !== "undefined") {
         return areas.tables.map((table) => ({
           label: table.description,
           value: table.id,
-          disabled: table.status === '3'
+          disabled: inverted ? !(table.status === '3') : table.status === '3'
         }));
       }
       return []

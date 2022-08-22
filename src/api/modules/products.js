@@ -28,7 +28,7 @@ export async function retrieveProduct(id) {
 
 export async function createProduct(product) {
     return await http.post('products/', {
-        name: product.name,
+        name: product.name.toUpperCase(),
         description: product.description,
         prices: product.prices,
         purchase_price: product.purchase_price,
@@ -48,7 +48,7 @@ export async function createProduct(product) {
 
 export async function updateProduct(idProduct, product) {
     return await http.put(`products/${idProduct}/`, {
-        name: product.name,
+        name: product.name.toUpperCase(),
         description: product.description,
         prices: product.prices,
         purchase_price: product.purchase_price,
@@ -99,13 +99,13 @@ export async function getProductsByCategory(categoryId) {
 
 export async function createProductCategory(categorie) {
     return await http.post('product-categories/', {
-        description: categorie,
+        description: categorie.toUpperCase(),
     })
 }
 
 export async function updateProductCategory(idCategorie, description) {
     return await http.put(`product-categories/${idCategorie}/`, {
-        description: description,
+        description: description.toUpperCase(),
     })
 }
 
@@ -145,7 +145,7 @@ export async function getProductPlaces() {
 
 export async function createProductPlace(place, printer_name, printer_format) {
     return await http.post('preparation-places/', {
-        description: place,
+        description: place.toUpperCase(),
         printer_name: printer_name,
         printer_format: printer_format,
     })
@@ -153,7 +153,7 @@ export async function createProductPlace(place, printer_name, printer_format) {
 
 export async function updateProductPlace(idPlace, place, printer_name, printer_format) {
     return await http.put(`preparation-places/${idPlace}/`, {
-        description: place,
+        description: place.toUpperCase(),
         printer_name: printer_name,
         printer_format: printer_format,
     })

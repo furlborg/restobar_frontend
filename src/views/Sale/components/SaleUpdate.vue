@@ -31,7 +31,7 @@ export default defineComponent({
   components: {
     SaleForm,
   },
-  emits: ["update:sale", "onSuccess"],
+  emits: ["update:sale", "on-success"],
   props: {
     sale: {
       type: Number,

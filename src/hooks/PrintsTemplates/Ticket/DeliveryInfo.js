@@ -23,6 +23,18 @@ const printDeliveryInfo = (props) => {
             },
           },
         ],
+        [
+          {
+            content: "ORDEN: " + props.data.id,
+            styles: {
+              fontStyle: "bold",
+              halign: "center",
+              fontSize:
+                settingsStore.business_settings.printer
+                  .delivery_ticket_font_size + 2,
+            },
+          },
+        ],
       ],
     },
     {

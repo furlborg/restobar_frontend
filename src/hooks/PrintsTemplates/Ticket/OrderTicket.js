@@ -1,7 +1,6 @@
 import { useProductStore } from "@/store/modules/product";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useTableStore } from "@/store/modules/table";
-import { format as formatter } from "date-fns";
 
 import { printPdf } from "@/hooks/PrintPdf.js";
 
@@ -9,15 +8,10 @@ const settingsStore = useSettingsStore();
 const productStore = useProductStore();
 const tableStore = useTableStore();
 
-let dateNow = formatter(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss");
-
 // let format = settingsStore.business_settings.printer.kitchen_printer_format;
 
 const printOrderTicket = (props) => {
-  console.log(props);
   let arrayDataPrint = [];
-
-  if (!!props.created && !!props.updateOrder === false) dateNow = props.created;
 
   productStore.places.forEach(async (place) => {
     let format = place.printer_format;
@@ -265,7 +259,9 @@ const printOrderTicket = (props) => {
       dat: [
         [
           {
-            content: `Fecha : ${dateNow}`,
+            content: `Fecha : ${
+              !props.updateOrder ? props.data.created : props.data.modified
+            }`,
             styles: {
               fontStyle: "bold",
               fontSize:

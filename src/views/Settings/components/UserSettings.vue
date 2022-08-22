@@ -16,6 +16,7 @@
             >Cambiar clave de seguridad</n-button
           >
           <n-button
+            v-if="userStore.hasPermission('add_user')"
             type="primary"
             @click="newUser(), (showModal = true)"
             secondary
@@ -130,6 +131,7 @@
         </n-space>
       </template>
     </n-modal>
+    <permission-modal v-model:show="showPermissions" :user="userPermission" />
   </div>
 </template>
 
@@ -140,6 +142,7 @@ import { useMessage, useDialog } from "naive-ui";
 import { createUserColumns } from "@/utils/constants";
 import UserSettingsModal from "./UserSettingsModal";
 import UserPassword from "./UserPassword";
+import PermissionModal from "./PermissionModal";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useUserStore } from "@/store/modules/user";
 import { updateGeneralPass } from "@/api/modules/business";
@@ -150,6 +153,7 @@ export default defineComponent({
   components: {
     UserSettingsModal,
     UserPassword,
+    PermissionModal,
   },
   setup() {
     const router = useRouter();
@@ -203,7 +207,7 @@ export default defineComponent({
         (items.username = data.username),
         (items.password = data.password),
         (items.branchoffice = data.branchoffice),
-        (items.profile = data.profile),
+        (items.profile = data.role_id),
         (items.is_active = data.is_active);
     };
 
@@ -381,6 +385,10 @@ export default defineComponent({
       securityPass.value.rePass = "";
     };
 
+    const showPermissions = ref(false);
+
+    const userPermission = ref(null);
+
     return {
       genericsStore,
       userStore,
@@ -405,10 +413,16 @@ export default defineComponent({
       onCloseSecurity,
       handlePasswordInput,
       performUpdateSecurityPass,
+      showPermissions,
+      userPermission,
       tableColumns: createUserColumns({
         editUser(data) {
           editUser(data);
           showModal.value = true;
+        },
+        changePermissions(rowData) {
+          showPermissions.value = true;
+          userPermission.value = rowData.id;
         },
         deleteUser(rowData) {
           changeState(rowData.id, rowData.is_active);

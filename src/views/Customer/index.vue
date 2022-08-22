@@ -2,6 +2,7 @@
   <n-card title="Clientes" :bordered="false" :segmented="{ content: 'hard' }">
     <template #header-extra>
       <n-button
+        v-if="userStore.hasPermission('add_customer')"
         :disabled="isTableLoading"
         type="primary"
         @click="showModal = true"
@@ -106,6 +107,7 @@ import {
   searchCustomers,
   disableCustomer,
 } from "@/api/modules/customer";
+import { useUserStore } from "@/store/modules/user";
 import CustomerModal from "./components/CustomerModal";
 
 export default defineComponent({
@@ -116,6 +118,7 @@ export default defineComponent({
   setup() {
     const message = useMessage();
     const dialog = useDialog();
+    const userStore = useUserStore();
     const isTableLoading = ref(false);
     const showFilters = ref(false);
     const showModal = ref(false);
@@ -307,6 +310,7 @@ export default defineComponent({
     });
 
     return {
+      userStore,
       isTableLoading,
       showModal,
       showFilters,

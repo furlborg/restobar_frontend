@@ -22,7 +22,7 @@
           <n-input
             v-model:value="till.opening_observations"
             type="textarea"
-            @keypress="isLetter($event)"
+            @keypress="isLetterOrNumber($event)"
           />
         </n-form-item>
       </n-form>
@@ -48,7 +48,7 @@ import { useGenericsStore } from "@/store/modules/generics";
 import { useTillStore } from "@/store/modules/till";
 import { useUserStore } from "@/store/modules/user";
 import { createTill } from "@/api/modules/tills";
-import { isDecimal, isLetter, isNumber } from "@/utils";
+import { isDecimal, isLetterOrNumber, isNumber } from "@/utils";
 
 export default defineComponent({
   name: "TillApertureModal",
@@ -93,7 +93,7 @@ export default defineComponent({
     return {
       isDecimal,
       isNumber,
-      isLetter,
+      isLetterOrNumber,
       genericsStore,
       isLoading,
       till,

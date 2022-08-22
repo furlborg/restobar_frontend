@@ -76,7 +76,7 @@
               start-50
               translate-middle
             "
-            >{{ table.code }}</n-text
+            >{{ table.description }}</n-text
           >
         </n-card>
       </n-gi>
@@ -120,6 +120,50 @@
         >
       </n-space>
     </teleport>
+    <n-modal
+      preset="card"
+      v-model:show="waiterStore.changeTable"
+      title="Cambiar mesa"
+      :mask-closable="false"
+      closable
+    >
+      <n-form-item label="Mesa actual" :disabled="isLoading">
+        <n-select
+          v-model:value="fromTable"
+          :options="tableStore.getAreaTablesOptions(area, true)"
+          placeholder=""
+        />
+      </n-form-item>
+      <n-form-item label="Area">
+        <n-select
+          v-model:value="currentArea"
+          :options="tableStore.getAreasOptions"
+          placeholder=""
+          @update:value="(v) => toTable = null"
+        />
+      </n-form-item>
+      <n-form-item label="Mesa">
+        <n-select
+          v-model:value="toTable"
+          :options="tableStore.getAreaTablesOptions(currentArea)"
+          :disabled="!currentArea"
+          placeholder=""
+          filterable
+        />
+      </n-form-item>
+      <template #action>
+        <n-space justify="end">
+          <n-button
+            type="success"
+            :loading="isLoading"
+            :disabled="!toTable || isLoading"
+            secondary
+            @click.prevent="performChangeTable"
+            >Confirmar</n-button
+          >
+        </n-space>
+      </template>
+    </n-modal>
   </div>
 </template>
 
@@ -128,6 +172,8 @@ import { defineComponent, ref, computed, onMounted } from "vue";
 import { useTableStore } from "@/store/modules/table";
 import { useWaiterStore } from "@/store/modules/waiter";
 import { useTillStore } from "@/store/modules/till";
+import { changeOrderTable } from "@/api/modules/tables";
+import { useMessage } from "naive-ui";
 import { cloneDeep } from "@/utils";
 
 export default defineComponent({
@@ -136,6 +182,8 @@ export default defineComponent({
     const waiterStore = useWaiterStore();
     const tableStore = useTableStore();
     const tillStore = useTillStore();
+    const isLoading = ref(false);
+    const message = useMessage();
     const area = ref(null);
     const currentTableGrouping = ref(null);
     const currentGroup = ref([]);
@@ -180,10 +228,55 @@ export default defineComponent({
       }
     });
 
+    const fromTable = ref(null);
+
+    const currentArea = ref(null);
+
+    const toTable = ref(null);
+
+    const performChangeTable = async () => {
+      isLoading.value = true;
+      await changeOrderTable(fromTable.value, toTable.value)
+        .then((response) => {
+          if (response.status === 200) {
+            message.success("Mesa cambiada!");
+            waiterStore.changeTable = false;
+            fromTable.value = null;
+            currentArea.value = null;
+            toTable.value = null;
+            tableStore.refreshData();
+          }
+        })
+        .catch((error) => {
+          if (error.response.status === 400) {
+            for (const value in error.response.data) {
+              if (Array.isArray(error.response.data[`${value}`])) {
+                error.response.data[`${value}`].forEach((err) => {
+                  if (typeof err === "object") {
+                    for (const v in err) {
+                      message.error(`${err[`${v}`]}`);
+                    }
+                  } else {
+                    message.error(`${err}`);
+                  }
+                });
+              } else {
+                message.error(error.response.data[`${value}`]);
+              }
+            }
+          } else {
+            console.error(error);
+            message.error("Algo salió mal...");
+          }
+          isLoading.value = false;
+        });
+    };
+
     return {
       waiterStore,
       tableStore,
       tillStore,
+      isLoading,
       area,
       tables,
       tableGroups,
@@ -193,6 +286,10 @@ export default defineComponent({
       addToGroup,
       removeFromGroup,
       saveGroup,
+      fromTable,
+      currentArea,
+      toTable,
+      performChangeTable,
     };
   },
 });

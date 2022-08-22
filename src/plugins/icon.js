@@ -78,6 +78,7 @@ import {
     MdMenuRound,
     MdSaveRound,
     MdArrowbackRound,
+    MdArrowforwardRound,
     RiForbidLine,
     MdPrintRound,
     MdNotinterestedRound,
@@ -103,6 +104,10 @@ import {
     MdPublishedwithchangesRound,
     BiEye,
     GiCardExchange,
+    LaPowerOffSolid,
+    BiListNested,
+    SiSimpleanalytics,
+    MdFactcheckTwotone,
 } from "oh-vue-icons/icons";
 OhVueIcon.add(
     BiThreeDots,
@@ -183,6 +188,7 @@ OhVueIcon.add(
     MdMenuRound,
     MdSaveRound,
     MdArrowbackRound,
+    MdArrowforwardRound,
     RiForbidLine,
     MdPrintRound,
     MdNotinterestedRound,
@@ -208,5 +214,9 @@ OhVueIcon.add(
     MdPublishedwithchangesRound,
     BiEye,
     GiCardExchange,
+    LaPowerOffSolid,
+    BiListNested,
+    SiSimpleanalytics,
+    MdFactcheckTwotone,
 );
 export { OhVueIcon }

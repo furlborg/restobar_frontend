@@ -22,7 +22,7 @@
           <n-input
             type="number"
             v-model:value="formitem.amount"
-              @input="formitem.amount = restrictDecimal(formitem.amount)"
+            @input="formitem.amount = restrictDecimal(formitem.amount)"
             placeholder=""
           />
         </n-form-item-gi>
@@ -97,11 +97,7 @@ export default defineComponent({
       getConcept(`?search=${type.value}`)
         .then((response) => {
           const json = response.data.filter((data) => {
-            if (
-              data.concept != "STOCK INICIAL" &&
-              data.concept != "VENTA" &&
-              data.concept != "COMPRA"
-            ) {
+            if (data.concept != "STOCK INICIAL") {
               return data;
             }
           });
@@ -136,19 +132,22 @@ export default defineComponent({
         .then((response) => {
           optionsEstablishment.value = [];
           response.data.map((v) => {
-              if (userStore.user.branchoffice == null || userStore.user.profile_des == "ADMINISTRADOR" ) {
+            if (
+              userStore.user.branchoffice == null ||
+              userStore.user.role == "ADMINISTRADOR"
+            ) {
+              optionsEstablishment.value.push({
+                label: v.description,
+                value: v.id,
+              });
+            } else {
+              if (userStore.user.branchoffice == v.id) {
                 optionsEstablishment.value.push({
                   label: v.description,
                   value: v.id,
-                })
-              }else{
-                if (userStore.user.branchoffice == v.id) {
-                  optionsEstablishment.value.push({
-                    label: v.description,
-                    value: v.id,
-                  })
-                }
+                });
               }
+            }
           });
         })
         .catch((error) => {
@@ -236,8 +235,8 @@ export default defineComponent({
         let data = value.match(/^\d+\.?\d{0,3}/);
         if (data) {
           return data[0];
-        }else{
-          return null
+        } else {
+          return null;
         }
       },
     };

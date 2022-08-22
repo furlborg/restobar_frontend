@@ -63,6 +63,14 @@
               >
             </n-space>
           </n-form-item-gi>
+          <n-form-item-gi label="Estado" :span="4">
+            <n-select
+              v-model:value="filterParams.status"
+              :options="statusOptions"
+              placeholder=""
+              clearable
+            />
+          </n-form-item-gi>
           <n-form-item-gi :span="5">
             <n-button type="info" secondary @click="performFilter"
               >Buscar</n-button
@@ -122,10 +130,8 @@ export default defineComponent({
   },
   setup() {
     const route = useRoute();
-    const router = useRouter();
     const till = route.params.till;
     const message = useMessage();
-    const dialog = useDialog();
     const businessStore = useBusinessStore();
     const genericsStore = useGenericsStore();
     const userStore = useUserStore();
@@ -138,17 +144,13 @@ export default defineComponent({
     const idOrder = ref(0);
     const delivery = ref({});
     const showFilters = ref(false);
-    const today = set(new Date(Date.now()), {
-      hours: 0,
-      minutes: 0,
-      seconds: 0,
-    });
     const filterParams = ref({
       till: till,
       created: null,
       take_aways: true,
       tables: true,
       deliverys: true,
+      status: null,
     });
     const pagination = ref({
       pageSearchParams: {
@@ -157,6 +159,7 @@ export default defineComponent({
         take_aways: true,
         tables: true,
         deliverys: true,
+        status: null,
       },
       total: 0,
       page: 1,
@@ -224,6 +227,21 @@ export default defineComponent({
       },
     });
 
+    const statusOptions = [
+      {
+        value: "1",
+        label: "PENDIENTE",
+      },
+      {
+        value: "2",
+        label: "COBRADO",
+      },
+      {
+        value: "3",
+        label: "ANULADO",
+      },
+    ];
+
     const loadOrders = async () => {
       isTableLoading.value = true;
       // pagination.value.pageSize = 20;
@@ -287,12 +305,14 @@ export default defineComponent({
       filterParams.value.take_aways = true;
       filterParams.value.tables = true;
       filterParams.value.deliverys = true;
+      filterParams.value.status = null;
       pagination.value.pageSearchParams = {
         till: till,
         created: null,
         take_aways: true,
         tables: true,
         deliverys: true,
+        status: null,
       };
       pagination.value.page = 1;
       await loadOrders();
@@ -328,6 +348,7 @@ export default defineComponent({
       onCloseModal,
       isLoading,
       genericsStore,
+      statusOptions,
       tableColumns: createTillOrderColumns({
         showDetails(row) {
           idOrder.value = row.id;

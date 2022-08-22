@@ -5,6 +5,7 @@ export const useWaiterStore = defineStore('waiter', {
     state: () => ({
         preOrderList: [],
         groupMode: false,
+        changeTable: false,
     }),
     actions: {
         initializeStore() {

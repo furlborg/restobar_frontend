@@ -3,7 +3,9 @@
     <n-page-header class="mb-2" @back="handleBack">
       <template #title>
         <n-space justify="space-between">
-          <n-text class="fs-2">Mesa {{ table }}</n-text>
+          <n-text class="fs-2">{{
+            tableStore.getTableByID(table).description
+          }}</n-text>
         </n-space>
       </template>
     </n-page-header>
@@ -15,7 +17,7 @@
         <n-gi span="2">
           <n-card class="h-100" title="Pedidos" :bordered="false" embedded>
             <template #header-extra>
-              <div v-if="userStore.user.profile_des !== 'MOZO'">
+              <div v-if="userStore.hasPermission('charge_order')">
                 <n-button
                   v-if="!($route.name === 'TablePayment')"
                   type="success"
@@ -47,6 +49,42 @@
               </div>
             </template>
             <n-form v-if="!($route.name === 'TablePayment')">
+              <n-grid cols="2" x-gap="12">
+                <n-form-item-gi
+                  v-if="
+                    settingsStore.businessSettings.order.order_customer_name
+                  "
+                  :span="
+                    !settingsStore.businessSettings.order.select_order_user
+                      ? 2
+                      : 1
+                  "
+                  label="Cliente"
+                >
+                  <n-input
+                    v-model:value="ask_for"
+                    placeholder=""
+                    :readonly="userStore.user.role === 'MOZO'"
+                    :disabled="userStore.user.role === 'MOZO'"
+                  />
+                </n-form-item-gi>
+                <n-form-item-gi
+                  v-if="settingsStore.businessSettings.order.select_order_user"
+                  :span="
+                    !settingsStore.businessSettings.order.order_customer_name
+                      ? 2
+                      : 1
+                  "
+                  label="Mozo"
+                >
+                  <n-select
+                    :options="activeUsersStore.usersOptions"
+                    v-model:value="orderUser"
+                    placeholder=""
+                    filterable
+                  />
+                </n-form-item-gi>
+              </n-grid>
               <n-form-item label="Buscar producto">
                 <n-input-group>
                   <n-auto-complete
@@ -66,7 +104,7 @@
               </n-form-item>
             </n-form>
             <n-scrollbar :x-scrollable="true" style="max-width: 900px">
-              <n-table>
+              <n-table size="small">
                 <thead>
                   <tr>
                     <th width="10%"></th>
@@ -77,56 +115,55 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr
-                    v-for="(order, index) in orderStore.orderList"
-                    :key="index"
-                  >
-                    <td>
-                      <n-button
-                        v-if="!($route.name === 'TablePayment')"
-                        type="info"
-                        text
-                        @click="
-                          itemIndex = index;
-                          showModal = true;
-                        "
-                        ><v-icon name="md-listalt-round"
-                      /></n-button>
-                    </td>
-                    <td>
-                      {{ order.product_name }}
-                    </td>
-                    <td>
-                      <n-input-number
-                        v-if="!($route.name === 'TablePayment')"
-                        class="border-top-0"
-                        size="small"
-                        :min="
-                          order.id ? saleStore.getOrderQuantity(order.id) : 1
-                        "
-                        v-model:value="order.quantity"
-                      />
-                      <template v-else>
-                        {{ order.quantity }}
-                      </template>
-                    </td>
-                    <td>S/. {{ order.subTotal.toFixed(2) }}</td>
-                    <td>
-                      <n-button
-                        v-if="!($route.name === 'TablePayment')"
-                        type="error"
-                        text
-                        @click="
-                          !order.id
-                            ? (orderStore.orderList.splice(index, 1),
-                              nullifyTableOrder())
-                            : deleteOrderDetail(index, order.id)
-                        "
-                      >
-                        <v-icon name="md-disabledbydefault-round" />
-                      </n-button>
-                    </td>
-                  </tr>
+                  <template v-for="(order, index) in orderStore.orderList">
+                    <tr v-if="order.quantity > 0" :key="index">
+                      <td>
+                        <n-button
+                          v-if="!($route.name === 'TablePayment')"
+                          type="info"
+                          text
+                          @click="
+                            itemIndex = index;
+                            showModal = true;
+                          "
+                          ><v-icon name="md-listalt-round"
+                        /></n-button>
+                      </td>
+                      <td>
+                        {{ order.product_name }}
+                      </td>
+                      <td>
+                        <n-input-number
+                          v-if="!($route.name === 'TablePayment')"
+                          class="border-top-0"
+                          size="small"
+                          :min="
+                            order.id ? saleStore.getOrderQuantity(order.id) : 1
+                          "
+                          v-model:value="order.quantity"
+                        />
+                        <template v-else>
+                          {{ order.quantity }}
+                        </template>
+                      </td>
+                      <td>S/. {{ order.subTotal.toFixed(2) }}</td>
+                      <td>
+                        <n-button
+                          v-if="!($route.name === 'TablePayment')"
+                          type="error"
+                          text
+                          @click="
+                            !order.id
+                              ? (orderStore.orderList.splice(index, 1),
+                                nullifyTableOrder())
+                              : deleteOrderDetail(index, order.id)
+                          "
+                        >
+                          <v-icon name="md-disabledbydefault-round" />
+                        </n-button>
+                      </td>
+                    </tr>
+                  </template>
                 </tbody>
                 <tfoot>
                   <tr>
@@ -186,8 +223,8 @@
           <n-space justify="end">
             <n-button
               type="success"
-              :loading="loadingConfirm"
-              :disabled="!userConfirm || loadingConfirm"
+              :loading="loading"
+              :disabled="!userConfirm || loading"
               secondary
               @click.prevent="
                 orderStore.orderId
@@ -267,9 +304,10 @@ import {
 import { isAxiosError } from "axios";
 import { NThing, NTag, NSpace, NText, useDialog, useMessage } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
-import { useUserStore } from "@/store/modules/user";
+import { useUserStore, useActiveUsersStore } from "@/store/modules/user";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useProductStore } from "@/store/modules/product";
+import { useTableStore } from "@/store/modules/table";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import {
@@ -289,10 +327,12 @@ export default defineComponent({
   },
   setup() {
     const userStore = useUserStore();
+    const activeUsersStore = useActiveUsersStore();
     const route = useRoute();
     const router = useRouter();
     const message = useMessage();
     const dialog = useDialog();
+    const tableStore = useTableStore();
     const table = route.params.table;
     const settingsStore = useSettingsStore();
     const genericsStore = useGenericsStore();
@@ -305,6 +345,8 @@ export default defineComponent({
     const checkState = ref(false);
     const loading = ref(false);
     const dateNow = ref(null);
+    const ask_for = ref(undefined);
+    const orderUser = ref(null);
 
     orderStore.orders = [];
     saleStore.order_initial = [];
@@ -358,9 +400,13 @@ export default defineComponent({
       await retrieveTableOrder(route.params.table)
         .then((response) => {
           if (response.status === 200) {
+            ask_for.value = response.data.ask_for;
             orderStore.orders = response.data.order_details;
             saleStore.order_initial = cloneDeep(orderStore.orderList);
             orderStore.orderId = response.data.id;
+            if (settingsStore.businessSettings.order.select_order_user) {
+              orderUser.value = response.data.user_id;
+            }
           }
         })
         .catch((error) => {
@@ -392,7 +438,8 @@ export default defineComponent({
       await createTableOrder(
         route.params.table,
         orderStore.orderList,
-        userConfirm.value
+        !orderUser.value ? userConfirm.value : orderUser.value,
+        ask_for.value
       )
         .then(async (response) => {
           if (response.status === 201) {
@@ -482,7 +529,8 @@ export default defineComponent({
         route.params.table,
         orderStore.orderId,
         orderStore.orderList,
-        userConfirm.value
+        !orderUser.value ? userConfirm.value : orderUser.value,
+        ask_for.value
       )
         .then(async (response) => {
           if (response.status === 202) {
@@ -794,7 +842,7 @@ export default defineComponent({
     };
 
     const validateSend = () => {
-      if (userStore.user.profile_des === "MOZO") {
+      if (userStore.user.role === "MOZO") {
         showUserConfirm.value = true;
       } else {
         if (!orderStore.orderId) {
@@ -837,12 +885,17 @@ export default defineComponent({
       loadingConfirm,
       validateSend,
       loading,
+      tableStore,
+      ask_for,
+      activeUsersStore,
+      orderUser,
+      settingsStore,
     };
   },
 });
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .slide-enter-active,
 .slide-leave-active {
   transition: opacity 1s, transform 1s;
@@ -852,5 +905,9 @@ export default defineComponent({
 .slide-leave-to {
   opacity: 0;
   transform: translateX(-30%);
+}
+
+.n-form-item .n-form-item-feedback-wrapper {
+  min-height: 12px;
 }
 </style>

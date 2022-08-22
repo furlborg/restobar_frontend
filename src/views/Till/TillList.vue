@@ -3,6 +3,7 @@
     <n-card title="Aperturas y Cierres" :segmented="{ content: 'hard' }">
       <template #header-extra>
         <n-button
+          v-if="userStore.hasPermission('add_till')"
           type="success"
           :disabled="
             userStore.user.branchoffice
@@ -129,6 +130,7 @@
 </template>
 
 <script>
+import format from "date-fns/format";
 import { defineComponent, ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useDialog, useMessage } from "naive-ui";
@@ -144,6 +146,8 @@ import {
   getTillReport,
   getTillSaleReport,
   getSimpleTillReport,
+  getExcelReport,
+  getAreaKardexReport,
 } from "@/api/modules/tills";
 import { useTillStore } from "@/store/modules/till";
 import { useBusinessStore } from "@/store/modules/business";
@@ -304,6 +308,15 @@ export default defineComponent({
       // loadProductsData()
     };
 
+    const downloadReport = (data, filename) => {
+      const url = window.URL.createObjectURL(new Blob([data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+    };
+
     return {
       isDecimal,
       isNumber,
@@ -408,6 +421,48 @@ export default defineComponent({
             })
             .catch((error) => {
               console.error(error);
+            });
+        },
+        makeAreaKardexReport(row) {
+          getAreaKardexReport(row.id)
+            .then((response) => {
+              const doc = new jspdf({
+                format: [80, 297],
+              });
+              doc.html(response.data, {
+                html2canvas: { scale: "0.25" },
+                margin: [0, 2, 0, 2],
+                callback: function (doc) {
+                  /* doc.save(); */
+                  doc.autoPrint();
+                  const hiddFrame = document.createElement("iframe");
+                  hiddFrame.style.position = "fixed";
+                  hiddFrame.style.width = "1px";
+                  hiddFrame.style.height = "1px";
+                  hiddFrame.style.opacity = "0.01";
+                  hiddFrame.src = doc.output("bloburl");
+                  document.body.appendChild(hiddFrame);
+                },
+              });
+            })
+            .catch((error) => {
+              console.error(error);
+            });
+        },
+        requestExcel(till, report, filename) {
+          getExcelReport(till, report)
+            .then((response) => {
+              downloadReport(
+                response.data,
+                `Reporte ${filename} ${format(
+                  new Date(Date.now()),
+                  "yyyy-MM-dd"
+                )}.xlsx`
+              );
+            })
+            .catch((error) => {
+              console.error(error);
+              message.error("Algo salió mal");
             });
         },
         closeTill(row) {

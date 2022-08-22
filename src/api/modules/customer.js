@@ -54,7 +54,7 @@ export async function createCustomer(customer) {
     return await http.post('customers/', {
         names: customer.names.toUpperCase(),
         doc_type: customer.doc_type,
-        doc_num: customer.doc_num,
+        doc_num: !customer.doc_num ? null : customer.doc_num,
         gender: customer.gender,
         birthdate: customer.birthdate,
         phone: customer.phone,

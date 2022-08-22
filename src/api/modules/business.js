@@ -28,7 +28,7 @@ export async function updateBusiness(business) {
 export async function updateGeneralPass(general_pass, new_pass) {
   return await http.post("business/change_general_pass/", {
     general_pass: general_pass,
-    new_pass: new_pass
+    new_pass: new_pass,
   });
 }
 
@@ -40,7 +40,9 @@ export async function updateBusinessSettings(business_settings) {
   return await http.put("business/business_settings/", {
     qz_config: business_settings.qz_config,
     printer: business_settings.printer,
-    sale: business_settings.sale
+    sale: business_settings.sale,
+    order: business_settings.order,
+    customers: business_settings.customers,
   });
 }
 

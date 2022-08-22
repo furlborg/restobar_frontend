@@ -18,11 +18,7 @@
           :x-gap="12"
         >
           <n-form-item-gi label="Nombre" path="name" :span="12">
-            <n-input
-              v-model:value="product.name"
-              @input="product.name = $event.toUpperCase()"
-              placeholder=""
-            />
+            <n-input v-model:value="product.name" placeholder="" />
           </n-form-item-gi>
           <n-form-item-gi label="Precio Compra" path="purchase_price" :span="5">
             <n-input
@@ -78,6 +74,7 @@
               <n-form-item v-else label="Categoría" path="category">
                 <n-input-group>
                   <n-button
+                    v-if="userStore.hasPermission('add_productcategory')"
                     type="info"
                     tertiary
                     @click="
@@ -96,7 +93,11 @@
                     clearable
                   />
                   <n-button
-                    v-if="product.category"
+                    v-if="
+                      userStore.hasPermission('change_productcategory')
+                        ? product.category
+                        : false
+                    "
                     type="warning"
                     tertiary
                     @click="
@@ -218,7 +219,11 @@
                 @search="supplieSearch"
                 :options="optionsSupplie"
               />
-              <n-button type="success" secondary @click="newSupplies()"
+              <n-button
+                v-if="userStore.hasPermission('add_supplies')"
+                type="success"
+                secondary
+                @click="newSupplies()"
                 >Nuevo
               </n-button>
             </n-input-group>
@@ -400,7 +405,7 @@ export default defineComponent({
           response.data.map((v) => {
             if (
               userStore.user.branchoffice == null ||
-              userStore.user.profile_des == "ADMINISTRADOR"
+              userStore.user.role == "ADMINISTRADOR"
             ) {
               optionsEstablishment.value.push({
                 label: v.description,

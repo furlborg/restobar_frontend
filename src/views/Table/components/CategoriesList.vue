@@ -45,7 +45,7 @@
       <n-grid
         v-if="listType === 'grid'"
         responsive="screen"
-        cols="8 xs:8 s:16 m:16 l:16 xl:20 2xl:20"
+        cols="8 xs:8 s:12 m:12 l:16 xl:20 2xl:20"
         :x-gap="12"
         :y-gap="12"
       >
@@ -70,7 +70,7 @@
                   start-50
                   translate-middle
                   text-center
-                  fs-5
+                  fs-6
                 "
                 >{{ category.description }}</n-text
               >

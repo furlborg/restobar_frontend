@@ -7,6 +7,7 @@
         > -->
         <n-space justify="space-around">
           <n-button
+            v-if="userStore.hasPermission('add_stock')"
             type="success"
             @click="newMovement(0), (showModalMovement = true)"
             secondary
@@ -17,6 +18,7 @@
             Entrada
           </n-button>
           <n-button
+            v-if="userStore.hasPermission('remove_stock')"
             type="error"
             secondary
             @click="newMovement(1), (showModalMovement = true)"
@@ -26,7 +28,12 @@
             ></template>
             Salida
           </n-button>
-          <n-button type="primary" @click="showModal = true" secondary>
+          <n-button
+            v-if="userStore.hasPermission('add_product')"
+            type="primary"
+            @click="showModal = true"
+            secondary
+          >
             <template #icon
               ><n-icon><v-icon name="la-user-plus-solid" /></n-icon
             ></template>
@@ -116,6 +123,7 @@
                 <transition name="fade">
                   <n-button-group v-if="product.showButtons">
                     <n-button
+                      v-if="userStore.hasPermission('change_product')"
                       class="p-4"
                       type="warning"
                       tertiary
@@ -124,6 +132,7 @@
                       <v-icon name="ri-edit-fill" scale="1.5" />
                     </n-button>
                     <n-button
+                      v-if="userStore.hasPermission('delete_product')"
                       class="p-4"
                       :type="product.is_disabled ? 'success' : 'error'"
                       tertiary
@@ -220,6 +229,7 @@ import { useMessage, useDialog } from "naive-ui";
 import { renderIcon } from "@/utils";
 import ProductModal from "./components/ProductModal";
 import { useProductStore } from "@/store/modules/product";
+import { useUserStore } from "@/store/modules/user";
 import {
   getProducts,
   searchProduct,
@@ -235,6 +245,7 @@ export default defineComponent({
   },
   setup() {
     const productStore = useProductStore();
+    const userStore = useUserStore();
     const isLoadingData = ref(false);
     const message = useMessage();
     const dialog = useDialog();
@@ -465,6 +476,7 @@ export default defineComponent({
     return {
       isLoadingData,
       productStore,
+      userStore,
       listType,
       type,
       showModal,

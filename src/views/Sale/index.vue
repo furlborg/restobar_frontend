@@ -2,13 +2,22 @@
   <div id="Sale">
     <n-card title="Ventas" :segmented="{ content: 'hard' }">
       <template #header-extra>
-        <n-select
-          v-if="!userStore.user.branchoffice"
-          class="ps-2"
-          v-model:value="filterParams.branch"
-          :options="businessStore.branchSelectOptions"
-          @update:value="refreshTable"
-        ></n-select>
+        <n-space>
+          <n-select
+            v-if="!userStore.user.branchoffice"
+            class="ps-2"
+            v-model:value="filterParams.branch"
+            :options="businessStore.branchSelectOptions"
+            @update:value="refreshTable"
+          />
+          <n-button
+            v-if="userStore.hasPermission('make_excel_report')"
+            type="info"
+            tertiary
+            @click="showReport = true"
+            >Reporte</n-button
+          >
+        </n-space>
       </template>
       <n-space justify="space-between">
         <n-button
@@ -104,6 +113,7 @@
       @update:sale="onCloseUpdate"
       @on-success="updateSuccess"
     />
+    <sale-report-modal v-model:show="showReport" />
   </div>
 </template>
 
@@ -124,11 +134,13 @@ import { useBusinessStore } from "@/store/modules/business";
 import { useUserStore } from "@/store/modules/user";
 import { isNumber, isLetter } from "@/utils";
 import SaleUpdate from "./components/SaleUpdate";
+import SaleReportModal from "./components/SaleReportModal.vue";
 
 export default defineComponent({
   name: "Sale",
   components: {
     SaleUpdate,
+    SaleReportModal,
   },
   setup() {
     const dateNow = ref(null);
@@ -331,6 +343,8 @@ export default defineComponent({
       onCloseUpdate();
     };
 
+    const showReport = ref(false);
+
     return {
       saleStore,
       isLetter,
@@ -349,6 +363,7 @@ export default defineComponent({
       saleId,
       onCloseUpdate,
       updateSuccess,
+      showReport,
       tableColumns: createSaleColumns({
         printSale(val) {
           VoucherPrint({

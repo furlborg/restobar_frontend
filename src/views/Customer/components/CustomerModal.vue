@@ -24,7 +24,7 @@
                 label="Nombres"
                 path="names"
                 :span="12"
-                @keypress="isLetter($event)"
+                @keypress="isLetterOrNumber($event)"
                 ref="customer_name"
               >
                 <n-input v-model:value="customer.names" placeholder="" />
@@ -35,7 +35,7 @@
                   :options="documentOptions"
                   :disabled="!!doc_type"
                   placeholder=""
-                  @update:value="changeDocMax"
+                  @update:value="(v) => (changeDocMax(v), resetValidation())"
                 />
               </n-form-item-gi>
               <n-form-item-gi
@@ -207,7 +207,7 @@
 <script>
 import { defineComponent, ref, toRefs, watch, computed } from "vue";
 import format from "date-fns/format";
-import { isNumber, isLetter } from "@/utils";
+import { isNumber, isLetter, isLetterOrNumber } from "@/utils";
 import { toTimestamp } from "@/utils/dates";
 import { documentOptions, customerRules } from "@/utils/constants";
 import {
@@ -236,13 +236,17 @@ export default defineComponent({
       type: String,
       default: null,
     },
+    document: {
+      type: String,
+      default: "",
+    },
   },
   setup(props, { emit }) {
     const message = useMessage();
     const requestMessage = ref(null);
     const customerStore = useCustomerStore();
     const genericsStore = useGenericsStore();
-    const { idCustomer, show, doc_type } = toRefs(props);
+    const { idCustomer, show, doc_type, document } = toRefs(props);
     const modalTitle = ref("Registrar Cliente");
     const isLoadingData = ref(false);
     const isSearchingDoc = ref(false);
@@ -314,6 +318,18 @@ export default defineComponent({
             },
           ],
         };
+        if (document.value) {
+          if (document.value.length === 8) {
+            customer.value.doc_type = "1";
+          } else if (document.value.length === 11) {
+            customer.value.doc_type = "6";
+          }
+          changeDocMax();
+          customer.value.doc_num = document.value;
+          performSearchByDoc();
+        } else {
+          changeDocMax();
+        }
       }
     });
 
@@ -520,6 +536,9 @@ export default defineComponent({
           console.error("Error: Tipo de Documento inválido");
           break;
       }
+    };
+
+    const resetValidation = () => {
       resetCustomer();
       customerRef.value.restoreValidation();
     };
@@ -549,6 +568,7 @@ export default defineComponent({
       isSearchingDoc,
       isNumber,
       isLetter,
+      isLetterOrNumber,
       modalTitle,
       customer,
       customerRef,
@@ -564,6 +584,7 @@ export default defineComponent({
       performSearchByDoc,
       changeDocMax,
       docMaxLength,
+      resetValidation,
     };
   },
 });

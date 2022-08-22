@@ -7,10 +7,11 @@
           Recargar
         </n-button>
         <n-button
+          v-if="userStore.hasPermission('take_away_order')"
           type="info"
           secondary
           @click="$router.push({ name: 'TakeOrder' })"
-          >Realizar pedido</n-button
+          >Llevar / Delivery</n-button
         >
       </n-space>
       <!-- <n-button
@@ -46,7 +47,7 @@
       >
         <n-grid
           responsive="screen"
-          cols="3 xs:3 s:12 m:12 l:15 xl:24 2xl:24"
+          cols="3 xs:3 s:12 m:12 l:15 xl:21 2xl:21"
           :x-gap="12"
           :y-gap="12"
         >
@@ -83,17 +84,40 @@
               />
               <div
                 class="
+                  ms-1
                   black-outline
-                  text-center
+                  text-center text-wrap
                   position-absolute
                   top-50
                   start-50
                   translate-middle
-                  fs-4
                 "
+                :class="{
+                  'fs-4': table.description.length <= 15,
+                  'fs-6': table.description.length > 15,
+                }"
               >
                 {{ table.description }}
               </div>
+              <n-button
+                v-if="
+                  table.order_amount &&
+                  settingsStore.business_settings.order.table_order_total
+                "
+                class="
+                  text-center
+                  position-absolute
+                  bottom-0
+                  start-50
+                  translate-middle-x
+                  fs-5
+                  fw-bolder
+                "
+                color="#901E00"
+                text
+              >
+                S/. {{ table.order_amount.toFixed(2) }}
+              </n-button>
               <n-button
                 @click.stop="openOptions.push(table.id)"
                 class="position-absolute top-0 end-0"
@@ -154,7 +178,7 @@
                     </n-button>
                   </n-space>
                   <n-button
-                    v-if="userStore.user.profile_des !== 'MOZO'"
+                    v-if="userStore.hasPermission('charge_order')"
                     class="mb-1"
                     type="success"
                     size="small"
@@ -219,6 +243,7 @@
                     Cambiar mesa
                   </n-button>
                   <n-button
+                    v-if="userStore.hasPermission('null_orders')"
                     class="mb-1"
                     type="error"
                     size="small"
@@ -336,6 +361,7 @@ import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 import { isAxiosError } from "axios";
 import { defineComponent, ref, onMounted } from "vue";
 import { useMessage } from "naive-ui";
+import { useSettingsStore } from "@/store/modules/settings";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useTableStore } from "@/store/modules/table";
 import { useTillStore } from "@/store/modules/till";
@@ -358,6 +384,7 @@ export default defineComponent({
     const tableGroups = ref([]);
     const currentTableGrouping = ref(null);
     const currentGroup = ref([]);
+    const settingsStore = useSettingsStore();
     const genericsStore = useGenericsStore();
     const tillStore = useTillStore();
     const tableStore = useTableStore();
@@ -564,6 +591,7 @@ export default defineComponent({
       currentArea,
       toTable,
       performChangeTable,
+      settingsStore,
     };
   },
 });

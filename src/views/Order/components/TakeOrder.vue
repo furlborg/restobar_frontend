@@ -107,6 +107,7 @@
                               createAddressesOptions();
                             }
                           "
+                          @keypress.enter="autoCreateCustomer"
                           placeholder=""
                           clearable
                         />
@@ -138,7 +139,11 @@
                       />
                     </n-form-item-gi>
                     <n-form-item-gi :span="2" label="Preguntar por">
-                      <n-input v-model:value="sale.ask_for" placeholder="" />
+                      <n-input
+                        v-model:value="sale.ask_for"
+                        placeholder=""
+                        :disabled="!!sale.delivery_info"
+                      />
                     </n-form-item-gi>
                     <n-form-item-gi :span="2">
                       <n-checkbox @update:checked="handleDelivery">
@@ -179,6 +184,7 @@
                           >
                             <n-input
                               v-model:value="sale.delivery_info.person"
+                              @update:value="(v) => (sale.ask_for = v)"
                               placeholder=""
                             />
                           </n-form-item-gi>
@@ -296,7 +302,7 @@
                       <div>
                         SUBTOTAL: <span>S/. {{ subTotal.toFixed(2) }}</span>
                       </div>
-                      <div v-if="!!sale.delivery_info">
+                      <div v-if="!!sale.delivery_info" key="delivery">
                         DELIVERY:
                         <span>S/.</span>
                         <input
@@ -309,10 +315,10 @@
                           @click="$event.target.select()"
                         />
                       </div>
+                      <div>IGV: <span>S/. 0.00</span></div>
                       <div>
                         ICBPER: <span>S/. {{ icbper.toFixed(2) }}</span>
                       </div>
-                      <div>IGV: <span>S/. 0.00</span></div>
                       <div>
                         DSCT:
                         <span>S/.</span>
@@ -349,6 +355,7 @@
                 <n-checkbox
                   v-if="!sale.delivery_info"
                   v-model:checked="isMultiple"
+                  disabled
                   >Pago multiple</n-checkbox
                 >
                 <n-button
@@ -360,14 +367,14 @@
                   secondary
                   block
                   @click.prevent="
-                    userStore.user.profile_des !== 'MOZO'
+                    userStore.user.role !== 'MOZO'
                       ? isMultiple
                         ? doMultiplePayment()
                         : performTakeAway()
                       : performTakeAway()
                   "
                   ><v-icon class="me-2" name="fa-coins" scale="2" />{{
-                    userStore.user.profile_des !== "MOZO"
+                    userStore.user.role !== "MOZO"
                       ? "Cobrar"
                       : "Realizar pedido"
                   }}</n-button
@@ -380,6 +387,7 @@
           <customer-modal
             v-model:show="showCustomerModal"
             :doc_type="sale.invoice_type === 1 ? '6' : null"
+            :document="customerDocument"
             @update:show="onCloseModal"
             @on-success="onSuccess"
           />
@@ -742,6 +750,8 @@ export default defineComponent({
       ask_for: "",
       delivery_info: null,
       payments: null,
+      do_update: true,
+      is_change: true,
     });
 
     watch(total, () => {
@@ -1001,6 +1011,10 @@ export default defineComponent({
       if (addressesOptions.value.length) {
         sale.value.address = addressesOptions.value[0].value;
       }
+      if (sale.value.delivery_info) {
+        sale.value.delivery_info.person = customer.names;
+        sale.value.delivery_info.phone = customer.phone;
+      }
     };
 
     const showCustomerOptions = async (value) => {
@@ -1043,6 +1057,22 @@ export default defineComponent({
       }
     };
 
+    const customerDocument = ref("");
+
+    const autoCreateCustomer = () => {
+      if (!searchingCustomer.value && !customerResults.value.length) {
+        if (
+          !isNaN(sale.value.customer_name) &&
+          ((sale.value.customer_name.length === 8 &&
+            sale.value.invoice_type !== 1) ||
+            sale.value.customer_name.length === 11)
+        ) {
+          showCustomerModal.value = true;
+          customerDocument.value = sale.value.customer_name;
+        }
+      }
+    };
+
     const { serie } = toRefs(sale.value);
 
     watch(serie, async () => {
@@ -1050,13 +1080,14 @@ export default defineComponent({
     });
     const handleDelivery = (v) => {
       v
-        ? (sale.value.delivery_info = {
+        ? ((sale.value.delivery_info = {
             person: "",
             address: "",
             phone: "",
             deliveryman: "",
             amount: parseFloat(0).toFixed(2),
-          })
+          }),
+          (sale.value.ask_for = ""))
         : (sale.value.delivery_info = null);
     };
 
@@ -1094,7 +1125,6 @@ export default defineComponent({
       }
 
       // if (settingsStore.business_settings.printer.print_delivery_ticket) {
-      //   console.log("asdasdasdasd");
       // }
       message.success("Imprimir");
     };
@@ -1169,10 +1199,11 @@ export default defineComponent({
     const performTakeAway = () => {
       saleForm.value.validate((errors) => {
         if (!errors) {
-          if (userStore.user.profile_des === "MOZO") {
+          if (userStore.user.role === "MOZO") {
             showConfirm.value = true;
           } else {
             dialog.success({
+              closable: false,
               title: "Confirmar pedido",
               content: "Realizar pedido?",
               positiveText: "Sí",
@@ -1190,7 +1221,8 @@ export default defineComponent({
                       message.success("Venta realizada correctamente!");
                       if (
                         settingsStore.businessSettings.sale.auto_send &&
-                        !sale.value.delivery_info
+                        !sale.value.delivery_info &&
+                        response.data.sale.invoice_type !== "80"
                       ) {
                         sendSale(response.data.sale.id)
                           .then((response) => {
@@ -1355,6 +1387,10 @@ export default defineComponent({
       }
     });
 
+    const dateDisabled = (ts) => {
+      return ts > new Date(Date.now());
+    };
+
     return {
       isDecimal,
       loading,
@@ -1379,6 +1415,8 @@ export default defineComponent({
       showCustomerModal,
       customerOptions,
       showCustomerOptions,
+      customerDocument,
+      autoCreateCustomer,
       searchingCustomer,
       createAddressesOptions,
       addressesOptions,
@@ -1401,6 +1439,7 @@ export default defineComponent({
       filteredMethods,
       evalPayments,
       currentPaymentsAmount,
+      dateDisabled,
     };
   },
 });

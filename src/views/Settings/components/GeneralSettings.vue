@@ -7,8 +7,22 @@
     </n-page-header>
     <n-card>
       <n-tabs type="card">
-        <n-tab-pane name="areas-tables" tab="Areas y Mesas">
-          <n-card :bordered="false" embedded>
+        <n-tab-pane
+          :disabled="
+            !userStore.hasPermission('view_area') ||
+            !userStore.hasPermission('view_table')
+          "
+          name="areas-tables"
+          tab="Areas y Mesas"
+        >
+          <n-card
+            v-if="
+              userStore.hasPermission('view_area') ||
+              userStore.hasPermission('view_table')
+            "
+            :bordered="false"
+            embedded
+          >
             <n-grid responsive="screen" cols="1 s:1 m:1 l:1 xl:2 2xl:2">
               <n-gi>
                 <n-text class="fs-4">Editar Areas</n-text>
@@ -24,22 +38,30 @@
                           clearable
                         />
                         <n-button
+                          v-if="userStore.hasPermission('change_area')"
                           type="warning"
                           secondary
-                          :disabled="!!area.id"
+                          :disabled="!currentArea || !!area.id"
                           @click="editArea"
                         >
                           <v-icon name="ri-edit-fill"></v-icon>
                         </n-button>
                       </n-input-group>
                     </n-form-item-gi>
-                    <n-form-item-gi :span="4" label="Descripción">
+                    <n-form-item-gi
+                      v-if="userStore.hasPermission('add_area') || !!area.id"
+                      :span="4"
+                      label="Descripción"
+                    >
                       <n-input
                         v-model:value="area.description"
                         placeholder=""
                       />
                     </n-form-item-gi>
-                    <n-form-item-gi :span="4">
+                    <n-form-item-gi
+                      v-if="userStore.hasPermission('add_area') || !!area.id"
+                      :span="4"
+                    >
                       <n-space>
                         <n-button
                           :type="!area.id ? 'info' : 'warning'"
@@ -66,7 +88,11 @@
               </n-gi>
               <n-gi>
                 <n-text class="fs-4">Editar Mesas</n-text>
-                <n-form>
+                <n-form
+                  v-if="
+                    userStore.hasPermission('add_table') || selectedTable.id
+                  "
+                >
                   <n-grid responsive="screen" cols="4 xs:4 s:12" :x-gap="12">
                     <n-form-item-gi :span="4" label="Código">
                       <n-input
@@ -124,12 +150,12 @@
                     :class="{ 'bg-selected': table.id === selectedTable.id }"
                     :bordered="false"
                     hoverable
+                    @click="
+                      userStore.hasPermission('change_table') &&
+                        selectTable(table)
+                    "
                   >
-                    <n-space
-                      align="center"
-                      vertical
-                      @click="selectTable(table)"
-                    >
+                    <n-space align="center" vertical>
                       <!-- <n-button class="position-absolute top-0 end-0 m-1" text>
                         <v-icon name="bi-three-dots" scale="1.25" />
                       </n-button> -->
@@ -142,8 +168,13 @@
             </n-spin>
           </n-card>
         </n-tab-pane>
-        <n-tab-pane name="PreparationPlaces" tab="Lugares de Preparación">
+        <n-tab-pane
+          :disabled="!userStore.hasPermission('view_preparationplace')"
+          name="PreparationPlaces"
+          tab="Lugares de Preparación"
+        >
           <n-card
+            v-if="userStore.hasPermission('view_preparationplace')"
             title="Editar Lugares de Preparación"
             :bordered="false"
             embedded
@@ -158,7 +189,10 @@
                     v-for="place in preparationPlaces"
                     :class="{ 'bg-selected': selectedPlace === place.id }"
                     :key="place.id"
-                    @click="selectPlace(place)"
+                    @click="
+                      userStore.hasPermission('change_preparationplace') &&
+                        selectPlace(place)
+                    "
                   >
                     <!-- <template #suffix v-if="selectedPlace === place.id">
                       <n-button type="error" text>
@@ -170,7 +204,13 @@
                 </n-list>
               </n-gi>
               <n-gi :span="9">
-                <n-form class="mt-2">
+                <n-form
+                  v-if="
+                    userStore.hasPermission('add_preparationplace') ||
+                    selectedPlace
+                  "
+                  class="mt-2"
+                >
                   <n-grid
                     responsive="screen"
                     cols="4 xs:4 s:8 m:12 l:24"
@@ -224,8 +264,13 @@
             </n-grid>
           </n-card>
         </n-tab-pane>
-        <n-tab-pane name="ProductCategories" tab="Categorías de Producto">
+        <n-tab-pane
+          :disabled="!userStore.hasPermission('view_productcategory')"
+          name="ProductCategories"
+          tab="Categorías de Producto"
+        >
           <n-card
+            v-if="userStore.hasPermission('view_productcategory')"
             title="Editar Categorías de Productos"
             :bordered="false"
             embedded
@@ -240,7 +285,10 @@
                     v-for="category in productCategories"
                     :class="{ 'bg-selected': selectedCategory === category.id }"
                     :key="category.id"
-                    @click="selectCategory(category)"
+                    @click="
+                      userStore.hasPermission('change_productcategory') &&
+                        selectCategory(category)
+                    "
                   >
                     <!-- <template #suffix v-if="selectedCategory === category.id">
                       <n-button type="error" text>
@@ -252,7 +300,13 @@
                 </n-list>
               </n-gi>
               <n-gi :span="9">
-                <n-form class="mt-2">
+                <n-form
+                  v-if="
+                    userStore.hasPermission('add_productcategory') ||
+                    selectedCategory
+                  "
+                  class="mt-2"
+                >
                   <n-grid
                     responsive="screen"
                     cols="4 xs:4 s:8 m:12 l:24"
@@ -293,8 +347,17 @@
             </n-grid>
           </n-card>
         </n-tab-pane>
-        <n-tab-pane name="PaymentMethods" tab="Métodos de Pago">
-          <n-card title="Editar Métodos de Pago" :bordered="false" embedded>
+        <n-tab-pane
+          :disabled="!userStore.hasPermission('view_paymentmethodtype')"
+          name="PaymentMethods"
+          tab="Métodos de Pago"
+        >
+          <n-card
+            v-if="userStore.hasPermission('view_paymentmethodtype')"
+            title="Editar Métodos de Pago"
+            :bordered="false"
+            embedded
+          >
             <n-grid responsive="screen" cols="3 xs:3 s:12" :x-gap="12">
               <n-gi :span="3">
                 <n-list class="bg-white m-0" bordered>
@@ -307,7 +370,10 @@
                     v-for="payment in paymentMethods"
                     :class="{ 'bg-selected': selectedPayment === payment.id }"
                     :key="payment.id"
-                    @click="selectPaymentMethod(payment)"
+                    @click="
+                      userStore.hasPermission('change_paymentmethodtype') &&
+                        selectPaymentMethod(payment)
+                    "
                   >
                     <!-- <template #suffix v-if="selectedCategory === category.id">
                       <n-button type="error" text>
@@ -319,7 +385,13 @@
                 </n-list>
               </n-gi>
               <n-gi :span="9">
-                <n-form class="mt-2">
+                <n-form
+                  v-if="
+                    userStore.hasPermission('add_paymentmethodtype') ||
+                    selectedPayment
+                  "
+                  class="mt-2"
+                >
                   <n-grid
                     responsive="screen"
                     cols="4 xs:4 s:8 m:12 l:24"
@@ -360,8 +432,17 @@
             </n-grid>
           </n-card>
         </n-tab-pane>
-        <n-tab-pane name="Concepts" tab="Conceptos">
-          <n-card title="Editar Conceptos" :bordered="false" embedded>
+        <n-tab-pane
+          :disabled="!userStore.hasPermission('view_concept')"
+          name="Concepts"
+          tab="Conceptos"
+        >
+          <n-card
+            v-if="userStore.hasPermission('view_concept')"
+            title="Editar Conceptos"
+            :bordered="false"
+            embedded
+          >
             <n-grid responsive="screen" cols="3 xs:3 s:12" :x-gap="12">
               <n-gi :span="3">
                 <n-list class="bg-white m-0" bordered>
@@ -374,7 +455,10 @@
                       'bg-selected': selectedConcept === single_concept.id,
                     }"
                     :key="single_concept.id"
-                    @click="selectConcept(single_concept)"
+                    @click="
+                      userStore.hasPermission('change_concept') &&
+                        selectConcept(single_concept)
+                    "
                   >
                     <!-- <template #suffix v-if="selectedCategory === category.id">
                       <n-button type="error" text>
@@ -402,7 +486,12 @@
                 </n-list>
               </n-gi>
               <n-gi :span="9">
-                <n-form class="mt-2">
+                <n-form
+                  v-if="
+                    userStore.hasPermission('add_concept') || selectedConcept
+                  "
+                  class="mt-2"
+                >
                   <n-grid
                     responsive="screen"
                     cols="4 xs:4 s:8 m:12 l:24"
@@ -457,8 +546,13 @@
             </n-grid>
           </n-card>
         </n-tab-pane>
-        <n-tab-pane name="Kardex" tab="Kardex">
+        <n-tab-pane
+          :disabled="!userStore.hasPermission('view_inventoryconcept')"
+          name="Kardex"
+          tab="Kardex"
+        >
           <n-card
+            v-if="userStore.hasPermission('view_inventoryconcept')"
             title="Editar Conceptos de Inventario"
             :bordered="false"
             embedded
@@ -476,7 +570,10 @@
                         selectedInventoryConcept === inventory_concept.id,
                     }"
                     :key="inventory_concept.id"
-                    @click="selectInventoryConcept(inventory_concept)"
+                    @click="
+                      userStore.hasPermission('change_inventoryconcept') &&
+                        selectInventoryConcept(inventory_concept)
+                    "
                   >
                     <!-- <template #suffix v-if="selectedCategory === category.id">
                       <n-button type="error" text>
@@ -504,7 +601,13 @@
                 </n-list>
               </n-gi>
               <n-gi :span="9">
-                <n-form class="mt-2">
+                <n-form
+                  v-if="
+                    userStore.hasPermission('add_inventoryconcept') ||
+                    selectedInventoryConcept
+                  "
+                  class="mt-2"
+                >
                   <n-grid
                     responsive="screen"
                     cols="4 xs:4 s:8 m:12 l:24"
@@ -575,6 +678,7 @@ import { useRouter } from "vue-router";
 import { useMessage } from "naive-ui";
 import { cloneDeep } from "@/utils";
 import { useTableStore } from "@/store/modules/table";
+import { useUserStore } from "@/store/modules/user";
 import { useProductStore } from "@/store/modules/product";
 import {
   createArea,
@@ -607,6 +711,7 @@ export default defineComponent({
     const router = useRouter();
     const tableStore = useTableStore();
     const productStore = useProductStore();
+    const userStore = useUserStore();
     const isLoadingData = ref(false);
     const currentArea = ref(null);
     const area = ref({
@@ -920,7 +1025,7 @@ export default defineComponent({
     const selectedPayment = ref(null);
 
     const selectPaymentMethod = (payment) => {
-      if (!selectedCategory.value) {
+      if (!selectedPayment.value) {
         selectedPayment.value = payment.id;
         paymentMethod.value = cloneDeep(payment.description);
       } else {
@@ -1156,6 +1261,7 @@ export default defineComponent({
     };
 
     return {
+      userStore,
       handleBack,
       isLoadingData,
       areaOptions,
