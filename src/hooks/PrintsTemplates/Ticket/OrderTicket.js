@@ -253,6 +253,7 @@ const printOrderTicket = (props) => {
       }
     });
 
+    lengthData += 20;
     structure.push({
       line: true,
 
