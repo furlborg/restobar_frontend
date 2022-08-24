@@ -51,6 +51,8 @@ const printOrderTicket = (props) => {
       return formatNewText;
     };
 
+    lengthData += 10;
+
     let structure = [
       !!props.data.ask_for && {
         dat: [
