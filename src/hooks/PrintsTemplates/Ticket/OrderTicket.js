@@ -84,6 +84,8 @@ const printOrderTicket = (props) => {
       },
     ];
 
+    lengthData += 10;
+
     !!props.updateOrder &&
       structure.push({
         dat: [
@@ -100,6 +102,8 @@ const printOrderTicket = (props) => {
           ],
         ],
       });
+
+    lengthData += 10;
 
     !!props.table &&
       structure.push({
