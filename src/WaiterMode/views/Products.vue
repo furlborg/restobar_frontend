@@ -453,6 +453,7 @@ export default defineComponent({
               price: product.prices,
               quantity: Number(product.quantity),
               indication: [],
+              quick_indications: product.quick_indications,
             };
             waiterStore.preOrderList.push(order);
           }

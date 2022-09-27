@@ -256,11 +256,39 @@ export const routes = [
       {
         path: "/kardex",
         name: "Kardex",
+        redirect: { name: "KardexHome" },
         meta: {
           requiredPerm: "view_kardex",
         },
         component: () =>
           import(/* webpackChunkName: "kardex" */ "@/views/Kardex"),
+        children: [
+          {
+            path: "",
+            name: "KardexHome",
+            component: () =>
+              import(
+                /* webpackChunkName: "kardex-by-supply" */ "@/views/Kardex/components/KardexBySupply"
+              ),
+          },
+          {
+            path: ":list",
+            name: "KardexList",
+            component: () =>
+              import(
+                /* webpackChunkName: "kardex-list" */ "@/views/Kardex/components/KardexList"
+              ),
+            beforeEnter: (to, from) => {
+              if (
+                !["products", "supplies"].some(
+                  (option) => option === to.params.list
+                )
+              ) {
+                return from.path === "/" ? { name: "Dashboard" } : false;
+              }
+            },
+          },
+        ],
       },
       {
         path: "/settings",

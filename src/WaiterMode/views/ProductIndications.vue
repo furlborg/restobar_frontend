@@ -30,6 +30,16 @@
           :title-extra="`S/. ${product.price}`"
         ></n-thing>
         <n-collapse-transition :show="selectedIndication === index">
+          <n-tag
+            v-for="(quick, index) in quickIndications"
+            :key="index"
+            class="mx-1"
+            checkable
+            :checked="indication.quick_indications.some((ind) => ind === quick)"
+            @update:checked="() => handleIndications(indication, quick)"
+          >
+            {{ quick }}
+          </n-tag>
           <n-form>
             <n-form-item
               v-if="selectedIndication !== null"
@@ -57,7 +67,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, toRefs, watch } from "vue";
+import { defineComponent, computed, ref, toRefs, watch } from "vue";
 import { cloneDeep } from "@/utils";
 
 export default defineComponent({
@@ -76,12 +86,34 @@ export default defineComponent({
     const { show, product } = toRefs(props);
     const indications = ref([]);
 
+    const quickIndications = computed(() => {
+      if (product.value.quick_indications) {
+        return product.value.quick_indications.trim().split(",");
+      }
+      return [];
+    });
+
+    const handleIndications = (indication, quick) => {
+      const index = indication.quick_indications.findIndex(
+        (ind) => ind === quick
+      );
+      if (index >= 0) {
+        indication.quick_indications.splice(index, 1);
+      } else {
+        indication.quick_indications.push(quick);
+      }
+    };
+
     watch(show, () => {
       if (show.value === true && product.value.indication.length === 0) {
         indications.value = Array.apply(
           null,
           Array(product.value.quantity)
-        ).map(() => ({ takeAway: false, description: "" }));
+        ).map(() => ({
+          takeAway: false,
+          description: "",
+          quick_indications: [],
+        }));
       } else if (
         show.value === true &&
         product.value.indication.length === product.value.quantity
@@ -97,7 +129,11 @@ export default defineComponent({
           i < product.value.quantity - product.value.indication.length;
           i++
         ) {
-          indications.value.push({ takeAway: false, description: "" });
+          indications.value.push({
+            takeAway: false,
+            description: "",
+            quick_indications: [],
+          });
         }
       } else if (
         show.value === true &&
@@ -117,7 +153,7 @@ export default defineComponent({
     const selectedIndication = ref(null);
 
     const selectIndication = (indication) => {
-      if (!selectedIndication) {
+      if (!selectedIndication.value) {
         selectedIndication.value = indication;
       } else {
         if (selectedIndication.value === indication) {
@@ -139,6 +175,8 @@ export default defineComponent({
       saveIndications,
       selectIndication,
       selectedIndication,
+      quickIndications,
+      handleIndications,
     };
   },
 });

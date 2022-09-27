@@ -59,7 +59,7 @@ export default defineComponent({
                 }
               });
             },
-            onNegativeClick: () => {},
+            onNegativeClick: () => { },
           });
           break;
         default:
@@ -75,7 +75,7 @@ export default defineComponent({
       {
         key: 2,
         label: "Salir Modo Chef",
-        disabled: !userStore.user.role !== "COCINERO",
+        disabled: userStore.user.role !== "ADMINISTRADOR",
       },
       {
         key: 3,

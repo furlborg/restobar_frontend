@@ -13,6 +13,7 @@ import { useUserStore } from "@/store/modules/user";
 import { useSaleStore } from "@/store/modules/sale";
 import { useTillStore } from "@/store/modules/till";
 import { useGenericsStore } from "@/store/modules/generics";
+import { useSettingsStore } from "@/store/modules/settings";
 
 const userStore = useUserStore();
 
@@ -21,6 +22,8 @@ const tillStore = useTillStore();
 const saleStore = useSaleStore();
 
 const genericsStore = useGenericsStore();
+
+const settingsStore = useSettingsStore();
 
 export const businessRules = {
   ruc: {
@@ -475,6 +478,7 @@ export const createTillColumns = ({
   makeSaleReport,
   makeAreaKardexReport,
   requestExcel,
+  sendReportMail,
   closeTill,
 }) => {
   return [
@@ -576,7 +580,8 @@ export const createTillColumns = ({
       width: 150,
       render(row) {
         return [
-          userStore.hasPermission("view_tilldetails") &&
+          !row.status &&
+            userStore.hasPermission("view_tilldetails") &&
             h(
               NButton,
               {
@@ -588,150 +593,162 @@ export const createTillColumns = ({
               },
               renderIcon("bi-eye")
             ),
-          h(
-            NDropdown,
-            {
-              trigger: "click",
-              options: [
-                {
-                  label: "Imprimir",
-                  key: 1,
-                  disabled: !userStore.hasPermission("make_ticket_report"),
-                  children: [
-                    {
-                      key: 11,
-                      label: "Reporte de caja",
-                    },
-                    {
-                      key: 12,
-                      label: "Reporte simple de caja",
-                    },
-                    {
-                      key: 13,
-                      label: "Reporte de ventas",
-                    },
-                    {
-                      key: 14,
-                      label: "Productos por Area",
-                    },
-                  ],
-                },
-                {
-                  label: "Excel",
-                  key: 2,
-                  disabled: !userStore.hasPermission("make_excel_report"),
-                  children: [
-                    {
-                      key: 21,
-                      label: "Caja",
-                      children: [
-                        {
-                          label: "Movimientos",
-                          key: 211,
-                        },
-                        {
-                          label: "Ingresos",
-                          key: 212,
-                        },
-                        {
-                          label: "Egresos",
-                          key: 213,
-                        },
-                      ],
-                    },
-                    {
-                      key: 22,
-                      label: "Pedidos",
-                      children: [
-                        {
-                          label: "General",
-                          key: 221,
-                        },
-                        {
-                          label: "Usuarios",
-                          key: 222,
-                        },
-                      ],
-                    },
-                    {
-                      label: "Ventas",
-                      key: 23,
-                      children: [
-                        {
-                          label: "Ventas",
-                          key: 231,
-                        },
-                        {
-                          label: "Productos",
-                          key: 232,
-                        },
-                        {
-                          label: "Categorías",
-                          key: 233,
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-              onSelect: (key) => {
-                switch (key) {
-                  case 11:
-                    makeTillReport(row);
-                    break;
-                  case 12:
-                    makeSimpleTillReport(row);
-                    break;
-                  case 13:
-                    makeSaleReport(row);
-                    break;
-                  case 14:
-                    makeAreaKardexReport(row);
-                    break;
-                  case 211:
-                    requestExcel(row.id, "details", "Movimientos");
-                    break;
-                  case 212:
-                    requestExcel(row.id, "income", "Ingresos");
-                    break;
-                  case 213:
-                    requestExcel(row.id, "outcome", "Egresos");
-                    break;
-                  case 221:
-                    requestExcel(row.id, "orders", "Pedidos");
-                    break;
-                  case 222:
-                    requestExcel(row.id, "users", "Usuarios");
-                    break;
-                  case 231:
-                    requestExcel(row.id, "sales", "Ventas");
-                    break;
-                  case 232:
-                    requestExcel(row.id, "products", "Productos");
-                    break;
-                  case 233:
-                    requestExcel(row.id, "categories", "Categorías");
-                    break;
-                  default:
-                    console.error("Algo salió mal...");
-                    break;
-                }
-              },
-            },
-            {
-              default: () =>
-                h(
-                  NButton,
+          !row.status &&
+            h(
+              NDropdown,
+              {
+                trigger: "click",
+                options: [
                   {
-                    class: "me-2",
-                    size: "small",
-                    type: "warning",
-                    secondary: true,
+                    label: "Imprimir",
+                    key: 1,
+                    disabled: !userStore.hasPermission("make_ticket_report"),
+                    children: [
+                      {
+                        key: 11,
+                        label: "Reporte de caja",
+                      },
+                      {
+                        key: 12,
+                        label: "Reporte simple de caja",
+                      },
+                      {
+                        key: 13,
+                        label: "Reporte de ventas",
+                      },
+                      {
+                        key: 14,
+                        label: "Productos por Area",
+                      },
+                    ],
                   },
-                  renderIcon("md-insertchart-outlined")
-                ),
-            }
-          ),
+                  {
+                    label: "Excel",
+                    key: 2,
+                    disabled: !userStore.hasPermission("make_excel_report"),
+                    children: [
+                      {
+                        key: 21,
+                        label: "Caja",
+                        children: [
+                          {
+                            label: "Movimientos",
+                            key: 211,
+                          },
+                          {
+                            label: "Ingresos",
+                            key: 212,
+                          },
+                          {
+                            label: "Egresos",
+                            key: 213,
+                          },
+                        ],
+                      },
+                      {
+                        key: 22,
+                        label: "Pedidos",
+                        children: [
+                          {
+                            label: "General",
+                            key: 221,
+                          },
+                          {
+                            label: "Usuarios",
+                            key: 222,
+                          },
+                        ],
+                      },
+                      {
+                        label: "Ventas",
+                        key: 23,
+                        children: [
+                          {
+                            label: "Ventas",
+                            key: 231,
+                          },
+                          {
+                            label: "Productos",
+                            key: 232,
+                          },
+                          {
+                            label: "Categorías",
+                            key: 233,
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  {
+                    type: "divider",
+                    key: "d1",
+                  },
+                  {
+                    label: "Enviar al correo",
+                    key: 3,
+                  },
+                ],
+                onSelect: (key) => {
+                  switch (key) {
+                    case 11:
+                      makeTillReport(row);
+                      break;
+                    case 12:
+                      makeSimpleTillReport(row);
+                      break;
+                    case 13:
+                      makeSaleReport(row);
+                      break;
+                    case 14:
+                      makeAreaKardexReport(row);
+                      break;
+                    case 211:
+                      requestExcel(row.id, "details", "Movimientos");
+                      break;
+                    case 212:
+                      requestExcel(row.id, "income", "Ingresos");
+                      break;
+                    case 213:
+                      requestExcel(row.id, "outcome", "Egresos");
+                      break;
+                    case 221:
+                      requestExcel(row.id, "orders", "Pedidos");
+                      break;
+                    case 222:
+                      requestExcel(row.id, "users_details", "Usuarios");
+                      break;
+                    case 231:
+                      requestExcel(row.id, "sales", "Ventas");
+                      break;
+                    case 232:
+                      requestExcel(row.id, "products", "Productos");
+                      break;
+                    case 233:
+                      requestExcel(row.id, "categories", "Categorías");
+                      break;
+                    case 3:
+                      sendReportMail();
+                      break;
+                    default:
+                      console.error("Algo salió mal...");
+                      break;
+                  }
+                },
+              },
+              {
+                default: () =>
+                  h(
+                    NButton,
+                    {
+                      class: "me-2",
+                      size: "small",
+                      type: "warning",
+                      secondary: true,
+                    },
+                    renderIcon("md-insertchart-outlined")
+                  ),
+              }
+            ),
           /* h(
                         NButton,
                         {
@@ -798,7 +815,7 @@ export const createMovementsColumns = ({
   editMovement,
   deleteMovement,
 }) => {
-  return [
+  const cols = [
     {
       title: "Documento",
       key: "document",
@@ -818,15 +835,6 @@ export const createMovementsColumns = ({
       key: "description",
       align: "center",
       width: 200,
-    },
-    {
-      title: "Método Pago",
-      key: "payment_method",
-      align: "center",
-      width: 200,
-      render(row) {
-        return saleStore.getPaymentMethodDescription(row.payment_method);
-      },
     },
     {
       title: "Ingreso",
@@ -932,6 +940,18 @@ export const createMovementsColumns = ({
       },
     },
   ];
+  if (!settingsStore.business_settings.till.closure_cash_total) {
+    cols.splice(2, 0, {
+      title: "Método Pago",
+      key: "payment_method",
+      align: "center",
+      width: 200,
+      render(row) {
+        return saleStore.getPaymentMethodDescription(row.payment_method);
+      },
+    });
+  }
+  return cols;
 };
 
 export const createTillDetailsColumns = () => {
@@ -1228,7 +1248,7 @@ export const createSuppliesColumns = ({ editSupplies, deleteSupplies }) => {
   ];
 };
 
-export const createKardexListColumns = () => {
+export const createProductKardexColumns = () => {
   return [
     {
       title: "Código",
@@ -1236,52 +1256,18 @@ export const createKardexListColumns = () => {
       align: "center",
     },
     {
-      title: "Insumo",
+      title: "Producto/Insumo",
       key: "name",
       align: "center",
     },
     {
-      title: "Fecha",
-      key: "date",
-      align: "center",
-    },
-    {
-      title: "Descripción",
-      key: "description",
-      align: "center",
-    },
-    {
-      title: "Documento",
-      key: "document",
-      align: "center",
-    },
-    {
-      title: "Entrada",
-      key: "input",
-      align: "center",
-      render(row) {
-        if (row.input) {
-          return row.input;
-        } else {
-          return "-";
-        }
-      },
-    },
-    {
-      title: "Salida",
-      key: "output",
-      align: "center",
-      render(row) {
-        if (row.output) {
-          return row.output;
-        } else {
-          return "-";
-        }
-      },
-    },
-    {
       title: "Stock",
-      key: "stock",
+      key: "amount",
+      align: "center",
+    },
+    {
+      title: "Acciones",
+      key: "actions",
       align: "center",
     },
   ];

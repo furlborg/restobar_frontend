@@ -97,6 +97,7 @@ export async function createTill(till) {
 
 export async function updateTill(idTill, till) {
   return await http.patch(`tills/${idTill}/`, {
+    closure_cash_total: till.closure_cash_total,
     closing_responsable: till.closing_responsable,
     closing_amount: till.closing_amount,
     closing_observations: till.closing_observations,
@@ -203,6 +204,10 @@ export async function getExcelReport(id, report, queryParams = null) {
         : transformInvoices(queryParams.invoice_types),
     },
   });
+}
+
+export async function sendTillReport(till) {
+  return await http.get(`send_report/${till}/`);
 }
 
 export async function getTicketReport(id, report, queryParams = null) {

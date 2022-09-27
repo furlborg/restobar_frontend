@@ -1,11 +1,6 @@
 <template>
   <div id="CurrentTill">
-    <n-grid
-      cols="5 xs:5 s:10 m:10 l:20 xl:20 2xl:20"
-      responsive="screen"
-      :x-gap="12"
-      :y-gap="12"
-    >
+    <n-grid cols="5 xs:5 s:10 m:10 l:20 xl:20 2xl:20" responsive="screen" :x-gap="12" :y-gap="12">
       <n-gi :span="5">
         <n-card hoverable>
           <n-space justify="space-between" align="center">
@@ -13,13 +8,8 @@
               <v-icon name="md-trendingup-round" scale="2" fill="LimeGreen" />
               <n-text class="fs-5">Ingresos</n-text>
             </n-space>
-            <n-button
-              v-if="userStore.hasPermission('make_income_details')"
-              type="success"
-              tertiary
-              circle
-              @click="(movementType = '0'), (showModal = true)"
-            >
+            <n-button v-if="userStore.hasPermission('make_income_details')" type="success" tertiary circle
+              @click="(movementType = '0'), (showModal = true)">
               <v-icon name="bi-pencil-square" scale="1.25" />
             </n-button>
           </n-space>
@@ -32,21 +22,11 @@
         <n-card hoverable>
           <n-space justify="space-between" align="center">
             <n-space align="center" vertical>
-              <v-icon
-                name="md-trendingdown-round"
-                scale="2"
-                fill="red"
-                flip="horizontal"
-              />
+              <v-icon name="md-trendingdown-round" scale="2" fill="red" flip="horizontal" />
               <n-text class="fs-5">Egresos</n-text>
             </n-space>
-            <n-button
-              v-if="userStore.hasPermission('make_outcome_details')"
-              type="error"
-              tertiary
-              circle
-              @click="(movementType = '1'), (showModal = true)"
-            >
+            <n-button v-if="userStore.hasPermission('make_outcome_details')" type="error" tertiary circle
+              @click="(movementType = '1'), (showModal = true)">
               <v-icon name="bi-pencil-square" scale="1.25" />
             </n-button>
           </n-space>
@@ -59,11 +39,7 @@
         <n-card hoverable>
           <n-space justify="space-between" align="center">
             <n-space align="center" vertical>
-              <v-icon
-                name="md-attachmoney-round"
-                scale="2"
-                fill="deepskyblue"
-              />
+              <v-icon name="md-attachmoney-round" scale="2" fill="deepskyblue" />
               <n-text class="fs-5">Ventas</n-text>
             </n-space>
           </n-space>
@@ -88,22 +64,13 @@
     </n-grid>
     <n-card class="mt-2" title="Movimientos" :segmented="{ content: 'hard' }">
       <template #header-extra>
-        <n-button
-          v-if="userStore.hasPermission('view_till')"
-          type="info"
-          secondary
-          @click="$router.push({ name: 'TillList' })"
-          >Lista de Cajas</n-button
-        >
+        <n-button v-if="userStore.hasPermission('view_till')" type="info" secondary
+          @click="$router.push({ name: 'TillList' })">Lista de Cajas</n-button>
       </template>
       <n-space justify="space-between">
-        <n-button
-          type="info"
-          text
-          @click="
-            showFilters === false ? (showFilters = true) : (showFilters = false)
-          "
-        >
+        <n-button type="info" text @click="
+          showFilters === false ? (showFilters = true) : (showFilters = false)
+        ">
           <v-icon name="md-filteralt-round" />
           {{ showFilters ? "Ocultar Filtros" : "Mostrar filtros" }}
         </n-button>
@@ -114,83 +81,42 @@
       </n-space>
       <n-collapse-transition class="mt-2" :show="showFilters">
         <n-form>
-          <n-grid
-            responsive="screen"
-            cols="3 xs:3 s:12 m:12 l:12 xl:24 2xl:24"
-            :x-gap="12"
-            :scroll-x="900"
-          >
+          <n-grid responsive="screen" cols="3 xs:3 s:12 m:12 l:12 xl:24 2xl:24" :x-gap="12" :scroll-x="900">
             <n-form-item-gi label="Documento" :span="3">
-              <n-input
-                v-model:value="filterParams.document"
-                placeholder=""
-                @keypress="isLetterOrNumber($event)"
-              />
+              <n-input v-model:value="filterParams.document" placeholder="" @keypress="isLetterOrNumber($event)" />
             </n-form-item-gi>
             <n-form-item-gi label="Descripción" :span="3">
-              <n-input
-                v-model:value="filterParams.description"
-                placeholder=""
-                @keypress="isLetterOrNumber($event)"
-              />
+              <n-input v-model:value="filterParams.description" placeholder="" @keypress="isLetterOrNumber($event)" />
             </n-form-item-gi>
             <n-form-item-gi label="Monto" :span="3">
-              <n-input
-                v-model:value="filterParams.amount"
-                placeholder=""
-                @keypress="isDecimal($event)"
-              />
+              <n-input v-model:value="filterParams.amount" placeholder="" @keypress="isDecimal($event)" />
             </n-form-item-gi>
             <n-form-item-gi label="Tipo Concepto" :span="3">
-              <n-select
-                v-model:value="filterParams.concept_type"
-                placeholder=""
-                :options="conceptTypeOptions"
-                @update:value="filterParams.concept = null"
-                clearable
-              />
+              <n-select v-model:value="filterParams.concept_type" placeholder="" :options="conceptTypeOptions"
+                @update:value="filterParams.concept = null" clearable />
             </n-form-item-gi>
             <n-form-item-gi label="Concepto" :span="3">
-              <n-select
-                v-model:value="filterParams.concept"
-                placeholder=""
-                :options="ConceptOptions"
-                clearable
-              />
+              <n-select v-model:value="filterParams.concept" placeholder="" :options="ConceptOptions" clearable />
             </n-form-item-gi>
-            <n-form-item-gi label="Método Pago" :span="3">
-              <n-select
-                v-model:value="filterParams.payment_method"
-                placeholder=""
-                :options="saleStore.getPaymentMethodsOptions"
-                clearable
-              />
+            <n-form-item-gi v-if="settingsStore.business_settings.till.closure_cash_total" label="Método Pago"
+              :span="3">
+              <n-select v-model:value="filterParams.payment_method" placeholder=""
+                :options="saleStore.getPaymentMethodsOptions" clearable />
             </n-form-item-gi>
             <!-- <n-form-item-gi label="Sucursal" :span="3">
               <n-select clearable />
             </n-form-item-gi> -->
             <n-form-item-gi :span="3">
-              <n-button type="info" secondary @click="performFilter"
-                >Buscar</n-button
-              >
+              <n-button type="info" secondary @click="performFilter">Buscar</n-button>
             </n-form-item-gi>
           </n-grid>
         </n-form>
       </n-collapse-transition>
-      <n-data-table
-        class="mt-2"
-        :columns="tableColumns"
-        :data="movements"
-        :loading="isLoading"
-        :pagination="pagination"
-      />
+      <n-data-table class="mt-2" :columns="tableColumns" :data="movements" :loading="isLoading"
+        :pagination="pagination" />
     </n-card>
-    <movement-modal
-      v-model:show="showModal"
-      :movement-type="movementType"
-      @update:show="onCloseModal"
-      @on-success="onSuccess"
-    />
+    <movement-modal v-model:show="showModal" :movement-type="movementType" @update:show="onCloseModal"
+      @on-success="onSuccess" />
   </div>
 </template>
 
@@ -204,6 +130,7 @@ import { createMovementsColumns } from "@/utils/constants";
 import { useTillStore } from "@/store/modules/till";
 import { useSaleStore } from "@/store/modules/sale";
 import { useBusinessStore } from "@/store/modules/business";
+import { useSettingsStore } from "@/store/modules/settings";
 import {
   getCurrentTillDetails,
   filterTillDetails,
@@ -220,6 +147,7 @@ export default defineComponent({
     const dateNow = ref(null);
     const urlImg = ref(null);
     const businnessStore = useBusinessStore();
+    const settingsStore = useSettingsStore();
     const userStore = useUserStore();
     const message = useMessage();
     const tillStore = useTillStore();
@@ -390,6 +318,7 @@ export default defineComponent({
       performFilter,
       refreshTable,
       userStore,
+      settingsStore,
       tableColumns: createMovementsColumns({
         hasSells() {
           return movements.value.some(
@@ -421,11 +350,10 @@ export default defineComponent({
               dat: [
                 [
                   {
-                    content: `RECIBO DE ${
-                      tillStore.getConceptType(rowData.concept) === "0"
+                    content: `RECIBO DE ${tillStore.getConceptType(rowData.concept) === "0"
                         ? "INGRESO"
                         : "EGRESO"
-                    }`,
+                      }`,
                     styles: {
                       fontStyle: "bold",
                       halign: "center",
@@ -513,4 +441,6 @@ export default defineComponent({
 });
 </script>
 
-<style></style>
+<style>
+
+</style>

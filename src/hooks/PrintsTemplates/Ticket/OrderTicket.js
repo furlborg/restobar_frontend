@@ -139,6 +139,15 @@ const printOrderTicket = (props) => {
         lengthData += 10;
 
         val.indication.map((v) => {
+          let desc = "";
+          if (!!v.quick_indications.length) {
+            v.quick_indications.forEach((ind) => {
+              desc += `${ind}, `;
+            });
+          }
+          v.description = !!v.description
+            ? desc + v.description
+            : desc.slice(0, -2);
           if (!!v.description) {
             ind = createNewText(v.description);
 

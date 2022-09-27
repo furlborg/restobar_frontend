@@ -101,16 +101,37 @@
       title="Anular pedido"
       :mask-closable="false"
       closable
+      @close="closeNullModal"
     >
-      <n-form-item label="Ingrese clave de seguridad">
+      <n-form-item label="Ingrese clave de seguridad" required>
         <n-input type="password" v-model:value="passConfirm" placeholder="" />
       </n-form-item>
+      <n-form-item
+        v-if="
+          addReason ||
+          settingsStore.business_settings.order.required_null_reason
+        "
+        label="Motivo de anulación"
+        required
+      >
+        <n-input v-model:value="nullReason" placeholder="" />
+      </n-form-item>
+      <n-space v-else justify="end">
+        <n-button type="info" text @click="addReason = true"
+          >Especificar motivo</n-button
+        >
+      </n-space>
       <template #action>
         <n-space justify="end">
           <n-button
             type="success"
             :loading="isLoading"
-            :disabled="!passConfirm || isLoading"
+            :disabled="
+              settingsStore.business_settings.order.required_null_reason ||
+              addReason
+                ? !passConfirm || isLoading || !nullReason
+                : !passConfirm || isLoading
+            "
             secondary
             @click.prevent="performNullifyTableOrder"
             >Confirmar</n-button
@@ -470,12 +491,22 @@ export default defineComponent({
 
     const deleteTable = ref(null);
 
+    const addReason = ref(false);
+
+    const nullReason = ref(undefined);
+
+    const closeNullModal = () => {
+      addReason.value = false;
+      passConfirm.value = "";
+      nullReason.value = undefined;
+    };
+
     const deleteId = ref(null);
 
     const performNullifyTableOrder = async () => {
       isLoading.value = true;
       if (!deleteTable.value) {
-        await nullOrder(deleteId.value, passConfirm.value)
+        await nullOrder(deleteId.value, nullReason.value, passConfirm.value)
           .then((response) => {
             if (response.status === 202) {
               message.success("Pedido anulado correctamente!");
@@ -498,7 +529,11 @@ export default defineComponent({
             isLoading.value = false;
           });
       } else {
-        await cancelTableOrder(deleteTable.value, passConfirm.value)
+        await cancelTableOrder(
+          deleteTable.value,
+          passConfirm.value,
+          nullReason.value
+        )
           .then((response) => {
             if (response.status === 202) {
               message.success("Pedido anulado correctamente!");
@@ -619,6 +654,7 @@ export default defineComponent({
     });
 
     return {
+      settingsStore,
       isLetter,
       isNumber,
       isDecimal,
@@ -639,6 +675,9 @@ export default defineComponent({
       onCloseModal,
       isLoading,
       showConfirm,
+      addReason,
+      nullReason,
+      closeNullModal,
       passConfirm,
       genericsStore,
       performNullifyTableOrder,

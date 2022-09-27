@@ -5,6 +5,7 @@
         type="datetimerange"
         v-model:formatted-value="queryParams.date_range"
         format="yyyy-MM-dd HH:mm:ss"
+        :default-time="['00:00:00', '23:59:59']"
         clearable
       />
     </n-form-item>

@@ -108,6 +108,54 @@
         remote
       />
     </n-card>
+    <n-modal
+      :class="{
+        'w-100': genericsStore.device === 'mobile',
+        'w-50': genericsStore.device === 'tablet',
+        'w-25': genericsStore.device === 'desktop',
+      }"
+      preset="card"
+      v-model:show="showConfirm"
+      title="Anular pedido"
+      :mask-closable="false"
+      closable
+      @close="closeNullModal"
+    >
+      <n-form-item label="Ingrese clave de seguridad" required>
+        <n-input type="password" v-model:value="passConfirm" placeholder="" />
+      </n-form-item>
+      <n-form-item
+        v-if="
+          addReason || settingsStore.business_settings.sale.required_null_reason
+        "
+        label="Motivo de anulación"
+        required
+      >
+        <n-input v-model:value="nullReason" placeholder="" />
+      </n-form-item>
+      <n-space v-else justify="end">
+        <n-button type="info" text @click="addReason = true"
+          >Especificar motivo</n-button
+        >
+      </n-space>
+      <template #action>
+        <n-space justify="end">
+          <n-button
+            type="success"
+            :loading="isLoading"
+            :disabled="
+              settingsStore.business_settings.sale.required_null_reason ||
+              addReason
+                ? !passConfirm || isLoading || !nullReason
+                : !passConfirm || isLoading
+            "
+            secondary
+            @click.prevent="performNullifySale"
+            >Confirmar</n-button
+          >
+        </n-space>
+      </template>
+    </n-modal>
     <SaleUpdate
       v-model:sale="saleId"
       @update:sale="onCloseUpdate"
@@ -130,6 +178,8 @@ import {
   nullSale,
 } from "@/api/modules/sales";
 import { useSaleStore } from "@/store/modules/sale";
+import { useGenericsStore } from "@/store/modules/generics";
+import { useSettingsStore } from "@/store/modules/settings";
 import { useBusinessStore } from "@/store/modules/business";
 import { useUserStore } from "@/store/modules/user";
 import { isNumber, isLetter } from "@/utils";
@@ -146,6 +196,8 @@ export default defineComponent({
     const dateNow = ref(null);
     const message = useMessage();
     const dialog = useDialog();
+    const genericsStore = useGenericsStore();
+    const settingsStore = useSettingsStore();
     const businessStore = useBusinessStore();
     const userStore = useUserStore();
     const saleStore = useSaleStore();
@@ -345,6 +397,46 @@ export default defineComponent({
 
     const showReport = ref(false);
 
+    const isLoading = ref(false);
+
+    const showConfirm = ref(false);
+
+    const passConfirm = ref("");
+
+    const addReason = ref(false);
+
+    const nullReason = ref(undefined);
+
+    const closeNullModal = () => {
+      isLoading.value = false;
+      addReason.value = false;
+      passConfirm.value = "";
+      nullReason.value = undefined;
+    };
+
+    const deleteId = ref(null);
+
+    const performNullifySale = async () => {
+      isLoading.value = true;
+      await nullSale(deleteId.value, passConfirm.value, nullReason.value)
+        .then((response) => {
+          if (response.status === 202) {
+            message.success("Anulado");
+            showConfirm.value = false;
+            deleteId.value = null;
+            passConfirm.value = "";
+            isLoading.value = false;
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          pagination.value.onChange(pagination.value.page);
+        });
+    };
+
     return {
       saleStore,
       isLetter,
@@ -364,6 +456,16 @@ export default defineComponent({
       onCloseUpdate,
       updateSuccess,
       showReport,
+      isLoading,
+      deleteId,
+      showConfirm,
+      addReason,
+      nullReason,
+      closeNullModal,
+      passConfirm,
+      genericsStore,
+      settingsStore,
+      performNullifySale,
       tableColumns: createSaleColumns({
         printSale(val) {
           VoucherPrint({
@@ -407,29 +509,8 @@ export default defineComponent({
             });
         },
         nullifySale(row) {
-          dialog.error({
-            title: "Anular venta",
-            content: "¿Desea anular venta?",
-            positiveText: "Si",
-            negativeText: "No",
-            onPositiveClick: async () => {
-              isTableLoading.value = true;
-              await nullSale(row.id)
-                .then((response) => {
-                  if (response.status === 204) {
-                    message.success("Anulado");
-                  }
-                })
-                .catch((error) => {
-                  console.error(error);
-                  message.error("Algo salió mal...");
-                })
-                .finally(() => {
-                  pagination.value.onChange(pagination.value.page);
-                });
-            },
-            onNegativeClick: () => {},
-          });
+          deleteId.value = row.id;
+          showConfirm.value = true;
         },
       }),
     };

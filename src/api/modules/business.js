@@ -43,6 +43,8 @@ export async function updateBusinessSettings(business_settings) {
     sale: business_settings.sale,
     order: business_settings.order,
     customers: business_settings.customers,
+    till: business_settings.till,
+    reports: business_settings.reports,
   });
 }
 

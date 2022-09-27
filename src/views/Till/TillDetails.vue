@@ -244,6 +244,7 @@ import {
   getSimpleTillReport,
   getExcelReport,
   getAreaKardexReport,
+  sendTillReport,
 } from "@/api/modules/tills";
 import { useUserStore } from "@/store/modules/user";
 
@@ -504,6 +505,19 @@ export default defineComponent({
         });
     };
 
+    const sendReportMail = async () => {
+      await sendTillReport(till)
+        .then((response) => {
+          if (response.status === 204) {
+            message.success("Envío exitoso!");
+          }
+        })
+        .catch((error) => {
+          message.error("Algo salío mal...");
+          console.error(error);
+        });
+    };
+
     const reportOptions = [
       {
         label: "Imprimir",
@@ -585,6 +599,14 @@ export default defineComponent({
           },
         ],
       },
+      {
+        type: "divider",
+        key: "d1",
+      },
+      {
+        label: "Enviar al correo",
+        key: 3,
+      },
     ];
 
     const selectReport = (key) => {
@@ -614,7 +636,7 @@ export default defineComponent({
           requestExcel("orders", "Pedidos");
           break;
         case 222:
-          requestExcel("users", "Usuarios");
+          requestExcel("users_details", "Usuarios");
           break;
         case 231:
           requestExcel("sales", "Ventas");
@@ -624,6 +646,9 @@ export default defineComponent({
           break;
         case 233:
           requestExcel("categories", "Categorías");
+          break;
+        case 3:
+          sendReportMail();
           break;
         default:
           console.error("Algo salió mal...");

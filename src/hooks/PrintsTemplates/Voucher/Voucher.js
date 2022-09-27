@@ -158,6 +158,22 @@ const VoucherPrint = (props) => {
       ],
     ],
   });
+  structure.push({
+    dat: [
+      [
+        {
+          content: props.businessStore.business.branchs[0].ubigee_description,
+          styles: {
+            fontStyle: "bold",
+            halign: "center",
+            fontSize:
+              settingsStore.business_settings.printer
+                .pre_account_ticket_font_size,
+          },
+        },
+      ],
+    ],
+  });
 
   if (!!props.prePayment === false) {
     structure.push({
@@ -487,6 +503,23 @@ const VoucherPrint = (props) => {
                   props.data.payment_method
                 ),
         },
+      ],
+    });
+
+    structure.push({
+      dat: [
+        [
+          {
+            content: `ORDEN N° ${props.data.id}`,
+            styles: {
+              fontStyle: "bold",
+              halign: "center",
+              fontSize:
+                settingsStore.business_settings.printer
+                  .pre_account_ticket_font_size,
+            },
+          },
+        ],
       ],
     });
   }

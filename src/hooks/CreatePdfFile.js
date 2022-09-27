@@ -69,7 +69,7 @@ export const CreatePdfFile = async (props, format) => {
       }
 
       if (
-        index === props.data.length - 1 &&
+        index === props.data.length - 2 &&
         !!props.addImages &&
         !!props.objSunat
       ) {

@@ -15,207 +15,137 @@
     <n-card>
       <n-text class="fs-4">Impresiones</n-text>
       <n-form class="mt-2" :disabled="!editMode">
-        <n-grid
-          responsive="screen"
-          cols="6 s:6 m:12 l:12 xl:24 2xl:24"
-          :x-gap="12"
-        >
+        <n-grid responsive="screen" cols="6 s:6 m:12 l:12 xl:24 2xl:24" :x-gap="12">
           <n-form-item-gi :span="3" label="QZ Host IP">
             <n-input v-model:value="businessSettings.qz_config.host" />
           </n-form-item-gi>
           <n-form-item-gi :span="6" label="Signature">
-            <n-input
-              type="textarea"
-              v-model:value="businessSettings.qz_config.signature"
-            />
+            <n-input type="textarea" v-model:value="businessSettings.qz_config.signature" />
           </n-form-item-gi>
           <n-form-item-gi :span="6" label="Certificate">
-            <n-input
-              type="textarea"
-              v-model:value="businessSettings.qz_config.certificate"
-            >
-              >Mostrar categoría producto</n-input
-            >
+            <n-input type="textarea" v-model:value="businessSettings.qz_config.certificate">
+              >Mostrar categoría producto</n-input>
           </n-form-item-gi>
         </n-grid>
         <n-divider />
         <n-text class="fs-4">Formatos</n-text>
-        <n-grid
-          responsive="screen"
-          cols="6 s:6 m:12 l:12 xl:24 2xl:24"
-          :x-gap="12"
-        >
+        <n-grid responsive="screen" cols="6 s:6 m:12 l:12 xl:24 2xl:24" :x-gap="12">
           <n-form-item-gi :span="3" label="Formato ticket pedidos">
-            <n-select
-              v-model:value="businessSettings.printer.kitchen_printer_format"
-              :options="printOptions"
-            />
+            <n-select v-model:value="businessSettings.printer.kitchen_printer_format" :options="printOptions" />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Formato ticket caja">
-            <n-select
-              v-model:value="businessSettings.printer.invoice_printer_format"
-              :options="printOptions"
-            />
+            <n-select v-model:value="businessSettings.printer.invoice_printer_format" :options="printOptions" />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Tamaño letra cabecera">
-            <n-input-number
-              v-model:value="businessSettings.printer.header_font_size"
-              placeholder=""
-              :min="6"
-              :max="20"
-            />
+            <n-input-number v-model:value="businessSettings.printer.header_font_size" placeholder="" :min="6"
+              :max="20" />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Tamaño letra subtitulo">
-            <n-input-number
-              v-model:value="businessSettings.printer.sub_header_font_size"
-              placeholder=""
-              :min="6"
-              :max="20"
-            />
+            <n-input-number v-model:value="businessSettings.printer.sub_header_font_size" placeholder="" :min="6"
+              :max="20" />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Tamaño letra cuerpo">
-            <n-input-number
-              v-model:value="businessSettings.printer.body_font_size"
-              placeholder=""
-              :min="6"
-              :max="20"
-            />
+            <n-input-number v-model:value="businessSettings.printer.body_font_size" placeholder="" :min="6" :max="20" />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Tamaño letra pie de página">
-            <n-input-number
-              v-model:value="businessSettings.printer.footer_font_size"
-              placeholder=""
-              :min="6"
-              :max="20"
-            />
+            <n-input-number v-model:value="businessSettings.printer.footer_font_size" placeholder="" :min="6"
+              :max="20" />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Tamaño letra delivery">
-            <n-input-number
-              v-model:value="businessSettings.printer.delivery_ticket_font_size"
-              placeholder=""
-              :min="6"
-              :max="20"
-            />
+            <n-input-number v-model:value="businessSettings.printer.delivery_ticket_font_size" placeholder="" :min="6"
+              :max="20" />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Tamaño letra pre-cuenta">
-            <n-input-number
-              v-model:value="
-                businessSettings.printer.pre_account_ticket_font_size
-              "
-              placeholder=""
-              :min="6"
-              :max="20"
-            />
+            <n-input-number v-model:value="
+              businessSettings.printer.pre_account_ticket_font_size
+            " placeholder="" :min="6" :max="20" />
           </n-form-item-gi>
           <n-form-item-gi :span="4">
-            <n-checkbox v-model:checked="businessSettings.printer.show_cat"
-              >Mostrar categoría producto</n-checkbox
-            >
+            <n-checkbox v-model:checked="businessSettings.printer.show_cat">Mostrar categoría producto</n-checkbox>
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Formato ticket pedidos">
-            <n-select
-              v-model:value="businessSettings.printer.kitchen_ticket_format"
-              :options="kitchenPrinterFormatOptions"
-            />
+            <n-select v-model:value="businessSettings.printer.kitchen_ticket_format"
+              :options="kitchenPrinterFormatOptions" />
           </n-form-item-gi>
           <n-form-item-gi :span="3">
-            <n-checkbox
-              v-model:checked="businessSettings.printer.print_delivery_ticket"
-              >Imprimir ticket delivery</n-checkbox
-            >
+            <n-checkbox v-model:checked="businessSettings.printer.print_delivery_ticket">Imprimir ticket delivery
+            </n-checkbox>
           </n-form-item-gi>
           <n-form-item-gi :span="4">
-            <n-checkbox
-              v-model:checked="businessSettings.printer.show_delivery_kitchen"
-              >Mostrar información de delivery</n-checkbox
-            >
+            <n-checkbox v-model:checked="businessSettings.printer.show_delivery_kitchen">Mostrar información de delivery
+            </n-checkbox>
           </n-form-item-gi>
         </n-grid>
         <n-divider />
         <n-text class="fs-4">Pedidos</n-text>
-        <n-grid
-          class="mt-2"
-          responsive="screen"
-          cols="6 s:6 m:12 l:12 xl:24 2xl:24"
-          x-gap="12"
-        >
+        <n-grid class="mt-2" responsive="screen" cols="6 s:6 m:12 l:12 xl:24 2xl:24" x-gap="12">
           <n-form-item-gi :span="3">
-            <n-checkbox
-              v-model:checked="businessSettings.order.order_customer_name"
-              >Nombre de Cliente</n-checkbox
-            >
+            <n-checkbox v-model:checked="businessSettings.order.order_customer_name">Nombre de Cliente</n-checkbox>
           </n-form-item-gi>
           <n-form-item-gi :span="3">
-            <n-checkbox
-              v-model:checked="businessSettings.order.select_order_user"
-              >Seleccionar Usuario</n-checkbox
-            >
+            <n-checkbox v-model:checked="businessSettings.order.select_order_user">Seleccionar Usuario</n-checkbox>
           </n-form-item-gi>
           <n-form-item-gi :span="3">
-            <n-checkbox
-              v-model:checked="businessSettings.order.table_order_total"
-              >Mostrar total de pedido</n-checkbox
-            >
+            <n-checkbox v-model:checked="businessSettings.order.table_order_total">Mostrar total de pedido</n-checkbox>
+          </n-form-item-gi>
+          <n-form-item-gi :span="4">
+            <n-checkbox v-model:checked="businessSettings.order.required_null_reason">Motivo de anulación de pedido
+              requerido</n-checkbox>
           </n-form-item-gi>
         </n-grid>
         <n-divider />
+        <n-text class="fs-4">Reportes</n-text>
+        <n-grid class="mt-2" responsive="screen" cols="6 s:6 m:12 l:12 xl:24 2xl:24" x-gap="12">
+          <n-form-item-gi :span="6" label="Correos">
+            <n-select v-model:value="businessSettings.reports.report_emails" filterable multiple tag placeholder=""
+              :show-arrow="false" :show="false" />
+          </n-form-item-gi>
+          <n-form-item-gi :span="4">
+            <n-checkbox v-model:checked="businessSettings.reports.auto_send_mail">Auto envío (Cierre de caja)
+            </n-checkbox>
+          </n-form-item-gi>
+        </n-grid>
         <n-text class="fs-4">Ventas</n-text>
-        <n-grid
-          class="mt-2"
-          responsive="screen"
-          cols="6 s:6 m:12 l:12 xl:24 2xl:24"
-          x-gap="12"
-        >
+        <n-grid class="mt-2" responsive="screen" cols="6 s:6 m:12 l:12 xl:24 2xl:24" x-gap="12">
           <n-form-item-gi :span="3" label="Documento por defecto">
-            <n-select
-              v-model:value="businessSettings.sale.default_invoice"
-              :options="invoiceOptions"
-            />
+            <n-select v-model:value="businessSettings.sale.default_invoice" :options="invoiceOptions" />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Valor ICBPER">
             <n-input v-model:value="businessSettings.sale.icbper_tax" />
           </n-form-item-gi>
-          <n-form-item-gi :span="3" label="Comisión Tarjeta de Crédito(%)">
+          <n-form-item-gi :span="3" label="Comisión Tarjeta de Crédito(%)" placeholder="" disabled>
             <n-input v-model:value="businessSettings.sale.card_comission" />
           </n-form-item-gi>
           <n-form-item-gi :span="3">
-            <n-checkbox v-model:checked="businessSettings.sale.auto_send"
-              >Auto envío CPE</n-checkbox
-            >
+            <n-checkbox v-model:checked="businessSettings.sale.auto_send">Auto envío CPE</n-checkbox>
+          </n-form-item-gi>
+          <n-form-item-gi :span="4">
+            <n-checkbox v-model:checked="businessSettings.sale.required_null_reason">Motivo de anulación de venta
+              requerido</n-checkbox>
+          </n-form-item-gi>
+        </n-grid>
+        <n-divider />
+        <n-text class="fs-4">Caja</n-text>
+        <n-grid class="mt-2" responsive="screen" cols="6 s:6 m:12 l:12 xl:24 2xl:24" x-gap="12">
+          <n-form-item-gi :span="6">
+            <n-checkbox v-model:checked="businessSettings.till.closure_cash_total">
+              Monto efectivo requerido (Cierre de caja)
+            </n-checkbox>
           </n-form-item-gi>
         </n-grid>
         <n-divider />
         <n-text class="fs-4">Clientes</n-text>
-        <n-grid
-          class="mt-2"
-          responsive="screen"
-          cols="6 s:6 m:12 l:12 xl:24 2xl:24"
-          x-gap="12"
-        >
+        <n-grid class="mt-2" responsive="screen" cols="6 s:6 m:12 l:12 xl:24 2xl:24" x-gap="12">
           <n-form-item-gi :span="6" label="API Token">
-            <n-input
-              type="textarea"
-              v-model:value="businessSettings.customers.api_token"
-            />
+            <n-input type="textarea" v-model:value="businessSettings.customers.api_token" />
           </n-form-item-gi>
         </n-grid>
         <n-space justify="end">
           <n-space>
-            <n-button
-              :type="editMode ? 'info' : 'warning'"
-              secondary
-              @click="
-                !editMode ? (editMode = true) : performUpdateBusinessSettings()
-              "
-              >{{ editMode ? "Guardar" : "Editar" }}</n-button
-            >
-            <n-button
-              type="error"
-              secondary
-              :disabled="!editMode"
-              @click="resetSettings"
-              >Cancelar</n-button
-            >
+            <n-button :type="editMode ? 'info' : 'warning'" secondary @click="
+              !editMode ? (editMode = true) : performUpdateBusinessSettings()
+            ">{{ editMode ? "Guardar" : "Editar" }}</n-button>
+            <n-button type="error" secondary :disabled="!editMode" @click="resetSettings">Cancelar</n-button>
           </n-space>
         </n-space>
       </n-form>
@@ -316,4 +246,5 @@ export default defineComponent({
 </script>
 
 <style>
+
 </style>

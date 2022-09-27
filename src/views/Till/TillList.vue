@@ -148,6 +148,7 @@ import {
   getSimpleTillReport,
   getExcelReport,
   getAreaKardexReport,
+  sendTillReport,
 } from "@/api/modules/tills";
 import { useTillStore } from "@/store/modules/till";
 import { useBusinessStore } from "@/store/modules/business";
@@ -463,6 +464,18 @@ export default defineComponent({
             .catch((error) => {
               console.error(error);
               message.error("Algo salió mal");
+            });
+        },
+        sendReportMail(row) {
+          sendTillReport(row.id)
+            .then((response) => {
+              if (response.status === 204) {
+                message.success("Envío exitoso!");
+              }
+            })
+            .catch((error) => {
+              message.error("Algo salío mal...");
+              console.error(error);
             });
         },
         closeTill(row) {

@@ -2,28 +2,21 @@
   <div id="Supplies">
     <n-card title="Kardex" :segmented="{ content: 'hard' }">
       <template #header-extra>
-        <n-dropdown
-          trigger="click"
-          :options="reportOptions"
-          @select="selectReport"
-        >
+        <n-dropdown trigger="click" :options="reportOptions" @select="selectReport">
           <n-button type="info" tertiary>
             <!-- <v-icon name="si-simpleanalytics" /> -->
             Reportes
           </n-button>
         </n-dropdown>
       </template>
-      <KardexList v-if="list === 'general'" />
-      <KardexBySupply v-if="list === 'bySupply'" />
+      <router-view />
     </n-card>
   </div>
 </template>
 
 <script>
-import { defineComponent, ref } from "vue";
+import { defineComponent } from "vue";
 import { useMessage } from "naive-ui";
-import KardexBySupply from "./components/KardexBySupply";
-import KardexList from "./components/KardexList";
 import { useUserStore } from "@/store/modules/user";
 import { getTicketReport, getExcelReport } from "@/api/modules/tills";
 import format from "date-fns/format";
@@ -31,26 +24,9 @@ import jspdf from "jspdf";
 
 export default defineComponent({
   name: "Supplies",
-  components: {
-    KardexBySupply,
-    KardexList,
-  },
   setup() {
     const userStore = useUserStore();
     const message = useMessage();
-    const list = ref("bySupply");
-    const buttonText = ref({
-      text: "Ver por insumo",
-      changeButton: () => {
-        if (buttonText.value.text === "Ver por insumo") {
-          buttonText.value.text = "Ver general";
-          list.value = "general";
-        } else if (buttonText.value.text === "Ver general") {
-          buttonText.value.text = "Ver por insumo";
-          list.value = "bySupply";
-        }
-      },
-    });
 
     const reportOptions = [
       {
@@ -178,8 +154,6 @@ export default defineComponent({
     };
 
     return {
-      list,
-      buttonText,
       reportOptions,
       selectReport,
     };
@@ -188,4 +162,5 @@ export default defineComponent({
 </script>
 
 <style>
+
 </style>

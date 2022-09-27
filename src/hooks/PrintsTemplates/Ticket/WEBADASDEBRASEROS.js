@@ -8,7 +8,6 @@ const settingsStore = useSettingsStore();
 const productStore = useProductStore();
 const tableStore = useTableStore();
 
-
 const printWEBADASDEBRASEROS = (props) => {
   let arrayDataPrint = [];
 
@@ -180,7 +179,9 @@ const printWEBADASDEBRASEROS = (props) => {
       dat: [
         [
           {
-            content: ` ${!props.updateOrder ? props.data.created : props.data.modified}`,
+            content: ` ${
+              !props.updateOrder ? props.data.created : props.data.modified
+            }`,
             styles: {
               fontSize:
                 settingsStore.business_settings.printer.sub_header_font_size,
@@ -216,6 +217,15 @@ const printWEBADASDEBRASEROS = (props) => {
 
         lengthData += 10;
         val.indication.map((v) => {
+          let desc = "";
+          if (!!v.quick_indications.length) {
+            v.quick_indications.forEach((ind) => {
+              desc += `${ind}, `;
+            });
+          }
+          v.description = !!v.description
+            ? desc + v.description
+            : desc.slice(0, -2);
           if (!!v.description) {
             ind += `${createNewText(`*** ${v.description}`)}`;
 

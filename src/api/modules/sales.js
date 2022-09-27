@@ -167,6 +167,9 @@ export async function sendSale(id) {
   return await http.get(`sales/${id}/send_sale/`);
 }
 
-export async function nullSale(id) {
-  return await http.delete(`sales/${id}/`);
+export async function nullSale(id, pass, nullReason = undefined) {
+  return await http.post(`sales/${id}/secure_delete/`, {
+    pass: pass,
+    null_reason: nullReason,
+  });
 }
