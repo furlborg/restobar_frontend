@@ -1253,22 +1253,17 @@ export const createProductKardexColumns = () => {
     {
       title: "Código",
       key: "code",
-      align: "center",
+      width: 150,
     },
     {
       title: "Producto/Insumo",
       key: "name",
-      align: "center",
+      width: 250,
     },
     {
       title: "Stock",
       key: "amount",
-      align: "center",
-    },
-    {
-      title: "Acciones",
-      key: "actions",
-      align: "center",
+      width: 150,
     },
   ];
 };

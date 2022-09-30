@@ -1,65 +1,33 @@
 <template>
-  <n-modal
-    preset="card"
-    :title="items.id ? 'Editar Insumo' : 'Registrar Insumo'"
-    :show="show"
-    style="width: 850px"
-    :on-close="() => $emit('update:show')"
-  >
+  <n-modal preset="card" :title="items.id ? 'Editar Insumo' : 'Registrar Insumo'" :show="show" style="width: 850px"
+    :on-close="() => $emit('update:show')">
     <n-form v-model:model="formitem" :rules="rules" ref="formRef">
       <n-grid cols="12 100:1 450:12" :x-gap="12">
-        <n-form-item-gi label="Nombre" :span="8" path="name">
-          <n-input
-            v-model:value="formitem.name"
-            @input="formitem.name = $event.toUpperCase()"
-            placeholder="Nombres"
-          />
+        <n-form-item-gi label="Código" path="code" :span="2">
+          <n-input v-model:value="formitem.code" placeholder="INS0000000" />
         </n-form-item-gi>
-        <n-form-item-gi label="Unidad de medida" :span="4">
-          <n-select
-            v-model:value="formitem.measureunit"
-            placeholder="Seleccione"
-            :options="optionsUND"
-          />
+        <n-form-item-gi label="Nombre" :span="8" path="name">
+          <n-input v-model:value="formitem.name" @input="formitem.name = $event.toUpperCase()" placeholder="Nombres" />
+        </n-form-item-gi>
+        <n-form-item-gi label="Unidad de medida" :span="2">
+          <n-select v-model:value="formitem.measureunit" placeholder="" :options="optionsUND" />
         </n-form-item-gi>
       </n-grid>
       <n-grid cols="12 100:1 450:12" :x-gap="12">
         <n-form-item-gi v-if="!formitem.id" label="Almacen" :span="4">
-          <n-select
-            v-model:value="formitem.branchoffice"
-            placeholder="Seleccione"
-            :options="optionsEstablishment"
-          />
+          <n-select v-model:value="formitem.branchoffice" placeholder="Seleccione" :options="optionsEstablishment" />
         </n-form-item-gi>
-        <n-form-item-gi
-          label="Precio de compra"
-          :span="4"
-          path="purchase_price"
-        >
-          <n-input
-            type="number"
-            v-model:value="formitem.purchase_price"
-            @input="
-              formitem.purchase_price = restrictDecimal(
-                1,
-                formitem.purchase_price
-              )
-            "
-            placeholder=""
-          />
+        <n-form-item-gi label="Precio de compra" :span="4" path="purchase_price">
+          <n-input type="number" v-model:value="formitem.purchase_price" @input="
+            formitem.purchase_price = restrictDecimal(
+              1,
+              formitem.purchase_price
+            )
+          " placeholder="" />
         </n-form-item-gi>
-        <n-form-item-gi
-          v-if="!formitem.id"
-          label="Stock Inicial"
-          :span="4"
-          path="amount"
-        >
-          <n-input
-            type="number"
-            v-model:value="formitem.amount"
-            @input="formitem.amount = restrictDecimal(2, formitem.amount)"
-            placeholder=""
-          />
+        <n-form-item-gi v-if="!formitem.id" label="Stock Inicial" :span="4" path="amount">
+          <n-input type="number" v-model:value="formitem.amount"
+            @input="formitem.amount = restrictDecimal(2, formitem.amount)" placeholder="" />
         </n-form-item-gi>
       </n-grid>
     </n-form>
@@ -68,7 +36,7 @@
       <n-space justify="end">
         <n-button @click="() => $emit('update:show')" ghost>Cancelar</n-button>
         <n-button type="primary" @click="save(formitem)">{{
-          items.id ? "Guardar" : "Registrar"
+        items.id ? "Guardar" : "Registrar"
         }}</n-button>
       </n-space>
     </template>
@@ -265,4 +233,5 @@ export default defineComponent({
 </script>
 
 <style>
+
 </style>

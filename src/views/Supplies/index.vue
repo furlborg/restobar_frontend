@@ -3,82 +3,52 @@
     <n-card title="Insumos" :segmented="{ content: 'hard' }">
       <template #header-extra>
         <n-space justify="space-around">
-          <n-button
-            v-if="userStore.hasPermission('add_supplies_stock')"
-            type="success"
-            @click="newMovement(0), (showModalMovement = true)"
-            secondary
-          >
-            <template #icon
-              ><n-icon><v-icon name="hi-solid-arrow-sm-up" /></n-icon
-            ></template>
+          <n-button v-if="userStore.hasPermission('add_supplies_stock')" type="success"
+            @click="newMovement(0), (showModalMovement = true)" secondary>
+            <template #icon>
+              <n-icon>
+                <v-icon name="hi-solid-arrow-sm-up" />
+              </n-icon>
+            </template>
             Entrada
           </n-button>
-          <n-button
-            v-if="userStore.hasPermission('remove_supplies_stock')"
-            type="error"
-            secondary
-            @click="newMovement(1), (showModalMovement = true)"
-          >
-            <template #icon
-              ><n-icon><v-icon name="hi-solid-arrow-sm-down" /></n-icon
-            ></template>
+          <n-button v-if="userStore.hasPermission('remove_supplies_stock')" type="error" secondary
+            @click="newMovement(1), (showModalMovement = true)">
+            <template #icon>
+              <n-icon>
+                <v-icon name="hi-solid-arrow-sm-down" />
+              </n-icon>
+            </template>
             Salida
           </n-button>
-          <n-button
-            v-if="userStore.hasPermission('add_supplies')"
-            type="primary"
-            @click="newSupplies(), (showModal = true)"
-            secondary
-          >
-            <template #icon
-              ><n-icon><v-icon name="la-user-plus-solid" /></n-icon
-            ></template>
+          <n-button v-if="userStore.hasPermission('add_supplies')" type="primary"
+            @click="newSupplies(), (showModal = true)" secondary>
+            <template #icon>
+              <n-icon>
+                <v-icon name="la-user-plus-solid" />
+              </n-icon>
+            </template>
             Crear
           </n-button>
         </n-space>
       </template>
 
-      <n-form
-        label-placement="left"
-        style="maxwidth: 350px; margin-top: -8px; margin-bottom: 12px"
-      >
-        <n-input
-          placeholder="Buscar"
-          @keydown.enter="SearchFilter()"
-          v-model:value="textsearch"
-          round
-        >
+      <n-form label-placement="left" style="maxwidth: 350px; margin-top: -8px; margin-bottom: 12px">
+        <n-input placeholder="Buscar" @keydown.enter="SearchFilter()" v-model:value="textsearch" round>
           <template #prefix>
-            <n-icon style="margin-top: -4px"
-              ><v-icon name="md-search-round"
-            /></n-icon>
+            <n-icon style="margin-top: -4px">
+              <v-icon name="md-search-round" />
+            </n-icon>
           </template>
         </n-input>
       </n-form>
 
-      <n-data-table
-        :columns="tableColumns"
-        :data="supplies.results"
-        size="small"
-        :scroll-x="900"
-        :loading="isLoadingData"
-        remote
-        :pagination="pagination"
-      />
+      <n-data-table :columns="tableColumns" :data="supplies.results" size="small" :scroll-x="900"
+        :loading="isLoadingData" remote :pagination="pagination" />
     </n-card>
     <!-- Customer Modal -->
-    <supplies-modal
-      v-model:show="showModal"
-      @on-success="listSupplies()"
-      :items="items"
-    />
-    <move-modal
-      v-model:show="showModalMovement"
-      @on-success="listSupplies()"
-      :items="itemsMovement"
-      :type="type"
-    />
+    <supplies-modal v-model:show="showModal" @on-success="listSupplies()" :items="items" />
+    <move-modal v-model:show="showModalMovement" @on-success="listSupplies()" :items="itemsMovement" :type="type" />
   </div>
 </template>
 
@@ -131,6 +101,7 @@ export default defineComponent({
     });
     const newSupplies = () => {
       (items.id = undefined),
+        (items.code = undefined),
         (items.name = undefined),
         (items.purchase_price = undefined),
         (items.measureunit = 1),
@@ -139,6 +110,7 @@ export default defineComponent({
     };
     const editSupplies = (data) => {
       (items.id = data.id),
+        (items.code = data.code),
         (items.name = data.name),
         (items.purchase_price = data.purchase_price),
         (items.measureunit = data.measureunit),
@@ -266,4 +238,5 @@ export default defineComponent({
 </script>
 
 <style>
+
 </style>

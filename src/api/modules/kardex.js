@@ -30,3 +30,7 @@ export async function listKardexByPage(list, search, page, pageSize) {
     });
   }
 }
+
+export async function updateKardexBy(list, id, data) {
+  return await http.put(`${list}-kardex/${id}/`, { ...data });
+}
