@@ -2,6 +2,10 @@
   <div id="Supplies">
     <n-card title="Kardex" :segmented="{ content: 'hard' }">
       <template #header-extra>
+        <n-button class="me-2" type="info" tertiary
+          @click="$route.name === 'KardexHome' ? $router.push({name: 'KardexList', params: { list: 'products'}}) : $router.push({name: 'KardexHome'})">
+          <v-icon name="md-viewcarousel-twotone" />
+        </n-button>
         <n-dropdown trigger="click" :options="reportOptions" @select="selectReport">
           <n-button type="info" tertiary>
             <!-- <v-icon name="si-simpleanalytics" /> -->

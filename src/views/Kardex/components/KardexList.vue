@@ -209,6 +209,9 @@ export default defineComponent({
 
     const rowClick = (row) => {
       return {
+        style: {
+          cursor: 'pointer',
+        },
         onClick: () => {
           modalData.value = row;
           showConfirm.value = false
