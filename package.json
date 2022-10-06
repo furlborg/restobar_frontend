@@ -26,8 +26,8 @@
     "vue": "^3.2.40",
     "vue-cookies": "^1.8.1",
     "vue-input-autowidth": "^2.2.0",
-    "vue-router": "^4.1.5",
-    "ws": "^8.9.0"
+    "vue-native-websocket-vue3": "^3.1.6",
+    "vue-router": "^4.1.5"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^5.0.8",

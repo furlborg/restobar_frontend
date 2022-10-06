@@ -4,7 +4,7 @@
       <template #title>
         <n-space justify="space-between">
           <n-text class="fs-2">{{
-            tableStore.getTableByID(table).description
+          tableStore.getTableByID(table).description
           }}</n-text>
         </n-space>
       </template>
@@ -18,29 +18,20 @@
           <n-card class="h-100" title="Pedidos" :bordered="false" embedded>
             <template #header-extra>
               <div v-if="userStore.hasPermission('charge_order')">
-                <n-button
-                  v-if="!($route.name === 'TablePayment')"
-                  type="success"
-                  :disabled="!orderStore.orderId"
-                  text
+                <n-button v-if="!($route.name === 'TablePayment')" type="success" :disabled="!orderStore.orderId" text
                   @click="
                     $router.push({
                       name: 'TablePayment',
                       params: { table: $route.params.table },
                     })
-                  "
-                >
+                  ">
                   <v-icon class="me-1" name="fa-coins" />
                   <span class="fs-6">Cobrar</span>
                 </n-button>
-                <router-link
-                  v-else
-                  class="text-decoration-none"
-                  :to="{
-                    name: 'ProductCategories',
-                    params: { table: $route.params.table },
-                  }"
-                >
+                <router-link v-else class="text-decoration-none" :to="{
+                  name: 'ProductCategories',
+                  params: { table: $route.params.table },
+                }">
                   <n-button type="info" text>
                     <v-icon class="me-1" name="md-add-round" />
                     <span class="fs-6">Añadir pedido</span>
@@ -50,56 +41,32 @@
             </template>
             <n-form v-if="!($route.name === 'TablePayment')">
               <n-grid cols="2" x-gap="12">
-                <n-form-item-gi
-                  v-if="
-                    settingsStore.businessSettings.order.order_customer_name
-                  "
-                  :span="
-                    !settingsStore.businessSettings.order.select_order_user
-                      ? 2
-                      : 1
-                  "
-                  label="Cliente"
-                >
-                  <n-input
-                    v-model:value="ask_for"
-                    placeholder=""
-                    :readonly="userStore.user.role === 'MOZO'"
-                    :disabled="userStore.user.role === 'MOZO'"
-                  />
+                <n-form-item-gi v-if="
+                  settingsStore.businessSettings.order.order_customer_name
+                " :span="
+                  !settingsStore.businessSettings.order.select_order_user
+                    ? 2
+                    : 1
+                " label="Cliente">
+                  <n-input v-model:value="ask_for" placeholder="" :readonly="userStore.user.role === 'MOZO'"
+                    :disabled="userStore.user.role === 'MOZO'" />
                 </n-form-item-gi>
-                <n-form-item-gi
-                  v-if="settingsStore.businessSettings.order.select_order_user"
-                  :span="
-                    !settingsStore.businessSettings.order.order_customer_name
-                      ? 2
-                      : 1
-                  "
-                  label="Mozo"
-                >
-                  <n-select
-                    :options="activeUsersStore.usersOptions"
-                    v-model:value="orderUser"
-                    placeholder=""
-                    filterable
-                  />
+                <n-form-item-gi v-if="settingsStore.businessSettings.order.select_order_user" :span="
+                  !settingsStore.businessSettings.order.order_customer_name
+                    ? 2
+                    : 1
+                " label="Mozo">
+                  <n-select :options="activeUsersStore.usersOptions" v-model:value="orderUser" placeholder=""
+                    filterable />
                 </n-form-item-gi>
               </n-grid>
               <n-form-item label="Buscar producto">
                 <n-input-group>
-                  <n-auto-complete
-                    :input-props="{
-                      autocomplete: 'disabled',
-                    }"
-                    v-model:value="productSearch"
-                    :options="productOptions"
-                    :get-show="showOptions"
-                    :loading="searching"
-                    placeholder=""
-                    clear-after-select
-                    :render-label="renderLabel"
-                    @select="selectProduct"
-                  />
+                  <n-auto-complete :input-props="{
+                    autocomplete: 'disabled',
+                  }" v-model:value="productSearch" :options="productOptions" :get-show="showOptions"
+                    :loading="searching" placeholder="" clear-after-select :render-label="renderLabel"
+                    @select="selectProduct" />
                 </n-input-group>
               </n-form-item>
             </n-form>
@@ -118,47 +85,32 @@
                   <template v-for="(order, index) in orderStore.orderList">
                     <tr v-if="order.quantity > 0" :key="index">
                       <td>
-                        <n-button
-                          v-if="!($route.name === 'TablePayment')"
-                          type="info"
-                          text
-                          @click="
-                            itemIndex = index;
-                            showModal = true;
-                          "
-                          ><v-icon name="md-listalt-round"
-                        /></n-button>
+                        <n-button v-if="!($route.name === 'TablePayment')" type="info" text @click="
+                          itemIndex = index;
+                          showModal = true;
+                        ">
+                          <v-icon name="md-listalt-round" />
+                        </n-button>
                       </td>
                       <td>
                         {{ order.product_name }}
                       </td>
                       <td>
-                        <n-input-number
-                          v-if="!($route.name === 'TablePayment')"
-                          class="border-top-0"
-                          size="small"
-                          :min="
-                            order.id ? saleStore.getOrderQuantity(order.id) : 1
-                          "
-                          v-model:value="order.quantity"
-                        />
+                        <n-input-number v-if="!($route.name === 'TablePayment')" class="border-top-0" size="small" :min="
+                          order.id ? saleStore.getOrderQuantity(order.id) : 1
+                        " v-model:value="order.quantity" />
                         <template v-else>
                           {{ order.quantity }}
                         </template>
                       </td>
                       <td>S/. {{ order.subTotal.toFixed(2) }}</td>
                       <td>
-                        <n-button
-                          v-if="!($route.name === 'TablePayment')"
-                          type="error"
-                          text
-                          @click="
-                            !order.id
-                              ? (orderStore.orderList.splice(index, 1),
-                                nullifyTableOrder())
-                              : deleteOrderDetail(index, order.id)
-                          "
-                        >
+                        <n-button v-if="!($route.name === 'TablePayment')" type="error" text @click="
+                          !order.id
+                            ? (orderStore.orderList.splice(index, 1),
+                              nullifyTableOrder())
+                            : deleteOrderDetail(index, order.id)
+                        ">
                           <v-icon name="md-disabledbydefault-round" />
                         </n-button>
                       </td>
@@ -168,30 +120,17 @@
                 <tfoot>
                   <tr>
                     <td colspan="3">
-                      <n-button
-                        v-if="!($route.name === 'TablePayment')"
-                        :type="orderStore.orderId ? 'info' : 'primary'"
-                        text
-                        block
-                        :loading="loading"
-                        :disabled="
+                      <n-button v-if="!($route.name === 'TablePayment')" :type="orderStore.orderId ? 'info' : 'primary'"
+                        text block :loading="loading" :disabled="
                           orderStore.orderList.length
                             ? checkState || loading
                             : true
-                        "
-                        @click="validateSend()"
-                      >
-                        <v-icon
-                          class="me-2"
-                          name="md-notealt-twotone"
-                          scale="1.5"
-                        />
-                        <span class="fs-4"
-                          >{{
-                            orderStore.orderId ? "Actualizar" : "Realizar"
-                          }}
-                          pedido</span
-                        >
+                        " @click="validateSend()">
+                        <v-icon class="me-2" name="md-notealt-twotone" scale="1.5" />
+                        <span class="fs-4">{{
+                        orderStore.orderId ? "Actualizar" : "Realizar"
+                        }}
+                          pedido</span>
                       </n-button>
                     </td>
                     <td colspan="2" class="fs-6 fw-bold">
@@ -204,88 +143,48 @@
           </n-card>
         </n-gi>
       </n-grid>
-      <n-modal
-        :class="{
-          'w-100': genericsStore.device === 'mobile',
-          'w-50': genericsStore.device === 'tablet',
-          'w-25': genericsStore.device === 'desktop',
-        }"
-        preset="card"
-        v-model:show="showUserConfirm"
-        title="Registrar pedido"
-        :mask-closable="false"
-        closable
-      >
+      <n-modal :class="{
+        'w-100': genericsStore.device === 'mobile',
+        'w-50': genericsStore.device === 'tablet',
+        'w-25': genericsStore.device === 'desktop',
+      }" preset="card" v-model:show="showUserConfirm" title="Registrar pedido" :mask-closable="false" closable>
         <n-form-item label="Ingrese código de usuario">
           <n-input type="password" v-model:value="userConfirm" placeholder="" />
         </n-form-item>
         <template #action>
           <n-space justify="end">
-            <n-button
-              type="success"
-              :loading="loading"
-              :disabled="!userConfirm || loading"
-              secondary
-              @click.prevent="
-                orderStore.orderId
-                  ? performUpdateTableOrder()
-                  : performCreateTableOrder()
-              "
-              >Confirmar</n-button
-            >
+            <n-button type="success" :loading="loading" :disabled="!userConfirm || loading" secondary @click.prevent="
+              orderStore.orderId
+                ? performUpdateTableOrder()
+                : performCreateTableOrder()
+            ">Confirmar</n-button>
           </n-space>
         </template>
       </n-modal>
-      <n-modal
-        :class="{
-          'w-100': genericsStore.device === 'mobile',
-          'w-50': genericsStore.device === 'tablet',
-          'w-25': genericsStore.device === 'desktop',
-        }"
-        preset="card"
-        v-model:show="showConfirm"
-        title="Eliminando comanda"
-        :mask-closable="false"
-        closable
-      >
+      <n-modal :class="{
+        'w-100': genericsStore.device === 'mobile',
+        'w-50': genericsStore.device === 'tablet',
+        'w-25': genericsStore.device === 'desktop',
+      }" preset="card" v-model:show="showConfirm" title="Eliminando comanda" :mask-closable="false" closable>
         <n-form>
           <n-grid cols="2" :x-gap="12">
             <n-form-item-gi label="Cantidad">
-              <n-input-number
-                v-model:value="deleteQuantity"
-                min="1"
-                :max="maxQuantity"
-                placeholder=""
-              />
+              <n-input-number v-model:value="deleteQuantity" min="1" :max="maxQuantity" placeholder="" />
             </n-form-item-gi>
             <n-form-item-gi label="Clave de seguridad">
-              <n-input
-                type="password"
-                v-model:value="passConfirm"
-                placeholder=""
-              />
+              <n-input type="password" v-model:value="passConfirm" placeholder="" />
             </n-form-item-gi>
           </n-grid>
         </n-form>
         <template #action>
           <n-space justify="end">
-            <n-button
-              type="success"
-              :disabled="!passConfirm"
-              secondary
-              @click.prevent="performDeleteDetail"
-              >Confirmar</n-button
-            >
+            <n-button type="success" :disabled="!passConfirm" secondary @click.prevent="performDeleteDetail">Confirmar
+            </n-button>
           </n-space>
         </template>
       </n-modal>
-      <OrderIndications
-        v-model:show="showModal"
-        preset="card"
-        title="Indicaciones"
-        :order="orderStore.orderList[itemIndex]"
-        @success="showModal = false"
-      ></OrderIndications>
+      <OrderIndications v-model:show="showModal" preset="card" title="Indicaciones"
+        :order="orderStore.orderList[itemIndex]" @success="showModal = false"></OrderIndications>
     </n-card>
   </div>
 </template>
@@ -294,7 +193,7 @@
 import printOrderTicket from "@/hooks/PrintsTemplates/Ticket/OrderTicket.js";
 import printWEBADASDEBRASEROS from "@/hooks/PrintsTemplates/Ticket/WEBADASDEBRASEROS.js";
 import OrderIndications from "./OrderIndications";
-import { defineComponent, ref, computed, onMounted, watchEffect, h } from "vue";
+import { defineComponent, ref, computed, onMounted, watch, watchEffect, h } from "vue";
 import {
   useRoute,
   useRouter,
@@ -446,7 +345,7 @@ export default defineComponent({
             checkState.value = true;
 
             switch (
-              settingsStore.business_settings.printer.kitchen_ticket_format
+            settingsStore.business_settings.printer.kitchen_ticket_format
             ) {
               case 1:
                 printOrderTicket({ data: response.data, table });
@@ -541,7 +440,7 @@ export default defineComponent({
             checkState.value = true;
 
             switch (
-              settingsStore.business_settings.printer.kitchen_ticket_format
+            settingsStore.business_settings.printer.kitchen_ticket_format
             ) {
               case 1:
                 printOrderTicket({
@@ -796,8 +695,8 @@ export default defineComponent({
                         option.category.toLowerCase().includes("menu")
                           ? "MENU"
                           : option.category.toLowerCase().includes("comb")
-                          ? "COMBO"
-                          : "CARTA",
+                            ? "COMBO"
+                            : "CARTA",
                     }
                   ),
                   h(
@@ -852,7 +751,6 @@ export default defineComponent({
         }
       }
     };
-
     return {
       showModal,
       itemIndex,

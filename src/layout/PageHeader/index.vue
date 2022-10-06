@@ -1,11 +1,8 @@
 <template>
   <div class="layout-header">
     <div class="layout-header-left">
-      <div
-        v-if="userStore.user.role !== 'MOZO'"
-        class="layout-header-trigger layout-header-trigger-min"
-        @click="() => $emit('update:collapsed', !collapsed)"
-      >
+      <div v-if="userStore.user.role !== 'MOZO'" class="layout-header-trigger layout-header-trigger-min"
+        @click="() => $emit('update:collapsed', !collapsed)">
         <n-icon size="18" v-if="collapsed">
           <v-icon name="oi-sidebar-expand" flip="horizontal" />
         </n-icon>
@@ -27,10 +24,10 @@
     <div class="layout-header-right">
       <n-space align="end" vertical :size="0">
         <n-text v-if="userStore.user.names" class="fw-bold">{{
-          userStore.user.names
+        userStore.user.names
         }}</n-text>
         <n-text v-if="userStore.user.branchoffice_des">{{
-          userStore.user.branchoffice_des
+        userStore.user.branchoffice_des
         }}</n-text>
       </n-space>
       <!-- <div
@@ -47,12 +44,7 @@
         </n-tooltip>
       </div> -->
       <div class="layout-header-trigger layout-header-trigger-min">
-        <n-dropdown
-          trigger="hover"
-          placement="bottom-end"
-          @select="avatarSelect"
-          :options="avatarOptions"
-        >
+        <n-dropdown trigger="hover" placement="bottom-end" @select="avatarSelect" :options="avatarOptions">
           <div class="avatar">
             <n-avatar>
               <v-icon name="hi-user" />
@@ -66,7 +58,7 @@
 </template>
 
 <script>
-import { defineComponent, reactive, ref, computed, toRefs } from "vue";
+import { defineComponent, reactive, ref, computed, toRefs, getCurrentInstance } from "vue";
 import { useDialog, useMessage } from "naive-ui";
 import { useRouter } from "vue-router";
 import { useUserStore } from "@/store/modules/user";
@@ -87,6 +79,9 @@ export default defineComponent({
     },
   },
   setup() {
+    const { proxy } = getCurrentInstance()
+    proxy.$connect("ws://192.168.1.101:7000/ws/orders/");
+
     const router = useRouter();
     const message = useMessage();
     const dialog = useDialog();
@@ -100,10 +95,10 @@ export default defineComponent({
     });
 
     const toggleFullscreenIcon = () =>
-      (state.fullscreenIcon =
-        document.fullscreenElement !== null
-          ? "bi-fullscreen-exit"
-          : "bi-fullscreen");
+    (state.fullscreenIcon =
+      document.fullscreenElement !== null
+        ? "bi-fullscreen-exit"
+        : "bi-fullscreen");
 
     document.addEventListener("fullscreenchange", toggleFullscreenIcon);
 
@@ -193,7 +188,7 @@ export default defineComponent({
             }
           });
         },
-        onNegativeClick: () => {},
+        onNegativeClick: () => { },
       });
     };
 
@@ -249,7 +244,7 @@ export default defineComponent({
       height: 64px;
     }
 
-    > * {
+    >* {
       cursor: pointer;
     }
   }
@@ -294,9 +289,7 @@ export default defineComponent({
   }
 
   .layout-header-left {
-    ::v-deep(.n-breadcrumb
-        .n-breadcrumb-item:last-child
-        .n-breadcrumb-item__link) {
+    ::v-deep(.n-breadcrumb .n-breadcrumb-item:last-child .n-breadcrumb-item__link) {
       color: #515a6e;
     }
   }
