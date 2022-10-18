@@ -130,6 +130,23 @@ const VoucherPrint = (props) => {
     dat: [
       [
         {
+          content: props.businessStore.business.name,
+          styles: {
+            fontStyle: "bold",
+            halign: "center",
+            fontSize:
+              settingsStore.business_settings.printer
+                .pre_account_ticket_font_size,
+          },
+        },
+      ],
+    ],
+  });
+
+  structure.push({
+    dat: [
+      [
+        {
           content: props.businessStore.business.ruc,
           styles: {
             fontStyle: "bold",
