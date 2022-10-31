@@ -1,42 +1,25 @@
 <template>
-  <n-modal
-    :class="{
-      'w-100': genericsStore.device === 'mobile',
-      'w-50': genericsStore.device === 'tablet',
-      'w-25': genericsStore.device === 'desktop',
-    }"
-    preset="card"
-    :title="movementType === '0' ? 'Registrar Ingreso' : 'Registrar Egreso'"
-    :show="show"
-    :on-close="() => ($emit('update:show'), cleanDetail())"
-  >
+  <n-modal :class="{
+    'w-100': genericsStore.device === 'mobile',
+    'w-50': genericsStore.device === 'tablet',
+    'w-25': genericsStore.device === 'desktop',
+  }" preset="card" :title="movementType === '0' ? 'Registrar Ingreso' : 'Registrar Egreso'" :show="show"
+    :on-close="() => ($emit('update:show'), cleanDetail())">
     <n-spin :show="isLoading">
       <n-form :rules="movementRules" :model="detail" ref="detailRef">
         <transition name="mode-fade" mode="out-in">
-          <n-form-item
-            v-if="conceptForm"
-            :label="!concept.id ? 'Crear Concepto' : 'Editar Concepto'"
-          >
+          <n-form-item v-if="conceptForm" :label="!concept.id ? 'Crear Concepto' : 'Editar Concepto'">
             <n-input-group>
-              <n-input
-                v-model:value="concept.description"
-                placeholder=""
-                @keypress="isLetter($event)"
-              />
-              <n-button
-                type="info"
-                tertiary
-                :disabled="
-                  concept.description ===
-                    tillStore.getConceptDescription(concept.id) ||
+              <n-input v-model:value="concept.description" placeholder="" @keypress="isLetter($event)" />
+              <n-button type="info" tertiary :disabled="
+                concept.description ===
+                  tillStore.getConceptDescription(concept.id) ||
                   !concept.description
-                    ? true
-                    : false
-                "
-                @click="
-                  !concept.id ? performCreateConcept() : performUpdateConcept()
-                "
-              >
+                  ? true
+                  : false
+              " @click="
+  !concept.id ? performCreateConcept() : performUpdateConcept()
+">
                 <v-icon name="md-save-round" />
               </n-button>
               <n-button type="error" tertiary @click="conceptForm = false">
@@ -46,74 +29,47 @@
           </n-form-item>
           <n-form-item v-else label="Concepto" path="concept">
             <n-input-group>
-              <n-button
-                v-if="userStore.hasPermission('add_concept')"
-                type="info"
-                tertiary
-                @click="
-                  conceptForm = true;
-                  concept.id = null;
-                  concept.description = null;
-                "
-              >
+              <n-button v-if="userStore.hasPermission('add_concept')" type="info" tertiary @click="
+                conceptForm = true;
+              concept.id = null;
+              concept.description = null;
+              ">
                 <v-icon name="md-add-round" />
               </n-button>
-              <n-select
-                v-model:value="detail.concept"
-                :options="
-                  movementType === '0'
-                    ? tillStore.getIncomeConceptsOptions
-                    : tillStore.getOutcomeConceptsOptions
-                "
-                placeholder=""
-                clearable
-              />
-              <n-button
-                v-if="
-                  userStore.hasPermission('change_concept')
-                    ? detail.concept
-                    : false
-                "
-                type="warning"
-                tertiary
-                @click="
-                  conceptForm = true;
-                  concept.id = detail.concept;
-                  concept.description = tillStore.getConceptDescription(
-                    detail.concept
-                  );
-                "
-              >
+              <n-select v-model:value="detail.concept" :options="
+                movementType === '0'
+                  ? tillStore.getIncomeConceptsOptions
+                  : tillStore.getOutcomeConceptsOptions
+              " placeholder="" clearable />
+              <n-button v-if="
+                userStore.hasPermission('change_concept')
+                  ? detail.concept
+                  : false
+              " type="warning" tertiary @click="
+  conceptForm = true;
+concept.id = detail.concept;
+concept.description = tillStore.getConceptDescription(
+  detail.concept
+);
+">
                 <v-icon name="ri-edit-fill" />
               </n-button>
             </n-input-group>
           </n-form-item>
         </transition>
         <transition name="mode-fade" mode="out-in">
-          <n-form-item
-            v-if="paymentForm"
-            :label="!payment.id ? 'Crear Método Pago' : 'Editar Método Pago'"
-          >
+          <n-form-item v-if="paymentForm" :label="!payment.id ? 'Crear Método Pago' : 'Editar Método Pago'">
             <n-input-group>
-              <n-input
-                v-model:value="payment.description"
-                placeholder=""
-                @keypress="isLetter($event)"
-              />
-              <n-button
-                type="info"
-                tertiary
-                :disabled="
-                  payment.description ===
-                    saleStore.getPaymentMethodDescription(payment.id) ||
+              <n-input v-model:value="payment.description" placeholder="" @keypress="isLetter($event)" />
+              <n-button type="info" tertiary :disabled="
+                payment.description ===
+                  saleStore.getPaymentMethodDescription(payment.id) ||
                   !payment.description
-                    ? true
-                    : false
-                "
-                @click="
-                  !payment.id ? performCreatePayment() : performUpdatePayment()
-                "
-              >
+                  ? true
+                  : false
+              " @click="
+  !payment.id ? performCreatePayment() : performUpdatePayment()
+">
                 <v-icon name="md-save-round" />
               </n-button>
               <n-button type="error" tertiary @click="paymentForm = false">
@@ -123,66 +79,43 @@
           </n-form-item>
           <n-form-item v-else label="Método Pago" path="payment_method">
             <n-input-group>
-              <n-button
-                v-if="userStore.hasPermission('add_paymentmethodtype')"
-                type="info"
-                tertiary
-                @click="
-                  paymentForm = true;
-                  payment.id = null;
-                  payment.description = null;
-                "
-              >
+              <n-button v-if="userStore.hasPermission('add_paymentmethodtype')" type="info" tertiary @click="
+                paymentForm = true;
+              payment.id = null;
+              payment.description = null;
+              ">
                 <v-icon name="md-add-round" />
               </n-button>
-              <n-select
-                v-model:value="detail.payment_method"
-                :options="saleStore.getPaymentMethodsOptions"
-                placeholder=""
-                clearable
-              />
-              <n-button
-                v-if="
-                  userStore.hasPermission('change_paymentmethodtype')
-                    ? detail.payment_method
-                    : false
-                "
-                type="warning"
-                tertiary
-                @click="
-                  paymentForm = true;
-                  payment.id = detail.payment_method;
-                  payment.description = saleStore.getPaymentMethodDescription(
-                    detail.payment_method
-                  );
-                "
-              >
+              <n-select v-model:value="detail.payment_method" :options="saleStore.getPaymentMethodsOptions"
+                placeholder="" clearable />
+              <n-button v-if="
+                userStore.hasPermission('change_paymentmethodtype')
+                  ? detail.payment_method
+                  : false
+              " type="warning" tertiary @click="
+  paymentForm = true;
+payment.id = detail.payment_method;
+payment.description = saleStore.getPaymentMethodDescription(
+  detail.payment_method
+);
+">
                 <v-icon name="ri-edit-fill" />
               </n-button>
             </n-input-group>
           </n-form-item>
         </transition>
         <n-form-item label="Descripción" path="description">
-          <n-input
-            v-model:value="detail.description"
-            @keypress="isLetter($event)"
-          />
+          <n-input v-model:value="detail.description" @keypress="isLetter($event)" />
         </n-form-item>
         <n-form-item label="Monto" path="amount">
-          <n-input-number
-            class="w-100"
-            v-model:value="detail.amount"
-            :min="0"
-            @keypress="isDecimal($event)"
-            :show-button="false"
-          />
+          <n-input-number class="w-100" v-model:value="detail.amount" :min="0" @keypress="isDecimal($event)"
+            :show-button="false" />
         </n-form-item>
       </n-form>
     </n-spin>
     <template #action>
-      <n-button type="success" block @click="performCreateDetail"
-        >Registrar {{ movementType === "0" ? "Ingreso" : "Egreso" }}</n-button
-      >
+      <n-button type="success" :loading="isLoading" :disabled="isLoading" block @click="performCreateDetail">Registrar
+        {{ movementType === "0" ? "Ingreso" : "Egreso" }}</n-button>
     </template>
   </n-modal>
 </template>
