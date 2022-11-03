@@ -1,14 +1,15 @@
 import jspdf from "jspdf";
 import autoTable from "jspdf-autotable";
+import { printPDFDoc } from "@/hooks/PrintPdf.js";
 
 import { useBusinessStore } from "@/store/modules/business";
 
 import qr from "qrcode";
 
 export const CreatePdfFile = async (props, format) => {
-  let formatDoc = [80, 350];
+  let formatDoc = [70, props.auto ? Math.round(props.lengthOfData) : 350];
 
-  if (!!format) {
+  if (!!format && !props.auto) {
     formatDoc = [
       format,
       !!props.lengthOfData && props.lengthOfData > format
@@ -149,6 +150,8 @@ export const CreatePdfFile = async (props, format) => {
 
     return hiddFrame;
   } else {
+    if (props.auto)
+      printPDFDoc(doc.output("datauristring").split(",")[1], formatDoc[1]);
     return doc.output("datauristring").split(",")[1];
   }
 };

@@ -107,8 +107,10 @@ const VoucherPrint = (props) => {
     }
   }
 
+  let lengthData = 0;
   let structure = [];
 
+  lengthData += 10;
   structure.push({
     dat: [
       [
@@ -126,6 +128,7 @@ const VoucherPrint = (props) => {
     ],
   });
 
+  lengthData += 10;
   structure.push({
     dat: [
       [
@@ -143,6 +146,7 @@ const VoucherPrint = (props) => {
     ],
   });
 
+  lengthData += 10;
   structure.push({
     dat: [
       [
@@ -159,6 +163,8 @@ const VoucherPrint = (props) => {
       ],
     ],
   });
+
+  lengthData += 10;
   structure.push({
     dat: [
       [
@@ -175,6 +181,8 @@ const VoucherPrint = (props) => {
       ],
     ],
   });
+
+  lengthData += 10;
   structure.push({
     dat: [
       [
@@ -193,6 +201,7 @@ const VoucherPrint = (props) => {
   });
 
   if (!!props.prePayment === false) {
+    lengthData += 10;
     structure.push({
       dat: [
         [
@@ -210,6 +219,7 @@ const VoucherPrint = (props) => {
       ],
     });
 
+    lengthData += 10;
     !!props.businessStore.business.email &&
       structure.push({
         dat: [
@@ -228,6 +238,7 @@ const VoucherPrint = (props) => {
         ],
       });
 
+    lengthData += 10;
     structure.push({
       dat: [
         [
@@ -245,6 +256,7 @@ const VoucherPrint = (props) => {
       ],
     });
 
+    lengthData += 10;
     structure.push({
       dat: [
         [
@@ -262,6 +274,7 @@ const VoucherPrint = (props) => {
       ],
     });
 
+    lengthData += 40;
     structure.push({
       dat: [
         {
@@ -296,6 +309,7 @@ const VoucherPrint = (props) => {
       line: true,
     });
   } else {
+    lengthData += 20;
     structure.push({
       dat: [
         [
@@ -392,6 +406,10 @@ const VoucherPrint = (props) => {
       line: true,
     });
 
+  lengthData += 10 * datTotals.length;
+  lengthData += 10 * datProdsCons.length;
+
+  lengthData += 40;
   !!props.prePayment === false &&
     NoNoteSale &&
     structure.push({
@@ -456,6 +474,7 @@ const VoucherPrint = (props) => {
     });
 
   if (!!props.prePayment) {
+    lengthData += 40;
     structure.push(
       !!totalProdSum && {
         line: true,
@@ -500,6 +519,7 @@ const VoucherPrint = (props) => {
       }
     );
   } else {
+    lengthData += 20;
     structure.push({
       line: true,
       fontSize:
@@ -523,6 +543,7 @@ const VoucherPrint = (props) => {
       ],
     });
 
+    lengthData += 10;
     structure.push({
       dat: [
         [
@@ -541,12 +562,17 @@ const VoucherPrint = (props) => {
     });
   }
 
-  CreatePdfFile({
-    show: true,
-    data: structure,
-    objSunat: dataSunat,
-    addImages: !!props.prePayment || !NoNoteSale ? false : true,
-  });
+  return CreatePdfFile(
+    {
+      data: structure,
+      objSunat: dataSunat,
+      addImages: !!props.prePayment || !NoNoteSale ? false : true,
+      lengthOfData: props.auto ? lengthData : undefined,
+      show: props.show,
+      auto: props.auto,
+    },
+    70
+  );
 };
 
 export default VoucherPrint;

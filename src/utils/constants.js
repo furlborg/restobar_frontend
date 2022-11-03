@@ -2072,6 +2072,7 @@ export const permissionsLabels = {
   add_order: "Agregar Pedidos",
   change_order: "Editar Pedidos",
   delete_order: "Eliminar Pedidos",
+  print_order_prebill: "Imprimir Pre-cuenta",
   view_order: "Ver Pedidos",
   charge_order: "Cobrar Pedidos",
   take_away_order: "Realizar pedidos para llevar",

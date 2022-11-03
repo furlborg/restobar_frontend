@@ -1,12 +1,7 @@
 <template>
   <n-tabs type="line" justify-content="space-around">
     <template #prefix>
-      <n-button
-        class="ms-2"
-        :disabled="$route.name !== 'WCategories'"
-        text
-        @click="showDrawer = true"
-      >
+      <n-button class="ms-2" :disabled="$route.name !== 'WCategories'" text @click="showDrawer = true">
         <v-icon name="md-search-round" />
       </n-button>
       <ProductsDrawer v-model:show="showDrawer" />
@@ -14,13 +9,14 @@
     <n-tab-pane class="p-0" name="menu" tab="Carta">
       <router-view></router-view>
     </n-tab-pane>
-    <n-tab-pane
-      id="OrderPane"
-      name="order"
-      tab="Pedido"
-      :disabled="!orderStore.orderId"
-    >
+    <n-tab-pane id="OrderPane" name="order" tab="Pedido" :disabled="!orderStore.orderId">
       <n-card title="Pedido" size="small" :segmented="{ content: 'hard' }">
+        <template #header-extra>
+          <n-button v-if="userStore.hasPermission('print_order_prebill')" type="info" secondary size="small"
+            @click="printOrderPrebill">
+            <v-icon name="fa-file-invoice-dollar" />
+          </n-button>
+        </template>
         <!-- <n-h2>Pedido</n-h2> -->
         <n-list class="m-0">
           <template v-for="(order, index) in orderStore.orderList">
@@ -32,7 +28,7 @@
                 </template>
                 <template #header-extra>
                   <n-text>{{
-                    `S/. ${order.quantity * order.price.toFixed(2)}`
+                      `S/. ${order.quantity * order.price.toFixed(2)}`
                   }}</n-text>
                 </template>
               </n-thing>
@@ -44,13 +40,8 @@
           </template>
         </n-list>
       </n-card>
-      <ProductIndications
-        v-model:show="showModal"
-        preset="card"
-        title="Indicaciones"
-        :product="orderStore.orderList[itemIndex]"
-        @success="showModal = false"
-      ></ProductIndications>
+      <ProductIndications v-model:show="showModal" preset="card" title="Indicaciones"
+        :product="orderStore.orderList[itemIndex]" @success="showModal = false"></ProductIndications>
     </n-tab-pane>
   </n-tabs>
 </template>
@@ -58,7 +49,9 @@
 <script>
 import { defineComponent, ref, onUpdated, onMounted } from "vue";
 import ProductsDrawer from "../components/ProductsDrawer";
+import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 import { useMessage, useDialog } from "naive-ui";
+import { isAxiosError } from "axios";
 import {
   useRoute,
   useRouter,
@@ -66,8 +59,10 @@ import {
   onBeforeRouteUpdate,
 } from "vue-router";
 import ProductIndications from "./ProductIndications";
+import { useBusinessStore } from "@/store/modules/business";
 import { useWaiterStore } from "@/store/modules/waiter";
 import { useOrderStore } from "@/store/modules/order";
+import { useUserStore } from "@/store/modules/user";
 import { useSaleStore } from "@/store/modules/sale";
 import { retrieveTableOrder } from "@/api/modules/tables";
 import { cloneDeep } from "@/utils";
@@ -79,9 +74,11 @@ export default defineComponent({
     ProductsDrawer,
   },
   setup() {
+    const businessStore = useBusinessStore();
     const waiterStore = useWaiterStore();
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
+    const userStore = useUserStore();
     const message = useMessage();
     const dialog = useDialog();
     const route = useRoute();
@@ -151,6 +148,45 @@ export default defineComponent({
         });
     };
 
+    const printOrderPrebill = async () => {
+      await retrieveTableOrder(route.params.table)
+        .then((response) => {
+          if (response.status === 200) {
+            VoucherPrint({
+              data: response.data,
+              businessStore,
+              prePayment: true,
+              auto: true,
+            });
+          }
+        })
+        .catch((error) => {
+          if (isAxiosError(error)) {
+            if (error.response.status === 400) {
+              for (const value in error.response.data) {
+                error.response.data[`${value}`].forEach((err) => {
+                  if (typeof err === "object") {
+                    for (const v in err) {
+                      message.error(`${err[`${v}`]}`);
+                    }
+                  } else {
+                    message.error(`${err}`);
+                  }
+                });
+              }
+            } else {
+              console.error(error);
+              message.error("Algo salió mal...");
+            }
+          } else {
+            console.error(error);
+            message.error("Algo salió mal...");
+          }
+          message.error("Algo salió mal...");
+          console.error(error);
+        });
+    };
+
     function setTabStyle() {
       let tab_nav = document.getElementsByClassName("n-tabs-nav");
       for (let i = 0; i < tab_nav.length; i++) {
@@ -177,6 +213,8 @@ export default defineComponent({
       itemIndex,
       orderDetails,
       showDrawer,
+      printOrderPrebill,
+      userStore,
     };
   },
 });
