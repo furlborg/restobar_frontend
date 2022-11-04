@@ -1,83 +1,45 @@
 <template>
   <div class="p-3">
     <n-input-group>
-      <n-select
-        v-model:value="area"
-        :options="tableStore.getAreasOptions"
-        placeholder="Seleccione area"
-        :disabled="!tillStore.currentTillID || waiterStore.groupMode"
-        @update:value="tableStore.refreshData()"
-      ></n-select>
-      <n-button
-        type="info"
-        :disabled="waiterStore.groupMode"
-        @click="tableStore.refreshData()"
-        ><v-icon name="hi-solid-refresh"
-      /></n-button>
+      <n-select v-model:value="area" :options="tableStore.getAreasOptions" placeholder="Seleccione area"
+        :disabled="!tillStore.currentTillID || waiterStore.groupMode" @update:value="tableStore.refreshData()">
+      </n-select>
+      <n-button type="info" :disabled="waiterStore.groupMode" @click="tableStore.refreshData()">
+        <v-icon name="hi-solid-refresh" />
+      </n-button>
     </n-input-group>
-    <n-grid
-      v-if="tillStore.currentTillID"
-      class="mt-3"
-      cols="3"
-      :x-gap="6"
-      :y-gap="6"
-    >
+    <n-grid v-if="tillStore.currentTillID" class="mt-3" cols="3" :x-gap="6" :y-gap="6">
       <n-gi v-for="table in tables" :key="table.id">
-        <n-card
-          @click="
-            waiterStore.groupMode
-              ? currentTableGrouping === table.id ||
-                tableGroups.some((g) => g.some((t) => t.id === table.id))
-                ? null
-                : !currentGroup.some((t) => t.id == table.id)
+        <n-card @click="
+          waiterStore.groupMode
+            ? currentTableGrouping === table.id ||
+              tableGroups.some((g) => g.some((t) => t.id === table.id))
+              ? null
+              : !currentGroup.some((t) => t.id == table.id)
                 ? addToGroup(table)
                 : removeFromGroup(table)
-              : ($router.push({ name: 'WOrder', params: { table: table.id } }),
-                cleanParams())
-          "
-          class="position-relative"
-          :class="{ 'bg-occuped': table.status === '3' }"
-          style="cursor: pointer"
-          embedded
-        >
-          <n-checkbox
-            v-if="waiterStore.groupMode"
-            :checked="currentGroup.some((t) => t.id === table.id)"
-            :disabled="
-              tableGroups.some((g) => g.some((t) => t.id === table.id)) ||
-              currentTableGrouping === table.id
-            "
-            size="small"
-            class="position-absolute top-0 start-0 m-2"
-          />
-          <v-icon
-            v-if="
-              waiterStore.groupMode === true &&
-              tableGroups.some((g) => g.some((t) => t.id === table.id))
-            "
-            class="position-absolute top-50 start-50 translate-middle fs-4"
-            name="ri-forbid-line"
-            scale="6"
-            fill="#FA8072"
-          />
+            : ($router.push({ name: 'WOrder', params: { table: table.id } }),
+              cleanParams())
+        " class="position-relative" :class="{ 'bg-occuped': table.status === '3' }" style="cursor: pointer">
+          <n-checkbox v-if="waiterStore.groupMode" :checked="currentGroup.some((t) => t.id === table.id)" :disabled="
+            tableGroups.some((g) => g.some((t) => t.id === table.id)) ||
+            currentTableGrouping === table.id
+          " size="small" class="position-absolute top-0 start-0 m-2" />
+          <v-icon v-if="
+            waiterStore.groupMode === true &&
+            tableGroups.some((g) => g.some((t) => t.id === table.id))
+          " class="position-absolute top-50 start-50 translate-middle fs-4" name="ri-forbid-line" scale="6"
+            fill="#FA8072" />
           <n-space align="center" :size="0" vertical>
-            <img
-              src="~@/assets/images/default-table.png"
-              alt=""
-              width="64"
-              height="64"
-            />
+            <img src="~@/assets/images/default-table.png" alt="" width="64" height="64" />
           </n-space>
-          <n-text
-            class="
+          <n-text class="
               black-outline
               position-absolute
               top-50
               start-50
               translate-middle
-            "
-            >{{ table.description }}</n-text
-          >
+            ">{{ table.description }}</n-text>
         </n-card>
       </n-gi>
     </n-grid>
@@ -91,76 +53,38 @@
       </n-space>
     </div>
     <teleport to="body">
-      <n-space
-        v-if="waiterStore.groupMode"
-        class="
+      <n-space v-if="waiterStore.groupMode" class="
           position-absolute
           bottom-0
           start-50
           translate-middle-x
           mb-3
           w-100
-        "
-        align="center"
-        vertical
-      >
-        <n-button class="p-3" type="success" secondary @click="saveGroup"
-          >Confirmar</n-button
-        >
-        <n-button
-          class="p-3"
-          type="error"
-          secondary
-          @click="
-            waiterStore.groupMode = false;
-            currentGroup = [];
-            currentTableGrouping = null;
-          "
-          >Cancelar</n-button
-        >
+        " align="center" vertical>
+        <n-button class="p-3" type="success" secondary @click="saveGroup">Confirmar</n-button>
+        <n-button class="p-3" type="error" secondary @click="
+          waiterStore.groupMode = false;
+        currentGroup = [];
+        currentTableGrouping = null;
+        ">Cancelar</n-button>
       </n-space>
     </teleport>
-    <n-modal
-      preset="card"
-      v-model:show="waiterStore.changeTable"
-      title="Cambiar mesa"
-      :mask-closable="false"
-      closable
-    >
+    <n-modal preset="card" v-model:show="waiterStore.changeTable" title="Cambiar mesa" :mask-closable="false" closable>
       <n-form-item label="Mesa actual" :disabled="isLoading">
-        <n-select
-          v-model:value="fromTable"
-          :options="tableStore.getAreaTablesOptions(area, true)"
-          placeholder=""
-        />
+        <n-select v-model:value="fromTable" :options="tableStore.getAreaTablesOptions(area, true)" placeholder="" />
       </n-form-item>
       <n-form-item label="Area">
-        <n-select
-          v-model:value="currentArea"
-          :options="tableStore.getAreasOptions"
-          placeholder=""
-          @update:value="(v) => toTable = null"
-        />
+        <n-select v-model:value="currentArea" :options="tableStore.getAreasOptions" placeholder=""
+          @update:value="(v) => toTable = null" />
       </n-form-item>
       <n-form-item label="Mesa">
-        <n-select
-          v-model:value="toTable"
-          :options="tableStore.getAreaTablesOptions(currentArea)"
-          :disabled="!currentArea"
-          placeholder=""
-          filterable
-        />
+        <n-select v-model:value="toTable" :options="tableStore.getAreaTablesOptions(currentArea)"
+          :disabled="!currentArea" placeholder="" filterable />
       </n-form-item>
       <template #action>
         <n-space justify="end">
-          <n-button
-            type="success"
-            :loading="isLoading"
-            :disabled="!toTable || isLoading"
-            secondary
-            @click.prevent="performChangeTable"
-            >Confirmar</n-button
-          >
+          <n-button type="success" :loading="isLoading" :disabled="!toTable || isLoading" secondary
+            @click.prevent="performChangeTable">Confirmar</n-button>
         </n-space>
       </template>
     </n-modal>
