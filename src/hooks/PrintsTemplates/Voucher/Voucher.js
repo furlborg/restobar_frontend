@@ -562,17 +562,26 @@ const VoucherPrint = (props) => {
     });
   }
 
-  return CreatePdfFile(
-    {
-      data: structure,
-      objSunat: dataSunat,
-      addImages: !!props.prePayment || !NoNoteSale ? false : true,
-      lengthOfData: props.auto ? lengthData : undefined,
-      show: props.show,
-      auto: props.auto,
-    },
-    70
-  );
+  return !props.auto
+    ? CreatePdfFile({
+        data: structure,
+        objSunat: dataSunat,
+        addImages: !!props.prePayment || !NoNoteSale ? false : true,
+        lengthOfData: props.auto ? lengthData : undefined,
+        show: props.show,
+        auto: props.auto,
+      })
+    : CreatePdfFile(
+        {
+          data: structure,
+          objSunat: dataSunat,
+          addImages: !!props.prePayment || !NoNoteSale ? false : true,
+          lengthOfData: props.auto ? lengthData : undefined,
+          show: props.show,
+          auto: props.auto,
+        },
+        70
+      );
 };
 
 export default VoucherPrint;

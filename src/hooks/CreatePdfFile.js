@@ -7,7 +7,10 @@ import { useBusinessStore } from "@/store/modules/business";
 import qr from "qrcode";
 
 export const CreatePdfFile = async (props, format) => {
-  let formatDoc = [70, props.auto ? Math.round(props.lengthOfData) : 350];
+  let formatDoc = [
+    !format ? 80 : format,
+    props.auto ? Math.round(props.lengthOfData) : 350,
+  ];
 
   if (!!format && !props.auto) {
     formatDoc = [
