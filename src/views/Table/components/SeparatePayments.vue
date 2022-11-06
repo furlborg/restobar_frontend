@@ -5,67 +5,33 @@
         <n-space class="mb-2" align="center" justify="space-between">
           <div class="d-flex align-items-center">
             <n-text class="fs-4">{{
-              `${saleStore.getSerieDescription(sale.serie)}-${sale.number}`
+                `${saleStore.getSerieDescription(sale.serie)}-${sale.number}`
             }}</n-text>
-            <n-dropdown
-              trigger="click"
-              :options="saleStore.getDocumentSeriesOptions(sale.invoice_type)"
-              :show-arrow="true"
-              placement="bottom-end"
-              size="huge"
-              @select="selectSerie"
-            >
+            <n-dropdown trigger="click" :options="saleStore.getDocumentSeriesOptions(sale.invoice_type)"
+              :show-arrow="true" placement="bottom-end" size="huge" @select="selectSerie">
               <n-button type="info" text>
-                <v-icon
-                  class="p-0"
-                  name="md-arrowdropdown-round"
-                  scale="1.75"
-                />
+                <v-icon class="p-0" name="md-arrowdropdown-round" scale="1.75" />
               </n-button>
             </n-dropdown>
           </div>
-          <n-radio-group
-            v-model:value="sale.invoice_type"
-            name="docType"
-            size="small"
-            @update:value="changeSerie"
-          >
+          <n-radio-group v-model:value="sale.invoice_type" name="docType" size="small" @update:value="changeSerie">
             <n-radio-button :value="1" :key="1">FACTURA</n-radio-button>
             <n-radio-button :value="3" :key="3">BOLETA</n-radio-button>
             <n-radio-button :value="80" :key="80">N. VENTA</n-radio-button>
           </n-radio-group>
-          <n-radio-group
-            v-model:value="sale.payment_condition"
-            name="saleType"
-            size="small"
-          >
+          <n-radio-group v-model:value="sale.payment_condition" name="saleType" size="small">
             <n-radio-button :value="1" :key="1">CONTADO</n-radio-button>
             <n-radio-button :value="2" :key="2">CRÉDITO</n-radio-button>
           </n-radio-group>
         </n-space>
         <n-form class="mb-2" ref="saleForm" :model="sale" :rules="formRules">
-          <n-grid
-            responsive="screen"
-            cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12"
-            :x-gap="12"
-          >
-            <n-form-item-gi
-              :span="9"
-              label="Cliente"
-              :show-require-mark="formRules.customer.required"
-              path="customer"
-            >
+          <n-grid responsive="screen" cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12" :x-gap="12">
+            <n-form-item-gi :span="9" label="Cliente" :show-require-mark="formRules.customer.required" path="customer">
               <n-input-group>
-                <n-auto-complete
-                  blur-after-select
-                  :input-props="{
-                    autocomplete: 'disabled',
-                  }"
-                  v-model:value="sale.customer_name"
-                  :options="customerOptions"
-                  :get-show="showOptions"
-                  :loading="searching"
-                  @update:value="
+                <n-auto-complete blur-after-select :input-props="{
+                  autocomplete: 'disabled',
+                }" v-model:value="sale.customer_name" :options="customerOptions" :get-show="showOptions"
+                  :loading="searching" @update:value="
                     (v) => {
                       !v
                         ? ((sale.customer = null),
@@ -73,60 +39,37 @@
                           (addressesOptions = []))
                         : null;
                     }
-                  "
-                  @select="
-                    (value) => {
-                      sale.customer = value;
-                      sale.address = null;
-                      createAddressesOptions();
-                    }
-                  "
-                  placeholder=""
-                  clearable
-                />
+                  " @select="
+  (value) => {
+    sale.customer = value;
+    sale.address = null;
+    createAddressesOptions();
+  }
+" placeholder="" clearable />
                 <n-button type="info" @click="showModal = true">
                   <v-icon name="md-add-round" />
                 </n-button>
               </n-input-group>
             </n-form-item-gi>
             <n-form-item-gi :span="3" label="Fecha">
-              <n-date-picker
-                class="w-100"
-                type="datetime"
-                :is-date-disabled="dateDisabled"
-                v-model:formatted-value="sale.date_sale"
-              />
+              <n-date-picker class="w-100" type="datetime" :is-date-disabled="dateDisabled"
+                v-model:formatted-value="sale.date_sale" />
             </n-form-item-gi>
             <n-form-item-gi :span="6" label="Dirección">
-              <n-select
-                v-model:value="sale.address"
-                :options="addressesOptions"
-                :disabled="!sale.customer"
-                placeholder=""
-              />
+              <n-select v-model:value="sale.address" :options="addressesOptions" :disabled="!sale.customer"
+                placeholder="" />
             </n-form-item-gi>
             <n-form-item-gi :span="2" label="Método Pago">
-              <n-select
-                v-model:value="sale.payment_method"
-                :options="saleStore.getPaymentMethodsOptions"
-                filterable
-              />
+              <n-select v-model:value="sale.payment_method" :options="saleStore.getPaymentMethodsOptions" filterable />
             </n-form-item-gi>
             <n-form-item-gi :span="2">
-              <n-checkbox v-model:checked="sale.by_consumption"
-                >Por consumo</n-checkbox
-              >
+              <n-checkbox v-model:checked="sale.by_consumption">Por consumo</n-checkbox>
             </n-form-item-gi>
             <n-form-item-gi :span="2">
-              <n-button
-                type="info"
-                text
-                @click="showObservations = !showObservations"
-                >{{
+              <n-button type="info" text @click="showObservations = !showObservations">{{
                   !showObservations ? "Ver" : "Ocultar"
-                }}
-                Observaciones</n-button
-              >
+              }}
+                Observaciones</n-button>
             </n-form-item-gi>
             <n-gi :span="12">
               <n-collapse-transition :show="showObservations">
@@ -154,44 +97,24 @@
                 <tr v-if="detail.quantity > 0" :key="index">
                   <td>{{ index + 1 }}</td>
                   <td align="center">
-                    <n-input-number
-                      v-model:value="detail.quantity"
-                      style="width: 100px"
-                      :min="1"
-                      :max="detail.max"
-                    />
+                    <n-input-number v-model:value="detail.quantity" style="width: 100px" :min="1" :max="detail.max" />
                   </td>
                   <td>
-                    <input
-                      class="custom-input"
-                      v-model="detail.product_name"
-                      v-autowidth
-                      @click="$event.target.select()"
-                    />
+                    <input class="custom-input" v-model="detail.product_name" v-autowidth
+                      @click="$event.target.select()" />
                   </td>
                   <td>
                     S/.
-                    <input
-                      class="custom-input"
-                      type="number"
-                      min="0"
-                      step=".01"
-                      v-model="detail.price_sale"
-                      v-autowidth
-                      @click="$event.target.select()"
-                    />
+                    <input class="custom-input" type="number" min="0" step=".01" v-model="detail.price_sale" v-autowidth
+                      @click="$event.target.select()" />
                   </td>
                   <td>
                     {{
-                      parseFloat(detail.quantity * detail.price_sale).toFixed(2)
+                        parseFloat(detail.quantity * detail.price_sale).toFixed(2)
                     }}
                   </td>
                   <td>
-                    <n-button
-                      type="error"
-                      text
-                      @click="sale.sale_details.splice(index, 1)"
-                    >
+                    <n-button type="error" text @click="sale.sale_details.splice(index, 1)">
                       <v-icon name="md-disabledbydefault-round" />
                     </n-button>
                   </td>
@@ -207,15 +130,8 @@
                 <span class="fs-4">Pago</span>
                 <div class="fs-5">
                   S/.
-                  <input
-                    class="fs-1 custom-input"
-                    type="number"
-                    min="0"
-                    step=".01"
-                    v-model="sale.given_amount"
-                    v-autowidth
-                    @click="$event.target.select()"
-                  />
+                  <input class="fs-1 custom-input" type="number" min="0" step=".01" v-model="sale.given_amount"
+                    v-autowidth @click="$event.target.select()" />
                 </div>
               </n-space>
               <n-space align="center" vertical>
@@ -238,29 +154,14 @@
               <div>
                 DSCT:
                 <span>S/.</span>
-                <input
-                  class="custom-input fw-bold"
-                  type="number"
-                  min="0"
-                  :max="subTotal"
-                  step=".1"
-                  v-model="sale.discount"
-                  v-autowidth
-                  @click="$event.target.select()"
-                />
+                <input class="custom-input fw-bold" type="number" min="0" :max="subTotal" step=".1"
+                  v-model="sale.discount" v-autowidth @click="$event.target.select()" />
               </div>
               <div>
                 OTROS:
                 <span>S/.</span>
-                <input
-                  class="custom-input fw-bold"
-                  type="number"
-                  min="0"
-                  step=".1"
-                  v-model="sale.other_charges"
-                  v-autowidth
-                  @click="$event.target.select()"
-                />
+                <input class="custom-input fw-bold" type="number" min="0" step=".1" v-model="sale.other_charges"
+                  v-autowidth @click="$event.target.select()" />
               </div>
               <div>
                 TOTAL: <span>S/. {{ sale.amount }}</span>
@@ -280,97 +181,57 @@
           ><v-icon class="me-2" name="fa-coins" scale="2" />Cobrar</n-button
         > -->
         <n-checkbox v-model:checked="isMultiple">Pago multiple</n-checkbox>
-        <n-button
-          class="fs-1 py-5 mt-2"
-          type="success"
-          :disabled="
-            list.length < count
-              ? !list.length || sale.given_amount < sale.amount
-              : !list.some((detail) => detail.quantity < detail.max)
+        <n-button class="fs-1 py-5 mt-2" type="success" :disabled="
+          list.length < count
+            ? !list.length || sale.given_amount < sale.amount
+            : !list.some((detail) => detail.quantity < detail.max)
               ? true
               : !list.length || sale.given_amount < sale.amount
-          "
-          secondary
-          block
-          @click.prevent="
-            isMultiple ? doMultiplePayment() : performCreateSale()
-          "
-          ><v-icon class="me-2" name="fa-coins" scale="2" />Cobrar</n-button
-        >
+        " secondary block @click.prevent="
+  isMultiple ? doMultiplePayment() : performCreateSale()
+">
+          <v-icon class="me-2" name="fa-coins" scale="2" />Cobrar
+        </n-button>
       </n-card>
     </n-spin>
-    <n-modal
-      :class="{
-        'w-100': genericsStore.device === 'mobile',
-        'w-50': genericsStore.device === 'tablet',
-        'w-25': genericsStore.device === 'desktop',
-      }"
-      preset="card"
-      v-model:show="showPayments"
-      title="Realizar venta"
-      :mask-closable="false"
-      closable
-      @close="sale.payments = null"
-    >
+    <n-modal :class="{
+      'w-100': genericsStore.device === 'mobile',
+      'w-50': genericsStore.device === 'tablet',
+      'w-25': genericsStore.device === 'desktop',
+    }" preset="card" v-model:show="showPayments" title="Realizar venta" :mask-closable="false" closable
+      @close="sale.payments = null">
       <n-space justify="space-between">
-        <n-tag type="info"
-          >Total: S/. {{ showPayments ? sale.amount : null }}</n-tag
-        >
-        <n-tag :type="evalPayments ? 'error' : 'success'"
-          >Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}</n-tag
-        >
-        <n-tag :type="evalPayments ? 'error' : 'warning'"
-          >Faltante: S/.
+        <n-tag type="info">Total: S/. {{ showPayments ? sale.amount : null }}</n-tag>
+        <n-tag :type="evalPayments ? 'error' : 'success'">Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}
+        </n-tag>
+        <n-tag :type="evalPayments ? 'error' : 'warning'">Faltante: S/.
           {{
-            showPayments
-              ? parseFloat(sale.amount - currentPaymentsAmount).toFixed(2)
-              : null
-          }}</n-tag
-        >
+              showPayments
+                ? parseFloat(sale.amount - currentPaymentsAmount).toFixed(2)
+                : null
+          }}</n-tag>
       </n-space>
       <n-form-item class="mt-2" label="Pagos">
-        <n-dynamic-input
-          v-model:value="sale.payments"
-          :min="1"
-          @create="createPayment"
-        >
+        <n-dynamic-input v-model:value="sale.payments" :min="1" @create="createPayment">
           <template #default="{ value }">
             <div style="display: flex; align-items: center; width: 100%">
-              <n-select
-                v-model:value="value.payment_method"
-                :options="filteredMethods"
-              />
-              <n-input
-                class="ms-2"
-                v-model:value="value.amount"
-                placeholder=""
-                @keypress="isDecimal($event)"
-              />
+              <n-select v-model:value="value.payment_method" :options="filteredMethods" />
+              <n-input class="ms-2" v-model:value="value.amount" placeholder="" @keypress="isDecimal($event)" />
             </div>
           </template>
         </n-dynamic-input>
       </n-form-item>
       <n-space justify="end">
-        <n-button
-          type="success"
-          :disabled="
-            evalPayments ||
-            sale.payments.some((pay) => pay.payment_method === null) ||
-            sale.payments.some((pay) => Number(pay.amount) <= 0)
-          "
-          secondary
-          @click="performCreateSale"
-          >Confirmar</n-button
-        >
+        <n-button type="success" :disabled="
+          evalPayments ||
+          sale.payments.some((pay) => pay.payment_method === null) ||
+          sale.payments.some((pay) => Number(pay.amount) <= 0)
+        " secondary @click="performCreateSale">Confirmar</n-button>
       </n-space>
     </n-modal>
     <!-- Customer Modal -->
-    <customer-modal
-      v-model:show="showModal"
-      :doc_type="sale.invoice_type === 1 ? '6' : null"
-      @update:show="onCloseModal"
-      @on-success="onSuccess"
-    />
+    <customer-modal v-model:show="showModal" :doc_type="sale.invoice_type === 1 ? '6' : null"
+      @update:show="onCloseModal" @on-success="onSuccess" />
   </div>
 </template>
 
@@ -473,9 +334,9 @@ export default defineComponent({
     const total = computed(() => {
       return parseFloat(
         subTotal.value -
-          parseFloat(sale.value.discount) +
-          icbper.value +
-          parseFloat(sale.value.other_charges)
+        parseFloat(sale.value.discount) +
+        icbper.value +
+        parseFloat(sale.value.other_charges)
       ).toFixed(2);
     });
 
@@ -541,6 +402,7 @@ export default defineComponent({
                       data: response.data,
                       businessStore,
                       changing: changing.value,
+                      show: true,
                     });
 
                     if (
@@ -877,10 +739,12 @@ input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
   /* display: none; <- Crashes Chrome on hover */
   -webkit-appearance: none;
-  margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
+  margin: 0;
+  /* <-- Apparently some margin are still there even though it's hidden */
 }
 
 input[type="number"] {
-  -moz-appearance: textfield; /* Firefox */
+  -moz-appearance: textfield;
+  /* Firefox */
 }
 </style>

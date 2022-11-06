@@ -538,6 +538,7 @@ export default defineComponent({
                       businessStore,
                       saleStore,
                       changing: changing.value,
+                      show: true,
                     });
 
                     if (
