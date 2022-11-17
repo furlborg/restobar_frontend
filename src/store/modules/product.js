@@ -1,11 +1,24 @@
 import { defineStore } from "pinia";
-import { getProductCategories, getProductPlaces } from "@/api/modules/products";
+import {
+  getProductCategories,
+  getProductPlaces,
+  getProductAffectations,
+} from "@/api/modules/products";
 
 export const useProductStore = defineStore("product", {
   state: () => ({
     categories: [],
     places: [],
+    affectations: [],
   }),
+  getters: {
+    affectationsOptions() {
+      return this.affectations.map((affectation) => ({
+        value: affectation.id,
+        label: affectation.description,
+      }));
+    },
+  },
   actions: {
     async initializeStore() {
       await getProductCategories()
@@ -18,6 +31,13 @@ export const useProductStore = defineStore("product", {
       await getProductPlaces()
         .then((response) => {
           this.places = response.data;
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+      await getProductAffectations()
+        .then((response) => {
+          this.affectations = response.data;
         })
         .catch((error) => {
           console.error(error);

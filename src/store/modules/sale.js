@@ -39,18 +39,27 @@ export const useSaleStore = defineStore("sale", {
       }));
     },
     toSale(state) {
-      state.sale_details = orderStore.orderList.map((order) => ({
-        product: order.product,
-        product_name: order.product_name,
-        price_sale: parseFloat(order.price).toFixed(2),
-        quantity: Number(order.quantity),
-        icbper: parseFloat(order.icbper_amount).toFixed(2),
-      }));
+      state.sale_details = orderStore.orderList.map((order) => {
+        let detail = {
+          product: order.product,
+          product_name: order.product_name,
+          product_affectation: order.product_affectation,
+          product_igv: order.product_igv,
+          price_base: parseFloat(order.price).toFixed(2),
+          igv_tax: 0,
+          discount: parseFloat(0).toFixed(2),
+          price_sale: parseFloat(order.price).toFixed(2),
+          quantity: Number(order.quantity),
+          icbper: parseFloat(order.icbper_amount).toFixed(2),
+        };
+        this.updateDetail(detail);
+        return detail;
+      });
       return state.sale_details;
     },
     saleTotal(state) {
       return state.sale_details.reduce((acc, curVal) => {
-        return (acc += curVal.price * curVal.quantity);
+        return (acc += curVal.price * curVal.quantity - curVal.discount);
       }, 0);
     },
   },
@@ -153,6 +162,33 @@ export const useSaleStore = defineStore("sale", {
     getOrderQuantity(id) {
       const order = this.order_initial.find((order) => order.id === id);
       return order ? order.quantity : null;
+    },
+    updateDetail(detail) {
+      switch (detail.product_affectation) {
+        case 10:
+          detail.price_base = detail.price_sale
+            ? parseFloat(detail.price_sale) / (Number(detail.product_igv) + 1)
+            : 0;
+          detail.igv_tax = detail.price_sale
+            ? parseFloat(detail.price_sale) - parseFloat(detail.price_base)
+            : 0;
+          break;
+        case 20:
+          detail.price_base = detail.price_sale
+            ? parseFloat(detail.price_sale)
+            : 0;
+          detail.igv_tax = 0;
+          break;
+        case 21:
+          detail.price_base = detail.price_sale
+            ? parseFloat(detail.price_sale)
+            : 0;
+          detail.igv_tax = 0;
+          break;
+        default:
+          console.error("Afectación inválida");
+          break;
+      }
     },
   },
 });

@@ -39,13 +39,8 @@
                           (addressesOptions = []))
                         : null;
                     }
-                  " @select="
-  (value) => {
-    sale.customer = value;
-    sale.address = null;
-    createAddressesOptions();
-  }
-" placeholder="" clearable />
+                  " @select="(value) => { sale.customer = value; sale.address = null; createAddressesOptions(); }"
+                  placeholder="" clearable />
                 <n-button type="info" @click="showModal = true">
                   <v-icon name="md-add-round" />
                 </n-button>
@@ -88,6 +83,7 @@
                 <th>Cantidad</th>
                 <th>Producto</th>
                 <th>Precio Unitario</th>
+                <th>Descuento</th>
                 <th>Precio Total</th>
                 <th></th>
               </tr>
@@ -95,7 +91,14 @@
             <tbody>
               <template v-for="(detail, index) in sale.sale_details">
                 <tr v-if="detail.quantity > 0" :key="index">
-                  <td>{{ index + 1 }}</td>
+                  <td>
+                    <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation"
+                      :options="productStore.affectationsOptions" @update:value="(v) => saleStore.updateDetail(detail)">
+                      <n-tag size="small" :color="getAfcColor(detail.product_affectation)">{{
+                          getAfcShort(detail.product_affectation)
+                      }}</n-tag>
+                    </n-popselect>
+                  </td>
                   <td align="center">
                     <n-input-number v-model:value="detail.quantity" style="width: 100px" :min="1" :max="detail.max" />
                   </td>
@@ -109,8 +112,14 @@
                       @click="$event.target.select()" />
                   </td>
                   <td>
+                    S/.
+                    <input class="custom-input" type="number" min="0" :max="!detail.price_sale ? 0 : detail.price_sale"
+                      :disabled="!!Number(sale.discount)" step=".5" v-model="detail.discount" v-autowidth
+                      @click="$event.target.select()" />
+                  </td>
+                  <td>
                     {{
-                        parseFloat(detail.quantity * detail.price_sale).toFixed(2)
+                        parseFloat(detail.quantity * detail.price_sale - detail.discount).toFixed(2)
                     }}
                   </td>
                   <td>
@@ -148,19 +157,29 @@
                 SUBTOTAL: <span>S/. {{ subTotal.toFixed(2) }}</span>
               </div>
               <div>
+                OP. GRAVADAS: <span>S/. {{ totalGRV.toFixed(2) }}</span>
+              </div>
+              <div>
+                OP. EXONERADAS: <span>S/. {{ totalEXN.toFixed(2) }}</span>
+              </div>
+              <div>
+                OP. GRATUITAS: <span>S/. {{ totalGRT.toFixed(2) }}</span>
+              </div>
+              <div>IGV: <span>S/. {{ totalIGV.toFixed(2) }}</span></div>
+              <div>
                 ICBPER: <span>S/. {{ icbper.toFixed(2) }}</span>
               </div>
-              <div>IGV: <span>S/. 0.00</span></div>
               <div>
                 DSCT:
                 <span>S/.</span>
-                <input class="custom-input fw-bold" type="number" min="0" :max="subTotal" step=".1"
-                  v-model="sale.discount" v-autowidth @click="$event.target.select()" />
+                <input class="custom-input fw-bold" type="number" min="0" :max="subTotal" step=".5" v-model="totalDSCT"
+                  v-autowidth :disabled="sale.sale_details.some(detail => Number(detail.discount) > 0)"
+                  @click="$event.target.select()" />
               </div>
               <div>
                 OTROS:
                 <span>S/.</span>
-                <input class="custom-input fw-bold" type="number" min="0" step=".1" v-model="sale.other_charges"
+                <input class="custom-input fw-bold" type="number" min="0" step=".5" v-model="sale.other_charges"
                   v-autowidth @click="$event.target.select()" />
               </div>
               <div>
@@ -187,9 +206,7 @@
             : !list.some((detail) => detail.quantity < detail.max)
               ? true
               : !list.length || sale.given_amount < sale.amount
-        " secondary block @click.prevent="
-  isMultiple ? doMultiplePayment() : performCreateSale()
-">
+        " secondary block @click.prevent="isMultiple ? doMultiplePayment() : performCreateSale()">
           <v-icon class="me-2" name="fa-coins" scale="2" />Cobrar
         </n-button>
       </n-card>
@@ -250,6 +267,7 @@ import { isAxiosError } from "axios";
 import CustomerModal from "@/views/Customer/components/CustomerModal";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useRouter } from "vue-router";
+import { useProductStore } from "@/store/modules/product";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { useUserStore } from "@/store/modules/user";
@@ -265,6 +283,7 @@ import { createSale, getSaleNumber, sendSale } from "@/api/modules/sales";
 import { useDialog, useMessage } from "naive-ui";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
 import format from "date-fns/format";
+import { lighten } from "@/utils";
 
 import { useBusinessStore } from "@/store/modules/business";
 
@@ -281,11 +300,13 @@ export default defineComponent({
   },
   emits: ["success"],
   setup(props, { emit }) {
+    const sale = toRef(props, "data");
     const dateNow = ref(null);
     const router = useRouter();
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
     const userStore = useUserStore();
+    const productStore = useProductStore();
     const settingsStore = useSettingsStore();
     const genericsStore = useGenericsStore();
     const message = useMessage();
@@ -317,6 +338,50 @@ export default defineComponent({
       }, 0);
     });
 
+    const totalGRV = computed(() => {
+      return sale.value.sale_details.reduce((acc, curVal) => {
+        return curVal.product_affectation === 10 ? acc += curVal.price_base * curVal.quantity : acc
+      }, 0)
+    })
+
+    const totalEXN = computed(() => {
+      return sale.value.sale_details.reduce((acc, curVal) => {
+        return curVal.product_affectation === 20 ? acc += curVal.price_base * curVal.quantity : acc
+      }, 0)
+    })
+
+    const totalGRT = computed(() => {
+      return sale.value.sale_details.reduce((acc, curVal) => {
+        return curVal.product_affectation === 21 ? acc += curVal.price_base * curVal.quantity : acc
+      }, 0)
+    })
+
+    const totalIGV = computed(() => {
+      return sale.value.sale_details.reduce((acc, curVal) => {
+        return acc += curVal.igv_tax * curVal.quantity
+      }, 0)
+    })
+
+    const totalDSCT = computed({
+      get: () => {
+        if (sale.value.sale_details.some(detail => Number(detail.discount) > 0)) {
+          return sale.value.sale_details.reduce((acc, curVal) => {
+            return acc += Number(curVal.discount)
+          }, 0)
+        }
+        return sale.value.discount
+      },
+      set: v => {
+        if (sale.value.sale_details.some(detail => Number(detail.discount) > 0)) {
+          sale.value.discount = v
+        } else {
+          sale.value.discount = sale.value.sale_details.reduce((acc, curVal) => {
+            return acc += Number(curVal.discount)
+          }, 0)
+        }
+      }
+    })
+
     const showObservations = ref(false);
 
     const subTotal = computed(() => {
@@ -339,8 +404,6 @@ export default defineComponent({
         parseFloat(sale.value.other_charges)
       ).toFixed(2);
     });
-
-    const sale = toRef(props, "data");
 
     watch(total, () => {
       sale.value.amount =
@@ -395,6 +458,15 @@ export default defineComponent({
             positiveText: "Sí",
             onPositiveClick: async () => {
               loading.value = true;
+              sale.value.taxed_amount = totalGRV
+              sale.value.exempt_amount = totalEXN
+              sale.value.free_amount = totalGRT
+              sale.value.igv_amount = totalIGV
+              sale.value.sale_details = sale.value.sale_details.map(detail => ({
+                ...detail,
+                igv_tax: detail.igv_tax.toFixed(2),
+                price_base: detail.price_base.toFixed(2),
+              }));
               await createSale(sale.value)
                 .then((response) => {
                   if (response.status === 201) {
@@ -683,8 +755,52 @@ export default defineComponent({
       return ts > new Date(Date.now());
     };
 
+    function getAfcColor(afc) {
+      switch (afc) {
+        case 10:
+          return {
+            color: lighten("#008B8B", 48),
+            textColor: "#008B8B",
+            borderColor: lighten("#008B8B", 24),
+          };
+        case 20:
+          return {
+            color: lighten("#9932CC", 48),
+            textColor: "#9932CC",
+            borderColor: lighten("#9932CC", 24),
+          };
+        case 21:
+          return {
+            color: lighten("#006400", 48),
+            textColor: "#006400",
+            borderColor: lighten("#006400", 24),
+          };
+        default:
+          return {
+            color: lighten("#8B0000", 48),
+            textColor: "#8B0000",
+            borderColor: lighten("#8B0000", 24),
+          };
+      }
+    }
+
+    function getAfcShort(afc) {
+      switch (afc) {
+        case 10:
+          return "GRV";
+        case 20:
+          return "EXN";
+        case 21:
+          return "GRT";
+        default:
+          console.error("Afectación inválida");
+          return "---";
+      }
+    }
+
     return {
       showModal,
+      productStore,
       orderStore,
       saleStore,
       sale,
@@ -719,6 +835,13 @@ export default defineComponent({
       dateDisabled,
       count,
       list,
+      getAfcShort,
+      getAfcColor,
+      totalIGV,
+      totalGRV,
+      totalEXN,
+      totalGRT,
+      totalDSCT,
     };
   },
 });

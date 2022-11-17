@@ -132,6 +132,10 @@ export async function takeAwayOrder(order_details, sale_data, user) {
     payments: sale_data.payments,
     do_update: sale_data.do_update,
     is_change: sale_data.is_change,
+    taxed_amount: sale_data.taxed_amount.toFixed(2),
+    exempt_amount: sale_data.exempt_amount.toFixed(2),
+    free_amount: sale_data.free_amount.toFixed(2),
+    igv_amount: sale_data.igv_amount.toFixed(2),
   };
   return await http.post("orders/take_away/", {
     order: order,

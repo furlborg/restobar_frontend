@@ -34,6 +34,8 @@ export const useOrderStore = defineStore("order", {
         price_sale: parseFloat(order.price).toFixed(2),
         quantity: Number(order.quantity),
         icbper: parseFloat(order.icbper_amount).toFixed(2),
+        product_affectation: order.affectation,
+        product_igv: order.igv_tax,
       }));
     },
   },
@@ -55,6 +57,8 @@ export const useOrderStore = defineStore("order", {
           quantity: 1,
           indication: [],
           icbper: product.icbper,
+          product_affectation: product.affectation,
+          product_igv: product.igv_tax,
           quick_indications: product.quick_indications,
         };
         this.orders.push(order);
@@ -87,6 +91,8 @@ export const useOrderStore = defineStore("order", {
           quantity: Number(product.quantity),
           indication: product.indication,
           icbper: product.icbper,
+          product_affectation: product.affectation,
+          product_igv: product.igv_tax,
           quick_indications: product.quick_indications,
         };
         this.orders.push(order);

@@ -45,6 +45,8 @@ export async function createProduct(product) {
     branchoffice: product.branchoffice,
     supplies: product.supplies,
     quick_indications: product.quick_indications,
+    affectation: product.affectation,
+    igv_tax: product.igv_tax,
   });
 }
 
@@ -67,6 +69,8 @@ export async function updateProduct(idProduct, product) {
     branchoffice: product.branchoffice,
     supplies: product.supplies,
     quick_indications: product.quick_indications,
+    affectation: product.affectation,
+    igv_tax: product.igv_tax,
   });
 }
 
@@ -185,4 +189,8 @@ export async function createProductMovement(products) {
     concept: products.concept,
     amount: products.amount,
   });
+}
+
+export async function getProductAffectations() {
+  return await http.get("product-affectation/");
 }
