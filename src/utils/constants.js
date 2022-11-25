@@ -2188,4 +2188,5 @@ export const permissionsLabels = {
   view_user: "Ver Usuarios",
   change_passwords: "Cambiar contraseñas de Usuarios",
   change_permissions: "Cambiar permisos de Usuarios",
+  change_product_affectation: "Cambiar afectación de producto en venta",
 };

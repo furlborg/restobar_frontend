@@ -30,14 +30,10 @@
                   <n-button type="info" tertiary :disabled="
                     categorie.description ===
                       productStore.getCategorieDescription(categorie.id) ||
-                    !categorie.description
+                      !categorie.description
                       ? true
                       : false
-                  " @click="
-                    !categorie.id
-                      ? performCreateProductCategory()
-                      : performUpdateProductCategory()
-                  ">
+                  " @click="!categorie.id ? performCreateProductCategory() : performUpdateProductCategory()">
                     <v-icon name="md-save-round" />
                   </n-button>
                   <n-button type="error" tertiary @click="categoryForm = false">
@@ -47,11 +43,8 @@
               </n-form-item>
               <n-form-item v-else label="Categoría" path="category">
                 <n-input-group>
-                  <n-button v-if="userStore.hasPermission('add_productcategory')" type="info" tertiary @click="
-                    categoryForm = true;
-                    categorie.id = null;
-                    categorie.description = null;
-                  ">
+                  <n-button v-if="userStore.hasPermission('add_productcategory')" type="info" tertiary
+                    @click="categoryForm = true; categorie.id = null; categorie.description = null;">
                     <v-icon name="md-add-round" />
                   </n-button>
                   <n-select v-model:value="product.category" :options="categoriesOptions" placeholder="" filterable
@@ -60,12 +53,8 @@
                     userStore.hasPermission('change_productcategory')
                       ? product.category
                       : false
-                  " type="warning" tertiary @click="
-                    categoryForm = true;
-                    categorie.id = product.category;
-                    categorie.description =
-                      productStore.getCategorieDescription(product.category);
-                  ">
+                  " type="warning" tertiary
+                    @click="categoryForm = true; categorie.id = product.category; categorie.description = productStore.getCategorieDescription(product.category);">
                     <v-icon name="ri-edit-fill" />
                   </n-button>
                 </n-input-group>
@@ -78,13 +67,31 @@
           <n-form-item-gi label="Unidad de medida" :span="5">
             <n-select v-model:value="product.measure_unit" placeholder="Seleccione" :options="optionsUND" />
           </n-form-item-gi>
-          <n-form-item-gi path="control_stock" :span="5">
-            <n-checkbox v-model:checked="product.control_stock" @update:checked="product.stock = null">Controlar Stock
-            </n-checkbox>
+          <n-form-item-gi label="Afectación" :span="8">
+            <n-select v-model:value="product.affectation" placeholder="Seleccione"
+              :options="productStore.affectationsOptions" />
+          </n-form-item-gi>
+          <n-form-item-gi label="IGV(%)" :span="4">
+            <n-input-number v-model:value="igv_percentage" placeholder="" :min="0" :max="100" :show-button="false"
+              @keypress="isNumber($event)" />
           </n-form-item-gi>
           <n-form-item-gi v-if="!product.id" label="Stock Inicial" path="stock" :span="4">
             <n-input type="number" v-model:value="product.stock" @input="product.stock = restrictDecimal(product.stock)"
               placeholder="0.0" :disabled="!product.control_stock ? true : false" />
+          </n-form-item-gi>
+          <n-form-item-gi path="control_stock" :span="4">
+            <n-checkbox v-model:checked="product.control_stock" @update:checked="product.stock = null">Controlar Stock
+            </n-checkbox>
+          </n-form-item-gi>
+          <n-form-item-gi :span="3">
+            <n-checkbox v-model:checked="product.control_supplie" @update:checked="
+              (key) => {
+                product.supplies = key ? product.supplies : [];
+              }
+            ">Insumos</n-checkbox>
+          </n-form-item-gi>
+          <n-form-item-gi label="Indicaciones rápidas" path="quick_indications" :span="12">
+            <n-input v-model:value="product.quick_indications" placeholder="" />
           </n-form-item-gi>
           <n-form-item-gi label="Nº Puntos" path="number_points" :span="4">
             <n-input-number v-model:value="product.number_points" placeholder="" :min="0" :show-button="false"
@@ -96,16 +103,6 @@
           </n-form-item-gi>
           <n-form-item-gi path="icbper" :span="3">
             <n-checkbox v-model:checked="product.icbper">ICBPER</n-checkbox>
-          </n-form-item-gi>
-          <n-form-item-gi :span="3">
-            <n-checkbox v-model:checked="product.control_supplie" @update:checked="
-              (key) => {
-                product.supplies = key ? product.supplies : [];
-              }
-            ">Insumos</n-checkbox>
-          </n-form-item-gi>
-          <n-form-item-gi label="Indicaciones rápidas" path="quick_indications" :span="12">
-            <n-input v-model:value="product.quick_indications" placeholder="" />
           </n-form-item-gi>
           <n-form-item-gi label="Almacen" :span="12">
             <n-select v-model:value="product.branchoffice" :disabled="product.id ? true : false"
@@ -168,6 +165,7 @@ import {
 } from "@/api/modules/products";
 import { getSupplies, getMeasureUnit } from "@/api/modules/supplies";
 import { useProductStore } from "@/store/modules/product";
+import { useSettingsStore } from "@/store/modules/settings";
 import { useBusinessStore } from "@/store/modules/business";
 import { useUserStore } from "@/store/modules/user";
 import { useMessage } from "naive-ui";
@@ -196,8 +194,9 @@ export default defineComponent({
     const message = useMessage();
     const showModal = ref(false);
     const isLoadingData = ref(false);
-    const genericsStore = useGenericsStore();
     const productStore = useProductStore();
+    const genericsStore = useGenericsStore();
+    const settingsStore = useSettingsStore();
     const userStore = useUserStore();
     const businessStore = useBusinessStore();
     const { idProduct, show } = toRefs(props);
@@ -231,7 +230,15 @@ export default defineComponent({
       branchoffice: null,
       quick_indications: null,
       supplies: [],
+      affectation: settingsStore.businessSettings.sale.default_affectation,
+      igv_tax: 0,
     });
+
+    const igv_percentage = computed({
+      get: () => Math.round(Number(product.value.igv_tax) * 100),
+      set: v => product.value.igv_tax = v / 100
+    })
+
     const categoriesOptions = computed(() => {
       return productStore.categories.map((categorie) => ({
         label: categorie.description,
@@ -340,6 +347,8 @@ export default defineComponent({
           quick_indications: null,
           branchoffice: optionsEstablishment.value[0].value,
           supplies: [],
+          affectation: settingsStore.businessSettings.sale.default_affectation,
+          igv_tax: 0,
         };
       }
     });
@@ -579,6 +588,7 @@ export default defineComponent({
       showModal,
       newSupplies,
       items,
+      igv_percentage,
       refreshSupplie,
       restrictDecimal(value) {
         let data = value.match(/^\d+\.?\d{0,3}/);

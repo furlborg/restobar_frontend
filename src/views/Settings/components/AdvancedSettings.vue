@@ -110,13 +110,17 @@
           <n-form-item-gi :span="3" label="Documento por defecto">
             <n-select v-model:value="businessSettings.sale.default_invoice" :options="invoiceOptions" />
           </n-form-item-gi>
+          <n-form-item-gi :span="5" label="Afectación por defecto">
+            <n-select v-model:value="businessSettings.sale.default_affectation"
+              :options="productStore.affectationsOptions" />
+          </n-form-item-gi>
+          <n-form-item-gi :span="3" label="Valor IGV (%)" placeholder="" disabled>
+            <n-input-number v-model:value="igv_percentage" :show-button="false" :min="0" :max="100" placeholder="" />
+          </n-form-item-gi>
           <n-form-item-gi :span="3" label="Valor ICBPER">
             <n-input v-model:value="businessSettings.sale.icbper_tax" />
           </n-form-item-gi>
-          <n-form-item-gi :span="3" label="Comisión Tarjeta de Crédito(%)" placeholder="" disabled>
-            <n-input v-model:value="businessSettings.sale.card_comission" />
-          </n-form-item-gi>
-          <n-form-item-gi :span="3">
+          <n-form-item-gi :span="2">
             <n-checkbox v-model:checked="businessSettings.sale.auto_send">Auto envío CPE</n-checkbox>
           </n-form-item-gi>
           <n-form-item-gi :span="4">
@@ -154,9 +158,10 @@
 </template>
 
 <script>
-import { defineComponent, ref } from "vue";
+import { defineComponent, ref, computed } from "vue";
 import { useMessage } from "naive-ui";
 import { useRouter } from "vue-router";
+import { useProductStore } from "@/store/modules/product";
 import { useSettingsStore } from "@/store/modules/settings";
 import { updateBusinessSettings } from "@/api/modules/business";
 import { cloneDeep } from "@/utils";
@@ -165,10 +170,16 @@ export default defineComponent({
   name: "AdvancedSettings",
   setup() {
     const router = useRouter();
+    const productStore = useProductStore();
     const settingsStore = useSettingsStore();
     const message = useMessage();
     const businessSettings = ref(cloneDeep(settingsStore.businessSettings));
     const editMode = ref(false);
+
+    const igv_percentage = computed({
+      get: () => Math.round(Number(businessSettings.value.sale.igv_tax) * 100),
+      set: v => businessSettings.value.sale.igv_tax = v / 100
+    })
 
     const printOptions = [
       {
@@ -232,9 +243,11 @@ export default defineComponent({
     };
 
     return {
+      igv_percentage,
       handleBack,
       printOptions,
       invoiceOptions,
+      productStore,
       businessSettings,
       performUpdateBusinessSettings,
       editMode,

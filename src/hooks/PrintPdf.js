@@ -137,7 +137,6 @@ export const printPDFDoc = (pdf, hDoc) => {
         let printerFindResult = await qz.printers.getDefault();
 
         if (!!printerFindResult) {
-          console.log(hDoc);
           let config = qz.configs.create(printerFindResult, {
             scaleContent: true,
             size: {

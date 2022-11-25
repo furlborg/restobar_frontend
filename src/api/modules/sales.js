@@ -124,6 +124,10 @@ export async function createSale(sale, pass = null) {
       till: tillStore.currentTillID,
       do_update: sale.do_update,
       is_change: sale.is_change,
+      taxed_amount: sale.taxed_amount.toFixed(2),
+      exempt_amount: sale.exempt_amount.toFixed(2),
+      free_amount: sale.free_amount.toFixed(2),
+      igv_amount: sale.igv_amount.toFixed(2),
     });
   } else {
     return await http.post("sales/", {
@@ -153,6 +157,10 @@ export async function createSale(sale, pass = null) {
       till: tillStore.currentTillID,
       do_update: sale.do_update,
       is_change: sale.is_change,
+      taxed_amount: sale.taxed_amount.toFixed(2),
+      exempt_amount: sale.exempt_amount.toFixed(2),
+      free_amount: sale.free_amount.toFixed(2),
+      igv_amount: sale.igv_amount.toFixed(2),
     });
   }
 }

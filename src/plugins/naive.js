@@ -85,6 +85,7 @@ import {
   NH6,
   NScrollbar,
   NEllipsis,
+  NPopselect,
 } from "naive-ui";
 
 export const naive = create({
@@ -174,5 +175,6 @@ export const naive = create({
     NH6,
     NScrollbar,
     NEllipsis,
+    NPopselect,
   ],
 });
