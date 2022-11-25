@@ -68,6 +68,9 @@ const VoucherPrint = (props) => {
           DESCUENTOS: !!props.data.discount
             ? parseFloat(props.data.discount).toFixed("2")
             : "0.00",
+          DELIVERY: !!dataForPrint.totales.total_delivery
+            ? parseFloat(dataForPrint.totales.total_delivery).toFixed("2")
+            : "0.00",
           "IMPORTE TOTAL": dataForPrint.totales.total_venta.toFixed("2"),
           EFECTIVO: props.data.given_amount,
           VUELTO: !!props.changing
