@@ -36,7 +36,7 @@
             <n-button style="width: 90px" type="info" tertiary disabled>
               <v-icon name="md-outgoingmail" />
             </n-button>
-            <n-button style="width: 90px" type="warning" tertiary>
+            <n-button style="width: 90px" type="warning" tertiary disabled>
               <v-icon name="fa-download" />
             </n-button>
           </n-button-group>
@@ -58,7 +58,8 @@
                 type="success"
                 secondary
                 block
-                :disabled="phoneNumber.length < 9"
+                :loading="loading"
+                :disabled="phoneNumber.length < 9 || loading"
                 @click="sendToWhatsapp"
               >
                 <v-icon name="bi-whatsapp" />
@@ -74,6 +75,7 @@
 
 <script>
 import { defineComponent, ref } from "vue";
+import { useMessage } from "naive-ui";
 import { printPdf } from "@/utils/printer";
 import { jsPDF } from "jspdf";
 import DefaultPreset from "./pdf-presets/DefaultPreset";
@@ -94,7 +96,10 @@ export default defineComponent({
     },
   },
   setup(props) {
+    const message = useMessage();
     const ticket = ref(null);
+
+    const loading = ref(false);
 
     const send = ref(false);
 
@@ -119,17 +124,26 @@ export default defineComponent({
     };
 
     const sendToWhatsapp = () => {
-      console.log(props.data.external_id, phoneNumber.value);
+      loading.value = true;
       sendWhatsapp(props.data.external_id, phoneNumber.value)
         .then((response) => {
-          console.log(response);
+          if (response.status === 200) {
+            message.success("Envío exitoso!");
+          }
         })
         .catch((error) => {
           console.error(error);
+          message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          phoneNumber.value = "";
+          loading.value = false;
+          send.value = false;
         });
     };
 
     return {
+      loading,
       ticket,
       generate,
       send,

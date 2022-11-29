@@ -163,7 +163,6 @@
       @on-success="updateSuccess"
     />
     <sale-report-modal v-model:show="showReport" />
-    <!-- <pdf-modal v-model:show="showPdf" :data="saleData" /> -->
     <preview-drawer v-model:show="showPdf" :data="saleData" />
   </div>
 </template>
