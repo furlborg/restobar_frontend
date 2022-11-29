@@ -70,6 +70,7 @@
                       !v
                         ? ((sale.customer = null),
                           (sale.address = null),
+                          (whatsappNumber = ''),
                           (addressesOptions = []))
                         : null;
                     }
@@ -78,6 +79,7 @@
                     (value) => {
                       sale.customer = value;
                       sale.address = null;
+                      whatsappNumber = '';
                       createAddressesOptions();
                     }
                   "
@@ -851,6 +853,7 @@ export default defineComponent({
       const customer = customerResults.value.find(
         (customer) => customer.id === sale.value.customer
       );
+      whatsappNumber.value = customer.phone;
       if (typeof customer !== "undefined") {
         addressesOptions.value = customer.addresses.map((address) => ({
           value: address.id,
@@ -936,7 +939,7 @@ export default defineComponent({
         customerResults.value.push(customer);
         sale.value.customer_name = `${customer.doc_num} - ${customer.names}`;
         sale.value.customer = customer.id;
-        whatsappNumber.value = customer.number;
+        whatsappNumber.value = customer.phone;
         createAddressesOptions();
       } else if (sale.value.invoice_type !== 1) {
         customerResults.value.push(customer);
