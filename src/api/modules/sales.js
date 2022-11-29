@@ -124,10 +124,10 @@ export async function createSale(sale, pass = null) {
       till: tillStore.currentTillID,
       do_update: sale.do_update,
       is_change: sale.is_change,
-      taxed_amount: sale.taxed_amount.toFixed(2),
-      exempt_amount: sale.exempt_amount.toFixed(2),
-      free_amount: sale.free_amount.toFixed(2),
-      igv_amount: sale.igv_amount.toFixed(2),
+      taxed_amount: parseFloat(sale.taxed_amount).toFixed(2),
+      exempt_amount: parseFloat(sale.exempt_amount).toFixed(2),
+      free_amount: parseFloat(sale.free_amount).toFixed(2),
+      igv_amount: parseFloat(sale.igv_amount).toFixed(2),
     });
   } else {
     return await http.post("sales/", {
@@ -157,10 +157,10 @@ export async function createSale(sale, pass = null) {
       till: tillStore.currentTillID,
       do_update: sale.do_update,
       is_change: sale.is_change,
-      taxed_amount: sale.taxed_amount.toFixed(2),
-      exempt_amount: sale.exempt_amount.toFixed(2),
-      free_amount: sale.free_amount.toFixed(2),
-      igv_amount: sale.igv_amount.toFixed(2),
+      taxed_amount: parseFloat(sale.taxed_amount).toFixed(2),
+      exempt_amount: parseFloat(sale.exempt_amount).toFixed(2),
+      free_amount: parseFloat(sale.free_amount).toFixed(2),
+      igv_amount: parseFloat(sale.igv_amount).toFixed(2),
     });
   }
 }
@@ -180,4 +180,19 @@ export async function nullSale(id, pass, nullReason = undefined) {
     pass: pass,
     null_reason: nullReason,
   });
+}
+export async function sendWhatsapp(id, phone) {
+  const businessStore = useBusinessStore();
+  return await http.post(
+    `wsp/${id}/`,
+    {
+      number: phone,
+    },
+    {
+      baseURL: `${businessStore.business.api_url}/`,
+      headers: {
+        Authorization: `Bearer ${businessStore.business.api_token}`,
+      },
+    }
+  );
 }

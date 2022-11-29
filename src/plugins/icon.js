@@ -110,6 +110,9 @@ import {
   MdFactcheckTwotone,
   MdViewcarouselTwotone,
   FaFileInvoiceDollar,
+  BiWhatsapp,
+  MdOutgoingmail,
+  FaDownload,
 } from "oh-vue-icons/icons";
 OhVueIcon.add(
   BiThreeDots,
@@ -221,6 +224,9 @@ OhVueIcon.add(
   SiSimpleanalytics,
   MdFactcheckTwotone,
   MdViewcarouselTwotone,
-  FaFileInvoiceDollar
+  FaFileInvoiceDollar,
+  BiWhatsapp,
+  MdOutgoingmail,
+  FaDownload
 );
 export { OhVueIcon };

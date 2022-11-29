@@ -3,16 +3,31 @@
     <n-card title="Ventas" :segmented="{ content: 'hard' }">
       <template #header-extra>
         <n-space>
-          <n-select v-if="!userStore.user.branchoffice" class="ps-2" v-model:value="filterParams.branch"
-            :options="businessStore.branchSelectOptions" @update:value="refreshTable" />
-          <n-button v-if="userStore.hasPermission('make_excel_report')" type="info" tertiary @click="showReport = true">
-            Reporte</n-button>
+          <n-select
+            v-if="!userStore.user.branchoffice"
+            class="ps-2"
+            v-model:value="filterParams.branch"
+            :options="businessStore.branchSelectOptions"
+            @update:value="refreshTable"
+          />
+          <n-button
+            v-if="userStore.hasPermission('make_excel_report')"
+            type="info"
+            tertiary
+            @click="showReport = true"
+          >
+            Reporte</n-button
+          >
         </n-space>
       </template>
       <n-space justify="space-between">
-        <n-button type="info" text @click="
-          showFilters === false ? (showFilters = true) : (showFilters = false)
-        ">
+        <n-button
+          type="info"
+          text
+          @click="
+            showFilters === false ? (showFilters = true) : (showFilters = false)
+          "
+        >
           <v-icon name="md-filteralt-round" />
           {{ showFilters ? "Ocultar Filtros" : "Mostrar filtros" }}
         </n-button>
@@ -25,67 +40,131 @@
       </n-space>
       <n-collapse-transition class="mt-2" :show="showFilters">
         <n-form>
-          <n-grid responsive="screen" cols="6 s:6 m:12 l:12 xl:24 2xl:24" :x-gap="12">
+          <n-grid
+            responsive="screen"
+            cols="6 s:6 m:12 l:12 xl:24 2xl:24"
+            :x-gap="12"
+          >
             <n-form-item-gi label="Cliente" :span="4">
-              <n-input v-model:value="filterParams.customer" placeholder="" @keypress="isLetter($event)" />
+              <n-input
+                v-model:value="filterParams.customer"
+                placeholder=""
+                @keypress="isLetter($event)"
+              />
             </n-form-item-gi>
             <n-form-item-gi label="Serie" :span="2">
-              <n-select v-model:value="filterParams.serie" :options="saleStore.getSeriesOptions" placeholder=""
-                clearable />
+              <n-select
+                v-model:value="filterParams.serie"
+                :options="saleStore.getSeriesOptions"
+                placeholder=""
+                clearable
+              />
             </n-form-item-gi>
             <n-form-item-gi label="Número" :span="2">
-              <n-input v-model:value="filterParams.number" placeholder="" @keypress="isNumber($event)" />
+              <n-input
+                v-model:value="filterParams.number"
+                placeholder=""
+                @keypress="isNumber($event)"
+              />
             </n-form-item-gi>
             <n-form-item-gi label="Método Pago" :span="3">
-              <n-select v-model:value="filterParams.payment_method" :options="saleStore.getPaymentMethodsOptions"
-                placeholder="" clearable />
+              <n-select
+                v-model:value="filterParams.payment_method"
+                :options="saleStore.getPaymentMethodsOptions"
+                placeholder=""
+                clearable
+              />
             </n-form-item-gi>
             <n-form-item-gi label="Estado" :span="2">
-              <n-select v-model:value="filterParams.status" :options="statusOptions" placeholder="" clearable />
+              <n-select
+                v-model:value="filterParams.status"
+                :options="statusOptions"
+                placeholder=""
+                clearable
+              />
             </n-form-item-gi>
             <n-form-item-gi label="Fecha" :span="6">
-              <n-date-picker type="daterange" v-model:formatted-value="filterParams.date_sale" format="dd/MM/yyyy"
-                clearable />
+              <n-date-picker
+                type="daterange"
+                v-model:formatted-value="filterParams.date_sale"
+                format="dd/MM/yyyy"
+                clearable
+              />
             </n-form-item-gi>
             <n-form-item-gi :span="5">
-              <n-button type="info" secondary @click="performFilter">Buscar</n-button>
+              <n-button type="info" secondary @click="performFilter"
+                >Buscar</n-button
+              >
             </n-form-item-gi>
           </n-grid>
         </n-form>
       </n-collapse-transition>
-      <n-data-table class="mt-2" :scroll-x="900" :columns="tableColumns" :data="sales" :loading="isTableLoading"
-        :pagination="pagination" remote />
+      <n-data-table
+        class="mt-2"
+        :scroll-x="900"
+        :columns="tableColumns"
+        :data="sales"
+        :loading="isTableLoading"
+        :pagination="pagination"
+        remote
+      />
     </n-card>
-    <n-modal :class="{
-      'w-100': genericsStore.device === 'mobile',
-      'w-50': genericsStore.device === 'tablet',
-      'w-25': genericsStore.device === 'desktop',
-    }" preset="card" v-model:show="showConfirm" title="Anular pedido" :mask-closable="false" closable
-      @close="closeNullModal">
+    <n-modal
+      :class="{
+        'w-100': genericsStore.device === 'mobile',
+        'w-50': genericsStore.device === 'tablet',
+        'w-25': genericsStore.device === 'desktop',
+      }"
+      preset="card"
+      v-model:show="showConfirm"
+      title="Anular pedido"
+      :mask-closable="false"
+      closable
+      @close="closeNullModal"
+    >
       <n-form-item label="Ingrese clave de seguridad" required>
         <n-input type="password" v-model:value="passConfirm" placeholder="" />
       </n-form-item>
-      <n-form-item v-if="
-        addReason || settingsStore.business_settings.sale.required_null_reason
-      " label="Motivo de anulación" required>
+      <n-form-item
+        v-if="
+          addReason || settingsStore.business_settings.sale.required_null_reason
+        "
+        label="Motivo de anulación"
+        required
+      >
         <n-input v-model:value="nullReason" placeholder="" />
       </n-form-item>
       <n-space v-else justify="end">
-        <n-button type="info" text @click="addReason = true">Especificar motivo</n-button>
+        <n-button type="info" text @click="addReason = true"
+          >Especificar motivo</n-button
+        >
       </n-space>
       <template #action>
         <n-space justify="end">
-          <n-button type="success" :loading="isLoading" :disabled="
-            settingsStore.business_settings.sale.required_null_reason ||
+          <n-button
+            type="success"
+            :loading="isLoading"
+            :disabled="
+              settingsStore.business_settings.sale.required_null_reason ||
               addReason
-              ? !passConfirm || isLoading || !nullReason
-              : !passConfirm || isLoading
-          " secondary @click.prevent="performNullifySale">Confirmar</n-button>
+                ? !passConfirm || isLoading || !nullReason
+                : !passConfirm || isLoading
+            "
+            secondary
+            @click.prevent="performNullifySale"
+            >Confirmar</n-button
+          >
         </n-space>
       </template>
     </n-modal>
-    <SaleUpdate v-model:sale="saleId" @update:sale="onCloseUpdate" @on-success="updateSuccess" />
+    <SaleUpdate
+      v-model:sale="saleId"
+      @update:sale="onCloseUpdate"
+      @on-success="updateSuccess"
+    />
     <sale-report-modal v-model:show="showReport" />
+    <!-- <pdf-modal v-model:show="showPdf" :data="saleData" /> -->
+    <preview-drawer v-model:show="showPdf" :data="saleData" />
   </div>
 </template>
 
@@ -108,13 +187,15 @@ import { useBusinessStore } from "@/store/modules/business";
 import { useUserStore } from "@/store/modules/user";
 import { isNumber, isLetter } from "@/utils";
 import SaleUpdate from "./components/SaleUpdate";
-import SaleReportModal from "./components/SaleReportModal.vue";
+import SaleReportModal from "./components/SaleReportModal";
+import PreviewDrawer from "./components/PreviewDrawer";
 
 export default defineComponent({
   name: "Sale",
   components: {
     SaleUpdate,
     SaleReportModal,
+    PreviewDrawer,
   },
   setup() {
     const dateNow = ref(null);
@@ -361,7 +442,13 @@ export default defineComponent({
         });
     };
 
+    const showPdf = ref(false);
+
+    const saleData = ref(null);
+
     return {
+      showPdf,
+      saleData,
       saleStore,
       isLetter,
       isNumber,
@@ -410,8 +497,9 @@ export default defineComponent({
             onUpdateShow: () => (modal.value = null),
           }); */
         },
-        miscSale() {
-          message.success("Miscelaneo");
+        miscSale(row) {
+          saleData.value = row;
+          showPdf.value = true;
         },
         async sendSale(row) {
           isTableLoading.value = true;
@@ -443,6 +531,4 @@ export default defineComponent({
 });
 </script>
 
-<style>
-
-</style>
+<style></style>
