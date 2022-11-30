@@ -1245,8 +1245,7 @@ export default defineComponent({
         businessStore,
         saleStore,
         changing: changing.value,
-        show: ticketPreview.value,
-        auto: !ticketPreview.value,
+        show: true,
       });
 
       if (
