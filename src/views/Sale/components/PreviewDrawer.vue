@@ -6,19 +6,21 @@
     placement="right"
     width="272px"
     :on-after-leave="() => (send = false)"
+    :mask-closable="false"
   >
     <n-drawer-content
       body-content-style="padding: 0;"
       footer-style="padding: 0; height: auto; display: flex; flex-direction: column;"
       :native-scrollbar="false"
     >
-      <!-- <template #header>
-        <n-button type="success" tertiary>
-          <v-icon name="bi-whatsapp" />
-        </n-button>
-      </template> -->
+      <template #header>
+        <n-page-header
+          title="Previsualización"
+          @back="() => ($emit('update:show', false), $emit('canceled'))"
+        ></n-page-header>
+      </template>
       <default-preset ref="ticket" :data="data" />
-      <template #footer>
+      <template v-if="!previewOnly" #footer>
         <n-button class="fs-4" type="info" secondary block @click="generate">
           Imprimir
         </n-button>
@@ -87,15 +89,20 @@ export default defineComponent({
   components: {
     DefaultPreset,
   },
+  emits: ["update:show", "printed", "canceled"],
   props: {
     show: {
       type: Boolean,
+    },
+    previewOnly: {
+      type: Boolean,
+      default: false,
     },
     data: {
       type: Object,
     },
   },
-  setup(props) {
+  setup(props, { emit }) {
     const message = useMessage();
     const ticket = ref(null);
 
@@ -116,9 +123,11 @@ export default defineComponent({
         hotfixes: ["px_scaling"],
       });
       doc.html(ticket.value.$el.innerHTML, {
-        callback: function (doc) {
+        callback: async function (doc) {
           // doc.save();
-          printPdf(doc, format);
+          await printPdf(doc, format);
+          emit("update:show", false);
+          emit("printed");
         },
       });
     };

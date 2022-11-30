@@ -2,7 +2,7 @@ import { useSettingsStore } from "@/store/modules/settings";
 import qz from "qz-tray";
 import rs from "jsrsasign";
 
-export function printPdf(pdf, format) {
+export async function printPdf(pdf, format) {
   const settingsStore = useSettingsStore();
 
   qz.security.setCertificatePromise(function (resolve) {
@@ -28,12 +28,14 @@ export function printPdf(pdf, format) {
       }
     };
   });
-  qz.websocket
+  await qz.websocket
     .connect({
       host: settingsStore.business_settings.qz_config.host,
     })
     .then(async () => {
-      const printer = await qz.printers.getDefault();
+      const printer = !settingsStore.businessSettings.sale.printer_name
+        ? await qz.printers.getDefault()
+        : settingsStore.businessSettings.sale.printer_name;
       //console.log(printer);
       const config = qz.configs.create(printer, {
         size: {

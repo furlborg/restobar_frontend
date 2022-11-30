@@ -197,6 +197,12 @@
           cols="6 s:6 m:12 l:12 xl:24 2xl:24"
           x-gap="12"
         >
+          <n-form-item-gi :span="3" label="Impresora de documentos">
+            <n-input
+              v-model:value="businessSettings.sale.printer_name"
+              placeholder=""
+            />
+          </n-form-item-gi>
           <n-form-item-gi :span="3" label="Documento por defecto">
             <n-select
               v-model:value="businessSettings.sale.default_invoice"
@@ -241,6 +247,11 @@
             <n-checkbox
               v-model:checked="businessSettings.sale.manage_affectations"
               >Manejar Afectaciones</n-checkbox
+            >
+          </n-form-item-gi>
+          <n-form-item-gi :span="4">
+            <n-checkbox v-model:checked="businessSettings.sale.show_preview"
+              >Mostrar previsualización</n-checkbox
             >
           </n-form-item-gi>
         </n-grid>
