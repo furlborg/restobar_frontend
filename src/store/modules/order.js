@@ -44,6 +44,7 @@ export const useOrderStore = defineStore("order", {
       return null;
     },
     addOrder(product) {
+      const settingsStore = useSettingsStore();
       const existence = this.orders.find(
         (order) => order.product === product.id
       );
@@ -58,13 +59,18 @@ export const useOrderStore = defineStore("order", {
           indication: [],
           icbper: product.icbper,
           product_affectation: product.affectation,
-          product_igv: product.igv_tax,
+          product_igv: !Number(product.igv_tax)
+            ? settingsStore.businessSettings.sale.igv_tax
+            : Number(product.igv_tax),
           quick_indications: product.quick_indications,
         };
+        console.log(settingsStore.businessSettings.sale.igv_tax);
+        console.log(order.product_igv);
         this.orders.push(order);
       }
     },
     addOrderItem(product) {
+      const settingsStore = useSettingsStore();
       const existence = this.orders.find(
         (order) => order.product === product.id
       );
@@ -92,9 +98,13 @@ export const useOrderStore = defineStore("order", {
           indication: product.indication,
           icbper: product.icbper,
           product_affectation: product.affectation,
-          product_igv: product.igv_tax,
+          product_igv: !Number(product.igv_tax)
+            ? settingsStore.businessSettings.sale.igv_tax
+            : Number(product.igv_tax),
           quick_indications: product.quick_indications,
         };
+        console.log(settingsStore.businessSettings.sale.igv_tax);
+        console.log(order.product_igv);
         this.orders.push(order);
       }
     },
