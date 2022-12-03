@@ -147,6 +147,12 @@
           </n-form-item-gi>
           <n-form-item-gi :span="3">
             <n-checkbox
+              v-model:checked="businessSettings.order.pending_takeaway"
+              >Para llevar pendiente</n-checkbox
+            >
+          </n-form-item-gi>
+          <n-form-item-gi :span="3">
+            <n-checkbox
               v-model:checked="businessSettings.order.select_order_user"
               >Seleccionar Usuario</n-checkbox
             >

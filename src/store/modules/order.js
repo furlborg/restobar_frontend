@@ -64,8 +64,6 @@ export const useOrderStore = defineStore("order", {
             : Number(product.igv_tax),
           quick_indications: product.quick_indications,
         };
-        console.log(settingsStore.businessSettings.sale.igv_tax);
-        console.log(order.product_igv);
         this.orders.push(order);
       }
     },
@@ -103,8 +101,6 @@ export const useOrderStore = defineStore("order", {
             : Number(product.igv_tax),
           quick_indications: product.quick_indications,
         };
-        console.log(settingsStore.businessSettings.sale.igv_tax);
-        console.log(order.product_igv);
         this.orders.push(order);
       }
     },

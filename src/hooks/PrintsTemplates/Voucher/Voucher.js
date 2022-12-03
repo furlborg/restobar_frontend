@@ -92,7 +92,6 @@ const VoucherPrint = (props) => {
         });
 
     for (let i in newTotal) {
-      console.log(newTotal[i]);
       if (!!parseFloat(newTotal[i])) {
         datTotals.push({
           tittle: i,

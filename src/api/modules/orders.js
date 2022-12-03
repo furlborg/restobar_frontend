@@ -1,4 +1,5 @@
 import { http } from "@/api";
+import { useSettingsStore } from "@/store/modules/settings";
 import { useBusinessStore } from "@/store/modules/business";
 import { useTillStore } from "@/store/modules/till";
 import { useUserStore } from "@/store/modules/user";
@@ -89,6 +90,7 @@ export async function listOrderDetails(order) {
 
 export async function takeAwayOrder(order_details, sale_data, user) {
   const businessStore = useBusinessStore();
+  const settingsStore = useSettingsStore();
   const tillStore = useTillStore();
   const userStore = useUserStore();
   let details = order_details.map((order) => ({
@@ -105,7 +107,11 @@ export async function takeAwayOrder(order_details, sale_data, user) {
     ask_for: sale_data.ask_for,
     user: !user ? null : user,
     status:
-      sale_data.delivery_info || userStore.user.role === "MOZO" ? "1" : "2",
+      sale_data.delivery_info || userStore.user.role === "MOZO"
+        ? "1"
+        : settingsStore.business_settings.order.pending_takeaway
+        ? "1"
+        : "2",
   };
   let sale = {
     order: sale_data.order,
