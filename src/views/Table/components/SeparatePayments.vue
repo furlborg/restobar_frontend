@@ -853,7 +853,7 @@ export default defineComponent({
       const customer = customerResults.value.find(
         (customer) => customer.id === sale.value.customer
       );
-      whatsappNumber.value = customer.phone;
+      whatsappNumber.value = !customer.phone ? "" : customer.phone;
       if (typeof customer !== "undefined") {
         addressesOptions.value = customer.addresses.map((address) => ({
           value: address.id,
@@ -939,7 +939,7 @@ export default defineComponent({
         customerResults.value.push(customer);
         sale.value.customer_name = `${customer.doc_num} - ${customer.names}`;
         sale.value.customer = customer.id;
-        whatsappNumber.value = customer.phone;
+        whatsappNumber.value = !customer.phone ? "" : customer.phone;
         createAddressesOptions();
       } else if (sale.value.invoice_type !== 1) {
         customerResults.value.push(customer);
