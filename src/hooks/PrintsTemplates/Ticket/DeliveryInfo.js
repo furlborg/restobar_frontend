@@ -136,13 +136,6 @@ const printDeliveryInfo = (props) => {
           twoPoints: ":",
           cont: props.data.delivery_info.amount,
         },
-      ],
-      fontSize:
-        settingsStore.business_settings.printer.delivery_ticket_font_size,
-      line: true,
-    },
-    {
-      dat: [
         {
           tittle: "TOTAL",
           twoPoints: ":",
