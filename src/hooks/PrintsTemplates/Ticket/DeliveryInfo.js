@@ -134,7 +134,7 @@ const printDeliveryInfo = (props) => {
         {
           tittle: "DELIVERY",
           twoPoints: ":",
-          cont: props.data.delivery_info.amount,
+          cont: Number(props.data.delivery_info.amount).toFixed(2),
         },
         {
           tittle: "TOTAL",
