@@ -2,7 +2,12 @@ import { useSettingsStore } from "@/store/modules/settings";
 import qz from "qz-tray";
 import rs from "jsrsasign";
 
-export async function printPdf(pdf, format) {
+export async function printPdf(
+  pdf,
+  format,
+  printer_name = null,
+  cb = undefined
+) {
   const settingsStore = useSettingsStore();
 
   qz.security.setCertificatePromise(function (resolve) {
@@ -33,9 +38,16 @@ export async function printPdf(pdf, format) {
       host: settingsStore.business_settings.qz_config.host,
     })
     .then(async () => {
-      const printer = !settingsStore.businessSettings.sale.printer_name
-        ? await qz.printers.getDefault()
-        : settingsStore.businessSettings.sale.printer_name;
+      const printer = !printer_name
+        ? !settingsStore.businessSettings.sale.printer_name
+          ? await qz.printers.getDefault()
+          : settingsStore.businessSettings.sale.printer_name
+        : printer_name;
+      qz.printers.setPrinterCallbacks((data) => {
+        console.log(data);
+        !!cb && cb(data);
+      });
+      qz.printers.startListening(printer);
       //console.log(printer);
       const config = qz.configs.create(printer, {
         size: {
@@ -52,11 +64,13 @@ export async function printPdf(pdf, format) {
           data: pdf.output("datauristring").split(",")[1],
         },
       ]).then(() => {
-        qz.websocket.disconnect();
+        // qz.printers.stopListening();
+        // qz.websocket.disconnect();
       });
     })
     .catch((error) => {
       console.error(error);
+      qz.printers.stopListening();
       qz.websocket.disconnect();
     });
 }

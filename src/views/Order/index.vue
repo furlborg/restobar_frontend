@@ -90,6 +90,7 @@
         remote
       />
     </n-card>
+    <ticket-preview v-model:show="showPreview" :data="ticketData" />
     <n-modal
       :class="{
         'w-100': genericsStore.device === 'mobile',
@@ -227,13 +228,12 @@
 
 <script>
 import printDeliveryInfo from "@/hooks/PrintsTemplates/Ticket/DeliveryInfo.js";
-import printOrderTicket from "@/hooks/PrintsTemplates/Ticket/OrderTicket.js";
-import printWEBADASDEBRASEROS from "@/hooks/PrintsTemplates/Ticket/WEBADASDEBRASEROS.js";
 import { defineComponent, ref, computed, onMounted } from "vue";
 import { useMessage, useDialog } from "naive-ui";
 import { set, format } from "date-fns";
 import DetailsModal from "./components/DetailsModal";
 import DeliveryModal from "./components/DeliveryModal";
+import TicketPreview from "./components/TicketPreview";
 import { createOrderColumns } from "@/utils/constants";
 import { useSaleStore } from "@/store/modules/sale";
 import { useBusinessStore } from "@/store/modules/business";
@@ -258,6 +258,7 @@ export default defineComponent({
   components: {
     DetailsModal,
     DeliveryModal,
+    TicketPreview,
   },
   setup() {
     const message = useMessage();
@@ -653,6 +654,10 @@ export default defineComponent({
       }
     });
 
+    const showPreview = ref(false);
+
+    const ticketData = ref(null);
+
     return {
       settingsStore,
       isLetter,
@@ -690,6 +695,8 @@ export default defineComponent({
       evalPayments,
       performUpdateOrderStatus,
       currentPaymentsAmount,
+      showPreview,
+      ticketData,
       tableColumns: createOrderColumns({
         showDetails(row) {
           idOrder.value = row.id;
@@ -753,54 +760,53 @@ export default defineComponent({
         async printOrder(row) {
           await retrieveOrder(row.id)
             .then((response) => {
-              if (response.status === 200) {
-                let objProps = {};
-                switch (row.order_type) {
-                  case "M":
-                    objProps = {
-                      data: response.data,
-                      table: response.data.table,
-                      created: row.created,
-                    };
-                    break;
-                  case "P":
-                    objProps = {
-                      data: response.data,
-                      saleInf: {},
-                      created: row.created,
-                    };
-                    break;
-                  case "D":
-                    objProps = {
-                      data: response.data,
-                      saleInf: { delivery_info: response.data.delivery_info },
-                      changing:
-                        response.data.amount -
-                        parseFloat(response.data.given_amount),
-                      created: row.created,
-                    };
-
-                    break;
-                  default:
-                    message.error(
-                      "Error al definir las propiedades de la impresión"
-                    );
-                }
-
-                switch (
-                  settingsStore.business_settings.printer.kitchen_ticket_format
-                ) {
-                  case 1:
-                    printOrderTicket(objProps);
-                    break;
-                  case 2:
-                    printWEBADASDEBRASEROS(objProps);
-                    break;
-
-                  default:
-                    message.error("No se encontro el formato de impresion");
-                }
-              }
+              ticketData.value = response.data;
+              showPreview.value = true;
+              // if (response.status === 200) {
+              //   let objProps = {};
+              //   switch (row.order_type) {
+              //     case "M":
+              //       objProps = {
+              //         data: response.data,
+              //         table: response.data.table,
+              //         created: row.created,
+              //       };
+              //       break;
+              //     case "P":
+              //       objProps = {
+              //         data: response.data,
+              //         saleInf: {},
+              //         created: row.created,
+              //       };
+              //       break;
+              //     case "D":
+              //       objProps = {
+              //         data: response.data,
+              //         saleInf: { delivery_info: response.data.delivery_info },
+              //         changing:
+              //           response.data.amount -
+              //           parseFloat(response.data.given_amount),
+              //         created: row.created,
+              //       };
+              //       break;
+              //     default:
+              //       message.error(
+              //         "Error al definir las propiedades de la impresión"
+              //       );
+              //   }
+              //   switch (
+              //     settingsStore.business_settings.printer.kitchen_ticket_format
+              //   ) {
+              //     case 1:
+              //       printOrderTicket(objProps);
+              //       break;
+              //     case 2:
+              //       printWEBADASDEBRASEROS(objProps);
+              //       break;
+              //     default:
+              //       message.error("No se encontro el formato de impresion");
+              //   }
+              // }
             })
             .catch((error) => {
               console.error(error);

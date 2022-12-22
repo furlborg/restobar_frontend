@@ -84,7 +84,7 @@
                 <td>UND</td>
                 <td align="left">{{ item.descripcion }}</td>
                 <td align="right">{{ item.precio_unitario.toFixed(2) }}</td>
-                <td align="right">10.00</td>
+                <td align="right">0.00</td>
                 <td align="right">{{ item.total_item.toFixed(2) }}</td>
               </tr>
             </tbody>
@@ -260,7 +260,7 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .ticket {
   font-family: Arial, Helvetica, sans-serif;
   background-color: White;

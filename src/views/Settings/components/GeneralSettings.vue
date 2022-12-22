@@ -223,7 +223,11 @@
                       />
                     </n-form-item-gi>
                     <n-form-item-gi :span="4" label="Nombre de impresora">
-                      <n-input v-model:value="printerName" placeholder="" />
+                      <n-select
+                        v-model:value="printerName"
+                        :options="printerStore.getPrintersOptions"
+                        placeholder=""
+                      />
                     </n-form-item-gi>
                     <n-form-item-gi :span="4" label="Formato de impresora">
                       <n-select
@@ -679,6 +683,7 @@ import { useMessage } from "naive-ui";
 import { cloneDeep } from "@/utils";
 import { useTableStore } from "@/store/modules/table";
 import { useUserStore } from "@/store/modules/user";
+import { usePrinterStore } from "@/store/modules/printer";
 import { useProductStore } from "@/store/modules/product";
 import {
   createArea,
@@ -710,6 +715,7 @@ export default defineComponent({
     const message = useMessage();
     const router = useRouter();
     const tableStore = useTableStore();
+    const printerStore = usePrinterStore();
     const productStore = useProductStore();
     const userStore = useUserStore();
     const isLoadingData = ref(false);
@@ -1279,6 +1285,7 @@ export default defineComponent({
       performUpdateTable,
       preparationPlaces,
       preparationPlace,
+      printerStore,
       printerName,
       printerFormat,
       printerFormatOptions,

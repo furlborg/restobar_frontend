@@ -4,6 +4,7 @@ import {
   getProductPlaces,
   getProductAffectations,
 } from "@/api/modules/products";
+import { usePrinterStore } from "@/store/modules/printer";
 
 export const useProductStore = defineStore("product", {
   state: () => ({
@@ -18,6 +19,9 @@ export const useProductStore = defineStore("product", {
         label: affectation.description,
       }));
     },
+    getPlacesPrinters() {
+      return this.places.map((place) => place.printer_name);
+    },
   },
   actions: {
     async initializeStore() {
@@ -30,7 +34,13 @@ export const useProductStore = defineStore("product", {
         });
       await getProductPlaces()
         .then((response) => {
+          const printerStore = usePrinterStore();
           this.places = response.data;
+          printerStore.managedPrinters = [
+            printerStore.managedPrinters[0],
+            ...this.getPlacesPrinters,
+          ];
+          printerStore.startListeningPrinters();
         })
         .catch((error) => {
           console.error(error);
@@ -55,7 +65,12 @@ export const useProductStore = defineStore("product", {
     async refreshPlaces() {
       return await getProductPlaces()
         .then((response) => {
+          const printerStore = usePrinterStore();
           this.places = response.data;
+          printerStore.managedPrinters = [
+            printerStore.managedPrinters[0],
+            ...this.getPlacesPrinters,
+          ];
         })
         .catch((error) => {
           console.error(error);
@@ -87,6 +102,14 @@ export const useProductStore = defineStore("product", {
       );
       if (place) {
         return place.printer_name;
+      } else {
+        return null;
+      }
+    },
+    getPlacePrinterPlace(printer) {
+      const place = this.places.find((place) => place.printer_name === printer);
+      if (place) {
+        return place.description;
       } else {
         return null;
       }

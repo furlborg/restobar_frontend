@@ -72,6 +72,7 @@ import { useRouter } from "vue-router";
 import { useUserStore } from "@/store/modules/user";
 import { retrieveCurrentTill } from "@/api/modules/tills";
 import { useTillStore } from "@/store/modules/till";
+import { usePrinterStore } from "@/store/modules/printer";
 import { useBusinessStore } from "@/store/modules/business";
 import ProjectSetting from "./ProjectSetting";
 import { renderIcon } from "@/utils";
@@ -92,6 +93,7 @@ export default defineComponent({
     const dialog = useDialog();
     const drawerSetting = ref();
     const userStore = useUserStore();
+    const printerStore = usePrinterStore();
     const businessStore = useBusinessStore();
     const tillStore = useTillStore();
 
@@ -189,6 +191,7 @@ export default defineComponent({
         onPositiveClick: async () => {
           await userStore.blacklistToken().then((v) => {
             if (v) {
+              printerStore.endConnection();
               router.push({ name: "Login" });
             }
           });

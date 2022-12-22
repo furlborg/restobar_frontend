@@ -232,6 +232,15 @@
         </template>
       </n-drawer-content>
     </n-drawer>
+    <ticket-preview
+      ref="ticketPreview"
+      v-model:show="showPdf"
+      :data="pdfData"
+      :hidden="true"
+      :isUpdate="true"
+      @printed="() => $router.push({ name: 'WHome' })"
+      @canceled="() => $router.push({ name: 'WHome' })"
+    />
   </div>
 </template>
 
@@ -244,6 +253,7 @@ import { useRoute } from "vue-router";
 import { useRouter } from "vue-router";
 import { useMessage } from "naive-ui";
 import ProductIndications from "./ProductIndications";
+import TicketPreview from "@/views/Order/components/TicketPreview";
 import { useProductStore } from "@/store/modules/product";
 import { useTableStore } from "@/store/modules/table";
 import { useOrderStore } from "@/store/modules/order";
@@ -258,6 +268,7 @@ export default defineComponent({
   name: "WProducts",
   components: {
     ProductIndications,
+    TicketPreview,
   },
   setup() {
     const message = useMessage();
@@ -301,24 +312,14 @@ export default defineComponent({
             //   table,
             // });
 
-            switch (
-              settingsStore.business_settings.printer.kitchen_ticket_format
-            ) {
-              case 1:
-                printOrderTicket({ data: response.data, table });
-                break;
-              case 2:
-                printWEBADASDEBRASEROS({ data: response.data, table });
-                break;
-
-              default:
-                message.error("No se encontro el formato de impresion");
-            }
+            pdfData.value = response.data;
+            showPdf.value = true;
+            setTimeout(() => ticketPreview.value.generate(), 100);
 
             activeDrawer.value = false;
             tableStore.refreshData();
             waiterStore.preOrderList = [];
-            router.push({ name: "WHome" });
+            // router.push({ name: "WHome" });
           }
         })
         .catch((error) => {
@@ -368,38 +369,14 @@ export default defineComponent({
               response.data.order_details
             );
 
-            // printOrderTicket({
-            //   data: response.data,
-            //   table,
-            //   updateOrder: true,
-            // });
-
-            switch (
-              settingsStore.business_settings.printer.kitchen_ticket_format
-            ) {
-              case 1:
-                printOrderTicket({
-                  data: response.data,
-                  table,
-                  updateOrder: true,
-                });
-                break;
-              case 2:
-                printWEBADASDEBRASEROS({
-                  data: response.data,
-                  table,
-                  updateOrder: true,
-                });
-                break;
-
-              default:
-                message.error("No se encontro el formato de impresion");
-            }
+            pdfData.value = response.data;
+            showPdf.value = true;
+            setTimeout(() => ticketPreview.value.generate(), 100);
 
             activeDrawer.value = false;
             tableStore.refreshData();
             waiterStore.preOrderList = [];
-            router.push({ name: "WHome" });
+            // router.push({ name: "WHome" });
           }
         })
         .catch((error) => {
@@ -473,6 +450,12 @@ export default defineComponent({
 
     const ask_for = ref(null);
 
+    const ticketPreview = ref(null);
+
+    const showPdf = ref(false);
+
+    const pdfData = ref(null);
+
     return {
       loading,
       search,
@@ -489,6 +472,9 @@ export default defineComponent({
       settingsStore,
       showAskFor,
       ask_for,
+      ticketPreview,
+      showPdf,
+      pdfData,
     };
   },
 });

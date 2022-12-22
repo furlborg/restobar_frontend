@@ -2,13 +2,21 @@
   <n-layout position="absolute">
     <n-layout-header style="height: 48px" position="absolute" bordered>
       <n-space class="h-100 m-0" align="center" justify="space-between">
-        <div class="d-flex ms-2 fs-6" v-if="$route.params.table">
+        <div v-if="$route.params.table" class="d-flex ms-2 fs-6">
           <n-button text @click="$router.back()">
             <v-icon name="md-arrowback-round" />
           </n-button>
           <div class="ms-2">
             {{ tableStore.getTableByID($route.params.table).description }}
           </div>
+        </div>
+        <div class="position-absolute top-0 end-0 me-1">
+          <v-icon
+            name="fa-circle"
+            scale="0.75"
+            :color="isConnected ? 'green' : 'red'"
+            :animation="isConnected ? undefined : 'flash'"
+          />
         </div>
         <div
           class="menuBtn"
@@ -73,6 +81,7 @@ import { defineComponent, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useDialog } from "naive-ui";
 import { retrieveCurrentTill } from "@/api/modules/tills";
+import { usePrinterStore } from "@/store/modules/printer";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useTableStore } from "@/store/modules/table";
 import { useProductStore } from "@/store/modules/product";
@@ -87,6 +96,7 @@ export default defineComponent({
     const dialog = useDialog();
     const router = useRouter();
     const waiterStore = useWaiterStore();
+    const printerStore = usePrinterStore();
     const settingsStore = useSettingsStore();
     const tableStore = useTableStore();
     const tillStore = useTillStore();
@@ -95,6 +105,12 @@ export default defineComponent({
     tableStore.initializeStore();
     settingsStore.initializeStore();
     productStore.initializeStore();
+
+    const isConnected = ref(false);
+
+    setInterval(() => {
+      isConnected.value = printerStore.qz.websocket.isActive();
+    }, 1000);
 
     const checkTill = () => {
       retrieveCurrentTill()
@@ -122,6 +138,7 @@ export default defineComponent({
         onPositiveClick: async () => {
           await userStore.blacklistToken().then((v) => {
             if (v) {
+              printerStore.endConnection();
               router.push({ name: "Login" });
             }
           });
@@ -131,11 +148,13 @@ export default defineComponent({
     };
 
     return {
+      printerStore,
       waiterStore,
       tableStore,
       userStore,
       doLogout,
       active,
+      isConnected,
     };
   },
 });
@@ -231,7 +250,7 @@ header {
 /* main menu block */
 .mainMenu {
   background-color: #fff;
-  position: absolute;
+  position: relative;
   left: 0;
   top: 0;
   z-index: 100;

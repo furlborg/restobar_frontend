@@ -466,7 +466,6 @@
 </template>
 
 <script>
-import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 import { defineComponent, ref, toRefs, computed, watch, onMounted } from "vue";
 import { isAxiosError } from "axios";
 import CustomerModal from "@/views/Customer/components/CustomerModal";

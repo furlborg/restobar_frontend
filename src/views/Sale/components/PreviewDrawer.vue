@@ -7,6 +7,7 @@
     width="272px"
     :on-after-leave="() => (send = false)"
     :mask-closable="false"
+    :z-index="!previewOnly ? undefined : -1000000"
   >
     <n-drawer-content
       body-content-style="padding: 0;"
@@ -78,7 +79,7 @@
 <script>
 import { defineComponent, ref } from "vue";
 import { useMessage } from "naive-ui";
-import { printPdf } from "@/utils/printer";
+import { usePrinterStore } from "@/store/modules/printer";
 import { jsPDF } from "jspdf";
 import DefaultPreset from "./pdf-presets/DefaultPreset";
 import { isNumber } from "@/utils";
@@ -103,6 +104,7 @@ export default defineComponent({
     },
   },
   setup(props, { emit }) {
+    const printerStore = usePrinterStore();
     const message = useMessage();
     const ticket = ref(null);
 
@@ -125,9 +127,13 @@ export default defineComponent({
       doc.html(ticket.value.$el.innerHTML, {
         callback: async function (doc) {
           // doc.save();
-          await printPdf(doc, format);
-          emit("update:show", false);
+          await printerStore.printTicket(
+            doc,
+            format,
+            `SALE#${props.data.id}#${props.data.serie}-${props.data.number}`
+          );
           emit("printed");
+          emit("update:show", false);
         },
       });
     };

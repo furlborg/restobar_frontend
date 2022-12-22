@@ -204,8 +204,9 @@
           x-gap="12"
         >
           <n-form-item-gi :span="3" label="Impresora de documentos">
-            <n-input
+            <n-select
               v-model:value="businessSettings.sale.printer_name"
+              :options="printerStore.getPrintersOptions"
               placeholder=""
             />
           </n-form-item-gi>
@@ -320,6 +321,7 @@
 import { defineComponent, ref, computed } from "vue";
 import { useMessage } from "naive-ui";
 import { useRouter } from "vue-router";
+import { usePrinterStore } from "@/store/modules/printer";
 import { useProductStore } from "@/store/modules/product";
 import { useSettingsStore } from "@/store/modules/settings";
 import { updateBusinessSettings } from "@/api/modules/business";
@@ -329,6 +331,7 @@ export default defineComponent({
   name: "AdvancedSettings",
   setup() {
     const router = useRouter();
+    const printerStore = usePrinterStore();
     const productStore = useProductStore();
     const settingsStore = useSettingsStore();
     const message = useMessage();
@@ -406,6 +409,7 @@ export default defineComponent({
       handleBack,
       printOptions,
       invoiceOptions,
+      printerStore,
       productStore,
       businessSettings,
       performUpdateBusinessSettings,

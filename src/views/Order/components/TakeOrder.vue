@@ -467,6 +467,21 @@
                       : "Realizar pedido"
                   }}
                 </n-button>
+                <ticket-preview
+                  ref="ticketPreviewRef"
+                  v-model:show="showPdf"
+                  :data="pdfData"
+                  :hidden="true"
+                  :isUpdate="true"
+                />
+                <preview-drawer
+                  ref="voucherDrawer"
+                  v-model:show="showVoucher"
+                  :data="voucherData"
+                  :previewOnly="!ticketPreview"
+                  @printed="() => $router.push({ name: 'TableHome' })"
+                  @canceled="() => $router.push({ name: 'TableHome' })"
+                />
               </n-card>
             </n-spin>
             <CategoriesList v-else />
@@ -743,7 +758,8 @@ import {
   searchRucCustomer,
 } from "@/api/modules/customer";
 import format from "date-fns/format";
-
+import TicketPreview from "@/views/Order/components/TicketPreview";
+import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 const dateNow = ref(null);
 
 export default defineComponent({
@@ -753,6 +769,8 @@ export default defineComponent({
     OrderIndications,
     CustomerModal,
     CategoriesList,
+    TicketPreview,
+    PreviewDrawer,
   },
   setup() {
     const userStore = useUserStore();
@@ -1312,11 +1330,19 @@ export default defineComponent({
       await takeAwayOrder(orderStore.orderList, sale.value, userConfirm.value)
         .then((response) => {
           if (response.status === 201) {
-            PrintsAfterTakeOrder(response.data);
+            // PrintsAfterTakeOrder(response.data);
+            pdfData.value = response.data.order;
+            showPdf.value = true;
+            setTimeout(() => ticketPreviewRef.value.generate(), 100);
+            voucherData.value = response.data.sale;
+            showVoucher.value = true;
+            if (!ticketPreview.value) {
+              setTimeout(() => voucherDrawer.value.generate(), 200);
+            }
 
             message.success("Venta realizada correctamente!");
 
-            router.push({ name: "TableHome" });
+            // router.push({ name: "TableHome" });
           }
         })
         .catch((error) => {
@@ -1370,7 +1396,14 @@ export default defineComponent({
                 )
                   .then((response) => {
                     if (response.status === 201) {
-                      PrintsAfterTakeOrder(response.data);
+                      pdfData.value = response.data.order;
+                      showPdf.value = true;
+                      setTimeout(() => ticketPreviewRef.value.generate(), 100);
+                      voucherData.value = response.data.sale;
+                      showVoucher.value = true;
+                      if (!ticketPreview.value) {
+                        setTimeout(() => voucherDrawer.value.generate(), 200);
+                      }
                       message.success("Venta realizada correctamente!");
                       if (
                         settingsStore.businessSettings.sale.auto_send &&
@@ -1435,7 +1468,7 @@ export default defineComponent({
                             });
                         }
                       }
-                      router.push({ name: "TableHome" });
+                      // router.push({ name: "TableHome" });
                     }
                   })
                   .catch((error) => {
@@ -1615,6 +1648,18 @@ export default defineComponent({
 
     const whatsappNumber = ref("");
 
+    const ticketPreviewRef = ref(null);
+
+    const showPdf = ref(false);
+
+    const pdfData = ref(null);
+
+    const voucherDrawer = ref(null);
+
+    const showVoucher = ref(false);
+
+    const voucherData = ref(null);
+
     return {
       isDecimal,
       loading,
@@ -1675,6 +1720,12 @@ export default defineComponent({
       totalDSCT,
       whatsappNumber,
       ticketPreview,
+      ticketPreviewRef,
+      showPdf,
+      pdfData,
+      voucherDrawer,
+      showVoucher,
+      voucherData,
     };
   },
 });

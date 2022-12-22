@@ -286,6 +286,15 @@
         :order="orderStore.orderList[itemIndex]"
         @success="showModal = false"
       ></OrderIndications>
+      <ticket-preview
+        ref="ticketPreview"
+        v-model:show="showPdf"
+        :data="pdfData"
+        :hidden="true"
+        :isUpdate="true"
+        @printed="() => $router.push({ name: 'TableHome' })"
+        @canceled="() => $router.push({ name: 'TableHome' })"
+      />
     </n-card>
   </div>
 </template>
@@ -294,6 +303,7 @@
 import printOrderTicket from "@/hooks/PrintsTemplates/Ticket/OrderTicket.js";
 import printWEBADASDEBRASEROS from "@/hooks/PrintsTemplates/Ticket/WEBADASDEBRASEROS.js";
 import OrderIndications from "./OrderIndications";
+import TicketPreview from "@/views/Order/components/TicketPreview";
 import { defineComponent, ref, computed, onMounted, watchEffect, h } from "vue";
 import {
   useRoute,
@@ -324,6 +334,7 @@ export default defineComponent({
   name: "TableOrder",
   components: {
     OrderIndications,
+    TicketPreview,
   },
   setup() {
     const userStore = useUserStore();
@@ -443,23 +454,10 @@ export default defineComponent({
       )
         .then(async (response) => {
           if (response.status === 201) {
+            pdfData.value = response.data;
+            showPdf.value = true;
+            setTimeout(() => ticketPreview.value.generate(), 100);
             checkState.value = true;
-
-            switch (
-              settingsStore.business_settings.printer.kitchen_ticket_format
-            ) {
-              case 1:
-                printOrderTicket({ data: response.data, table });
-                break;
-              case 2:
-                printWEBADASDEBRASEROS({ data: response.data, table });
-                break;
-
-              default:
-                message.error("No se encontro el formato de impresion");
-            }
-
-            router.push({ name: "TableHome" });
           }
         })
         .catch((error) => {
@@ -537,31 +535,10 @@ export default defineComponent({
             response.data.order_details = evalOrderList(
               response.data.order_details
             );
-
+            pdfData.value = response.data;
+            showPdf.value = true;
+            setTimeout(() => ticketPreview.value.generate(), 100);
             checkState.value = true;
-
-            switch (
-              settingsStore.business_settings.printer.kitchen_ticket_format
-            ) {
-              case 1:
-                printOrderTicket({
-                  data: response.data,
-                  table,
-                  updateOrder: true,
-                });
-                break;
-              case 2:
-                printWEBADASDEBRASEROS({
-                  data: response.data,
-                  table,
-                  updateOrder: true,
-                });
-                break;
-
-              default:
-                message.error("No se encontro el formato de impresion");
-            }
-            router.push({ name: "TableHome" });
           }
         })
         .catch((error) => {
@@ -853,6 +830,12 @@ export default defineComponent({
       }
     };
 
+    const ticketPreview = ref(null);
+
+    const showPdf = ref(false);
+
+    const pdfData = ref(null);
+
     return {
       showModal,
       itemIndex,
@@ -890,6 +873,9 @@ export default defineComponent({
       activeUsersStore,
       orderUser,
       settingsStore,
+      ticketPreview,
+      showPdf,
+      pdfData,
     };
   },
 });
