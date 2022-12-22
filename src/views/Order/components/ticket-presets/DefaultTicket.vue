@@ -6,6 +6,7 @@
           {{ info.table || (!info.delivery_info ? "PARA LLEVAR" : "DELIVERY") }}
         </div>
         <div class="ticket-header-subtitle">ORDEN #{{ info.id }}</div>
+        <div v-if="isUpdate" class="ticket-header-subtitle">ACTUALIZACIÓN</div>
       </div>
       <div class="ticket-body">
         <div
