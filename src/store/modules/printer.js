@@ -56,6 +56,7 @@ export const usePrinterStore = defineStore("printer", {
         this.qz.websocket
           .connect({
             host: this.host,
+            usingSecure: !/(android)/i.test(navigator.userAgent),
           })
           .then(() => {
             this.getPrinters();
