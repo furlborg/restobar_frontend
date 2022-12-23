@@ -6,8 +6,13 @@
           <v-icon name="hi-solid-refresh" />
           Recargar
         </n-button>
-        <n-button v-if="userStore.hasPermission('take_away_order')" type="info" secondary
-          @click="$router.push({ name: 'TakeOrder' })">Llevar / Delivery</n-button>
+        <n-button
+          v-if="userStore.hasPermission('take_away_order')"
+          type="info"
+          secondary
+          @click="$router.push({ name: 'TakeOrder' })"
+          >Llevar / Delivery</n-button
+        >
       </n-space>
       <!-- <n-button
         v-if="!groupMode"
@@ -33,94 +38,144 @@
       </n-space> -->
     </template>
     <n-spin v-if="tillStore.currentTillID" :show="isLoading">
-      <n-card class="my-2" v-for="area in tableStore.branchAreas" :key="area.id" :title="area.description" embedded>
-        <n-grid responsive="screen" cols="3 xs:3 s:12 m:12 l:15 xl:21 2xl:21" :x-gap="12" :y-gap="12">
+      <n-card
+        class="my-2"
+        v-for="area in tableStore.branchAreas"
+        :key="area.id"
+        :title="area.description"
+        embedded
+      >
+        <n-grid
+          responsive="screen"
+          cols="3 xs:3 s:12 m:12 l:15 xl:21 2xl:21"
+          :x-gap="12"
+          :y-gap="12"
+        >
           <n-gi v-for="table in area.tables" :key="table.id" :span="3">
-            <n-card :id="`table-${table.id}`" class="position-relative overflow-hidden rounded-3"
-              :class="{ 'bg-occuped': table.status === '3' }" size="small" @click="
+            <n-card
+              :id="`table-${table.id}`"
+              class="position-relative overflow-hidden rounded-3"
+              :class="{ 'bg-occuped': table.status === '3' }"
+              size="small"
+              @click="
                 groupMode
                   ? currentTableGrouping === table.id ||
                     tableGroups.some((g) => g.some((t) => t.id === table.id))
                     ? null
                     : !currentGroup.some((t) => t.id == table.id)
-                      ? addToGroup(table)
-                      : removeFromGroup(table)
+                    ? addToGroup(table)
+                    : removeFromGroup(table)
                   : $router.push({
-                    name: 'TableOrder',
-                    params: { table: table.id },
-                  })
-              " style="cursor: pointer">
-              <n-checkbox v-if="groupMode" :checked="currentGroup.some((t) => t.id === table.id)" :disabled="
-                tableGroups.some((g) => g.some((t) => t.id === table.id)) ||
-                currentTableGrouping === table.id
-              " size="large" class="position-absolute top-0 start-0 m-2" />
-              <div class="
-                  ms-1
-                  black-outline
-                  text-center text-wrap
-                  position-absolute
-                  top-50
-                  start-50
-                  translate-middle
-                " :class="{
+                      name: 'TableOrder',
+                      params: { table: table.id },
+                    })
+              "
+              style="cursor: pointer"
+            >
+              <n-checkbox
+                v-if="groupMode"
+                :checked="currentGroup.some((t) => t.id === table.id)"
+                :disabled="
+                  tableGroups.some((g) => g.some((t) => t.id === table.id)) ||
+                  currentTableGrouping === table.id
+                "
+                size="large"
+                class="position-absolute top-0 start-0 m-2"
+              />
+              <div
+                class="ms-1 black-outline text-center text-wrap position-absolute top-50 start-50 translate-middle"
+                :class="{
                   'fs-4': table.description.length <= 15,
                   'fs-6': table.description.length > 15,
-                }">
+                }"
+              >
                 {{ table.description }}
               </div>
-              <n-button v-if="
-                table.order_amount &&
-                settingsStore.business_settings.order.table_order_total
-              " class="
-                  text-center
-                  position-absolute
-                  bottom-0
-                  start-50
-                  translate-middle-x
-                  fs-5
-                  fw-bolder
-                " color="#901E00" text>
+              <n-button
+                v-if="
+                  table.order_amount &&
+                  settingsStore.business_settings.order.table_order_total
+                "
+                class="text-center position-absolute bottom-0 start-50 translate-middle-x fs-5 fw-bolder"
+                color="#901E00"
+                text
+              >
                 S/. {{ table.order_amount.toFixed(2) }}
               </n-button>
-              <n-button @click.stop="openOptions.push(table.id)" class="position-absolute top-0 end-0" quaternary
-                size="small">
+              <n-button
+                @click.stop="openOptions.push(table.id)"
+                class="position-absolute top-0 end-0"
+                quaternary
+                size="small"
+              >
                 <v-icon name="bi-three-dots-vertical" />
               </n-button>
-              <v-icon v-if="
-                groupMode === true &&
-                tableGroups.some((g) => g.some((t) => t.id === table.id))
-              " class="position-absolute top-50 start-50 translate-middle fs-4" name="ri-forbid-line" scale="8"
-                fill="#FA8072" />
+              <v-icon
+                v-if="
+                  groupMode === true &&
+                  tableGroups.some((g) => g.some((t) => t.id === table.id))
+                "
+                class="position-absolute top-50 start-50 translate-middle fs-4"
+                name="ri-forbid-line"
+                scale="8"
+                fill="#FA8072"
+              />
               <n-space justify="center">
                 <!-- <router-link
                   :to="{ name: 'TableOrder', params: { table: table.id } }"
                 > -->
-                <img draggable="false" src="~@/assets/images/default-table.png" alt="" width="128" height="128" />
+                <img
+                  draggable="false"
+                  src="~@/assets/images/default-table.png"
+                  alt=""
+                  width="128"
+                  height="128"
+                />
                 <!-- </router-link> -->
               </n-space>
-              <n-drawer :show="
-                groupMode
-                  ? ((openOptions = []), false)
-                  : openOptions.some((t) => t === table.id)
-              " height="100%" placement="top" :to="`#table-${table.id}`" @maskClick.stop>
+              <n-drawer
+                :show="
+                  groupMode
+                    ? ((openOptions = []), false)
+                    : openOptions.some((t) => t === table.id)
+                "
+                height="100%"
+                placement="top"
+                :to="`#table-${table.id}`"
+                @maskClick.stop
+              >
                 <n-drawer-content :native-scrollbar="false" @click.stop>
                   <n-space vertical align="center">
-                    <n-button type="error" size="small" tertiary circle @click="
-                      openOptions.splice(
-                        openOptions.findIndex((i) => i === table.id),
-                        1
-                      )
-                    ">
+                    <n-button
+                      type="error"
+                      size="small"
+                      tertiary
+                      circle
+                      @click="
+                        openOptions.splice(
+                          openOptions.findIndex((i) => i === table.id),
+                          1
+                        )
+                      "
+                    >
                       <v-icon name="md-close-round" />
                     </n-button>
                   </n-space>
-                  <n-button v-if="userStore.hasPermission('charge_order')" class="mb-1" type="success" size="small"
-                    block secondary :disabled="table.status === '1'" @click="
+                  <n-button
+                    v-if="userStore.hasPermission('charge_order')"
+                    class="mb-1"
+                    type="success"
+                    size="small"
+                    block
+                    secondary
+                    :disabled="table.status === '1'"
+                    @click="
                       $router.push({
                         name: 'TablePayment',
                         params: { table: table.id },
                       })
-                    ">
+                    "
+                  >
                     Cobrar pedido
                   </n-button>
                   <!-- <n-button
@@ -141,30 +196,52 @@
                   >
                     Unir mesa
                   </n-button> -->
-                  <n-button class="mb-1" type="info" size="small" block secondary :disabled="table.status === '1'"
-                    @click="performRetrieveTableOrder(table.id)">
+                  <n-button
+                    class="mb-1"
+                    type="info"
+                    size="small"
+                    block
+                    secondary
+                    :disabled="table.status === '1'"
+                    @click="performRetrieveTableOrder(table.id)"
+                  >
                     Pre-cuenta
                   </n-button>
-                  <n-button class="mb-1" type="warning" size="small" block secondary :disabled="table.status === '1'"
+                  <n-button
+                    class="mb-1"
+                    type="warning"
+                    size="small"
+                    block
+                    secondary
+                    :disabled="table.status === '1'"
                     @click="
-  openOptions.splice(
-    openOptions.findIndex((i) => i === table.id),
-    1
-  );
-fromTable = table.id;
-currentArea = area.id;
-changeTable = true;
-                    ">
+                      openOptions.splice(
+                        openOptions.findIndex((i) => i === table.id),
+                        1
+                      );
+                      fromTable = table.id;
+                      currentArea = area.id;
+                      changeTable = true;
+                    "
+                  >
                     Cambiar mesa
                   </n-button>
-                  <n-button v-if="userStore.hasPermission('null_orders')" class="mb-1" type="error" size="small" block
-                    secondary :disabled="table.status === '1'" @click="
+                  <n-button
+                    v-if="userStore.hasPermission('null_orders')"
+                    class="mb-1"
+                    type="error"
+                    size="small"
+                    block
+                    secondary
+                    :disabled="table.status === '1'"
+                    @click="
                       openOptions.splice(
                         openOptions.findIndex((i) => i === table.id),
                         1
                       ),
-                      nullifyTableOrder(table.id)
-                    ">
+                        nullifyTableOrder(table.id)
+                    "
+                  >
                     Anular pedido
                   </n-button>
                 </n-drawer-content>
@@ -183,57 +260,110 @@ changeTable = true;
         <n-text class="fs-3">NO SE HA APERTURADO CAJA</n-text>
       </n-space>
     </div>
-    <n-modal :class="{
-      'w-100': genericsStore.device === 'mobile',
-      'w-50': genericsStore.device === 'tablet',
-      'w-25': genericsStore.device === 'desktop',
-    }" preset="card" v-model:show="showConfirm" title="Anular pedido" :mask-closable="false" closable
-      @close="closeNullModal">
+    <n-modal
+      :class="{
+        'w-100': genericsStore.device === 'mobile',
+        'w-50': genericsStore.device === 'tablet',
+        'w-25': genericsStore.device === 'desktop',
+      }"
+      preset="card"
+      v-model:show="showConfirm"
+      title="Anular pedido"
+      :mask-closable="false"
+      closable
+      @close="closeNullModal"
+    >
       <n-form-item label="Ingrese clave de seguridad" required>
         <n-input type="password" v-model:value="passConfirm" placeholder="" />
       </n-form-item>
-      <n-form-item v-if="
-        addReason ||
-        settingsStore.business_settings.order.required_null_reason
-      " label="Motivo de anulación" required>
+      <n-form-item
+        v-if="
+          addReason ||
+          settingsStore.business_settings.order.required_null_reason
+        "
+        label="Motivo de anulación"
+        required
+      >
         <n-input v-model:value="nullReason" placeholder="" />
       </n-form-item>
       <n-space v-else justify="end">
-        <n-button type="info" text @click="addReason = true">Especificar motivo</n-button>
+        <n-button type="info" text @click="addReason = true"
+          >Especificar motivo</n-button
+        >
       </n-space>
       <template #action>
         <n-space justify="end">
-          <n-button type="success" :loading="isLoading" :disabled="
-            settingsStore.business_settings.order.required_null_reason ||
+          <n-button
+            type="success"
+            :loading="isLoading"
+            :disabled="
+              settingsStore.business_settings.order.required_null_reason ||
               addReason
-              ? !passConfirm || isLoading || !nullReason
-              : !passConfirm || isLoading
-          " secondary @click.prevent="performNullifyTableOrder">Confirmar</n-button>
+                ? !passConfirm || isLoading || !nullReason
+                : !passConfirm || isLoading
+            "
+            secondary
+            @click.prevent="performNullifyTableOrder"
+            >Confirmar</n-button
+          >
         </n-space>
       </template>
     </n-modal>
-    <n-modal :class="{
-      'w-100': genericsStore.device === 'mobile',
-      'w-50': genericsStore.device === 'tablet',
-      'w-25': genericsStore.device === 'desktop',
-    }" preset="card" v-model:show="changeTable" title="Cambiar mesa" :mask-closable="false" closable>
+    <n-modal
+      :class="{
+        'w-100': genericsStore.device === 'mobile',
+        'w-50': genericsStore.device === 'tablet',
+        'w-25': genericsStore.device === 'desktop',
+      }"
+      preset="card"
+      v-model:show="changeTable"
+      title="Cambiar mesa"
+      :mask-closable="false"
+      closable
+    >
       <n-form-item label="Mesa actual">
-        <n-select :value="fromTable" disabled :options="tableStore.getAreaTablesOptions(currentArea)" placeholder="" />
+        <n-select
+          :value="fromTable"
+          disabled
+          :options="tableStore.getAreaTablesOptions(currentArea)"
+          placeholder=""
+        />
       </n-form-item>
       <n-form-item label="Area">
-        <n-select v-model:value="currentArea" :options="tableStore.getAreasOptions" placeholder="" />
+        <n-select
+          v-model:value="currentArea"
+          :options="tableStore.getAreasOptions"
+          placeholder=""
+        />
       </n-form-item>
       <n-form-item label="Mesa">
-        <n-select v-model:value="toTable" :options="tableStore.getAreaTablesOptions(currentArea)" placeholder=""
-          filterable />
+        <n-select
+          v-model:value="toTable"
+          :options="tableStore.getAreaTablesOptions(currentArea)"
+          placeholder=""
+          filterable
+        />
       </n-form-item>
       <template #action>
         <n-space justify="end">
-          <n-button type="success" :loading="isLoading" :disabled="!toTable || isLoading" secondary
-            @click.prevent="performChangeTable">Confirmar</n-button>
+          <n-button
+            type="success"
+            :loading="isLoading"
+            :disabled="!toTable || isLoading"
+            secondary
+            @click.prevent="performChangeTable"
+            >Confirmar</n-button
+          >
         </n-space>
       </template>
     </n-modal>
+    <preview-drawer
+      ref="previewDrawer"
+      v-model:show="showPreview"
+      :data="previewData"
+      :preVoucher="true"
+      :previewOnly="true"
+    />
   </n-card>
 </template>
 
@@ -255,9 +385,13 @@ import {
 } from "@/api/modules/tables";
 import { cloneDeep } from "@/utils";
 import { useBusinessStore } from "@/store/modules/business";
+import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 
 export default defineComponent({
   name: "Tables",
+  components: {
+    PreviewDrawer,
+  },
   setup() {
     const groupMode = ref(false);
     const isLoading = ref(false);
@@ -286,12 +420,9 @@ export default defineComponent({
       await retrieveTableOrder(table)
         .then((response) => {
           if (response.status === 200) {
-            VoucherPrint({
-              data: response.data,
-              businessStore,
-              prePayment: true,
-              auto: true,
-            });
+            previewData.value = response.data;
+            showPreview.value = true;
+            setTimeout(() => previewDrawer.value.generate(), 100);
           }
         })
         .catch((error) => {
@@ -463,6 +594,12 @@ export default defineComponent({
         });
     };
 
+    const previewDrawer = ref(null);
+
+    const showPreview = ref(false);
+
+    const previewData = ref(null);
+
     return {
       isLoading,
       groupMode,
@@ -492,6 +629,9 @@ export default defineComponent({
       toTable,
       performChangeTable,
       settingsStore,
+      previewDrawer,
+      showPreview,
+      previewData,
     };
   },
 });

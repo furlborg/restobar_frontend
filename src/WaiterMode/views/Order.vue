@@ -1,7 +1,12 @@
 <template>
   <n-tabs type="line" justify-content="space-around">
     <template #prefix>
-      <n-button class="ms-2" :disabled="$route.name !== 'WCategories'" text @click="showDrawer = true">
+      <n-button
+        class="ms-2"
+        :disabled="$route.name !== 'WCategories'"
+        text
+        @click="showDrawer = true"
+      >
         <v-icon name="md-search-round" />
       </n-button>
       <ProductsDrawer v-model:show="showDrawer" />
@@ -9,11 +14,21 @@
     <n-tab-pane class="p-0" name="menu" tab="Carta">
       <router-view></router-view>
     </n-tab-pane>
-    <n-tab-pane id="OrderPane" name="order" tab="Pedido" :disabled="!orderStore.orderId">
+    <n-tab-pane
+      id="OrderPane"
+      name="order"
+      tab="Pedido"
+      :disabled="!orderStore.orderId"
+    >
       <n-card title="Pedido" size="small" :segmented="{ content: 'hard' }">
         <template #header-extra>
-          <n-button v-if="userStore.hasPermission('print_order_prebill')" type="info" secondary size="small"
-            @click="printOrderPrebill">
+          <n-button
+            v-if="userStore.hasPermission('print_order_prebill')"
+            type="info"
+            secondary
+            size="small"
+            @click="printOrderPrebill"
+          >
             <v-icon name="fa-file-invoice-dollar" />
           </n-button>
         </template>
@@ -28,7 +43,7 @@
                 </template>
                 <template #header-extra>
                   <n-text>{{
-                      `S/. ${order.quantity * order.price.toFixed(2)}`
+                    `S/. ${order.quantity * order.price.toFixed(2)}`
                   }}</n-text>
                 </template>
               </n-thing>
@@ -40,8 +55,20 @@
           </template>
         </n-list>
       </n-card>
-      <ProductIndications v-model:show="showModal" preset="card" title="Indicaciones"
-        :product="orderStore.orderList[itemIndex]" @success="showModal = false"></ProductIndications>
+      <ProductIndications
+        v-model:show="showModal"
+        preset="card"
+        title="Indicaciones"
+        :product="orderStore.orderList[itemIndex]"
+        @success="showModal = false"
+      />
+      <preview-drawer
+        ref="previewDrawer"
+        v-model:show="showPreview"
+        :data="previewData"
+        :preVoucher="true"
+        :previewOnly="true"
+      />
     </n-tab-pane>
   </n-tabs>
 </template>
@@ -65,6 +92,7 @@ import { useOrderStore } from "@/store/modules/order";
 import { useUserStore } from "@/store/modules/user";
 import { useSaleStore } from "@/store/modules/sale";
 import { retrieveTableOrder } from "@/api/modules/tables";
+import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 import { cloneDeep } from "@/utils";
 
 export default defineComponent({
@@ -72,6 +100,7 @@ export default defineComponent({
   components: {
     ProductIndications,
     ProductsDrawer,
+    PreviewDrawer,
   },
   setup() {
     const businessStore = useBusinessStore();
@@ -152,12 +181,9 @@ export default defineComponent({
       await retrieveTableOrder(route.params.table)
         .then((response) => {
           if (response.status === 200) {
-            VoucherPrint({
-              data: response.data,
-              businessStore,
-              prePayment: true,
-              auto: true,
-            });
+            previewData.value = response.data;
+            showPreview.value = true;
+            setTimeout(() => previewDrawer.value.generate(), 100);
           }
         })
         .catch((error) => {
@@ -206,6 +232,12 @@ export default defineComponent({
       setTabStyle();
     });
 
+    const previewDrawer = ref(null);
+
+    const showPreview = ref(false);
+
+    const previewData = ref(null);
+
     return {
       waiterStore,
       orderStore,
@@ -215,6 +247,9 @@ export default defineComponent({
       showDrawer,
       printOrderPrebill,
       userStore,
+      previewDrawer,
+      showPreview,
+      previewData,
     };
   },
 });

@@ -20,7 +20,8 @@
           @back="() => ($emit('update:show', false), $emit('canceled'))"
         ></n-page-header>
       </template>
-      <default-preset ref="ticket" :data="data" />
+      <default-preset v-if="!preVoucher" ref="ticket" :data="data" />
+      <preview-preset v-else ref="ticket" :data="data" />
       <template v-if="!previewOnly" #footer>
         <n-button class="fs-4" type="info" secondary block @click="generate">
           Imprimir
@@ -82,6 +83,7 @@ import { useMessage } from "naive-ui";
 import { usePrinterStore } from "@/store/modules/printer";
 import { jsPDF } from "jspdf";
 import DefaultPreset from "./pdf-presets/DefaultPreset";
+import PreviewPreset from "./pdf-presets/PreviewPreset";
 import { isNumber } from "@/utils";
 import { sendWhatsapp } from "@/api/modules/sales";
 
@@ -89,6 +91,7 @@ export default defineComponent({
   name: "PreviewDrawer",
   components: {
     DefaultPreset,
+    PreviewPreset,
   },
   emits: ["update:show", "printed", "canceled"],
   props: {
@@ -101,6 +104,10 @@ export default defineComponent({
     },
     data: {
       type: Object,
+    },
+    preVoucher: {
+      type: Boolean,
+      default: false,
     },
   },
   setup(props, { emit }) {
@@ -122,6 +129,7 @@ export default defineComponent({
       const doc = new jsPDF({
         unit: "px",
         format: format,
+        orientation: "m",
         hotfixes: ["px_scaling"],
       });
       doc.html(ticket.value.$el.innerHTML, {
@@ -130,7 +138,9 @@ export default defineComponent({
           await printerStore.printTicket(
             doc,
             format,
-            `SALE#${props.data.id}#${props.data.serie}-${props.data.number}`
+            !props.preVoucher
+              ? `SALE#${props.data.id}#${props.data.serie}-${props.data.number}`
+              : `PREVOUCHER#${props.data.id}`
           );
           emit("printed");
           emit("update:show", false);
