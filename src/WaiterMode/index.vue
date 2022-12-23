@@ -83,6 +83,7 @@ import { useDialog } from "naive-ui";
 import { retrieveCurrentTill } from "@/api/modules/tills";
 import { usePrinterStore } from "@/store/modules/printer";
 import { useSettingsStore } from "@/store/modules/settings";
+import { useBusinessStore } from "@/store/modules/business";
 import { useTableStore } from "@/store/modules/table";
 import { useProductStore } from "@/store/modules/product";
 import { useWaiterStore } from "@/store/modules/waiter";
@@ -95,6 +96,7 @@ export default defineComponent({
     const active = ref(false);
     const dialog = useDialog();
     const router = useRouter();
+    const businessStore = useBusinessStore();
     const waiterStore = useWaiterStore();
     const printerStore = usePrinterStore();
     const settingsStore = useSettingsStore();
@@ -102,6 +104,7 @@ export default defineComponent({
     const tillStore = useTillStore();
     const productStore = useProductStore();
     const userStore = useUserStore();
+    businessStore.initializeStore();
     tableStore.initializeStore();
     settingsStore.initializeStore();
     productStore.initializeStore();
