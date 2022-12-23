@@ -10,14 +10,6 @@
             {{ tableStore.getTableByID($route.params.table).description }}
           </div>
         </div>
-        <div class="position-absolute top-0 end-0 me-1">
-          <v-icon
-            name="fa-circle"
-            scale="0.75"
-            :color="isConnected ? 'green' : 'red'"
-            :animation="isConnected ? undefined : 'flash'"
-          />
-        </div>
         <div
           class="menuBtn"
           :class="{ act: active === true }"
@@ -25,6 +17,13 @@
         >
           <span class="lines"></span>
         </div>
+        <v-icon
+          class="position-absolute top-0 end-0 me-1"
+          name="fa-circle"
+          scale="0.75"
+          :color="isConnected ? 'green' : 'red'"
+          :animation="isConnected ? undefined : 'flash'"
+        />
       </n-space>
     </n-layout-header>
     <n-layout-content
