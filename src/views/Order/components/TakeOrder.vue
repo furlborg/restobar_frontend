@@ -787,7 +787,7 @@ export default defineComponent({
     saleStore.order_initial = [];
     orderStore.orderId = null;
 
-    const ticketPreview = ref(false);
+    const ticketPreview = ref(settingsStore.businessSettings.sale.show_preview);
 
     const loading = ref(false);
     const payment_amount = ref(parseFloat(0).toFixed(2));
