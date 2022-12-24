@@ -472,7 +472,7 @@
                   v-model:show="showPdf"
                   :data="pdfData"
                   :hidden="true"
-                  :isUpdate="true"
+                  :isUpdate="false"
                 />
                 <preview-drawer
                   ref="voucherDrawer"
