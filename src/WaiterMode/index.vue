@@ -103,10 +103,9 @@ export default defineComponent({
     const tillStore = useTillStore();
     const productStore = useProductStore();
     const userStore = useUserStore();
-    businessStore.initializeStore();
+    businessStore.initializeStore().then(() => productStore.initializeStore());
     tableStore.initializeStore();
     settingsStore.initializeStore();
-    productStore.initializeStore();
 
     const isConnected = ref(false);
 
