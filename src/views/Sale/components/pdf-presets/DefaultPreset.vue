@@ -131,6 +131,18 @@
                   {{ sale.totales.total_venta.toFixed(2) }}
                 </td>
               </tr>
+              <tr>
+                <td align="right" colspan="5">EFECTIVO :</td>
+                <td align="right">
+                  {{ parseFloat(data.given_amount).toFixed(2) }}
+                </td>
+              </tr>
+              <tr>
+                <td align="right" colspan="5">VUELTO :</td>
+                <td align="right">
+                  {{ parseFloat(data.given_amount - data.amount).toFixed(2) }}
+                </td>
+              </tr>
             </tfoot>
           </table>
           <div class="amount-text">SON {{ amountText }}</div>
