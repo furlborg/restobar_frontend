@@ -291,7 +291,7 @@
         v-model:show="showPdf"
         :data="pdfData"
         :hidden="true"
-        :isUpdate="!!order.id"
+        :isUpdate="!!orderStore.orderId"
         @printed="() => $router.push({ name: 'TableHome' })"
         @canceled="() => $router.push({ name: 'TableHome' })"
       />
