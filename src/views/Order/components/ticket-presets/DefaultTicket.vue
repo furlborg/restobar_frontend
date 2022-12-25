@@ -26,7 +26,7 @@
               {{ getPrefix(detail.product_category)
               }}{{
                 settingsStore.business_settings.printer
-                  .kitchen_ticket_format === 2 && `${detail.quantity}x`
+                  .kitchen_ticket_format === 2 && `${detail.quantity} x `
               }}{{ detail.product_name }}
             </div>
             <div
@@ -181,17 +181,17 @@ export default defineComponent({
     font-weight: bold;
     &-reference {
       margin-bottom: 10px;
-      font-size: 14px;
+      font-size: 16px;
     }
     &-item {
-      font-size: 14px;
+      font-size: 16px;
     }
     .indication {
       margin: 5px 0 5px 0;
       font-size: 12px;
       &-extra {
         margin: 5px 0 5px 0;
-        font-size: 14px;
+        font-size: 16px;
       }
     }
   }
