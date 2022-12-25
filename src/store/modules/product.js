@@ -5,6 +5,7 @@ import {
   getProductAffectations,
 } from "@/api/modules/products";
 import { usePrinterStore } from "@/store/modules/printer";
+import { getDeviceType } from "@/utils";
 
 export const useProductStore = defineStore("product", {
   state: () => ({
@@ -40,7 +41,8 @@ export const useProductStore = defineStore("product", {
             printerStore.managedPrinters[0],
             ...this.getPlacesPrinters,
           ];
-          printerStore.startListeningPrinters();
+          if (getDeviceType() === "desktop")
+            printerStore.startListeningPrinters();
         })
         .catch((error) => {
           console.error(error);
