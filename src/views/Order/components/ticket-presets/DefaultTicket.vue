@@ -9,6 +9,8 @@
         <div v-if="isUpdate" class="ticket-header-subtitle">ACTUALIZACIÓN</div>
       </div>
       <div class="ticket-body">
+        <div>{{ info.created }}</div>
+        <div>{{ info.username }}</div>
         <div
           class="ticket-body-reference"
           v-if="info.order_type === 'P' && data.ask_for"
@@ -16,6 +18,9 @@
           REFERENCIA: {{ data.ask_for }}
         </div>
         <template v-for="detail in infoDetails" :key="detail.id">
+          <div class="dashed-line">
+            - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+          </div>
           <div class="ticket-body-item">
             <div>
               {{ getPrefix(detail.product_category)
@@ -56,10 +61,7 @@
           </div>
         </template>
       </div>
-      <div class="ticket-footer">
-        <div>{{ info.created }}</div>
-        <div>{{ info.username }}</div>
-      </div>
+      <div class="ticket-footer"></div>
     </div>
   </div>
 </template>
@@ -196,6 +198,10 @@ export default defineComponent({
   &-footer {
     font-weight: bold;
     font-size: 14px;
+  }
+  .dashed-line {
+    font-weight: lighter;
+    text-align: center;
   }
 }
 </style>

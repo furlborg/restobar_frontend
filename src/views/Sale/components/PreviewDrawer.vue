@@ -7,6 +7,7 @@
     width="272px"
     :on-after-leave="() => (send = false)"
     :mask-closable="false"
+    :on-esc="() => ($emit('update:show', false), $emit('canceled'))"
     :z-index="!previewOnly ? undefined : -1000000"
   >
     <n-drawer-content

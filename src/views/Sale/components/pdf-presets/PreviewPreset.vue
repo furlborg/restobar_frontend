@@ -2,18 +2,29 @@
   <div id="PreviewPreset">
     <div class="ticket">
       <div class="ticket-header">
-        <div class="ticket-header-info">
-          {{ businessStore.business.ruc }}
+        <div
+          v-if="settingsStore.business_settings.printer.show_both_names"
+          class="ticket-header-info"
+        >
+          {{ businessStore.business.name }}
         </div>
-        <div class="ticket-header-info">{{ businessStore.business.name }}</div>
         <div class="ticket-header-info">
           {{ businessStore.business.commercial_name }}
         </div>
         <div class="ticket-header-info">
+          {{ businessStore.business.ruc }}
+        </div>
+        <div class="ticket-header-info">
           {{ businessStore.business.fiscal_address }}
         </div>
-        <div class="ticket-header-info">ORDEN #{{ data.id }}</div>
-        <div class="ticket-header-info">PRE CUENTA</div>
+        <div class="ticket-header-info">
+          {{ businessStore.business.branchs[0].ubigee_description }}
+        </div>
+        <div class="ticket-header-info">
+          {{ tableStore.getTableByID(data.table).description }}
+        </div>
+        <div class="ticket-header-info">PRE-CUENTA</div>
+        <div class="ticket-header-info">Nº {{ data.id }}</div>
       </div>
       <div class="ticket-body">
         <div class="ticket-body-details">
@@ -62,7 +73,6 @@
       <div class="ticket-footer">
         <div>F. EMISIÓN: {{ data.created }}</div>
         <div>USUARIO: {{ data.username }}</div>
-        <div>MESA: {{ tableStore.getTableByID(data.table).description }}</div>
       </div>
     </div>
   </div>
@@ -71,6 +81,7 @@
 <script>
 import { defineComponent } from "vue";
 import { useTableStore } from "@/store/modules/table";
+import { useSettingsStore } from "@/store/modules/settings";
 import { useBusinessStore } from "@/store/modules/business";
 
 export default defineComponent({
@@ -82,11 +93,13 @@ export default defineComponent({
   },
   setup(props) {
     const tableStore = useTableStore();
+    const settingsStore = useSettingsStore();
     const businessStore = useBusinessStore();
 
     return {
       tableStore,
       businessStore,
+      settingsStore,
     };
   },
 });
@@ -102,12 +115,12 @@ export default defineComponent({
 
   &-header {
     text-align: center;
-    font-size: 12px;
+    font-size: 14px;
     margin-bottom: 5px;
   }
 
   &-body {
-    font-size: 10px;
+    font-size: 14px;
     table td,
     th {
       vertical-align: top;
@@ -118,20 +131,27 @@ export default defineComponent({
         tr {
           &:first-child {
             td {
-              border-top: 1px solid;
+              border-top: 1px dashed;
             }
           }
           &:last-child {
             td {
-              border-bottom: 1px solid;
+              border-bottom: 1px dashed;
             }
+          }
+        }
+      }
+      tfoot {
+        tr {
+          td {
+            border-bottom: 1px dashed;
           }
         }
       }
     }
   }
   &-footer {
-    font-size: 12px;
+    font-size: 14px;
   }
 }
 </style>

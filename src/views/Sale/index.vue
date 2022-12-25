@@ -176,6 +176,7 @@ import {
   listSales,
   listSalesByPage,
   searchSales,
+  retrieveSale,
   sendSale,
   nullSale,
 } from "@/api/modules/sales";
@@ -497,8 +498,17 @@ export default defineComponent({
           }); */
         },
         miscSale(row) {
-          saleData.value = row;
-          showPdf.value = true;
+          retrieveSale(row.id)
+            .then((response) => {
+              if (response.status === 200) {
+                saleData.value = response.data;
+                showPdf.value = true;
+              }
+            })
+            .catch((error) => {
+              console.error(error);
+              message.error("Algo salió mal...");
+            });
         },
         async sendSale(row) {
           isTableLoading.value = true;
