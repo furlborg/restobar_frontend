@@ -12,7 +12,12 @@
         <div class="ticket-header-info">
           {{ businessStore.business.ruc }}
         </div>
-        <div class="ticket-header-info">{{ businessStore.business.name }}</div>
+        <div
+          v-if="settingsStore.business_settings.printer.show_both_names"
+          class="ticket-header-info"
+        >
+          {{ businessStore.business.name }}
+        </div>
         <div class="ticket-header-info">
           {{ businessStore.business.commercial_name }}
         </div>
@@ -230,6 +235,7 @@
 <script>
 import { defineComponent } from "vue";
 import { useBusinessStore } from "@/store/modules/business";
+import { useSettingsStore } from "@/store/modules/settings";
 import { numeroALetras } from "@/hooks/numberText.js";
 import qr from "qrcode";
 export default defineComponent({
@@ -240,7 +246,7 @@ export default defineComponent({
     },
   },
   setup(props) {
-    console.log(props.data);
+    const settingsStore = useSettingsStore();
     const businessStore = useBusinessStore();
 
     const hasDiscounts = props.data.sale_details.some(
@@ -283,6 +289,7 @@ export default defineComponent({
     };
 
     return {
+      settingsStore,
       businessStore,
       sale,
       title,
