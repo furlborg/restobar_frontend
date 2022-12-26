@@ -9,18 +9,14 @@
         <div v-if="isUpdate" class="ticket-header-subtitle">ACTUALIZACIÓN</div>
       </div>
       <div class="ticket-body">
-        <div>{{ info.created }}</div>
-        <div>{{ info.username }}</div>
-        <div
-          class="ticket-body-reference"
-          v-if="info.order_type === 'P' && data.ask_for"
-        >
-          REFERENCIA: {{ data.ask_for }}
+        <div class="ticket-body-info">
+          <div>{{ info.created }}</div>
+          <div>{{ info.username }}</div>
+          <div v-if="info.order_type === 'P' && data.ask_for">
+            REFERENCIA: {{ data.ask_for }}
+          </div>
         </div>
         <template v-for="detail in infoDetails" :key="detail.id">
-          <div class="dashed-line">
-            - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-          </div>
           <div class="ticket-body-item">
             <div>
               {{ getPrefix(detail.product_category)
@@ -177,13 +173,15 @@ export default defineComponent({
     }
   }
   &-body {
-    margin: 20px 0 20px 0;
+    padding: 20px 0 20px 0;
     font-weight: bold;
-    &-reference {
+    &-info {
       margin-bottom: 10px;
       font-size: 16px;
     }
     &-item {
+      border-top: 1px dashed;
+      padding: 10px 0;
       font-size: 16px;
     }
     .indication {
@@ -198,10 +196,6 @@ export default defineComponent({
   &-footer {
     font-weight: bold;
     font-size: 14px;
-  }
-  .dashed-line {
-    font-weight: lighter;
-    text-align: center;
   }
 }
 </style>

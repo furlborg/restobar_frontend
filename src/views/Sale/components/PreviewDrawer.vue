@@ -81,6 +81,7 @@
 <script>
 import { defineComponent, ref } from "vue";
 import { useMessage } from "naive-ui";
+import { useSettingsStore } from "@/store/modules/settings";
 import { usePrinterStore } from "@/store/modules/printer";
 import { jsPDF } from "jspdf";
 import DefaultPreset from "./pdf-presets/DefaultPreset";
@@ -112,6 +113,7 @@ export default defineComponent({
     },
   },
   setup(props, { emit }) {
+    const settingsStore = useSettingsStore();
     const printerStore = usePrinterStore();
     const message = useMessage();
     const ticket = ref(null);
@@ -135,14 +137,24 @@ export default defineComponent({
       });
       doc.html(ticket.value.$el.innerHTML, {
         callback: async function (doc) {
-          // doc.save();
-          await printerStore.printTicket(
-            doc,
-            format,
-            !props.preVoucher
-              ? `SALE#${props.data.id}#${props.data.serie}-${props.data.number}`
-              : `PREVOUCHER#${props.data.id}`
-          );
+          if (settingsStore.business_settings.printer.native_printing) {
+            doc.autoPrint();
+            const hiddFrame = document.createElement("iframe");
+            hiddFrame.style.position = "fixed";
+            hiddFrame.style.width = "1px";
+            hiddFrame.style.height = "1px";
+            hiddFrame.style.opacity = "0.01";
+            hiddFrame.src = doc.output("bloburl");
+            document.body.appendChild(hiddFrame);
+          } else {
+            await printerStore.printTicket(
+              doc,
+              format,
+              !props.preVoucher
+                ? `SALE#${props.data.id}#${props.data.serie}-${props.data.number}`
+                : `PREVOUCHER#${props.data.id}`
+            );
+          }
           emit("printed");
           emit("update:show", false);
         },

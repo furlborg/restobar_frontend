@@ -42,6 +42,7 @@
 import { defineComponent, ref, computed } from "vue";
 import DefaultTicket from "./ticket-presets/DefaultTicket";
 import TicketDelivery from "./ticket-presets/TicketDelivery";
+import { useSettingsStore } from "@/store/modules/settings";
 import { useProductStore } from "@/store/modules/product";
 import { usePrinterStore } from "@/store/modules/printer";
 import { jsPDF } from "jspdf";
@@ -70,6 +71,7 @@ export default defineComponent({
     },
   },
   setup(props, { emit }) {
+    const settingsStore = useSettingsStore();
     const printerStore = usePrinterStore();
     const productStore = useProductStore();
     const tickets = ref([]);
@@ -118,12 +120,22 @@ export default defineComponent({
       });
       doc.html(delivery.value.$el.innerHTML, {
         callback: async function (doc) {
-          // doc.save();
-          await printerStore.printTicket(
-            doc,
-            format,
-            `DELIVERY#${props.data.id}`
-          );
+          if (settingsStore.business_settings.printer.native_printing) {
+            doc.autoPrint();
+            const hiddFrame = document.createElement("iframe");
+            hiddFrame.style.position = "fixed";
+            hiddFrame.style.width = "1px";
+            hiddFrame.style.height = "1px";
+            hiddFrame.style.opacity = "0.01";
+            hiddFrame.src = doc.output("bloburl");
+            document.body.appendChild(hiddFrame);
+          } else {
+            await printerStore.printTicket(
+              doc,
+              format,
+              `DELIVERY#${props.data.id}`
+            );
+          }
         },
       });
     };
