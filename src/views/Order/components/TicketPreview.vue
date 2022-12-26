@@ -87,7 +87,7 @@ export default defineComponent({
 
     const printTicket = (i, place) => {
       const ticket = tickets.value[i];
-      const format = [ticket.$el.clientWidth, ticket.$el.clientHeight + 50];
+      const format = [ticket.$el.clientWidth, ticket.$el.clientHeight + 30];
       const doc = new jsPDF({
         unit: "px",
         format: format,
