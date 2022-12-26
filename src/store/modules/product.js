@@ -41,7 +41,10 @@ export const useProductStore = defineStore("product", {
             printerStore.managedPrinters[0],
             ...this.getPlacesPrinters,
           ];
-          if (getDeviceType() === "desktop")
+          if (
+            getDeviceType() === "desktop" &&
+            printerStore.qz.websocket.isActive()
+          )
             printerStore.startListeningPrinters();
         })
         .catch((error) => {

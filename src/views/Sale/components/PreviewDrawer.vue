@@ -83,6 +83,7 @@ import { defineComponent, ref } from "vue";
 import { useMessage } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
 import { usePrinterStore } from "@/store/modules/printer";
+import { useSaleStore } from "@/store/modules/sale";
 import { jsPDF } from "jspdf";
 import DefaultPreset from "./pdf-presets/DefaultPreset";
 import PreviewPreset from "./pdf-presets/PreviewPreset";
@@ -115,6 +116,7 @@ export default defineComponent({
   setup(props, { emit }) {
     const settingsStore = useSettingsStore();
     const printerStore = usePrinterStore();
+    const saleStore = useSaleStore();
     const message = useMessage();
     const ticket = ref(null);
 
@@ -151,7 +153,9 @@ export default defineComponent({
               doc,
               format,
               !props.preVoucher
-                ? `SALE#${props.data.id}#${props.data.serie}-${props.data.number}`
+                ? `SALE#${props.data.id}#${saleStore.getSerieDescription(
+                    props.data.serie
+                  )}-${props.data.number}`
                 : `PREVOUCHER#${props.data.id}`
             );
           }
