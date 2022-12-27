@@ -705,7 +705,7 @@ export default defineComponent({
                     pdfData.value = response.data;
                     showPdf.value = true;
                     if (!ticketPreview.value) {
-                      setTimeout(() => previewDrawer.value.generate(), 100);
+                      setTimeout(() => previewDrawer.value.generate(), 250);
                     }
 
                     if (

@@ -391,7 +391,7 @@ export default defineComponent({
 
                 pdfData.value = response.data;
                 showPdf.value = true;
-                setTimeout(() => ticketPreview.value.generate(), 100);
+                setTimeout(() => ticketPreview.value.generate(), 250);
 
                 emit("update:show", false);
                 tableStore.refreshData();
@@ -463,7 +463,7 @@ export default defineComponent({
 
                 pdfData.value = response.data;
                 showPdf.value = true;
-                setTimeout(() => ticketPreview.value.generate(), 100);
+                setTimeout(() => ticketPreview.value.generate(), 250);
 
                 emit("update:show", false);
                 tableStore.refreshData();

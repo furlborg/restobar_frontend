@@ -183,7 +183,7 @@ export default defineComponent({
           if (response.status === 200) {
             previewData.value = response.data;
             showPreview.value = true;
-            setTimeout(() => previewDrawer.value.generate(), 100);
+            setTimeout(() => previewDrawer.value.generate(), 250);
           }
         })
         .catch((error) => {

@@ -1333,11 +1333,11 @@ export default defineComponent({
             // PrintsAfterTakeOrder(response.data);
             pdfData.value = response.data.order;
             showPdf.value = true;
-            setTimeout(() => ticketPreviewRef.value.generate(), 100);
+            setTimeout(() => ticketPreviewRef.value.generate(), 250);
             voucherData.value = response.data.sale;
             showVoucher.value = true;
             if (!ticketPreview.value) {
-              setTimeout(() => voucherDrawer.value.generate(), 200);
+              setTimeout(() => voucherDrawer.value.generate(), 500);
             }
 
             message.success("Venta realizada correctamente!");
@@ -1398,11 +1398,11 @@ export default defineComponent({
                     if (response.status === 201) {
                       pdfData.value = response.data.order;
                       showPdf.value = true;
-                      setTimeout(() => ticketPreviewRef.value.generate(), 100);
+                      setTimeout(() => ticketPreviewRef.value.generate(), 250);
                       voucherData.value = response.data.sale;
                       showVoucher.value = true;
                       if (!ticketPreview.value) {
-                        setTimeout(() => voucherDrawer.value.generate(), 200);
+                        setTimeout(() => voucherDrawer.value.generate(), 500);
                       }
                       message.success("Venta realizada correctamente!");
                       if (

@@ -456,7 +456,7 @@ export default defineComponent({
           if (response.status === 201) {
             pdfData.value = response.data;
             showPdf.value = true;
-            setTimeout(() => ticketPreview.value.generate(), 100);
+            setTimeout(() => ticketPreview.value.generate(), 250);
             checkState.value = true;
           }
         })
@@ -537,7 +537,7 @@ export default defineComponent({
             );
             pdfData.value = response.data;
             showPdf.value = true;
-            setTimeout(() => ticketPreview.value.generate(), 100);
+            setTimeout(() => ticketPreview.value.generate(), 250);
             checkState.value = true;
           }
         })
