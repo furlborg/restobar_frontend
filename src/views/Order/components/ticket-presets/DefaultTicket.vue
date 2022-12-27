@@ -169,12 +169,14 @@ export default defineComponent({
       font-size: 18px;
     }
     &-subtitle {
+      word-spacing: 5px;
       font-size: 16px;
     }
   }
   &-body {
-    padding: 20px 0 20px 0;
+    padding: 20px 0;
     font-weight: bold;
+    word-spacing: 5px;
     &-info {
       margin-bottom: 10px;
       font-size: 16px;
