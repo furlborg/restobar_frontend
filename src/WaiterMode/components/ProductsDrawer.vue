@@ -389,14 +389,14 @@ export default defineComponent({
                 //   table,
                 // });
 
-                pdfData.value = response.data;
-                showPdf.value = true;
-                setTimeout(() => ticketPreview.value.generate(), 250);
+                // pdfData.value = response.data;
+                // showPdf.value = true;
+                // setTimeout(() => ticketPreview.value.generate(), 250);
 
                 emit("update:show", false);
                 tableStore.refreshData();
                 waiterStore.preOrderList = [];
-                // router.push({ name: "WHome" });
+                router.push({ name: "WHome" });
               }
             })
             .catch((error) => {
@@ -461,14 +461,14 @@ export default defineComponent({
                 //   updateOrder: true,
                 // });
 
-                pdfData.value = response.data;
-                showPdf.value = true;
-                setTimeout(() => ticketPreview.value.generate(), 250);
+                // pdfData.value = response.data;
+                // showPdf.value = true;
+                // setTimeout(() => ticketPreview.value.generate(), 250);
 
                 emit("update:show", false);
                 tableStore.refreshData();
                 waiterStore.preOrderList = [];
-                // router.push({ name: "WHome" });
+                router.push({ name: "WHome" });
               }
             })
             .catch((error) => {

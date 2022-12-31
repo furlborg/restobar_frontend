@@ -62,11 +62,25 @@
       </div>
     </div>
     <ProjectSetting ref="drawerSetting" />
+    <ticket-preview
+      ref="ticketPreview"
+      v-model:show="showPreview"
+      :data="previewData"
+      :hidden="true"
+      :isUpdate="orderUpdate"
+    />
   </div>
 </template>
 
 <script>
-import { defineComponent, reactive, ref, computed, toRefs } from "vue";
+import {
+  defineComponent,
+  reactive,
+  ref,
+  computed,
+  toRefs,
+  getCurrentInstance,
+} from "vue";
 import { useDialog, useMessage } from "naive-ui";
 import { useRouter } from "vue-router";
 import { useUserStore } from "@/store/modules/user";
@@ -76,11 +90,13 @@ import { usePrinterStore } from "@/store/modules/printer";
 import { useBusinessStore } from "@/store/modules/business";
 import ProjectSetting from "./ProjectSetting";
 import { renderIcon } from "@/utils";
+import TicketPreview from "@/views/Order/components/TicketPreview";
 
 export default defineComponent({
   name: "PageHeader",
   components: {
     ProjectSetting,
+    TicketPreview,
   },
   props: {
     collapsed: {
@@ -88,6 +104,16 @@ export default defineComponent({
     },
   },
   setup() {
+    const { proxy } = getCurrentInstance();
+    proxy.$connect("ws://192.168.18.101:8000/ws/orders/");
+    proxy.$socket.onmessage = (message) => {
+      const res = JSON.parse(message.data);
+      previewData.value = res.data;
+      orderUpdate.value = res.isUpdate;
+      showPreview.value = true;
+      setTimeout(() => ticketPreview.value.generate(), 250);
+    };
+
     const router = useRouter();
     const message = useMessage();
     const dialog = useDialog();
@@ -205,6 +231,14 @@ export default defineComponent({
       openDrawer();
     }
 
+    const ticketPreview = ref(null);
+
+    const showPreview = ref(false);
+
+    const orderUpdate = ref(false);
+
+    const previewData = ref(null);
+
     return {
       ...toRefs(state),
       userStore,
@@ -214,6 +248,10 @@ export default defineComponent({
       avatarSelect,
       drawerSetting,
       openSetting,
+      ticketPreview,
+      showPreview,
+      previewData,
+      orderUpdate,
     };
   },
 });

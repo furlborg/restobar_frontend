@@ -368,10 +368,10 @@
 </template>
 
 <script>
+import { defineComponent, ref, onMounted } from "vue";
 import { CreatePdfFile } from "@/hooks/CreatePdfFile";
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 import { isAxiosError } from "axios";
-import { defineComponent, ref, onMounted } from "vue";
 import { useMessage } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useGenericsStore } from "@/store/modules/generics";

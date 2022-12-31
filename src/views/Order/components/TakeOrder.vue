@@ -1331,9 +1331,9 @@ export default defineComponent({
         .then((response) => {
           if (response.status === 201) {
             // PrintsAfterTakeOrder(response.data);
-            pdfData.value = response.data.order;
-            showPdf.value = true;
-            setTimeout(() => ticketPreviewRef.value.generate(), 250);
+            // pdfData.value = response.data.order;
+            // showPdf.value = true;
+            // setTimeout(() => ticketPreviewRef.value.generate(), 250);
             voucherData.value = response.data.sale;
             showVoucher.value = true;
             if (!ticketPreview.value) {
@@ -1396,9 +1396,9 @@ export default defineComponent({
                 )
                   .then((response) => {
                     if (response.status === 201) {
-                      pdfData.value = response.data.order;
-                      showPdf.value = true;
-                      setTimeout(() => ticketPreviewRef.value.generate(), 250);
+                      // pdfData.value = response.data.order;
+                      // showPdf.value = true;
+                      // setTimeout(() => ticketPreviewRef.value.generate(), 250);
                       voucherData.value = response.data.sale;
                       showVoucher.value = true;
                       if (!ticketPreview.value) {

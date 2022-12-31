@@ -10,7 +10,7 @@
       </div>
       <div class="ticket-body">
         <div class="ticket-body-info">
-          <div>{{ info.created }}</div>
+          <div>{{ !isUpdate ? info.created : info.modified }}</div>
           <div>{{ info.username }}</div>
           <div v-if="info.order_type === 'P' && data.ask_for">
             REFERENCIA: {{ data.ask_for }}
@@ -65,7 +65,6 @@
 <script>
 import { defineComponent, computed } from "vue";
 import { useSettingsStore } from "@/store/modules/settings";
-import { useTableStore } from "@/store/modules/table";
 
 export default defineComponent({
   name: "DefaultTicket",
@@ -84,7 +83,6 @@ export default defineComponent({
   },
   setup(props) {
     const settingsStore = useSettingsStore();
-    const tableStore = useTableStore();
 
     const info = computed(() => {
       let data = {
@@ -94,9 +92,6 @@ export default defineComponent({
           : props.data.order_details.filter(
               (detail) => detail.preparation_place === props.place.description
             ),
-        table: !props.data.table
-          ? ""
-          : tableStore.getTableByID(props.data.table).description,
         json_sale: !props.data.json_sale
           ? ""
           : JSON.parse(props.data.json_sale),

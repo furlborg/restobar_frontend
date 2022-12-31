@@ -454,10 +454,11 @@ export default defineComponent({
       )
         .then(async (response) => {
           if (response.status === 201) {
-            pdfData.value = response.data;
-            showPdf.value = true;
-            setTimeout(() => ticketPreview.value.generate(), 250);
+            // pdfData.value = response.data;
+            // showPdf.value = true;
+            // setTimeout(() => ticketPreview.value.generate(), 250);
             checkState.value = true;
+            router.push({ name: "TableHome" });
           }
         })
         .catch((error) => {
@@ -535,10 +536,11 @@ export default defineComponent({
             response.data.order_details = evalOrderList(
               response.data.order_details
             );
-            pdfData.value = response.data;
-            showPdf.value = true;
-            setTimeout(() => ticketPreview.value.generate(), 250);
+            // pdfData.value = response.data;
+            // showPdf.value = true;
+            // setTimeout(() => ticketPreview.value.generate(), 250);
             checkState.value = true;
+            router.push({ name: "TableHome" });
           }
         })
         .catch((error) => {
