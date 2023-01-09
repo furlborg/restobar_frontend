@@ -34,6 +34,15 @@
               CANT: {{ !isUpdate ? detail.quantity : detail.quantity }}
             </div>
             <div class="indication">
+              <template v-if="detail.product_description">
+                <div
+                  v-for="(item, index) in detail.product_description.split(',')"
+                  :key="index"
+                  class="indication-item"
+                >
+                  = {{ item }}
+                </div>
+              </template>
               <template
                 v-for="(indication, index) in detail.indication"
                 :key="index"
