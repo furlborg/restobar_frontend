@@ -319,13 +319,11 @@ export default defineComponent({
     };
 
     const onCloseModal = () => {
-      document.title = "Pedidos | App";
       idOrder.value = 0;
       delivery.value = null;
     };
 
     onMounted(async () => {
-      document.title = "Pedidos | App";
       await loadOrders();
     });
 
@@ -364,5 +362,4 @@ export default defineComponent({
 });
 </script>
 
-<style>
-</style>
+<style></style>

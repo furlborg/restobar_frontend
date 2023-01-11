@@ -378,8 +378,6 @@ export default defineComponent({
     ];
 
     onMounted(async () => {
-      document.title = "Reportes de Caja | App";
-
       await loadMovements();
 
       const fetch = new Date();
@@ -393,7 +391,6 @@ export default defineComponent({
     });
 
     const onCloseModal = () => {
-      document.title = "Movimientos de Caja | App";
       // idProduct.value = 0
     };
 

@@ -486,7 +486,6 @@ export default defineComponent({
 
     watch(show, () => {
       if (show.value === true && idProduct.value !== 0) {
-        document.title = "Modificar Producto | App";
         modalTitle.value = "Modificar Producto";
         isLoadingData.value = true;
         retrieveProduct(idProduct.value)
@@ -502,7 +501,6 @@ export default defineComponent({
             isLoadingData.value = false;
           });
       } else if (show.value === true && idProduct.value === 0) {
-        document.title = "Registrar Producto | App";
         modalTitle.value = "Registrar Producto";
         product.value = {
           code: null,

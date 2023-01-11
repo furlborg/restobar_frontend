@@ -374,7 +374,6 @@ export default defineComponent({
     ];
 
     onMounted(async () => {
-      document.title = "Ventas | App";
       await loadSales();
 
       const fetch = new Date();

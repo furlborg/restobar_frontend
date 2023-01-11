@@ -454,12 +454,10 @@ export default defineComponent({
     };
 
     onMounted(async () => {
-      document.title = "Productos | App";
       await loadProductsData();
     });
 
     const onCloseModal = () => {
-      document.title = "Productos | App";
       idProduct.value = 0;
     };
 
@@ -469,9 +467,7 @@ export default defineComponent({
       await loadProductsData();
     };
 
-    onMounted(() => {
-      document.title = "Productos | App";
-    });
+    onMounted(() => {});
 
     return {
       isLoadingData,

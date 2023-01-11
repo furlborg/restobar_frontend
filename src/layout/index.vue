@@ -15,7 +15,7 @@
         :collapsed="userStore.user.role !== 'MOZO' ? collapsed : true"
         :collapsed-width="userStore.user.role !== 'MOZO' ? 64 : 0"
         collapse-mode="width"
-        :width="200"
+        :width="175"
         :native-scrollbar="false"
         bordered
       >

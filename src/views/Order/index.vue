@@ -481,7 +481,6 @@ export default defineComponent({
     ];
 
     const onCloseModal = () => {
-      document.title = "Pedidos | App";
       idOrder.value = 0;
       delivery.value = null;
     };
@@ -560,7 +559,6 @@ export default defineComponent({
     };
 
     onMounted(async () => {
-      document.title = "Pedidos | App";
       await loadOrders();
     });
 

@@ -3,16 +3,14 @@
 </template>
 
 <script>
-import { defineComponent, onMounted } from "vue";
+import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "Settings",
   setup() {
-    onMounted(() => (document.title = "Configuración | App"));
     return {};
   },
 });
 </script>
 
-<style>
-</style>
+<style></style>

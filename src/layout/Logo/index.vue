@@ -1,10 +1,16 @@
 <template>
-  <div class="logo">
+  <div :class="{ logo: !collapsed, 'logo-collapsed': collapsed }">
     <img
+      v-if="collapsed"
+      draggable="false"
+      src="~@/assets/images/logo.png"
+      alt=""
+    />
+    <img
+      v-else
       draggable="false"
       src="~@/assets/images/account-logo.png"
       alt=""
-      :class="{ 'img-2': collapsed }"
     />
   </div>
 </template>
@@ -27,22 +33,36 @@ export default defineComponent({
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 96px;
-  line-height: 64px;
-  overflow: hidden;
-  white-space: nowrap;
+  height: 112px;
+
+  &-collapsed {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 64px;
+
+    img {
+      height: 48px;
+    }
+  }
 
   img {
-    width: auto;
-    height: 64px;
+    max-height: 96px;
   }
+}
 
-  .img-2 {
-    height: 32px;
-  }
+.zoom-fade-enter-active,
+.zoom-fade-leave-active {
+  transition: transform 0.15s, opacity 0.28s ease-in-out;
+}
 
-  .title {
-    margin-bottom: 0;
-  }
+.zoom-fade-enter-from {
+  opacity: 0;
+  transform: scale(0.97);
+}
+
+.zoom-fade-leave-to {
+  opacity: 0;
+  transform: scale(1.03);
 }
 </style>

@@ -285,7 +285,6 @@ export default defineComponent({
 
     watch(show, async () => {
       if (show.value === true && idCustomer.value !== 0) {
-        document.title = "Modificar Cliente | App";
         modalTitle.value = "Modificar Cliente";
         isLoadingData.value = true;
         await retrieveCustomer(idCustomer.value)
@@ -300,7 +299,6 @@ export default defineComponent({
             isLoadingData.value = false;
           });
       } else if (show.value === true && idCustomer.value === 0) {
-        document.title = "Registrar Cliente | App";
         modalTitle.value = "Registrar Cliente";
         customer.value = {
           names: null,
@@ -590,5 +588,4 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

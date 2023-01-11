@@ -64,7 +64,6 @@ export default defineComponent({
 
     watch(show, async () => {
       if (show.value === true) {
-        document.title = "Detalle de Pedido | App";
         isLoadingData.value = true;
         await listOrderDetails(idOrder.value)
           .then((response) => {
@@ -99,5 +98,4 @@ export default defineComponent({
 });
 </script>
 
-<style>
-</style>
+<style></style>

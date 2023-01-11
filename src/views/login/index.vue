@@ -173,6 +173,12 @@ export default defineComponent({
       font-size: 14px;
       color: #808695;
     }
+    &-logo {
+      img {
+        width: auto;
+        height: 256px;
+      }
+    }
   }
   &-other {
     width: 100%;

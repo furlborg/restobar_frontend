@@ -1509,7 +1509,6 @@ export default defineComponent({
     };
 
     onMounted(async () => {
-      document.title = "Realizar Pedido | App";
       await obtainSaleNumber();
 
       const fetch = new Date();
@@ -1522,9 +1521,7 @@ export default defineComponent({
       dateNow.value = `${dd}/${mm + 1}/${yy} ${hh}:${msms}`;
     });
 
-    const onCloseModal = () => {
-      document.title = "Realizar Pedido | App";
-    };
+    const onCloseModal = () => {};
 
     const onSuccess = (customer) => {
       if (sale.value.invoice_type === 1 && customer.doc_type === "6") {

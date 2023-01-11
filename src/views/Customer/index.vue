@@ -294,7 +294,6 @@ export default defineComponent({
     };
 
     const onCloseModal = () => {
-      document.title = "Clientes | App";
       idCustomer.value = 0;
     };
 
@@ -305,7 +304,6 @@ export default defineComponent({
     };
 
     onMounted(async () => {
-      document.title = "Clientes | App";
       await loadCustomersData();
     });
 
@@ -344,5 +342,4 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

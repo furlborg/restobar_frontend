@@ -287,12 +287,10 @@ export default defineComponent({
     };
 
     onMounted(async () => {
-      document.title = "Aperturas y Cierres | App";
       await loadTills();
     });
 
     const onCloseModal = () => {
-      document.title = "Aperturas y Cierres | App";
       // idProduct.value = 0
     };
 
@@ -492,5 +490,4 @@ export default defineComponent({
 });
 </script>
 
-<style>
-</style>
+<style></style>

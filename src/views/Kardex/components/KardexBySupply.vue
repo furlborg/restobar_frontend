@@ -178,7 +178,6 @@ export default defineComponent({
     });
 
     onMounted(() => {
-      document.title = "Kardex | App";
       listProducts();
     });
 

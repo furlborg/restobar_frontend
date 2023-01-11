@@ -905,7 +905,6 @@ export default defineComponent({
     });
 
     onMounted(async () => {
-      document.title = "Venta | App";
       sale.value.given_amount = total.value;
       await obtainSaleNumber();
 
@@ -919,9 +918,7 @@ export default defineComponent({
       dateNow.value = `${dd}/${mm}/${yy} ${hh}:${msms}`;
     });
 
-    const onCloseModal = () => {
-      document.title = "Venta | App";
-    };
+    const onCloseModal = () => {};
 
     const onSuccess = (customer) => {
       if (sale.value.invoice_type === 1 && customer.doc_type === "6") {

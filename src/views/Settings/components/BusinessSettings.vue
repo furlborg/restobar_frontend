@@ -466,7 +466,6 @@ export default defineComponent({
     };
 
     onMounted(() => {
-      document.title = "Configuración de Empresa | App";
       business.value = cloneDeep(businessStore.business);
     });
 
@@ -475,7 +474,6 @@ export default defineComponent({
     };
 
     const onCloseModal = () => {
-      document.title = "Configuración de Empresa | App";
       // idProduct.value = 0
     };
 
