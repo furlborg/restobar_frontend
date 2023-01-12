@@ -2,14 +2,46 @@
   <div id="DefaultTicket">
     <div class="ticket">
       <div class="ticket-header">
-        <div class="ticket-header-title">
+        <div
+          class="ticket-header-title"
+          :style="{
+            fontSize: `${settingsStore.business_settings.printer.header_font_size}px`,
+          }"
+        >
           {{ info.table || (!info.delivery_info ? "PARA LLEVAR" : "DELIVERY") }}
         </div>
-        <div class="ticket-header-subtitle">ORDEN #{{ info.id }}</div>
-        <div v-if="isUpdate" class="ticket-header-subtitle">ACTUALIZACIÓN</div>
+        <div
+          class="ticket-header-subtitle"
+          :style="{
+            fontSize: `${settingsStore.business_settings.printer.sub_header_font_size}px`,
+          }"
+        >
+          ORDEN #{{ info.id }}
+        </div>
+        <div
+          v-if="isUpdate"
+          class="ticket-header-subtitle"
+          :style="{
+            fontSize: `${settingsStore.business_settings.printer.sub_header_font_size}px`,
+          }"
+        >
+          ACTUALIZACIÓN
+        </div>
       </div>
-      <div class="ticket-body">
-        <div class="ticket-body-info">
+      <div
+        class="ticket-body"
+        :style="{
+          fontSize: `${settingsStore.business_settings.printer.body_font_size}px`,
+        }"
+      >
+        <div
+          class="ticket-body-info"
+          :style="{
+            fontSize: `${
+              settingsStore.business_settings.printer.body_font_size + 1
+            }px`,
+          }"
+        >
           <div>{{ info.created }}</div>
           <div>{{ info.username }}</div>
           <div v-if="info.order_type === 'P' && data.ask_for">
@@ -33,7 +65,14 @@
             >
               CANT: {{ !isUpdate ? detail.quantity : detail.quantity }}
             </div>
-            <div class="indication">
+            <div
+              class="indication"
+              :style="{
+                fontSize: `${
+                  settingsStore.business_settings.printer.body_font_size - 1
+                }px`,
+              }"
+            >
               <template v-if="detail.product_description">
                 <div
                   v-for="(item, index) in detail.product_description.split(',')"
@@ -66,7 +105,12 @@
           </div>
         </template>
       </div>
-      <div class="ticket-footer"></div>
+      <div
+        class="ticket-footer"
+        :style="{
+          fontSize: `${settingsStore.business_settings.printer.footer_font_size}px`,
+        }"
+      ></div>
     </div>
   </div>
 </template>
@@ -174,12 +218,8 @@ export default defineComponent({
     font-weight: bold;
     text-align: center;
     margin: 10px 0 0 0;
-    &-title {
-      font-size: 18px;
-    }
     &-subtitle {
       word-spacing: 5px;
-      font-size: 16px;
     }
   }
   &-body {
@@ -188,25 +228,20 @@ export default defineComponent({
     word-spacing: 5px;
     &-info {
       margin-bottom: 10px;
-      font-size: 16px;
     }
     &-item {
       border-top: 1px dashed;
       padding: 10px 0;
-      font-size: 16px;
     }
     .indication {
       margin: 5px 0 5px 0;
-      font-size: 12px;
       &-extra {
         margin: 5px 0 5px 0;
-        font-size: 16px;
       }
     }
   }
   &-footer {
     font-weight: bold;
-    font-size: 14px;
   }
 }
 </style>
