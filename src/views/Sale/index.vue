@@ -477,16 +477,6 @@ export default defineComponent({
       settingsStore,
       performNullifySale,
       tableColumns: createSaleColumns({
-        printSale(val) {
-          VoucherPrint({
-            data: val,
-            businessStore,
-            saleStore,
-            show: true,
-          });
-
-          message.success("Impresión creada");
-        },
         updateSale(row) {
           showModal.value = true;
           saleId.value = row.id;
@@ -496,7 +486,7 @@ export default defineComponent({
             onUpdateShow: () => (modal.value = null),
           }); */
         },
-        miscSale(row) {
+        printSale(row) {
           retrieveSale(row.id)
             .then((response) => {
               if (response.status === 200) {

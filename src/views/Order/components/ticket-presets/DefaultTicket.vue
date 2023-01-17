@@ -44,7 +44,7 @@
         >
           <div>{{ info.created }}</div>
           <div>{{ info.username }}</div>
-          <div v-if="info.order_type === 'P' && data.ask_for">
+          <div v-if="info.order_type !== 'M' && data.ask_for" key="ask_for">
             REFERENCIA: {{ data.ask_for }}
           </div>
         </div>
@@ -54,8 +54,10 @@
               {{ getPrefix(detail.product_category)
               }}{{
                 settingsStore.business_settings.printer
-                  .kitchen_ticket_format === 2 && `${detail.quantity} x `
-              }}{{ detail.product_name }}
+                  .kitchen_ticket_format === 2
+                  ? `${detail.quantity} x `
+                  : ""
+              }}{{ generateName(detail) }}
             </div>
             <div
               v-if="
@@ -73,15 +75,6 @@
                 }px`,
               }"
             >
-              <template v-if="detail.product_description">
-                <div
-                  v-for="(item, index) in detail.product_description.split(',')"
-                  :key="index"
-                  class="indication-item"
-                >
-                  = {{ item }}
-                </div>
-              </template>
               <template
                 v-for="(indication, index) in detail.indication"
                 :key="index"
@@ -96,7 +89,10 @@
                 </div>
               </template>
               <div
-                v-if="detail.indication.some((ind) => ind.takeAway)"
+                v-if="
+                  info.order_type !== 'M' &&
+                  detail.indication.some((ind) => ind.takeAway)
+                "
                 class="indication-extra"
               >
                 PARA LLEVAR: {{ indicationTakeAways(detail.indication) }}
@@ -196,10 +192,20 @@ export default defineComponent({
       return prefix;
     };
 
+    const generateName = (detail) => {
+      if (detail.product_category.toLowerCase().includes("combo")) {
+        detail.product_name =
+          detail.product_category +
+          detail.product_description.replaceAll(", ", "+");
+      }
+      return detail.product_name;
+    };
+
     return {
       info,
       getPrefix,
       infoDetails,
+      generateName,
       settingsStore,
       indicationTakeAways,
     };

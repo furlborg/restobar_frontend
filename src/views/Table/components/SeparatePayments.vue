@@ -453,6 +453,14 @@
       @update:show="onCloseModal"
       @on-success="onSuccess"
     />
+    <preview-drawer
+      ref="previewDrawer"
+      v-model:show="showPdf"
+      :data="pdfData"
+      :previewOnly="!ticketPreview"
+      @printed="() => $emit('success')"
+      @canceled="() => $emit('success')"
+    />
   </div>
 </template>
 
@@ -469,6 +477,7 @@ import {
 } from "vue";
 import { isAxiosError } from "axios";
 import CustomerModal from "@/views/Customer/components/CustomerModal";
+import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useRouter } from "vue-router";
 import { useProductStore } from "@/store/modules/product";
@@ -501,6 +510,7 @@ export default defineComponent({
   directives: { autowidth: VueInputAutowidth },
   components: {
     CustomerModal,
+    PreviewDrawer,
   },
   props: {
     data: {
@@ -510,7 +520,6 @@ export default defineComponent({
   emits: ["success"],
   setup(props, { emit }) {
     const sale = toRef(props, "data");
-    const ticketPreview = ref(false);
     const dateNow = ref(null);
     const router = useRouter();
     const orderStore = useOrderStore();
@@ -523,6 +532,7 @@ export default defineComponent({
     const loading = ref(false);
     const dialog = useDialog();
     const showModal = ref(false);
+    const ticketPreview = ref(settingsStore.businessSettings.sale.show_preview);
     const payment_amount = ref(parseFloat(0).toFixed(2));
     const saleForm = ref();
     const changing = computed(() => {
@@ -696,13 +706,11 @@ export default defineComponent({
               await createSale(sale.value)
                 .then((response) => {
                   if (response.status === 201) {
-                    VoucherPrint({
-                      data: response.data,
-                      businessStore,
-                      changing: changing.value,
-                      show: ticketPreview.value,
-                      auto: !ticketPreview.value,
-                    });
+                    pdfData.value = response.data;
+                    showPdf.value = true;
+                    if (!ticketPreview.value) {
+                      setTimeout(() => previewDrawer.value.generate(), 250);
+                    }
 
                     if (
                       settingsStore.businessSettings.sale.auto_send &&
@@ -780,7 +788,7 @@ export default defineComponent({
                         message.error("Algo salió mal...");
                       });
                     message.success("Venta realizada correctamente!");
-                    emit("success");
+                    // emit("success");
                   }
                 })
                 .catch((error) => {
@@ -1051,6 +1059,12 @@ export default defineComponent({
 
     const whatsappNumber = ref("");
 
+    const showPdf = ref(false);
+
+    const previewDrawer = ref(null);
+
+    const pdfData = ref(null);
+
     return {
       showModal,
       settingsStore,
@@ -1098,6 +1112,9 @@ export default defineComponent({
       totalDSCT,
       whatsappNumber,
       ticketPreview,
+      showPdf,
+      previewDrawer,
+      pdfData,
     };
   },
 });

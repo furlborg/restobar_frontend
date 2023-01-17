@@ -705,129 +705,26 @@ export default defineComponent({
           showDeliveryModal.value = true;
         },
         payDeliver(row) {
-          paymentsTotal.value = row.amount;
+          paymentsTotal.value = parseFloat(row.amount);
+          if (!settingsStore.business_settings.till.delivery_affects_till) {
+            paymentsTotal.value -= parseFloat(row.delivery_info.amount);
+            console.log(paymentsTotal.value);
+          }
           currentOrder.value.order_id = row.id;
           currentOrder.value.sale_id = row.sale_id;
           payments.value = [
             {
               payment_method: Number(row.payment_method),
-              amount: String(row.amount.toFixed(2)),
+              amount: String(paymentsTotal.value.toFixed(2)),
             },
           ];
           showPayments.value = true;
-          /* dialog.success({
-            title: "Pedido cobrado",
-            content: "¿El pedido ya ha sido cobrado?",
-            positiveText: "Si",
-            negativeText: "No",
-            onPositiveClick: async () => {
-              isTableLoading.value = true;
-              await updateOrderStatus(row.id)
-                .then((response) => {
-                  if (response.status === 202) {
-                    message.success("¡Pedido cobrado!");
-                    if (settingsStore.businessSettings.sale.auto_send) {
-                      sendSale(row.sale_id)
-                        .then((response) => {
-                          if (response.status === 200) {
-                            message.success("Enviado!");
-                          }
-                        })
-                        .catch((error) => {
-                          if (error.response.status === 400) {
-                            message.error(error.response.data.error);
-                          } else {
-                            console.error(error);
-                            message.error("Algo salió mal...");
-                          }
-                        });
-                    }
-                  }
-                })
-                .catch((error) => {
-                  console.error(error);
-                  message.error("Algo salió mal...");
-                })
-                .finally(() => {
-                  loadOrders();
-                });
-            },
-            onNegativeClick: () => {},
-          }); */
         },
         async printOrder(row) {
           await retrieveOrder(row.id)
             .then((response) => {
               ticketData.value = response.data;
               showPreview.value = true;
-              // if (response.status === 200) {
-              //   let objProps = {};
-              //   switch (row.order_type) {
-              //     case "M":
-              //       objProps = {
-              //         data: response.data,
-              //         table: response.data.table,
-              //         created: row.created,
-              //       };
-              //       break;
-              //     case "P":
-              //       objProps = {
-              //         data: response.data,
-              //         saleInf: {},
-              //         created: row.created,
-              //       };
-              //       break;
-              //     case "D":
-              //       objProps = {
-              //         data: response.data,
-              //         saleInf: { delivery_info: response.data.delivery_info },
-              //         changing:
-              //           response.data.amount -
-              //           parseFloat(response.data.given_amount),
-              //         created: row.created,
-              //       };
-              //       break;
-              //     default:
-              //       message.error(
-              //         "Error al definir las propiedades de la impresión"
-              //       );
-              //   }
-              //   switch (
-              //     settingsStore.business_settings.printer.kitchen_ticket_format
-              //   ) {
-              //     case 1:
-              //       printOrderTicket(objProps);
-              //       break;
-              //     case 2:
-              //       printWEBADASDEBRASEROS(objProps);
-              //       break;
-              //     default:
-              //       message.error("No se encontro el formato de impresion");
-              //   }
-              // }
-            })
-            .catch((error) => {
-              console.error(error);
-              message.error("Algo salió mal...");
-            });
-        },
-        async printDelivery(row) {
-          await retrieveOrder(row.id)
-            .then((response) => {
-              if (response.status === 200) {
-                //do smething
-                if (
-                  !!response.data.delivery_info &&
-                  settingsStore.business_settings.printer.print_delivery_ticket
-                ) {
-                  printDeliveryInfo({
-                    data: response.data,
-                    changing:
-                      response.data.amount -
-                      parseFloat(response.data.given_amount),
-                  });
-                }
-              }
             })
             .catch((error) => {
               console.error(error);

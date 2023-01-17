@@ -1333,7 +1333,6 @@ export const saleRules = {
 
 export const createSaleColumns = ({
   printSale,
-  miscSale,
   updateSale,
   sendSale,
   nullifySale,
@@ -1467,23 +1466,12 @@ export const createSaleColumns = ({
           h(
             NButton,
             {
-              class: "me-2",
               size: "small",
               type: "warning",
               secondary: true,
               onClick: () => printSale(row),
             },
             renderIcon("md-print-round")
-          ),
-          h(
-            NButton,
-            {
-              size: "small",
-              type: "success",
-              secondary: true,
-              onClick: () => miscSale(row),
-            },
-            renderIcon("ri-mail-send-fill")
           ),
         ];
       },
@@ -1626,7 +1614,6 @@ export const createOrderColumns = ({
   showDeliveryInfo,
   payDeliver,
   printOrder,
-  printDelivery,
   nullifyOrder,
 }) => {
   return [
@@ -1649,11 +1636,11 @@ export const createOrderColumns = ({
     },
     {
       title: "Monto",
-      key: "amount",
+      key: "initial_amount",
       align: "center",
       width: genericsStore.device !== "desktop" ? 100 : "auto",
       render(row) {
-        return `S/. ${parseFloat(row.amount).toFixed(2)}`;
+        return `S/. ${parseFloat(row.initial_amount).toFixed(2)}`;
       },
     },
     {
@@ -1759,18 +1746,6 @@ export const createOrderColumns = ({
       width: genericsStore.device !== "desktop" ? 250 : "auto",
       align: "center",
       render(row) {
-        const handleOption = async (option) => {
-          switch (option) {
-            case 1:
-              await printOrder(row);
-              break;
-            case 2:
-              await printDelivery(row);
-              break;
-            default:
-              console.error("Opción inválida");
-          }
-        };
         return [
           h(
             NButton,
@@ -1810,49 +1785,17 @@ export const createOrderColumns = ({
                 renderIcon("fa-dollar-sign")
               )
             : null,
-          row.is_delivery
-            ? h(
-                NPopselect,
-                {
-                  size: "small",
-                  trigger: "click",
-                  options: [
-                    {
-                      value: 1,
-                      label: "Imprimir orden",
-                    },
-                    {
-                      value: 2,
-                      label: "Imprimir delivery",
-                    },
-                  ],
-                  onUpdateValue: handleOption,
-                },
-                {
-                  default: () =>
-                    h(
-                      NButton,
-                      {
-                        class: "me-2",
-                        size: "small",
-                        type: "warning",
-                        secondary: true,
-                      },
-                      renderIcon("md-print-round")
-                    ),
-                }
-              )
-            : h(
-                NButton,
-                {
-                  class: "me-2",
-                  size: "small",
-                  type: "warning",
-                  secondary: true,
-                  onClick: () => printOrder(row),
-                },
-                renderIcon("md-print-round")
-              ),
+          h(
+            NButton,
+            {
+              class: "me-2",
+              size: "small",
+              type: "warning",
+              secondary: true,
+              onClick: () => printOrder(row),
+            },
+            renderIcon("md-print-round")
+          ),
           userStore.hasPermission("delete_order") &&
             h(
               NButton,
@@ -1896,11 +1839,11 @@ export const createTillOrderColumns = ({ showDetails, showDeliveryInfo }) => {
     },
     {
       title: "Monto",
-      key: "amount",
+      key: "initial_amount",
       align: "center",
       width: genericsStore.device !== "desktop" ? 100 : "auto",
       render(row) {
-        return `S/. ${parseFloat(row.amount).toFixed(2)}`;
+        return `S/. ${parseFloat(row.initial_amount).toFixed(2)}`;
       },
     },
     {

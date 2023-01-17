@@ -50,7 +50,7 @@
               @click.prevent="handleSubmit"
               size="large"
               :loading="loading"
-              color="#A32B2C"
+              color="#ff9068"
               block
             >
               Iniciar Sesión
