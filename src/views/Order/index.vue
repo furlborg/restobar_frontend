@@ -706,9 +706,11 @@ export default defineComponent({
         },
         payDeliver(row) {
           paymentsTotal.value = parseFloat(row.amount);
-          if (!settingsStore.business_settings.till.delivery_affects_till) {
+          if (
+            !settingsStore.business_settings.till.delivery_affects_till &&
+            row.order_type === "D"
+          ) {
             paymentsTotal.value -= parseFloat(row.delivery_info.amount);
-            console.log(paymentsTotal.value);
           }
           currentOrder.value.order_id = row.id;
           currentOrder.value.sale_id = row.sale_id;
