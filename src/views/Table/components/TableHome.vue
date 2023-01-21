@@ -85,9 +85,9 @@
               <div
                 class="ms-1 text-center text-wrap position-absolute top-50 start-50 translate-middle"
                 :class="{
-                  'fs-1': table.description.length <= 5,
+                  'fs-alt': table.description.length <= 3,
                   'fs-4':
-                    table.description.length > 5 &&
+                    table.description.length > 3 &&
                     table.description.length <= 15,
                   'fs-6': table.description.length > 15,
                 }"
@@ -643,6 +643,11 @@ export default defineComponent({
 <style lang="scss" scoped>
 .bg-occuped {
   background-color: rgb(255, 162, 162);
+}
+
+.fs-alt {
+  font-size: 3rem;
+  font-weight: bold;
 }
 
 .black-outline {

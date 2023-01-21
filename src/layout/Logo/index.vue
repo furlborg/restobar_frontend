@@ -1,17 +1,6 @@
 <template>
   <div :class="{ logo: !collapsed, 'logo-collapsed': collapsed }">
-    <img
-      v-if="collapsed"
-      draggable="false"
-      src="~@/assets/images/logo.png"
-      alt=""
-    />
-    <img
-      v-else
-      draggable="false"
-      src="~@/assets/images/account-logo.png"
-      alt=""
-    />
+    <img draggable="false" src="~@/assets/images/logo.png" alt="" />
   </div>
 </template>
 

@@ -6,11 +6,19 @@
           class="ticket-header-title"
           :style="{
             fontSize: `${settingsStore.business_settings.printer.header_font_size}px`,
+            textAlign:
+              settingsStore.business_settings.printer.kitchen_ticket_format ===
+              3
+                ? 'right'
+                : 'center',
           }"
         >
           {{ info.table || (!info.delivery_info ? "PARA LLEVAR" : "DELIVERY") }}
         </div>
         <div
+          v-if="
+            settingsStore.business_settings.printer.kitchen_ticket_format !== 3
+          "
           class="ticket-header-subtitle"
           :style="{
             fontSize: `${settingsStore.business_settings.printer.sub_header_font_size}px`,

@@ -476,6 +476,7 @@ export const createTillColumns = ({
   makeTillReport,
   makeSimpleTillReport,
   makeSaleReport,
+  makeMethodsReport,
   makeAreaKardexReport,
   requestExcel,
   sendReportMail,
@@ -618,6 +619,10 @@ export const createTillColumns = ({
                       },
                       {
                         key: 14,
+                        label: "Reporte por método de pago",
+                      },
+                      {
+                        key: 15,
                         label: "Productos por Area",
                       },
                     ],
@@ -700,6 +705,9 @@ export const createTillColumns = ({
                       makeSaleReport(row);
                       break;
                     case 14:
+                      makeMethodsReport(row);
+                      break;
+                    case 15:
                       makeAreaKardexReport(row);
                       break;
                     case 211:

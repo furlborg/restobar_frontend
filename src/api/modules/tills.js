@@ -121,6 +121,10 @@ export async function getTillSaleReport(id) {
   return await http.get(`tills/${id}/sale_report/`);
 }
 
+export async function getTillMethodsReport(id) {
+  return await http.get(`tills/${id}/methods_report/`);
+}
+
 export async function getAreaKardexReport(id) {
   return await http.get(`tills/${id}/areas_product_kardex/`);
 }

@@ -397,6 +397,10 @@ export default defineComponent({
         label: "FORMATO 2",
         value: 2,
       },
+      {
+        label: "FORMATO 3",
+        value: 3,
+      },
     ];
 
     const performUpdateBusinessSettings = () => {
