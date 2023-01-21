@@ -63,17 +63,17 @@
               }}{{
                 settingsStore.business_settings.printer
                   .kitchen_ticket_format === 2
-                  ? `${detail.quantity} x `
+                  ? `${!isUpdate ? detail.quantity : detail.initial_quantity} x `
                   : ""
               }}{{ generateName(detail) }}
             </div>
             <div
               v-if="
                 settingsStore.business_settings.printer
-                  .kitchen_ticket_format === 1
+                  .kitchen_ticket_format !== 2
               "
             >
-              CANT: {{ !isUpdate ? detail.quantity : detail.quantity }}
+              CANT: {{ !isUpdate ? detail.quantity : detail.initial_quantity }}
             </div>
             <div
               class="indication"
