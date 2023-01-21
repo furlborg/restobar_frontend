@@ -62,7 +62,7 @@
               {{ getPrefix(detail.product_category)
               }}{{
                 settingsStore.business_settings.printer
-                  .kitchen_ticket_format === 2
+                  .kitchen_ticket_format !== 1
                   ? `${!isUpdate ? detail.quantity : detail.initial_quantity} x `
                   : ""
               }}{{ generateName(detail) }}
@@ -70,7 +70,7 @@
             <div
               v-if="
                 settingsStore.business_settings.printer
-                  .kitchen_ticket_format !== 2
+                  .kitchen_ticket_format === 1
               "
             >
               CANT: {{ !isUpdate ? detail.quantity : detail.initial_quantity }}
