@@ -105,7 +105,7 @@ export default defineComponent({
   },
   setup() {
     const { proxy } = getCurrentInstance();
-    proxy.$connect("ws://192.168.18.101:8000/ws/orders/");
+    proxy.$connect(`${process.env.VUE_APP_WS_URL}/ws/orders/`);
     proxy.$socket.onmessage = (message) => {
       const res = JSON.parse(message.data);
       previewData.value = res.data;

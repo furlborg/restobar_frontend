@@ -17,7 +17,7 @@ const app = createApp(App);
 app
   .use(store)
   .use(router)
-  .use(VueNativeSock, "ws://192.168.18.101:8000/ws/orders/", {
+  .use(VueNativeSock, `${process.env.VUE_APP_WS_URL}/ws/orders/`, {
     store: socketStore,
     format: "json",
     connectManually: true,
