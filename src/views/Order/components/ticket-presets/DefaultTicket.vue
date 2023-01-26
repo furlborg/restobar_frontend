@@ -60,7 +60,7 @@
           <div class="ticket-body-item">
             <div>
               {{ getPrefix(detail.product_category)
-              }}{{
+              }}<span v-if="!!getPrefix(detail.product_category)">&#9733; </span>{{
                 settingsStore.business_settings.printer
                   .kitchen_ticket_format !== 1
                   ? `${!isUpdate ? detail.quantity : detail.initial_quantity} x `
