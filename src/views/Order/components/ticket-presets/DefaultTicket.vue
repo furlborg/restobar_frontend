@@ -191,7 +191,7 @@ export default defineComponent({
       if (settingsStore.business_settings.printer.show_cat) {
         if (cat.toLowerCase().includes("menu")) {
           prefix = "[MENU] ";
-        } else if (cat.toLowerCase().includes("combos")) {
+        } else if (cat.toLowerCase().includes("combo")) {
           prefix = "[COMBO] >> ";
         } else {
           prefix = "[CARTA] >> ";
@@ -201,7 +201,7 @@ export default defineComponent({
     };
 
     const generateName = (detail) => {
-      if (settingsStore.business_settings.printer.kitchen_ticket_format !== 2 && detail.product_category.toLowerCase().includes("combo")) {
+      if (settingsStore.business_settings.printer.kitchen_ticket_format === 3 && detail.product_category.toLowerCase().includes("combo")) {
         detail.product_name =
           detail.product_category +
           detail.product_description.replaceAll(", ", "+");
