@@ -201,7 +201,7 @@ export default defineComponent({
     };
 
     const generateName = (detail) => {
-      if (detail.product_category.toLowerCase().includes("combo")) {
+      if (settingsStore.business_settings.printer.kitchen_ticket_format === 1 && detail.product_category.toLowerCase().includes("combo")) {
         detail.product_name =
           detail.product_category +
           detail.product_description.replaceAll(", ", "+");
