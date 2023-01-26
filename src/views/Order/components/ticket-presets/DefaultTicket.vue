@@ -191,7 +191,7 @@ export default defineComponent({
       if (settingsStore.business_settings.printer.show_cat) {
         if (cat.toLowerCase().includes("menu")) {
           prefix = "[MENU] ";
-        } else if (cat.toLowerCase().includes("combo")) {
+        } else if (cat.toLowerCase().includes("combos")) {
           prefix = "[COMBO] >> ";
         } else {
           prefix = "[CARTA] >> ";
