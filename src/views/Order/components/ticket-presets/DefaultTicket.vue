@@ -190,7 +190,7 @@ export default defineComponent({
       let prefix = "";
       if (settingsStore.business_settings.printer.show_cat) {
         if (cat.toLowerCase().includes("menu")) {
-          if (settingsStore.business_settings.printer.kitchen_ticket_format !== 1) prefix = "[MENU] >> ";
+          prefix = "[MENU] ";
         } else if (cat.toLowerCase().includes("combo")) {
           prefix = "[COMBO] >> ";
         } else {
