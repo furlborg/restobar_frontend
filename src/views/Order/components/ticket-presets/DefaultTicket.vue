@@ -83,6 +83,9 @@
                 }px`,
               }"
             >
+              <template v-if"!!detail.product_description">
+                <div v-for="desc in detail.product_description.split(',')" :key="desc">*{{ desc }}</div>
+              </template>
               <template
                 v-for="(indication, index) in detail.indication"
                 :key="index"
