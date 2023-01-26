@@ -62,7 +62,7 @@
               v-model:value="businessSettings.printer.header_font_size"
               placeholder=""
               :min="6"
-              :max="30"
+              :max="50"
             />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Tamaño letra subtitulo">
@@ -70,7 +70,7 @@
               v-model:value="businessSettings.printer.sub_header_font_size"
               placeholder=""
               :min="6"
-              :max="30"
+              :max="50"
             />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Tamaño letra cuerpo">
@@ -78,7 +78,7 @@
               v-model:value="businessSettings.printer.body_font_size"
               placeholder=""
               :min="6"
-              :max="30"
+              :max="50"
             />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Tamaño letra pie de página">
@@ -86,7 +86,7 @@
               v-model:value="businessSettings.printer.footer_font_size"
               placeholder=""
               :min="6"
-              :max="30"
+              :max="50"
             />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Tamaño letra delivery">
@@ -94,7 +94,7 @@
               v-model:value="businessSettings.printer.delivery_ticket_font_size"
               placeholder=""
               :min="6"
-              :max="30"
+              :max="50"
             />
           </n-form-item-gi>
           <n-form-item-gi :span="3" label="Tamaño letra pre-cuenta">
@@ -104,7 +104,7 @@
               "
               placeholder=""
               :min="6"
-              :max="30"
+              :max="50"
             />
           </n-form-item-gi>
           <n-form-item-gi :span="4">
