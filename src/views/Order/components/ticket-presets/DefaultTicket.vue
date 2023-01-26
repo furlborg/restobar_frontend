@@ -190,11 +190,11 @@ export default defineComponent({
       let prefix = "";
       if (settingsStore.business_settings.printer.show_cat) {
         if (cat.toLowerCase().includes("menu")) {
-          if (settingsStore.business_settings.printer.kitchen_ticket_format !== 1) prefix = "[MENU] <span>&#9733;</span> ";
+          if (settingsStore.business_settings.printer.kitchen_ticket_format !== 1) prefix = "[MENU] ✶ ";
         } else if (cat.toLowerCase().includes("combo")) {
-          prefix = "[COMBO] <span>&#9733;</span> ";
+          prefix = "[COMBO] ✶ ";
         } else {
-          prefix = "[CARTA] <span>&#9733;</span> ";
+          prefix = "[CARTA] ✶ ";
         }
       }
       return prefix;
