@@ -63,7 +63,9 @@
               }}{{
                 settingsStore.business_settings.printer
                   .kitchen_ticket_format !== 1
-                  ? `${!isUpdate ? detail.quantity : detail.initial_quantity} x `
+                  ? `${
+                      !!isUpdate ? detail.quantity : detail.initial_quantity
+                    } x `
                   : ""
               }}{{ generateName(detail) }}
             </div>
@@ -84,7 +86,12 @@
               }"
             >
               <template v-if="!!detail.product_description">
-                <div v-for="desc in detail.product_description.split(',')" :key="desc">*{{ desc }}</div>
+                <div
+                  v-for="desc in detail.product_description.split(',')"
+                  :key="desc"
+                >
+                  *{{ desc }}
+                </div>
               </template>
               <template
                 v-for="(indication, index) in detail.indication"
@@ -204,7 +211,10 @@ export default defineComponent({
     };
 
     const generateName = (detail) => {
-      if (settingsStore.business_settings.printer.kitchen_ticket_format === 3 && detail.product_category.toLowerCase().includes("combo")) {
+      if (
+        settingsStore.business_settings.printer.kitchen_ticket_format === 3 &&
+        detail.product_category.toLowerCase().includes("combo")
+      ) {
         detail.product_name =
           detail.product_category +
           detail.product_description.replaceAll(", ", "+");

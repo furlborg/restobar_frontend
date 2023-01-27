@@ -227,7 +227,6 @@
 </template>
 
 <script>
-import printDeliveryInfo from "@/hooks/PrintsTemplates/Ticket/DeliveryInfo.js";
 import { defineComponent, ref, computed, onMounted } from "vue";
 import { useMessage, useDialog } from "naive-ui";
 import { set, format } from "date-fns";

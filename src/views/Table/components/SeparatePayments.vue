@@ -465,7 +465,6 @@
 </template>
 
 <script>
-import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 import {
   defineComponent,
   ref,

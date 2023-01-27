@@ -168,7 +168,6 @@
 </template>
 
 <script>
-import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 import { defineComponent, ref, onMounted } from "vue";
 import { useMessage, useDialog } from "naive-ui";
 import { createSaleColumns } from "@/utils/constants";

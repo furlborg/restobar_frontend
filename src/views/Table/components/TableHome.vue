@@ -371,8 +371,6 @@
 </template>
 
 <script>
-import { CreatePdfFile } from "@/hooks/CreatePdfFile";
-import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 import { isAxiosError } from "axios";
 import { defineComponent, ref, onMounted } from "vue";
 import { useMessage } from "naive-ui";

@@ -300,8 +300,6 @@
 </template>
 
 <script>
-import printOrderTicket from "@/hooks/PrintsTemplates/Ticket/OrderTicket.js";
-import printWEBADASDEBRASEROS from "@/hooks/PrintsTemplates/Ticket/WEBADASDEBRASEROS.js";
 import OrderIndications from "./OrderIndications";
 import TicketPreview from "@/views/Order/components/TicketPreview";
 import { defineComponent, ref, computed, onMounted, watchEffect, h } from "vue";

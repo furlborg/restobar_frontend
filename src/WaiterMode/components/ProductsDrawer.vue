@@ -161,8 +161,6 @@
 </template>
 
 <script>
-import printOrderTicket from "@/hooks/PrintsTemplates/Ticket/OrderTicket.js";
-import printWEBADASDEBRASEROS from "@/hooks/PrintsTemplates/Ticket/WEBADASDEBRASEROS.js";
 import ProductIndications from "../views/ProductIndications";
 import TicketPreview from "@/views/Order/components/TicketPreview";
 import { h, defineComponent, ref, computed } from "vue";
@@ -384,11 +382,6 @@ export default defineComponent({
               if (response.status === 201) {
                 message.success("Orden creada correctamente");
 
-                // printOrderTicket({
-                //   data: response.data,
-                //   table,
-                // });
-
                 pdfData.value = response.data;
                 showPdf.value = true;
                 setTimeout(() => ticketPreview.value.generate(), 250);
@@ -454,12 +447,6 @@ export default defineComponent({
                 response.data.order_details = evalOrderList(
                   response.data.order_details
                 );
-
-                // printOrderTicket({
-                //   data: response.data,
-                //   table,
-                //   updateOrder: true,
-                // });
 
                 pdfData.value = response.data;
                 showPdf.value = true;

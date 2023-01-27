@@ -721,10 +721,6 @@
 </template>
 
 <script>
-import printOrderTicket from "@/hooks/PrintsTemplates/Ticket/OrderTicket.js";
-import printDeliveryInfo from "@/hooks/PrintsTemplates/Ticket/DeliveryInfo.js";
-import printWEBADASDEBRASEROS from "@/hooks/PrintsTemplates/Ticket/WEBADASDEBRASEROS.js";
-import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 import CustomerModal from "@/views/Customer/components/CustomerModal";
 import OrderIndications from "./OrderIndications";
 import CategoriesList from "./CategoriesList";
@@ -1253,45 +1249,6 @@ export default defineComponent({
           }),
           (sale.value.ask_for = ""))
         : (sale.value.delivery_info = null);
-    };
-
-    const PrintsAfterTakeOrder = (val) => {
-      let values = { ...val.order, ...val.sale };
-
-      VoucherPrint({
-        data: values,
-        businessStore,
-        saleStore,
-        changing: changing.value,
-        show: true,
-      });
-
-      if (
-        !!values.delivery_info &&
-        settingsStore.business_settings.printer.print_delivery_ticket
-      ) {
-        printDeliveryInfo({ data: values, changing: changing.value });
-      }
-
-      switch (settingsStore.business_settings.printer.kitchen_ticket_format) {
-        case 1:
-          printOrderTicket({ data: values, saleInf: sale.value });
-          break;
-        case 2:
-          printWEBADASDEBRASEROS({
-            data: values,
-            saleInf: sale.value,
-            changing: changing.value,
-          });
-          break;
-
-        default:
-          message.error("No se encontro el formato de impresion");
-      }
-
-      // if (settingsStore.business_settings.printer.print_delivery_ticket) {
-      // }
-      message.success("Imprimir");
     };
 
     const showConfirm = ref(false);

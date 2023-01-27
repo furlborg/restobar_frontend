@@ -76,7 +76,6 @@
 <script>
 import { defineComponent, ref, onUpdated, onMounted } from "vue";
 import ProductsDrawer from "../components/ProductsDrawer";
-import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 import { useMessage, useDialog } from "naive-ui";
 import { isAxiosError } from "axios";
 import {

@@ -245,8 +245,6 @@
 </template>
 
 <script>
-import printOrderTicket from "@/hooks/PrintsTemplates/Ticket/OrderTicket.js";
-import printWEBADASDEBRASEROS from "@/hooks/PrintsTemplates/Ticket/WEBADASDEBRASEROS.js";
 import { useSettingsStore } from "@/store/modules/settings";
 import { defineComponent, ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
@@ -306,11 +304,6 @@ export default defineComponent({
         .then((response) => {
           if (response.status === 201) {
             message.success("Orden creada correctamente");
-
-            // printOrderTicket({
-            //   data: response.data,
-            //   table,
-            // });
 
             pdfData.value = response.data;
             showPdf.value = true;
