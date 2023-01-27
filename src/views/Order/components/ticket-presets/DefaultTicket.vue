@@ -50,8 +50,14 @@
             }px`,
           }"
         >
-          <div>{{ info.created }}</div>
-          <div>{{ info.username }}</div>
+          <template
+            v-if="
+              settingsStore.business_settings.printer.info_location === 'header'
+            "
+          >
+            <div>{{ info.created }}</div>
+            <div>{{ info.username }}</div>
+          </template>
           <div v-if="info.order_type !== 'M' && data.ask_for" key="ask_for">
             REFERENCIA: {{ data.ask_for }}
           </div>
@@ -124,7 +130,16 @@
         :style="{
           fontSize: `${settingsStore.business_settings.printer.footer_font_size}px`,
         }"
-      ></div>
+      >
+        <template
+          v-if="
+            settingsStore.business_settings.printer.info_location === 'footer'
+          "
+        >
+          <div>{{ info.created }}</div>
+          <div>{{ info.username }}</div>
+        </template>
+      </div>
     </div>
   </div>
 </template>
@@ -240,17 +255,18 @@ export default defineComponent({
   background-color: White;
   line-height: normal;
   width: 252px;
-  margin: 0 10px 0 10px;
+  margin: 0 10px;
   &-header {
     font-weight: bold;
     text-align: center;
-    margin: 10px 0 0 0;
+    margin-top: 10px;
     &-subtitle {
       word-spacing: 5px;
     }
   }
   &-body {
-    padding: 20px 0;
+    padding-top: 20px;
+    padding-bottom: 10px;
     font-weight: bold;
     word-spacing: 5px;
     &-info {
@@ -258,12 +274,12 @@ export default defineComponent({
     }
     &-item {
       border-top: 1px dashed;
-      padding: 10px 0;
+      padding-top: 10px;
     }
     .indication {
-      margin: 5px 0 5px 0;
+      margin-top: 5px;
       &-extra {
-        margin: 5px 0 5px 0;
+        margin-top: 5px;
       }
     }
   }

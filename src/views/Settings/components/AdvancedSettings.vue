@@ -107,16 +107,22 @@
               :max="50"
             />
           </n-form-item-gi>
-          <n-form-item-gi :span="4">
-            <n-checkbox v-model:checked="businessSettings.printer.show_cat"
-              >Mostrar categoría producto</n-checkbox
-            >
-          </n-form-item-gi>
-          <n-form-item-gi :span="3" label="Formato ticket pedidos">
+          <n-form-item-gi :span="3" label="Formato de ticket">
             <n-select
               v-model:value="businessSettings.printer.kitchen_ticket_format"
               :options="kitchenPrinterFormatOptions"
             />
+          </n-form-item-gi>
+          <n-form-item-gi :span="3" label="Información en">
+            <n-select
+              v-model:value="businessSettings.printer.info_location"
+              :options="infoLocationOptions"
+            />
+          </n-form-item-gi>
+          <n-form-item-gi :span="4">
+            <n-checkbox v-model:checked="businessSettings.printer.show_cat"
+              >Mostrar categoría producto</n-checkbox
+            >
           </n-form-item-gi>
           <n-form-item-gi :span="3">
             <n-checkbox
@@ -403,6 +409,17 @@ export default defineComponent({
       },
     ];
 
+    const infoLocationOptions = [
+      {
+        label: "Cabecera",
+        value: "header",
+      },
+      {
+        label: "Pie de página",
+        value: "footer",
+      },
+    ];
+
     const performUpdateBusinessSettings = () => {
       updateBusinessSettings(businessSettings.value)
         .then((response) => {
@@ -439,6 +456,7 @@ export default defineComponent({
       editMode,
       resetSettings,
       kitchenPrinterFormatOptions,
+      infoLocationOptions,
     };
   },
 });
