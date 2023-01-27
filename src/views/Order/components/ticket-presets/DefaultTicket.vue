@@ -81,7 +81,7 @@
                   .kitchen_ticket_format === 1
               "
             >
-              CANT: {{ !isUpdate ? detail.quantity : detail.initial_quantity }}
+              CANT: {{ !!isUpdate ? detail.quantity : detail.initial_quantity }}
             </div>
             <div
               class="indication"
