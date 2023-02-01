@@ -387,6 +387,7 @@ import {
 import { cloneDeep } from "@/utils";
 import { useBusinessStore } from "@/store/modules/business";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
+import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 
 export default defineComponent({
   name: "Tables",
@@ -421,9 +422,18 @@ export default defineComponent({
       await retrieveTableOrder(table)
         .then((response) => {
           if (response.status === 200) {
-            previewData.value = response.data;
-            showPreview.value = true;
-            setTimeout(() => previewDrawer.value.generate(), 250);
+            if (settingsStore.business_settings.printer.print_html) {
+              previewData.value = response.data;
+              showPreview.value = true;
+              setTimeout(() => previewDrawer.value.generate(), 250);
+            } else {
+              VoucherPrint({
+                data: response.data,
+                businessStore,
+                prePayment: true,
+                auto: true,
+              });
+            }
           }
         })
         .catch((error) => {

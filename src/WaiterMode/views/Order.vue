@@ -85,6 +85,7 @@ import {
   onBeforeRouteUpdate,
 } from "vue-router";
 import ProductIndications from "./ProductIndications";
+import { useSettingsStore } from "@/store/modules/settings";
 import { useBusinessStore } from "@/store/modules/business";
 import { useWaiterStore } from "@/store/modules/waiter";
 import { useOrderStore } from "@/store/modules/order";
@@ -93,6 +94,7 @@ import { useSaleStore } from "@/store/modules/sale";
 import { retrieveTableOrder } from "@/api/modules/tables";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 import { cloneDeep } from "@/utils";
+import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 
 export default defineComponent({
   name: "WOrder",
@@ -102,6 +104,7 @@ export default defineComponent({
     PreviewDrawer,
   },
   setup() {
+    const settingsStore = useSettingsStore();
     const businessStore = useBusinessStore();
     const waiterStore = useWaiterStore();
     const orderStore = useOrderStore();
@@ -180,9 +183,18 @@ export default defineComponent({
       await retrieveTableOrder(route.params.table)
         .then((response) => {
           if (response.status === 200) {
-            previewData.value = response.data;
-            showPreview.value = true;
-            setTimeout(() => previewDrawer.value.generate(), 250);
+            if (settingsStore.business_settings.printer.print_html) {
+              previewData.value = response.data;
+              showPreview.value = true;
+              setTimeout(() => previewDrawer.value.generate(), 250);
+            } else {
+              VoucherPrint({
+                data: response.data,
+                businessStore,
+                prePayment: true,
+                auto: true,
+              });
+            }
           }
         })
         .catch((error) => {

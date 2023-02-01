@@ -329,7 +329,15 @@
 </template>
 
 <script>
-import { defineComponent, ref, toRefs, computed, watch, reactive } from "vue";
+import {
+  defineComponent,
+  ref,
+  toRefs,
+  computed,
+  watch,
+  reactive,
+  h,
+} from "vue";
 import { useGenericsStore } from "@/store/modules/generics";
 import {
   createProduct,
@@ -343,7 +351,7 @@ import { useProductStore } from "@/store/modules/product";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useBusinessStore } from "@/store/modules/business";
 import { useUserStore } from "@/store/modules/user";
-import { useMessage } from "naive-ui";
+import { NButton, useMessage } from "naive-ui";
 import { productRules } from "@/utils/constants";
 import { isNumber, isDecimal } from "@/utils";
 import { getBranchs } from "@/api/modules/business";
@@ -715,16 +723,16 @@ export default defineComponent({
         title: "",
         width: 5,
         render(row, i) {
-          return (
-            <NButton
-              type="error"
-              size="small"
-              onClick={() => {
+          return h(
+            NButton,
+            {
+              type: "error",
+              size: "small",
+              onClick: () => {
                 deleteSupplie(row.supplie);
-              }}
-            >
-              Quitar
-            </NButton>
+              },
+            },
+            () => "Quitar"
           );
         },
       },

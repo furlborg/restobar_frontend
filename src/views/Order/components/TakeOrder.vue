@@ -756,6 +756,11 @@ import {
 import format from "date-fns/format";
 import TicketPreview from "@/views/Order/components/TicketPreview";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
+
+import printDeliveryInfo from "@/hooks/PrintsTemplates/Ticket/DeliveryInfo.js";
+import printWEBADASDEBRASEROS from "@/hooks/PrintsTemplates/Ticket/WEBADASDEBRASEROS.js";
+import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
+
 const dateNow = ref(null);
 
 export default defineComponent({
@@ -806,7 +811,7 @@ export default defineComponent({
     const totalGRV = computed(() => {
       return saleStore.toSale.reduce((acc, curVal) => {
         return curVal.product_affectation === 10
-          ? (acc += curVal.price_base * curVal.quantity)
+          ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
           : acc;
       }, 0);
     });
@@ -814,7 +819,7 @@ export default defineComponent({
     const totalEXN = computed(() => {
       return saleStore.toSale.reduce((acc, curVal) => {
         return curVal.product_affectation === 20
-          ? (acc += curVal.price_base * curVal.quantity)
+          ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
           : acc;
       }, 0);
     });
@@ -822,7 +827,7 @@ export default defineComponent({
     const totalGRT = computed(() => {
       return saleStore.toSale.reduce((acc, curVal) => {
         return curVal.product_affectation === 21
-          ? (acc += curVal.price_base * curVal.quantity)
+          ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
           : acc;
       }, 0);
     });
@@ -1276,6 +1281,26 @@ export default defineComponent({
       }
     }; */
 
+    const PrintsAfterTakeOrder = (val) => {
+      let values = { ...val.order, ...val.sale };
+
+      VoucherPrint({
+        data: values,
+        businessStore,
+        saleStore,
+        changing: changing.value,
+        show: true,
+      });
+
+      if (
+        !!values.delivery_info &&
+        settingsStore.business_settings.printer.print_delivery_ticket
+      ) {
+        printDeliveryInfo({ data: values, changing: changing.value });
+      }
+      router.push({ name: "TableHome" });
+    };
+
     const performCreateOrder = async () => {
       loading.value = true;
       sale.value.sale_details = saleStore.toSale.map((detail) => ({
@@ -1287,18 +1312,21 @@ export default defineComponent({
       await takeAwayOrder(orderStore.orderList, sale.value, userConfirm.value)
         .then((response) => {
           if (response.status === 201) {
-            // PrintsAfterTakeOrder(response.data);
+            message.success("Venta realizada correctamente!");
             pdfData.value = response.data.order;
             showPdf.value = true;
-            setTimeout(() => ticketPreviewRef.value.generate(), 250);
-            voucherData.value = response.data.sale;
-            showVoucher.value = true;
-            if (!ticketPreview.value) {
-              setTimeout(() => voucherDrawer.value.generate(), 500);
-            }
-
-            message.success("Venta realizada correctamente!");
-
+            setTimeout(() => {
+              ticketPreviewRef.value.generate();
+              if (settingsStore.business_settings.printer.print_html) {
+                voucherData.value = response.data.sale;
+                showVoucher.value = true;
+                if (!ticketPreview.value) {
+                  setTimeout(() => voucherDrawer.value.generate(), 250);
+                }
+              } else {
+                PrintsAfterTakeOrder(response.data);
+              }
+            }, 250);
             // router.push({ name: "TableHome" });
           }
         })
@@ -1353,15 +1381,26 @@ export default defineComponent({
                 )
                   .then((response) => {
                     if (response.status === 201) {
+                      message.success("Venta realizada correctamente!");
                       pdfData.value = response.data.order;
                       showPdf.value = true;
-                      setTimeout(() => ticketPreviewRef.value.generate(), 250);
-                      voucherData.value = response.data.sale;
-                      showVoucher.value = true;
-                      if (!ticketPreview.value) {
-                        setTimeout(() => voucherDrawer.value.generate(), 500);
-                      }
-                      message.success("Venta realizada correctamente!");
+                      setTimeout(() => {
+                        ticketPreviewRef.value.generate();
+                        if (
+                          settingsStore.business_settings.printer.print_html
+                        ) {
+                          voucherData.value = response.data.sale;
+                          showVoucher.value = true;
+                          if (!ticketPreview.value) {
+                            setTimeout(
+                              () => voucherDrawer.value.generate(),
+                              250
+                            );
+                          }
+                        } else {
+                          PrintsAfterTakeOrder(response.data);
+                        }
+                      }, 250);
                       if (
                         settingsStore.businessSettings.sale.auto_send &&
                         !sale.value.delivery_info &&

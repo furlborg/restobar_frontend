@@ -188,6 +188,7 @@ import { isNumber, isLetter } from "@/utils";
 import SaleUpdate from "./components/SaleUpdate";
 import SaleReportModal from "./components/SaleReportModal";
 import PreviewDrawer from "./components/PreviewDrawer";
+import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 
 export default defineComponent({
   name: "Sale",
@@ -489,8 +490,17 @@ export default defineComponent({
           retrieveSale(row.id)
             .then((response) => {
               if (response.status === 200) {
-                saleData.value = response.data;
-                showPdf.value = true;
+                if (settingsStore.business_settings.printer.print_html) {
+                  saleData.value = response.data;
+                  showPdf.value = true;
+                } else {
+                  VoucherPrint({
+                    data: response.data,
+                    businessStore,
+                    saleStore,
+                    show: true,
+                  });
+                }
               }
             })
             .catch((error) => {

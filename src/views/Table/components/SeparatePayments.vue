@@ -501,8 +501,8 @@ import { useDialog, useMessage } from "naive-ui";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
 import format from "date-fns/format";
 import { lighten } from "@/utils";
-
 import { useBusinessStore } from "@/store/modules/business";
+import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 
 export default defineComponent({
   name: "SeparatePayments",
@@ -560,7 +560,7 @@ export default defineComponent({
     const totalGRV = computed(() => {
       return sale.value.sale_details.reduce((acc, curVal) => {
         return curVal.product_affectation === 10
-          ? (acc += curVal.price_base * curVal.quantity)
+          ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
           : acc;
       }, 0);
     });
@@ -568,7 +568,7 @@ export default defineComponent({
     const totalEXN = computed(() => {
       return sale.value.sale_details.reduce((acc, curVal) => {
         return curVal.product_affectation === 20
-          ? (acc += curVal.price_base * curVal.quantity)
+          ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
           : acc;
       }, 0);
     });
@@ -576,7 +576,7 @@ export default defineComponent({
     const totalGRT = computed(() => {
       return sale.value.sale_details.reduce((acc, curVal) => {
         return curVal.product_affectation === 21
-          ? (acc += curVal.price_base * curVal.quantity)
+          ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
           : acc;
       }, 0);
     });
@@ -705,10 +705,20 @@ export default defineComponent({
               await createSale(sale.value)
                 .then((response) => {
                   if (response.status === 201) {
-                    pdfData.value = response.data;
-                    showPdf.value = true;
-                    if (!ticketPreview.value) {
-                      setTimeout(() => previewDrawer.value.generate(), 250);
+                    if (settingsStore.business_settings.printer.print_html) {
+                      pdfData.value = response.data;
+                      showPdf.value = true;
+                      if (!ticketPreview.value) {
+                        setTimeout(() => previewDrawer.value.generate(), 250);
+                      }
+                    } else {
+                      VoucherPrint({
+                        data: response.data,
+                        businessStore,
+                        changing: changing.value,
+                        show: true,
+                      });
+                      emit("success");
                     }
 
                     if (

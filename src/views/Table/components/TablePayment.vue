@@ -495,6 +495,7 @@ import format from "date-fns/format";
 import { lighten } from "@/utils";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 import { useBusinessStore } from "@/store/modules/business";
+import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 
 export default defineComponent({
   name: "TablePayment",
@@ -538,7 +539,7 @@ export default defineComponent({
     const totalGRV = computed(() => {
       return saleStore.toSale.reduce((acc, curVal) => {
         return curVal.product_affectation === 10
-          ? (acc += curVal.price_base * curVal.quantity)
+          ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
           : acc;
       }, 0);
     });
@@ -546,7 +547,7 @@ export default defineComponent({
     const totalEXN = computed(() => {
       return saleStore.toSale.reduce((acc, curVal) => {
         return curVal.product_affectation === 20
-          ? (acc += curVal.price_base * curVal.quantity)
+          ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
           : acc;
       }, 0);
     });
@@ -554,7 +555,7 @@ export default defineComponent({
     const totalGRT = computed(() => {
       return saleStore.toSale.reduce((acc, curVal) => {
         return curVal.product_affectation === 21
-          ? (acc += curVal.price_base * curVal.quantity)
+          ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
           : acc;
       }, 0);
     });
@@ -702,10 +703,21 @@ export default defineComponent({
               await createSale(sale.value)
                 .then((response) => {
                   if (response.status === 201) {
-                    pdfData.value = response.data;
-                    showPdf.value = true;
-                    if (!ticketPreview.value) {
-                      setTimeout(() => previewDrawer.value.generate(), 250);
+                    if (settingsStore.business_settings.printer.print_html) {
+                      pdfData.value = response.data;
+                      showPdf.value = true;
+                      if (!ticketPreview.value) {
+                        setTimeout(() => previewDrawer.value.generate(), 250);
+                      }
+                    } else {
+                      VoucherPrint({
+                        data: response.data,
+                        businessStore,
+                        saleStore,
+                        changing: changing.value,
+                        show: true,
+                      });
+                      router.push({ name: "TableHome" });
                     }
 
                     if (

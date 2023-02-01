@@ -144,7 +144,10 @@ export default defineComponent({
       places.value.forEach((place, i) => {
         printTicket(i, place);
       });
-      if (props.data.order_type === "D") {
+      if (
+        props.data.order_type === "D" &&
+        settingsStore.business_settings.printer.print_html
+      ) {
         printDelivery();
       }
       emit("printed");

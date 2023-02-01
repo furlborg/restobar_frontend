@@ -148,6 +148,11 @@
               >Impresiones nativas
             </n-checkbox>
           </n-form-item-gi>
+          <n-form-item-gi :span="4">
+            <n-checkbox v-model:checked="businessSettings.printer.print_html"
+              >Impresiones HTML
+            </n-checkbox>
+          </n-form-item-gi>
         </n-grid>
         <n-divider />
         <n-text class="fs-4">Pedidos</n-text>
