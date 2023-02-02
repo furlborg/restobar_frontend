@@ -431,7 +431,8 @@ export default defineComponent({
                 data: response.data,
                 businessStore,
                 prePayment: true,
-                auto: true,
+                auto: false,
+                show: true,
               });
             }
           }
