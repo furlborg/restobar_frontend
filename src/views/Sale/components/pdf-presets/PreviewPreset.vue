@@ -47,11 +47,7 @@
                   <td align="left">{{ detail.product_name }}</td>
                   <td align="right">{{ detail.price.toFixed(2) }}</td>
                   <td align="right">
-                    {{
-                      parseFloat(
-                        detail.initial_quantity * detail.price
-                      ).toFixed(2)
-                    }}
+                    {{ parseFloat(detail.quantity * detail.price).toFixed(2) }}
                   </td>
                 </tr>
               </template>
