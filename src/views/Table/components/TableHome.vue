@@ -432,7 +432,7 @@ export default defineComponent({
                 businessStore,
                 prePayment: true,
                 auto: false,
-                show: true,
+                show: false,
               });
             }
           }

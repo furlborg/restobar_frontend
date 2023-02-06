@@ -1,11 +1,27 @@
 <template>
   <div id="TicketDelivery">
     <div class="ticket">
-      <div class="ticket-header">
+      <div
+        class="ticket-header"
+        :style="{
+          fontSize: `${
+            settingsStore.business_settings.printer.delivery_ticket_font_size +
+            4
+          }px`,
+        }"
+      >
         <div class="ticket-header-title">DELIVERY</div>
         <div class="ticket-header-subtitle">ORDEN #{{ data.id }}</div>
       </div>
-      <div class="ticket-body">
+      <div
+        class="ticket-body"
+        :style="{
+          fontSize: `${
+            settingsStore.business_settings.printer.delivery_ticket_font_size +
+            2
+          }px`,
+        }"
+      >
         <table class="ticket-body-info">
           <tbody>
             <tr>
@@ -50,14 +66,19 @@
           </tbody>
         </table>
       </div>
-      <table class="ticket-body-details">
+      <table
+        class="ticket-body-details"
+        :style="{
+          fontSize: `${settingsStore.business_settings.printer.delivery_ticket_font_size}px`,
+        }"
+      >
         <thead>
           <tr>
-            <td>CANT</td>
-            <td>UM</td>
-            <td>DESCRIPCIÓN</td>
-            <td>PRECIO</td>
-            <td>TOTAL</td>
+            <td width="15%">CANT</td>
+            <td width="15%">UM</td>
+            <td width="35%">DESCRIPCIÓN</td>
+            <td width="19%">PRECIO</td>
+            <td width="21%">TOTAL</td>
           </tr>
         </thead>
         <tbody>
@@ -82,7 +103,15 @@
           </tr>
         </tfoot>
       </table>
-      <div class="ticket-footer">
+      <div
+        class="ticket-footer"
+        :style="{
+          fontSize: `${
+            settingsStore.business_settings.printer.delivery_ticket_font_size +
+            2
+          }px`,
+        }"
+      >
         <div>REPARTIDOR:{{ data.delivery_info.deliveryman }}</div>
       </div>
     </div>
@@ -91,6 +120,7 @@
 
 <script>
 import { defineComponent } from "vue";
+import { useSettingsStore } from "@/store/modules/settings";
 
 export default defineComponent({
   name: "TicketDelivery",
@@ -100,10 +130,13 @@ export default defineComponent({
     },
   },
   setup(props) {
+    const settingsStore = useSettingsStore();
+
     const info = JSON.parse(props.data.json_sale);
 
     return {
       info,
+      settingsStore,
     };
   },
 });
@@ -119,14 +152,11 @@ export default defineComponent({
   &-header {
     text-align: center;
     margin-bottom: 5px;
-    font-size: 14px;
   }
   &-body {
-    font-size: 12px;
     margin-bottom: 5px;
     &-details {
       margin-top: 5px;
-      font-size: 10px;
       width: 272px;
       tbody {
         tr {
@@ -145,7 +175,6 @@ export default defineComponent({
     }
   }
   &-footer {
-    font-size: 12px;
   }
 }
 </style>
