@@ -91,7 +91,13 @@
                 }px`,
               }"
             >
-              <template v-if="!!detail.product_description">
+              <template
+                v-if="
+                  !!detail.product_description &&
+                  settingsStore.business_settings.printer
+                    .kitchen_ticket_format !== 3
+                "
+              >
                 <div
                   v-for="desc in detail.product_description.split(',')"
                   :key="desc"
@@ -218,6 +224,8 @@ export default defineComponent({
           prefix = "[MENU] ";
         } else if (cat.toLowerCase().includes("combo")) {
           prefix = "[COMBO] >> ";
+        } else if (cat.toLowerCase().includes("porcion")) {
+          prefix = "[PORCION] >> ";
         } else {
           prefix = "[CARTA] >> ";
         }
@@ -227,12 +235,12 @@ export default defineComponent({
 
     const generateName = (detail) => {
       if (
-        settingsStore.business_settings.printer.kitchen_ticket_format === 3 &&
-        detail.product_category.toLowerCase().includes("combo")
+        detail.product_category.toLowerCase().includes("combo") &&
+        settingsStore.business_settings.printer.kitchen_ticket_format === 3
       ) {
         detail.product_name =
           detail.product_category +
-          detail.product_description.replaceAll(", ", "+");
+          detail.product_description.replaceAll(",", "+");
       }
       return detail.product_name;
     };
