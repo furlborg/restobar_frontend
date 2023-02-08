@@ -159,10 +159,11 @@ import {
 } from "vue";
 import { useMessage } from "naive-ui";
 import { useGenericsStore } from "@/store/modules/generics";
+import { useSettingsStore } from "@/store/modules/settings";
 import CustomerModal from "@/views/Customer/components/CustomerModal";
 import { retrieveCustomerAddresses } from "@/api/modules/customer";
 import { useSaleStore } from "@/store/modules/sale";
-import { createSale, getSaleNumber } from "@/api/modules/sales";
+import { createSale, getSaleNumber, sendSale } from "@/api/modules/sales";
 import { saleRules } from "@/utils/constants";
 import {
   searchCustomerByName,
@@ -182,6 +183,7 @@ export default defineComponent({
   emits: ["on-success"],
   setup(props, { emit }) {
     const genericsStore = useGenericsStore();
+    const settingsStore = useSettingsStore();
     const saleStore = useSaleStore();
     const message = useMessage();
     const sale = reactive({
@@ -386,6 +388,26 @@ export default defineComponent({
           if (response.status === 201) {
             message.success("Se ha generado la venta...");
             emit("on-success");
+            const json = JSON.parse(response.data.json_sale);
+            if (
+              settingsStore.businessSettings.sale.auto_send &&
+              json.codigo_tipo_documento !== "80"
+            ) {
+              sendSale(response.data.id)
+                .then((response) => {
+                  if (response.status === 200) {
+                    message.success("Enviado!");
+                  }
+                })
+                .catch((error) => {
+                  if (error.response.status === 400) {
+                    message.error(error.response.data);
+                  } else {
+                    console.error(error);
+                    message.error("Algo salió mal...");
+                  }
+                });
+            }
           }
         })
         .catch((error) => {
