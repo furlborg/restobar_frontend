@@ -3,11 +3,7 @@
     <div class="view-account-container">
       <div class="view-account-top">
         <div class="view-account-top-logo">
-          <img
-            draggable="false"
-            src="~@/assets/images/account-logo.png"
-            alt=""
-          />
+          <img draggable="false" :src="image" alt="" />
         </div>
       </div>
       <div class="view-account-form">
@@ -69,6 +65,8 @@ import { useRouter } from "vue-router";
 import { login } from "@/api/modules/users";
 import { useUserStore } from "@/store/modules/user";
 import { useGenericsStore } from "@/store/modules/generics";
+import logo from "@/assets/images/account-logo.png";
+import axios from "axios";
 
 export default defineComponent({
   name: "login",
@@ -78,6 +76,17 @@ export default defineComponent({
     const formRef = ref();
     const message = useMessage();
     const loading = ref(false);
+    const image = ref(null);
+    axios
+      .get(`${process.env.VUE_APP_API_URL}/media/business/logo.png`)
+      .then((response) => {
+        if (response.status === 200) {
+          image.value = `${process.env.VUE_APP_API_URL}/media/business/logo.png`;
+        } else {
+          image.value = logo;
+        }
+      })
+      .catch((e) => (image.value = logo));
 
     const router = useRouter();
 
@@ -145,6 +154,7 @@ export default defineComponent({
       rules,
       formInline,
       handleSubmit,
+      image,
     };
   },
 });

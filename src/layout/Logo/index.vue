@@ -1,11 +1,13 @@
 <template>
   <div :class="{ logo: !collapsed, 'logo-collapsed': collapsed }">
-    <img draggable="false" src="~@/assets/images/logo.png" alt="" />
+    <img draggable="false" :src="image" alt="" />
   </div>
 </template>
 
 <script>
-import { defineComponent } from "vue";
+import { defineComponent, ref } from "vue";
+import logo from "@/assets/images/logo.png";
+import axios from "axios";
 
 export default defineComponent({
   name: "Logo",
@@ -13,6 +15,22 @@ export default defineComponent({
     collapsed: {
       type: Boolean,
     },
+  },
+  setup() {
+    const image = ref(null);
+    axios
+      .get(`${process.env.VUE_APP_API_URL}/media/business/logo.png`)
+      .then((response) => {
+        if (response.status === 200) {
+          image.value = `${process.env.VUE_APP_API_URL}/media/business/logo.png`;
+        } else {
+          image.value = logo;
+        }
+      })
+      .catch((e) => (image.value = logo));
+    return {
+      image,
+    };
   },
 });
 </script>
