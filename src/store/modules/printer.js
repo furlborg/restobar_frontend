@@ -195,9 +195,16 @@ export const usePrinterStore = defineStore("printer", {
       const config = this.qz.configs.create(printer, {
         jobName: `QZ_${job_name.toUpperCase()}`,
         size: {
-          width: format[0] * 0.2645833333,
-          height: format[1] * 0.2645833333,
+          width: 80,
+          height: 0,
         },
+        margins: {
+          top: 0,
+          bottom: 0,
+          right: 0,
+          left: 0,
+        },
+        colorType: "blackwhite",
         units: "mm",
       });
       this.qz.print(config, [
