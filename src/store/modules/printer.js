@@ -204,6 +204,7 @@ export const usePrinterStore = defineStore("printer", {
           right: 0,
           left: 0,
         },
+        orientation: "portrait",
         colorType: "blackwhite",
         units: "mm",
       });

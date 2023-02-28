@@ -185,8 +185,8 @@ export default defineComponent({
     }
     &-logo {
       img {
-        width: auto;
-        height: 256px;
+        max-width: 350px;
+        max-height: 250px;
       }
     }
   }
