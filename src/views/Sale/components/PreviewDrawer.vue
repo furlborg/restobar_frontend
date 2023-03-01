@@ -134,7 +134,7 @@ export default defineComponent({
       const doc = new jsPDF({
         unit: "px",
         format: format,
-        orientation: "m",
+        orientation: "p",
         hotfixes: ["px_scaling"],
       });
       doc.html(ticket.value.$el.innerHTML, {
