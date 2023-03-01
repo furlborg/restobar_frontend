@@ -192,22 +192,31 @@ export const usePrinterStore = defineStore("printer", {
           ? await this.qz.printers.getDefault()
           : this.managedPrinters[0]
         : place;
-      const config = this.qz.configs.create(printer, {
-        jobName: `QZ_${job_name.toUpperCase()}`,
-        size: {
-          width: 80,
-          height: 0,
-        },
-        margins: {
-          top: 0,
-          bottom: 0,
-          right: 0,
-          left: 0,
-        },
-        orientation: "portrait",
-        colorType: "blackwhite",
-        units: "mm",
-      });
+      const config = !place
+        ? this.qz.configs.create(printer, {
+            jobName: `QZ_${job_name.toUpperCase()}`,
+            size: {
+              width: 80,
+              height: 0,
+            },
+            margins: {
+              top: 0,
+              bottom: 0,
+              right: 0,
+              left: 0,
+            },
+            orientation: "portrait",
+            colorType: "blackwhite",
+            units: "mm",
+          })
+        : this.qz.configs.create(printer, {
+            jobName: `QZ_${job_name.toUpperCase()}`,
+            size: {
+              width: format[0] * 0.2645833333,
+              height: format[1] * 0.2645833333,
+            },
+            units: "mm",
+          });
       this.qz.print(config, [
         {
           type: "pixel",
