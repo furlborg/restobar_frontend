@@ -76,26 +76,54 @@
         </div>
         <div class="ticket-body-details">
           <table width="272px">
-            <thead>
-              <tr>
-                <th width="15%">CANT</th>
-                <th width="40%">DESCRIPCIÓN</th>
-                <th :width="!!hasDiscounts ? '15%' : '20%'">PRECIO</th>
-                <th v-if="hasDiscounts" width="15%">DESCT</th>
-                <th :width="!!hasDiscounts ? '15%' : '20%'">TOTAL</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(item, index) in sale.items" :key="index">
-                <td>{{ item.cantidad }}</td>
-                <td align="left">{{ item.descripcion }}</td>
-                <td align="right">{{ item.precio_unitario.toFixed(2) }}</td>
-                <td v-if="hasDiscounts" align="right">
-                  {{ data.sale_details[index] }}
-                </td>
-                <td align="right">{{ item.total_item.toFixed(2) }}</td>
-              </tr>
-            </tbody>
+            <template v-if="data.by_consumption">
+              <thead>
+                <tr>
+                  <th :width="!!hasDiscounts ? '60%' : '80%'" align="center">
+                    DESCRIPCIÓN
+                  </th>
+                  <th width="0"></th>
+                  <th width="0"></th>
+                  <th v-if="hasDiscounts" width="20%">DESCT</th>
+                  <th width="20%">TOTAL</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td align="center">Por consumo</td>
+                  <td></td>
+                  <td></td>
+                  <td v-if="hasDiscounts" align="right">
+                    {{ sale.totales.total_descuentos.toFixed(2) }}
+                  </td>
+                  <td align="right">
+                    {{ sale.totales.total_venta.toFixed(2) }}
+                  </td>
+                </tr>
+              </tbody>
+            </template>
+            <template v-else>
+              <thead>
+                <tr>
+                  <th width="15%">CANT</th>
+                  <th width="40%">DESCRIPCIÓN</th>
+                  <th :width="!!hasDiscounts ? '15%' : '20%'">PRECIO</th>
+                  <th v-if="hasDiscounts" width="15%">DESCT</th>
+                  <th :width="!!hasDiscounts ? '15%' : '20%'">TOTAL</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(item, index) in sale.items" :key="index">
+                  <td>{{ item.cantidad }}</td>
+                  <td align="left">{{ item.descripcion }}</td>
+                  <td align="right">{{ item.precio_unitario.toFixed(2) }}</td>
+                  <td v-if="hasDiscounts" align="right">
+                    {{ data.sale_details[index] }}
+                  </td>
+                  <td align="right">{{ item.total_item.toFixed(2) }}</td>
+                </tr>
+              </tbody>
+            </template>
             <tfoot>
               <tr v-if="Number(sale.totales.total_operaciones_gravadas)">
                 <td align="right" :colspan="!!hasDiscounts ? 4 : 3">
