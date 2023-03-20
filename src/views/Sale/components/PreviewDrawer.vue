@@ -41,7 +41,12 @@
             <n-button style="width: 90px" type="info" tertiary disabled>
               <v-icon name="md-outgoingmail" />
             </n-button>
-            <n-button style="width: 90px" type="warning" tertiary disabled>
+            <n-button
+              style="width: 90px"
+              type="warning"
+              tertiary
+              @click="generate(true)"
+            >
               <v-icon name="fa-download" />
             </n-button>
           </n-button-group>
@@ -126,7 +131,7 @@ export default defineComponent({
 
     const phoneNumber = ref("");
 
-    const generate = () => {
+    const generate = (save = false) => {
       const format = [
         ticket.value.$el.clientWidth,
         ticket.value.$el.clientHeight + 10,
@@ -139,25 +144,38 @@ export default defineComponent({
       });
       doc.html(ticket.value.$el.innerHTML, {
         callback: async function (doc) {
-          if (settingsStore.business_settings.printer.native_printing) {
-            doc.autoPrint();
-            const hiddFrame = document.createElement("iframe");
-            hiddFrame.style.position = "fixed";
-            hiddFrame.style.width = "1px";
-            hiddFrame.style.height = "1px";
-            hiddFrame.style.opacity = "0.01";
-            hiddFrame.src = doc.output("bloburl");
-            document.body.appendChild(hiddFrame);
-          } else {
-            await printerStore.printTicket(
-              doc,
-              format,
-              !props.preVoucher
-                ? `SALE#${props.data.id}#${saleStore.getSerieDescription(
-                    props.data.serie
-                  )}-${props.data.number}`
-                : `PREVOUCHER#${props.data.id}`
+          if (save) {
+            console.log(
+              `${saleStore.getSerieDescription(props.data.serie)}-${
+                props.data.number
+              }`
             );
+            doc.save(
+              `${saleStore.getSerieDescription(props.data.serie)}-${
+                props.data.number
+              }`
+            );
+          } else {
+            if (settingsStore.business_settings.printer.native_printing) {
+              doc.autoPrint();
+              const hiddFrame = document.createElement("iframe");
+              hiddFrame.style.position = "fixed";
+              hiddFrame.style.width = "1px";
+              hiddFrame.style.height = "1px";
+              hiddFrame.style.opacity = "0.01";
+              hiddFrame.src = doc.output("bloburl");
+              document.body.appendChild(hiddFrame);
+            } else {
+              await printerStore.printTicket(
+                doc,
+                format,
+                !props.preVoucher
+                  ? `SALE#${props.data.id}#${saleStore.getSerieDescription(
+                      props.data.serie
+                    )}-${props.data.number}`
+                  : `PREVOUCHER#${props.data.id}`
+              );
+            }
           }
           emit("printed");
           emit("update:show", false);
