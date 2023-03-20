@@ -144,12 +144,7 @@ export default defineComponent({
       });
       doc.html(ticket.value.$el.innerHTML, {
         callback: async function (doc) {
-          if (save) {
-            console.log(
-              `${saleStore.getSerieDescription(props.data.serie)}-${
-                props.data.number
-              }`
-            );
+          if (save === true) {
             doc.save(
               `${saleStore.getSerieDescription(props.data.serie)}-${
                 props.data.number
