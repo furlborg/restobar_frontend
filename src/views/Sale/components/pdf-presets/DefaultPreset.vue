@@ -118,7 +118,7 @@
                   <td align="left">{{ item.descripcion }}</td>
                   <td align="right">{{ item.precio_unitario.toFixed(2) }}</td>
                   <td v-if="hasDiscounts" align="right">
-                    {{ data.sale_details[index] }}
+                    {{ data.sale_details[index].discount }}
                   </td>
                   <td align="right">{{ item.total_item.toFixed(2) }}</td>
                 </tr>
