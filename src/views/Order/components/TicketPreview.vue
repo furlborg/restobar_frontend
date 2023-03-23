@@ -95,7 +95,7 @@ export default defineComponent({
         hotfixes: ["px_scaling"],
       });
       doc.html(ticket.$el.innerHTML, {
-        margin: [0, 0, 0, 15],
+        margin: settingsStore.business_settings.printer.margins,
         callback: async function (doc) {
           // doc.save();
           await printerStore.printTicket(

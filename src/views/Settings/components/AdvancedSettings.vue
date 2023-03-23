@@ -119,6 +119,38 @@
               :options="infoLocationOptions"
             />
           </n-form-item-gi>
+          <n-form-item-gi :span="3" label="Margen superior">
+            <n-input-number
+              v-model:value="businessSettings.printer.margins[0]"
+              placeholder=""
+              :min="0"
+              :max="25"
+            />
+          </n-form-item-gi>
+          <n-form-item-gi :span="3" label="Margen derecho">
+            <n-input-number
+              v-model:value="businessSettings.printer.margins[1]"
+              placeholder=""
+              :min="0"
+              :max="25"
+            />
+          </n-form-item-gi>
+          <n-form-item-gi :span="3" label="Margen inferior">
+            <n-input-number
+              v-model:value="businessSettings.printer.margins[2]"
+              placeholder=""
+              :min="0"
+              :max="25"
+            />
+          </n-form-item-gi>
+          <n-form-item-gi :span="3" label="Margen izquierdo">
+            <n-input-number
+              v-model:value="businessSettings.printer.margins[3]"
+              placeholder=""
+              :min="0"
+              :max="25"
+            />
+          </n-form-item-gi>
           <n-form-item-gi :span="4">
             <n-checkbox v-model:checked="businessSettings.printer.show_cat"
               >Mostrar categoría producto</n-checkbox
