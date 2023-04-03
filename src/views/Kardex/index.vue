@@ -2,11 +2,26 @@
   <div id="Supplies">
     <n-card title="Kardex" :segmented="{ content: 'hard' }">
       <template #header-extra>
-        <n-button class="me-2" type="info" tertiary
-          @click="$route.name === 'KardexHome' ? $router.push({name: 'KardexList', params: { list: 'products'}}) : $router.push({name: 'KardexHome'})">
+        <n-button
+          class="me-2"
+          type="info"
+          tertiary
+          @click="
+            $route.name === 'KardexHome'
+              ? $router.push({
+                  name: 'KardexList',
+                  params: { list: 'products' },
+                })
+              : $router.push({ name: 'KardexHome' })
+          "
+        >
           <v-icon name="md-viewcarousel-twotone" />
         </n-button>
-        <n-dropdown trigger="click" :options="reportOptions" @select="selectReport">
+        <n-dropdown
+          trigger="click"
+          :options="reportOptions"
+          @select="selectReport"
+        >
           <n-button type="info" tertiary>
             <!-- <v-icon name="si-simpleanalytics" /> -->
             Reportes
@@ -70,8 +85,36 @@ export default defineComponent({
       {
         label: "Insumos",
         key: "supplies",
-        disabled: true,
-        children: [],
+        children: [
+          {
+            label: "Imprimir",
+            key: 3,
+            children: [
+              {
+                key: 31,
+                label: "Con stock",
+              },
+              {
+                key: 32,
+                label: "Sin stock",
+              },
+            ],
+          },
+          {
+            label: "Excel",
+            key: 4,
+            children: [
+              {
+                key: 41,
+                label: "Con stock",
+              },
+              {
+                key: 42,
+                label: "Sin stock",
+              },
+            ],
+          },
+        ],
       },
     ];
 
@@ -90,6 +133,22 @@ export default defineComponent({
           break;
         case 22:
           requestExcel("products_kardex", "Kardex Productos", {
+            has_stock: false,
+          });
+          break;
+        case 31:
+          requestTicket("products_kardex_ticket", { has_stock: true });
+          break;
+        case 32:
+          requestTicket("products_kardex_ticket", { has_stock: false });
+          break;
+        case 41:
+          requestExcel("supplies_kardex", "Kardex Insumos", {
+            has_stock: true,
+          });
+          break;
+        case 42:
+          requestExcel("supplies_kardex", "Kardex Insumos", {
             has_stock: false,
           });
           break;
@@ -165,6 +224,4 @@ export default defineComponent({
 });
 </script>
 
-<style>
-
-</style>
+<style></style>
