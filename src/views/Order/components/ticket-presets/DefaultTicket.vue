@@ -62,73 +62,102 @@
             REFERENCIA: {{ data.ask_for }}
           </div>
         </div>
-        <template v-for="detail in infoDetails" :key="detail.id">
-          <div class="ticket-body-item">
-            <div>
-              {{ getPrefix(detail.product_category)
-              }}{{
-                settingsStore.business_settings.printer
-                  .kitchen_ticket_format !== 1
-                  ? `${
-                      !!isUpdate ? detail.quantity : detail.initial_quantity
-                    } x `
-                  : ""
-              }}{{ generateName(detail) }}
-            </div>
-            <div
-              v-if="
-                settingsStore.business_settings.printer
-                  .kitchen_ticket_format === 1
-              "
-            >
-              CANT: {{ !!isUpdate ? detail.quantity : detail.initial_quantity }}
-            </div>
-            <div
-              class="indication"
-              :style="{
-                fontSize: `${
-                  settingsStore.business_settings.printer.body_font_size - 1
-                }px`,
-              }"
-            >
-              <template
-                v-if="
-                  !!detail.product_description &&
+        <template
+          v-if="
+            settingsStore.business_settings.printer.kitchen_ticket_format === 4
+          "
+        >
+          <table>
+            <thead>
+              <tr>
+                <th width="20%">CANT.</th>
+                <th width="80%">PRODUCTO</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="detail in infoDetails" :key="detail.id">
+                <td align="center">
+                  {{ !!isUpdate ? detail.quantity : detail.initial_quantity }}
+                </td>
+                <td>
+                  {{ getPrefix(detail.product_category)
+                  }}{{ generateName(detail)
+                  }}{{ generateIndication(detail.indication) }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </template>
+        <template v-else>
+          <template v-for="detail in infoDetails" :key="detail.id">
+            <div class="ticket-body-item">
+              <div>
+                {{ getPrefix(detail.product_category)
+                }}{{
                   settingsStore.business_settings.printer
-                    .kitchen_ticket_format !== 3
-                "
-              >
-                <div
-                  v-for="desc in detail.product_description.split(',')"
-                  :key="desc"
-                >
-                  *{{ desc }}
-                </div>
-              </template>
-              <template
-                v-for="(indication, index) in detail.indication"
-                :key="index"
-              >
-                <div class="indication-item" v-if="!!indication.description">
-                  -
-                  {{
-                    !indication.takeAway
-                      ? indication.description
-                      : indication.description + " [LLEVAR]"
-                  }}
-                </div>
-              </template>
+                    .kitchen_ticket_format !== 1
+                    ? `${
+                        !!isUpdate ? detail.quantity : detail.initial_quantity
+                      } x `
+                    : ""
+                }}{{ generateName(detail) }}
+              </div>
               <div
                 v-if="
-                  info.order_type !== 'M' &&
-                  detail.indication.some((ind) => ind.takeAway)
+                  settingsStore.business_settings.printer
+                    .kitchen_ticket_format === 1
                 "
-                class="indication-extra"
               >
-                PARA LLEVAR: {{ indicationTakeAways(detail.indication) }}
+                CANT:
+                {{ !!isUpdate ? detail.quantity : detail.initial_quantity }}
+              </div>
+              <div
+                class="indication"
+                :style="{
+                  fontSize: `${
+                    settingsStore.business_settings.printer.body_font_size - 1
+                  }px`,
+                }"
+              >
+                <template
+                  v-if="
+                    !!detail.product_description &&
+                    settingsStore.business_settings.printer
+                      .kitchen_ticket_format !== 3
+                  "
+                >
+                  <div
+                    v-for="desc in detail.product_description.split(',')"
+                    :key="desc"
+                  >
+                    *{{ desc }}
+                  </div>
+                </template>
+                <template
+                  v-for="(indication, index) in detail.indication"
+                  :key="index"
+                >
+                  <div class="indication-item" v-if="!!indication.description">
+                    -
+                    {{
+                      !indication.takeAway
+                        ? indication.description
+                        : indication.description + " [LLEVAR]"
+                    }}
+                  </div>
+                </template>
+                <div
+                  v-if="
+                    info.order_type !== 'M' &&
+                    detail.indication.some((ind) => ind.takeAway)
+                  "
+                  class="indication-extra"
+                >
+                  PARA LLEVAR: {{ indicationTakeAways(detail.indication) }}
+                </div>
               </div>
             </div>
-          </div>
+          </template>
         </template>
       </div>
       <div
@@ -245,11 +274,20 @@ export default defineComponent({
       return detail.product_name;
     };
 
+    const generateIndication = (ind) => {
+      let text = "";
+      for (const indication of ind) {
+        text += ` [${indication.description}]`;
+      }
+      return text;
+    };
+
     return {
       info,
       getPrefix,
       infoDetails,
       generateName,
+      generateIndication,
       settingsStore,
       indicationTakeAways,
     };
@@ -270,6 +308,16 @@ export default defineComponent({
     margin-top: 10px;
     &-subtitle {
       word-spacing: 5px;
+    }
+  }
+  table {
+    th {
+      border-bottom: 1px dotted black;
+    }
+    tr {
+      td {
+        border-bottom: 1px dotted black;
+      }
     }
   }
   &-body {

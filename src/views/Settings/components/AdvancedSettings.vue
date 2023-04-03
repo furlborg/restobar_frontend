@@ -444,6 +444,10 @@ export default defineComponent({
         label: "FORMATO 3",
         value: 3,
       },
+      {
+        label: "FORMATO 4",
+        value: 4,
+      },
     ];
 
     const infoLocationOptions = [
