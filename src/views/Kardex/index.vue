@@ -137,10 +137,10 @@ export default defineComponent({
           });
           break;
         case 31:
-          requestTicket("products_kardex_ticket", { has_stock: true });
+          requestTicket("supplies_kardex_ticket", { has_stock: true });
           break;
         case 32:
-          requestTicket("products_kardex_ticket", { has_stock: false });
+          requestTicket("supplies_kardex_ticket", { has_stock: false });
           break;
         case 41:
           requestExcel("supplies_kardex", "Kardex Insumos", {
