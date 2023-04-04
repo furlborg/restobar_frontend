@@ -7,7 +7,6 @@ import { useUserStore } from "@/store/modules/user";
 export async function listOrders(filterParams) {
   return await http.get("orders/", {
     params: {
-      till: filterParams.till,
       created__range:
         filterParams.created !== null
           ? `${filterParams.created[0]}, ${filterParams.created[1]}`
@@ -28,7 +27,6 @@ export async function listOrdersByPage(filterParams, page, pageSize) {
   if (filterParams) {
     return await http.get("orders/", {
       params: {
-        till: filterParams.till,
         created__range:
           filterParams.created !== null
             ? `${filterParams.created[0]}, ${filterParams.created[1]}`
@@ -62,7 +60,6 @@ export async function updateOrderStatus(order, payments) {
 export async function searchOrders(filterParams, page, pageSize) {
   return await http.get("orders/", {
     params: {
-      till: filterParams.till,
       created__range:
         filterParams.created !== null
           ? `${filterParams.created[0]}, ${filterParams.created[1]}`

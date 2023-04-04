@@ -282,7 +282,6 @@ export default defineComponent({
       seconds: 0,
     });
     const filterParams = ref({
-      till: tillStore.currentTillID,
       created: [
         format(today, "dd/MM/yyyy HH:mm:ss"),
         format(
@@ -291,13 +290,12 @@ export default defineComponent({
         ),
       ],
       take_aways: true,
-      tables: false,
+      tables: true,
       deliverys: true,
       status: null,
     });
     const pagination = ref({
       pageSearchParams: {
-        till: tillStore.currentTillID,
         created: [
           format(today, "dd/MM/yyyy HH:mm:ss"),
           format(
@@ -306,7 +304,7 @@ export default defineComponent({
           ),
         ],
         take_aways: true,
-        tables: false,
+        tables: true,
         deliverys: true,
         status: null,
       },
@@ -434,7 +432,6 @@ export default defineComponent({
     };
 
     const refreshTable = async () => {
-      filterParams.value.till = tillStore.currentTillID;
       filterParams.value.created = [
         format(today, "dd/MM/yyyy HH:mm:ss"),
         format(
@@ -443,11 +440,10 @@ export default defineComponent({
         ),
       ];
       filterParams.value.take_aways = true;
-      filterParams.value.tables = false;
+      filterParams.value.tables = true;
       filterParams.value.deliverys = true;
       filterParams.value.status = null;
       pagination.value.pageSearchParams = {
-        till: tillStore.currentTillID,
         created: [
           format(today, "dd/MM/yyyy HH:mm:ss"),
           format(
@@ -456,7 +452,7 @@ export default defineComponent({
           ),
         ],
         take_aways: true,
-        tables: false,
+        tables: true,
         deliverys: true,
         status: null,
       };
