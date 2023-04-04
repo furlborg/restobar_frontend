@@ -87,9 +87,7 @@ export default defineComponent({
             ),
           key: "Orders",
           icon: renderIcon("md-pendingactions-twotone"),
-          disabled: !userStore.hasPermission("view_order")
-            ? true
-            : !tillStore.currentTillID,
+          disabled: !userStore.hasPermission("view_order"),
         },
         {
           label: () =>
@@ -206,5 +204,4 @@ export default defineComponent({
 });
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

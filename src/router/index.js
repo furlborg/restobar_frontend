@@ -38,25 +38,6 @@ export const routes = [
         },
         component: () =>
           import(/* webpackChunkName: "order" */ "@/views/Order"),
-        beforeEnter: async (to, from, next) => {
-          const tillStore = useTillStore();
-          await retrieveCurrentTill()
-            .then((response) => {
-              if (response.status === 200) {
-                tillStore.currentTillID = response.data.id;
-                tillStore.currentTillOrders = response.data.orders_count;
-              }
-            })
-            .catch((error) => {
-              if (error.response.status === 404) {
-                tillStore.currentTillID = null;
-                tillStore.currentTillOrders = 0;
-              }
-            });
-          tillStore.currentTillID !== null
-            ? next()
-            : next({ name: "TillList" });
-        },
       },
       {
         path: "/sales",
