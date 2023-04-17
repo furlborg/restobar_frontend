@@ -568,7 +568,7 @@ export default defineComponent({
 
     const totalDSCT = computed({
       get: () => {
-        if (saleStore.toSale.some((detail) => Number(detail.discount) > 0)) {
+        if (!saleStore.toSale.some((detail) => Number(detail.discount) > 0)) {
           return saleStore.toSale.reduce((acc, curVal) => {
             return (acc += Number(curVal.discount));
           }, 0);
@@ -576,7 +576,7 @@ export default defineComponent({
         return sale.value.discount;
       },
       set: (v) => {
-        if (saleStore.toSale.some((detail) => Number(detail.discount) > 0)) {
+        if (!saleStore.toSale.some((detail) => Number(detail.discount) > 0)) {
           sale.value.discount = v;
         } else {
           sale.value.discount = saleStore.toSale.reduce((acc, curVal) => {

@@ -590,7 +590,7 @@ export default defineComponent({
     const totalDSCT = computed({
       get: () => {
         if (
-          sale.value.sale_details.some((detail) => Number(detail.discount) > 0)
+          !sale.value.sale_details.some((detail) => Number(detail.discount) > 0)
         ) {
           return sale.value.sale_details.reduce((acc, curVal) => {
             return (acc += Number(curVal.discount));
