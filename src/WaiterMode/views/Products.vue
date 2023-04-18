@@ -331,6 +331,7 @@ export default defineComponent({
         if (!!item && order.quantity > item.quantity) {
           let newOrder = cloneDeep(order);
           newOrder.quantity = order.quantity - item.quantity;
+          newOrder.indication = newOrder.indication.slice(order.quantity);
           list.push(newOrder);
         } else if (
           !!item &&
