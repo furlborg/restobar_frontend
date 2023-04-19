@@ -3,6 +3,7 @@ import {
   getProductCategories,
   getProductPlaces,
   getProductAffectations,
+  getProductFittings,
 } from "@/api/modules/products";
 import { usePrinterStore } from "@/store/modules/printer";
 import { getDeviceType } from "@/utils";
@@ -12,6 +13,7 @@ export const useProductStore = defineStore("product", {
     categories: [],
     places: [],
     affectations: [],
+    fittings: [],
   }),
   getters: {
     affectationsOptions() {
@@ -22,6 +24,12 @@ export const useProductStore = defineStore("product", {
     },
     getPlacesPrinters() {
       return this.places.map((place) => place.printer_name);
+    },
+    getFittingsOptions() {
+      return this.fittings.map((fitting) => ({
+        value: fitting.id,
+        label: fitting.name,
+      }));
     },
   },
   actions: {
@@ -53,6 +61,13 @@ export const useProductStore = defineStore("product", {
       await getProductAffectations()
         .then((response) => {
           this.affectations = response.data;
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+      await getProductFittings()
+        .then((response) => {
+          this.fittings = response.data;
         })
         .catch((error) => {
           console.error(error);

@@ -25,6 +25,22 @@
           {{ place.description }}
         </n-button>
       </template>
+      <template v-if="settingsStore.business_settings.printer.manage_fittings">
+        <template v-for="(place, i) in fittingPlaces" :key="place.id">
+          <fitting-ticket
+            :ref="(el) => (fittings[i] = el)"
+            :data="data"
+            :place="place"
+            :isUpdate="isUpdate"
+          />
+          <n-button type="info" secondary block @click="printTicket(i, place)">
+            <template #icon>
+              <v-icon name="md-print-round" />
+            </template>
+            {{ place.description }}
+          </n-button>
+        </template>
+      </template>
       <template v-if="data.order_type === 'D'">
         <ticket-delivery ref="delivery" :data="data" />
         <n-button type="info" secondary block @click="printDelivery">
@@ -41,6 +57,7 @@
 <script>
 import { defineComponent, ref, computed } from "vue";
 import DefaultTicket from "./ticket-presets/DefaultTicket";
+import FittingTicket from "./ticket-presets/FittingTicket";
 import TicketDelivery from "./ticket-presets/TicketDelivery";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useProductStore } from "@/store/modules/product";
@@ -51,6 +68,7 @@ export default defineComponent({
   name: "TicketPreview",
   components: {
     DefaultTicket,
+    FittingTicket,
     TicketDelivery,
   },
   emits: ["update:show", "printed", "canceled"],
@@ -75,6 +93,7 @@ export default defineComponent({
     const printerStore = usePrinterStore();
     const productStore = useProductStore();
     const tickets = ref([]);
+    const fittings = ref([]);
     const delivery = ref(null);
 
     const places = computed(() => {
@@ -107,6 +126,39 @@ export default defineComponent({
         },
       });
     };
+
+    const printFitting = (i, place) => {
+      const ticket = fittings.value[i];
+      const format = [ticket.$el.clientWidth, ticket.$el.clientHeight + 30];
+      const doc = new jsPDF({
+        unit: "px",
+        format: format,
+        orientation: "m",
+        hotfixes: ["px_scaling"],
+      });
+      doc.html(ticket.$el.innerHTML, {
+        margin: settingsStore.business_settings.printer.margins,
+        callback: async function (doc) {
+          // doc.save();
+          await printerStore.printTicket(
+            doc,
+            format,
+            `ORDER#${props.data.id}#${place.description}`,
+            place.printer_name
+          );
+        },
+      });
+    };
+
+    const fittingPlaces = computed(() => {
+      console.log(props.data.order_details);
+      return productStore.places.filter((place) =>
+        props.data.order_details.some(
+          (detail) =>
+            detail.product_fitting?.preparation_place === place.description
+        )
+      );
+    });
 
     const printDelivery = () => {
       const format = [
@@ -145,6 +197,11 @@ export default defineComponent({
       places.value.forEach((place, i) => {
         printTicket(i, place);
       });
+      if (settingsStore.business_settings.printer.manage_fittings) {
+        places.value.forEach((place, i) => {
+          printFitting(i, place);
+        });
+      }
       if (
         props.data.order_type === "D" &&
         settingsStore.business_settings.printer.print_html
@@ -161,7 +218,10 @@ export default defineComponent({
       printTicket,
       printDelivery,
       places,
+      fittingPlaces,
+      fittings,
       generate,
+      settingsStore,
     };
   },
 });

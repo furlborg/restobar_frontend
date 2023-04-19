@@ -47,6 +47,7 @@ export async function createProduct(product) {
     quick_indications: product.quick_indications,
     affectation: product.affectation,
     igv_tax: product.igv_tax,
+    fitting: product.fitting,
   });
 }
 
@@ -71,6 +72,7 @@ export async function updateProduct(idProduct, product) {
     quick_indications: product.quick_indications,
     affectation: product.affectation,
     igv_tax: product.igv_tax,
+    fitting: product.fitting,
   });
 }
 
@@ -193,4 +195,8 @@ export async function createProductMovement(products) {
 
 export async function getProductAffectations() {
   return await http.get("product-affectation/");
+}
+
+export async function getProductFittings() {
+  return await http.get("product-fitting/");
 }

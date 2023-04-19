@@ -1,5 +1,5 @@
 <template>
-  <div id="DefaultTicket">
+  <div id="FittingTicket">
     <div class="ticket">
       <div class="ticket-header">
         <div
@@ -80,9 +80,7 @@
                   {{ !!isUpdate ? detail.quantity : detail.initial_quantity }}
                 </td>
                 <td>
-                  {{ getPrefix(detail.product_category)
-                  }}{{ generateName(detail)
-                  }}{{ generateIndication(detail.indication) }}
+                  {{ detail.product_fitting.name }} ({{ detail.product_name }})
                 </td>
               </tr>
             </tbody>
@@ -92,15 +90,14 @@
           <template v-for="detail in infoDetails" :key="detail.id">
             <div class="ticket-body-item">
               <div>
-                {{ getPrefix(detail.product_category)
-                }}{{
+                {{
                   settingsStore.business_settings.printer
                     .kitchen_ticket_format !== 1
                     ? `${
                         !!isUpdate ? detail.quantity : detail.initial_quantity
                       } x `
                     : ""
-                }}{{ generateName(detail) }}
+                }}{{ detail.product_fitting.name }} ({{ detail.product_name }})
               </div>
               <div
                 v-if="
@@ -185,7 +182,7 @@ import { useSettingsStore } from "@/store/modules/settings";
 import { useTableStore } from "@/store/modules/table";
 
 export default defineComponent({
-  name: "DefaultTicket",
+  name: "FittingTicket",
   props: {
     data: {
       type: Object,
@@ -209,7 +206,9 @@ export default defineComponent({
         order_details: !props.place
           ? props.data.order_details
           : props.data.order_details.filter(
-              (detail) => detail.preparation_place === props.place.description
+              (detail) =>
+                detail.product_fitting?.preparation_place ===
+                props.place.description
             ),
         table: !props.data.table
           ? ""

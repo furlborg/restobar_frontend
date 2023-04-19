@@ -194,7 +194,19 @@
           >
             <n-input v-model:value="product.quick_indications" placeholder="" />
           </n-form-item-gi>
-          <n-form-item-gi label="Nº Puntos" path="number_points" :span="4">
+          <n-form-item-gi
+            v-if="settingsStore.businessSettings.printer.manage_fittings"
+            label="Guarnición"
+            path="fitting"
+            :span="8"
+          >
+            <n-select
+              v-model:value="product.fitting"
+              placeholder=""
+              :options="productStore.getFittingsOptions"
+            />
+          </n-form-item-gi>
+          <!-- <n-form-item-gi label="N° Puntos" path="number_points" :span="4">
             <n-input-number
               v-model:value="product.number_points"
               placeholder=""
@@ -211,7 +223,7 @@
               :show-button="false"
               @keypress="isNumber($event)"
             />
-          </n-form-item-gi>
+          </n-form-item-gi> -->
           <n-form-item-gi path="icbper" :span="3">
             <n-checkbox v-model:checked="product.icbper">ICBPER</n-checkbox>
           </n-form-item-gi>
