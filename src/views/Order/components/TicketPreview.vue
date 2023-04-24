@@ -11,7 +11,7 @@
       body-content-style="padding: 0;"
       :native-scrollbar="false"
     >
-      <template v-for="(place, i) in places" :key="place.id">
+      <template v-for="(place, i) in places" :key="`product-${place.id}`">
         <default-ticket
           :ref="(el) => (tickets[i] = el)"
           :data="data"
@@ -26,7 +26,10 @@
         </n-button>
       </template>
       <template v-if="settingsStore.business_settings.printer.manage_fittings">
-        <template v-for="(place, i) in fittingPlaces" :key="place.id">
+        <template
+          v-for="(place, i) in fittingPlaces"
+          :key="`fitting-${place.id}`"
+        >
           <fitting-ticket
             :ref="(el) => (fittings[i] = el)"
             :data="data"
@@ -151,7 +154,6 @@ export default defineComponent({
     };
 
     const fittingPlaces = computed(() => {
-      console.log(props.data.order_details);
       return productStore.places.filter((place) =>
         props.data.order_details.some(
           (detail) =>

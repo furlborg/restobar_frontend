@@ -71,11 +71,11 @@
             <thead>
               <tr>
                 <th width="20%">CANT.</th>
-                <th width="80%">PRODUCTO</th>
+                <th width="80%">GUARNICIÓN</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="detail in infoDetails" :key="detail.id">
+              <tr v-for="detail in info.order_details" :key="detail.id">
                 <td align="center">
                   {{ !!isUpdate ? detail.quantity : detail.initial_quantity }}
                 </td>
@@ -87,7 +87,7 @@
           </table>
         </template>
         <template v-else>
-          <template v-for="detail in infoDetails" :key="detail.id">
+          <template v-for="detail in info.order_details" :key="detail.id">
             <div class="ticket-body-item">
               <div>
                 {{
@@ -177,7 +177,7 @@
 </template>
 
 <script>
-import { defineComponent, computed } from "vue";
+import { defineComponent, ref } from "vue";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useTableStore } from "@/store/modules/table";
 
@@ -200,7 +200,7 @@ export default defineComponent({
     const settingsStore = useSettingsStore();
     const tableStore = useTableStore();
 
-    const info = computed(() => {
+    const generateData = () => {
       let data = {
         ...props.data,
         order_details: !props.place
@@ -217,11 +217,7 @@ export default defineComponent({
           ? ""
           : JSON.parse(props.data.json_sale),
       };
-      return data;
-    });
-
-    const infoDetails = computed(() => {
-      return info.value.order_details.map((detail) => {
+      data.order_details.forEach((detail) => {
         detail.indication = detail.indication.map((indication) => {
           let desc = "";
           if (indication.quick_indications.length) {
@@ -234,9 +230,11 @@ export default defineComponent({
             : desc + indication.description;
           return indication;
         });
-        return detail;
       });
-    });
+      return data;
+    };
+
+    const info = ref(generateData());
 
     const indicationTakeAways = (indication) => {
       return indication.reduce((acc, curVal) => {
@@ -261,18 +259,6 @@ export default defineComponent({
       return prefix;
     };
 
-    const generateName = (detail) => {
-      if (
-        detail.product_category.toLowerCase().includes("combo") &&
-        settingsStore.business_settings.printer.kitchen_ticket_format === 3
-      ) {
-        detail.product_name =
-          detail.product_category +
-          detail.product_description.replaceAll(",", "+");
-      }
-      return detail.product_name;
-    };
-
     const generateIndication = (ind) => {
       let text = "";
       for (const indication of ind) {
@@ -284,8 +270,6 @@ export default defineComponent({
     return {
       info,
       getPrefix,
-      infoDetails,
-      generateName,
       generateIndication,
       settingsStore,
       indicationTakeAways,
