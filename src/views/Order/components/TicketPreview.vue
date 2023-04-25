@@ -200,7 +200,7 @@ export default defineComponent({
         printTicket(i, place);
       });
       if (settingsStore.business_settings.printer.manage_fittings) {
-        places.value.forEach((place, i) => {
+        fittingPlaces.value.forEach((place, i) => {
           printFitting(i, place);
         });
       }
