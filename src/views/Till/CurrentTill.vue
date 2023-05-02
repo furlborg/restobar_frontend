@@ -158,11 +158,7 @@
                 clearable
               />
             </n-form-item-gi>
-            <n-form-item-gi
-              v-if="settingsStore.business_settings.till.closure_cash_total"
-              label="Método Pago"
-              :span="3"
-            >
+            <n-form-item-gi label="Método Pago" :span="3">
               <n-select
                 v-model:value="filterParams.payment_method"
                 placeholder=""
