@@ -14,12 +14,15 @@ import { useSaleStore } from "@/store/modules/sale";
 import { useTillStore } from "@/store/modules/till";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useSettingsStore } from "@/store/modules/settings";
+import { useTableStore } from "@/store/modules/table";
 
 const userStore = useUserStore();
 
 const tillStore = useTillStore();
 
 const saleStore = useSaleStore();
+
+const tableStore = useTableStore();
 
 const genericsStore = useGenericsStore();
 
@@ -735,7 +738,7 @@ export const createTillColumns = ({
                       requestExcel(row.id, "categories", "Categorías");
                       break;
                     case 3:
-                      sendReportMail();
+                      sendReportMail(row);
                       break;
                     default:
                       console.error("Algo salió mal...");
@@ -1656,6 +1659,24 @@ export const createOrderColumns = ({
       key: "created",
       align: "center",
       width: genericsStore.device !== "desktop" ? 200 : "auto",
+    },
+    {
+      title: "Mesa",
+      key: "type",
+      align: "center",
+      width: genericsStore.device !== "desktop" ? 150 : "auto",
+      render(row) {
+        switch (row.order_type) {
+          case "M":
+            return tableStore.getTableByID(row.table).description;
+          case "P":
+            return "-";
+          case "D":
+            return "-";
+          default:
+            return "¡ERROR!";
+        }
+      },
     },
     {
       title: "Tipo",
