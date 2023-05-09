@@ -854,7 +854,7 @@ export default defineComponent({
         return sale.value.discount;
       },
       set: (v) => {
-        if (saleStore.toSale.some((detail) => Number(detail.discount) > 0)) {
+        if (!saleStore.toSale.some((detail) => Number(detail.discount) > 0)) {
           sale.value.discount = v;
         } else {
           sale.value.discount = saleStore.toSale.reduce((acc, curVal) => {
@@ -881,7 +881,7 @@ export default defineComponent({
     const total = computed(() => {
       let cal = parseFloat(
         subTotal.value -
-          parseFloat(sale.value.discount) +
+          parseFloat(totalDSCT.value) +
           icbper.value +
           parseFloat(sale.value.other_charges)
       );
