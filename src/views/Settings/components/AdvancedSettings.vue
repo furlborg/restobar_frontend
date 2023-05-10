@@ -186,8 +186,15 @@
             </n-checkbox>
           </n-form-item-gi>
           <n-form-item-gi :span="4">
-            <n-checkbox v-model:checked="businessSettings.printer.manage_fittings"
+            <n-checkbox
+              v-model:checked="businessSettings.printer.manage_fittings"
               >Manejar guarniciones
+            </n-checkbox>
+          </n-form-item-gi>
+          <n-form-item-gi :span="4">
+            <n-checkbox
+              v-model:checked="businessSettings.printer.subticket_mode"
+              >Modo subticket
             </n-checkbox>
           </n-form-item-gi>
         </n-grid>

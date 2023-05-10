@@ -36,7 +36,7 @@
             :place="place"
             :isUpdate="isUpdate"
           />
-          <n-button type="info" secondary block @click="printTicket(i, place)">
+          <n-button type="info" secondary block @click="printFitting(i, place)">
             <template #icon>
               <v-icon name="md-print-round" />
             </template>
@@ -218,6 +218,7 @@ export default defineComponent({
       tickets,
       delivery,
       printTicket,
+      printFitting,
       printDelivery,
       places,
       fittingPlaces,

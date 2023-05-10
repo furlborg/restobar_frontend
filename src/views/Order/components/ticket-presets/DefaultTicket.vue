@@ -208,8 +208,11 @@ export default defineComponent({
         ...props.data,
         order_details: !props.place
           ? props.data.order_details
-          : props.data.order_details.filter(
-              (detail) => detail.preparation_place === props.place.description
+          : props.data.order_details.filter((detail) =>
+              settingsStore.business_settings.printer.subticket_mode &&
+              props.place.is_main
+                ? !!detail.preparation_place
+                : detail.preparation_place === props.place.description
             ),
         table: !props.data.table
           ? ""
