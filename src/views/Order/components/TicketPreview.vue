@@ -25,7 +25,7 @@
           {{ place.description }}
         </n-button>
       </template>
-      <template v-if="settingsStore.business_settings.printer.manage_fittings">
+      <!-- <template v-if="settingsStore.business_settings.printer.manage_fittings">
         <template
           v-for="(place, i) in fittingPlaces"
           :key="`fitting-${place.id}`"
@@ -43,7 +43,7 @@
             {{ place.description }}
           </n-button>
         </template>
-      </template>
+      </template> -->
       <template v-if="data.order_type === 'D'">
         <ticket-delivery ref="delivery" :data="data" />
         <n-button type="info" secondary block @click="printDelivery">
@@ -102,7 +102,9 @@ export default defineComponent({
     const places = computed(() => {
       return productStore.places.filter((place) =>
         props.data.order_details.some(
-          (detail) => detail.preparation_place === place.description
+          (detail) =>
+            detail.preparation_place === place.description ||
+            detail.product_fitting?.preparation_place === place.description
         )
       );
     });
@@ -199,11 +201,11 @@ export default defineComponent({
       places.value.forEach((place, i) => {
         printTicket(i, place);
       });
-      if (settingsStore.business_settings.printer.manage_fittings) {
-        fittingPlaces.value.forEach((place, i) => {
-          printFitting(i, place);
-        });
-      }
+      // if (settingsStore.business_settings.printer.manage_fittings) {
+      //   fittingPlaces.value.forEach((place, i) => {
+      //     printFitting(i, place);
+      //   });
+      // }
       if (
         props.data.order_type === "D" &&
         settingsStore.business_settings.printer.print_html

@@ -62,101 +62,223 @@
             REFERENCIA: {{ data.ask_for }}
           </div>
         </div>
-        <template
-          v-if="
-            settingsStore.business_settings.printer.kitchen_ticket_format === 4
-          "
-        >
-          <table style="width: 100%">
-            <thead>
-              <tr>
-                <th width="20%">CANT.</th>
-                <th width="80%">PRODUCTO</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="detail in info.order_details" :key="detail.id">
-                <td align="center">
-                  {{ !!isUpdate ? detail.quantity : detail.initial_quantity }}
-                </td>
-                <td>
+        <template v-if="info.order_details.length">
+          <template
+            v-if="
+              settingsStore.business_settings.printer.kitchen_ticket_format ===
+              4
+            "
+          >
+            <table style="width: 100%">
+              <thead>
+                <tr>
+                  <th width="20%">CANT.</th>
+                  <th width="80%">PRODUCTO</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="detail in info.order_details" :key="detail.id">
+                  <td align="center">
+                    {{ !!isUpdate ? detail.quantity : detail.initial_quantity }}
+                  </td>
+                  <td>
+                    {{ getPrefix(detail.product_category)
+                    }}{{ detail.product_name
+                    }}{{ generateIndication(detail.indication) }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </template>
+          <template v-else>
+            <template v-for="detail in info.order_details" :key="detail.id">
+              <div class="ticket-body-item">
+                <div>
                   {{ getPrefix(detail.product_category)
-                  }}{{ detail.product_name
-                  }}{{ generateIndication(detail.indication) }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </template>
-        <template v-else>
-          <template v-for="detail in info.order_details" :key="detail.id">
-            <div class="ticket-body-item">
-              <div>
-                {{ getPrefix(detail.product_category)
-                }}{{
-                  settingsStore.business_settings.printer
-                    .kitchen_ticket_format !== 1
-                    ? `${
-                        !!isUpdate ? detail.quantity : detail.initial_quantity
-                      } x `
-                    : ""
-                }}{{ detail.product_name }}
-              </div>
-              <div
-                v-if="
-                  settingsStore.business_settings.printer
-                    .kitchen_ticket_format === 1
-                "
-              >
-                CANT:
-                {{ !!isUpdate ? detail.quantity : detail.initial_quantity }}
-              </div>
-              <div
-                class="indication"
-                :style="{
-                  fontSize: `${
-                    settingsStore.business_settings.printer.body_font_size - 1
-                  }px`,
-                }"
-              >
-                <template
-                  v-if="
-                    !!detail.product_description &&
+                  }}{{
                     settingsStore.business_settings.printer
-                      .kitchen_ticket_format !== 3
-                  "
-                >
-                  <div
-                    v-for="desc in detail.product_description.split(',')"
-                    :key="desc"
-                  >
-                    *{{ desc }}
-                  </div>
-                </template>
-                <template
-                  v-for="(indication, index) in detail.indication"
-                  :key="index"
-                >
-                  <div class="indication-item" v-if="!!indication.description">
-                    -
-                    {{
-                      !indication.takeAway
-                        ? indication.description
-                        : indication.description + " [LLEVAR]"
-                    }}
-                  </div>
-                </template>
+                      .kitchen_ticket_format !== 1
+                      ? `${
+                          !!isUpdate ? detail.quantity : detail.initial_quantity
+                        } x `
+                      : ""
+                  }}{{ detail.product_name }}
+                </div>
                 <div
                   v-if="
-                    info.order_type !== 'M' &&
-                    detail.indication.some((ind) => ind.takeAway)
+                    settingsStore.business_settings.printer
+                      .kitchen_ticket_format === 1
                   "
-                  class="indication-extra"
                 >
-                  PARA LLEVAR: {{ indicationTakeAways(detail.indication) }}
+                  CANT:
+                  {{ !!isUpdate ? detail.quantity : detail.initial_quantity }}
+                </div>
+                <div
+                  class="indication"
+                  :style="{
+                    fontSize: `${
+                      settingsStore.business_settings.printer.body_font_size - 1
+                    }px`,
+                  }"
+                >
+                  <template
+                    v-if="
+                      !!detail.product_description &&
+                      settingsStore.business_settings.printer
+                        .kitchen_ticket_format !== 3
+                    "
+                  >
+                    <div
+                      v-for="desc in detail.product_description.split(',')"
+                      :key="desc"
+                    >
+                      *{{ desc }}
+                    </div>
+                  </template>
+                  <template
+                    v-for="(indication, index) in detail.indication"
+                    :key="index"
+                  >
+                    <div
+                      class="indication-item"
+                      v-if="!!indication.description"
+                    >
+                      -
+                      {{
+                        !indication.takeAway
+                          ? indication.description
+                          : indication.description + " [LLEVAR]"
+                      }}
+                    </div>
+                  </template>
+                  <div
+                    v-if="
+                      info.order_type !== 'M' &&
+                      detail.indication.some((ind) => ind.takeAway)
+                    "
+                    class="indication-extra"
+                  >
+                    PARA LLEVAR: {{ indicationTakeAways(detail.indication) }}
+                  </div>
                 </div>
               </div>
-            </div>
+            </template>
+          </template>
+        </template>
+        <template
+          v-if="
+            settingsStore.business_settings.printer.manage_fittings &&
+            !settingsStore.business_settings.printer.subticket_mode &&
+            fitting_info.order_details.length
+          "
+        >
+          <template
+            v-if="
+              settingsStore.business_settings.printer.kitchen_ticket_format ===
+              4
+            "
+          >
+            <table style="width: 100%">
+              <thead>
+                <tr>
+                  <th width="20%">CANT.</th>
+                  <th width="80%">GUARNICIÓN</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="detail in fitting_info.order_details"
+                  :key="`fitting-${detail.id}`"
+                >
+                  <td align="center">
+                    {{ !!isUpdate ? detail.quantity : detail.initial_quantity }}
+                  </td>
+                  <td>
+                    {{ detail.product_fitting.name }} ({{
+                      detail.product_name
+                    }})
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </template>
+          <template v-else>
+            <template
+              v-for="detail in fitting_info.order_details"
+              :key="`fitting-${detail.id}`"
+            >
+              <div class="ticket-body-item">
+                <div>
+                  {{
+                    settingsStore.business_settings.printer
+                      .kitchen_ticket_format !== 1
+                      ? `${
+                          !!isUpdate ? detail.quantity : detail.initial_quantity
+                        } x `
+                      : ""
+                  }}{{ detail.product_fitting.name }} ({{
+                    detail.product_name
+                  }})
+                </div>
+                <div
+                  v-if="
+                    settingsStore.business_settings.printer
+                      .kitchen_ticket_format === 1
+                  "
+                >
+                  CANT:
+                  {{ !!isUpdate ? detail.quantity : detail.initial_quantity }}
+                </div>
+                <div
+                  class="indication"
+                  :style="{
+                    fontSize: `${
+                      settingsStore.business_settings.printer.body_font_size - 1
+                    }px`,
+                  }"
+                >
+                  <template
+                    v-if="
+                      !!detail.product_description &&
+                      settingsStore.business_settings.printer
+                        .kitchen_ticket_format !== 3
+                    "
+                  >
+                    <div
+                      v-for="desc in detail.product_description.split(',')"
+                      :key="desc"
+                    >
+                      *{{ desc }}
+                    </div>
+                  </template>
+                  <template
+                    v-for="(indication, index) in detail.indication"
+                    :key="index"
+                  >
+                    <div
+                      class="indication-item"
+                      v-if="!!indication.description"
+                    >
+                      -
+                      {{
+                        !indication.takeAway
+                          ? indication.description
+                          : indication.description + " [LLEVAR]"
+                      }}
+                    </div>
+                  </template>
+                  <div
+                    v-if="
+                      info.order_type !== 'M' &&
+                      detail.indication.some((ind) => ind.takeAway)
+                    "
+                    class="indication-extra"
+                  >
+                    PARA LLEVAR: {{ indicationTakeAways(detail.indication) }}
+                  </div>
+                </div>
+              </div>
+            </template>
           </template>
         </template>
       </div>
@@ -248,6 +370,42 @@ export default defineComponent({
 
     const info = ref(generateData());
 
+    const generateFittingData = () => {
+      let data = {
+        ...props.data,
+        order_details: !props.place
+          ? props.data.order_details
+          : props.data.order_details.filter(
+              (detail) =>
+                detail.product_fitting?.preparation_place ===
+                props.place.description
+            ),
+        table: !props.data.table
+          ? ""
+          : tableStore.getTableByID(props.data.table).description,
+        json_sale: !props.data.json_sale
+          ? ""
+          : JSON.parse(props.data.json_sale),
+      };
+      data.order_details.forEach((detail) => {
+        detail.indication = detail.indication.map((indication) => {
+          let desc = "";
+          if (indication.quick_indications.length) {
+            indication.quick_indications.forEach((ind) => {
+              desc += `${ind}, `;
+            });
+          }
+          indication.description = !indication.description
+            ? desc.slice(0, -2)
+            : desc + indication.description;
+          return indication;
+        });
+      });
+      return data;
+    };
+
+    const fitting_info = ref(generateFittingData());
+
     const indicationTakeAways = (indication) => {
       return indication.reduce((acc, curVal) => {
         curVal.takeAway && acc++;
@@ -281,6 +439,7 @@ export default defineComponent({
 
     return {
       info,
+      fitting_info,
       getPrefix,
       generateIndication,
       settingsStore,
