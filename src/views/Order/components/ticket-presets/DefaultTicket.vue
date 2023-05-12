@@ -168,7 +168,7 @@
         <template
           v-if="
             settingsStore.business_settings.printer.manage_fittings &&
-            !settingsStore.business_settings.printer.subticket_mode &&
+            !place.is_main &&
             fitting_info.order_details.length
           "
         >
