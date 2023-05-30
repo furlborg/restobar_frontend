@@ -181,12 +181,16 @@ export async function nullSale(id, pass, nullReason = undefined) {
     null_reason: nullReason,
   });
 }
-export async function sendWhatsapp(id, phone) {
+export async function sendWhatsapp(id, [serie, number], phone) {
   const businessStore = useBusinessStore();
   return await http.post(
-    `wsp/${id}/`,
+    "/wsp",
     {
-      number: phone,
+      serie: serie,
+      number: number,
+      countryCode: "+51",
+      phoneNumber: phone,
+      pdf: `${process.env.VUE_APP_API_URL}/api/v1/sales/${id}/voucher`,
     },
     {
       baseURL: `${businessStore.business.api_url}/`,

@@ -180,7 +180,11 @@ export default defineComponent({
 
     const sendToWhatsapp = () => {
       loading.value = true;
-      sendWhatsapp(props.data.external_id, phoneNumber.value)
+      sendWhatsapp(
+        props.data.id,
+        props.data.codsale.split("-"),
+        phoneNumber.value
+      )
         .then((response) => {
           if (response.status === 200) {
             message.success("Envío exitoso!");
