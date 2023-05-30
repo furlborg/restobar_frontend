@@ -2,6 +2,7 @@ import { http } from "@/api";
 import { useBusinessStore } from "@/store/modules/business";
 import { useUserStore } from "@/store/modules/user";
 import { useTillStore } from "@/store/modules/till";
+import { useSaleStore } from "@/store/modules/sale";
 
 export async function getPaymentMethods() {
   return await http.get("payment_methods/");
@@ -183,11 +184,12 @@ export async function nullSale(id, pass, nullReason = undefined) {
 }
 export async function sendWhatsapp(id, [serie, number], phone) {
   const businessStore = useBusinessStore();
+  const saleStore = useSaleStore();
   return await http.post(
     "/wsp",
     {
-      serie: serie,
-      number: number,
+      serie: saleStore.getSerieDescription(serie),
+      number: number.toString(),
       countryCode: "+51",
       phoneNumber: phone,
       pdf: `${process.env.VUE_APP_API_URL}/api/v1/sales/${id}/voucher`,
