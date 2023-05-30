@@ -182,7 +182,7 @@ export default defineComponent({
       loading.value = true;
       sendWhatsapp(
         props.data.id,
-        props.data.codsale.split("-"),
+        [props.data.serie, props.data.number],
         phoneNumber.value
       )
         .then((response) => {

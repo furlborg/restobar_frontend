@@ -1419,7 +1419,7 @@ export default defineComponent({
                               if (whatsappNumber.value.length >= 9) {
                                 sendWhatsapp(
                                   response.data.id,
-                                  response.data.codsale.split("-"),
+                                  [response.data.serie, response.data.number],
                                   whatsappNumber.value
                                 )
                                   .then((response) => {
@@ -1461,7 +1461,7 @@ export default defineComponent({
                         if (whatsappNumber.value.length >= 9) {
                           sendWhatsapp(
                             response.data.id,
-                            response.data.codsale.split("-"),
+                            [response.data.serie, response.data.number],
                             whatsappNumber.value
                           )
                             .then((response) => {
