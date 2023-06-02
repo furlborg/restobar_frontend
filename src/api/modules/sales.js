@@ -192,7 +192,7 @@ export async function sendWhatsapp(id, [serie, number], phone) {
       number: number.toString(),
       countryCode: "+51",
       phoneNumber: phone,
-      pdf: `${process.env.VUE_APP_API_URL}/api/v1/sales/${id}/voucher`,
+      pdf: "", // `${process.env.VUE_APP_API_URL}/api/v1/sales/${id}/voucher`,
     },
     {
       baseURL: `${businessStore.business.api_url}/`,
