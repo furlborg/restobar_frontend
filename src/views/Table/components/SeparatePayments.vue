@@ -737,7 +737,8 @@ export default defineComponent({
                               whatsappNumber.value
                             )
                               .then((response) => {
-                                console.log(response);
+                                if (response.status === 200)
+                                  window.open(response.data.data.url, "_blank");
                               })
                               .catch((error) => {
                                 console.error(error);
@@ -778,7 +779,8 @@ export default defineComponent({
                           whatsappNumber.value
                         )
                           .then((response) => {
-                            console.log(response);
+                            if (response.status === 200)
+                              window.open(response.data.data.url, "_blank");
                           })
                           .catch((error) => {
                             console.error(error);
