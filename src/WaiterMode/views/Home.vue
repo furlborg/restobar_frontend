@@ -73,6 +73,17 @@
             class="black-outline position-absolute top-50 start-50 translate-middle"
             >{{ table.description }}</n-text
           >
+          <n-button
+            v-if="
+              table.order_amount &&
+              settingsStore.business_settings.order.table_order_total
+            "
+            class="text-center position-absolute bottom-0 start-50 translate-middle-x fs-5 fw-bolder"
+            color="#901E00"
+            text
+          >
+            S/. {{ table.order_amount.toFixed(2) }}
+          </n-button>
         </n-card>
       </n-gi>
     </n-grid>
@@ -157,6 +168,7 @@
 
 <script>
 import { defineComponent, ref, computed, onMounted } from "vue";
+import { useSettingsStore } from "@/store/modules/settings";
 import { useTableStore } from "@/store/modules/table";
 import { useWaiterStore } from "@/store/modules/waiter";
 import { useTillStore } from "@/store/modules/till";
@@ -168,6 +180,7 @@ import { cloneDeep } from "@/utils";
 export default defineComponent({
   name: "WHome",
   setup() {
+    const settingsStore = useSettingsStore();
     const printerStore = usePrinterStore();
     const waiterStore = useWaiterStore();
     const tableStore = useTableStore();
@@ -263,6 +276,7 @@ export default defineComponent({
     };
 
     return {
+      settingsStore,
       printerStore,
       waiterStore,
       tableStore,
