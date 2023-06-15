@@ -300,7 +300,10 @@
                           type="number"
                           min="0"
                           :max="!detail.price_sale ? 0 : detail.price_sale"
-                          :disabled="!!Number(sale.discount)"
+                          :disabled="
+                            detail.product_affectation === 21 ||
+                            !!Number(sale.discount)
+                          "
                           step=".5"
                           v-model="detail.discount"
                           v-autowidth
@@ -309,10 +312,12 @@
                       </td>
                       <td>
                         {{
-                          parseFloat(
-                            detail.quantity * detail.price_sale -
-                              detail.discount
-                          ).toFixed(2)
+                          detail.product_affectation === 21
+                            ? "0.00"
+                            : parseFloat(
+                                detail.quantity * detail.price_sale -
+                                  detail.discount
+                              ).toFixed(2)
                         }}
                       </td>
                     </tr>
@@ -868,7 +873,9 @@ export default defineComponent({
 
     const subTotal = computed(() => {
       return saleStore.toSale.reduce((acc, curVal) => {
-        return (acc += curVal.price_sale * curVal.quantity);
+        return curVal.product_affectation === 21
+          ? (acc += 0)
+          : (acc += curVal.price_sale * curVal.quantity);
       }, 0);
     });
 

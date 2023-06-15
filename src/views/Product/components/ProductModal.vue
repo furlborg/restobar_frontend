@@ -38,6 +38,10 @@
               v-model:value="product.prices"
               placeholder=""
               @input="product.prices = restrictDecimal(product.prices)"
+              @blur="
+                () =>
+                  (product.affectation = Number(product.prices) > 0 ? 20 : 21)
+              "
             />
           </n-form-item-gi>
           <n-gi :span="12">
