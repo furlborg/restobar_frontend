@@ -153,7 +153,7 @@
                   </template>
                   <div
                     v-if="
-                      info.order_type !== 'M' &&
+                      info.order_type === 'M' &&
                       detail.indication.some((ind) => ind.takeAway)
                     "
                     class="indication-extra"
