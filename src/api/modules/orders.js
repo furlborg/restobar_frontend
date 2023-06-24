@@ -90,12 +90,14 @@ export async function takeAwayOrder(order_details, sale_data, user) {
   const settingsStore = useSettingsStore();
   const tillStore = useTillStore();
   const userStore = useUserStore();
+  console.log("1doin!");
   let details = order_details.map((order) => ({
     product: order.product,
     indication: order.indication,
     quantity: order.quantity,
     initial_quantity: order.quantity,
   }));
+  console.log("2doin!");
   let order = {
     till: tillStore.currentTillID,
     order_details: details,
@@ -110,6 +112,7 @@ export async function takeAwayOrder(order_details, sale_data, user) {
         ? "1"
         : "2",
   };
+  console.log("3doin!");
   let sale = {
     order: sale_data.order,
     serie: sale_data.serie,
@@ -121,7 +124,7 @@ export async function takeAwayOrder(order_details, sale_data, user) {
     invoice_type: sale_data.invoice_type,
     payment_method: sale_data.payment_method,
     payment_condition: sale_data.payment_condition,
-    customer: sale.customer,
+    customer: sale_data.customer === 0 ? null : sale_data.customer,
     address: sale_data.address,
     branch_office: !userStore.user.branchoffice
       ? businessStore.currentBranch
@@ -140,6 +143,7 @@ export async function takeAwayOrder(order_details, sale_data, user) {
     free_amount: sale_data.free_amount.toFixed(2),
     igv_amount: sale_data.igv_amount.toFixed(2),
   };
+  console.log("4doin!");
   return await http.post("orders/take_away/", {
     order: order,
     sale: sale,
