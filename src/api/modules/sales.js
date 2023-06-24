@@ -110,7 +110,7 @@ export async function createSale(sale, pass = null) {
       invoice_type: sale.invoice_type,
       payment_method: sale.payment_method,
       payment_condition: sale.payment_condition,
-      customer: sale.customer === 0 ? null : sale.customer,
+      customer: sale.customer,
       address: sale.address,
       branch_office: !userStore.user.branchoffice
         ? businessStore.currentBranch
@@ -143,7 +143,7 @@ export async function createSale(sale, pass = null) {
       invoice_type: sale.invoice_type,
       payment_method: sale.payment_method,
       payment_condition: sale.payment_condition,
-      customer: sale.customer === 0 ? null : sale.customer,
+      customer: sale.customer,
       address: sale.address,
       branch_office: !userStore.user.branchoffice
         ? businessStore.currentBranch

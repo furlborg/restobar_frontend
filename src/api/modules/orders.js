@@ -121,7 +121,7 @@ export async function takeAwayOrder(order_details, sale_data, user) {
     invoice_type: sale_data.invoice_type,
     payment_method: sale_data.payment_method,
     payment_condition: sale_data.payment_condition,
-    customer: sale.customer === 0 ? null : sale.customer,
+    customer: sale.customer,
     address: sale_data.address,
     branch_office: !userStore.user.branchoffice
       ? businessStore.currentBranch
