@@ -69,7 +69,7 @@
                   @update:value="
                     (v) => {
                       !v
-                        ? ((sale.customer = null),
+                        ? ((sale.customer = 0),
                           (sale.address = null),
                           (whatsappNumber = ''),
                           (addressesOptions = []))
@@ -87,8 +87,15 @@
                   placeholder=""
                   clearable
                 />
-                <n-button type="info" secondary @click="showModal = true">
+                <n-button
+                  v-if="!sale.customer"
+                  type="info"
+                  @click="(sale.customer = 0), (showModal = true)"
+                >
                   <v-icon name="md-add-round" />
+                </n-button>
+                <n-button v-else type="warning" @click="showModal = true">
+                  <v-icon name="ri-edit-fill" />
                 </n-button>
               </n-input-group>
             </n-form-item-gi>
@@ -449,6 +456,7 @@
     <!-- Customer Modal -->
     <customer-modal
       v-model:show="showModal"
+      :id-customer="sale.customer"
       :doc_type="sale.invoice_type === 1 ? '6' : null"
       :document="customerDocument"
       @update:show="onCloseModal"

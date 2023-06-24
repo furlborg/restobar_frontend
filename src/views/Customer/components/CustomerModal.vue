@@ -474,8 +474,13 @@ export default defineComponent({
                   )
                     ? businessStore.business.branchs[0].ubigeo
                     : response.data.ubigeo[2];
-                  customer.value.addresses[0].description =
-                    response.data.direccion;
+                  if (customer.value.doc_num.startsWith("1")) {
+                    customer.value.addresses[0].description =
+                      response.data.direccion || "-";
+                  } else {
+                    customer.value.addresses[0].description =
+                      response.data.direccion;
+                  }
                 }
                 customer_name.value.restoreValidation();
               } else {
