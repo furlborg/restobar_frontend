@@ -1421,7 +1421,7 @@ export default defineComponent({
                   userConfirm.value
                 )
                   .then((response) => {
-                    console.log('here now!')
+                    console.log('here now!', response)
                     if (response.status === 201) {
                       console.log('final here!')
                       message.success("Venta realizada correctamente!");
