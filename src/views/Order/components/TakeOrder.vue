@@ -1414,16 +1414,13 @@ export default defineComponent({
               onPositiveClick: async () => {
                 loading.value = true;
                 sale.value.sale_details = saleStore.toSale;
-                console.log('here!')
                 await takeAwayOrder(
                   orderStore.orderList,
                   sale.value,
                   userConfirm.value
                 )
                   .then((response) => {
-                    console.log('here now!', response)
                     if (response.status === 201) {
-                      console.log('final here!')
                       message.success("Venta realizada correctamente!");
                       pdfData.value = response.data.order;
                       showPdf.value = true;
