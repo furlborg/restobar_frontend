@@ -94,7 +94,7 @@
                           @update:value="
                             (v) => {
                               !v
-                                ? ((sale.customer = null),
+                                ? ((sale.customer = 0),
                                   (sale.address = null),
                                   (whatsappNumber = ''),
                                   (addressesOptions = []))
@@ -113,8 +113,21 @@
                           placeholder=""
                           clearable
                         />
-                        <n-button type="info" @click="showCustomerModal = true">
+                        <n-button
+                          v-if="!sale.customer"
+                          type="info"
+                          @click="
+                            (sale.customer = 0), (showCustomerModal = true)
+                          "
+                        >
                           <v-icon name="md-add-round" />
+                        </n-button>
+                        <n-button
+                          v-else
+                          type="warning"
+                          @click="showCustomerModal = true"
+                        >
+                          <v-icon name="ri-edit-fill" />
                         </n-button>
                       </n-input-group>
                     </n-form-item-gi>
@@ -131,6 +144,7 @@
                         :options="addressesOptions"
                         :disabled="!sale.customer"
                         placeholder=""
+                        @update:value="changeAddress"
                       />
                     </n-form-item-gi>
                     <n-form-item-gi :span="2" label="Método Pago">
@@ -429,7 +443,9 @@
                 <n-checkbox
                   v-if="!sale.delivery_info"
                   v-model:checked="isMultiple"
-                  disabled
+                  :disabled="
+                    settingsStore.businessSettings.order.pending_takeaway
+                  "
                   >Pago multiple</n-checkbox
                 >
                 <n-divider />
@@ -500,6 +516,7 @@
           <!-- Customer Modal -->
           <customer-modal
             v-model:show="showCustomerModal"
+            :id-customer="sale.customer"
             :doc_type="sale.invoice_type === 1 ? '6' : null"
             :document="customerDocument"
             @update:show="onCloseModal"
@@ -912,7 +929,7 @@ export default defineComponent({
       payment_method: 1,
       payment_condition: 1,
       customer_name: "",
-      customer: null,
+      customer: 0,
       address: null,
       discount: "0.00",
       icbper: icbper,
@@ -1192,6 +1209,16 @@ export default defineComponent({
       if (sale.value.delivery_info) {
         sale.value.delivery_info.person = customer.names;
         sale.value.delivery_info.phone = customer.phone;
+        sale.value.delivery_info.address = customer.addresses.length
+          ? customer.addresses[0].description
+          : "";
+      }
+    };
+
+    const changeAddress = (v, o) => {
+      if (sale.value.delivery_info) {
+        console.log(v, o);
+        sale.value.delivery_info.address = o.label.split(" - ")[1];
       }
     };
 
@@ -1706,6 +1733,7 @@ export default defineComponent({
       addressesOptions,
       showObservations,
       performTakeAway,
+      changeAddress,
       handleDelivery,
       onCloseModal,
       onSuccess,

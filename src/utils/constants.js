@@ -761,16 +761,16 @@ export const createTillColumns = ({
               }
             ),
           /* h(
-                        NButton,
-                        {
-                            class: 'me-2',
-                            size: 'small',
-                            type: 'warning',
-                            secondary: true,
-                            onClick: () => generateReport(row)
-                        },
-                        renderIcon('md-insertchart-outlined')
-                    ), */
+              NButton,
+              {
+                  class: 'me-2',
+                  size: 'small',
+                  type: 'warning',
+                  secondary: true,
+                  onClick: () => generateReport(row)
+              },
+              renderIcon('md-insertchart-outlined')
+          ), */
           userStore.hasPermission("delete_till") &&
             h(
               NButton,

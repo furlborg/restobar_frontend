@@ -218,6 +218,7 @@ import {
 } from "@/api/modules/customer";
 import { useMessage } from "naive-ui";
 import { useCustomerStore } from "@/store/modules/customer";
+import { useBusinessStore } from "@/store/modules/business";
 import { useGenericsStore } from "@/store/modules/generics";
 
 export default defineComponent({
@@ -245,6 +246,7 @@ export default defineComponent({
     const message = useMessage();
     const requestMessage = ref(null);
     const customerStore = useCustomerStore();
+    const businessStore = useBusinessStore();
     const genericsStore = useGenericsStore();
     const { idCustomer, show, doc_type, document } = toRefs(props);
     const modalTitle = ref("Registrar Cliente");
@@ -311,7 +313,7 @@ export default defineComponent({
           addresses: [
             {
               description: "",
-              ubigeo: null,
+              ubigeo: businessStore.business.branchs[0].ubigeo,
               is_disabled: false,
             },
           ],
@@ -461,7 +463,7 @@ export default defineComponent({
                   customer.value.addresses = [
                     {
                       description: "",
-                      ubigeo: null,
+                      ubigeo: businessStore.business.branchs[0].ubigeo,
                       is_disabled: false,
                     },
                   ];
@@ -470,7 +472,7 @@ export default defineComponent({
                   customer.value.addresses[0].ubigeo = isNaN(
                     response.data.ubigeo[2]
                   )
-                    ? null
+                    ? businessStore.business.branchs[0].ubigeo
                     : response.data.ubigeo[2];
                   customer.value.addresses[0].description =
                     response.data.direccion;
@@ -481,7 +483,7 @@ export default defineComponent({
               }
             })
             .catch((error) => {
-              if (error.response.status === 404) {
+              if (error.response && error.response.status === 404) {
                 message.error("Documento no encontrado");
               } else {
                 console.error(error);
