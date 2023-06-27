@@ -320,7 +320,6 @@ export default defineComponent({
             : `${desc} [${indication.description}]`;
           return desc;
         }, "");
-        saleData.items[index].descripcion += indication;
         const item = saleData.items.find((i) => i.descripcion === detail.product_name);
         if (item) item.descripcion += indication;
       });
