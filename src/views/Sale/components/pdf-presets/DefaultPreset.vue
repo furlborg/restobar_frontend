@@ -308,7 +308,7 @@ export default defineComponent({
       let saleData = JSON.parse(props.data.json_sale);
       // console.log(JSON.stringify(props.data, null, "  "));
       // console.log(JSON.stringify(saleData, null, "  "));
-      props.data.order_data.order_details.forEach((detail, index) => {
+      props.data.order_data.order_details.forEach((detail) => {
         const indication = detail.indication.reduce((desc, indication) => {
           if (indication.quick_indications.length) {
             indication.quick_indications.forEach((ind) => {
@@ -320,8 +320,9 @@ export default defineComponent({
             : `${desc} [${indication.description}]`;
           return desc;
         }, "");
-        console.log(indication);
         saleData.items[index].descripcion += indication;
+        const item = saleData.items.find((i) => i.descripcion === detail.product_name);
+        if (item) item.descripcion += indication;
       });
       return saleData;
     };
