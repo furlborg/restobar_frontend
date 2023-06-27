@@ -317,7 +317,7 @@ export default defineComponent({
           }
           desc = !indication.description
             ? ` [${desc.slice(0, -2)}]`
-            : desc + ` [${indication.description}]`;
+            : ` [${desc}${indication.description}]`;
           return desc;
         }, "");
         console.log(indication);
