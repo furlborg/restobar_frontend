@@ -269,7 +269,8 @@
                       ? !data.order_data.delivery_info
                         ? "PARA LLEVAR"
                         : "DELIVERY"
-                      : tableStore.getTableByID(data.order_data.table).description
+                      : tableStore.getTableByID(data.order_data.table)
+                          .description
                   }}
                 </td>
               </tr>
@@ -308,21 +309,25 @@ export default defineComponent({
       let saleData = JSON.parse(props.data.json_sale);
       // console.log(JSON.stringify(props.data, null, "  "));
       // console.log(JSON.stringify(saleData, null, "  "));
-      props.data.order_data.order_details.forEach((detail) => {
-        const indication = detail.indication.reduce((desc, indication) => {
-          if (indication.quick_indications.length) {
-            indication.quick_indications.forEach((ind) => {
-              desc += `${ind}, `;
-            });
-          }
-          desc = !indication.description
-            ? ` [${desc.slice(0, -2)}]`
-            : `${desc} [${indication.description}]`;
-          return desc;
-        }, "");
-        const item = saleData.items.find((i) => i.descripcion === detail.product_name);
-        if (item) item.descripcion += indication;
-      });
+      if (settingsStore.business_settings.printer.detail_items) {
+        props.data.order_data.order_details.forEach((detail) => {
+          const indication = detail.indication.reduce((desc, indication) => {
+            if (indication.quick_indications.length) {
+              indication.quick_indications.forEach((ind) => {
+                desc += `${ind}, `;
+              });
+            }
+            desc = !indication.description
+              ? ` [${desc.slice(0, -2)}]`
+              : `${desc} [${indication.description}]`;
+            return desc;
+          }, "");
+          const item = saleData.items.find(
+            (i) => i.descripcion === detail.product_name
+          );
+          if (item) item.descripcion += indication;
+        });
+      }
       return saleData;
     };
 

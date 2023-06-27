@@ -162,6 +162,11 @@
               >Imprimir ticket delivery
             </n-checkbox>
           </n-form-item-gi>
+          <n-form-item-gi :span="3">
+            <n-checkbox v-model:checked="businessSettings.printer.detail_items"
+              >Items detallados
+            </n-checkbox>
+          </n-form-item-gi>
           <n-form-item-gi :span="4">
             <n-checkbox
               v-model:checked="businessSettings.printer.show_delivery_kitchen"
@@ -174,24 +179,24 @@
               >Mostrar ambos nombres(Empresa)
             </n-checkbox>
           </n-form-item-gi>
-          <n-form-item-gi :span="4">
+          <n-form-item-gi :span="3">
             <n-checkbox
               v-model:checked="businessSettings.printer.native_printing"
               >Impresiones nativas
             </n-checkbox>
           </n-form-item-gi>
-          <n-form-item-gi :span="4">
+          <n-form-item-gi :span="3">
             <n-checkbox v-model:checked="businessSettings.printer.print_html"
               >Impresiones HTML
             </n-checkbox>
           </n-form-item-gi>
-          <n-form-item-gi :span="4">
+          <n-form-item-gi :span="3">
             <n-checkbox
               v-model:checked="businessSettings.printer.manage_fittings"
               >Manejar guarniciones
             </n-checkbox>
           </n-form-item-gi>
-          <n-form-item-gi :span="4">
+          <n-form-item-gi :span="3">
             <n-checkbox
               v-model:checked="businessSettings.printer.subticket_mode"
               >Modo subticket
