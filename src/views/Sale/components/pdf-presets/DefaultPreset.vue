@@ -213,11 +213,11 @@
               <div class="extra-info-value">ORDEN N°{{ data.order_id }}</div>
               <div class="extra-info-value">
                 {{
-                  !data.order.table
-                    ? !data.order.delivery_info
+                  !data.order_data.table
+                    ? !data.order_data.delivery_info
                       ? "PARA LLEVAR"
                       : "DELIVERY"
-                    : tableStore.getTableByID(data.order.table).description
+                    : tableStore.getTableByID(data.order_data.table).description
                 }}
               </div>
             </div>
@@ -265,11 +265,11 @@
                 <td></td>
                 <td>
                   {{
-                    !data.order.table
-                      ? !data.order.delivery_info
+                    !data.order_data.table
+                      ? !data.order_data.delivery_info
                         ? "PARA LLEVAR"
                         : "DELIVERY"
-                      : tableStore.getTableByID(data.order.table).description
+                      : tableStore.getTableByID(data.order_data.table).description
                   }}
                 </td>
               </tr>
@@ -308,7 +308,7 @@ export default defineComponent({
       let saleData = JSON.parse(props.data.json_sale);
       // console.log(JSON.stringify(props.data, null, "  "));
       // console.log(JSON.stringify(saleData, null, "  "));
-      props.data.order.order_details.forEach((detail, index) => {
+      props.data.order_data.order_details.forEach((detail, index) => {
         const indication = detail.indication.reduce((desc, indication) => {
           if (indication.quick_indications.length) {
             indication.quick_indications.forEach((ind) => {
