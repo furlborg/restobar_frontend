@@ -211,6 +211,15 @@
               <div class="extra-info-value">{{ info[0] }}</div>
               <div class="extra-info-label">PEDIDO:</div>
               <div class="extra-info-value">ORDEN N°{{ data.order_id }}</div>
+              <div class="extra-info-value">
+                {{
+                  !data.order.table
+                    ? !data.order.delivery_info
+                      ? "PARA LLEVAR"
+                      : "DELIVERY"
+                    : tableStore.getTableByID(data.order.table).description
+                }}
+              </div>
             </div>
           </div>
           <div>
@@ -252,6 +261,18 @@
                 <td>PEDIDO:</td>
                 <td>ORDEN N°{{ data.order_id }}</td>
               </tr>
+              <tr>
+                <td></td>
+                <td>
+                  {{
+                    !data.order.table
+                      ? !data.order.delivery_info
+                        ? "PARA LLEVAR"
+                        : "DELIVERY"
+                      : tableStore.getTableByID(data.order.table).description
+                  }}
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -264,6 +285,7 @@
 import { defineComponent } from "vue";
 import { useBusinessStore } from "@/store/modules/business";
 import { useSettingsStore } from "@/store/modules/settings";
+import { useTableStore } from "@/store/modules/table";
 import { numeroALetras } from "@/hooks/numberText.js";
 import qr from "qrcode";
 export default defineComponent({
@@ -276,12 +298,35 @@ export default defineComponent({
   setup(props) {
     const settingsStore = useSettingsStore();
     const businessStore = useBusinessStore();
+    const tableStore = useTableStore();
 
     const hasDiscounts = props.data.sale_details.some(
       (detail) => !!Number(detail.discount)
     );
 
-    const sale = JSON.parse(props.data.json_sale);
+    const parseSale = () => {
+      let saleData = JSON.parse(props.data.json_sale);
+      // console.log(JSON.stringify(props.data, null, "  "));
+      // console.log(JSON.stringify(saleData, null, "  "));
+      props.data.order.order_details.forEach((detail, index) => {
+        const indication = detail.indication.reduce((desc, indication) => {
+          if (indication.quick_indications.length) {
+            indication.quick_indications.forEach((ind) => {
+              desc += `${ind}, `;
+            });
+          }
+          desc = !indication.description
+            ? ` [${desc.slice(0, -2)}]`
+            : desc + ` [${indication.description}]`;
+          return desc;
+        }, "");
+        console.log(indication);
+        saleData.items[index].descripcion += indication;
+      });
+      return saleData;
+    };
+
+    const sale = parseSale();
 
     const title = () => {
       switch (sale.codigo_tipo_documento) {
@@ -319,6 +364,7 @@ export default defineComponent({
     return {
       settingsStore,
       businessStore,
+      tableStore,
       sale,
       title,
       info,

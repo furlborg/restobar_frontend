@@ -132,7 +132,29 @@ export default defineComponent({
   setup(props) {
     const settingsStore = useSettingsStore();
 
-    const info = JSON.parse(props.data.json_sale);
+    const parseSale = () => {
+      let saleData = JSON.parse(props.data.json_sale);
+      // console.log(JSON.stringify(props.data, null, "  "));
+      // console.log(JSON.stringify(saleData, null, "  "));
+      props.data.order_details.forEach((detail, index) => {
+        const indication = detail.indication.reduce((desc, indication) => {
+          if (indication.quick_indications.length) {
+            indication.quick_indications.forEach((ind) => {
+              desc += `${ind}, `;
+            });
+          }
+          desc = !indication.description
+            ? ` [${desc.slice(0, -2)}]`
+            : desc + ` [${indication.description}]`;
+          return desc;
+        }, "");
+        console.log(indication);
+        saleData.items[index].descripcion += indication;
+      });
+      return saleData;
+    };
+
+    const info = parseSale();
 
     return {
       info,
