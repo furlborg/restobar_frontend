@@ -163,7 +163,7 @@ import { useSettingsStore } from "@/store/modules/settings";
 import CustomerModal from "@/views/Customer/components/CustomerModal";
 import { retrieveCustomerAddresses } from "@/api/modules/customer";
 import { useSaleStore } from "@/store/modules/sale";
-import { createSale, getSaleNumber, sendSale } from "@/api/modules/sales";
+import { recoverySale, getSaleNumber, sendSale } from "@/api/modules/sales";
 import { saleRules } from "@/utils/constants";
 import {
   searchCustomerByName,
@@ -176,6 +176,9 @@ export default defineComponent({
     CustomerModal,
   },
   props: {
+    id: {
+      type: Number,
+    },
     data: {
       type: Object,
     },
@@ -383,7 +386,7 @@ export default defineComponent({
       sale.sale_details.forEach((detail) => {
         delete detail.id;
       });
-      await createSale(sale, userConfirm.value)
+      await recoverySale(props.id, sale, userConfirm.value)
         .then((response) => {
           if (response.status === 201) {
             message.success("Se ha generado la venta...");

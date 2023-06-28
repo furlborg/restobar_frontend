@@ -1469,7 +1469,10 @@ export const createSaleColumns = ({
                 size: "small",
                 type: "info",
                 secondary: true,
-                disabled: row.status !== "A",
+                disabled:
+                  row.invoice_type !== "80"
+                    ? !["E", "X"].includes(row.status)
+                    : !["N", "X"].includes(row.status),
                 onClick: () => updateSale(row),
               },
               renderIcon("gi-card-exchange")

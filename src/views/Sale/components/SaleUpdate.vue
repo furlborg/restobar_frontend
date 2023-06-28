@@ -14,7 +14,11 @@
     @close="() => $emit('update:sale')"
   >
     <n-spin :show="loading">
-      <SaleForm :data="data" @on-success="() => $emit('on-success')" />
+      <SaleForm
+        :id="sale"
+        :data="data"
+        @on-success="() => $emit('on-success')"
+      />
     </n-spin>
   </n-modal>
 </template>
@@ -86,5 +90,4 @@ export default defineComponent({
 });
 </script>
 
-<style>
-</style>
+<style></style>

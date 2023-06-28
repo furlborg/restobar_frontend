@@ -182,6 +182,45 @@ export async function nullSale(id, pass, nullReason = undefined) {
     null_reason: nullReason,
   });
 }
+
+export async function recoverySale(id, sale, pass) {
+  const businessStore = useBusinessStore();
+  const userStore = useUserStore();
+  const tillStore = useTillStore();
+  return await http.post(`sales/${id}/recovery/`, {
+    pass: pass,
+    order: sale.order,
+    serie: sale.serie,
+    number: sale.number,
+    date_sale: sale.date_sale,
+    count: sale.count,
+    amount: sale.amount,
+    given_amount: sale.given_amount,
+    invoice_type: sale.invoice_type,
+    payment_method: sale.payment_method,
+    payment_condition: sale.payment_condition,
+    customer: sale.customer === 0 ? null : sale.customer,
+    address: sale.address,
+    branch_office: !userStore.user.branchoffice
+      ? businessStore.currentBranch
+      : null,
+    discount: sale.discount,
+    icbper: parseFloat(sale.icbper).toFixed(2),
+    other_charges: parseFloat(sale.other_charges).toFixed(2),
+    by_consumption: sale.by_consumption,
+    observations: sale.observations,
+    sale_details: sale.sale_details.filter((detail) => detail.quantity > 0),
+    payments: sale.payments,
+    till: tillStore.currentTillID,
+    do_update: sale.do_update,
+    is_change: sale.is_change,
+    taxed_amount: parseFloat(sale.taxed_amount).toFixed(2),
+    exempt_amount: parseFloat(sale.exempt_amount).toFixed(2),
+    free_amount: parseFloat(sale.free_amount).toFixed(2),
+    igv_amount: parseFloat(sale.igv_amount).toFixed(2),
+  });
+}
+
 export async function sendWhatsapp(id, [serie, number], phone) {
   const businessStore = useBusinessStore();
   const saleStore = useSaleStore();
