@@ -161,7 +161,10 @@
                         :disabled="!!sale.delivery_info"
                       />
                     </n-form-item-gi>
-                    <n-form-item-gi :span="2">
+                    <n-form-item-gi
+                      v-if="$route.query.delivery === undefined"
+                      :span="2"
+                    >
                       <n-checkbox @update:checked="handleDelivery">
                         Delivery
                       </n-checkbox>
@@ -763,7 +766,7 @@ import {
 } from "vue";
 import { isAxiosError } from "axios";
 import { NThing, NTag, NSpace, NText, useDialog, useMessage } from "naive-ui";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useProductStore } from "@/store/modules/product";
 import { useOrderStore } from "@/store/modules/order";
@@ -805,6 +808,7 @@ export default defineComponent({
     const userStore = useUserStore();
     const dialog = useDialog();
     const message = useMessage();
+    const route = useRoute();
     const router = useRouter();
     const saleStore = useSaleStore();
     const orderStore = useOrderStore();
@@ -938,7 +942,16 @@ export default defineComponent({
       by_consumption: false,
       sale_details: [],
       ask_for: "",
-      delivery_info: null,
+      delivery_info:
+        !(route.query.delivery === undefined) && route.query.delivery === "true"
+          ? {
+              person: "",
+              address: "",
+              phone: "",
+              deliveryman: "",
+              amount: parseFloat(0).toFixed(2),
+            }
+          : null,
       payments: null,
       do_update: true,
       is_change: true,

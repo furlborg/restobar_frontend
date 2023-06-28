@@ -211,6 +211,12 @@
           cols="6 s:6 m:12 l:12 xl:24 2xl:24"
           x-gap="12"
         >
+          <n-form-item-gi :span="4">
+            <n-checkbox
+              v-model:checked="businessSettings.order.divide_delivery_takeaway"
+              >Dividir delivery y para llevar</n-checkbox
+            >
+          </n-form-item-gi>
           <n-form-item-gi :span="3">
             <n-checkbox
               v-model:checked="businessSettings.order.order_customer_name"

@@ -6,13 +6,37 @@
           <v-icon name="hi-solid-refresh" />
           Recargar
         </n-button>
-        <n-button
-          v-if="userStore.hasPermission('take_away_order')"
-          type="info"
-          secondary
-          @click="$router.push({ name: 'TakeOrder' })"
-          >Llevar / Delivery</n-button
+        <template
+          v-if="settingsStore.business_settings.order.divide_delivery_takeaway"
         >
+          <n-button
+            v-if="userStore.hasPermission('take_away_order')"
+            type="info"
+            secondary
+            @click="
+              $router.push({ name: 'TakeOrder', query: { delivery: true } })
+            "
+            >Delivery</n-button
+          >
+          <n-button
+            v-if="userStore.hasPermission('take_away_order')"
+            type="info"
+            secondary
+            @click="
+              $router.push({ name: 'TakeOrder', query: { delivery: false } })
+            "
+            >Llevar</n-button
+          >
+        </template>
+        <template v-else>
+          <n-button
+            v-if="userStore.hasPermission('take_away_order')"
+            type="info"
+            secondary
+            @click="$router.push({ name: 'TakeOrder' })"
+            >Llevar / Delivery</n-button
+          >
+        </template>
       </n-space>
       <!-- <n-button
         v-if="!groupMode"
