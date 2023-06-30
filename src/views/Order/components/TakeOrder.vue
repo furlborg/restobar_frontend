@@ -531,7 +531,7 @@
             <template #header>
               <n-button
                 type="info"
-                text
+                secondary
                 @click="selectProducts = !selectProducts"
                 >{{
                   selectProducts ? "Seleccionar productos" : "Cobrar"

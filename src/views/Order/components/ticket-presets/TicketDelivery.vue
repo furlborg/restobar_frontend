@@ -54,6 +54,10 @@
               <td>{{ info.fecha_de_emision }} {{ info.hora_de_emision }}</td>
             </tr>
             <tr>
+              <td align="right">MÉTODO PAGO :</td>
+              <td>{{ info.informacion_adicional[2] }}</td>
+            </tr>
+            <tr>
               <td align="right">PAGO :</td>
               <td>{{ data.given_amount }}</td>
             </tr>
@@ -135,7 +139,9 @@ export default defineComponent({
     const parseSale = () => {
       let saleData = JSON.parse(props.data.json_sale);
       // console.log(JSON.stringify(props.data, null, "  "));
-      // console.log(JSON.stringify(saleData, null, "  "));
+      saleData.informacion_adicional =
+        saleData.informacion_adicional.split("|");
+      console.log(JSON.stringify(saleData, null, "  "));
       if (settingsStore.business_settings.printer.detail_items) {
         props.data.order_details.forEach((detail, index) => {
           const indication = detail.indication.reduce((desc, indication) => {
