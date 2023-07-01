@@ -462,25 +462,20 @@ export default defineComponent({
                   }
                   customer.value.addresses = [
                     {
-                      description: "",
-                      ubigeo: businessStore.business.branchs[0].ubigeo,
+                      description: response.data.direccion,
+                      ubigeo: response.data.ubigeo_sunat,
                       is_disabled: false,
                     },
                   ];
                 } else if (customer.value.doc_num.length === 11) {
                   customer.value.names = response.data.nombre_o_razon_social;
-                  customer.value.addresses[0].ubigeo = isNaN(
-                    response.data.ubigeo[2]
-                  )
-                    ? businessStore.business.branchs[0].ubigeo
-                    : response.data.ubigeo[2];
-                  if (customer.value.doc_num.startsWith("1")) {
-                    customer.value.addresses[0].description =
-                      response.data.direccion || "-";
-                  } else {
-                    customer.value.addresses[0].description =
-                      response.data.direccion;
-                  }
+                  customer.value.addresses = [
+                    {
+                      description: response.data.direccion,
+                      ubigeo: response.data.ubigeo_sunat,
+                      is_disabled: false,
+                    },
+                  ];
                 }
                 customer_name.value.restoreValidation();
               } else {
