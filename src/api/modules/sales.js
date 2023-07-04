@@ -186,7 +186,6 @@ export async function nullSale(id, pass, nullReason = undefined) {
 export async function recoverySale(id, sale, pass) {
   const businessStore = useBusinessStore();
   const userStore = useUserStore();
-  const tillStore = useTillStore();
   return await http.post(`sales/${id}/recovery/`, {
     pass: pass,
     order: sale.order,
@@ -211,7 +210,7 @@ export async function recoverySale(id, sale, pass) {
     observations: sale.observations,
     sale_details: sale.sale_details.filter((detail) => detail.quantity > 0),
     payments: sale.payments,
-    till: tillStore.currentTillID,
+    till: sale.till,
     do_update: sale.do_update,
     is_change: sale.is_change,
     taxed_amount: parseFloat(sale.taxed_amount).toFixed(2),
