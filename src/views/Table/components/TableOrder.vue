@@ -116,16 +116,20 @@
                 </thead>
                 <tbody>
                   <template v-for="(order, index) in orderStore.orderList">
-                    <tr v-if="order.quantity > 0" :key="index">
+                    <tr
+                      v-if="order.quantity > 0"
+                      :key="index"
+                      style="cursor: pointer"
+                      @click="
+                        itemIndex = index;
+                        showModal = true;
+                      "
+                    >
                       <td>
                         <n-button
                           v-if="!($route.name === 'TablePayment')"
                           type="info"
                           text
-                          @click="
-                            itemIndex = index;
-                            showModal = true;
-                          "
                           ><v-icon name="md-listalt-round"
                         /></n-button>
                       </td>
@@ -141,6 +145,7 @@
                             order.id ? saleStore.getOrderQuantity(order.id) : 1
                           "
                           v-model:value="order.quantity"
+                          @click.stop
                         />
                         <template v-else>
                           {{ order.quantity }}
@@ -152,7 +157,7 @@
                           v-if="!($route.name === 'TablePayment')"
                           type="error"
                           text
-                          @click="
+                          @click.stop="
                             !order.id
                               ? (orderStore.orderList.splice(index, 1),
                                 nullifyTableOrder())
@@ -505,7 +510,7 @@ export default defineComponent({
         if (!!item && order.quantity > item.quantity) {
           let newOrder = cloneDeep(order);
           newOrder.quantity = order.quantity - item.quantity;
-          newOrder.indication = newOrder.indication.slice(order.quantity-1);
+          newOrder.indication = newOrder.indication.slice(order.quantity - 1);
           list.push(newOrder);
         } else if (
           !!item &&

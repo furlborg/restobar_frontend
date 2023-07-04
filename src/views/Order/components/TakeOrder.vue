@@ -568,16 +568,14 @@
                   <tr
                     v-for="(order, index) in orderStore.orderList"
                     :key="index"
+                    style="cursor: pointer"
+                    @click="
+                      itemIndex = index;
+                      showModal = true;
+                    "
                   >
                     <td>
-                      <n-button
-                        type="info"
-                        text
-                        @click="
-                          itemIndex = index;
-                          showModal = true;
-                        "
-                      >
+                      <n-button type="info" text>
                         <v-icon name="md-listalt-round" />
                       </n-button>
                     </td>
