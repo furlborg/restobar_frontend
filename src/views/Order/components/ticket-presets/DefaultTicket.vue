@@ -196,7 +196,7 @@
                   <td>
                     {{ detail.product_fitting.name }} ({{
                       detail.product_name
-                    }})
+                    }}){{ generateIndication(detail.indication) }}
                   </td>
                 </tr>
               </tbody>
@@ -218,7 +218,7 @@
                       : ""
                   }}{{ detail.product_fitting.name }} ({{
                     detail.product_name
-                  }})
+                  }}){{ generateIndication(detail.indication) }}
                 </div>
                 <div
                   v-if="
