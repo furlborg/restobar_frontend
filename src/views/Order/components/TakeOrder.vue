@@ -712,12 +712,14 @@
               <div style="display: flex; align-items: center; width: 100%">
                 <n-select
                   v-model:value="value.payment_method"
+                  :disabled="loading"
                   :options="filteredMethods"
                 />
                 <n-input
                   class="ms-2"
                   v-model:value="value.amount"
                   placeholder=""
+                  :disabled="loading"
                   @keypress="isDecimal($event)"
                 />
               </div>
@@ -730,8 +732,10 @@
             :disabled="
               evalPayments ||
               sale.payments.some((pay) => pay.payment_method === null) ||
-              sale.payments.some((pay) => Number(pay.amount) <= 0)
+              sale.payments.some((pay) => Number(pay.amount) <= 0) ||
+              loading
             "
+            :loading="loading"
             secondary
             @click="performTakeAway"
             >Confirmar</n-button

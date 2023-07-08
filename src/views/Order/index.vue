@@ -198,11 +198,13 @@
               <n-select
                 v-model:value="value.payment_method"
                 :options="filteredMethods"
+                :disabled="isTableLoading"
               />
               <n-input
                 class="ms-2"
                 v-model:value="value.amount"
                 placeholder=""
+                :disabled="isTableLoading"
                 @keypress="isDecimal($event)"
               />
             </div>
@@ -215,8 +217,10 @@
           :disabled="
             evalPayments ||
             payments.some((pay) => pay.payment_method === null) ||
-            payments.some((pay) => Number(pay.amount) <= 0)
+            payments.some((pay) => Number(pay.amount) <= 0) ||
+            isTableLoading
           "
+          :loading="isTableLoading"
           secondary
           @click="performUpdateOrderStatus"
           >Confirmar</n-button

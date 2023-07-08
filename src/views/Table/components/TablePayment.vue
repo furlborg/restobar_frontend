@@ -428,11 +428,13 @@
               <n-select
                 v-model:value="value.payment_method"
                 :options="filteredMethods"
+                :disabled="loading"
               />
               <n-input
                 class="ms-2"
                 v-model:value="value.amount"
                 placeholder=""
+                :disabled="loading"
                 @keypress="isDecimal($event)"
               />
             </div>
@@ -445,9 +447,11 @@
           :disabled="
             evalPayments ||
             sale.payments.some((pay) => pay.payment_method === null) ||
-            sale.payments.some((pay) => Number(pay.amount) <= 0)
+            sale.payments.some((pay) => Number(pay.amount) <= 0) ||
+            loading
           "
           secondary
+          :loading="loading"
           @click="performCreateSale"
           >Confirmar</n-button
         >
