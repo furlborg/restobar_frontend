@@ -336,11 +336,11 @@ export default defineComponent({
     const title = () => {
       switch (sale.codigo_tipo_documento) {
         case "01":
-          return "FACTURA DE VENTA ELECTRÓNICA";
+          return "FACTURA ELECTRÓNICA";
         case "03":
           return "BOLETA  DE VENTA ELECTRÓNICA";
         case "80":
-          return "NOTA DE VENTA ELECTRÓNICA";
+          return "NOTA DE VENTA";
         default:
           console.error("tipo de documento inválido");
           return "";
