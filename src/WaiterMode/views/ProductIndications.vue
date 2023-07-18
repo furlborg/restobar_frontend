@@ -35,6 +35,7 @@
             :key="index"
             class="mx-1"
             checkable
+            @click.stop
             :checked="indication.quick_indications.some((ind) => ind === quick)"
             @update:checked="() => handleIndications(indication, quick)"
           >
