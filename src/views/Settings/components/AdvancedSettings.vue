@@ -211,6 +211,13 @@
           cols="6 s:6 m:12 l:12 xl:24 2xl:24"
           x-gap="12"
         >
+          <n-form-item-gi label="Filtros por defecto" :span="4">
+            <n-select
+              v-model:value="businessSettings.order.default_filters"
+              :options="orderTypeOptions"
+              multiple
+            />
+          </n-form-item-gi>
           <n-form-item-gi :span="4">
             <n-checkbox
               v-model:checked="businessSettings.order.divide_delivery_takeaway"
@@ -508,6 +515,21 @@ export default defineComponent({
       editMode.value = false;
     };
 
+    const orderTypeOptions = [
+      {
+        value: "M",
+        label: "MESA",
+      },
+      {
+        value: "P",
+        label: "PARA LLEVAR",
+      },
+      {
+        value: "D",
+        label: "DELIVERY",
+      },
+    ];
+
     return {
       igv_percentage,
       handleBack,
@@ -521,6 +543,7 @@ export default defineComponent({
       resetSettings,
       kitchenPrinterFormatOptions,
       infoLocationOptions,
+      orderTypeOptions,
     };
   },
 });

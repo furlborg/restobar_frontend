@@ -293,9 +293,18 @@ export default defineComponent({
           "dd/MM/yyyy HH:mm:ss"
         ),
       ],
-      take_aways: true,
-      tables: true,
-      deliverys: true,
+      take_aways:
+        settingsStore.business_settings?.order?.default_filters.some(
+          (filter) => filter === "P"
+        ) ?? true,
+      tables:
+        settingsStore.business_settings?.order?.default_filters.some(
+          (filter) => filter === "M"
+        ) ?? true,
+      deliverys:
+        settingsStore.business_settings?.order?.default_filters.some(
+          (filter) => filter === "D"
+        ) ?? true,
       status: null,
     });
     const pagination = ref({
