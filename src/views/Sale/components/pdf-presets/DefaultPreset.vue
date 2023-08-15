@@ -182,10 +182,19 @@
                   EFECTIVO :
                 </td>
                 <td align="right">
-                  {{ parseFloat(data.given_amount).toFixed(2) }}
+                  {{
+                    data.payment_condition === 1
+                      ? parseFloat(data.given_amount).toFixed(2)
+                      : sale.totales.total_venta.toFixed(2)
+                  }}
                 </td>
               </tr>
-              <tr v-if="parseFloat(data.given_amount - data.amount)">
+              <tr
+                v-if="
+                  data.payment_condition === 1 &&
+                  parseFloat(data.given_amount - data.amount)
+                "
+              >
                 <td align="right" :colspan="!!hasDiscounts ? 4 : 3">
                   VUELTO :
                 </td>

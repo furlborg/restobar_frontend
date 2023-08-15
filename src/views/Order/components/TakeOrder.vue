@@ -59,6 +59,7 @@
                     v-model:value="sale.payment_condition"
                     name="saleType"
                     size="small"
+                    @update:value="changeCondition"
                   >
                     <n-radio-button :value="1" :key="1">CONTADO</n-radio-button>
                     <n-radio-button :value="2" :key="2">CRÉDITO</n-radio-button>
@@ -444,7 +445,7 @@
                   </n-gi>
                 </n-grid>
                 <n-checkbox
-                  v-if="!sale.delivery_info"
+                  v-if="!sale.delivery_info || sale.payment_condition === 1"
                   v-model:checked="isMultiple"
                   :disabled="
                     settingsStore.businessSettings.order.pending_takeaway
@@ -457,7 +458,7 @@
                   cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12"
                   :x-gap="12"
                 >
-                  <n-gi :span="4">
+                  <!-- <n-gi :span="4">
                     <n-input-group>
                       <n-button
                         type="success"
@@ -468,7 +469,7 @@
                       </n-button>
                       <n-input placeholder="" v-model:value="whatsappNumber" />
                     </n-input-group>
-                  </n-gi>
+                  </n-gi> -->
                   <n-gi class="d-flex align-items-center" :span="3">
                     <n-checkbox v-model:checked="ticketPreview"
                       >Previsualizar ticket</n-checkbox
@@ -479,7 +480,10 @@
                   class="fs-1 py-5 mt-2"
                   type="success"
                   :disabled="
-                    !saleStore.toSale.length || sale.given_amount < sale.amount
+                    !saleStore.toSale.length ||
+                    sale.given_amount < sale.payment_condition === 1
+                      ? sale.given_amount < sale.amount
+                      : !(sale.given_amount < sale.amount)
                   "
                   secondary
                   block
@@ -591,6 +595,7 @@
                         @update:value="
                           saleStore.sale_details = orderStore.orderList
                         "
+                        @click.stop
                       />
                     </td>
                     <td>S/. {{ order.subTotal.toFixed(2) }}</td>
@@ -598,7 +603,7 @@
                       <n-button
                         type="error"
                         text
-                        @click="orderStore.orderList.splice(index, 1)"
+                        @click.stop="orderStore.orderList.splice(index, 1)"
                       >
                         <v-icon name="md-disabledbydefault-round" />
                       </n-button>
@@ -969,7 +974,7 @@ export default defineComponent({
     });
 
     const rules = computed(() => {
-      if (sale.value.invoice_type !== 1) {
+      if (sale.value.invoice_type !== 1 && sale.value.payment_condition === 1) {
         saleRules.customer.required = false;
       } else {
         saleRules.customer.required = true;
@@ -1000,6 +1005,20 @@ export default defineComponent({
 
     const selectSerie = (v) => {
       sale.value.serie = v;
+    };
+
+    const changeCondition = (v) => {
+      switch (v) {
+        case 1:
+          sale.value.given_amount = total.value;
+          break;
+        case 2:
+          sale.value.given_amount = parseFloat(0).toFixed(2);
+          break;
+        default:
+          console.error(`${v} invalido`);
+          break;
+      }
     };
 
     const changeSerie = (v) => {
@@ -1465,23 +1484,23 @@ export default defineComponent({
                           .then((response) => {
                             if (response.status === 200) {
                               message.success("Enviado!");
-                              if (whatsappNumber.value.length >= 9) {
-                                sendWhatsapp(
-                                  response.data.id,
-                                  [response.data.serie, response.data.number],
-                                  whatsappNumber.value
-                                )
-                                  .then((response) => {
-                                    if (response.status === 200)
-                                      window.open(
-                                        response.data.data.url,
-                                        "_blank"
-                                      );
-                                  })
-                                  .catch((error) => {
-                                    console.error(error);
-                                  });
-                              }
+                              // if (whatsappNumber.value.length >= 9) {
+                              //   sendWhatsapp(
+                              //     response.data.id,
+                              //     [response.data.serie, response.data.number],
+                              //     whatsappNumber.value
+                              //   )
+                              //     .then((response) => {
+                              //       if (response.status === 200)
+                              //         window.open(
+                              //           response.data.data.url,
+                              //           "_blank"
+                              //         );
+                              //     })
+                              //     .catch((error) => {
+                              //       console.error(error);
+                              //     });
+                              // }
                             }
                           })
                           .catch((error) => {
@@ -1510,22 +1529,23 @@ export default defineComponent({
                               message.error("Algo salió mal...");
                             }
                           });
-                      } else {
-                        if (whatsappNumber.value.length >= 9) {
-                          sendWhatsapp(
-                            response.data.id,
-                            [response.data.serie, response.data.number],
-                            whatsappNumber.value
-                          )
-                            .then((response) => {
-                              if (response.status === 200)
-                                window.open(response.data.data.url, "_blank");
-                            })
-                            .catch((error) => {
-                              console.error(error);
-                            });
-                        }
                       }
+                      // else {
+                      //   if (whatsappNumber.value.length >= 9) {
+                      //     sendWhatsapp(
+                      //       response.data.id,
+                      //       [response.data.serie, response.data.number],
+                      //       whatsappNumber.value
+                      //     )
+                      //       .then((response) => {
+                      //         if (response.status === 200)
+                      //           window.open(response.data.data.url, "_blank");
+                      //       })
+                      //       .catch((error) => {
+                      //         console.error(error);
+                      //       });
+                      //   }
+                      // }
                       // router.push({ name: "TableHome" });
                     }
                   })
@@ -1730,6 +1750,7 @@ export default defineComponent({
       rules,
       saleForm,
       sale,
+      changeCondition,
       changeSerie,
       selectSerie,
       renderLabel,

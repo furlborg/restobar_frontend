@@ -48,6 +48,15 @@ export const routes = [
         component: () => import(/* webpackChunkName: "sale" */ "@/views/Sale"),
       },
       {
+        path: "/credits",
+        name: "Credits",
+        // meta: {
+        //   requiredPerm: "view_sale",
+        // },
+        component: () =>
+          import(/* webpackChunkName: "credits" */ "@/views/Sale/SaleCredits"),
+      },
+      {
         path: "/till",
         name: "Till",
         redirect: { name: "CurrentTill" },

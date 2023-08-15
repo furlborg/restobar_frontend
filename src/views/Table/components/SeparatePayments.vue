@@ -349,7 +349,7 @@
           cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12"
           :x-gap="12"
         >
-          <n-gi :span="4">
+          <!-- <n-gi :span="4">
             <n-input-group>
               <n-button
                 type="success"
@@ -360,7 +360,7 @@
               </n-button>
               <n-input placeholder="" v-model:value="whatsappNumber" />
             </n-input-group>
-          </n-gi>
+          </n-gi> -->
           <n-gi class="d-flex align-items-center" :span="3">
             <n-checkbox v-model:checked="ticketPreview"
               >Previsualizar ticket</n-checkbox
@@ -742,20 +742,20 @@ export default defineComponent({
                           if (response.status === 200) {
                             message.success("Enviado!");
                           }
-                          if (whatsappNumber.value.length >= 9) {
-                            sendWhatsapp(
-                              response.data.id,
-                              [response.data.serie, response.data.number],
-                              whatsappNumber.value
-                            )
-                              .then((response) => {
-                                if (response.status === 200)
-                                  window.open(response.data.data.url, "_blank");
-                              })
-                              .catch((error) => {
-                                console.error(error);
-                              });
-                          }
+                          // if (whatsappNumber.value.length >= 9) {
+                          //   sendWhatsapp(
+                          //     response.data.id,
+                          //     [response.data.serie, response.data.number],
+                          //     whatsappNumber.value
+                          //   )
+                          //     .then((response) => {
+                          //       if (response.status === 200)
+                          //         window.open(response.data.data.url, "_blank");
+                          //     })
+                          //     .catch((error) => {
+                          //       console.error(error);
+                          //     });
+                          // }
                         })
                         .catch((error) => {
                           if (isAxiosError(error)) {
@@ -783,22 +783,23 @@ export default defineComponent({
                             message.error("Algo salió mal...");
                           }
                         });
-                    } else {
-                      if (whatsappNumber.value.length >= 9) {
-                        sendWhatsapp(
-                          response.data.id,
-                          [response.data.serie, response.data.number],
-                          whatsappNumber.value
-                        )
-                          .then((response) => {
-                            if (response.status === 200)
-                              window.open(response.data.data.url, "_blank");
-                          })
-                          .catch((error) => {
-                            console.error(error);
-                          });
-                      }
                     }
+                    // else {
+                    //   if (whatsappNumber.value.length >= 9) {
+                    //     sendWhatsapp(
+                    //       response.data.id,
+                    //       [response.data.serie, response.data.number],
+                    //       whatsappNumber.value
+                    //     )
+                    //       .then((response) => {
+                    //         if (response.status === 200)
+                    //           window.open(response.data.data.url, "_blank");
+                    //       })
+                    //       .catch((error) => {
+                    //         console.error(error);
+                    //       });
+                    //   }
+                    // }
                     retrieveOrder(orderStore.orderId)
                       .then((response) => {
                         if (response.status === 200) {

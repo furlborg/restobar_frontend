@@ -122,7 +122,9 @@ export default defineComponent({
     const settingsStore = useSettingsStore();
     const printerStore = usePrinterStore();
     const saleStore = useSaleStore();
+
     const message = useMessage();
+
     const ticket = ref(null);
 
     const loading = ref(false);

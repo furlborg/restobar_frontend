@@ -240,3 +240,19 @@ export async function sendWhatsapp(id, [serie, number], phone) {
     }
   );
 }
+
+export async function getSaleCredits(params) {
+  return await http.get("credits/", {
+    params: {
+      ...params,
+    },
+  });
+}
+
+export async function createSaleCredit(data) {
+  const tillStore = useTillStore();
+  return await http.post("credits/", {
+    ...data,
+    till: tillStore.currentTillID,
+  });
+}

@@ -170,6 +170,12 @@ export async function nullifyDetail(idTill) {
   return await http.delete(`till_details/${idTill}`);
 }
 
+export async function secureNullifyDetail(id, pass) {
+  return await http.post(`till_details/${id}/secure_delete/`, {
+    pass: pass,
+  });
+}
+
 export async function getConcepts() {
   return await http.get("concepts/");
 }

@@ -38,6 +38,7 @@
             v-model:value="sale.payment_condition"
             name="saleType"
             size="small"
+            @update:value="changeCondition"
           >
             <n-radio-button :value="1" :key="1">CONTADO</n-radio-button>
             <n-radio-button :value="2" :key="2">CRÉDITO</n-radio-button>
@@ -123,7 +124,9 @@
               />
             </n-form-item-gi>
             <n-form-item-gi :span="2">
-              <n-checkbox v-model:checked="sale.by_consumption"
+              <n-checkbox
+                v-model:checked="sale.by_consumption"
+                :disabled="sale.payment_condition === 2"
                 >Por consumo</n-checkbox
               >
             </n-form-item-gi>
@@ -341,7 +344,7 @@
           @click.prevent="performCreateSale"
           ><v-icon class="me-2" name="fa-coins" scale="2" />Cobrar</n-button
         > -->
-        <n-space justify="space-between">
+        <n-space v-if="sale.payment_condition === 1" justify="space-between">
           <n-checkbox v-model:checked="isMultiple">Pago multiple</n-checkbox>
           <n-button type="info" text @click="openSeparatePaymentsModal"
             >Nueva cuenta</n-button
@@ -353,7 +356,7 @@
           cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12"
           :x-gap="12"
         >
-          <n-gi :span="4">
+          <!-- <n-gi :span="4">
             <n-input-group>
               <n-button
                 type="success"
@@ -364,7 +367,7 @@
               </n-button>
               <n-input placeholder="" v-model:value="whatsappNumber" />
             </n-input-group>
-          </n-gi>
+          </n-gi> -->
           <n-gi class="d-flex align-items-center" :span="3">
             <n-checkbox v-model:checked="ticketPreview"
               >Previsualizar ticket</n-checkbox
@@ -376,7 +379,9 @@
           type="success"
           :disabled="
             !saleStore.toSale.filter((detail) => !!detail.quantity).length ||
-            sale.given_amount < sale.amount
+            sale.payment_condition === 1
+              ? sale.given_amount < sale.amount
+              : !(sale.given_amount < sale.amount)
           "
           secondary
           block
@@ -669,7 +674,7 @@ export default defineComponent({
 
     const formRules = computed(() => {
       let rules = saleRules;
-      if (sale.value.invoice_type !== 1) {
+      if (sale.value.invoice_type !== 1 && sale.value.payment_condition === 1) {
         rules.customer.required = false;
       } else {
         rules.customer.required = true;
@@ -679,6 +684,20 @@ export default defineComponent({
 
     const selectSerie = (v) => {
       sale.value.serie = v;
+    };
+
+    const changeCondition = (v) => {
+      switch (v) {
+        case 1:
+          sale.value.given_amount = total.value;
+          break;
+        case 2:
+          sale.value.given_amount = parseFloat(0).toFixed(2);
+          break;
+        default:
+          console.error(`${v} invalido`);
+          break;
+      }
     };
 
     const changeSerie = (v) => {
@@ -748,23 +767,23 @@ export default defineComponent({
                           if (response.status === 200) {
                             const sale = response.data;
                             message.success("Enviado!");
-                            if (whatsappNumber.value.length >= 9) {
-                              sendWhatsapp(
-                                sale.id,
-                                [sale.serie, sale.number],
-                                whatsappNumber.value
-                              )
-                                .then((response) => {
-                                  if (response.status === 200)
-                                    window.open(
-                                      response.data.data.url,
-                                      "_blank"
-                                    );
-                                })
-                                .catch((error) => {
-                                  console.error(error);
-                                });
-                            }
+                            // if (whatsappNumber.value.length >= 9) {
+                            //   sendWhatsapp(
+                            //     sale.id,
+                            //     [sale.serie, sale.number],
+                            //     whatsappNumber.value
+                            //   )
+                            //     .then((response) => {
+                            //       if (response.status === 200)
+                            //         window.open(
+                            //           response.data.data.url,
+                            //           "_blank"
+                            //         );
+                            //     })
+                            //     .catch((error) => {
+                            //       console.error(error);
+                            //     });
+                            // }
                           }
                         })
                         .catch((error) => {
@@ -793,22 +812,23 @@ export default defineComponent({
                             message.error("Algo salió mal...");
                           }
                         });
-                    } else {
-                      if (whatsappNumber.value.length >= 9) {
-                        sendWhatsapp(
-                          response.data.id,
-                          [response.data.serie, response.data.number],
-                          whatsappNumber.value
-                        )
-                          .then((response) => {
-                            if (response.status === 200)
-                              window.open(response.data.data.url, "_blank");
-                          })
-                          .catch((error) => {
-                            console.error(error);
-                          });
-                      }
                     }
+                    // else {
+                    //   if (whatsappNumber.value.length >= 9) {
+                    //     sendWhatsapp(
+                    //       response.data.id,
+                    //       [response.data.serie, response.data.number],
+                    //       whatsappNumber.value
+                    //     )
+                    //       .then((response) => {
+                    //         if (response.status === 200)
+                    //           window.open(response.data.data.url, "_blank");
+                    //       })
+                    //       .catch((error) => {
+                    //         console.error(error);
+                    //       });
+                    //   }
+                    // }
                     message.success("Venta realizada correctamente!");
                     // router.push({ name: "TableHome" });
                   }
@@ -1143,6 +1163,7 @@ export default defineComponent({
       payment_amount,
       subTotal,
       selectSerie,
+      changeCondition,
       changeSerie,
       showObservations,
       performCreateSale,
