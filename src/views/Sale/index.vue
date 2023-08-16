@@ -11,13 +11,6 @@
             @update:value="refreshTable"
           />
           <n-button
-            type="info"
-            tertiary
-            @click="$router.push({ name: 'Credits' })"
-          >
-            Créditos</n-button
-          >
-          <n-button
             v-if="userStore.hasPermission('make_excel_report')"
             type="info"
             tertiary

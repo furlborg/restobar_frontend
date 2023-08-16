@@ -2,23 +2,33 @@
   <div id="TillList">
     <n-card title="Aperturas y Cierres" :segmented="{ content: 'hard' }">
       <template #header-extra>
-        <n-button
-          v-if="userStore.hasPermission('add_till')"
-          type="success"
-          :disabled="
-            userStore.user.branchoffice
-              ? isTableLoading || tills.some((till) => till.status === true)
-              : isTableLoading ||
-                tills.some((till) => till.status === true) ||
-                !(
-                  !userStore.user.branchoffice &&
-                  businessStore.currentBranch === filterParams.branch
-                )
-          "
-          secondary
-          @click="showApertureModal = true"
-          >Aperturar</n-button
-        >
+        <n-space>
+          <n-button
+            v-if="settingsStore.businessSettings?.sale?.enable_credits === true"
+            type="info"
+            tertiary
+            @click="$router.push({ name: 'Credits' })"
+          >
+            Créditos</n-button
+          >
+          <n-button
+            v-if="userStore.hasPermission('add_till')"
+            type="success"
+            :disabled="
+              userStore.user.branchoffice
+                ? isTableLoading || tills.some((till) => till.status === true)
+                : isTableLoading ||
+                  tills.some((till) => till.status === true) ||
+                  !(
+                    !userStore.user.branchoffice &&
+                    businessStore.currentBranch === filterParams.branch
+                  )
+            "
+            secondary
+            @click="showApertureModal = true"
+            >Aperturar</n-button
+          >
+        </n-space>
       </template>
       <n-space justify="space-between">
         <n-button
@@ -152,6 +162,7 @@ import {
   sendTillReport,
 } from "@/api/modules/tills";
 import { useTillStore } from "@/store/modules/till";
+import { useSettingsStore } from "@/store/modules/settings";
 import { useBusinessStore } from "@/store/modules/business";
 import { useUserStore } from "@/store/modules/user";
 
@@ -165,6 +176,7 @@ export default defineComponent({
     const message = useMessage();
     const dialog = useDialog();
     const router = useRouter();
+    const settingsStore = useSettingsStore();
     const businessStore = useBusinessStore();
     const userStore = useUserStore();
     const tillStore = useTillStore();
@@ -334,6 +346,7 @@ export default defineComponent({
       pagination,
       tills,
       idTill,
+      settingsStore,
       businessStore,
       userStore,
       tableColumns: createTillColumns({

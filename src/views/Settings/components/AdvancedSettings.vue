@@ -342,6 +342,11 @@
             >
           </n-form-item-gi>
           <n-form-item-gi :span="4">
+            <n-checkbox v-model:checked="businessSettings.sale.enable_credits"
+              >Habilitar créditos</n-checkbox
+            >
+          </n-form-item-gi>
+          <n-form-item-gi :span="4">
             <n-checkbox v-model:checked="businessSettings.sale.show_preview"
               >Mostrar previsualización</n-checkbox
             >

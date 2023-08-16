@@ -480,8 +480,7 @@
                   class="fs-1 py-5 mt-2"
                   type="success"
                   :disabled="
-                    !saleStore.toSale.length ||
-                    sale.given_amount < sale.payment_condition === 1
+                    !saleStore.toSale.length || sale.payment_condition === 1
                       ? sale.given_amount < sale.amount
                       : !(sale.given_amount < sale.amount)
                   "

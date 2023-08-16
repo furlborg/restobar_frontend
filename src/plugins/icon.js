@@ -114,6 +114,7 @@ import {
   MdOutgoingmail,
   FaDownload,
   FaCircle,
+  MdCreditcardTwotone,
 } from "oh-vue-icons/icons";
 OhVueIcon.add(
   BiThreeDots,
@@ -229,6 +230,7 @@ OhVueIcon.add(
   BiWhatsapp,
   MdOutgoingmail,
   FaDownload,
-  FaCircle
+  FaCircle,
+  MdCreditcardTwotone
 );
 export { OhVueIcon };
