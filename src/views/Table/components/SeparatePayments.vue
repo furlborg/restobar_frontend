@@ -38,6 +38,9 @@
             v-model:value="sale.payment_condition"
             name="saleType"
             size="small"
+            :disabled="
+              !(settingsStore.businessSettings?.sale?.enable_credits === true)
+            "
           >
             <n-radio-button :value="1" :key="1">CONTADO</n-radio-button>
             <n-radio-button :value="2" :key="2">CRÉDITO</n-radio-button>
