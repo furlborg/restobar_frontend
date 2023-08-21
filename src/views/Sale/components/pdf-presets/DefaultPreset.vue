@@ -90,7 +90,7 @@
               </thead>
               <tbody>
                 <tr>
-                  <td align="center">Por consumo</td>
+                  <td align="center">Por consumo de alimentos</td>
                   <td></td>
                   <td></td>
                   <td v-if="hasDiscounts" align="right">
