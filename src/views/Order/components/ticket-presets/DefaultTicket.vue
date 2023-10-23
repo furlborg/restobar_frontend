@@ -293,7 +293,7 @@
             settingsStore.business_settings.printer.info_location === 'footer'
           "
         >
-          <div>{{ info.created }}</div>
+          <div>{{ isUpdate ? info.created : info.modified }}</div>
           <div>{{ info.username }}</div>
         </template>
       </div>
