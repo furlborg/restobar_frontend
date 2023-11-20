@@ -230,13 +230,25 @@ export default defineComponent({
           credits.value = data.results;
           credits.value.forEach((credit) => {
             credit.amount = Number(credit.amount);
-            credit.payments.reduceRight((acc, curVal) => {
-              curVal.amount = Number(curVal.amount);
-              acc += curVal.amount;
-              curVal.paid_amount = acc;
-              curVal.pending_amount = credit.amount - curVal.paid_amount;
-              return acc;
-            }, 0);
+            if (credit.paid_amount > credit.amount)
+              credit.paid_amount = credit.amount;
+            if (credit.pending_amount < 0) credit.pending_amount = 0;
+            if (credit.payments.length) {
+              credit.payments.reduceRight((acc, curVal) => {
+                curVal.amount =
+                  curVal.amount > credit.amount
+                    ? credit.amount
+                    : Number(curVal.amount);
+                acc += curVal.amount;
+                curVal.paid_amount = acc;
+                const pending_amount = credit.amount - curVal.paid_amount;
+                curVal.pending_amount = pending_amount;
+                return acc;
+              }, 0);
+            } else {
+              credit.paid_amount = 0;
+              credit.pending_amount = credit.amount;
+            }
             // credit.pending_amount = credit.amount - credit.paid_amount;
           });
         }

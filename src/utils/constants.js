@@ -179,7 +179,11 @@ export const saleDocumentOptions = [
   },
 ];
 
-export const createCustomerColumns = ({ editCustomer, deleteCustomer }) => {
+export const createCustomerColumns = ({
+  editCustomer,
+  showCredits,
+  deleteCustomer,
+}) => {
   return [
     {
       title: "ID",
@@ -293,6 +297,19 @@ export const createCustomerColumns = ({ editCustomer, deleteCustomer }) => {
             },
             renderIcon("la-user-edit-solid")
           ),
+          settingsStore.business_settings.sale.customer_credits &&
+            h(
+              NButton,
+              {
+                class: "me-2",
+                size: "small",
+                type: "info",
+                secondary: true,
+                // disabled: !userStore.hasPermission("change_customer"),
+                onClick: () => showCredits(row),
+              },
+              renderIcon("bi-eye")
+            ),
           h(
             NButton,
             {

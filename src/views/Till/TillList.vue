@@ -4,7 +4,10 @@
       <template #header-extra>
         <n-space>
           <n-button
-            v-if="settingsStore.businessSettings?.sale?.enable_credits === true"
+            v-if="
+              settingsStore.businessSettings?.sale?.enable_credits === true &&
+              settingsStore.businessSettings?.sale?.customer_credits === false
+            "
             type="info"
             tertiary
             @click="$router.push({ name: 'Credits' })"

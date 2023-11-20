@@ -94,6 +94,13 @@
       @update:show="onCloseModal"
       @on-success="onSuccess"
     />
+    <!-- Customer Credits Drawer -->
+    <customer-credits-drawer
+      v-model:show="showCredits"
+      :id="idCustomer"
+      @update:show="onCloseModal"
+      @on-success="onSuccess"
+    />
   </n-card>
 </template>
 
@@ -109,11 +116,13 @@ import {
 } from "@/api/modules/customer";
 import { useUserStore } from "@/store/modules/user";
 import CustomerModal from "./components/CustomerModal";
+import CustomerCreditsDrawer from "./components/CustomerCreditsDrawer";
 
 export default defineComponent({
   name: "Customer",
   components: {
     CustomerModal,
+    CustomerCreditsDrawer,
   },
   setup() {
     const message = useMessage();
@@ -299,9 +308,12 @@ export default defineComponent({
 
     const onSuccess = async () => {
       showModal.value = false;
+      showCredits.value = false;
       onCloseModal();
       await loadCustomersData();
     };
+
+    const showCredits = ref(false);
 
     onMounted(async () => {
       await loadCustomersData();
@@ -311,6 +323,7 @@ export default defineComponent({
       userStore,
       isTableLoading,
       showModal,
+      showCredits,
       showFilters,
       pagination,
       customers,
@@ -324,6 +337,10 @@ export default defineComponent({
       tableColumns: createCustomerColumns({
         editCustomer(rowData) {
           showModal.value = true;
+          idCustomer.value = rowData.id;
+        },
+        showCredits(rowData) {
+          showCredits.value = true;
           idCustomer.value = rowData.id;
         },
         deleteCustomer(rowData) {

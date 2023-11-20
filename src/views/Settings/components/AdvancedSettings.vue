@@ -347,6 +347,11 @@
             >
           </n-form-item-gi>
           <n-form-item-gi :span="4">
+            <n-checkbox v-model:checked="businessSettings.sale.customer_credits"
+              >Créditos por cliente</n-checkbox
+            >
+          </n-form-item-gi>
+          <n-form-item-gi :span="4">
             <n-checkbox v-model:checked="businessSettings.sale.show_preview"
               >Mostrar previsualización</n-checkbox
             >
