@@ -140,7 +140,7 @@ export default defineComponent({
 
     const credits = ref([]);
 
-    const columns = [
+    const columns = ref([
       {
         key: "codsale",
         title: "Documento",
@@ -208,7 +208,7 @@ export default defineComponent({
         title: "Fecha",
         width: 200,
       },
-    ];
+    ]);
 
     const currentRow = ref(null);
 

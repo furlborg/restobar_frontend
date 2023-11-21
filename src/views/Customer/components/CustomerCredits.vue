@@ -6,7 +6,7 @@
     closable
   >
     <n-space class="mb-1" align="center" justify="space-between">
-      <n-input-group v-if="tillStore.currentTillID">
+      <n-input-group v-if="tillStore.currentTillID && filters.status === 'P'">
         <n-select
           style="max-width: 200px"
           :disabled="loading"
@@ -34,6 +34,19 @@
           Pagar
         </n-button>
       </n-input-group>
+      <n-input
+        v-if="filters.status === 'C'"
+        class="me-1"
+        v-model:value="filters.document"
+        placeholder="Documento"
+        clearable
+        @update:value="
+          (v) => {
+            payment = { payment_method: 1, amount: null };
+            debouncedLoadCredits(v);
+          }
+        "
+      />
       <n-select
         class="me-1"
         v-model:value="filters.status"
@@ -59,7 +72,7 @@
 </template>
 
 <script>
-import { defineComponent, h, ref, onMounted } from "vue";
+import { defineComponent, h, ref, computed, onMounted } from "vue";
 import { NTag, useMessage } from "naive-ui";
 import { useTillStore } from "@/store/modules/till";
 import { useSaleStore } from "@/store/modules/sale";
@@ -83,78 +96,95 @@ export default defineComponent({
 
     const credits = ref([]);
 
-    const columns = [
-      {
-        type: "selection",
-        disabled(row) {
-          return row.paid_amount > 0;
-        },
-      },
-      {
-        key: "codsale",
-        title: "Documento",
-        width: 150,
-      },
-      {
-        key: "pending_amount",
-        title: "Monto Pendiente",
-        width: 150,
-        render(row) {
-          return `S/. ${row.pending_amount.toFixed(2)}`;
-        },
-      },
-      {
-        key: "paid_amount",
-        title: "Monto Pagado",
-        width: 150,
-        render(row) {
-          return `S/. ${row.paid_amount.toFixed(2)}`;
-        },
-      },
-      {
-        key: "amount",
-        title: "Monto Total",
-        width: 150,
-        render(row) {
-          return `S/. ${row.amount.toFixed(2)}`;
-        },
-      },
-      {
-        key: "status",
-        title: "Estado",
-        width: 150,
-        render(row) {
-          return h(
-            NTag,
-            {
-              type:
-                row.status === "A"
-                  ? "error"
-                  : !row.pending_amount
-                  ? "success"
-                  : "warning",
-            },
-            {
-              default: () =>
-                row.status === "A"
-                  ? "ANULADO"
-                  : !row.pending_amount
-                  ? "COBRADO"
-                  : "PENDIENTE",
-            }
-          );
-        },
-      },
-      {
-        key: "date_sale",
-        title: "Fecha",
-        width: 200,
-      },
-    ];
-
     const filters = ref({
       status: "P",
+      document: null,
     });
+
+    const columns = computed(() =>
+      [
+        {
+          type: "selection",
+          disabled(row) {
+            return row.paid_amount > 0;
+          },
+        },
+        {
+          key: "codsale",
+          title: "Venta",
+          width: 125,
+        },
+        {
+          key: "pending_amount",
+          title: "Pendiente",
+          width: 124,
+          render(row) {
+            return `S/. ${row.pending_amount.toFixed(2)}`;
+          },
+        },
+        {
+          key: "paid_amount",
+          title: "Pagado",
+          width: 125,
+          render(row) {
+            return `S/. ${row.paid_amount.toFixed(2)}`;
+          },
+        },
+        {
+          key: "amount",
+          title: "Total",
+          width: 125,
+          render(row) {
+            return `S/. ${row.amount.toFixed(2)}`;
+          },
+        },
+        {
+          key: "status",
+          title: "Estado",
+          width: 150,
+          render(row) {
+            return h(
+              NTag,
+              {
+                type:
+                  row.status === "A"
+                    ? "error"
+                    : !row.pending_amount
+                    ? "success"
+                    : "warning",
+              },
+              {
+                default: () =>
+                  row.status === "A"
+                    ? "ANULADO"
+                    : !row.pending_amount
+                    ? "COBRADO"
+                    : "PENDIENTE",
+              }
+            );
+          },
+        },
+        {
+          key: "pcodsale",
+          title: "Pago",
+          width: 125,
+          hide: filters.value.status !== "C",
+          render(row) {
+            return row.payments.at(0)?.document;
+          },
+        },
+        {
+          key: "date_sale",
+          title: "Fecha",
+          width: 200,
+          render(row) {
+            return filters.value.status === "P"
+              ? row.date_sale
+              : row.payments.at(0)?.created;
+          },
+        },
+      ].filter((c) => !c.hide)
+    );
 
     const loadCredits = async () => {
       loading.value = true;
