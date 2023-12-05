@@ -74,6 +74,13 @@
       <div class="ticket-footer">
         <div>F. EMISIÓN: {{ data.created }}</div>
         <div>USUARIO: {{ data.username }}</div>
+        <div
+          v-if="settingsStore.business_settings.printer.extra_text"
+          style="padding: 10px"
+          align="center"
+        >
+          EN EL PADRE NO COBRAMOS POR SERVICIO. AQUI AMAMOS LAS PROPINAS
+        </div>
       </div>
     </div>
   </div>
