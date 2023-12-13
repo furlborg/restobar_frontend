@@ -80,6 +80,11 @@ export const useSaleStore = defineStore("sale", {
           console.error(error);
         });
     },
+    getFreeSaleSerieByType(doc_type) {
+      return this.series.find(
+        (serie) => serie.free_sale === true && serie.doc_type === doc_type
+      );
+    },
     async refreshPaymentMethods() {
       return await getPaymentMethods()
         .then((response) => {

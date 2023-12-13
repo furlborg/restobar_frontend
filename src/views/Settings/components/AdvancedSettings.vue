@@ -357,6 +357,17 @@
             >
           </n-form-item-gi>
           <n-form-item-gi :span="4">
+            <n-checkbox v-model:checked="businessSettings.sale.free_sale"
+              >Venta libre</n-checkbox
+            >
+          </n-form-item-gi>
+          <n-form-item-gi :span="4">
+            <n-checkbox
+              v-model:checked="businessSettings.sale.free_sale_affects_till"
+              >Venta libre afecta caja</n-checkbox
+            >
+          </n-form-item-gi>
+          <n-form-item-gi :span="4">
             <n-checkbox v-model:checked="businessSettings.sale.show_preview"
               >Mostrar previsualización</n-checkbox
             >

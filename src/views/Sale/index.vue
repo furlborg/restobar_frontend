@@ -11,6 +11,14 @@
             @update:value="refreshTable"
           />
           <n-button
+            v-if="settingsStore.businessSettings?.sale?.free_sale"
+            type="info"
+            tertiary
+            @click="() => $router.push({ name: 'FreeSale' })"
+          >
+            Venta Libre
+          </n-button>
+          <n-button
             v-if="userStore.hasPermission('make_excel_report')"
             type="info"
             tertiary

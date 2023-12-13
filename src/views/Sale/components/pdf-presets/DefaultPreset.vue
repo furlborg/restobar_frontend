@@ -218,9 +218,11 @@
               <div class="extra-info-value">{{ info[1] }}</div>
               <div class="extra-info-label">USUARIO:</div>
               <div class="extra-info-value">{{ info[0] }}</div>
-              <div class="extra-info-label">PEDIDO:</div>
-              <div class="extra-info-value">ORDEN N°{{ data.order_id }}</div>
-              <div class="extra-info-value">
+              <div v-if="data.order_id" class="extra-info-label">PEDIDO:</div>
+              <div v-if="data.order_id" class="extra-info-value">
+                ORDEN N°{{ data.order_id }}
+              </div>
+              <div v-if="data.order_data" class="extra-info-value">
                 {{
                   !data.order_data.table
                     ? !data.order_data.delivery_info
