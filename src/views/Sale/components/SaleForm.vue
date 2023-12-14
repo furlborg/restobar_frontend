@@ -273,7 +273,7 @@ export default defineComponent({
     const showCustomerOptions = async (value) => {
       if (value.length >= 3 && value.length <= 11) {
         searchingCustomer.value = true;
-        if (sale.invoice_type === 1) {
+        if (sale.invoice_type === "1") {
           await searchRucCustomer(value)
             .then((response) => {
               if (response.status === 200) {
