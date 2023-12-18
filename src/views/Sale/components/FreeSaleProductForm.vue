@@ -58,12 +58,22 @@ export default defineComponent({
         trigger: ["blur", "input"],
         message: "Nombre requeridos",
       },
-      price_sale: {
-        type: "number",
-        required: true,
-        trigger: ["blur", "input"],
-        message: "Precio requerido",
-      },
+      price_sale: [
+        {
+          type: "number",
+          required: true,
+          trigger: ["blur", "input"],
+          message: "Precio requerido",
+        },
+        {
+          type: "number",
+          trigger: ["blur", "input"],
+          message: "Precio requerido",
+          validator(rule, value) {
+            return value > 0;
+          },
+        },
+      ],
     };
 
     const saveProduct = () => {

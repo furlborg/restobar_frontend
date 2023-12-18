@@ -174,6 +174,7 @@
               <th>Precio Unitario</th>
               <!-- <th>Descuento</th> -->
               <th>Precio Total</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -257,6 +258,15 @@
                           detail.quantity * detail.price_sale - detail.discount
                         ).toFixed(2)
                   }}
+                </td>
+                <td>
+                  <n-button
+                    type="error"
+                    text
+                    @click="saleStore.toSale.splice(index, 1)"
+                  >
+                    <v-icon name="md-disabledbydefault-round" />
+                  </n-button>
                 </td>
               </tr>
             </template>
