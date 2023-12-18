@@ -21,18 +21,6 @@
           <n-text class="fs-4">{{
             `${saleStore.getSerieDescription(sale.serie)}-${sale.number}`
           }}</n-text>
-          <n-dropdown
-            trigger="click"
-            :options="saleStore.getDocumentSeriesOptions(sale.invoice_type)"
-            :show-arrow="true"
-            placement="bottom-end"
-            size="huge"
-            @select="selectSerie"
-          >
-            <n-button type="info" text>
-              <v-icon class="p-0" name="md-arrowdropdown-round" scale="1.75" />
-            </n-button>
-          </n-dropdown>
         </div>
         <n-radio-group
           v-model:value="sale.invoice_type"
