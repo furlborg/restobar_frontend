@@ -81,9 +81,11 @@ export const useSaleStore = defineStore("sale", {
         });
     },
     getFreeSaleSerieByType(doc_type) {
-      return this.series.find(
-        (serie) => serie.free_sale === true && serie.doc_type === doc_type
-      );
+      return this.series
+        .filter((s) => !s.is_disabled && !s.free_sale)
+        .find(
+          (serie) => serie.free_sale === true && serie.doc_type === doc_type
+        );
     },
     async refreshPaymentMethods() {
       return await getPaymentMethods()
@@ -122,7 +124,7 @@ export const useSaleStore = defineStore("sale", {
         });
     },
     getDocumentSeriesOptions(doc_type) {
-      let series = this.series;
+      let series = this.series.filter((s) => !s.is_disabled && !s.free_sale);
       if (!userStore.user.branchoffice) {
         series = series.filter(
           (serie) => serie.sucursal === businessStore.currentBranch
@@ -147,7 +149,7 @@ export const useSaleStore = defineStore("sale", {
       return serie ? serie.id : null;
     },
     getFirstOption(doc_type) {
-      let series = this.series;
+      let series = this.series.filter((s) => !s.is_disabled && !s.free_sale);
       if (!userStore.user.branchoffice) {
         series = series.filter(
           (serie) => serie.sucursal === businessStore.currentBranch
