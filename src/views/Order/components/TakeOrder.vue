@@ -141,8 +141,9 @@
                     <n-form-item-gi :span="3" label="Fecha">
                       <n-date-picker
                         class="w-100"
-                        v-model:formatted-value="sale.date_sale"
                         type="datetime"
+                        :is-date-disabled="dateDisabled"
+                        v-model:formatted-value="sale.date_sale"
                       />
                     </n-form-item-gi>
                     <n-form-item-gi :span="4" label="Dirección">
