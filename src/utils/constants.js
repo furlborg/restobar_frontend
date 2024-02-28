@@ -357,11 +357,12 @@ export const productRules = {
     required: true,
     trigger: ["blur", "input"],
     message: "Precio requerido",
-  },
-  purchase_price: {
-    required: true,
-    trigger: ["blur", "input"],
-    message: "Precio requerido",
+    validator(rule, value) {
+      if (Number(value) <= 0) {
+        return new Error("Precio de Venta requerido");
+      }
+      return true;
+    },
   },
   category: {
     type: "number",

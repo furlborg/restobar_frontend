@@ -205,6 +205,12 @@
                       min="0"
                       step=".01"
                       v-model="detail.price_sale"
+                      @input="
+                        (v) => (
+                          saleStore.updateDetail(detail),
+                          (detail.discount = parseFloat(0).toFixed(2))
+                        )
+                      "
                       v-autowidth
                       @click="$event.target.select()"
                     />

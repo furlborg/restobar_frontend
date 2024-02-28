@@ -23,24 +23,25 @@
           <n-form-item-gi label="Nombre" path="name" :span="12">
             <n-input v-model:value="product.name" placeholder="" />
           </n-form-item-gi>
-          <n-form-item-gi label="Precio Compra" path="purchase_price" :span="4">
-            <n-input
-              type="number"
-              v-model:value="product.purchase_price"
-              placeholder=""
-              @input="
-                product.purchase_price = restrictDecimal(product.purchase_price)
-              "
-            />
-          </n-form-item-gi>
           <n-form-item-gi label="Precio venta" path="prices" :span="4">
             <n-input
               v-model:value="product.prices"
+              type="number"
               placeholder=""
               @input="product.prices = restrictDecimal(product.prices)"
               @blur="
                 () =>
                   (product.affectation = Number(product.prices) > 0 ? 20 : 21)
+              "
+            />
+          </n-form-item-gi>
+          <n-form-item-gi label="Precio Compra" path="purchase_price" :span="4">
+            <n-input
+              v-model:value="product.purchase_price"
+              type="number"
+              placeholder=""
+              @input="
+                product.purchase_price = restrictDecimal(product.purchase_price)
               "
             />
           </n-form-item-gi>
@@ -416,7 +417,7 @@ export default defineComponent({
       name: null,
       description: null,
       prices: null,
-      purchase_price: null,
+      purchase_price: 0,
       measure_unit: 1,
       control_stock: false,
       stock: "",
