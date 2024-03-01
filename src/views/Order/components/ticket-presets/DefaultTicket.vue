@@ -72,8 +72,25 @@
             <table style="width: 100%">
               <thead>
                 <tr>
-                  <th width="20%">CANT.</th>
-                  <th width="80%">PRODUCTO</th>
+                  <th width="20%">CANT</th>
+                  <th
+                    :width="
+                      !settingsStore.business_settings.printer
+                        .show_product_price
+                        ? '80%'
+                        : '60%'
+                    "
+                  >
+                    PRODUCTO
+                  </th>
+                  <th
+                    v-if="
+                      settingsStore.business_settings.printer.show_product_price
+                    "
+                    width="20%"
+                  >
+                    PRC
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -85,6 +102,13 @@
                     {{ getPrefix(detail.product_category)
                     }}{{ detail.product_name
                     }}{{ generateIndication(detail.indication) }}
+                  </td>
+                  <td
+                    v-if="
+                      settingsStore.business_settings.printer.show_product_price
+                    "
+                  >
+                    {{ detail.price.toFixed(2) }}
                   </td>
                 </tr>
               </tbody>

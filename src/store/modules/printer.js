@@ -26,6 +26,7 @@ export const usePrinterStore = defineStore("printer", {
   },
   actions: {
     initializeStore(qz_config, auto = true) {
+      this.managedPrinters.push(qz_config.printer_name);
       this.host = qz_config.host;
       this.qz.security.setCertificatePromise(function (resolve) {
         resolve(qz_config.certificate);

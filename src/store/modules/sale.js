@@ -82,10 +82,8 @@ export const useSaleStore = defineStore("sale", {
     },
     getFreeSaleSerieByType(doc_type) {
       return this.series
-        .filter((s) => !s.is_disabled && !s.free_sale)
-        .find(
-          (serie) => serie.free_sale === true && serie.doc_type === doc_type
-        );
+        .filter((s) => !s.is_disabled && s.free_sale)
+        .find((serie) => serie.doc_type === doc_type);
     },
     async refreshPaymentMethods() {
       return await getPaymentMethods()

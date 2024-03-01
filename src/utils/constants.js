@@ -15,6 +15,7 @@ import { useTillStore } from "@/store/modules/till";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useTableStore } from "@/store/modules/table";
+import { parse, differenceInDays } from "date-fns";
 
 const userStore = useUserStore();
 
@@ -1360,6 +1361,12 @@ export const saleRules = {
   delivery_info: null,
 };
 
+const verifyDate = (date) =>
+  differenceInDays(
+    Date.now(),
+    parse(date.split(" ")[0], "dd/MM/yyyy", new Date())
+  ) > 5;
+
 export const createSaleColumns = ({
   printSale,
   updateSale,
@@ -1473,7 +1480,7 @@ export const createSaleColumns = ({
                 secondary: true,
                 disabled:
                   row.invoice_type !== "80"
-                    ? row.status !== "E"
+                    ? row.status !== "E" || verifyDate(row.date_sale)
                     : row.status === "A",
                 onClick: () => nullifySale(row),
               },

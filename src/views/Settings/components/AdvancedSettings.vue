@@ -207,6 +207,12 @@
               >Texto extra
             </n-checkbox>
           </n-form-item-gi>
+          <n-form-item-gi :span="3">
+            <n-checkbox
+              v-model:checked="businessSettings.printer.show_product_price"
+              >Precio de productos
+            </n-checkbox>
+          </n-form-item-gi>
         </n-grid>
         <n-divider />
         <n-text class="fs-4">Pedidos</n-text>
