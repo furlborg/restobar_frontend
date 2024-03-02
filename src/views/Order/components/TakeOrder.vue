@@ -935,14 +935,14 @@ export default defineComponent({
     const saleForm = ref();
     const sale = ref({
       serie: saleStore.getFirstOption(
-        settingsStore.businessSettings.sale.enable_invoices ? settingsStore.businessSettings.sale.default_invoice : "80"
+        settingsStore.businessSettings.sale.enable_invoices ? settingsStore.businessSettings.sale.default_invoice : 80
       ),
       number: "",
       date_sale: format(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss"),
       count: products_count,
       amount: total,
       given_amount: parseFloat(0).toFixed(2),
-      invoice_type: settingsStore.businessSettings.sale.enable_invoices ? settingsStore.businessSettings.sale.default_invoice : "80",
+      invoice_type: settingsStore.businessSettings.sale.enable_invoices ? settingsStore.businessSettings.sale.default_invoice : 80,
       payment_method: 1,
       payment_condition: 1,
       customer_name: "",
