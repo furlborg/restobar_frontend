@@ -11,7 +11,7 @@
             @update:value="refreshTable"
           />
           <n-button
-            v-if="settingsStore.businessSettings?.sale?.free_sale"
+            v-if="settingsStore.businessSettings.sale.enable_invoices && settingsStore.businessSettings?.sale?.free_sale"
             type="info"
             tertiary
             @click="() => $router.push({ name: 'FreeSale' })"
