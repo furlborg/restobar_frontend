@@ -49,8 +49,8 @@
                     size="small"
                     @update:value="changeSerie"
                   >
-                    <n-radio-button :value="1" :key="1">FACTURA</n-radio-button>
-                    <n-radio-button :value="3" :key="3">BOLETA</n-radio-button>
+                    <n-radio-button :disabled="!settingsStore.businessSettings.sale.enable_invoices" :value="1" :key="1">FACTURA</n-radio-button>
+                    <n-radio-button :disabled="!settingsStore.businessSettings.sale.enable_invoices" :value="3" :key="3">BOLETA</n-radio-button>
                     <n-radio-button :value="80" :key="80"
                       >N. VENTA</n-radio-button
                     >
@@ -935,14 +935,14 @@ export default defineComponent({
     const saleForm = ref();
     const sale = ref({
       serie: saleStore.getFirstOption(
-        settingsStore.businessSettings.sale.default_invoice
+        settingsStore.businessSettings.sale.enable_invoices ? settingsStore.businessSettings.sale.default_invoice : "80"
       ),
       number: "",
       date_sale: format(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss"),
       count: products_count,
       amount: total,
       given_amount: parseFloat(0).toFixed(2),
-      invoice_type: settingsStore.businessSettings.sale.default_invoice,
+      invoice_type: settingsStore.businessSettings.sale.enable_invoices ? settingsStore.businessSettings.sale.default_invoice : "80",
       payment_method: 1,
       payment_condition: 1,
       customer_name: "",

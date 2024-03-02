@@ -30,8 +30,8 @@
             size="small"
             @update:value="changeSerie"
           >
-            <n-radio-button :value="1" :key="1">FACTURA</n-radio-button>
-            <n-radio-button :value="3" :key="3">BOLETA</n-radio-button>
+            <n-radio-button :disabled="!settingsStore.businessSettings.sale.enable_invoices" :value="1" :key="1">FACTURA</n-radio-button>
+            <n-radio-button :disabled="!settingsStore.businessSettings.sale.enable_invoices" :value="3" :key="3">BOLETA</n-radio-button>
             <n-radio-button :value="80" :key="80">N. VENTA</n-radio-button>
           </n-radio-group>
           <n-radio-group
