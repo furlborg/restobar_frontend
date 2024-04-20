@@ -31,6 +31,12 @@ export const routes = [
           import(/* webpackChunkName: "customer" */ "@/views/Customer"),
       },
       {
+        path: "/birthday",
+        name: "Cums",
+        component: () =>
+          import(/* webpackChunkName: "customer" */ "@/views/Cums"),
+      },
+      {
         path: "/orders",
         name: "Orders",
         meta: {

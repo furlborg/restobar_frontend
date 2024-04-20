@@ -3,6 +3,7 @@ import { useUserStore } from "@/store/modules/user";
 import { sleep } from "@/utils";
 
 export const http = axios.create({
+  // eslint-disable-next-line no-undef
   baseURL: `${process.env.VUE_APP_API_URL}/api/v1/`,
 });
 
@@ -15,6 +16,7 @@ http.interceptors.request.use((request) => {
 });
 
 http.interceptors.response.use(async (response) => {
+  // eslint-disable-next-line no-undef
   if (process.env.NODE_ENV === "development") {
     await sleep();
   }

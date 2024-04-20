@@ -184,6 +184,19 @@ export default defineComponent({
             h(
               RouterLink,
               {
+                to: { name: "Cums" },
+              },
+              () => h("span", "Cumpleaños")
+            ),
+          key: "Cums",
+          icon: renderIcon('co-birthday-cake'),
+          // disabled: !userStore.hasPermission("view_customer"),
+        },
+        {
+          label: () =>
+            h(
+              RouterLink,
+              {
                 to: { name: "Settings" },
               },
               () => h("span", "Configuración")

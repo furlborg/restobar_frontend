@@ -115,9 +115,11 @@ import {
   FaDownload,
   FaCircle,
   MdCreditcardTwotone,
+  CoBirthdayCake,
 } from "oh-vue-icons/icons";
 OhVueIcon.add(
   BiThreeDots,
+  CoBirthdayCake,
   BiThreeDotsVertical,
   MdSpacedashboardTwotone,
   MdSupervisedusercircleTwotone,
