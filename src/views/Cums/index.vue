@@ -2,6 +2,7 @@
 import { defineComponent, onMounted, ref } from "vue";
 import { getCustomers, getCustomersByPageNumber } from "@/api/modules/customer";
 import { useMessage } from "naive-ui";
+import { format, parse } from "date-fns";
 
 export default defineComponent({
 	// eslint-disable-next-line vue/multi-word-component-names
@@ -10,11 +11,12 @@ export default defineComponent({
 		const isTableLoading = ref(false);
 		const customers = ref([]);
 		const message = useMessage();
+		const getMonthNow = format(new Date(Date.now()), "MM");
 
-		function daysUntilNextBirthday(birthday) {
+		function daysUntilNextBirthday(birthdate) {
 			const today = new Date();
 			const currentYear = today.getFullYear();
-			const nextBirthday = new Date(birthday);
+			const nextBirthday = new Date(birthdate);
 			nextBirthday.setFullYear(currentYear);
 			if(today > nextBirthday) {
 				nextBirthday.setFullYear(currentYear + 1);
@@ -53,11 +55,13 @@ export default defineComponent({
 					) {
 						++pagination.value.pageCount;
 					}
-					customers.value = response.data.results.sort((a, b) => {
-						const daysUntilBirthdayA = daysUntilNextBirthday(a?.["birthday"]);
-						const daysUntilBirthdayB = daysUntilNextBirthday(b?.["birthday"]);
-						return daysUntilBirthdayA - daysUntilBirthdayB;
-					});
+					customers.value = response.data.results.filter(x => x["birthdate"] !== null).
+						filter(date => format(new Date(parse(date["birthdate"], "dd/MM/yyyy", new Date())), "MM") === getMonthNow).
+						sort((a, b) => {
+							const daysUntilBirthdayA = daysUntilNextBirthday(a?.["birthdate"]);
+							const daysUntilBirthdayB = daysUntilNextBirthday(b?.["birthdate"]);
+							return daysUntilBirthdayA - daysUntilBirthdayB;
+						});
 				}).catch((error) => {
 					console.error(error);
 					message.error("Algo salió mal...");
@@ -66,7 +70,7 @@ export default defineComponent({
 				});
 			},
 			onPageSizeChange: async(pageSize) => {
-				isTableLoading.value = true;
+                isTableLoading.value = true;
 				pagination.value.offset = 0;
 				pagination.value.page = 1;
 				pagination.value.pageSize = pageSize;
@@ -85,11 +89,13 @@ export default defineComponent({
 					) {
 						++pagination.value.pageCount;
 					}
-					customers.value = response.data.results.sort((a, b) => {
-						const daysUntilBirthdayA = daysUntilNextBirthday(a?.["birthday"]);
-						const daysUntilBirthdayB = daysUntilNextBirthday(b?.["birthday"]);
-						return daysUntilBirthdayA - daysUntilBirthdayB;
-					});
+					customers.value = response.data.results.filter(x => x["birthdate"] !== null).
+						filter(date => format(new Date(parse(date["birthdate"], "dd/MM/yyyy", new Date())), "MM") === getMonthNow).
+						sort((a, b) => {
+							const daysUntilBirthdayA = daysUntilNextBirthday(a?.["birthdate"]);
+							const daysUntilBirthdayB = daysUntilNextBirthday(b?.["birthdate"]);
+							return daysUntilBirthdayA - daysUntilBirthdayB;
+						});
 				}).catch((error) => {
 					console.error(error);
 					message.error("Algo salió mal...");
@@ -114,11 +120,13 @@ export default defineComponent({
 				) {
 					++pagination.value.pageCount;
 				}
-				customers.value = response.data.results.sort((a, b) => {
-					const daysUntilBirthdayA = daysUntilNextBirthday(a?.["birthday"]);
-					const daysUntilBirthdayB = daysUntilNextBirthday(b?.["birthday"]);
-					return daysUntilBirthdayA - daysUntilBirthdayB;
-				});
+				customers.value = response.data.results.filter(x => x["birthdate"] !== null).
+					filter(date => format(new Date(parse(date["birthdate"], "dd/MM/yyyy", new Date())), "MM") === getMonthNow).
+					sort((a, b) => {
+						const daysUntilBirthdayA = daysUntilNextBirthday(a?.["birthdate"]);
+						const daysUntilBirthdayB = daysUntilNextBirthday(b?.["birthdate"]);
+						return daysUntilBirthdayA - daysUntilBirthdayB;
+					});
 			}).catch((error) => {
 				console.error(error);
 				message.error("Algo salió mal...");
