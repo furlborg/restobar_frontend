@@ -134,7 +134,9 @@
                         /></n-button>
                       </td>
                       <td>
+                          <span>
                         {{ order.product_name }}
+                          </span><br>
                           <span style="color: #15151c; font-size: 12px;">
                             {{ order.modified }}
                           </span>
