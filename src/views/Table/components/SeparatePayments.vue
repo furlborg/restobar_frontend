@@ -668,11 +668,12 @@ export default defineComponent({
 
     const formRules = computed(() => {
       let rules = saleRules;
-      if (sale.value.invoice_type !== 1) {
+      if (sale.value.invoice_type !== 1 && sale.value.given_amount <= 699) {
         rules.customer.required = false;
       } else {
         rules.customer.required = true;
       }
+        console.log(rules);
       return rules;
     });
 

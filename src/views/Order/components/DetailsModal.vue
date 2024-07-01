@@ -2,8 +2,8 @@
   <n-modal
     :class="{
       'w-100': genericsStore.device === 'mobile',
-      'w-50': genericsStore.device === 'tablet',
-      'w-25': genericsStore.device === 'desktop',
+      'w-75': genericsStore.device === 'tablet',
+      'w-50': genericsStore.device === 'desktop',
     }"
     preset="card"
     title="Detalle de pedido"

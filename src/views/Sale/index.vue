@@ -11,7 +11,7 @@
             @update:value="refreshTable"
           />
           <n-button
-            v-if="settingsStore.businessSettings.sale.enable_invoices && settingsStore.businessSettings?.sale?.free_sale"
+            v-if="settingsStore.businessSettings.sale?.enable_invoices && settingsStore.businessSettings?.sale?.free_sale"
             type="info"
             tertiary
             @click="() => $router.push({ name: 'FreeSale' })"
@@ -177,7 +177,7 @@
 
 <script>
 import { defineComponent, ref, onMounted } from "vue";
-import { useMessage, useDialog } from "naive-ui";
+import { useMessage } from "naive-ui";
 import { createSaleColumns } from "@/utils/constants";
 import {
   listSales,
@@ -208,7 +208,6 @@ export default defineComponent({
   setup() {
     const dateNow = ref(null);
     const message = useMessage();
-    const dialog = useDialog();
     const genericsStore = useGenericsStore();
     const settingsStore = useSettingsStore();
     const businessStore = useBusinessStore();

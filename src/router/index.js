@@ -3,7 +3,6 @@ import { useTillStore } from "@/store/modules/till";
 import { useUserStore } from "@/store/modules/user";
 import { useGenericsStore } from "@/store/modules/generics";
 import { retrieveCurrentTill } from "@/api/modules/tills";
-const useCookie = require("vue-cookies");
 
 export const routes = [
   {
@@ -35,6 +34,12 @@ export const routes = [
         name: "Cums",
         component: () =>
           import(/* webpackChunkName: "customer" */ "@/views/Cums"),
+      },
+      {
+        path: "/anulate",
+        name: "Anulate",
+        component: () =>
+          import(/* webpackChunkName: "customer" */ "@/views/Anulate/ViewAnulate.vue"),
       },
       {
         path: "/orders",
@@ -305,10 +310,10 @@ export const routes = [
           const userStore = useUserStore();
           if (!userStore.user.role || userStore.user.role === "ADMINISTRADOR") {
             next();
-            return;
+            
           } else {
             next(from.path === "/" ? { name: "Dashboard" } : false);
-            return;
+            
           }
         },
         children: [

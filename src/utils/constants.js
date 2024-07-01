@@ -6,7 +6,6 @@ import {
   NDropdown,
   NText,
   NSpace,
-  NPopselect,
 } from "naive-ui";
 import { renderIcon, lighten } from "@/utils";
 import { useUserStore } from "@/store/modules/user";
@@ -1355,7 +1354,7 @@ export const saleRules = {
   customer: {
     type: "number",
     required: true,
-    trigger: ["blur"],
+    trigger: ["blur", "input"],
     message: "Cliente es requerido",
   },
   delivery_info: null,

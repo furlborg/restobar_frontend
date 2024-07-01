@@ -116,6 +116,7 @@ import {
   FaCircle,
   MdCreditcardTwotone,
   CoBirthdayCake,
+  MdCancelpresentationTwotone
 } from "oh-vue-icons/icons";
 OhVueIcon.add(
   BiThreeDots,
@@ -156,6 +157,7 @@ OhVueIcon.add(
   MdDeletesweepRound,
   MdPersonsearchRound,
   MdDiningTwotone,
+  MdCancelpresentationTwotone,
   GiMeal,
   MdAddRound,
   MdAddcircleRound,

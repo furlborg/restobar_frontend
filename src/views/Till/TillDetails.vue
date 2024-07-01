@@ -226,8 +226,8 @@
 import jspdf from "jspdf";
 import format from "date-fns/format";
 import { defineComponent, ref, onMounted, computed } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { useMessage, useDialog } from "naive-ui";
+import { useRoute } from "vue-router";
+import { useMessage } from "naive-ui";
 import MovementModal from "./components/MovementModal";
 import TillOrders from "./components/TillOrders";
 import TillSales from "./components/TillSales";
@@ -235,7 +235,7 @@ import { isDecimal, isLetter, isNumber, isLetterOrNumber } from "@/utils";
 import { createTillDetailsColumns } from "@/utils/constants";
 import { useTillStore } from "@/store/modules/till";
 import { useSaleStore } from "@/store/modules/sale";
-import { useBusinessStore } from "@/store/modules/business";
+
 import {
   getCurrentTillDetails,
   filterTillDetails,
@@ -257,16 +257,12 @@ export default defineComponent({
   },
   setup() {
     const route = useRoute();
-    const router = useRouter();
     const till = route.params.till;
     const dateNow = ref(null);
-    const urlImg = ref(null);
-    const businnessStore = useBusinessStore();
     const userStore = useUserStore();
     const message = useMessage();
     const tillStore = useTillStore();
     const saleStore = useSaleStore();
-    const dialog = useDialog();
     const showModal = ref(false);
     const movementType = ref(null);
     const showFilters = ref(false);
@@ -536,6 +532,14 @@ export default defineComponent({
           {
             key: 14,
             label: "Productos por Area",
+          },
+          {
+            key: 15,
+            label: "Reporte de anulación de productos",
+          },
+          {
+            key: 16,
+            label: "Reporte de anulación de productos",
           },
         ],
       },

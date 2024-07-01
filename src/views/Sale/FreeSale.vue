@@ -42,6 +42,7 @@
           <n-radio-button :value="2" :key="2">CRÉDITO</n-radio-button>
         </n-radio-group>
       </n-space>
+
       <n-form class="mb-2" ref="saleForm" :model="sale" :rules="formRules">
         <n-grid
           responsive="screen"
@@ -669,7 +670,7 @@ export default defineComponent({
 
     const formRules = computed(() => {
       let rules = saleRules;
-      if (sale.value.invoice_type !== 1 && sale.value.payment_condition === 1) {
+      if (sale.value.invoice_type !== 1 && sale.value.payment_condition === 1 && sale.value.given_amount <= 699) {
         rules.customer.required = false;
       } else {
         rules.customer.required = true;

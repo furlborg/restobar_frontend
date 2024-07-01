@@ -78,7 +78,7 @@
           <n-gi v-for="table in area.tables" :key="table.id" :span="3">
             <n-card
               :id="`table-${table.id}`"
-              class="position-relative overflow-hidden rounded-3"
+              class="overflow-hidden position-relative rounded-3"
               :class="{ 'bg-occuped': table.status === '3' }"
               size="small"
               @click="
@@ -86,7 +86,7 @@
                   ? currentTableGrouping === table.id ||
                     tableGroups.some((g) => g.some((t) => t.id === table.id))
                     ? null
-                    : !currentGroup.some((t) => t.id == table.id)
+                    : !currentGroup.some((t) => t.id === table.id)
                     ? addToGroup(table)
                     : removeFromGroup(table)
                   : $router.push({
@@ -104,10 +104,10 @@
                   currentTableGrouping === table.id
                 "
                 size="large"
-                class="position-absolute top-0 start-0 m-2"
+                class="top-0 m-2 position-absolute start-0"
               />
               <div
-                class="ms-1 text-center text-wrap position-absolute top-50 start-50 translate-middle"
+                class="text-center text-wrap position-absolute top-50 start-50 translate-middle"
                 :class="{
                   'fs-alt': table.description.length <= 3,
                   'fs-4':
@@ -118,12 +118,20 @@
               >
                 {{ table.description }}
               </div>
+                  <div class="text-center position-absolute start-50 translate-middle-x"
+                       style="bottom: 35px; font-size: 13px; left: 50%; color: #e31414; font-weight: 900 !important; width: 100%;" v-if="table?.order_amount">
+                     Ult. Pedido:
+                  </div>
+                <div class="text-center position-absolute start-50 translate-middle-x"
+                       style="bottom: 20px; font-size: 13px; left: 50%; color: #e31414; font-weight: 900 !important; width: 100%;" v-if="table?.order_amount">
+                    {{ table.modified }}
+                  </div>
               <n-button
                 v-if="
                   table.order_amount &&
                   settingsStore.business_settings.order.table_order_total
                 "
-                class="text-center position-absolute bottom-0 start-50 translate-middle-x fs-5 fw-bolder"
+                class="bottom-0 text-center position-absolute start-50 translate-middle-x fs-5 fw-bolder"
                 color="#901E00"
                 text
               >
@@ -131,7 +139,7 @@
               </n-button>
               <n-button
                 @click.stop="openOptions.push(table.id)"
-                class="position-absolute top-0 end-0"
+                class="top-0 position-absolute end-0"
                 quaternary
                 size="small"
               >
@@ -160,6 +168,7 @@
                 />
                 <!-- </router-link> -->
               </n-space>
+
               <n-drawer
                 :show="
                   groupMode
@@ -554,7 +563,7 @@ export default defineComponent({
     };
 
     const removeFromGroup = (table) => {
-      let index = currentGroup.value.findIndex((t) => t.id === table.id);
+      let index = currentGroup.value.findIndex((t) => t?.id === table.id);
       currentGroup.value.splice(index, 1);
     };
 

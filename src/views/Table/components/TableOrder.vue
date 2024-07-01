@@ -135,6 +135,9 @@
                       </td>
                       <td>
                         {{ order.product_name }}
+                          <span style="color: #15151c; font-size: 12px;">
+                            {{ order.modified }}
+                          </span>
                       </td>
                       <td>
                         <n-input-number
@@ -372,7 +375,7 @@ export default defineComponent({
         JSON.stringify(orderStore.orderList);
     });
 
-    onBeforeRouteUpdate((to, from) => {
+    onBeforeRouteUpdate((to) => {
       if (to.name !== "ProductCategories" && to.name !== "CategoriesItems") {
         if (!checkState.value) {
           dialog.error({
@@ -391,7 +394,7 @@ export default defineComponent({
       }
     });
 
-    onBeforeRouteLeave((to, from) => {
+    onBeforeRouteLeave((to) => {
       if (to.name !== "ProductCategories" && to.name !== "CategoriesItems") {
         if (!checkState.value) {
           dialog.error({

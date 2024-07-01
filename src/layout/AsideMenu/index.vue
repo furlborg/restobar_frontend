@@ -107,6 +107,18 @@ export default defineComponent({
             h(
               RouterLink,
               {
+                to: { name: "Anulate" },
+              },
+              () => h("span", "Anulaciones")
+            ),
+          key: "Anulate",
+          icon: renderIcon("md-cancelpresentation-twotone"),
+        },
+        {
+          label: () =>
+            h(
+              RouterLink,
+              {
                 to: { name: "Product" },
               },
               () => h("span", "Productos")

@@ -75,7 +75,7 @@
                   class="mb-2"
                   ref="saleForm"
                   :model="sale"
-                  :rules="rules"
+                  :rules="formRules"
                 >
                   <n-grid
                     responsive="screen"
@@ -84,8 +84,8 @@
                   >
                     <n-form-item-gi
                       :span="9"
+                      :show-require-mark="formRules.customer.required"
                       label="Cliente"
-                      :show-require-mark="rules.customer.required"
                       path="customer"
                     >
                       <n-input-group>
@@ -246,7 +246,7 @@
                     </n-gi>
                   </n-grid>
                 </n-form>
-                <n-table class="fs-6 m-auto text-center" :bordered="false">
+                <n-table class="m-auto text-center fs-6" :bordered="false">
                   <thead>
                     <tr>
                       <th
@@ -484,7 +484,7 @@
                   </n-gi>
                 </n-grid>
                 <n-button
-                  class="fs-1 py-5 mt-2"
+                  class="mt-2 py-5 fs-1"
                   type="success"
                   :disabled="
                     !saleStore.toSale.length || sale.payment_condition === 1
@@ -493,7 +493,7 @@
                   "
                   secondary
                   block
-                  @click.prevent="
+                  @click="
                     userStore.user.role !== 'MOZO'
                       ? isMultiple
                         ? doMultiplePayment()
@@ -789,9 +789,9 @@ import { useBusinessStore } from "@/store/modules/business";
 import { useGenericsStore } from "@/store/modules/generics";
 import { searchProductByName } from "@/api/modules/products";
 import { takeAwayOrder } from "@/api/modules/orders";
-import { sendSale, getSaleNumber, sendWhatsapp } from "@/api/modules/sales";
+import { sendSale, getSaleNumber } from "@/api/modules/sales";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
-import { isDecimal, isNumber, isLetter, lighten } from "@/utils";
+import { isDecimal, lighten } from "@/utils";
 import { saleRules } from "@/utils/constants";
 import {
   searchCustomerByName,
@@ -802,7 +802,6 @@ import TicketPreview from "@/views/Order/components/TicketPreview";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 
 import printDeliveryInfo from "@/hooks/PrintsTemplates/Ticket/DeliveryInfo.js";
-import printWEBADASDEBRASEROS from "@/hooks/PrintsTemplates/Ticket/WEBADASDEBRASEROS.js";
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 
 const dateNow = ref(null);
@@ -833,7 +832,7 @@ export default defineComponent({
     saleStore.order_initial = [];
     orderStore.orderId = null;
 
-    const ticketPreview = ref(settingsStore.businessSettings.sale.show_preview);
+    const ticketPreview = ref(settingsStore.businessSettings.sale?.show_preview);
 
     const loading = ref(false);
     const payment_amount = ref(parseFloat(0).toFixed(2));
@@ -935,14 +934,14 @@ export default defineComponent({
     const saleForm = ref();
     const sale = ref({
       serie: saleStore.getFirstOption(
-        settingsStore.businessSettings.sale.enable_invoices ? settingsStore.businessSettings.sale.default_invoice : 80
+        settingsStore.businessSettings.sale?.enable_invoices ? settingsStore.businessSettings.sale?.default_invoice : 80
       ),
       number: "",
       date_sale: format(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss"),
       count: products_count,
       amount: total,
       given_amount: parseFloat(0).toFixed(2),
-      invoice_type: settingsStore.businessSettings.sale.enable_invoices ? settingsStore.businessSettings.sale.default_invoice : 80,
+      invoice_type: settingsStore.businessSettings.sale?.enable_invoices ? settingsStore.businessSettings.sale?.default_invoice : 80,
       payment_method: 1,
       payment_condition: 1,
       customer_name: "",
@@ -979,14 +978,15 @@ export default defineComponent({
         total.value > 0 ? total.value : parseFloat(0).toFixed(2);
     });
 
-    const rules = computed(() => {
-      if (sale.value.invoice_type !== 1 && sale.value.payment_condition === 1) {
-        saleRules.customer.required = false;
+    const formRules = computed(() => {
+      let rules = saleRules;
+      if (sale.value.invoice_type !== 1 && sale.value.payment_condition === 1 && sale.value.given_amount <= 699) {
+          rules.customer.required = false;
       } else {
-        saleRules.customer.required = true;
+          rules.customer.required = true;
       }
       if (sale.value.delivery_info) {
-        saleRules.delivery_info = {
+          rules.delivery_info = {
           person: {
             required: true,
             trigger: ["blur", "input"],
@@ -1004,9 +1004,9 @@ export default defineComponent({
           },
         };
       } else {
-        saleRules.delivery_info = null;
+          rules.delivery_info = null;
       }
-      return saleRules;
+      return rules;
     });
 
     const selectSerie = (v) => {
@@ -1441,8 +1441,8 @@ export default defineComponent({
     };
 
     const performTakeAway = () => {
-      saleForm.value.validate((errors) => {
-        if (!errors) {
+            saleForm.value.validate((errors) => {
+        if (!errors && !saleRules.customer.required) {
           if (userStore.user.role === "MOZO") {
             showConfirm.value = true;
           } else {
@@ -1586,8 +1586,11 @@ export default defineComponent({
             });
           }
         } else {
-          console.error(errors);
+          if(formRules.value.customer.required){
+            message.error("Debes agregar un cliente porque la venta es mayor a S/ 699");
+          }
           message.error("Datos Incorrectos");
+          console.error(errors);
         }
       });
     };
@@ -1753,7 +1756,7 @@ export default defineComponent({
       changing,
       payment_amount,
       subTotal,
-      rules,
+      formRules,
       saleForm,
       sale,
       changeCondition,
