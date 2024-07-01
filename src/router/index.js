@@ -35,12 +35,12 @@ export const routes = [
         component: () =>
           import(/* webpackChunkName: "customer" */ "@/views/Cums"),
       },
-      {
-        path: "/anulate",
-        name: "Anulate",
-        component: () =>
-          import(/* webpackChunkName: "customer" */ "@/views/Anulate/ViewAnulate.vue"),
-      },
+      // {
+      //   path: "/anulate",
+      //   name: "Anulate",
+      //   component: () =>
+      //     import(/* webpackChunkName: "customer" */ "@/views/Anulate/ViewAnulate.vue"),
+      // },
       {
         path: "/orders",
         name: "Orders",

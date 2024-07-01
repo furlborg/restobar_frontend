@@ -102,18 +102,18 @@ export default defineComponent({
           icon: renderIcon("md-description-twotone"),
           disabled: !userStore.hasPermission("view_sale"),
         },
-        {
-          label: () =>
-            h(
-              RouterLink,
-              {
-                to: { name: "Anulate" },
-              },
-              () => h("span", "Anulaciones")
-            ),
-          key: "Anulate",
-          icon: renderIcon("md-cancelpresentation-twotone"),
-        },
+        // {
+        //   label: () =>
+        //     h(
+        //       RouterLink,
+        //       {
+        //         to: { name: "Anulate" },
+        //       },
+        //       () => h("span", "Anulaciones")
+        //     ),
+        //   key: "Anulate",
+        //   icon: renderIcon("md-cancelpresentation-twotone"),
+        // },
         {
           label: () =>
             h(
