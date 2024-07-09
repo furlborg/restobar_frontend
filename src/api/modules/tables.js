@@ -110,10 +110,9 @@ export async function updateTableOrder(
   });
 }
 
-export async function cancelTableOrder(idTable, pass, nullReason) {
+export async function cancelTableOrder(idTable, dataAnulate) {
   return http.post(`tables/${idTable}/cancel_order/`, {
-    pass: pass,
-    null_reason: nullReason,
+    ...dataAnulate
   });
 }
 

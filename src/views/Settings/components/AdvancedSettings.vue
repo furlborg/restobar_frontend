@@ -1,449 +1,471 @@
 <template>
-  <div id="AdvancedSettings">
-    <n-page-header class="mb-2" @back="handleBack">
-      <template #title>
-        <n-text class="fs-2">Configuración Avanzada</n-text>
-      </template>
-    </n-page-header>
-    <!-- <n-tabs type="card">
-      <n-tab-pane name="printing" tab="Impresiones">
-        <n-grid responsive="screen" cols="1 s:1 m:2 l:2 xl:2 2xl:2">
-          <n-form></n-form>
-        </n-grid>
-      </n-tab-pane>
-    </n-tabs> -->
-    <n-card>
-      <n-text class="fs-4">Impresiones</n-text>
-      <n-form class="mt-2" :disabled="!editMode">
-        <n-grid
-          responsive="screen"
-          cols="6 s:6 m:12 l:12 xl:24 2xl:24"
-          :x-gap="12"
-        >
-          <n-form-item-gi :span="3" label="QZ Host IP">
-            <n-input v-model:value="businessSettings.qz_config.host" />
-          </n-form-item-gi>
-          <n-form-item-gi :span="6" label="Signature">
-            <n-input
-              type="textarea"
-              v-model:value="businessSettings.qz_config.signature"
-            />
-          </n-form-item-gi>
-          <n-form-item-gi :span="6" label="Certificate">
-            <n-input
-              type="textarea"
-              v-model:value="businessSettings.qz_config.certificate"
-            >
-              >Mostrar categoría producto</n-input
-            >
-          </n-form-item-gi>
-        </n-grid>
-        <n-divider />
-        <n-text class="fs-4">Formatos</n-text>
-        <n-grid
-          responsive="screen"
-          cols="6 s:6 m:12 l:12 xl:24 2xl:24"
-          :x-gap="12"
-        >
-          <n-form-item-gi :span="3" label="Formato ticket pedidos">
-            <n-select
-              v-model:value="businessSettings.printer.kitchen_printer_format"
-              :options="printOptions"
-            />
-          </n-form-item-gi>
-          <n-form-item-gi :span="3" label="Formato ticket caja">
-            <n-select
-              v-model:value="businessSettings.printer.invoice_printer_format"
-              :options="printOptions"
-            />
-          </n-form-item-gi>
-          <n-form-item-gi :span="3" label="Tamaño letra cabecera">
-            <n-input-number
-              v-model:value="businessSettings.printer.header_font_size"
-              placeholder=""
-              :min="6"
-              :max="50"
-            />
-          </n-form-item-gi>
-          <n-form-item-gi :span="3" label="Tamaño letra subtitulo">
-            <n-input-number
-              v-model:value="businessSettings.printer.sub_header_font_size"
-              placeholder=""
-              :min="6"
-              :max="50"
-            />
-          </n-form-item-gi>
-          <n-form-item-gi :span="3" label="Tamaño letra cuerpo">
-            <n-input-number
-              v-model:value="businessSettings.printer.body_font_size"
-              placeholder=""
-              :min="6"
-              :max="50"
-            />
-          </n-form-item-gi>
-          <n-form-item-gi :span="3" label="Tamaño letra pie de página">
-            <n-input-number
-              v-model:value="businessSettings.printer.footer_font_size"
-              placeholder=""
-              :min="6"
-              :max="50"
-            />
-          </n-form-item-gi>
-          <n-form-item-gi :span="3" label="Tamaño letra delivery">
-            <n-input-number
-              v-model:value="businessSettings.printer.delivery_ticket_font_size"
-              placeholder=""
-              :min="6"
-              :max="50"
-            />
-          </n-form-item-gi>
-          <n-form-item-gi :span="3" label="Tamaño letra pre-cuenta">
-            <n-input-number
-              v-model:value="
+    <div id="AdvancedSettings">
+        <n-page-header class="mb-2" @back="handleBack">
+            <template #title>
+                <n-text class="fs-2">Configuración Avanzada</n-text>
+            </template>
+        </n-page-header>
+        <n-card>
+            <n-text class="fs-4">Impresiones</n-text>
+            <n-form class="mt-2" :disabled="!editMode">
+                <n-grid
+                        responsive="screen"
+                        cols="6 s:6 m:12 l:12 xl:24 2xl:24"
+                        :x-gap="12"
+                >
+                    <n-form-item-gi :span="3" label="QZ Host IP">
+                        <n-input v-model:value="businessSettings.qz_config.host"/>
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="6" label="Signature">
+                        <n-input
+                                type="textarea"
+                                v-model:value="businessSettings.qz_config.signature"
+                        />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="6" label="Certificate">
+                        <n-input
+                                type="textarea"
+                                v-model:value="businessSettings.qz_config.certificate"
+                        >
+                            >Mostrar categoría producto
+                        </n-input
+                        >
+                    </n-form-item-gi>
+                </n-grid>
+                <n-divider/>
+                <n-text class="fs-4">Formatos</n-text>
+                <n-grid
+                        responsive="screen"
+                        cols="6 s:6 m:12 l:12 xl:24 2xl:24"
+                        :x-gap="12"
+                >
+                    <n-form-item-gi :span="3" label="Formato ticket pedidos">
+                        <n-select
+                                v-model:value="businessSettings.printer.kitchen_printer_format"
+                                :options="printOptions"
+                        />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3" label="Formato ticket caja">
+                        <n-select
+                                v-model:value="businessSettings.printer.invoice_printer_format"
+                                :options="printOptions"
+                        />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3" label="Tamaño letra cabecera">
+                        <n-input-number
+                                v-model:value="businessSettings.printer.header_font_size"
+                                placeholder=""
+                                :min="6"
+                                :max="50"
+                        />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3" label="Tamaño letra subtitulo">
+                        <n-input-number
+                                v-model:value="businessSettings.printer.sub_header_font_size"
+                                placeholder=""
+                                :min="6"
+                                :max="50"
+                        />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3" label="Tamaño letra cuerpo">
+                        <n-input-number
+                                v-model:value="businessSettings.printer.body_font_size"
+                                placeholder=""
+                                :min="6"
+                                :max="50"
+                        />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3" label="Tamaño letra pie de página">
+                        <n-input-number
+                                v-model:value="businessSettings.printer.footer_font_size"
+                                placeholder=""
+                                :min="6"
+                                :max="50"
+                        />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3" label="Tamaño letra delivery">
+                        <n-input-number
+                                v-model:value="businessSettings.printer.delivery_ticket_font_size"
+                                placeholder=""
+                                :min="6"
+                                :max="50"
+                        />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3" label="Tamaño letra pre-cuenta">
+                        <n-input-number
+                                v-model:value="
                 businessSettings.printer.pre_account_ticket_font_size
               "
-              placeholder=""
-              :min="6"
-              :max="50"
-            />
-          </n-form-item-gi>
-          <n-form-item-gi :span="3" label="Formato de ticket">
-            <n-select
-              v-model:value="businessSettings.printer.kitchen_ticket_format"
-              :options="kitchenPrinterFormatOptions"
-            />
-          </n-form-item-gi>
-          <n-form-item-gi :span="3" label="Información en">
-            <n-select
-              v-model:value="businessSettings.printer.info_location"
-              :options="infoLocationOptions"
-            />
-          </n-form-item-gi>
-          <n-form-item-gi :span="3" label="Margen superior">
-            <n-input-number
-              v-model:value="businessSettings.printer.margins[0]"
-              placeholder=""
-              :min="0"
-              :max="25"
-            />
-          </n-form-item-gi>
-          <n-form-item-gi :span="3" label="Margen derecho">
-            <n-input-number
-              v-model:value="businessSettings.printer.margins[1]"
-              placeholder=""
-              :min="0"
-              :max="25"
-            />
-          </n-form-item-gi>
-          <n-form-item-gi :span="3" label="Margen inferior">
-            <n-input-number
-              v-model:value="businessSettings.printer.margins[2]"
-              placeholder=""
-              :min="0"
-              :max="25"
-            />
-          </n-form-item-gi>
-          <n-form-item-gi :span="3" label="Margen izquierdo">
-            <n-input-number
-              v-model:value="businessSettings.printer.margins[3]"
-              placeholder=""
-              :min="0"
-              :max="25"
-            />
-          </n-form-item-gi>
-          <n-form-item-gi :span="4">
-            <n-checkbox v-model:checked="businessSettings.printer.show_cat"
-              >Mostrar categoría producto</n-checkbox
-            >
-          </n-form-item-gi>
-          <n-form-item-gi :span="3">
-            <n-checkbox
-              v-model:checked="businessSettings.printer.print_delivery_ticket"
-              >Imprimir ticket delivery
-            </n-checkbox>
-          </n-form-item-gi>
-          <n-form-item-gi :span="3">
-            <n-checkbox v-model:checked="businessSettings.printer.detail_items"
-              >Items detallados
-            </n-checkbox>
-          </n-form-item-gi>
-          <n-form-item-gi :span="4">
-            <n-checkbox
-              v-model:checked="businessSettings.printer.show_delivery_kitchen"
-              >Mostrar información de delivery
-            </n-checkbox>
-          </n-form-item-gi>
-          <n-form-item-gi :span="4">
-            <n-checkbox
-              v-model:checked="businessSettings.printer.show_both_names"
-              >Mostrar ambos nombres(Empresa)
-            </n-checkbox>
-          </n-form-item-gi>
-          <n-form-item-gi :span="3">
-            <n-checkbox
-              v-model:checked="businessSettings.printer.native_printing"
-              >Impresiones nativas
-            </n-checkbox>
-          </n-form-item-gi>
-          <n-form-item-gi :span="3">
-            <n-checkbox v-model:checked="businessSettings.printer.print_html"
-              >Impresiones HTML
-            </n-checkbox>
-          </n-form-item-gi>
-          <n-form-item-gi :span="3">
-            <n-checkbox
-              v-model:checked="businessSettings.printer.manage_fittings"
-              >Manejar guarniciones
-            </n-checkbox>
-          </n-form-item-gi>
-          <n-form-item-gi :span="3">
-            <n-checkbox
-              v-model:checked="businessSettings.printer.subticket_mode"
-              >Modo subticket
-            </n-checkbox>
-          </n-form-item-gi>
-          <n-form-item-gi :span="3">
-            <n-checkbox v-model:checked="businessSettings.printer.extra_text"
-              >Texto extra
-            </n-checkbox>
-          </n-form-item-gi>
-          <n-form-item-gi :span="3">
-            <n-checkbox
-              v-model:checked="businessSettings.printer.show_product_price"
-              >Precio de productos
-            </n-checkbox>
-          </n-form-item-gi>
-        </n-grid>
-        <n-divider />
-        <n-text class="fs-4">Pedidos</n-text>
-        <n-grid
-          class="mt-2"
-          responsive="screen"
-          cols="6 s:6 m:12 l:12 xl:24 2xl:24"
-          x-gap="12"
-        >
-          <n-form-item-gi label="Filtros por defecto" :span="4">
-            <n-select
-              v-model:value="businessSettings.order.default_filters"
-              :options="orderTypeOptions"
-              multiple
-            />
-          </n-form-item-gi>
-          <n-form-item-gi :span="4">
-            <n-checkbox
-              v-model:checked="businessSettings.order.divide_delivery_takeaway"
-              >Dividir delivery y para llevar</n-checkbox
-            >
-          </n-form-item-gi>
-          <n-form-item-gi :span="3">
-            <n-checkbox
-              v-model:checked="businessSettings.order.order_customer_name"
-              >Nombre de Cliente</n-checkbox
-            >
-          </n-form-item-gi>
-          <n-form-item-gi :span="3">
-            <n-checkbox
-              v-model:checked="businessSettings.order.pending_takeaway"
-              >Para llevar pendiente</n-checkbox
-            >
-          </n-form-item-gi>
-          <n-form-item-gi :span="3">
-            <n-checkbox
-              v-model:checked="businessSettings.order.select_order_user"
-              >Seleccionar Usuario</n-checkbox
-            >
-          </n-form-item-gi>
-          <n-form-item-gi :span="3">
-            <n-checkbox
-              v-model:checked="businessSettings.order.table_order_total"
-              >Mostrar total de pedido</n-checkbox
-            >
-          </n-form-item-gi>
-          <n-form-item-gi :span="4">
-            <n-checkbox
-              v-model:checked="businessSettings.order.required_null_reason"
-              >Motivo de anulación de pedido requerido</n-checkbox
-            >
-          </n-form-item-gi>
-        </n-grid>
-        <n-divider />
-        <n-text class="fs-4">Reportes</n-text>
-        <n-grid
-          class="mt-2"
-          responsive="screen"
-          cols="6 s:6 m:12 l:12 xl:24 2xl:24"
-          x-gap="12"
-        >
-          <n-form-item-gi :span="6" label="Correos">
-            <n-select
-              v-model:value="businessSettings.reports.report_emails"
-              filterable
-              multiple
-              tag
-              placeholder=""
-              :show-arrow="false"
-              :show="false"
-            />
-          </n-form-item-gi>
-          <n-form-item-gi :span="4">
-            <n-checkbox
-              v-model:checked="businessSettings.reports.auto_send_mail"
-              >Auto envío (Cierre de caja)
-            </n-checkbox>
-          </n-form-item-gi>
-        </n-grid>
-        <n-text class="fs-4">Ventas</n-text>
-        <n-grid
-          class="mt-2"
-          responsive="screen"
-          cols="6 s:6 m:12 l:12 xl:24 2xl:24"
-          x-gap="12"
-        >
-          <n-form-item-gi :span="3" label="Impresora de documentos">
-            <n-select
-              v-model:value="businessSettings.sale.printer_name"
-              :options="printerStore.getPrintersOptions"
-              placeholder=""
-            />
-          </n-form-item-gi>
-          <n-form-item-gi :span="3" label="Documento por defecto">
-            <n-select
-              v-model:value="businessSettings.sale.default_invoice"
-              :options="invoiceOptions"
-            />
-          </n-form-item-gi>
-          <n-form-item-gi :span="5" label="Afectación por defecto">
-            <n-select
-              v-model:value="businessSettings.sale.default_affectation"
-              :options="productStore.affectationsOptions"
-            />
-          </n-form-item-gi>
-          <n-form-item-gi
-            :span="3"
-            label="Valor IGV (%)"
-            placeholder=""
-            disabled
-          >
-            <n-input-number
-              v-model:value="igv_percentage"
-              :show-button="false"
-              :min="0"
-              :max="100"
-              placeholder=""
-            />
-          </n-form-item-gi>
-          <n-form-item-gi :span="3" label="Valor ICBPER">
-            <n-input v-model:value="businessSettings.sale.icbper_tax" />
-          </n-form-item-gi>
-          <n-form-item-gi :span="2">
-            <n-checkbox v-model:checked="businessSettings.sale.auto_send"
-              >Auto envío CPE</n-checkbox
-            >
-          </n-form-item-gi>
-          <n-form-item-gi :span="4">
-            <n-checkbox
-              v-model:checked="businessSettings.sale.required_null_reason"
-              >Motivo de anulación de venta requerido</n-checkbox
-            >
-          </n-form-item-gi>
-          <n-form-item-gi :span="4">
-            <n-checkbox
-              v-model:checked="businessSettings.sale.manage_affectations"
-              >Manejar Afectaciones</n-checkbox
-            >
-          </n-form-item-gi>
-          <n-form-item-gi :span="4">
-            <n-checkbox v-model:checked="businessSettings.sale.enable_credits"
-              >Habilitar créditos</n-checkbox
-            >
-          </n-form-item-gi>
-          <n-form-item-gi :span="4">
-            <n-checkbox v-model:checked="businessSettings.sale.customer_credits"
-              >Créditos por cliente</n-checkbox
-            >
-          </n-form-item-gi>
-          <n-form-item-gi :span="4">
-            <n-checkbox v-model:checked="businessSettings.sale.free_sale"
-              >Venta libre</n-checkbox
-            >
-          </n-form-item-gi>
-          <n-form-item-gi :span="4">
-            <n-checkbox
-              v-model:checked="businessSettings.sale.free_sale_affects_till"
-              >Venta libre afecta caja</n-checkbox
-            >
-          </n-form-item-gi>
-          <n-form-item-gi :span="4">
-            <n-checkbox v-model:checked="businessSettings.sale.show_preview"
-              >Mostrar previsualización</n-checkbox
-            >
-          </n-form-item-gi>
-          <n-form-item-gi :span="4">
-            <n-checkbox v-model:checked="businessSettings.sale.enable_invoices"
-              >Habilitar boletas/facturas</n-checkbox
-            >
-          </n-form-item-gi>
-        </n-grid>
-        <n-divider />
-        <n-text class="fs-4">Caja</n-text>
-        <n-grid
-          class="mt-2"
-          responsive="screen"
-          cols="6 s:6 m:12 l:12 xl:24 2xl:24"
-          x-gap="12"
-        >
-          <n-form-item-gi :span="6">
-            <n-checkbox
-              v-model:checked="businessSettings.till.closure_cash_total"
-            >
-              Monto efectivo requerido (Cierre de caja)
-            </n-checkbox>
-          </n-form-item-gi>
-          <n-form-item-gi :span="6">
-            <n-checkbox
-              v-model:checked="businessSettings.till.delivery_affects_till"
-            >
-              Monto delivery afecta caja
-            </n-checkbox>
-          </n-form-item-gi>
-        </n-grid>
-        <n-divider />
-        <n-text class="fs-4">Clientes</n-text>
-        <n-grid
-          class="mt-2"
-          responsive="screen"
-          cols="6 s:6 m:12 l:12 xl:24 2xl:24"
-          x-gap="12"
-        >
-          <n-form-item-gi :span="6" label="API Token">
-            <n-input
-              type="textarea"
-              v-model:value="businessSettings.customers.api_token"
-            />
-          </n-form-item-gi>
-        </n-grid>
-        <n-space justify="end">
-          <n-space>
-            <n-button
-              :type="editMode ? 'info' : 'warning'"
-              secondary
-              @click="
+                                placeholder=""
+                                :min="6"
+                                :max="50"
+                        />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3" label="Formato de ticket">
+                        <n-select
+                                v-model:value="businessSettings.printer.kitchen_ticket_format"
+                                :options="kitchenPrinterFormatOptions"
+                        />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3" label="Información en">
+                        <n-select
+                                v-model:value="businessSettings.printer.info_location"
+                                :options="infoLocationOptions"
+                        />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3" label="Margen superior">
+                        <n-input-number
+                                v-model:value="businessSettings.printer.margins[0]"
+                                placeholder=""
+                                :min="0"
+                                :max="25"
+                        />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3" label="Margen derecho">
+                        <n-input-number
+                                v-model:value="businessSettings.printer.margins[1]"
+                                placeholder=""
+                                :min="0"
+                                :max="25"
+                        />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3" label="Margen inferior">
+                        <n-input-number
+                                v-model:value="businessSettings.printer.margins[2]"
+                                placeholder=""
+                                :min="0"
+                                :max="25"
+                        />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3" label="Margen izquierdo">
+                        <n-input-number
+                                v-model:value="businessSettings.printer.margins[3]"
+                                placeholder=""
+                                :min="0"
+                                :max="25"
+                        />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="4">
+                        <n-checkbox v-model:checked="businessSettings.printer.show_cat"
+                        >Mostrar categoría producto
+                        </n-checkbox
+                        >
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3">
+                        <n-checkbox
+                                v-model:checked="businessSettings.printer.print_delivery_ticket"
+                        >Imprimir ticket delivery
+                        </n-checkbox>
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3">
+                        <n-checkbox v-model:checked="businessSettings.printer.detail_items"
+                        >Items detallados
+                        </n-checkbox>
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="4">
+                        <n-checkbox
+                                v-model:checked="businessSettings.printer.show_delivery_kitchen"
+                        >Mostrar información de delivery
+                        </n-checkbox>
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="4">
+                        <n-checkbox
+                                v-model:checked="businessSettings.printer.show_both_names"
+                        >Mostrar ambos nombres(Empresa)
+                        </n-checkbox>
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3">
+                        <n-checkbox
+                                v-model:checked="businessSettings.printer.native_printing"
+                        >Impresiones nativas
+                        </n-checkbox>
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3">
+                        <n-checkbox v-model:checked="businessSettings.printer.print_html"
+                        >Impresiones HTML
+                        </n-checkbox>
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3">
+                        <n-checkbox
+                                v-model:checked="businessSettings.printer.manage_fittings"
+                        >Manejar guarniciones
+                        </n-checkbox>
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3">
+                        <n-checkbox
+                                v-model:checked="businessSettings.printer.subticket_mode"
+                        >Modo subticket
+                        </n-checkbox>
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3">
+                        <n-checkbox v-model:checked="businessSettings.printer.extra_text"
+                        >Texto extra
+                        </n-checkbox>
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3">
+                        <n-checkbox
+                                v-model:checked="businessSettings.printer.show_product_price"
+                        >Precio de productos
+                        </n-checkbox>
+                    </n-form-item-gi>
+                </n-grid>
+                <n-divider/>
+                <n-text class="fs-4">Pedidos</n-text>
+                <n-grid
+                        class="mt-2"
+                        responsive="screen"
+                        cols="6 s:6 m:12 l:12 xl:24 2xl:24"
+                        x-gap="12"
+                >
+                    <n-form-item-gi label="Filtros por defecto" :span="4">
+                        <n-select
+                                v-model:value="businessSettings.order.default_filters"
+                                :options="orderTypeOptions"
+                                multiple
+                        />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="4">
+                        <n-checkbox
+                                v-model:checked="businessSettings.order.divide_delivery_takeaway"
+                        >Dividir delivery y para llevar
+                        </n-checkbox
+                        >
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3">
+                        <n-checkbox
+                                v-model:checked="businessSettings.order.order_customer_name"
+                        >Nombre de Cliente
+                        </n-checkbox
+                        >
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3">
+                        <n-checkbox
+                                v-model:checked="businessSettings.order.pending_takeaway"
+                        >Para llevar pendiente
+                        </n-checkbox
+                        >
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3">
+                        <n-checkbox
+                                v-model:checked="businessSettings.order.select_order_user"
+                        >Seleccionar Usuario
+                        </n-checkbox
+                        >
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3">
+                        <n-checkbox
+                                v-model:checked="businessSettings.order.table_order_total"
+                        >Mostrar total de pedido
+                        </n-checkbox
+                        >
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="4">
+                        <n-checkbox
+                                v-model:checked="businessSettings.order.required_null_reason"
+                        >Motivo de anulación de pedido requerido
+                        </n-checkbox
+                        >
+                    </n-form-item-gi>
+                </n-grid>
+                <n-divider/>
+                <n-text class="fs-4">Reportes</n-text>
+                <n-grid
+                        class="mt-2"
+                        responsive="screen"
+                        cols="6 s:6 m:12 l:12 xl:24 2xl:24"
+                        x-gap="12"
+                >
+                    <n-form-item-gi :span="6" label="Correos">
+                        <n-select
+                                v-model:value="businessSettings.reports.report_emails"
+                                filterable
+                                multiple
+                                tag
+                                placeholder=""
+                                :show-arrow="false"
+                                :show="false"
+                        />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="4">
+                        <n-checkbox
+                                v-model:checked="businessSettings.reports.auto_send_mail"
+                        >Auto envío (Cierre de caja)
+                        </n-checkbox>
+                    </n-form-item-gi>
+                </n-grid>
+                <n-text class="fs-4">Ventas</n-text>
+                <n-grid
+                        class="mt-2"
+                        responsive="screen"
+                        cols="6 s:6 m:12 l:12 xl:24 2xl:24"
+                        x-gap="12"
+                >
+                    <n-form-item-gi :span="3" label="Impresora de documentos">
+                        <n-select
+                                v-model:value="businessSettings.sale.printer_name"
+                                :options="printerStore.getPrintersOptions"
+                                placeholder=""
+                        />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3" label="Documento por defecto">
+                        <n-select
+                                v-model:value="businessSettings.sale.default_invoice"
+                                :options="invoiceOptions"
+                        />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="5" label="Afectación por defecto">
+                        <n-select
+                                v-model:value="businessSettings.sale.default_affectation"
+                                :options="productStore.affectationsOptions"
+                        />
+                    </n-form-item-gi>
+                    <n-form-item-gi
+                            :span="3"
+                            label="Valor IGV (%)"
+                            placeholder=""
+                            disabled
+                    >
+                        <n-input-number
+                                v-model:value="igv_percentage"
+                                :show-button="false"
+                                :min="0"
+                                :max="100"
+                                placeholder=""
+                        />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3" label="Valor ICBPER">
+                        <n-input v-model:value="businessSettings.sale.icbper_tax"/>
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="2">
+                        <n-checkbox v-model:checked="businessSettings.sale.auto_send"
+                        >Auto envío CPE
+                        </n-checkbox
+                        >
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="4">
+                        <n-checkbox
+                                v-model:checked="businessSettings.sale.required_null_reason"
+                        >Motivo de anulación de venta requerido
+                        </n-checkbox
+                        >
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="4">
+                        <n-checkbox
+                                v-model:checked="businessSettings.sale.manage_affectations"
+                        >Manejar Afectaciones
+                        </n-checkbox
+                        >
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="4">
+                        <n-checkbox v-model:checked="businessSettings.sale.enable_credits"
+                        >Habilitar créditos
+                        </n-checkbox
+                        >
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="4">
+                        <n-checkbox v-model:checked="businessSettings.sale.customer_credits"
+                        >Créditos por cliente
+                        </n-checkbox
+                        >
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="4">
+                        <n-checkbox v-model:checked="businessSettings.sale.free_sale"
+                        >Venta libre
+                        </n-checkbox
+                        >
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="4">
+                        <n-checkbox
+                                v-model:checked="businessSettings.sale.free_sale_affects_till"
+                        >Venta libre afecta caja
+                        </n-checkbox
+                        >
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="4">
+                        <n-checkbox v-model:checked="businessSettings.sale.show_preview"
+                        >Mostrar previsualización
+                        </n-checkbox
+                        >
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="4">
+                        <n-checkbox v-model:checked="businessSettings.sale.enable_invoices"
+                        >Habilitar boletas/facturas
+                        </n-checkbox
+                        >
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="4">
+                        <n-checkbox v-model:checked="businessSettings.sale.require_user_pass_to_null">
+                            Requerir clave de usuario para anular
+                        </n-checkbox>
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="4">
+                        <n-checkbox v-model:checked="businessSettings.sale.require_general_pass_to_null">
+                            Requerir clave general para anular
+                        </n-checkbox>
+                    </n-form-item-gi>
+                </n-grid>
+                <n-divider/>
+                <n-text class="fs-4">Caja</n-text>
+                <n-grid
+                        class="mt-2"
+                        responsive="screen"
+                        cols="6 s:6 m:12 l:12 xl:24 2xl:24"
+                        x-gap="12"
+                >
+                    <n-form-item-gi :span="6">
+                        <n-checkbox
+                                v-model:checked="businessSettings.till.closure_cash_total"
+                        >
+                            Monto efectivo requerido (Cierre de caja)
+                        </n-checkbox>
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="6">
+                        <n-checkbox
+                                v-model:checked="businessSettings.till.delivery_affects_till"
+                        >
+                            Monto delivery afecta caja
+                        </n-checkbox>
+                    </n-form-item-gi>
+                </n-grid>
+                <n-divider/>
+                <n-text class="fs-4">Clientes</n-text>
+                <n-grid
+                        class="mt-2"
+                        responsive="screen"
+                        cols="6 s:6 m:12 l:12 xl:24 2xl:24"
+                        x-gap="12"
+                >
+                    <n-form-item-gi :span="6" label="API Token">
+                        <n-input
+                                type="textarea"
+                                v-model:value="businessSettings.customers.api_token"
+                        />
+                    </n-form-item-gi>
+                </n-grid>
+                <n-space justify="end">
+                    <n-space>
+                        <n-button
+                                :type="editMode ? 'info' : 'warning'"
+                                secondary
+                                @click="
                 !editMode ? (editMode = true) : performUpdateBusinessSettings()
               "
-              >{{ editMode ? "Guardar" : "Editar" }}</n-button
-            >
-            <n-button
-              type="error"
-              secondary
-              :disabled="!editMode"
-              @click="resetSettings"
-              >Cancelar</n-button
-            >
-          </n-space>
-        </n-space>
-      </n-form>
-    </n-card>
-  </div>
+                        >{{ editMode ? "Guardar" : "Editar" }}
+                        </n-button
+                        >
+                        <n-button
+                                type="error"
+                                secondary
+                                :disabled="!editMode"
+                                @click="resetSettings"
+                        >Cancelar
+                        </n-button
+                        >
+                    </n-space>
+                </n-space>
+            </n-form>
+        </n-card>
+    </div>
 </template>
 
 <script>
@@ -457,132 +479,130 @@ import { updateBusinessSettings } from "@/api/modules/business";
 import { cloneDeep } from "@/utils";
 
 export default defineComponent({
-  name: "AdvancedSettings",
-  setup() {
-    const router = useRouter();
-    const printerStore = usePrinterStore();
-    const productStore = useProductStore();
-    const settingsStore = useSettingsStore();
-    const message = useMessage();
-    const businessSettings = ref(cloneDeep(settingsStore.businessSettings));
-    const editMode = ref(false);
+    name: "AdvancedSettings",
+    setup() {
+        const router = useRouter();
+        const printerStore = usePrinterStore();
+        const productStore = useProductStore();
+        const settingsStore = useSettingsStore();
+        const message = useMessage();
+        const businessSettings = ref(cloneDeep(settingsStore.businessSettings));
+        const editMode = ref(false);
 
-    const igv_percentage = computed({
-      get: () => Math.round(Number(businessSettings.value.sale.igv_tax) * 100),
-      set: (v) => (businessSettings.value.sale.igv_tax = v / 100),
-    });
-
-    const printOptions = [
-      {
-        label: "80 mm",
-        value: 80,
-      },
-      {
-        label: "58 mm",
-        value: 58,
-      },
-    ];
-
-    const invoiceOptions = [
-      {
-        label: "FACTURA",
-        value: 1,
-      },
-      {
-        label: "BOLETA",
-        value: 3,
-      },
-      {
-        label: "N. VENTA",
-        value: 80,
-      },
-    ];
-
-    const kitchenPrinterFormatOptions = [
-      {
-        label: "FORMATO 1",
-        value: 1,
-      },
-      {
-        label: "FORMATO 2",
-        value: 2,
-      },
-      {
-        label: "FORMATO 3",
-        value: 3,
-      },
-      {
-        label: "FORMATO 4",
-        value: 4,
-      },
-    ];
-
-    const infoLocationOptions = [
-      {
-        label: "Cabecera",
-        value: "header",
-      },
-      {
-        label: "Pie de página",
-        value: "footer",
-      },
-    ];
-
-    const performUpdateBusinessSettings = () => {
-      updateBusinessSettings(businessSettings.value)
-        .then((response) => {
-          if (response.status === 202) {
-            message.success("Actualizado correctamente!");
-            settingsStore.business_settings = response.data;
-            editMode.value = false;
-          }
-        })
-        .catch((error) => {
-          console.error(error);
-          message.error("Algo salió mal...");
+        const igv_percentage = computed({
+            get: () => Math.round(Number(businessSettings.value.sale.igv_tax) * 100),
+            set: (v) => (businessSettings.value.sale.igv_tax = v / 100)
         });
-    };
 
-    const handleBack = () => {
-      router.push({ name: "HomeSettings" });
-    };
+        const printOptions = [
+            {
+                label: "80 mm",
+                value: 80
+            },
+            {
+                label: "58 mm",
+                value: 58
+            }
+        ];
 
-    const resetSettings = () => {
-      businessSettings.value = cloneDeep(settingsStore.businessSettings);
-      editMode.value = false;
-    };
+        const invoiceOptions = [
+            {
+                label: "FACTURA",
+                value: 1
+            },
+            {
+                label: "BOLETA",
+                value: 3
+            },
+            {
+                label: "N. VENTA",
+                value: 80
+            }
+        ];
 
-    const orderTypeOptions = [
-      {
-        value: "M",
-        label: "MESA",
-      },
-      {
-        value: "P",
-        label: "PARA LLEVAR",
-      },
-      {
-        value: "D",
-        label: "DELIVERY",
-      },
-    ];
+        const kitchenPrinterFormatOptions = [
+            {
+                label: "FORMATO 1",
+                value: 1
+            },
+            {
+                label: "FORMATO 2",
+                value: 2
+            },
+            {
+                label: "FORMATO 3",
+                value: 3
+            },
+            {
+                label: "FORMATO 4",
+                value: 4
+            }
+        ];
 
-    return {
-      igv_percentage,
-      handleBack,
-      printOptions,
-      invoiceOptions,
-      printerStore,
-      productStore,
-      businessSettings,
-      performUpdateBusinessSettings,
-      editMode,
-      resetSettings,
-      kitchenPrinterFormatOptions,
-      infoLocationOptions,
-      orderTypeOptions,
-    };
-  },
+        const infoLocationOptions = [
+            {
+                label: "Cabecera",
+                value: "header"
+            },
+            {
+                label: "Pie de página",
+                value: "footer"
+            }
+        ];
+
+        const performUpdateBusinessSettings = () => {
+            updateBusinessSettings(businessSettings.value).then((response) => {
+                if(response.status === 202) {
+                    message.success("Actualizado correctamente!");
+                    settingsStore.business_settings = response.data;
+                    editMode.value = false;
+                }
+            }).catch((error) => {
+                console.error(error);
+                message.error("Algo salió mal...");
+            });
+        };
+
+        const handleBack = () => {
+            router.push({ name: "HomeSettings" });
+        };
+
+        const resetSettings = () => {
+            businessSettings.value = cloneDeep(settingsStore.businessSettings);
+            editMode.value = false;
+        };
+
+        const orderTypeOptions = [
+            {
+                value: "M",
+                label: "MESA"
+            },
+            {
+                value: "P",
+                label: "PARA LLEVAR"
+            },
+            {
+                value: "D",
+                label: "DELIVERY"
+            }
+        ];
+
+        return {
+            igv_percentage,
+            handleBack,
+            printOptions,
+            invoiceOptions,
+            printerStore,
+            productStore,
+            businessSettings,
+            performUpdateBusinessSettings,
+            editMode,
+            resetSettings,
+            kitchenPrinterFormatOptions,
+            infoLocationOptions,
+            orderTypeOptions
+        };
+    }
 });
 </script>
 

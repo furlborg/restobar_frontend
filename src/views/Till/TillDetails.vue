@@ -423,7 +423,7 @@ export default defineComponent({
           const doc = new jspdf({
             format: [80, 297],
           });
-          doc.html(response.data, {
+          doc.html(response.d7ata, {
             html2canvas: { scale: "0.25" },
             margin: [0, 2, 0, 2],
             callback: function (doc) {

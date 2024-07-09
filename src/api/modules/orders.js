@@ -74,6 +74,24 @@ export async function searchOrders(filterParams, page, pageSize) {
   });
 }
 
+export async function searchOrdersAnulate(filterParams, page, pageSize) {
+  return await http.get("orders/canceled_list/", {
+    params: {
+      created__range:
+        filterParams.created !== null
+          ? `${filterParams.created}`
+          : null,
+      take_aways: filterParams.take_aways,
+      tables: filterParams.tables,
+      deliverys: filterParams.deliverys,
+      status: filterParams.status,
+      canceled_type: filterParams.canceled_type,
+      page: page,
+      page_size: pageSize,
+    },
+  });
+}
+
 export async function nullOrder(order, nullReason, pass) {
   return await http.post(`orders/${order}/secure_delete/`, {
     pass: pass,
