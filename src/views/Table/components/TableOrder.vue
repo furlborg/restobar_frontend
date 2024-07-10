@@ -256,12 +256,8 @@
           'w-50': genericsStore.device === 'tablet',
           'w-25': genericsStore.device === 'desktop',
         }"
-                    preset="card"
-                    v-model:show="showConfirm"
-                    title="Eliminando comanda"
-                    :mask-closable="false"
-                    closable
-            >
+                    preset="card" v-model:show="showConfirm" title="Eliminando comanda" :mask-closable="false"
+                    closable @close="()=> {dataAnulate = { username: '', pass: '' }}">
                 <div v-if="!userStore.hasPermission('cancel_orderdetail')">
                     <n-form ref="formRef" :model="dataAnulate" :rules="rules">
                         <n-form-item label="Cantidad">
@@ -611,7 +607,7 @@ export default defineComponent({
         };
 
         const performNullifyTableOrder = async() => {
-            await cancelTableOrder(table).then((response) => {
+            await cancelTableOrder(table, dataAnulate.value).then((response) => {
                 if(response.status === 202) {
                     message.success("Pedido anulado correctamente!");
                     checkState.value = true;
@@ -637,12 +633,13 @@ export default defineComponent({
             await performDeleteOrderDetail(
                 route.params.table,
                 removingItem.value.id,
-                passConfirm.value,
+                dataAnulate.value,
                 deleteQuantity.value
             ).then((response) => {
                 if(response.status === 204) {
                     orderStore.orderList.splice(removingItem.value.ind, 1);
                     saleStore.order_initial.splice(removingItem.value.ind, 1);
+                    nullifyTableOrder();
                     message.success("Comanda eliminada");
                     removingItem.value.ind = "";
                     removingItem.value.id = "";
@@ -651,7 +648,6 @@ export default defineComponent({
                     maxQuantity.value = 1;
                     showConfirm.value = false;
                     dataAnulate.value = { username: "", pass: "" };
-                    nullifyTableOrder();
                 } else if(response.status === 202) {
                     orderStore.orderList[removingItem.value.ind].quantity -=
                         response.data.quantity;
@@ -671,12 +667,11 @@ export default defineComponent({
                 }
             }).catch((error) => {
                 console.error(error);
-                message.error("Algo salió mal");
+                message.error("Error al anular, verifique sus datos...");
             });
         };
 
         const deleteOrderDetail = (detailIndex, detailId) => {
-            console.log("xxx");
             removingItem.value.ind = detailIndex;
             removingItem.value.id = detailId;
             deleteQuantity.value = saleStore.getOrderQuantity(detailId);
