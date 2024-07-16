@@ -680,7 +680,7 @@ export default defineComponent({
             if (sale.value.invoice_type === 1) {
               message.warning("Debes agregar un cliente cuando la venta es con factura");
             } else {
-              message.error("Debes agregar un cliente porque la venta es mayor a S/ 699ddd");
+              message.error("Debes agregar un cliente porque la venta es mayor a S/ 699");
             }
           }
           console.error(errors);
