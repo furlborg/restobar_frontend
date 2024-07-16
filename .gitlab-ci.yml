@@ -1,0 +1,14 @@
+stages:
+  - demo
+
+demo:
+  image: ubuntu:latest
+  stage: demo
+  only:
+    - dev_igv-hotfix
+  before_script:
+    - 'which sshpass || (apt-get update -y && apt-get install sshpass -y)'
+    - mkdir -p ~/.ssh
+    - ssh-keyscan -H ${SSH_HOST} >> ~/.ssh/known_hosts
+  script:
+    - sshpass -p "${SSH_PASSWORD}" ssh ${SSH_USER}@${SSH_HOST} " cd /home/ubuntu/ && export NVM_DIR=~/.nvm && source ~/.nvm/nvm.sh && . update_tilson_front && exit"
