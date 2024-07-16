@@ -5,97 +5,52 @@
         <n-space class="mb-2" align="center" justify="space-between">
           <div class="d-flex align-items-center">
             <n-text class="fs-4">{{
-              `${saleStore.getSerieDescription(sale.serie)}-${sale.number}`
-            }}</n-text>
-            <n-dropdown
-              trigger="click"
-              :options="saleStore.getDocumentSeriesOptions(sale.invoice_type)"
-              :show-arrow="true"
-              placement="bottom-end"
-              size="huge"
-              @select="selectSerie"
-            >
+      `${saleStore.getSerieDescription(sale.serie)}-${sale.number}`
+    }}</n-text>
+            <n-dropdown trigger="click" :options="saleStore.getDocumentSeriesOptions(sale.invoice_type)"
+              :show-arrow="true" placement="bottom-end" size="huge" @select="selectSerie">
               <n-button type="info" text>
-                <v-icon
-                  class="p-0"
-                  name="md-arrowdropdown-round"
-                  scale="1.75"
-                />
+                <v-icon class="p-0" name="md-arrowdropdown-round" scale="1.75" />
               </n-button>
             </n-dropdown>
           </div>
-          <n-radio-group
-            v-model:value="sale.invoice_type"
-            name="docType"
-            size="small"
-            @update:value="changeSerie"
-          >
-            <n-radio-button :disabled="!settingsStore.businessSettings.sale.enable_invoices" :value="1" :key="1">FACTURA</n-radio-button>
-            <n-radio-button :disabled="!settingsStore.businessSettings.sale.enable_invoices" :value="3" :key="3">BOLETA</n-radio-button>
+          <n-radio-group v-model:value="sale.invoice_type" name="docType" size="small" @update:value="changeSerie">
+            <n-radio-button :disabled="!settingsStore.businessSettings.sale.enable_invoices" :value="1"
+              :key="1">FACTURA</n-radio-button>
+            <n-radio-button :disabled="!settingsStore.businessSettings.sale.enable_invoices" :value="3"
+              :key="3">BOLETA</n-radio-button>
             <n-radio-button :value="80" :key="80">N. VENTA</n-radio-button>
           </n-radio-group>
-          <n-radio-group
-            v-model:value="sale.payment_condition"
-            name="saleType"
-            size="small"
-            @update:value="changeCondition"
-            :disabled="
-              !(settingsStore.businessSettings?.sale?.enable_credits === true)
-            "
-          >
+          <n-radio-group v-model:value="sale.payment_condition" name="saleType" size="small"
+            @update:value="changeCondition" :disabled="!(settingsStore.businessSettings?.sale?.enable_credits === true)
+      ">
             <n-radio-button :value="1" :key="1">CONTADO</n-radio-button>
             <n-radio-button :value="2" :key="2">CRÉDITO</n-radio-button>
           </n-radio-group>
         </n-space>
         <n-form class="mb-2" ref="saleForm" :model="sale" :rules="formRules">
-          <n-grid
-            responsive="screen"
-            cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12"
-            :x-gap="12"
-          >
-            <n-form-item-gi
-              :span="9"
-              label="Cliente"
-              :show-require-mark="formRules.customer.required"
-              path="customer"
-            >
+          <n-grid responsive="screen" cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12" :x-gap="12">
+            <n-form-item-gi :span="9" label="Cliente" :show-require-mark="formRules.customer.required" path="customer">
               <n-input-group>
-                <n-auto-complete
-                  blur-after-select
-                  :input-props="{
-                    autocomplete: 'disabled',
-                  }"
-                  v-model:value="sale.customer_name"
-                  :options="customerOptions"
-                  :get-show="showOptions"
-                  :loading="searching"
-                  @keypress.enter="autoCreateCustomer"
-                  @update:value="
-                    (v) => {
-                      !v
-                        ? ((sale.customer = 0),
-                          (sale.address = null),
-                          (whatsappNumber = ''),
-                          (addressesOptions = []))
-                        : null;
-                    }
-                  "
-                  @select="
-                    (value) => {
-                      sale.customer = value;
-                      sale.address = null;
-                      whatsappNumber = '';
-                      createAddressesOptions();
-                    }
-                  "
-                  placeholder=""
-                  clearable
-                />
-                <n-button
-                  v-if="!sale.customer"
-                  type="info"
-                  @click="(sale.customer = 0), (showModal = true)"
-                >
+                <n-auto-complete blur-after-select :input-props="{
+      autocomplete: 'disabled',
+    }" v-model:value="sale.customer_name" :options="customerOptions" :get-show="showOptions" :loading="searching"
+                  @keypress.enter="autoCreateCustomer" @update:value="(v) => {
+      !v
+        ? ((sale.customer = 0),
+          (sale.address = null),
+          (whatsappNumber = ''),
+          (addressesOptions = []))
+        : null;
+    }
+      " @select="(value) => {
+      sale.customer = value;
+      sale.address = null;
+      whatsappNumber = '';
+      createAddressesOptions();
+    }
+      " placeholder="" clearable />
+                <n-button v-if="!sale.customer" type="info" @click="(sale.customer = 0), (showModal = true)">
                   <v-icon name="md-add-round" />
                 </n-button>
                 <n-button v-else type="warning" @click="showModal = true">
@@ -104,45 +59,25 @@
               </n-input-group>
             </n-form-item-gi>
             <n-form-item-gi :span="3" label="Fecha">
-              <n-date-picker
-                class="w-100"
-                type="datetime"
-                :is-date-disabled="dateDisabled"
-                v-model:formatted-value="sale.date_sale"
-              />
+              <n-date-picker class="w-100" type="datetime" :is-date-disabled="dateDisabled"
+                v-model:formatted-value="sale.date_sale" />
             </n-form-item-gi>
             <n-form-item-gi :span="6" label="Dirección">
-              <n-select
-                v-model:value="sale.address"
-                :options="addressesOptions"
-                :disabled="!sale.customer"
-                placeholder=""
-              />
+              <n-select v-model:value="sale.address" :options="addressesOptions" :disabled="!sale.customer"
+                placeholder="" />
             </n-form-item-gi>
             <n-form-item-gi :span="2" label="Método Pago">
-              <n-select
-                v-model:value="sale.payment_method"
-                :options="saleStore.getPaymentMethodsOptions"
-                filterable
-              />
+              <n-select v-model:value="sale.payment_method" :options="saleStore.getPaymentMethodsOptions" filterable />
             </n-form-item-gi>
             <n-form-item-gi :span="2">
-              <n-checkbox
-                v-model:checked="sale.by_consumption"
-                :disabled="sale.payment_condition === 2"
-                >Por consumo</n-checkbox
-              >
+              <n-checkbox v-model:checked="sale.by_consumption" :disabled="sale.payment_condition === 2">Por
+                consumo</n-checkbox>
             </n-form-item-gi>
             <n-form-item-gi :span="2">
-              <n-button
-                type="info"
-                text
-                @click="showObservations = !showObservations"
-                >{{
-                  !showObservations ? "Ver" : "Ocultar"
-                }}
-                Observaciones</n-button
-              >
+              <n-button type="info" text @click="showObservations = !showObservations">{{
+      !showObservations ? "Ver" : "Ocultar"
+    }}
+                Observaciones</n-button>
             </n-form-item-gi>
             <n-gi :span="12">
               <n-collapse-transition :show="showObservations">
@@ -157,9 +92,7 @@
           <n-table class="fs-6 m-auto text-center" :bordered="false">
             <thead>
               <tr>
-                <th
-                  v-if="settingsStore.businessSettings.sale.manage_affectations"
-                >
+                <th v-if="settingsStore.businessSettings.sale.manage_affectations">
                   #
                 </th>
                 <th>Cantidad</th>
@@ -172,81 +105,44 @@
             <tbody>
               <template v-for="(detail, index) in saleStore.toSale">
                 <tr v-if="detail.quantity > 0" :key="index">
-                  <td
-                    v-if="
-                      settingsStore.businessSettings.sale.manage_affectations
-                    "
-                  >
-                    <n-popselect
-                      size="small"
-                      placement="bottom-start"
-                      v-model:value="detail.product_affectation"
-                      :disabled="
-                        !userStore.hasPermission('change_product_affectation')
-                      "
-                      :options="productStore.affectationsOptions"
-                      @update:value="(v) => saleStore.updateDetail(detail)"
-                    >
-                      <n-tag
-                        size="small"
-                        :color="getAfcColor(detail.product_affectation)"
-                        >{{ getAfcShort(detail.product_affectation) }}</n-tag
-                      >
+                  <td v-if="settingsStore.businessSettings.sale.manage_affectations
+      ">
+                    <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation"
+                      :disabled="!userStore.hasPermission('change_product_affectation')
+      " :options="productStore.affectationsOptions" @update:value="(v) => saleStore.updateDetail(detail)">
+                      <n-tag size="small" :color="getAfcColor(detail.product_affectation)">{{
+      getAfcShort(detail.product_affectation) }}</n-tag>
                     </n-popselect>
                   </td>
                   <td>{{ detail.quantity }}</td>
                   <td>
-                    <input
-                      class="custom-input"
-                      v-model="detail.product_name"
-                      v-autowidth
-                      @click="$event.target.select()"
-                    />
+                    <input class="custom-input" v-model="detail.product_name" v-autowidth
+                      @click="$event.target.select()" />
                   </td>
                   <td>
                     S/.
-                    <input
-                      class="custom-input"
-                      type="number"
-                      min="0"
-                      step=".5"
-                      v-model="detail.price_sale"
-                      @input="
-                        (v) => (
-                          saleStore.updateDetail(detail),
-                          (detail.discount = parseFloat(0).toFixed(2))
-                        )
-                      "
-                      v-autowidth
-                      @click="$event.target.select()"
-                    />
+                    <input class="custom-input" type="number" min="0" step=".5" v-model="detail.price_sale" @input="(v) => (
+      saleStore.updateDetail(detail),
+      (detail.discount = parseFloat(0).toFixed(2))
+    )
+      " v-autowidth @click="$event.target.select()" />
                   </td>
                   <td>
                     S/.
-                    <input
-                      class="custom-input"
-                      type="number"
-                      min="0"
-                      :max="!detail.price_sale ? 0 : detail.price_sale"
-                      :disabled="
-                        detail.product_affectation === 21 ||
-                        !!Number(sale.discount)
-                      "
-                      step=".5"
-                      v-model="detail.discount"
-                      v-autowidth
-                      @click="$event.target.select()"
-                    />
+                    <input class="custom-input" type="number" min="0" :max="!detail.price_sale ? 0 : detail.price_sale"
+                      :disabled="detail.product_affectation === 21 ||
+      !!Number(sale.discount)
+      " step=".5" v-model="detail.discount" v-autowidth @click="$event.target.select()" />
                   </td>
                   <td>
                     {{
-                      detail.product_affectation === 21
-                        ? "0.00"
-                        : parseFloat(
-                            detail.quantity * detail.price_sale -
-                              detail.discount
-                          ).toFixed(2)
-                    }}
+      detail.product_affectation === 21
+        ? "0.00"
+        : parseFloat(
+          detail.quantity * detail.price_sale -
+          detail.discount
+        ).toFixed(2)
+    }}
                   </td>
                 </tr>
               </template>
@@ -260,15 +156,8 @@
                 <span class="fs-4">Pago</span>
                 <div class="fs-5">
                   S/.
-                  <input
-                    class="fs-1 custom-input"
-                    type="number"
-                    min="0"
-                    step=".01"
-                    v-model="sale.given_amount"
-                    v-autowidth
-                    @click="$event.target.select()"
-                  />
+                  <input class="fs-1 custom-input" type="number" min="0" step=".01" v-model="sale.given_amount"
+                    v-autowidth @click="$event.target.select()" />
                 </div>
               </n-space>
               <n-space align="center" vertical>
@@ -299,20 +188,11 @@
               <div>
                 DSCT:
                 <span>S/.</span>
-                <input
-                  class="custom-input fw-bold"
-                  type="number"
-                  min="0"
-                  step=".5"
-                  v-model="totalDSCT"
-                  v-autowidth
-                  :disabled="
-                    saleStore.toSale.some(
-                      (detail) => Number(detail.discount) > 0
-                    )
-                  "
-                  @click="$event.target.select()"
-                />
+                <input class="custom-input fw-bold" type="number" min="0" step=".5" v-model="totalDSCT" v-autowidth
+                  :disabled="saleStore.toSale.some(
+      (detail) => Number(detail.discount) > 0
+    )
+      " @click="$event.target.select()" />
               </div>
               <div v-if="icbper">
                 ICBPER: <span>S/. {{ icbper.toFixed(2) }}</span>
@@ -320,15 +200,8 @@
               <div>
                 OTROS:
                 <span>S/.</span>
-                <input
-                  class="custom-input fw-bold"
-                  type="number"
-                  min="0"
-                  step=".5"
-                  v-model="sale.other_charges"
-                  v-autowidth
-                  @click="$event.target.select()"
-                />
+                <input class="custom-input fw-bold" type="number" min="0" step=".5" v-model="sale.other_charges"
+                  v-autowidth @click="$event.target.select()" />
               </div>
               <div>
                 TOTAL: <span>S/. {{ sale.amount }}</span>
@@ -349,16 +222,10 @@
         > -->
         <n-space v-if="sale.payment_condition === 1" justify="space-between">
           <n-checkbox v-model:checked="isMultiple">Pago multiple</n-checkbox>
-          <n-button type="info" text @click="openSeparatePaymentsModal"
-            >Nueva cuenta</n-button
-          >
+          <n-button type="info" text @click="openSeparatePaymentsModal">Nueva cuenta</n-button>
         </n-space>
         <n-divider />
-        <n-grid
-          responsive="screen"
-          cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12"
-          :x-gap="12"
-        >
+        <n-grid responsive="screen" cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12" :x-gap="12">
           <!-- <n-gi :span="4">
             <n-input-group>
               <n-button
@@ -372,122 +239,64 @@
             </n-input-group>
           </n-gi> -->
           <n-gi class="d-flex align-items-center" :span="3">
-            <n-checkbox v-model:checked="ticketPreview"
-              >Previsualizar ticket</n-checkbox
-            >
+            <n-checkbox v-model:checked="ticketPreview">Previsualizar ticket</n-checkbox>
           </n-gi>
         </n-grid>
-        <n-button
-          class="fs-1 py-5 mt-2"
-          type="success"
-          :disabled="
-            !saleStore.toSale.filter((detail) => !!detail.quantity).length ||
-            sale.payment_condition === 1
-              ? sale.given_amount < sale.amount
-              : !(sale.given_amount < sale.amount)
-          "
-          secondary
-          block
-          @click.prevent="
-            isMultiple ? doMultiplePayment() : performCreateSale()
-          "
-        >
+        <n-button class="fs-1 py-5 mt-2" type="success" :disabled="!saleStore.toSale.filter((detail) => !!detail.quantity).length ||
+      sale.payment_condition === 1
+      ? sale.given_amount < sale.amount
+      : !(sale.given_amount < sale.amount)
+      " secondary block @click.prevent="
+      isMultiple ? doMultiplePayment() : performCreateSale()
+      ">
           <v-icon class="me-2" name="fa-coins" scale="2" />Cobrar
         </n-button>
       </n-card>
     </n-spin>
-    <n-modal
-      :class="{
-        'w-100': genericsStore.device === 'mobile',
-        'w-50': genericsStore.device === 'tablet',
-        'w-25': genericsStore.device === 'desktop',
-      }"
-      preset="card"
-      v-model:show="showPayments"
-      title="Realizar venta"
-      :mask-closable="false"
-      closable
-      @close="sale.payments = null"
-    >
+    <n-modal :class="{
+      'w-100': genericsStore.device === 'mobile',
+      'w-50': genericsStore.device === 'tablet',
+      'w-25': genericsStore.device === 'desktop',
+    }" preset="card" v-model:show="showPayments" title="Realizar venta" :mask-closable="false" closable
+      @close="sale.payments = null">
       <n-space justify="space-between">
-        <n-tag type="info"
-          >Total: S/. {{ showPayments ? sale.amount : null }}</n-tag
-        >
-        <n-tag :type="evalPayments ? 'error' : 'success'"
-          >Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}
+        <n-tag type="info">Total: S/. {{ showPayments ? sale.amount : null }}</n-tag>
+        <n-tag :type="evalPayments ? 'error' : 'success'">Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}
         </n-tag>
-        <n-tag :type="evalPayments ? 'error' : 'warning'"
-          >Faltante: S/.
+        <n-tag :type="evalPayments ? 'error' : 'warning'">Faltante: S/.
           {{
-            showPayments
-              ? parseFloat(sale.amount - currentPaymentsAmount).toFixed(2)
-              : null
-          }}</n-tag
-        >
+      showPayments
+        ? parseFloat(sale.amount - currentPaymentsAmount).toFixed(2)
+        : null
+    }}</n-tag>
       </n-space>
       <n-form-item class="mt-2" label="Pagos">
-        <n-dynamic-input
-          v-model:value="sale.payments"
-          :min="1"
-          @create="createPayment"
-        >
+        <n-dynamic-input v-model:value="sale.payments" :min="1" @create="createPayment">
           <template #default="{ value }">
             <div style="display: flex; align-items: center; width: 100%">
-              <n-select
-                v-model:value="value.payment_method"
-                :options="filteredMethods"
-                :disabled="loading"
-              />
-              <n-input
-                class="ms-2"
-                v-model:value="value.amount"
-                placeholder=""
-                :disabled="loading"
-                @keypress="isDecimal($event)"
-              />
+              <n-select v-model:value="value.payment_method" :options="filteredMethods" :disabled="loading" />
+              <n-input class="ms-2" v-model:value="value.amount" placeholder="" :disabled="loading"
+                @keypress="isDecimal($event)" />
             </div>
           </template>
         </n-dynamic-input>
       </n-form-item>
       <n-space justify="end">
-        <n-button
-          type="success"
-          :disabled="
-            evalPayments ||
-            sale.payments.some((pay) => pay.payment_method === null) ||
-            sale.payments.some((pay) => Number(pay.amount) <= 0) ||
-            loading
-          "
-          secondary
-          :loading="loading"
-          @click="performCreateSale"
-          >Confirmar</n-button
-        >
+        <n-button type="success" :disabled="evalPayments ||
+      sale.payments.some((pay) => pay.payment_method === null) ||
+      sale.payments.some((pay) => Number(pay.amount) <= 0) ||
+      loading
+      " secondary :loading="loading" @click="performCreateSale">Confirmar</n-button>
       </n-space>
     </n-modal>
     <!-- Customer Modal -->
-    <customer-modal
-      v-model:show="showModal"
-      :id-customer="sale.customer"
-      :doc_type="sale.invoice_type === 1 ? '6' : null"
-      :document="customerDocument"
-      @update:show="onCloseModal"
-      @on-success="onSuccess"
-    />
-    <separate-payments-modal
-      v-model:show="showSeparateModal"
-      :data="separatePayments"
-      :on-close="closeSeparatePaymentsModal"
-      @success="successSeparatePaymentsModal"
-    />
-    <preview-drawer
-      ref="previewDrawer"
-      v-model:show="showPdf"
-      :data="pdfData"
-      :previewOnly="!ticketPreview"
-      @printed="() => $router.push({ name: 'TableHome' })"
-      @canceled="() => $router.push({ name: 'TableHome' })"
-    />
+    <customer-modal v-model:show="showModal" :id-customer="sale.customer"
+      :doc_type="sale.invoice_type === 1 ? '6' : null" :document="customerDocument" @update:show="onCloseModal"
+      @on-success="onSuccess" />
+    <separate-payments-modal v-model:show="showSeparateModal" :data="separatePayments"
+      :on-close="closeSeparatePaymentsModal" @success="successSeparatePaymentsModal" />
+    <preview-drawer ref="previewDrawer" v-model:show="showPdf" :data="pdfData" :previewOnly="!ticketPreview"
+      @printed="() => $router.push({ name: 'TableHome' })" @canceled="() => $router.push({ name: 'TableHome' })" />
   </div>
 </template>
 
@@ -631,11 +440,11 @@ export default defineComponent({
     const total = computed(() => {
       return parseFloat(
         totalIGV.value +
-          totalGRV.value +
-          totalEXN.value -
-          parseFloat(totalDSCT.value) +
-          icbper.value +
-          parseFloat(sale.value.other_charges)
+        totalGRV.value +
+        totalEXN.value -
+        parseFloat(totalDSCT.value) +
+        icbper.value +
+        parseFloat(sale.value.other_charges)
       ).toFixed(2);
     });
 
@@ -682,7 +491,7 @@ export default defineComponent({
       } else {
         rules.customer.required = true;
       }
-        console.log(rules);
+      console.log(rules);
       return rules;
     });
 
@@ -867,6 +676,13 @@ export default defineComponent({
             },
           });
         } else {
+          if (formRules.value.customer.required) {
+            if (sale.value.invoice_type === 1) {
+              message.warning("Debes agregar un cliente cuando la venta es con factura");
+            } else {
+              message.error("Debes agregar un cliente porque la venta es mayor a S/ 699ddd");
+            }
+          }
           console.error(errors);
           message.error("Datos Incorrectos");
         }
@@ -980,7 +796,7 @@ export default defineComponent({
       dateNow.value = `${dd}/${mm}/${yy} ${hh}:${msms}`;
     });
 
-    const onCloseModal = () => {};
+    const onCloseModal = () => { };
 
     const onSuccess = (customer) => {
       if (sale.value.invoice_type === 1 && customer.doc_type === "6") {
