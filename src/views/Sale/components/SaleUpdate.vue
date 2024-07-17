@@ -1,10 +1,10 @@
 <template>
   <!-- @close="() => $emit('update:show')" -->
   <n-modal
-    :class="{
+          :class="{
       'w-100': genericsStore.device === 'mobile',
       'w-75': genericsStore.device === 'tablet',
-      'w-50': genericsStore.device === 'desktop',
+      'w-75 ': genericsStore.device === 'desktop',
     }"
     id="SaleUpdate"
     preset="card"

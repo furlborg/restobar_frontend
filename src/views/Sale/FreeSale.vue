@@ -601,7 +601,7 @@ export default defineComponent({
                       sendSale(response.data.id)
                         .then((response) => {
                           if (response.status === 200) {
-                            const sale = response.data;
+
                             message.success("Enviado!");
                             // if (whatsappNumber.value.length >= 9) {
                             //   sendWhatsapp(

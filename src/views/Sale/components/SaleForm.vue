@@ -124,11 +124,14 @@
       }"
       preset="card"
       v-model:show="showConfirm"
-      title="Contraseña de seguridad"
+      title="¿Desea editar la venta?"
       :mask-closable="false"
       closable
     >
-      <n-form-item label="Ingrese contraseña de seguridad">
+<!--        <pre>-->
+<!--        {{settingsStore.businessSettings.sale}}-->
+<!--        </pre>-->
+      <n-form-item label="Ingrese contraseña de seguridad" v-if="settingsStore.businessSettings.sale?.require_pass_recovery">
         <n-input type="password" v-model:value="userConfirm" placeholder="" />
       </n-form-item>
       <template #action>
@@ -136,7 +139,7 @@
           <n-button
             type="success"
             :loading="loading"
-            :disabled="!userConfirm || loading"
+            :disabled="loading"
             secondary
             @click.prevent="peformCreateSale"
             >Confirmar</n-button
@@ -444,6 +447,7 @@ export default defineComponent({
       searchingCustomer,
       createAddressesOptions,
       addressesOptions,
+      settingsStore,
       onCloseModal,
       onSuccess,
       changeSerie,

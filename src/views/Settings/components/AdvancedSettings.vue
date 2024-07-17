@@ -403,6 +403,11 @@
                             Requerir clave general para anular
                         </n-checkbox>
                     </n-form-item-gi>
+                    <n-form-item-gi :span="4">
+                        <n-checkbox v-model:checked="businessSettings.sale.require_pass_recovery">
+                            Requerir clave general para editar venta
+                        </n-checkbox>
+                    </n-form-item-gi>
                 </n-grid>
                 <n-divider/>
                 <n-text class="fs-4">Caja</n-text>
