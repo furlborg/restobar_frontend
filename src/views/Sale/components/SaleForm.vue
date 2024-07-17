@@ -128,9 +128,6 @@
       :mask-closable="false"
       closable
     >
-<!--        <pre>-->
-<!--        {{settingsStore.businessSettings.sale}}-->
-<!--        </pre>-->
       <n-form-item label="Ingrese contraseña de seguridad" v-if="settingsStore.businessSettings.sale?.require_pass_recovery">
         <n-input type="password" v-model:value="userConfirm" placeholder="" />
       </n-form-item>

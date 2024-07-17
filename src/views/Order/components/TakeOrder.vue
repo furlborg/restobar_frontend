@@ -433,8 +433,8 @@
                     </n-button>
                 </n-space>
             </n-modal>
-            <OrderIndications v-model:show="showModal" preset="card" title="Indicaciones"
-                              :order="orderStore.orderList[itemIndex]" @success="showModal = false"></OrderIndications>
+            <OrderIndications v-model:show="showModal" preset="card" title="Indicaciones" :order="orderStore.orderList[itemIndex]"
+                              @success="showModal = false"/>
         </n-card>
     </div>
 </template>
@@ -655,15 +655,7 @@ export default defineComponent({
 
         const formRules = computed(() => {
             let rules = saleRules;
-            // rules.customer.required = false
-            // rules.customer.required = !(sale.value.invoice_type !== 1 && sale.value.payment_condition === 1 &&
-            //     parseFloat(sale.value.given_amount) <= 699);
-            console.log(sale.value.invoice_type );
-            console.log(sale.value.payment_condition);
-            console.log(parseFloat(sale.value.given_amount) > 699);
             rules.customer.required = !(sale.value.invoice_type !== 1 && sale.value.payment_condition === 1 && parseFloat(sale.value.given_amount) < 699)
-            console.log(rules.customer.required);
-            // console.log(sale.value.invoice_type === 1 || sale.value.payment_condition === 1 || parseFloat(sale.value.given_amount) <= 699);
             if(sale.value.delivery_info) {
                 rules.delivery_info = {
                     person: {
