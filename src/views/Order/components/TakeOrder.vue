@@ -50,7 +50,7 @@
                                 <n-form class="mb-2" ref="saleForm" :model="sale" :rules="formRules">
                                     <n-grid responsive="screen" cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12" :x-gap="12">
                                         <n-form-item-gi :span="9" :show-require-mark="formRules.customer.required" label="Cliente"
-                                                        path="customer">
+                                                        :path="formRules.customer.required ? 'customer' : ''">
                                             <n-input-group>
                                                 <n-auto-complete blur-after-select :input-props="{
       autocomplete: 'disabled',
@@ -276,18 +276,6 @@
                                 </n-checkbox>
                                 <n-divider/>
                                 <n-grid responsive="screen" cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12" :x-gap="12">
-                                    <!-- <n-gi :span="4">
-									  <n-input-group>
-										<n-button
-										  type="success"
-										  :disabled="!(whatsappNumber.length >= 9)"
-										  secondary
-										>
-										  <v-icon name="bi-whatsapp" />
-										</n-button>
-										<n-input placeholder="" v-model:value="whatsappNumber" />
-									  </n-input-group>
-									</n-gi> -->
                                     <n-gi class="d-flex align-items-center" :span="3">
                                         <n-checkbox v-model:checked="ticketPreview">Previsualizar ticket</n-checkbox>
                                     </n-gi>
@@ -380,32 +368,6 @@
                                 <tfoot>
                                 <tr>
                                     <td colspan="3">
-                                        <!-- <n-button
-										v-if="!($route.name === 'TablePayment')"
-										:type="orderStore.orderId ? 'info' : 'primary'"
-										text
-										block
-										:disabled="
-										  orderStore.orderList.length ? checkState : true
-										"
-										@click="
-										  orderStore.orderId
-											? performUpdateTableOrder()
-											: performCreateTableOrder()
-										"
-									  >
-										<v-icon
-										  class="me-2"
-										  name="md-notealt-twotone"
-										  scale="1.5"
-										/>
-										<span class="fs-4"
-										  >{{
-											orderStore.orderId ? "Actualizar" : "Realizar"
-										  }}
-										  pedido</span
-										>
-									  </n-button> -->
                                     </td>
                                     <td colspan="2" class="fs-6 fw-bold">
                                         S/. {{ orderStore.orderTotal.toFixed(2) }}
@@ -658,7 +620,7 @@ export default defineComponent({
             payment_method: 1,
             payment_condition: 1,
             customer_name: "",
-            customer: 0,
+            customer: null,
             address: null,
             discount: "0.00",
             icbper: icbper,
@@ -693,8 +655,15 @@ export default defineComponent({
 
         const formRules = computed(() => {
             let rules = saleRules;
-            rules.customer.required = !(sale.value.invoice_type !== 1 && sale.value.payment_condition === 1 &&
-                parseFloat(sale.value.given_amount) <= 699);
+            // rules.customer.required = false
+            // rules.customer.required = !(sale.value.invoice_type !== 1 && sale.value.payment_condition === 1 &&
+            //     parseFloat(sale.value.given_amount) <= 699);
+            console.log(sale.value.invoice_type );
+            console.log(sale.value.payment_condition);
+            console.log(parseFloat(sale.value.given_amount) > 699);
+            rules.customer.required = !(sale.value.invoice_type !== 1 && sale.value.payment_condition === 1 && parseFloat(sale.value.given_amount) < 699)
+            console.log(rules.customer.required);
+            // console.log(sale.value.invoice_type === 1 || sale.value.payment_condition === 1 || parseFloat(sale.value.given_amount) <= 699);
             if(sale.value.delivery_info) {
                 rules.delivery_info = {
                     person: {
@@ -1135,7 +1104,13 @@ export default defineComponent({
         };
 
         const performTakeAway = () => {
+            formRules.effect
             saleForm.value.validate((errors) => {
+                // console.log(sale.value.customer);
+                // if(parseFloat(sale.value.given_amount) > 699 && sale.value.invoice_type === 80 || sale.value.invoice_type === 3 && sale.value.customer){
+                //     message.warning('El monto es mayor a 699, debes de agregar un cliente')
+                //     return
+                // }
                 if(!errors) {
                     if(userStore.user.role === "MOZO") {
                         showConfirm.value = true;
