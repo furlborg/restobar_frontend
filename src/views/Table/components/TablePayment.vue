@@ -59,7 +59,7 @@
               </n-input-group>
             </n-form-item-gi>
             <n-form-item-gi :span="3" label="Fecha">
-              <n-date-picker class="w-100" type="datetime" :is-date-disabled="dateDisabled"
+              <n-date-picker class="w-100" type="datetime" :is-date-disabled="dateDisabled"  disabled
                 v-model:formatted-value="sale.date_sale" />
             </n-form-item-gi>
             <n-form-item-gi :span="6" label="Dirección">

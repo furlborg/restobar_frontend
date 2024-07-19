@@ -82,7 +82,7 @@
                                         </n-form-item-gi>
                                         <n-form-item-gi :span="3" label="Fecha">
                                             <n-date-picker class="w-100" type="datetime" :is-date-disabled="dateDisabled"
-                                                           v-model:formatted-value="sale.date_sale"/>
+                                                           v-model:formatted-value="sale.date_sale" disabled/>
                                         </n-form-item-gi>
                                         <n-form-item-gi :span="4" label="Dirección">
                                             <n-select v-model:value="sale.address" :options="addressesOptions" :disabled="!sale.customer"
