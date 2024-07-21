@@ -546,7 +546,7 @@ export default defineComponent({
         const performNullifyTableOrder = async() => {
             isLoading.value = true;
             if(!deleteTable.value) {
-                await nullOrder(deleteId.value, nullReason.value, passConfirm.value).then((response) => {
+                await nullOrder(deleteId.value, dataAnulate.value).then((response) => {
                     if(response.status === 202) {
                         message.success("Pedido anulado correctamente!");
                         showConfirm.value = false;

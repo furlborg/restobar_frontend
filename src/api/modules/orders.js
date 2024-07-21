@@ -92,10 +92,9 @@ export async function searchOrdersAnulate(filterParams, page, pageSize) {
   });
 }
 
-export async function nullOrder(order, nullReason, pass) {
+export async function nullOrder(order, dataAnulate) {
   return await http.post(`orders/${order}/secure_delete/`, {
-    pass: pass,
-    null_reason: nullReason,
+    ...dataAnulate
   });
 }
 
@@ -110,7 +109,6 @@ export async function takeAwayOrder(order_details, sale_data, user) {
   const userStore = useUserStore();
   let details = order_details.map((order) => ({
     product: order.product,
-    indication: order.indication,
     quantity: order.quantity,
     initial_quantity: order.quantity,
   }));
