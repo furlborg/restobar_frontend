@@ -111,6 +111,8 @@ export async function takeAwayOrder(order_details, sale_data, user) {
     product: order.product,
     quantity: order.quantity,
     initial_quantity: order.quantity,
+    indication: order.indication || [],
+    quick_indications: order.quick_indications || [],
   }));
   let order = {
     till: tillStore.currentTillID,

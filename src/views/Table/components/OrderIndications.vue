@@ -115,7 +115,7 @@ export default defineComponent({
     watch(show, () => {
       if (show.value === true && order.value.indication.length === 0) {
         indications.value = Array.apply(null, Array(order.value.quantity)).map(
-          () => ({ takeAway: false, description: "", quick_indications: [] })
+          () => ({ takeAway: false, description: "[]", quick_indications: [] })
         );
       } else if (
         show.value === true &&

@@ -72,7 +72,7 @@ export async function createTableOrder(
     const tillStore = useTillStore();
     let order_details = details.map((order) => ({
         product: order.product,
-        indication: order.indication,
+        indication: order.indication || [],
         quantity: order.quantity
     }));
     return await http.post(`tables/${idTable}/take_order/`, {
@@ -95,7 +95,7 @@ export async function updateTableOrder(
     let order_details = details.map((order) => ({
         id: order.id,
         product: order.product,
-        indication: order.indication,
+        indication: order.indication || [],
         quantity: order.quantity
     })).filter((detail) => detail.quantity > 0);
     return await http.patch(`tables/${idTable}/change_order/`, {
