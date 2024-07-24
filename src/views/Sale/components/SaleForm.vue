@@ -19,6 +19,7 @@
           placeholder=""
           v-model:value="sale.number"
           disabled
+          :min="0.0005"
           :show-button="false"
         />
       </n-form-item-gi>
@@ -262,11 +263,7 @@ export default defineComponent({
     };
 
     const rules = computed(() => {
-      if (sale.invoice_type !== "1") {
-        saleRules.customer.required = false;
-      } else {
-        saleRules.customer.required = true;
-      }
+      saleRules.customer.required = sale.invoice_type === "1";
       return saleRules;
     });
 

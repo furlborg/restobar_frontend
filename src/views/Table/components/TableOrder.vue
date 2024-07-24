@@ -108,11 +108,11 @@
                             <n-table size="small">
                                 <thead>
                                 <tr>
-                                    <th width="10%"></th>
-                                    <th width="40%">Producto</th>
-                                    <th width="25%">Cantidad</th>
-                                    <th width="15%">SubTotal</th>
-                                    <th width="10%"></th>
+                                    <th style="width: 10%"></th>
+                                    <th style="width: 40%">Producto</th>
+                                    <th style="width: 25%">Cantidad</th>
+                                    <th style="width: 15%">SubTotal</th>
+                                    <th style="width: 10%"></th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -261,7 +261,7 @@
                 <div v-if="!userStore.hasPermission('cancel_orderdetail')">
                     <n-form ref="formRef" :model="dataAnulate" :rules="rules">
                         <n-form-item label="Cantidad">
-                            <n-input-number v-model:value="deleteQuantity" min="1" :max="maxQuantity" placeholder="" style="width: 100%"/>
+                            <n-input-number v-model:value="deleteQuantity" :min="1" :max="maxQuantity" placeholder="" style="width: 100%"/>
                         </n-form-item>
                     </n-form>
                 </div>
@@ -275,7 +275,7 @@
                                 <n-input type="password" v-model:value="dataAnulate.pass" placeholder=""/>
                             </n-form-item>
                             <n-form-item label="Cantidad">
-                                <n-input-number v-model:value="deleteQuantity" min="1" :max="maxQuantity" style="width: 100%"/>
+                                <n-input-number v-model:value="deleteQuantity" :min="1" :max="maxQuantity" style="width: 100%"/>
                             </n-form-item>
                         </n-form>
                     </div>
@@ -285,7 +285,7 @@
                                 <n-input type="password" v-model:value="dataAnulate.pass"/>
                             </n-form-item>
                             <n-form-item label="Cantidad">
-                                <n-input-number v-model:value="deleteQuantity" min="1" :max="maxQuantity" style="width: 100%"/>
+                                <n-input-number v-model:value="deleteQuantity" :min="1" :max="maxQuantity" style="width: 100%"/>
                             </n-form-item>
                         </n-form>
                     </div>

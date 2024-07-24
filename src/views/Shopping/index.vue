@@ -51,7 +51,7 @@
               </n-input-group>
             </n-form-item-gi>
             <n-form-item-gi :span="2" label="Cantidad">
-              <n-input-number class="w-100" placeholder="" />
+              <n-input-number class="w-100" placeholder="" :min="0.0005" />
             </n-form-item-gi>
             <n-form-item-gi :span="2" label="Pre. compra (S/.)">
               <n-input placeholder="" />
