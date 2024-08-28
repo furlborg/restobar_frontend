@@ -85,6 +85,10 @@
                 <td align="right">TOTAL PENDIENTE:</td>
                 <td>S/. {{ data.pending_amount.toFixed(2) }}</td>
               </tr>
+              <tr>
+                <td align="right">OBSERVACIONES:</td>
+                <td>S/. {{ data.observations || '' }}</td>
+              </tr>
             </tfoot>
           </table>
         </div>

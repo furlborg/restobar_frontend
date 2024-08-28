@@ -285,6 +285,14 @@
                   }}
                 </td>
               </tr>
+              <tr>
+                <td>OBSERVACIONES</td>
+                <td>
+                  {{
+                    data.observations
+                  }}
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>

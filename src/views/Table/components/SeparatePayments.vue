@@ -77,7 +77,7 @@
             <n-gi :span="12">
               <n-collapse-transition :show="showObservations">
                 <n-form-item label="Observaciones">
-                  <n-input type="textarea" />
+                  <n-input type="textarea"  v-model:value="sale.observations"/>
                 </n-form-item>
               </n-collapse-transition>
             </n-gi>

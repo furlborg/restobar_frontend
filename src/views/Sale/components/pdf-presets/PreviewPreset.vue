@@ -81,6 +81,9 @@
         >
           EN EL PADRE NO COBRAMOS POR SERVICIO. AQUI AMAMOS LAS PROPINAS
         </div>
+          <div>
+              {{data.observations || ''}}
+          </div>
       </div>
     </div>
   </div>
