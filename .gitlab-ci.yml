@@ -11,4 +11,4 @@ demo:
     - mkdir -p ~/.ssh
     - ssh-keyscan -H ${SSH_HOST} >> ~/.ssh/known_hosts
   script:
-    - sshpass -p "${SSH_PASSWORD}" ssh ${SSH_USER}@${SSH_HOST} " cd /home/ubuntu/ && export NVM_DIR=~/.nvm && source ~/.nvm/nvm.sh && . update_tilson_front && exit"
+    - sshpass -p "${SSH_PASSWORD}" ssh ${SSH_USER}@${SSH_HOST} " cd /home/tsi/ci/ && export NVM_DIR=~/.nvm && source ~/.nvm/nvm.sh && . update_demo_flizzy_front && exit"
