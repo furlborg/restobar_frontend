@@ -131,21 +131,21 @@
                   <n-input
                     v-model:value="filterParams.document"
                     placeholder=""
-                    @keypress="isLetterOrNumber($event)"
+                    @keydown="isLetterOrNumber($event)"
                   />
                 </n-form-item-gi>
                 <n-form-item-gi label="Descripción" :span="3">
                   <n-input
                     v-model:value="filterParams.description"
                     placeholder=""
-                    @keypress="isLetterOrNumber($event)"
+                    @keydown="isLetterOrNumber($event)"
                   />
                 </n-form-item-gi>
                 <n-form-item-gi label="Monto" :span="3">
                   <n-input
                     v-model:value="filterParams.amount"
                     placeholder=""
-                    @keypress="isDecimal($event)"
+                    @keydown="isDecimal($event)"
                   />
                 </n-form-item-gi>
                 <n-form-item-gi label="Tipo Concepto" :span="3">
@@ -205,7 +205,6 @@
             @select="selectReport"
           >
             <n-button type="info" tertiary>
-              <!-- <v-icon name="si-simpleanalytics" /> -->
               Reportes
             </n-button>
           </n-dropdown>
@@ -223,7 +222,7 @@
 </template>
 
 <script>
-import jspdf from "jspdf";
+import jsPDF from "jspdf";
 import format from "date-fns/format";
 import { defineComponent, ref, onMounted, computed } from "vue";
 import { useRoute } from "vue-router";
@@ -283,23 +282,23 @@ export default defineComponent({
 
     const income = computed(() =>
       movements.value
-        .filter((row) => tillStore.getConceptType(row.concept) === "0")
-        .reduce((prevValue, row) => prevValue + Number(row.amount), 0)
+        .filter((row) => tillStore.getConceptType(row?.concept) === "0")
+        .reduce((prevValue, row) => prevValue + Number(row?.amount), 0)
     );
 
     const outcome = computed(() =>
       movements.value
-        .filter((row) => tillStore.getConceptType(row.concept) === "1")
-        .reduce((prevValue, row) => prevValue + Number(row.amount), 0)
+        .filter((row) => tillStore.getConceptType(row?.concept) === "1")
+        .reduce((prevValue, row) => prevValue + Number(row?.amount), 0)
     );
 
     const sells = computed(() => {
       const sells_income = movements.value
-        .filter((row) => row.concept === 3)
-        .reduce((prevValue, row) => prevValue + Number(row.amount), 0);
+        .filter((row) => row?.concept === 3)
+        .reduce((prevValue, row) => prevValue + Number(row?.amount), 0);
       const sells_outcome = movements.value
-        .filter((row) => row.concept === 6)
-        .reduce((prevValue, row) => prevValue + Number(row.amount), 0);
+        .filter((row) => row?.concept === 6)
+        .reduce((prevValue, row) => prevValue + Number(row?.amount), 0);
       return sells_income - sells_outcome;
     });
 
@@ -381,9 +380,9 @@ export default defineComponent({
       const mm = fetch.getMonth();
       const yy = fetch.getFullYear();
       const hh = fetch.getHours();
-      const msms = fetch.getMinutes();
+      const ss = fetch.getMinutes();
 
-      dateNow.value = `${dd}/${mm + 1}/${yy} ${hh}:${msms}`;
+      dateNow.value = `${dd}/${mm + 1}/${yy} ${hh}:${ss}`;
     });
 
     const onCloseModal = () => {
@@ -393,7 +392,7 @@ export default defineComponent({
     const makeTillReport = () => {
       getTillReport(till)
         .then((response) => {
-          const doc = new jspdf({
+          const doc = new jsPDF({
             format: [80, 297],
           });
           doc.html(response.data, {
@@ -402,13 +401,13 @@ export default defineComponent({
             callback: function (doc) {
               /* doc.save(); */
               doc.autoPrint();
-              const hiddFrame = document.createElement("iframe");
-              hiddFrame.style.position = "fixed";
-              hiddFrame.style.width = "1px";
-              hiddFrame.style.height = "1px";
-              hiddFrame.style.opacity = "0.01";
-              hiddFrame.src = doc.output("bloburl");
-              document.body.appendChild(hiddFrame);
+              const hiddeFrame = document.createElement("iframe");
+              hiddeFrame.style.position = "fixed";
+              hiddeFrame.style.width = "1px";
+              hiddeFrame.style.height = "1px";
+              hiddeFrame.style.opacity = "0.01";
+              hiddeFrame.src = doc.output("bloburl");
+              document.body.appendChild(hiddeFrame);
             },
           });
         })
@@ -420,22 +419,22 @@ export default defineComponent({
     const makeSimpleTillReport = () => {
       getSimpleTillReport(till)
         .then((response) => {
-          const doc = new jspdf({
+          const doc = new jsPDF({
             format: [80, 297],
           });
-          doc.html(response.d7ata, {
+          doc.html(response.data, {
             html2canvas: { scale: "0.25" },
             margin: [0, 2, 0, 2],
             callback: function (doc) {
               /* doc.save(); */
               doc.autoPrint();
-              const hiddFrame = document.createElement("iframe");
-              hiddFrame.style.position = "fixed";
-              hiddFrame.style.width = "1px";
-              hiddFrame.style.height = "1px";
-              hiddFrame.style.opacity = "0.01";
-              hiddFrame.src = doc.output("bloburl");
-              document.body.appendChild(hiddFrame);
+              const hiddeFrame = document.createElement("iframe");
+              hiddeFrame.style.position = "fixed";
+              hiddeFrame.style.width = "1px";
+              hiddeFrame.style.height = "1px";
+              hiddeFrame.style.opacity = "0.01";
+              hiddeFrame.src = doc.output("bloburl");
+              document.body.appendChild(hiddeFrame);
             },
           });
         })
@@ -447,7 +446,7 @@ export default defineComponent({
     const makeSaleReport = () => {
       getTillSaleReport(till)
         .then((response) => {
-          const doc = new jspdf({
+          const doc = new jsPDF({
             format: [80, 297],
           });
           doc.html(response.data, {
@@ -456,13 +455,13 @@ export default defineComponent({
             callback: function (doc) {
               /* doc.save(); */
               doc.autoPrint();
-              const hiddFrame = document.createElement("iframe");
-              hiddFrame.style.position = "fixed";
-              hiddFrame.style.width = "1px";
-              hiddFrame.style.height = "1px";
-              hiddFrame.style.opacity = "0.01";
-              hiddFrame.src = doc.output("bloburl");
-              document.body.appendChild(hiddFrame);
+              const hiddeFrame = document.createElement("iframe");
+              hiddeFrame.style.position = "fixed";
+              hiddeFrame.style.width = "1px";
+              hiddeFrame.style.height = "1px";
+              hiddeFrame.style.opacity = "0.01";
+              hiddeFrame.src = doc.output("bloburl");
+              document.body.appendChild(hiddeFrame);
             },
           });
         })
@@ -474,7 +473,7 @@ export default defineComponent({
     const makeAreaKardexReport = () => {
       getAreaKardexReport(till)
         .then((response) => {
-          const doc = new jspdf({
+          const doc = new jsPDF({
             format: [80, 297],
           });
           doc.html(response.data, {
@@ -483,13 +482,13 @@ export default defineComponent({
             callback: function (doc) {
               /* doc.save(); */
               doc.autoPrint();
-              const hiddFrame = document.createElement("iframe");
-              hiddFrame.style.position = "fixed";
-              hiddFrame.style.width = "1px";
-              hiddFrame.style.height = "1px";
-              hiddFrame.style.opacity = "0.01";
-              hiddFrame.src = doc.output("bloburl");
-              document.body.appendChild(hiddFrame);
+              const hiddeFrame = document.createElement("iframe");
+              hiddeFrame.style.position = "fixed";
+              hiddeFrame.style.width = "1px";
+              hiddeFrame.style.height = "1px";
+              hiddeFrame.style.opacity = "0.01";
+              hiddeFrame.src = doc.output("bloburl");
+              document.body.appendChild(hiddeFrame);
             },
           });
         })
@@ -665,7 +664,7 @@ export default defineComponent({
     };
 
     const downloadReport = (data, filename) => {
-      const url = window.URL.createObjectURL(new Blob([data]));
+      const url = window.URL?.['createObjectURL'](new Blob([data]));
       const link = document.createElement("a");
       link.href = url;
       link.setAttribute("download", filename);

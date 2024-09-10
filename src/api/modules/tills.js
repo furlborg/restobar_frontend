@@ -113,6 +113,10 @@ export async function getTillReport(id) {
   return await http.get(`tills/${id}/till_report/`);
 }
 
+export async function getTillReportDetail(id) {
+  return await http.get(`tills/${id}/till_report_second/`);
+}
+
 export async function getSimpleTillReport(id) {
   return await http.get(`tills/${id}/simple_till_report/`);
 }

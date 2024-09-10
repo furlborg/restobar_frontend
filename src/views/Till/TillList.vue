@@ -5,8 +5,8 @@
         <n-space>
           <n-button
             v-if="
-              settingsStore.businessSettings?.sale?.enable_credits === true &&
-              settingsStore.businessSettings?.sale?.customer_credits === false
+              settingsStore.businessSettings?.sale?.['enable_credits'] === true &&
+              settingsStore.businessSettings?.sale?.['customer_credits'] === false
             "
             type="info"
             tertiary
@@ -69,28 +69,28 @@
               <n-input
                 v-model:value="filterParams.opening_responsable"
                 placeholder=""
-                @keypress="isLetter($event)"
+                @keydown="isLetter($event)"
               />
             </n-form-item-gi>
             <n-form-item-gi label="Responsable Cierre" :span="3">
               <n-input
                 v-model:value="filterParams.closing_responsable"
                 placeholder=""
-                @keypress="isLetter($event)"
+                @keydown="isLetter($event)"
               />
             </n-form-item-gi>
             <n-form-item-gi label="Saldo inicial" :span="3">
               <n-input
                 v-model:value="filterParams.opening_amount"
                 placeholder=""
-                @keypress="isDecimal($event)"
+                @keydown="isDecimal($event)"
               />
             </n-form-item-gi>
             <n-form-item-gi label="Saldo final" :span="3">
               <n-input
                 v-model:value="filterParams.closing_amount"
                 placeholder=""
-                @keypress="isDecimal($event)"
+                @keydown="isDecimal($event)"
               />
             </n-form-item-gi>
             <n-form-item-gi label="Apertura" :span="6">
@@ -146,23 +146,23 @@
 import format from "date-fns/format";
 import { defineComponent, ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { useDialog, useMessage } from "naive-ui";
-import jspdf from "jspdf";
+import { useMessage } from "naive-ui";
+import { jsPDF } from "jspdf";
 import TillApertureModal from "./components/TillApertureModal";
 import TillClosureModal from "./components/TillClosureModal";
 import { createTillColumns } from "@/utils/constants";
 import { isDecimal, isLetter, isNumber } from "@/utils";
 import {
-  getTills,
-  getTillsByPageNumber,
-  filterTills,
-  getTillReport,
-  getTillSaleReport,
-  getTillMethodsReport,
-  getSimpleTillReport,
-  getExcelReport,
-  getAreaKardexReport,
-  sendTillReport,
+    getTills,
+    getTillsByPageNumber,
+    filterTills,
+    getTillReport,
+    getTillSaleReport,
+    getTillMethodsReport,
+    getSimpleTillReport,
+    getExcelReport,
+    getAreaKardexReport,
+    sendTillReport, getTillReportDetail
 } from "@/api/modules/tills";
 import { useTillStore } from "@/store/modules/till";
 import { useSettingsStore } from "@/store/modules/settings";
@@ -177,7 +177,6 @@ export default defineComponent({
   },
   setup() {
     const message = useMessage();
-    const dialog = useDialog();
     const router = useRouter();
     const settingsStore = useSettingsStore();
     const businessStore = useBusinessStore();
@@ -364,7 +363,7 @@ export default defineComponent({
         makeTillReport(row) {
           getTillReport(row.id)
             .then((response) => {
-              const doc = new jspdf({
+              const doc = new jsPDF({
                 format: [80, 297],
               });
               doc.html(response.data, {
@@ -373,13 +372,13 @@ export default defineComponent({
                 callback: function (doc) {
                   /* doc.save(); */
                   doc.autoPrint();
-                  const hiddFrame = document.createElement("iframe");
-                  hiddFrame.style.position = "fixed";
-                  hiddFrame.style.width = "1px";
-                  hiddFrame.style.height = "1px";
-                  hiddFrame.style.opacity = "0.01";
-                  hiddFrame.src = doc.output("bloburl");
-                  document.body.appendChild(hiddFrame);
+                  const hiddeFrame = document.createElement("iframe");
+                  hiddeFrame.style.position = "fixed";
+                  hiddeFrame.style.width = "1px";
+                  hiddeFrame.style.height = "1px";
+                  hiddeFrame.style.opacity = "0.01";
+                  hiddeFrame.src = doc.output("bloburl");
+                  document.body.appendChild(hiddeFrame);
                 },
               });
             })
@@ -390,7 +389,7 @@ export default defineComponent({
         makeSimpleTillReport(row) {
           getSimpleTillReport(row.id)
             .then((response) => {
-              const doc = new jspdf({
+              const doc = new jsPDF({
                 format: [80, 297],
               });
               doc.html(response.data, {
@@ -399,13 +398,13 @@ export default defineComponent({
                 callback: function (doc) {
                   /* doc.save(); */
                   doc.autoPrint();
-                  const hiddFrame = document.createElement("iframe");
-                  hiddFrame.style.position = "fixed";
-                  hiddFrame.style.width = "1px";
-                  hiddFrame.style.height = "1px";
-                  hiddFrame.style.opacity = "0.01";
-                  hiddFrame.src = doc.output("bloburl");
-                  document.body.appendChild(hiddFrame);
+                  const hiddeFrame = document.createElement("iframe");
+                  hiddeFrame.style.position = "fixed";
+                  hiddeFrame.style.width = "1px";
+                  hiddeFrame.style.height = "1px";
+                  hiddeFrame.style.opacity = "0.01";
+                  hiddeFrame.src = doc.output("bloburl");
+                  document.body.appendChild(hiddeFrame);
                 },
               });
             })
@@ -416,7 +415,7 @@ export default defineComponent({
         makeSaleReport(row) {
           getTillSaleReport(row.id)
             .then((response) => {
-              const doc = new jspdf({
+              const doc = new jsPDF({
                 format: [80, 297],
               });
               doc.html(response.data, {
@@ -425,13 +424,13 @@ export default defineComponent({
                 callback: function (doc) {
                   /* doc.save(); */
                   doc.autoPrint();
-                  const hiddFrame = document.createElement("iframe");
-                  hiddFrame.style.position = "fixed";
-                  hiddFrame.style.width = "1px";
-                  hiddFrame.style.height = "1px";
-                  hiddFrame.style.opacity = "0.01";
-                  hiddFrame.src = doc.output("bloburl");
-                  document.body.appendChild(hiddFrame);
+                  const hiddeFrame = document.createElement("iframe");
+                  hiddeFrame.style.position = "fixed";
+                  hiddeFrame.style.width = "1px";
+                  hiddeFrame.style.height = "1px";
+                  hiddeFrame.style.opacity = "0.01";
+                  hiddeFrame.src = doc.output("bloburl");
+                  document.body.appendChild(hiddeFrame);
                 },
               });
             })
@@ -442,7 +441,7 @@ export default defineComponent({
         makeMethodsReport(row) {
           getTillMethodsReport(row.id)
             .then((response) => {
-              const doc = new jspdf({
+              const doc = new jsPDF({
                 format: [80, 297],
               });
               doc.html(response.data, {
@@ -451,13 +450,13 @@ export default defineComponent({
                 callback: function (doc) {
                   /* doc.save(); */
                   doc.autoPrint();
-                  const hiddFrame = document.createElement("iframe");
-                  hiddFrame.style.position = "fixed";
-                  hiddFrame.style.width = "1px";
-                  hiddFrame.style.height = "1px";
-                  hiddFrame.style.opacity = "0.01";
-                  hiddFrame.src = doc.output("bloburl");
-                  document.body.appendChild(hiddFrame);
+                  const hiddeFrame = document.createElement("iframe");
+                  hiddeFrame.style.position = "fixed";
+                  hiddeFrame.style.width = "1px";
+                  hiddeFrame.style.height = "1px";
+                  hiddeFrame.style.opacity = "0.01";
+                  hiddeFrame.src = doc.output("bloburl");
+                  document.body.appendChild(hiddeFrame);
                 },
               });
             })
@@ -468,7 +467,7 @@ export default defineComponent({
         makeAreaKardexReport(row) {
           getAreaKardexReport(row.id)
             .then((response) => {
-              const doc = new jspdf({
+              const doc = new jsPDF({
                 format: [80, 297],
               });
               doc.html(response.data, {
@@ -477,13 +476,13 @@ export default defineComponent({
                 callback: function (doc) {
                   /* doc.save(); */
                   doc.autoPrint();
-                  const hiddFrame = document.createElement("iframe");
-                  hiddFrame.style.position = "fixed";
-                  hiddFrame.style.width = "1px";
-                  hiddFrame.style.height = "1px";
-                  hiddFrame.style.opacity = "0.01";
-                  hiddFrame.src = doc.output("bloburl");
-                  document.body.appendChild(hiddFrame);
+                  const hiddeFrame = document.createElement("iframe");
+                  hiddeFrame.style.position = "fixed";
+                  hiddeFrame.style.width = "1px";
+                  hiddeFrame.style.height = "1px";
+                  hiddeFrame.style.opacity = "0.01";
+                  hiddeFrame.src = doc.output("bloburl");
+                  document.body.appendChild(hiddeFrame);
                 },
               });
             })
@@ -527,6 +526,28 @@ export default defineComponent({
             showClosureModal.value = true;
           }
         },
+          makeTillReportDetail(row) {
+              getTillReportDetail(row.id).then((response) => {
+                  const doc = new jsPDF({
+                      format: [80, 1500]
+                  });
+                  doc.html(response.data, {
+                      html2canvas: { scale: "0.25" },
+                      margin: [0, 2, 0, 2],
+                      callback: function(doc) {
+                          /* doc.save(); */
+                          doc.autoPrint();
+                          const hiddeFrame = document.createElement("iframe");
+                          hiddeFrame.style.position = "fixed";
+                          hiddeFrame.style.width = "1px";
+                          hiddeFrame.style.height = "1px";
+                          hiddeFrame.style.opacity = "0.01";
+                          hiddeFrame.src = doc.output("bloburl");
+                          document.body.appendChild(hiddeFrame);
+                      }
+                  });
+              }).catch(() => message.error("Error al intentar imprimir reporte..."));
+          }
       }),
     };
   },

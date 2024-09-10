@@ -328,11 +328,9 @@ import {
   createSale,
   getSaleNumber,
   sendSale,
-  sendWhatsapp,
 } from "@/api/modules/sales";
 import { useDialog, useMessage } from "naive-ui";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
-import format from "date-fns/format";
 import { lighten } from "@/utils";
 import { useBusinessStore } from "@/store/modules/business";
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
@@ -353,10 +351,8 @@ export default defineComponent({
   setup(props, { emit }) {
     const sale = toRef(props, "data");
     const dateNow = ref(null);
-    const router = useRouter();
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
-    const userStore = useUserStore();
     const productStore = useProductStore();
     const settingsStore = useSettingsStore();
     const genericsStore = useGenericsStore();
@@ -487,7 +483,6 @@ export default defineComponent({
       } else {
         rules.customer.required = true;
       }
-      console.log(rules);
       return rules;
     });
 

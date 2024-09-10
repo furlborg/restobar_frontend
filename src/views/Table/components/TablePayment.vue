@@ -121,7 +121,7 @@
                   </td>
                   <td>
                     S/.
-                    <input class="custom-input" type="number" min="0" step=".5" v-model="detail.price_sale" @input="(v) => (
+                    <input class="custom-input" type="number" min="0" step=".5" v-model="detail.price_sale" @input="() => (
       saleStore.updateDetail(detail),
       (detail.discount = parseFloat(0).toFixed(2))
     )
@@ -322,7 +322,6 @@ import {
   createSale,
   getSaleNumber,
   sendSale,
-  sendWhatsapp,
 } from "@/api/modules/sales";
 import { useDialog, useMessage } from "naive-ui";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
@@ -486,12 +485,7 @@ export default defineComponent({
 
     const formRules = computed(() => {
       let rules = saleRules;
-      if (sale.value.invoice_type !== 1 && sale.value.payment_condition === 1 && sale.value.given_amount <= 699) {
-        rules.customer.required = false;
-      } else {
-        rules.customer.required = true;
-      }
-      console.log(rules);
+      rules.customer.required = !(sale.value.invoice_type !== 1 && sale.value.payment_condition === 1 && sale.value.given_amount <= 699);
       return rules;
     });
 

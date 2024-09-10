@@ -115,29 +115,6 @@ export const documentOptions = [
   },
 ];
 
-export const measureUnitOptions = [
-  {
-    label: "UND",
-    value: "1",
-  },
-  {
-    label: "SERV",
-    value: "2",
-  },
-];
-
-export const getmeasureUnitByNumber = (v) => {
-  switch (v) {
-    case "1":
-      return "UND";
-    case "2":
-      return "SERV";
-    default:
-      console.error("Error: Unidad de medida inválido");
-      break;
-  }
-};
-
 export const getSaleDocumentByNumber = (v) => {
   switch (v) {
     case "1":
@@ -297,7 +274,7 @@ export const createCustomerColumns = ({
             },
             renderIcon("la-user-edit-solid")
           ),
-          settingsStore.business_settings.sale.customer_credits &&
+          settingsStore.business_settings?.['sale']?.['customer_credits'] &&
             h(
               NButton,
               {
@@ -502,6 +479,7 @@ export const createTillColumns = ({
   requestExcel,
   sendReportMail,
   closeTill,
+  makeTillReportDetail,
 }) => {
   return [
     /* {
@@ -635,6 +613,10 @@ export const createTillColumns = ({
                         label: "Reporte simple de caja",
                       },
                       {
+                        key: 16,
+                        label: "Reporte detallado de caja",
+                      },
+                      {
                         key: 13,
                         label: "Reporte de ventas",
                       },
@@ -646,7 +628,7 @@ export const createTillColumns = ({
                         key: 15,
                         label: "Productos por Area",
                       },
-                    ],
+                    ].concat({key: 16, label: "Reporte detallado de caja",}),
                   },
                   {
                     label: "Excel",
@@ -731,6 +713,9 @@ export const createTillColumns = ({
                     case 15:
                       makeAreaKardexReport(row);
                       break;
+                    case 16:
+                      makeTillReportDetail(row);
+                      break;
                     case 211:
                       requestExcel(row.id, "details", "Movimientos");
                       break;
@@ -778,17 +763,6 @@ export const createTillColumns = ({
                   ),
               }
             ),
-          /* h(
-              NButton,
-              {
-                  class: 'me-2',
-                  size: 'small',
-                  type: 'warning',
-                  secondary: true,
-                  onClick: () => generateReport(row)
-              },
-              renderIcon('md-insertchart-outlined')
-          ), */
           userStore.hasPermission("delete_till") &&
             h(
               NButton,
@@ -872,7 +846,7 @@ export const createMovementsColumns = ({
       width: 100,
       render(row) {
         let concept_type = tillStore.getConceptType(row.concept);
-        return concept_type == "0" ? row.amount : "----";
+        return concept_type === "0" ? row.amount : "----";
       },
     },
     {
@@ -882,7 +856,7 @@ export const createMovementsColumns = ({
       width: 100,
       render(row) {
         let concept_type = tillStore.getConceptType(row.concept);
-        return concept_type == "1" ? row.amount : "----";
+        return concept_type === "1" ? row.amount : "----";
       },
     },
     {
@@ -906,11 +880,11 @@ export const createMovementsColumns = ({
           NTag,
           {
             size: "small",
-            type: concept_type == "0" ? "success" : "error",
+            type: concept_type === "0" ? "success" : "error",
             round: true,
           },
           {
-            default: () => (concept_type == "0" ? "INGRESO" : "EGRESO"),
+            default: () => (concept_type === "0" ? "INGRESO" : "EGRESO"),
           }
         );
       },
@@ -969,7 +943,7 @@ export const createMovementsColumns = ({
       },
     },
   ];
-  if (!settingsStore.business_settings.till.closure_cash_total) {
+  if (!settingsStore.business_settings?.['till'].closure_cash_total) {
     cols.splice(2, 0, {
       title: "Método Pago",
       key: "payment_method",
@@ -1021,7 +995,7 @@ export const createTillDetailsColumns = () => {
       width: 100,
       render(row) {
         let concept_type = tillStore.getConceptType(row.concept);
-        return concept_type == "0" ? row.amount : "----";
+        return concept_type === "0" ? row.amount : "----";
       },
     },
     {
@@ -1031,7 +1005,7 @@ export const createTillDetailsColumns = () => {
       width: 100,
       render(row) {
         let concept_type = tillStore.getConceptType(row.concept);
-        return concept_type == "1" ? row.amount : "----";
+        return concept_type === "1" ? row.amount : "----";
       },
     },
     {
@@ -1055,11 +1029,11 @@ export const createTillDetailsColumns = () => {
           NTag,
           {
             size: "small",
-            type: concept_type == "0" ? "success" : "error",
+            type: concept_type === "0" ? "success" : "error",
             round: true,
           },
           {
-            default: () => (concept_type == "0" ? "INGRESO" : "EGRESO"),
+            default: () => (concept_type === "0" ? "INGRESO" : "EGRESO"),
           }
         );
       },
@@ -1429,10 +1403,10 @@ export const createSaleColumns = ({
           NPopover,
           {
             trigger: "hover",
-            disabled: !row.null_reason,
+            disabled: !row?.['null_reason'],
           },
           {
-            default: () => row.null_reason,
+            default: () => row?.['null_reason'],
             trigger: () =>
               h(
                 NTag,
@@ -1571,10 +1545,10 @@ export const createTillSalesColumns = () => {
           NPopover,
           {
             trigger: "hover",
-            disabled: !row.null_reason,
+            disabled: !row?.['null_reason'],
           },
           {
-            default: () => row.null_reason,
+            default: () => row?.['null_reason'],
             trigger: () =>
               h(
                 NTag,
@@ -1678,7 +1652,7 @@ export const createOrderColumns = ({
       align: "center",
       width: genericsStore.device !== "desktop" ? 100 : "auto",
       render(row) {
-        return `S/. ${parseFloat(row.initial_amount).toFixed(2)}`;
+        return `S/. ${parseFloat(row?.['initial_amount']).toFixed(2)}`;
       },
     },
     {
@@ -1776,10 +1750,10 @@ export const createOrderColumns = ({
           NPopover,
           {
             trigger: "hover",
-            disabled: !row.null_reason,
+            disabled: !row?.['null_reason'],
           },
           {
-            default: () => row.null_reason,
+            default: () => row?.['null_reason'],
             trigger: () =>
               h(
                 NTag,
@@ -1814,7 +1788,7 @@ export const createOrderColumns = ({
             },
             renderIcon("md-feed-round")
           ),
-          row.is_delivery
+          row?.['is_delivery']
             ? h(
                 NButton,
                 {
@@ -1899,7 +1873,7 @@ export const createTillOrderColumns = ({ showDetails, showDeliveryInfo }) => {
       align: "center",
       width: genericsStore.device !== "desktop" ? 100 : "auto",
       render(row) {
-        return `S/. ${parseFloat(row.initial_amount).toFixed(2)}`;
+        return `S/. ${parseFloat(row?.['initial_amount']).toFixed(2)}`;
       },
     },
     {
@@ -1979,10 +1953,10 @@ export const createTillOrderColumns = ({ showDetails, showDeliveryInfo }) => {
           NPopover,
           {
             trigger: "hover",
-            disabled: !row.null_reason,
+            disabled: !row?.['null_reason'],
           },
           {
-            default: () => row.null_reason,
+            default: () => row?.['null_reason'],
             trigger: () =>
               h(
                 NTag,
@@ -2024,7 +1998,7 @@ export const createTillOrderColumns = ({ showDetails, showDeliveryInfo }) => {
               size: "small",
               type: "warning",
               secondary: true,
-              disabled: !row.is_delivery,
+              disabled: !row?.['is_delivery'],
               onClick: () => showDeliveryInfo(row),
             },
             renderIcon("md-deliverydining-round")
