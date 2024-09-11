@@ -82,6 +82,7 @@ export async function disableProduct(id) {
 
 export async function searchProduct(
   search,
+  category,
   disabled = false,
   pageLimit,
   pageOffset
@@ -89,6 +90,7 @@ export async function searchProduct(
   return await http.get("products/", {
     params: {
       search: search,
+      category: category,
       disabled: disabled,
       limit: pageLimit,
       offset: pageOffset,

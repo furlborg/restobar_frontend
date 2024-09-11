@@ -47,16 +47,15 @@
             v-model:value="search"
             placeholder="Buscar..."
             clearable
-            @clear="((search = ''), (show_disabled = false)), performSearch()"
-            @keypress.enter="performSearch"
+            @clear="()=>{(search = ''); (show_disabled = false); performSearch()}"
+            @keyup.enter="performSearch"
           />
           <n-button type="primary" @click="performSearch" secondary>
             <v-icon name="md-search-round" />
           </n-button>
         </n-input-group>
-        <n-checkbox v-model:checked="show_disabled"
-          >Mostrar deshabilitados</n-checkbox
-        >
+          <n-select v-model:value="category" :options="categoriesOptions" placeholder="Seleccione una categoria" @update:value="performSearch" filterable style="min-width: 200px"/>
+          <n-checkbox v-model:checked="show_disabled">Mostrar deshabilitados</n-checkbox>
       </n-space>
       <!-- <n-radio-group v-model:value="listType" name="listType" size="small">
           <n-radio-button class="p-0" value="list" key="list">
@@ -103,7 +102,7 @@
                       }}</n-tag>
                     </n-space>
                     <div v-if="product.amount.length > 0">
-                      <div v-if="product.amount.length == 1">
+                      <div v-if="product.amount.length === 1">
                         <n-text class="fs-6"
                           >Stock: {{ product.amount[0].amount }}</n-text
                         >
@@ -224,7 +223,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, onMounted, reactive } from "vue";
+import { defineComponent, ref, onMounted, reactive, computed } from "vue";
 import { useMessage, useDialog } from "naive-ui";
 import { renderIcon } from "@/utils";
 import ProductModal from "./components/ProductModal";
@@ -253,7 +252,8 @@ export default defineComponent({
     const showModal = ref(false);
     const showModalMovement = ref(false);
     const showButtons = ref(false);
-    const search = ref(null);
+    const search = ref('');
+    const category = ref();
     const show_disabled = ref(false);
     const idProduct = ref(0);
     const type = ref(0);
@@ -271,6 +271,14 @@ export default defineComponent({
         icon: renderIcon("ri-delete-bin-2-fill"),
       },
     ];
+
+      const categoriesOptions = computed(() => {
+          return productStore.categories.map((categories) => ({
+              label: categories.description,
+              value: categories.id,
+          }));
+      });
+
     const newMovement = (value) => {
       (type.value = value),
         (itemsMovement.product = undefined),
@@ -280,7 +288,8 @@ export default defineComponent({
         (itemsMovement.amount = undefined);
     };
     const pagination = ref({
-      search: null,
+      search: '',
+      category: null,
       show_disabled: false,
       total: 0,
       offset: 0,
@@ -295,6 +304,7 @@ export default defineComponent({
         pagination.value.offset = --page * pagination.value.pageSize;
         await searchProduct(
           pagination.value.search,
+          pagination.value.category,
           pagination.value.show_disabled,
           pagination.value.pageSize,
           pagination.value.offset
@@ -327,6 +337,7 @@ export default defineComponent({
         pagination.value.pageSize = pageSize;
         await searchProduct(
           pagination.value.search,
+          pagination.value.category,
           pagination.value.show_disabled,
           pageSize,
           pagination.value.offset
@@ -390,11 +401,13 @@ export default defineComponent({
     const performSearch = async () => {
       isLoadingData.value = true;
       pagination.value.search = search.value;
+      pagination.value.category = category.value;
       pagination.value.show_disabled = show_disabled.value;
       pagination.value.offset = 0;
       pagination.value.page = 1;
       await searchProduct(
         pagination.value.search,
+        pagination.value.category,
         pagination.value.show_disabled,
         pagination.value.pageSize,
         pagination.value.offset
@@ -464,7 +477,7 @@ export default defineComponent({
     const onSuccess = async () => {
       showModal.value = false;
       onCloseModal();
-      await loadProductsData();
+      await performSearch();
     };
 
     onMounted(() => {});
@@ -486,6 +499,8 @@ export default defineComponent({
       search,
       show_disabled,
       products,
+      categoriesOptions,
+      category,
       idProduct,
       refreshProducts,
       editProduct,

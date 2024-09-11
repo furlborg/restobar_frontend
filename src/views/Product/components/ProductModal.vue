@@ -63,8 +63,6 @@
                       categorie.description ===
                         productStore.getCategorieDescription(categorie.id) ||
                       !categorie.description
-                        ? true
-                        : false
                     "
                     @click="
                       !categorie.id
@@ -171,7 +169,7 @@
               v-model:value="product.stock"
               @input="product.stock = restrictDecimal(product.stock)"
               placeholder="0.0"
-              :disabled="!product.control_stock ? true : false"
+              :disabled="!product.control_stock"
             />
           </n-form-item-gi>
           <n-form-item-gi path="control_stock" :span="4">
@@ -235,7 +233,7 @@
           <n-form-item-gi label="Almacen" :span="12">
             <n-select
               v-model:value="product.branchoffice"
-              :disabled="product.id ? true : false"
+              :disabled="!!product.id"
               placeholder="Seleccione"
               :options="optionsEstablishment"
             />
@@ -295,7 +293,7 @@
               @click="addSupplie(supplieItem)"
               secondary
               :disabled="
-                supplieItem.supplie && supplieItem.stock ? false : true
+                !(supplieItem.supplie && supplieItem.stock)
               "
               >+ Agregar</n-button
             >
@@ -472,15 +470,15 @@ export default defineComponent({
           optionsEstablishment.value = [];
           response.data.map((v) => {
             if (
-              userStore.user.branchoffice == null ||
-              userStore.user.role == "ADMINISTRADOR"
+              userStore.user.branchoffice === null ||
+              userStore.user.role === "ADMINISTRADOR"
             ) {
               optionsEstablishment.value.push({
                 label: v.description,
                 value: v.id,
               });
             } else {
-              if (userStore.user.branchoffice == v.id) {
+              if (userStore.user.branchoffice === v.id) {
                 optionsEstablishment.value.push({
                   label: v.description,
                   value: v.id,
@@ -561,7 +559,7 @@ export default defineComponent({
           ) {
             message.warning("Necesitas agregar insumos.");
           } else if (
-            (product.value.control_stock && product.value.stock == "") ||
+            (product.value.control_stock && product.value.stock === "") ||
             parseInt(product.value.stock) <= 0
           ) {
             message.warning("La cantidad debe ser mayor a 0.");
@@ -667,7 +665,7 @@ export default defineComponent({
     const addSupplie = (data) => {
       let verify = false;
       product.value.supplies.map((v) => {
-        if (v.supplie == data.supplie) {
+        if (v?.supplie === data.supplie) {
           verify = true;
         }
       });
@@ -676,8 +674,8 @@ export default defineComponent({
       } else {
         let name = "";
         optionsSupplie.value.map((v) => {
-          if (v.value == data.supplie) {
-            name = v.label;
+          if (v?.value === data.supplie) {
+            name = v?.label;
           }
         });
 
@@ -695,7 +693,7 @@ export default defineComponent({
     const deleteSupplie = (value) => {
       let data = [];
       product.value.supplies.map((v) => {
-        if (value !== v.supplie) {
+        if (value !== v?.supplie) {
           data.push(v);
         }
       });
@@ -739,7 +737,7 @@ export default defineComponent({
       {
         title: "",
         width: 5,
-        render(row, i) {
+        render(row) {
           return h(
             NButton,
             {
