@@ -628,7 +628,7 @@ export const createTillColumns = ({
                         key: 15,
                         label: "Productos por Area",
                       },
-                    ].concat({key: 16, label: "Reporte detallado de caja",}),
+                    ],
                   },
                   {
                     label: "Excel",
