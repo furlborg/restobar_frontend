@@ -236,14 +236,14 @@ import { useTillStore } from "@/store/modules/till";
 import { useSaleStore } from "@/store/modules/sale";
 
 import {
-  getCurrentTillDetails,
-  filterTillDetails,
-  getTillReport,
-  getTillSaleReport,
-  getSimpleTillReport,
-  getExcelReport,
-  getAreaKardexReport,
-  sendTillReport,
+    getCurrentTillDetails,
+    filterTillDetails,
+    getTillReport,
+    getTillSaleReport,
+    getSimpleTillReport,
+    getExcelReport,
+    getAreaKardexReport,
+    sendTillReport, getTillReportDetail
 } from "@/api/modules/tills";
 import { useUserStore } from "@/store/modules/user";
 
@@ -416,6 +416,34 @@ export default defineComponent({
         });
     };
 
+      const makeDetailedTillReport = () => {
+          getTillReportDetail(till)
+        .then((response) => {
+          const doc = new jsPDF({
+            format: [80, 1500],
+          });
+          doc.html(response.data, {
+            html2canvas: { scale: "0.25" },
+            margin: [0, 2, 0, 2],
+            callback: function (doc) {
+              /* doc.save(); */
+              doc.autoPrint();
+              const hiddeFrame = document.createElement("iframe");
+              hiddeFrame.style.position = "fixed";
+              hiddeFrame.style.width = "1px";
+              hiddeFrame.style.height = "1px";
+              hiddeFrame.style.opacity = "0.01";
+              hiddeFrame.src = doc.output("bloburl");
+              document.body.appendChild(hiddeFrame);
+            },
+          });
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    };
+
+
     const makeSimpleTillReport = () => {
       getSimpleTillReport(till)
         .then((response) => {
@@ -525,6 +553,10 @@ export default defineComponent({
             label: "Reporte simple de caja",
           },
           {
+            key: 17,
+            label: "Reporte detallado de caja",
+          },
+          {
             key: 13,
             label: "Reporte de ventas",
           },
@@ -619,6 +651,9 @@ export default defineComponent({
           break;
         case 13:
           makeSaleReport();
+          break;
+        case 17:
+          makeDetailedTillReport();
           break;
         case 14:
           makeAreaKardexReport();
