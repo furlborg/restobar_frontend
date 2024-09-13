@@ -16,17 +16,8 @@
           <div class="item-zoom" @click="selectCategory(category.id)">
             <div>
               <img src="~@/assets/images/category-bg.jpg" alt="" />
-              <n-text
-                class="
-                  position-absolute
-                  top-50
-                  start-50
-                  translate-middle
-                  text-center
-                  fs-6
-                "
-                >{{ category.description }}</n-text
-              >
+                <n-text style="font-size: 21px; font-weight: 900; text-align: center; color: #000; top: 40%; left: 45%"
+                        class="position-absolute translate-middle">{{ category.description }}</n-text>
             </div>
           </div>
         </n-gi>

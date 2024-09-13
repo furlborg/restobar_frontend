@@ -155,7 +155,7 @@
               :min="0"
               :max="100"
               :show-button="false"
-              @keypress="isNumber($event)"
+              @keydown="isNumber($event)"
             />
           </n-form-item-gi>
           <n-form-item-gi
@@ -215,7 +215,7 @@
               placeholder=""
               :min="0"
               :show-button="false"
-              @keypress="isNumber($event)"
+              @keydown="isNumber($event)"
             />
           </n-form-item-gi>
           <n-form-item-gi label="Puntos canje" path="redeem_points" :span="4">
@@ -224,7 +224,7 @@
               placeholder=""
               :min="0"
               :show-button="false"
-              @keypress="isNumber($event)"
+              @keydown="isNumber($event)"
             />
           </n-form-item-gi> -->
           <n-form-item-gi path="icbper" :span="3">
@@ -284,7 +284,7 @@
               v-model:value="supplieItem.stock"
               :min="0"
               :show-button="false"
-              @keypress="isDecimal($event)"
+              @keydown="isDecimal($event)"
             />
           </n-form-item-gi>
           <n-form-item-gi v-if="product.control_supplie" :span="4">
@@ -396,7 +396,6 @@ export default defineComponent({
     const genericsStore = useGenericsStore();
     const settingsStore = useSettingsStore();
     const userStore = useUserStore();
-    const businessStore = useBusinessStore();
     const { idProduct, show } = toRefs(props);
     const uploadRef = ref(null);
     const modalTitle = ref("Registrar Producto");
@@ -458,7 +457,7 @@ export default defineComponent({
             value: v.id,
           }));
         })
-        .catch((error) => {
+        .catch(() => {
           message.error("Algo salió mal...");
         });
     };

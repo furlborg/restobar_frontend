@@ -69,7 +69,7 @@
       whatsappNumber = '';
       createAddressesOptions();
     }
-      " @keypress.enter="autoCreateCustomer" placeholder="" clearable/>
+      " @keydown.enter="autoCreateCustomer" placeholder="" clearable/>
                                                 <n-button v-if="!sale.customer" type="info" @click="
       (sale.customer = 0), (showCustomerModal = true)
       ">
