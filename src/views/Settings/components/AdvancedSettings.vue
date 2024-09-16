@@ -571,7 +571,7 @@ export default defineComponent({
 
         const getPrinters = async () => {
             try {
-                const response = await fetch(`http://${settingsStore.business_settings.qz_config.host}:8000/printers`, {
+                const response = await fetch(`https://${settingsStore.business_settings.qz_config.host}:8000/printers`, {
                     method: 'GET'
                 });
 
