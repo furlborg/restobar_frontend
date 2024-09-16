@@ -53,7 +53,6 @@
           DELIVERY
         </n-button>
       </template>
-        <n-button @click="sendJsonOverWebSocket(data)">xd</n-button>
     </n-drawer-content>
   </n-drawer>
 </template>
@@ -67,7 +66,6 @@ import { useProductStore } from "@/store/modules/product";
 import { usePrinterStore } from "@/store/modules/printer";
 import { jsPDF } from "jspdf";
 import { useMessage } from "naive-ui";
-// import { Client } from "@stomp/stompjs";
 
 export default defineComponent({
   name: "TicketPreview",
@@ -111,14 +109,6 @@ export default defineComponent({
       );
     });
 
-    const sendJsonOverWebSocket = (data) => {
-        console.log(data);
-        console.log( places.value);
-          // Crear la instancia del cliente STOMP
-        // const socket = new WebSocket("ws://192.168.18.111:8000/print");
-
-    };
-
       const printTicket = (i, place) => {
       const ticket = tickets.value[i];
       const format = [ticket.$el.clientWidth, ticket.$el.clientHeight + 30];
@@ -130,14 +120,68 @@ export default defineComponent({
       });
       doc.html(ticket.$el.innerHTML, {
         margin: settingsStore.business_settings.printer.margins,
-        callback: async function (doc) {
+        callback: async function () {
           // doc.save();
-          await printerStore.printTicket(
-            doc,
-            format,
-            `ORDER#${props.data.id}#${place.description}`,
-            place.printer_name
-          );
+            const socket = new WebSocket(`wss://${settingsStore?.business_settings.qz_config.host}:8000/print`);
+            socket.onopen = function() {
+                // Enviar el mensaje JSON
+                const jsonTicket = {
+                    "printer_name": place.printer_name,
+                    "ticket_type": "ORDER",
+                    "tittle": {
+                        "table": "",
+                        "order": props.data.id
+                    },
+                    "header": {
+                        "date": props.data.created,
+                        "reference": props.data.ask_for,
+                        "username": props.data.username
+                    },
+                    "ticket_content": props.data.order_details.filter(pl => pl.preparation_place === place.description).map(it => ({
+                        "id": it.id,
+                        "cantidad": it.quantity,
+                        "descripcion": it.product_name,
+                        "indicaciones": it.indication.filter(indicate => {
+                            return (
+                                (!indicate.description.includes("[]") || indicate.quick_indications.length > 0) &&
+                                indicate.description !== ""
+                            );
+                        }).map(indicate => indicate.description) || ""
+                    }))
+                };
+
+                jsonTicket.tittle.table = `MESA ${props.data?.table}`;
+                if(props.data.delivery_info || props.data.table) delete jsonTicket.header.reference;
+                if(!props.data.table) jsonTicket.tittle.table = !props.data.delivery_info ? "PARA LLEVAR" : "DELIVERY";
+                console.log(jsonTicket);
+                // jsonTicket.header.reference = props.data.table || (!props.data.info.delivery_info ? "PARA LLEVAR" : "DELIVERY")
+                socket.send(JSON.stringify(jsonTicket));
+
+            };
+
+// Evento si ocurre algún error en la conexión
+            socket.onerror = function (error) {
+                console.log("Error en WebSocket", error);
+                message.error(error)
+            };
+
+// Evento cuando se recibe un mensaje del servidor
+            socket.onmessage = function (event) {
+                console.log("Mensaje recibido del servidor", event.data);
+                message.success(event.data)
+            };
+
+// Evento cuando la conexión es cerrada
+            socket.onclose = function (event) {
+                console.log("Conexión WebSocket cerrada", event);
+            };
+
+          // await printerStore.printTicket(
+          //   doc,
+          //   format,
+          //   `ORDER#${props.data.id}#${place.description}`,
+          //   place.printer_name
+          // );
         },
       });
     };
@@ -198,77 +242,73 @@ export default defineComponent({
             document.body.appendChild(hiddeFrame);
           } else {
 
-              const socket = new WebSocket(`ws://${settingsStore.business_settings.qz_config.host}:8000/print`);
-
 // Evento cuando la conexión es exitosa
-            console.log(props.data);
-            console.log(JSON.parse(props.data.json_sale));
-            console.log(JSON.parse(props.data.json_sale).informacion_adicional.split("|")[2]);
-        socket.onopen = function () {
-            console.log("Conexión WebSocket abierta");
-            // Enviar el mensaje JSON
-            const jsonTicket = {
-                "printer_name": settingsStore.businessSettings.sale.printer_name,
-                "ticket_type": "DELIVERY",
-                "tittle": {
-                    "table": "DELIVERY",
-                    "order": props.data.id
-                },
-                "header": {
-                    "invoice": `${JSON.parse(props.data.json_sale)?.serie_documento}-${JSON.parse(props.data.json_sale)?.numero_documento}`,
-                    "fecha": JSON.parse(props.data.json_sale).fecha_de_emision,
-                    "customer": props.data.delivery_info.person,
-                    "reference": props.data.ask_for,
-                    "phone": props.data.delivery_info.phone,
-                    "address": props.data.delivery_info.address,
-                    "payment_method": JSON.parse(props.data.json_sale).informacion_adicional.split("|")[2],
-                    "usuario": props.data.username
-                },
-                "ticket_content": JSON.parse(props.data.json_sale).items.map(it => ({
-                    "cantidad": it.cantidad,
-                    "descripcion": it.descripcion,
-                    "precio": parseFloat(it?.["precio_unitario"].toFixed(2)),
-                    "total": parseFloat(it?.["total_item"].toFixed(2))
-                })),
-                "totals": {
-                    "exonerado": 112,
-                    "gravado": 0,
-                    "icbper": 0,
-                    "igv": 0,
-                    "total" : 112,
-                    "pago": 150,
-                    "vuelto": 38
-                },
-                "footer": {
-                    "repartidor": props.data.delivery_info.deliveryman
-                }
-            };
+              console.log(props.data);
+              console.log(JSON.parse(props.data.json_sale));
+              console.log(JSON.parse(props.data.json_sale).informacion_adicional.split("|")[2]);
+              const socket = new WebSocket(`ws://${settingsStore.business_settings?.qz_config?.host}:8000/print`);
 
-            socket.send(JSON.stringify(jsonTicket));
+              socket.onopen = function() {
+                  console.log("Conexión WebSocket abierta");
+                  // Enviar el mensaje JSON
+                  const jsonTicket = {
+                      "printer_name": settingsStore.businessSettings.sale.printer_name,
+                      "ticket_type": "DELIVERY",
+                      "tittle": {
+                          "table": "DELIVERY",
+                          "order": props.data.id
+                      },
+                      "header": {
+                          "invoice": `${JSON.parse(props.data.json_sale)?.serie_documento}-${JSON.parse(
+                              props.data.json_sale)?.numero_documento}`,
+                          "fecha": JSON.parse(props.data.json_sale).fecha_de_emision,
+                          "customer": props.data.delivery_info.person,
+                          "reference": props.data.ask_for,
+                          "phone": props.data.delivery_info.phone,
+                          "address": props.data.delivery_info.address,
+                          "payment_method": JSON.parse(props.data.json_sale).informacion_adicional.split("|")[2],
+                          "usuario": props.data.username
+                      },
+                      "ticket_content": JSON.parse(props.data.json_sale).items.map(it => ({
+                          "cantidad": it.cantidad,
+                          "descripcion": it.descripcion,
+                          "precio": parseFloat(it?.["precio_unitario"].toFixed(2)),
+                          "total": parseFloat(it?.["total_item"].toFixed(2))
+                      })),
+                      "totals": {
+                          "exonerado": props.data.total_operaciones_exoneradas,
+                          "gravado": props.data.total_operaciones_gravadas,
+                          "icbper": props.data.total_impuestos_bolsa_plastica,
+                          "igv": props.data.total_igv,
+                          "total": props.data.total_venta,
+                          "pago": props.data.given_amount,
+                          "vuelto": parseFloat( (props.data.given_amount - props.data?.['totales']?.['total_venta']).toFixed(2))
+                      },
+                      "footer": {
+                          "repartidor": props.data.delivery_info.deliveryman
+                      }
+                  };
 
-        };
+                  socket.send(JSON.stringify(jsonTicket));
+
+              };
 
 // Evento si ocurre algún error en la conexión
-        socket.onerror = function (error) {
-            console.log("Error en WebSocket", error);
-            message.error(error)
-        };
+              socket.onerror = function(error) {
+                  console.log("Error en WebSocket", error);
+                  message.error(error);
+              };
 
 // Evento cuando se recibe un mensaje del servidor
-        socket.onmessage = function (event) {
-            console.log("Mensaje recibido del servidor", event.data);
-            message.success(event.data)
-        };
+              socket.onmessage = function(event) {
+                  console.log("Mensaje recibido del servidor", event.data);
+                  message.success(event.data);
+              };
 
 // Evento cuando la conexión es cerrada
-        socket.onclose = function (event) {
-            console.log("Conexión WebSocket cerrada", event);
-        };
-            // await printerStore.printTicket(
-            //   doc,
-            //   format,
-            //   `DELIVERY#${props.data.id}`
-            // );
+              socket.onclose = function(event) {
+                  console.log("Conexión WebSocket cerrada", event);
+              };
           }
         },
       });
@@ -303,7 +343,6 @@ export default defineComponent({
       fittingPlaces,
       fittings,
       generate,
-        sendJsonOverWebSocket,
       settingsStore,
     };
   },

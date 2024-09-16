@@ -180,15 +180,68 @@ export default defineComponent({
                             hiddFrame.src = doc.output("bloburl");
                             document.body.appendChild(hiddFrame);
                         } else {
-                            await printerStore.printTicket(
-                                doc,
-                                format,
-                                !props.preVoucher
-                                    ? `SALE#${props.data.id}#${saleStore.getSerieDescription(
-                                        props.data.serie
-                                    )}-${props.data.number}`
-                                    : `PREVOUCHER#${props.data.id}`
-                            );
+                            console.log("xd: ", props.data);
+                            console.log("xd: ", props.preVoucher);
+                            if(props.preVoucher) {
+                                const socket = new WebSocket(`wss://${settingsStore?.business_settings.qz_config.host}:8000/print`);
+                                socket.onopen = function() {
+                                    // Enviar el mensaje JSON
+                                    const jsonTicket = {
+                                        "printer_name": settingsStore.businessSettings.sale.printer_name,
+                                        "ticket_type": "PRE-ACCOUNT",
+                                        "tittle": {
+                                            "ruc": 20145965384,
+                                            "company": "BRAZZERS",
+                                            "address": "JR. SERAFIN FILOMENO S/N",
+                                            "table": `MESA ${props.data.table}`,
+                                            "order": 25653
+                                        },
+                                        "header": {
+                                            "date": props.data.created,
+                                            "reference": props.data.ask_for,
+                                            "username": props.data.username
+                                        },
+                                        "ticket_content": props.data.order_details.map(it => ({
+                                            "cantidad": it.quantity,
+                                            "descripcion": it.product_name,
+                                            "precio": it.price,
+                                            "total": it?.['sub_total']
+                                        }))
+                                    };
+
+                                    console.log(jsonTicket);
+                                    // socket.send(JSON.stringify(jsonTicket));
+
+                                };
+
+// Evento si ocurre algún error en la conexión
+                                socket.onerror = function(error) {
+                                    console.log("Error en WebSocket", error);
+                                    message.error(error);
+                                };
+
+// Evento cuando se recibe un mensaje del servidor
+                                socket.onmessage = function(event) {
+                                    console.log("Mensaje recibido del servidor", event.data);
+                                    message.success(event.data);
+                                };
+
+// Evento cuando la conexión es cerrada
+                                socket.onclose = function(event) {
+                                    console.log("Conexión WebSocket cerrada", event);
+                                };
+                            } else {
+
+                                await printerStore.printTicket(
+                                    doc,
+                                    format,
+                                    !props.preVoucher
+                                        ? `SALE#${props.data.id}#${saleStore.getSerieDescription(
+                                            props.data.serie
+                                        )}-${props.data.number}`
+                                        : `PREVOUCHER#${props.data.id}`
+                                );
+                            }
                         }
                     }
                     emit("printed");
