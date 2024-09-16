@@ -53,6 +53,7 @@
           DELIVERY
         </n-button>
       </template>
+        <n-button @click="sendJsonOverWebSocket(data)">xd</n-button>
     </n-drawer-content>
   </n-drawer>
 </template>
@@ -60,18 +61,18 @@
 <script>
 import { defineComponent, ref, computed } from "vue";
 import DefaultTicket from "./ticket-presets/DefaultTicket";
-import FittingTicket from "./ticket-presets/FittingTicket";
 import TicketDelivery from "./ticket-presets/TicketDelivery";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useProductStore } from "@/store/modules/product";
 import { usePrinterStore } from "@/store/modules/printer";
 import { jsPDF } from "jspdf";
+import { useMessage } from "naive-ui";
+// import { Client } from "@stomp/stompjs";
 
 export default defineComponent({
   name: "TicketPreview",
   components: {
     DefaultTicket,
-    FittingTicket,
     TicketDelivery,
   },
   emits: ["update:show", "printed", "canceled"],
@@ -95,6 +96,7 @@ export default defineComponent({
     const settingsStore = useSettingsStore();
     const printerStore = usePrinterStore();
     const productStore = useProductStore();
+    const message = useMessage();
     const tickets = ref([]);
     const fittings = ref([]);
     const delivery = ref(null);
@@ -109,7 +111,15 @@ export default defineComponent({
       );
     });
 
-    const printTicket = (i, place) => {
+    const sendJsonOverWebSocket = (data) => {
+        console.log(data);
+        console.log( places.value);
+          // Crear la instancia del cliente STOMP
+        // const socket = new WebSocket("ws://192.168.18.111:8000/print");
+
+    };
+
+      const printTicket = (i, place) => {
       const ticket = tickets.value[i];
       const format = [ticket.$el.clientWidth, ticket.$el.clientHeight + 30];
       const doc = new jsPDF({
@@ -179,19 +189,86 @@ export default defineComponent({
         callback: async function (doc) {
           if (settingsStore.business_settings.printer.native_printing) {
             doc.autoPrint();
-            const hiddFrame = document.createElement("iframe");
-            hiddFrame.style.position = "fixed";
-            hiddFrame.style.width = "1px";
-            hiddFrame.style.height = "1px";
-            hiddFrame.style.opacity = "0.01";
-            hiddFrame.src = doc.output("bloburl");
-            document.body.appendChild(hiddFrame);
+            const hiddeFrame = document.createElement("iframe");
+            hiddeFrame.style.position = "fixed";
+            hiddeFrame.style.width = "1px";
+            hiddeFrame.style.height = "1px";
+            hiddeFrame.style.opacity = "0.01";
+            hiddeFrame.src = doc.output("bloburl");
+            document.body.appendChild(hiddeFrame);
           } else {
-            await printerStore.printTicket(
-              doc,
-              format,
-              `DELIVERY#${props.data.id}`
-            );
+
+              const socket = new WebSocket(`ws://${settingsStore.business_settings.qz_config.host}:8000/print`);
+
+// Evento cuando la conexión es exitosa
+            console.log(props.data);
+            console.log(JSON.parse(props.data.json_sale));
+            console.log(JSON.parse(props.data.json_sale).informacion_adicional.split("|")[2]);
+        socket.onopen = function () {
+            console.log("Conexión WebSocket abierta");
+            // Enviar el mensaje JSON
+            const jsonTicket = {
+                "printer_name": settingsStore.businessSettings.sale.printer_name,
+                "ticket_type": "DELIVERY",
+                "tittle": {
+                    "table": "DELIVERY",
+                    "order": props.data.id
+                },
+                "header": {
+                    "invoice": `${JSON.parse(props.data.json_sale)?.serie_documento}-${JSON.parse(props.data.json_sale)?.numero_documento}`,
+                    "fecha": JSON.parse(props.data.json_sale).fecha_de_emision,
+                    "customer": props.data.delivery_info.person,
+                    "reference": props.data.ask_for,
+                    "phone": props.data.delivery_info.phone,
+                    "address": props.data.delivery_info.address,
+                    "payment_method": JSON.parse(props.data.json_sale).informacion_adicional.split("|")[2],
+                    "usuario": props.data.username
+                },
+                "ticket_content": JSON.parse(props.data.json_sale).items.map(it => ({
+                    "cantidad": it.cantidad,
+                    "descripcion": it.descripcion,
+                    "precio": parseFloat(it?.["precio_unitario"].toFixed(2)),
+                    "total": parseFloat(it?.["total_item"].toFixed(2))
+                })),
+                "totals": {
+                    "exonerado": 112,
+                    "gravado": 0,
+                    "icbper": 0,
+                    "igv": 0,
+                    "total" : 112,
+                    "pago": 150,
+                    "vuelto": 38
+                },
+                "footer": {
+                    "repartidor": props.data.delivery_info.deliveryman
+                }
+            };
+
+            socket.send(JSON.stringify(jsonTicket));
+
+        };
+
+// Evento si ocurre algún error en la conexión
+        socket.onerror = function (error) {
+            console.log("Error en WebSocket", error);
+            message.error(error)
+        };
+
+// Evento cuando se recibe un mensaje del servidor
+        socket.onmessage = function (event) {
+            console.log("Mensaje recibido del servidor", event.data);
+            message.success(event.data)
+        };
+
+// Evento cuando la conexión es cerrada
+        socket.onclose = function (event) {
+            console.log("Conexión WebSocket cerrada", event);
+        };
+            // await printerStore.printTicket(
+            //   doc,
+            //   format,
+            //   `DELIVERY#${props.data.id}`
+            // );
           }
         },
       });
@@ -226,6 +303,7 @@ export default defineComponent({
       fittingPlaces,
       fittings,
       generate,
+        sendJsonOverWebSocket,
       settingsStore,
     };
   },

@@ -303,7 +303,7 @@
                     <n-form-item-gi :span="3" label="Impresora de documentos">
                         <n-select
                                 v-model:value="businessSettings.sale.printer_name"
-                                :options="printerStore.getPrintersOptions"
+                                :options="optionsPrinters"
                                 placeholder=""
                         />
                     </n-form-item-gi>
@@ -489,6 +489,7 @@ export default defineComponent({
         const router = useRouter();
         const printerStore = usePrinterStore();
         const productStore = useProductStore();
+        const optionsPrinters = ref();
         const settingsStore = useSettingsStore();
         const message = useMessage();
         const businessSettings = ref(cloneDeep(settingsStore.businessSettings));
@@ -568,6 +569,29 @@ export default defineComponent({
             });
         };
 
+        const getPrinters = async () => {
+            try {
+                const response = await fetch(`http://${settingsStore.business_settings.qz_config.host}:8000/printers`, {
+                    method: 'GET'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error en la solicitud: ${response.status}`);
+                }
+
+                const data = await response.json();  // Si la respuesta es JSON
+                console.log(data);
+                optionsPrinters.value = data.printers.map(printer =>({
+                    value: printer,
+                    label: printer,
+                }))
+            } catch (error) {
+                console.error('Error al hacer la solicitud:', error);
+            }
+        };
+
+        getPrinters()
+
         const handleBack = () => {
             router.push({ name: "HomeSettings" });
         };
@@ -602,6 +626,7 @@ export default defineComponent({
             businessSettings,
             performUpdateBusinessSettings,
             editMode,
+            optionsPrinters,
             resetSettings,
             kitchenPrinterFormatOptions,
             infoLocationOptions,

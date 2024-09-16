@@ -456,7 +456,7 @@ export default defineComponent({
     const generateIndication = (ind) => {
       let text = "";
       for (const indication of ind) {
-        text += ` [${indication.description}]`;
+          if(!!indication.description || indication.quick_indications.length) text += ` [${indication.description}]`;
       }
       return text;
     };

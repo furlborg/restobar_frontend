@@ -9,6 +9,7 @@
     "production": "serve -s dist"
   },
   "dependencies": {
+    "@stomp/stompjs": "^7.0.0",
     "axios": "^0.27.2",
     "clone-deep": "^4.0.1",
     "exceljs": "^4.3.0",
@@ -16,6 +17,7 @@
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.5.28",
     "jsrsasign": "^10.6.1",
+    "net": "^1.0.2",
     "oh-vue-icons": "^0.4.7",
     "path": "^0.12.7",
     "path-browserify": "^1.0.1",

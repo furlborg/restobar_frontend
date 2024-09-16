@@ -222,14 +222,14 @@
                         placeholder=""
                       />
                     </n-form-item-gi>
-                    <n-form-item-gi :span="4" label="Nombre de impresora">
+                    <n-form-item-gi :span="6" label="Nombre de impresora">
                       <n-select
                         v-model:value="printerName"
-                        :options="printerStore.getPrintersOptions"
+                        :options="optionsPrinters"
                         placeholder=""
                       />
                     </n-form-item-gi>
-                    <n-form-item-gi :span="4" label="Formato de impresora">
+                    <n-form-item-gi :span="6" label="Formato de impresora">
                       <n-select
                         v-model:value="printerFormat"
                         :options="printerFormatOptions"
@@ -708,6 +708,7 @@ import {
   updateInventoryConcept,
 } from "@/api/modules/products";
 import { getConcepts, createConcept, updateConcept } from "@/api/modules/tills";
+import { useSettingsStore } from "@/store/modules/settings";
 
 export default defineComponent({
   name: "GeneralSettings",
@@ -715,8 +716,10 @@ export default defineComponent({
     const message = useMessage();
     const router = useRouter();
     const tableStore = useTableStore();
+      const settingsStore = useSettingsStore();
     const printerStore = usePrinterStore();
     const productStore = useProductStore();
+    const optionsPrinters = ref([]);
     const userStore = useUserStore();
     const isLoadingData = ref(false);
     const currentArea = ref(null);
@@ -733,12 +736,36 @@ export default defineComponent({
       return tableStore.getAreasOptions;
     });
     const tables = computed(() => {
-      let a = tableStore.areas.find((a) => a.id == currentArea.value);
+      let a = tableStore.areas.find((a) => a.id === currentArea.value);
       if (a) {
         return a.tables;
       }
       return [];
     });
+
+      const getPrinters = async () => {
+          try {
+              const response = await fetch(`http://${settingsStore.business_settings.qz_config.host}:8000/printers`, {
+                  method: 'GET'
+              });
+
+              if (!response.ok) {
+                  throw new Error(`Error en la solicitud: ${response.status}`);
+              }
+
+              const data = await response.json();  // Si la respuesta es JSON
+              console.log(data);
+              optionsPrinters.value = data.printers.map(printer =>({
+                  value: printer,
+                  label: printer,
+              }))
+          } catch (error) {
+              console.error('Error al hacer la solicitud:', error);
+          }
+      };
+
+      getPrinters()
+
     const productCategories = ref([]);
     const productCategory = ref(null);
     const selectedCategory = ref(null);
@@ -1308,6 +1335,7 @@ export default defineComponent({
       conceptTypeOptions,
       concepts,
       concept,
+      optionsPrinters,
       selectedConcept,
       selectConcept,
       performCreateConcept,

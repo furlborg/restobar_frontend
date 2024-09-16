@@ -141,7 +141,6 @@ export default defineComponent({
       // console.log(JSON.stringify(props.data, null, "  "));
       saleData.informacion_adicional =
         saleData.informacion_adicional.split("|");
-      console.log(JSON.stringify(saleData, null, "  "));
       if (settingsStore.business_settings.printer.detail_items) {
         props.data.order_details.forEach((detail, index) => {
           const indication = detail.indication.reduce((desc, indication) => {
