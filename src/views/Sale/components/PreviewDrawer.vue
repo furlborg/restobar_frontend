@@ -183,34 +183,55 @@ export default defineComponent({
                             console.log("xd: ", props.data);
                             console.log("xd: ", props.preVoucher);
                             if(props.preVoucher) {
-                                const socket = new WebSocket(`wss://${settingsStore?.business_settings.qz_config.host}:8000/print`);
+                                const socket = new WebSocket(`${settingsStore?.business_settings.qz_config.wbsockets_host}/print`);
                                 socket.onopen = function() {
                                     // Enviar el mensaje JSON
                                     const jsonTicket = {
-                                        "printer_name": settingsStore.businessSettings.sale.printer_name,
+                                        "printer_name": "DEMO",
                                         "ticket_type": "PRE-ACCOUNT",
-                                        "tittle": {
+                                        "header": {
+                                            "logo": "",
                                             "ruc": 20145965384,
                                             "company": "BRAZZERS",
                                             "address": "JR. SERAFIN FILOMENO S/N",
-                                            "table": `MESA ${props.data.table}`,
+                                            "table": "MESA 1",
                                             "order": 25653
                                         },
-                                        "header": {
-                                            "date": props.data.created,
-                                            "reference": props.data.ask_for,
-                                            "username": props.data.username
+                                        "ticket_content": [
+                                            {
+                                                "cantidad": 2,
+                                                "descripcion": "Ceviche de Caballo",
+                                                "precio": 20,
+                                                "total": 40
+                                            },
+                                            {
+                                                "cantidad": 4,
+                                                "descripcion": "Inca Cola 2L",
+                                                "precio": 12,
+                                                "total": 48
+                                            },
+                                            {
+                                                "cantidad": 6,
+                                                "descripcion": "Cerveza pilsen personal",
+                                                "precio": 8,
+                                                "total": 24
+                                            }
+                                        ],
+                                        "totals": {
+                                            "exonerado": 11200,
+                                            "gravado": 0,
+                                            "icbper": 0,
+                                            "igv": 0,
+                                            "total" : 11200
                                         },
-                                        "ticket_content": props.data.order_details.map(it => ({
-                                            "cantidad": it.quantity,
-                                            "descripcion": it.product_name,
-                                            "precio": it.price,
-                                            "total": it?.['sub_total']
-                                        }))
-                                    };
+                                        "footer":{
+                                            "date": "09/09/2024 14:05:24",
+                                            "username": "JORGE"
+                                        }
+                                    }
 
                                     console.log(jsonTicket);
-                                    // socket.send(JSON.stringify(jsonTicket));
+                                    socket.send(JSON.stringify(jsonTicket));
 
                                 };
 

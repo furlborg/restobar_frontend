@@ -13,8 +13,11 @@
                         cols="6 s:6 m:12 l:12 xl:24 2xl:24"
                         :x-gap="12"
                 >
-                    <n-form-item-gi :span="3" label="QZ Host IP">
+                    <n-form-item-gi :span="3" label="Kuceta Address IP">
                         <n-input v-model:value="businessSettings.qz_config.host"/>
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3" label="Kuceta webSocket">
+                        <n-input v-model:value="businessSettings.qz_config.wbsockets_host"/>
                     </n-form-item-gi>
                     <n-form-item-gi :span="6" label="Signature">
                         <n-input
@@ -571,7 +574,7 @@ export default defineComponent({
 
         const getPrinters = async () => {
             try {
-                const response = await fetch(`https://${settingsStore.business_settings.qz_config.host}:8000/printers`, {
+                const response = await fetch(`${settingsStore.business_settings.qz_config.host}/printers`, {
                     method: 'GET'
                 });
 
