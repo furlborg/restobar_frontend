@@ -1,5 +1,6 @@
 stages:
   - demo
+  - test_prints
 
 demo:
   image: ubuntu:latest
@@ -12,3 +13,16 @@ demo:
     - ssh-keyscan -H ${SSH_HOST} >> ~/.ssh/known_hosts
   script:
     - sshpass -p "${SSH_PASSWORD}" ssh ${SSH_USER}@${SSH_HOST} " cd /home/tsi/ci/ && export NVM_DIR=~/.nvm && source ~/.nvm/nvm.sh && . update_demo_flizzy_front && exit"
+
+    
+test_prints:
+  image: ubuntu:latest
+  stage: test_prints
+  only:
+    - test-prints
+  before_script:
+    - 'which sshpass || (apt-get update -y && apt-get install sshpass -y)'
+    - mkdir -p ~/.ssh
+    - ssh-keyscan -H ${SSH_HOST} >> ~/.ssh/known_hosts
+  script:
+    - sshpass -p "${SSH_PASSWORD}" ssh ${SSH_USER}@${SSH_HOST} " cd /home/tsi/ci/ && export NVM_DIR=~/.nvm && source ~/.nvm/nvm.sh && . update_demo_flizzy_front_prints && exit"
