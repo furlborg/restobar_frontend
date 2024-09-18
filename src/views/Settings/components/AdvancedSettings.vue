@@ -571,28 +571,28 @@ export default defineComponent({
             });
         };
 
-        const getPrinters = async () => {
-            try {
-                const response = await fetch(`${settingsStore.business_settings.qz_config.host}/printers`, {
-                    method: 'GET'
-                });
+        // const getPrinters = async () => {
+        //     try {
+        //         const response = await fetch(`${settingsStore.business_settings.qz_config.host}/printers`, {
+        //             method: 'GET'
+        //         });
+        //
+        //         if (!response.ok) {
+        //             throw new Error(`Error en la solicitud: ${response.status}`);
+        //         }
+        //
+        //         const data = await response.json();  // Si la respuesta es JSON
+        //         console.log(data);
+        //         optionsPrinters.value = data.printers.map(printer =>({
+        //             value: printer,
+        //             label: printer,
+        //         }))
+        //     } catch (error) {
+        //         console.error('Error al hacer la solicitud:', error);
+        //     }
+        // };
 
-                if (!response.ok) {
-                    throw new Error(`Error en la solicitud: ${response.status}`);
-                }
-
-                const data = await response.json();  // Si la respuesta es JSON
-                console.log(data);
-                optionsPrinters.value = data.printers.map(printer =>({
-                    value: printer,
-                    label: printer,
-                }))
-            } catch (error) {
-                console.error('Error al hacer la solicitud:', error);
-            }
-        };
-
-        getPrinters()
+        // getPrinters()
 
         const handleBack = () => {
             router.push({ name: "HomeSettings" });

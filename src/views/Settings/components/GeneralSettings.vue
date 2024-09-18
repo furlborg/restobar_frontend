@@ -707,7 +707,7 @@ import {
   updateInventoryConcept,
 } from "@/api/modules/products";
 import { getConcepts, createConcept, updateConcept } from "@/api/modules/tills";
-import { useSettingsStore } from "@/store/modules/settings";
+// import { useSettingsStore } from "@/store/modules/settings";
 
 export default defineComponent({
   name: "GeneralSettings",
@@ -715,7 +715,7 @@ export default defineComponent({
     const message = useMessage();
     const router = useRouter();
     const tableStore = useTableStore();
-      const settingsStore = useSettingsStore();
+      // const settingsStore = useSettingsStore();
     const printerStore = usePrinterStore();
     const productStore = useProductStore();
     const optionsPrinters = ref([]);
@@ -742,28 +742,28 @@ export default defineComponent({
       return [];
     });
 
-      const getPrinters = async () => {
-          try {
-              const response = await fetch(`${settingsStore.business_settings.qz_config.host}/printers`, {
-                  method: 'GET'
-              });
+      // const getPrinters = async () => {
+      //     try {
+      //         const response = await fetch(`${settingsStore.business_settings.qz_config.host}/printers`, {
+      //             method: 'GET'
+      //         });
+      //
+      //         if (!response.ok) {
+      //             throw new Error(`Error en la solicitud: ${response.status}`);
+      //         }
+      //
+      //         const data = await response.json();  // Si la respuesta es JSON
+      //         console.log(data);
+      //         optionsPrinters.value = data.printers.map(printer =>({
+      //             value: printer,
+      //             label: printer,
+      //         }))
+      //     } catch (error) {
+      //         console.error('Error al hacer la solicitud:', error);
+      //     }
+      // };
 
-              if (!response.ok) {
-                  throw new Error(`Error en la solicitud: ${response.status}`);
-              }
-
-              const data = await response.json();  // Si la respuesta es JSON
-              console.log(data);
-              optionsPrinters.value = data.printers.map(printer =>({
-                  value: printer,
-                  label: printer,
-              }))
-          } catch (error) {
-              console.error('Error al hacer la solicitud:', error);
-          }
-      };
-
-      getPrinters()
+      // getPrinters()
 
     const productCategories = ref([]);
     const productCategory = ref(null);
