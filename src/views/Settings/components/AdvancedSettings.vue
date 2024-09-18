@@ -304,9 +304,8 @@
                         x-gap="12"
                 >
                     <n-form-item-gi :span="3" label="Impresora de documentos">
-                        <n-select
+                        <n-input
                                 v-model:value="businessSettings.sale.printer_name"
-                                :options="optionsPrinters"
                                 placeholder=""
                         />
                     </n-form-item-gi>

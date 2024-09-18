@@ -223,9 +223,8 @@
                       />
                     </n-form-item-gi>
                     <n-form-item-gi :span="6" label="Nombre de impresora">
-                      <n-select
+                      <n-input
                         v-model:value="printerName"
-                        :options="optionsPrinters"
                         placeholder=""
                       />
                     </n-form-item-gi>
