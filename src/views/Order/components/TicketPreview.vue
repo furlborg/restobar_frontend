@@ -122,7 +122,7 @@ export default defineComponent({
         margin: settingsStore.business_settings.printer.margins,
         callback: async function () {
           // doc.save();
-            const socket = new WebSocket(`${settingsStore?.business_settings.qz_config.wbsockets_host}/print`);
+            const socket = new WebSocket(`${settingsStore?.business_settings.qz_config.wbsockets_host}/print/`);
             socket.onopen = function() {
                 // Enviar el mensaje JSON
                 const jsonTicket = {
@@ -246,7 +246,7 @@ export default defineComponent({
               console.log(props.data);
               console.log(JSON.parse(props.data.json_sale));
               console.log(JSON.parse(props.data.json_sale).informacion_adicional.split("|")[2]);
-              const socket = new WebSocket(`${settingsStore.business_settings?.qz_config?.wbsockets_host}/print`);
+              const socket = new WebSocket(`${settingsStore.business_settings?.qz_config?.wbsockets_host}/print/`);
 
               socket.onopen = function() {
                   console.log("Conexión WebSocket abierta");

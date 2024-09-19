@@ -185,7 +185,7 @@ export default defineComponent({
                             console.log("xd: ", props.data);
                             console.log("xd: ", props.preVoucher);
                             if(props.preVoucher) {
-                                const socket = new WebSocket(`${settingsStore?.business_settings.qz_config.wbsockets_host}/print`);
+                                const socket = new WebSocket(`${settingsStore?.business_settings.qz_config.wbsockets_host}/print/`);
                                 const business = businessStore.business;
                                 socket.onopen = function() {
                                     // Enviar el mensaje JSON
