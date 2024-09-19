@@ -94,6 +94,7 @@ import DefaultPreset from "./pdf-presets/DefaultPreset";
 import PreviewPreset from "./pdf-presets/PreviewPreset";
 import { isNumber } from "@/utils";
 import { sendWhatsapp } from "@/api/modules/sales";
+import { useBusinessStore } from "@/store/modules/business";
 
 export default defineComponent({
     name: "PreviewDrawer",
@@ -123,6 +124,7 @@ export default defineComponent({
         const printerStore = usePrinterStore();
         const saleStore = useSaleStore();
         const totalEnterPulse = ref(0);
+        const businessStore = useBusinessStore();
 
         const message = useMessage();
 
@@ -184,55 +186,39 @@ export default defineComponent({
                             console.log("xd: ", props.preVoucher);
                             if(props.preVoucher) {
                                 const socket = new WebSocket(`${settingsStore?.business_settings.qz_config.wbsockets_host}/print`);
+                                const business = businessStore.business;
                                 socket.onopen = function() {
                                     // Enviar el mensaje JSON
                                     const jsonTicket = {
                                         "printer_name": "DEMO",
                                         "ticket_type": "PRE-ACCOUNT",
-                                        "header": {
+                                        "tittle": {
                                             "logo": "",
-                                            "ruc": 20145965384,
-                                            "company": "BRAZZERS",
-                                            "address": "JR. SERAFIN FILOMENO S/N",
-                                            "table": "MESA 1",
-                                            "order": 25653
+                                            "ruc": business.ruc,
+                                            "company": business.commercial_name,
+                                            "address": business.fiscal_address,
+                                            "table": `MESA ${props.data.table}`,
+                                            "order": props.data.id
                                         },
-                                        "ticket_content": [
-                                            {
-                                                "cantidad": 2,
-                                                "descripcion": "Ceviche de Caballo",
-                                                "precio": 20,
-                                                "total": 40
-                                            },
-                                            {
-                                                "cantidad": 4,
-                                                "descripcion": "Inca Cola 2L",
-                                                "precio": 12,
-                                                "total": 48
-                                            },
-                                            {
-                                                "cantidad": 6,
-                                                "descripcion": "Cerveza pilsen personal",
-                                                "precio": 8,
-                                                "total": 24
-                                            }
-                                        ],
+                                        "ticket_content": props.data.order_details.map(order => ({
+                                            cantidad: order.quantity,
+                                            descripcion: order.product_name,
+                                            precio: order.price,
+                                            total: order?.['sub_total'],
+                                        })),
                                         "totals": {
-                                            "exonerado": 11200,
+                                            "exonerado": 0,
                                             "gravado": 0,
                                             "icbper": 0,
                                             "igv": 0,
-                                            "total" : 11200
+                                            "total": props.data?.['initial_amount']
                                         },
-                                        "footer":{
-                                            "date": "09/09/2024 14:05:24",
-                                            "username": "JORGE"
+                                        "footer": {
+                                            "date": props.data.created,
+                                            "username": props.data.username
                                         }
-                                    }
-
-                                    console.log(jsonTicket);
+                                    };
                                     socket.send(JSON.stringify(jsonTicket));
-
                                 };
 
 // Evento si ocurre algún error en la conexión
