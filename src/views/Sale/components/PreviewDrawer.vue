@@ -182,15 +182,15 @@ export default defineComponent({
                             hiddFrame.src = doc.output("bloburl");
                             document.body.appendChild(hiddFrame);
                         } else {
-                            console.log("xd: ", props.data);
-                            console.log("xd: ", props.preVoucher);
+
                             if(props.preVoucher) {
                                 const socket = new WebSocket(`${settingsStore?.business_settings.qz_config.wbsockets_host}/print/`);
                                 const business = businessStore.business;
+
                                 socket.onopen = function() {
                                     // Enviar el mensaje JSON
                                     const jsonTicket = {
-                                        "printer_name": "DEMO",
+                                        "printer_name": settingsStore.business_settings.sale.printer_name,
                                         "ticket_type": "PRE-ACCOUNT",
                                         "tittle": {
                                             "logo": "",
