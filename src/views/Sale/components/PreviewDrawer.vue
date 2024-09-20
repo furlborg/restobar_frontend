@@ -121,7 +121,7 @@ export default defineComponent({
     },
     setup(props, { emit }) {
         const settingsStore = useSettingsStore();
-        const printerStore = usePrinterStore();
+        // const printerStore = usePrinterStore();
         const saleStore = useSaleStore();
         const totalEnterPulse = ref(0);
         const businessStore = useBusinessStore();
@@ -153,6 +153,7 @@ export default defineComponent({
         });
 
         const generate = (save = false) => {
+            console.log("aaa");
             const format = [
                 ticket.value.$el.clientWidth,
                 ticket.value.$el.clientHeight + 10
@@ -172,84 +173,71 @@ export default defineComponent({
                             }`
                         );
                     } else {
-                        if(settingsStore.business_settings.printer.native_printing) {
-                            doc.autoPrint();
-                            const hiddFrame = document.createElement("iframe");
-                            hiddFrame.style.position = "fixed";
-                            hiddFrame.style.width = "1px";
-                            hiddFrame.style.height = "1px";
-                            hiddFrame.style.opacity = "0.01";
-                            hiddFrame.src = doc.output("bloburl");
-                            document.body.appendChild(hiddFrame);
-                        } else {
+                        if(props.preVoucher) {
+                            const socket = new WebSocket(`${settingsStore?.business_settings.qz_config.wbsockets_host}/print`);
+                            const business = businessStore.business;
 
-                            if(props.preVoucher) {
-                                const socket = new WebSocket(`${settingsStore?.business_settings.qz_config.wbsockets_host}/print`);
-                                const business = businessStore.business;
-
-                                socket.onopen = function() {
-                                    // Enviar el mensaje JSON
-                                    const jsonTicket = {
-                                        "printer_name": settingsStore.business_settings.sale.printer_name,
-                                        "ticket_type": "PRE-ACCOUNT",
-                                        "tittle": {
-                                            "logo": "",
-                                            "ruc": business.ruc,
-                                            "company": business.commercial_name,
-                                            "address": business.fiscal_address,
-                                            "table": `MESA ${props.data.table}`,
-                                            "order": props.data.id
-                                        },
-                                        "ticket_content": props.data.order_details.map(order => ({
-                                            cantidad: order.quantity,
-                                            descripcion: order.product_name,
-                                            precio: order.price,
-                                            total: order?.['sub_total'],
-                                        })),
-                                        "totals": {
-                                            "exonerado": 0,
-                                            "gravado": 0,
-                                            "icbper": 0,
-                                            "igv": 0,
-                                            "total": props.data?.['initial_amount']
-                                        },
-                                        "footer": {
-                                            "date": props.data.created,
-                                            "username": props.data.username
-                                        }
-                                    };
-                                    socket.send(JSON.stringify(jsonTicket));
+                            socket.onopen = function() {
+                                // Enviar el mensaje JSON
+                                const jsonTicket = {
+                                    "printer_name": settingsStore.business_settings.sale.printer_name,
+                                    "ticket_type": "PRE-ACCOUNT",
+                                    "tittle": {
+                                        "logo": "",
+                                        "ruc": business.ruc,
+                                        "company": business.commercial_name,
+                                        "address": business.fiscal_address,
+                                        "table": `MESA ${props.data.table}`,
+                                        "order": props.data.id
+                                    },
+                                    "ticket_content": props.data.order_details.map(order => ({
+                                        cantidad: order.quantity,
+                                        descripcion: order.product_name,
+                                        precio: order.price,
+                                        total: order?.["sub_total"]
+                                    })),
+                                    "totals": {
+                                        "exonerado": 0,
+                                        "gravado": 0,
+                                        "icbper": 0,
+                                        "igv": 0,
+                                        "total": props.data?.["initial_amount"]
+                                    },
+                                    "footer": {
+                                        "date": props.data.created,
+                                        "username": props.data.username
+                                    }
                                 };
+                                socket.send(JSON.stringify(jsonTicket));
+                            };
 
 // Evento si ocurre algún error en la conexión
-                                socket.onerror = function(error) {
-                                    console.log("Error en WebSocket", error);
-                                    message.error(error);
-                                };
+                            socket.onerror = function(error) {
+                                console.log("Error en WebSocket", error);
+                                message.error(error);
+                            };
 
 // Evento cuando se recibe un mensaje del servidor
-                                socket.onmessage = function(event) {
-                                    console.log("Mensaje recibido del servidor", event.data);
-                                    message.success(event.data);
-                                };
+                            socket.onmessage = function(event) {
+                                console.log("Mensaje recibido del servidor", event.data);
+                                message.success(event.data);
+                            };
 
 // Evento cuando la conexión es cerrada
-                                socket.onclose = function(event) {
-                                    console.log("Conexión WebSocket cerrada", event);
-                                };
-                            } else {
-
-                                await printerStore.printTicket(
-                                    doc,
-                                    format,
-                                    !props.preVoucher
-                                        ? `SALE#${props.data.id}#${saleStore.getSerieDescription(
-                                            props.data.serie
-                                        )}-${props.data.number}`
-                                        : `PREVOUCHER#${props.data.id}`
-                                );
-                            }
+                            socket.onclose = function(event) {
+                                console.log("Conexión WebSocket cerrada", event);
+                            };
+                        } else {
+                            doc.autoPrint();
+                            const hiddeFrame = document.createElement("iframe");
+                            hiddeFrame.style.position = "fixed";
+                            hiddeFrame.style.width = "1px";
+                            hiddeFrame.style.height = "1px";
+                            hiddeFrame.style.opacity = "0.01";
+                            hiddeFrame.src = doc.output("bloburl");
+                            document.body.appendChild(hiddeFrame);
                         }
+
                     }
                     emit("printed");
                     emit("update:show", false);

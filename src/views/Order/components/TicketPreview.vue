@@ -110,81 +110,81 @@ export default defineComponent({
     });
 
       const printTicket = (i, place) => {
-      const ticket = tickets.value[i];
-      const format = [ticket.$el.clientWidth, ticket.$el.clientHeight + 30];
-      const doc = new jsPDF({
-        unit: "px",
-        format: format,
-        orientation: "m",
-        hotfixes: ["px_scaling"],
-      });
-      doc.html(ticket.$el.innerHTML, {
-        margin: settingsStore.business_settings.printer.margins,
-        callback: async function () {
-          // doc.save();
-            const socket = new WebSocket(`${settingsStore?.business_settings.qz_config.wbsockets_host}/print`);
-            socket.onopen = function() {
-                // Enviar el mensaje JSON
-                const jsonTicket = {
-                    "printer_name": place.printer_name,
-                    "ticket_type": "ORDER",
-                    "tittle": {
-                        "table": "",
-                        "order": props.data.id
-                    },
-                    "header": {
-                        "date": props.data.created,
-                        "reference": props.data.ask_for,
-                        "username": props.data.username
-                    },
-                    "ticket_content": props.data.order_details.filter(pl => pl.preparation_place === place.description).map(it => ({
-                        "id": it.id,
-                        "cantidad": it.quantity,
-                        "descripcion": it.product_name,
-                        "indicaciones": it.indication.filter(indicate => {
-                            return (
-                                (!indicate.description.includes("[]") || indicate.quick_indications.length > 0) &&
-                                indicate.description !== ""
-                            );
-                        }).map(indicate => indicate.description) || ""
-                    }))
-                };
+          const ticket = tickets.value[i];
+          const format = [ticket.$el.clientWidth, ticket.$el.clientHeight + 30];
+          const doc = new jsPDF({
+              unit: "px",
+              format: format,
+              orientation: "m",
+              hotfixes: ["px_scaling"]
+          });
+          doc.html(ticket.$el.innerHTML, {
+              margin: settingsStore.business_settings.printer.margins,
+              callback: async function() {
+                  // doc.save();
+                  const socket = new WebSocket(`${settingsStore?.business_settings.qz_config.wbsockets_host}/print`);
+                  socket.onopen = function() {
+                      // Enviar el mensaje JSON
+                      const jsonTicket = {
+                          "printer_name": place.printer_name,
+                          "ticket_type": "ORDER",
+                          "tittle": {
+                              "table": "",
+                              "order": props.data.id
+                          },
+                          "header": {
+                              "date": props.data.created,
+                              "reference": props.data.ask_for,
+                              "username": props.data.username
+                          },
+                          "ticket_content": props.data.order_details.filter(pl => pl.preparation_place === place.description).map(it => ({
+                              "id": it.id,
+                              "cantidad": it.quantity,
+                              "descripcion": it.product_name,
+                              "indicaciones": it.indication.filter(indicate => {
+                                  return (
+                                      (!indicate.description.includes("[]") || indicate.quick_indications.length > 0) &&
+                                      indicate.description !== ""
+                                  );
+                              }).map(indicate => indicate.description) || ""
+                          }))
+                      };
 
-                jsonTicket.tittle.table = `MESA ${props.data?.table}`;
-                if(props.data.delivery_info || props.data.table) delete jsonTicket.header.reference;
-                if(!props.data.table) jsonTicket.tittle.table = !props.data.delivery_info ? "PARA LLEVAR" : "DELIVERY";
-                console.log(jsonTicket);
-                // jsonTicket.header.reference = props.data.table || (!props.data.info.delivery_info ? "PARA LLEVAR" : "DELIVERY")
-                socket.send(JSON.stringify(jsonTicket));
+                      jsonTicket.tittle.table = `MESA ${props.data?.table}`;
+                      if(props.data.delivery_info || props.data.table) delete jsonTicket.header.reference;
+                      if(!props.data.table) jsonTicket.tittle.table = !props.data.delivery_info ? "PARA LLEVAR" : "DELIVERY";
+                      console.log(jsonTicket);
+                      // jsonTicket.header.reference = props.data.table || (!props.data.info.delivery_info ? "PARA LLEVAR" : "DELIVERY")
+                      socket.send(JSON.stringify(jsonTicket));
 
-            };
+                  };
 
 // Evento si ocurre algún error en la conexión
-            socket.onerror = function (error) {
-                console.log("Error en WebSocket", error);
-                message.error(error)
-            };
+                  socket.onerror = function(error) {
+                      console.log("Error en WebSocket", error);
+                      message.error(error);
+                  };
 
 // Evento cuando se recibe un mensaje del servidor
-            socket.onmessage = function (event) {
-                console.log("Mensaje recibido del servidor", event.data);
-                message.success(event.data)
-            };
+                  socket.onmessage = function(event) {
+                      console.log("Mensaje recibido del servidor", event.data);
+                      message.success(event.data);
+                  };
 
 // Evento cuando la conexión es cerrada
-            socket.onclose = function (event) {
-                console.log("Conexión WebSocket cerrada", event);
-            };
+                  socket.onclose = function(event) {
+                      console.log("Conexión WebSocket cerrada", event);
+                  };
 
-          // await printerStore.printTicket(
-          //   doc,
-          //   format,
-          //   `ORDER#${props.data.id}#${place.description}`,
-          //   place.printer_name
-          // );
-        },
-      });
-    };
+                  // await printerStore.printTicket(
+                  //   doc,
+                  //   format,
+                  //   `ORDER#${props.data.id}#${place.description}`,
+                  //   place.printer_name
+                  // );
+              }
+          });
+      };
 
     const printFitting = (i, place) => {
       const ticket = fittings.value[i];
@@ -231,7 +231,7 @@ export default defineComponent({
       });
       doc.html(delivery.value.$el.innerHTML, {
         callback: async function (doc) {
-          if (settingsStore.business_settings.printer.native_printing) {
+          if (!settingsStore.business_settings.printer.native_printing) {
             doc.autoPrint();
             const hiddeFrame = document.createElement("iframe");
             hiddeFrame.style.position = "fixed";
@@ -243,9 +243,6 @@ export default defineComponent({
           } else {
 
 // Evento cuando la conexión es exitosa
-              console.log(props.data);
-              console.log(JSON.parse(props.data.json_sale));
-              console.log(JSON.parse(props.data.json_sale).informacion_adicional.split("|")[2]);
               const socket = new WebSocket(`${settingsStore.business_settings?.qz_config?.wbsockets_host}/print`);
 
               socket.onopen = function() {

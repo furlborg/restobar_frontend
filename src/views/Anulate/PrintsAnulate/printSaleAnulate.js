@@ -7,7 +7,6 @@ applyPlugin(jsPDF);
 
 export class printTicketSalesAnulate {
     constructor(doc, size) {
-        console.log(size);
         this.doc = doc;
         this.doc = new jsPDF({
             unit: "mm",

@@ -12,7 +12,7 @@
       <n-button
         type="info"
         :disabled="waiterStore.groupMode"
-        @click="tableStore.refreshData(), printerStore.startConnection()"
+        @click="tableStore.refreshData()"
       >
         <v-icon name="hi-solid-refresh" />
       </n-button>
@@ -31,7 +31,7 @@
               ? currentTableGrouping === table.id ||
                 tableGroups.some((g) => g.some((t) => t.id === table.id))
                 ? null
-                : !currentGroup.some((t) => t.id == table.id)
+                : !currentGroup.some((t) => t.id === table.id)
                 ? addToGroup(table)
                 : removeFromGroup(table)
               : ($router.push({ name: 'WOrder', params: { table: table.id } }),
@@ -138,7 +138,7 @@
           v-model:value="currentArea"
           :options="tableStore.getAreasOptions"
           placeholder=""
-          @update:value="(v) => (toTable = null)"
+          @update:value="() => (toTable = null)"
         />
       </n-form-item>
       <n-form-item label="Mesa">
@@ -192,7 +192,7 @@ export default defineComponent({
     const currentGroup = ref([]);
     const tableGroups = ref([]);
     const tables = computed(() => {
-      let a = tableStore.areas.find((a) => a.id == area.value);
+      let a = tableStore.areas.find((a) => a.id === area.value);
       if (a) {
         return a.tables;
       }

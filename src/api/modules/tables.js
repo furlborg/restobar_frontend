@@ -109,7 +109,6 @@ export async function updateTableOrder(
 }
 
 export async function cancelTableOrder(idTable, dataAnulate) {
-    console.log(dataAnulate);
     return http.post(`tables/${idTable}/cancel_order/`, {
         ...dataAnulate
     });

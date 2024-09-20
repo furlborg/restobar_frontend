@@ -32,8 +32,8 @@
 <script>
 import { defineComponent, ref } from "vue";
 import { jsPDF } from "jspdf";
-import { useSettingsStore } from "@/store/modules/settings";
-import { usePrinterStore } from "@/store/modules/printer";
+// import { useSettingsStore } from "@/store/modules/settings";
+// import { usePrinterStore } from "@/store/modules/printer";
 import { useSaleStore } from "@/store/modules/sale";
 import SaleCreditTicket from "./pdf-presets/SaleCreditTicket";
 
@@ -60,8 +60,8 @@ export default defineComponent({
     },
   },
   setup(props, { emit }) {
-    const settingsStore = useSettingsStore();
-    const printerStore = usePrinterStore();
+    // const settingsStore = useSettingsStore();
+    // const printerStore = usePrinterStore();
     const saleStore = useSaleStore();
 
     const ticket = ref(null);
@@ -86,7 +86,7 @@ export default defineComponent({
               }`
             );
           } else {
-            if (settingsStore.business_settings.printer.native_printing) {
+            // if (settingsStore.business_settings.printer.native_printing) {
               doc.autoPrint();
               const hiddFrame = document.createElement("iframe");
               hiddFrame.style.position = "fixed";
@@ -95,15 +95,16 @@ export default defineComponent({
               hiddFrame.style.opacity = "0.01";
               hiddFrame.src = doc.output("bloburl");
               document.body.appendChild(hiddFrame);
-            } else {
-              await printerStore.printTicket(
-                doc,
-                format,
-                `SALEPAYMENT#${props.data.id}#${saleStore.getSerieDescription(
-                  props.data.serie
-                )}-${props.data.number}`
-              );
-            }
+            // }
+            // else {
+            //   await printerStore.printTicket(
+            //     doc,
+            //     format,
+            //     `SALEPAYMENT#${props.data.id}#${saleStore.getSerieDescription(
+            //       props.data.serie
+            //     )}-${props.data.number}`
+            //   );
+            // }
           }
           emit("printed");
           emit("update:show", false);

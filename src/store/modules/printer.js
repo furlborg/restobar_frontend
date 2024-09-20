@@ -3,8 +3,7 @@ import { createDiscreteApi } from "naive-ui";
 import qz from "qz-tray";
 import rs from "jsrsasign";
 
-const { message, notification } = createDiscreteApi([
-  "message",
+const {   notification } = createDiscreteApi([
   "notification",
 ]);
 
@@ -49,25 +48,25 @@ export const usePrinterStore = defineStore("printer", {
         };
       });
       if (auto) {
-        this.startConnection();
+        // this.startConnection();
       }
     },
-    startConnection() {
-      if (!this.qz.websocket.isActive()) {
-        this.qz.websocket
-          .connect({
-            host: this.host,
-            usingSecure: !/(android)/i.test(navigator.userAgent),
-          })
-          .then(() => {
-            this.getPrinters();
-          })
-          .catch((error) => {
-            console.error(error);
-            message.error(error.message);
-          });
-      }
-    },
+    // startConnection() {
+    //   if (!this.qz.websocket.isActive()) {
+    //     this.qz.websocket
+    //       .connect({
+    //         host: this.host,
+    //         usingSecure: !/(android)/i.test(navigator.userAgent),
+    //       })
+    //       .then(() => {
+    //         this.getPrinters();
+    //       })
+    //       .catch((error) => {
+    //         console.error(error);
+    //         message.error(error.message);
+    //       });
+    //   }
+    // },
     endConnection() {
       if (this.qz.websocket.isActive()) {
         this.qz.websocket.disconnect();
@@ -187,7 +186,7 @@ export const usePrinterStore = defineStore("printer", {
       this.qz.printers.stopListening();
     },
     async printTicket(pdf, format, job_name, place = null) {
-      this.startConnection();
+      // this.startConnection();
       const printer = !place
         ? !this.managedPrinters[0]
           ? await this.qz.printers.getDefault()
