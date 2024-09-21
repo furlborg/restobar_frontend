@@ -87,13 +87,14 @@
 import { defineComponent, ref, watchEffect } from "vue";
 import { useMessage } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
-import { usePrinterStore } from "@/store/modules/printer";
 import { useSaleStore } from "@/store/modules/sale";
 import { jsPDF } from "jspdf";
 import DefaultPreset from "./pdf-presets/DefaultPreset";
 import PreviewPreset from "./pdf-presets/PreviewPreset";
 import { isNumber } from "@/utils";
 import { sendWhatsapp } from "@/api/modules/sales";
+import { useBusinessStore } from "@/store/modules/business";
+import { useTableStore } from "@/store/modules/table";
 
 export default defineComponent({
     name: "PreviewDrawer",
@@ -120,9 +121,13 @@ export default defineComponent({
     },
     setup(props, { emit }) {
         const settingsStore = useSettingsStore();
-        const printerStore = usePrinterStore();
         const saleStore = useSaleStore();
+        const tableStore = useTableStore();
         const totalEnterPulse = ref(0);
+        const businessStore = useBusinessStore();
+        // eslint-disable-next-line no-undef
+        // const apiUrl = process.env.VUE_APP_API_URL.replace(/^https?:\/\//, ''); // Elimina 'http://' o 'https://'
+        let socket = null;
 
         const message = useMessage();
 
@@ -161,6 +166,7 @@ export default defineComponent({
                 orientation: "p",
                 hotfixes: ["px_scaling"]
             });
+
             doc.html(ticket.value.$el.innerHTML, {
                 callback: async function(doc) {
                     if(save === true) {
@@ -170,99 +176,82 @@ export default defineComponent({
                             }`
                         );
                     } else {
-                        if(settingsStore.business_settings.printer.native_printing) {
-                            doc.autoPrint();
-                            const hiddFrame = document.createElement("iframe");
-                            hiddFrame.style.position = "fixed";
-                            hiddFrame.style.width = "1px";
-                            hiddFrame.style.height = "1px";
-                            hiddFrame.style.opacity = "0.01";
-                            hiddFrame.src = doc.output("bloburl");
-                            document.body.appendChild(hiddFrame);
-                        } else {
-                            console.log("xd: ", props.data);
-                            console.log("xd: ", props.preVoucher);
-                            if(props.preVoucher) {
-                                const socket = new WebSocket(`${settingsStore?.business_settings.qz_config.wbsockets_host}/print`);
-                                socket.onopen = function() {
-                                    // Enviar el mensaje JSON
-                                    const jsonTicket = {
-                                        "printer_name": "DEMO",
-                                        "ticket_type": "PRE-ACCOUNT",
-                                        "header": {
-                                            "logo": "",
-                                            "ruc": 20145965384,
-                                            "company": "BRAZZERS",
-                                            "address": "JR. SERAFIN FILOMENO S/N",
-                                            "table": "MESA 1",
-                                            "order": 25653
-                                        },
-                                        "ticket_content": [
-                                            {
-                                                "cantidad": 2,
-                                                "descripcion": "Ceviche de Caballo",
-                                                "precio": 20,
-                                                "total": 40
-                                            },
-                                            {
-                                                "cantidad": 4,
-                                                "descripcion": "Inca Cola 2L",
-                                                "precio": 12,
-                                                "total": 48
-                                            },
-                                            {
-                                                "cantidad": 6,
-                                                "descripcion": "Cerveza pilsen personal",
-                                                "precio": 8,
-                                                "total": 24
-                                            }
-                                        ],
-                                        "totals": {
-                                            "exonerado": 11200,
-                                            "gravado": 0,
-                                            "icbper": 0,
-                                            "igv": 0,
-                                            "total" : 11200
-                                        },
-                                        "footer":{
-                                            "date": "09/09/2024 14:05:24",
-                                            "username": "JORGE"
-                                        }
+                        if(props.preVoucher) {
+                            const business = businessStore.business;
+                            const sendTicketData = () => {
+                                console.log(props.data);
+                                const jsonTicket = {
+                                    "printer_name": settingsStore.business_settings.sale.printer_name,
+                                    "ticket_type": "PRE-ACCOUNT",
+                                    "tittle": {
+                                        "logo": "",
+                                        "ruc": business.ruc,
+                                        "company": business.commercial_name,
+                                        "address": business.fiscal_address,
+                                        "table": tableStore.getTableByID(props.data.table).description,
+                                        "order": props.data.id
+                                    },
+                                    "ticket_content": props.data.order_details.map(order => ({
+                                        cantidad: order.quantity,
+                                        descripcion: order.product_name,
+                                        precio: order.price,
+                                        total: order?.["sub_total"]
+                                    })),
+                                    "totals": {
+                                        "exonerado": 0,
+                                        "gravado": 0,
+                                        "icbper": 0,
+                                        "igv": 0,
+                                        "total": props.data?.["initial_amount"]
+                                    },
+                                    "footer": {
+                                        "date": props.data.created,
+                                        "username": props.data.username
                                     }
+                                };
+                                socket.send(JSON.stringify(jsonTicket));
+                                console.log("Mensaje enviado a WebSocket:", jsonTicket);
+                            };
 
-                                    console.log(jsonTicket);
-                                    socket.send(JSON.stringify(jsonTicket));
+                            // Verifica el estado del WebSocket y maneja la conexión
+                            if(!socket || socket.readyState === WebSocket.CLOSED) {
+                                // eslint-disable-next-line no-undef
+                                const apiUrl = process.env.VUE_APP_API_URL.replace(/^https?:\/\//, "");
+                                socket = new WebSocket(`${window.location.protocol === "https:" ? "wss" : "ws"}://${apiUrl}/ws/print/`);
 
+                                socket.onopen = function() {
+                                    console.log("Conexión WebSocket abierta");
+                                    sendTicketData();
                                 };
 
-// Evento si ocurre algún error en la conexión
                                 socket.onerror = function(error) {
                                     console.log("Error en WebSocket", error);
                                     message.error(error);
                                 };
 
-// Evento cuando se recibe un mensaje del servidor
                                 socket.onmessage = function(event) {
-                                    console.log("Mensaje recibido del servidor", event.data);
-                                    message.success(event.data);
+                                    if(event.data.includes("success")) {
+                                        console.log("Mensaje recibido del servidor", JSON.parse(event.data).success);
+                                        message.success(JSON.parse(event.data).success);
+                                    }
                                 };
 
-// Evento cuando la conexión es cerrada
                                 socket.onclose = function(event) {
                                     console.log("Conexión WebSocket cerrada", event);
                                 };
-                            } else {
-
-                                await printerStore.printTicket(
-                                    doc,
-                                    format,
-                                    !props.preVoucher
-                                        ? `SALE#${props.data.id}#${saleStore.getSerieDescription(
-                                            props.data.serie
-                                        )}-${props.data.number}`
-                                        : `PREVOUCHER#${props.data.id}`
-                                );
+                            } else if(socket.readyState === WebSocket.OPEN) {
+                                // Si el WebSocket ya está abierto, envía el mensaje directamente
+                                sendTicketData();
                             }
+                        } else {
+                            doc.autoPrint();
+                            const hiddeFrame = document.createElement("iframe");
+                            hiddeFrame.style.position = "fixed";
+                            hiddeFrame.style.width = "1px";
+                            hiddeFrame.style.height = "1px";
+                            hiddeFrame.style.opacity = "0.01";
+                            hiddeFrame.src = doc.output("bloburl");
+                            document.body.appendChild(hiddeFrame);
                         }
                     }
                     emit("printed");

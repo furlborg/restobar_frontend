@@ -370,6 +370,8 @@ export default defineComponent({
 
         const performRetrieveTableOrder = async(table) => {
             await retrieveTableOrder(table).then((response) => {
+                        console.log(response.data);
+                        console.log(settingsStore.business_settings.printer.print_html);
                 if(response.status === 200) {
                     if(settingsStore.business_settings.printer.print_html) {
                         previewData.value = response.data;

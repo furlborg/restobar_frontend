@@ -12,7 +12,7 @@
       <n-button
         type="info"
         :disabled="waiterStore.groupMode"
-        @click="tableStore.refreshData(), printerStore.startConnection()"
+        @click="tableStore.refreshData()"
       >
         <v-icon name="hi-solid-refresh" />
       </n-button>

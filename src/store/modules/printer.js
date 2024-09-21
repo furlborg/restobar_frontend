@@ -49,7 +49,7 @@ export const usePrinterStore = defineStore("printer", {
         };
       });
       if (auto) {
-        this.startConnection();
+        // this.startConnection();
       }
     },
     startConnection() {
@@ -187,7 +187,7 @@ export const usePrinterStore = defineStore("printer", {
       this.qz.printers.stopListening();
     },
     async printTicket(pdf, format, job_name, place = null) {
-      this.startConnection();
+      // this.startConnection();
       const printer = !place
         ? !this.managedPrinters[0]
           ? await this.qz.printers.getDefault()
