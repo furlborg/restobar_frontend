@@ -66,6 +66,7 @@ import { useProductStore } from "@/store/modules/product";
 import { usePrinterStore } from "@/store/modules/printer";
 import { jsPDF } from "jspdf";
 import { useMessage } from "naive-ui";
+import { useTableStore } from "@/store/modules/table";
 
 export default defineComponent({
   name: "TicketPreview",
@@ -98,6 +99,7 @@ export default defineComponent({
     const tickets = ref([]);
     const fittings = ref([]);
     const delivery = ref(null);
+      const tableStore = useTableStore();
 
     const places = computed(() => {
       return productStore.places.filter((place) =>
@@ -149,11 +151,9 @@ export default defineComponent({
                               }).map(indicate => indicate.description) || ""
                           }))
                       };
-
-                      jsonTicket.tittle.table = `MESA ${props.data?.table}`;
+                      jsonTicket.tittle.table = tableStore.getTableByID(props.data.table).description;
                       if(props.data.delivery_info || props.data.table) delete jsonTicket.header.reference;
                       if(!props.data.table) jsonTicket.tittle.table = !props.data.delivery_info ? "PARA LLEVAR" : "DELIVERY";
-                      console.log(jsonTicket);
                       // jsonTicket.header.reference = props.data.table || (!props.data.info.delivery_info ? "PARA LLEVAR" : "DELIVERY")
                       socket.send(JSON.stringify(jsonTicket));
 

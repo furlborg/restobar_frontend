@@ -95,6 +95,7 @@ import PreviewPreset from "./pdf-presets/PreviewPreset";
 import { isNumber } from "@/utils";
 import { sendWhatsapp } from "@/api/modules/sales";
 import { useBusinessStore } from "@/store/modules/business";
+import { useTableStore } from "@/store/modules/table";
 
 export default defineComponent({
     name: "PreviewDrawer",
@@ -125,6 +126,7 @@ export default defineComponent({
         const saleStore = useSaleStore();
         const totalEnterPulse = ref(0);
         const businessStore = useBusinessStore();
+        const tableStore = useTableStore();
 
         const message = useMessage();
 
@@ -176,7 +178,7 @@ export default defineComponent({
                         if(props.preVoucher) {
                             const socket = new WebSocket(`${settingsStore?.business_settings.qz_config.wbsockets_host}/print`);
                             const business = businessStore.business;
-
+                            console.log(props.data);
                             socket.onopen = function() {
                                 // Enviar el mensaje JSON
                                 const jsonTicket = {
@@ -187,7 +189,7 @@ export default defineComponent({
                                         "ruc": business.ruc,
                                         "company": business.commercial_name,
                                         "address": business.fiscal_address,
-                                        "table": `MESA ${props.data.table}`,
+                                        "table": tableStore.getTableByID(props.data.table).description,
                                         "order": props.data.id
                                     },
                                     "ticket_content": props.data.order_details.map(order => ({
