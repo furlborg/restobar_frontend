@@ -10,12 +10,13 @@
       <n-drawer-content body-content-style="padding: 0;" :native-scrollbar="false" >
           <template v-for="(place, i) in places" :key="`product-${place.id}`">
               <default-ticket
-                      :ref="(el) => (tickets[i] = el)"
+                      ref="tickets"
                       :data="data"
                       :place="place"
                       :isUpdate="isUpdate"
               />
-              <n-button type="info" secondary block @click="printTicketsForAllPlaces(i)">
+
+              <n-button type="info" secondary block @click="printTicket(i, place, false)">
                   <template #icon>
                       <v-icon name="md-print-round"/>
                   </template>
@@ -37,7 +38,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed } from "vue";
+import { defineComponent, ref, computed, nextTick } from "vue";
 import DefaultTicket from "./ticket-presets/DefaultTicket";
 import TicketDelivery from "./ticket-presets/TicketDelivery";
 import { useSettingsStore } from "@/store/modules/settings";
@@ -104,15 +105,9 @@ export default defineComponent({
                   if(callback) callback();  // Ejecuta el callback cuando el socket esté listo
               };
 
-              socket.onmessage = function(event) {
-                  if(event.data.includes("success")) {
-                      console.log("Mensaje recibido del servidor", JSON.parse(event.data).success);
-                      message.success(JSON.parse(event.data).success);
-                  }
-              };
-
               socket.onclose = function(event) {
                   console.log("WebSocket cerrado", event);
+                  socket.close()
               };
           } else if(socket.readyState === WebSocket.OPEN) {
               if(callback) callback();  // Si el socket ya está abierto, ejecuta el callback
@@ -120,10 +115,7 @@ export default defineComponent({
       };
 
       const printTicket = async(i, place) => {
-          // console.log("Lugar de preparación:", place);  // Confirmación de lugar de preparación
-
           return new Promise((resolve) => {
-
               const sendTicketData = () => {
                   const jsonTicket = {
                       "printer_name": place.printer_name,
@@ -137,7 +129,6 @@ export default defineComponent({
                           "reference": props.data.ask_for,
                           "username": props.data.username
                       },
-                      // Filtrar el contenido solo por el lugar de preparación actual
                       "ticket_content": props.data.order_details.filter(pl => pl.preparation_place === place.description).map(it => ({
                           "id": it.id,
                           "cantidad": it.quantity,
@@ -150,16 +141,59 @@ export default defineComponent({
                           }).map(indicate => indicate.description) || ""
                       }))
                   };
-
                   // Obtener la descripción de la mesa si está presente
                   jsonTicket.tittle.table = tableStore.getTableByID(props.data.table).description;
                   if(props.data.delivery_info || props.data.table) delete jsonTicket.header.reference;
                   if(!props.data.table) jsonTicket.tittle.table = !props.data.delivery_info ? "PARA LLEVAR" : "DELIVERY";
 
-                  console.log("Enviando ticket:", jsonTicket);
                   socket.send(JSON.stringify(jsonTicket));  // Envía el ticket al WebSocket
+
+                  // Cerrar el WebSocket después de enviar el ticket y recibir respuesta
+                  socket.onmessage = function(event) {
+                      if(event.data.includes("id")) {
+                          if(JSON.parse(event.data).id !== "") {
+                              if(event.data.includes("success")) {
+                                  message.success(JSON.parse(event.data).success);
+                                  socket.close();  // Cerramos la conexión tras recibir la confirmación
+                              }
+                          } else {
+                              message.error("No se pudo establecer conexión con el servidor de impresiones");
+                              message.error("Iniciando impresión manual");
+
+                                  const ticket = tickets.value[i];
+                              nextTick(() => {
+                                  if (ticket && ticket.$el) {
+                                      const format = [ticket.$el.clientWidth, ticket.$el.clientHeight + 30];
+                                      console.log(format);
+                                      const doc = new jsPDF({
+                                          unit: "px",
+                                          format: format,
+                                          orientation: "m",
+                                          hotfixes: ["px_scaling"]
+                                      });
+                                      doc.html(ticket.$el.innerHTML, {
+                                          callback: async function(doc) {
+                                              doc.autoPrint();
+                                              const hiddeFrame = document.createElement("iframe");
+                                              hiddeFrame.style.position = "fixed";
+                                              hiddeFrame.style.width = "1px";
+                                              hiddeFrame.style.height = "1px";
+                                              hiddeFrame.style.opacity = "0.01";
+                                              hiddeFrame.src = doc.output("bloburl");
+                                              document.body.appendChild(hiddeFrame);
+                                          }
+                                      });
+                                  } else {
+                                      console.error("No se pudo encontrar el elemento del ticket.");
+                                  }
+                              });
+                          }
+                      }
+                  };
+
                   resolve();  // Notifica que el ticket ha sido enviado
               };
+
               // Mantener el WebSocket abierto y enviar el ticket
               openWebSocket(sendTicketData);
           });
@@ -210,8 +244,8 @@ export default defineComponent({
           });
 
           doc.html(delivery.value.$el.innerHTML, {
-              callback: async function (doc) {
-                  if (settingsStore.business_settings.printer.native_printing) {
+              callback: async function(doc) {
+                  if(settingsStore.business_settings.printer.native_printing) {
                       doc.autoPrint();
                       const hiddeFrame = document.createElement("iframe");
                       hiddeFrame.style.position = "fixed";
@@ -230,7 +264,8 @@ export default defineComponent({
                                   "order": props.data.id
                               },
                               "header": {
-                                  "invoice": `${JSON.parse(props.data.json_sale)?.serie_documento}-${JSON.parse(props.data.json_sale)?.numero_documento}`,
+                                  "invoice": `${JSON.parse(props.data.json_sale)?.serie_documento}-${JSON.parse(
+                                      props.data.json_sale)?.numero_documento}`,
                                   "fecha": JSON.parse(props.data.json_sale).fecha_de_emision,
                                   "customer": props.data.delivery_info.person,
                                   "reference": props.data.ask_for,
@@ -246,13 +281,14 @@ export default defineComponent({
                                   "total": parseFloat(it?.["total_item"].toFixed(2))
                               })),
                               "totals": {
-                                  "exonerado":JSON.parse(props.data.json_sale).totales.total_operaciones_exoneradas  ,
-                                  "gravado":JSON.parse(props.data.json_sale).totales.total_operaciones_gravadas  ,
-                                  "icbper":JSON.parse(props.data.json_sale).totales.total_impuestos_bolsa_plastica ,
-                                  "igv": JSON.parse(props.data.json_sale).totales.total_igv ,
-                                  "total": JSON.parse(props.data.json_sale).totales.total_venta ,
+                                  "exonerado": JSON.parse(props.data.json_sale).totales.total_operaciones_exoneradas,
+                                  "gravado": JSON.parse(props.data.json_sale).totales.total_operaciones_gravadas,
+                                  "icbper": JSON.parse(props.data.json_sale).totales.total_impuestos_bolsa_plastica,
+                                  "igv": JSON.parse(props.data.json_sale).totales.total_igv,
+                                  "total": JSON.parse(props.data.json_sale).totales.total_venta,
                                   "pago": parseFloat(props.data.given_amount),
-                                  "vuelto": parseFloat((props.data.given_amount - JSON.parse(props.data.json_sale)?.["totales"]?.["total_venta"]).toFixed(2))
+                                  "vuelto": parseFloat(
+                                      (props.data.given_amount - JSON.parse(props.data.json_sale)?.["totales"]?.["total_venta"]).toFixed(2))
                               },
                               "footer": {
                                   "repartidor": props.data.delivery_info.deliveryman
@@ -265,28 +301,62 @@ export default defineComponent({
                       const apiUrl = process.env.VUE_APP_API_URL.replace(/^https?:\/\//, "");
                       const socketUrl = `${window.location.protocol === "https:" ? "wss" : "ws"}://${apiUrl}/ws/print/`;
 
-                      if (!socket || socket.readyState === WebSocket.CLOSED) {
+                      if(!socket || socket.readyState === WebSocket.CLOSED) {
                           socket = new WebSocket(socketUrl);
 
-                          socket.onopen = function (e) {
+                          socket.onopen = function(e) {
                               console.log("Conexión WebSocket abierta", e);
                               sendTicketData(); // Enviar datos una vez se abre el WebSocket
                           };
 
-                          socket.onerror = function (error) {
+                          socket.onerror = function(error) {
                               console.log("Error en WebSocket", error);
                               message.error("Error en la conexión WebSocket");
                           };
 
-                          socket.onmessage = function (event) {
-                              if (event.data.includes("success")) {
-                                  console.log("Mensaje recibido del servidor", JSON.parse(event.data).success);
-                                  message.success("Impresión completada con éxito");
+                          socket.onmessage = function(event) {
+                              if(event.data.includes("id")) {
+                                  if(JSON.parse(event.data).id !== "") {
+                                      if(event.data.includes("success")) {
+                                          message.success(JSON.parse(event.data).success);
+                                          socket.close();  // Cerramos la conexión tras recibir la confirmación
+                                      }
+                                  } else {
+                                      message.error("No se pudo establecer conexión con el servidor de impresiones");
+                                      message.error("Iniciando impresión manual");
+
+                                      nextTick(() => {
+                                          if(delivery.value && delivery.value.$el) {
+                                              const format = [delivery.value.$el.clientWidth, delivery.value.$el.clientHeight + 30];
+                                              console.log(format);
+                                              const doc = new jsPDF({
+                                                  unit: "px",
+                                                  format: format,
+                                                  orientation: "m",
+                                                  hotfixes: ["px_scaling"]
+                                              });
+                                              doc.html(delivery.value.$el.innerHTML, {
+                                                  callback: async function(doc) {
+                                                      doc.autoPrint();
+                                                      const hiddeFrame = document.createElement("iframe");
+                                                      hiddeFrame.style.position = "fixed";
+                                                      hiddeFrame.style.width = "1px";
+                                                      hiddeFrame.style.height = "1px";
+                                                      hiddeFrame.style.opacity = "0.01";
+                                                      hiddeFrame.src = doc.output("bloburl");
+                                                      document.body.appendChild(hiddeFrame);
+                                                  }
+                                              });
+                                          } else {
+                                              console.error("No se pudo encontrar el elemento del ticket.");
+                                          }
+                                      });
+                                  }
                               }
                           };
-
                           socket.onclose = function () {
                               console.log("Conexión WebSocket cerrada");
+                              socket.close()
                           };
                       } else if (socket.readyState === WebSocket.OPEN) {
                           // Si el WebSocket ya está abierto, envía el ticket
@@ -299,10 +369,9 @@ export default defineComponent({
           });
       };
 
-      const printTicketsForAllPlaces = async(i) => {
-          // Recorremos cada lugar de preparación y enviamos el ticket
-          for(const place of places.value) {
-              await printTicket(i, place);  // Asegurarnos de que se imprime un ticket para cada lugar
+      const printTicketsForAllPlaces = async () => {
+          for (const [i, place] of places.value.entries()) {
+              await printTicket(i, place, true);
           }
       };
 
@@ -333,7 +402,7 @@ export default defineComponent({
       fittings,
       generate,
       settingsStore,
-        printTicketsForAllPlaces
+      printTicketsForAllPlaces
     };
   },
 });
