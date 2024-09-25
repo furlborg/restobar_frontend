@@ -150,7 +150,8 @@ export default defineComponent({
                 window.addEventListener("keydown", onKeyDown);
                 if(totalEnterPulse.value >= 3 && totalEnterPulse.value <= 4) {
                     generate();
-                    message.success(`"Total de pulsaciones: ", ${totalEnterPulse.value}, "si no se imprime es porque el qz esta mal configurado..."`);
+                    message.success(
+                        `"Total de pulsaciones: ", ${totalEnterPulse.value}, "si no se imprime es porque el qz esta mal configurado..."`);
                 }
             }
         });
@@ -179,7 +180,33 @@ export default defineComponent({
                         if(props.preVoucher) {
                             const business = businessStore.business;
                             const sendTicketData = () => {
-                                console.log(props.data);
+
+                                const orders = props.data.order_details.map(order => {
+                                    let totalOperation = 0;
+                                    let totalUnitPrice = 0;
+                                    if(order.product_affectation === 20) {
+                                        totalOperation = parseFloat((order.quantity * order.price).toFixed(2));
+                                        totalUnitPrice = parseFloat((order.price).toFixed(2));
+                                    } else {
+                                        if(order.product_affectation === 10) {
+                                            totalOperation = parseFloat((order.quantity * ((order.price * 0.18) + order.price)).toFixed(2));
+                                            totalUnitPrice = parseFloat(((order.price * 0.18) + order.price)).toFixed(2);
+                                        }
+                                    }
+                                    console.log(totalOperation);
+                                    return {
+                                        operation: order.product_affectation,
+                                        cantidad: order.quantity,
+                                        descripcion: order.product_name,
+                                        precio: totalUnitPrice,
+                                        total: totalOperation
+                                    };
+                                });
+                                const totalIGV = orders.reduce((acc, it) => { return it.operation === 10 ? acc + it.total : acc; }, 0);
+                                const totalExo = orders.reduce((acc, it) => { return it.operation === 20 ? acc + it.total : acc; }, 0);
+
+                                const igv = parseFloat((totalIGV - (totalIGV / 1.18)).toFixed(2))
+                                const gravado = parseFloat((totalIGV / 1.18).toFixed(2))
                                 const jsonTicket = {
                                     "printer_name": settingsStore.business_settings.sale.printer_name,
                                     "ticket_type": "PRE-ACCOUNT",
@@ -191,18 +218,13 @@ export default defineComponent({
                                         "table": tableStore.getTableByID(props.data.table).description,
                                         "order": props.data.id
                                     },
-                                    "ticket_content": props.data.order_details.map(order => ({
-                                        cantidad: order.quantity,
-                                        descripcion: order.product_name,
-                                        precio: order.price,
-                                        total: parseFloat((order.quantity * order.price).toFixed(2))
-                                    })),
+                                    "ticket_content": orders,
                                     "totals": {
-                                        "exonerado": 0,
-                                        "gravado": 0,
+                                        "exonerado": totalExo,
+                                        "gravado": gravado,
                                         "icbper": 0,
-                                        "igv": 0,
-                                        "total": props.data?.["initial_amount"]
+                                        "igv": igv,
+                                        "total": parseFloat(totalExo + totalIGV).toFixed(2)
                                     },
                                     "footer": {
                                         "date": props.data.created,
@@ -210,7 +232,6 @@ export default defineComponent({
                                     }
                                 };
                                 socket.send(JSON.stringify(jsonTicket));
-                                console.log("Mensaje enviado a WebSocket:", jsonTicket);
                             };
 
                             // Verifica el estado del WebSocket y maneja la conexión
@@ -233,6 +254,7 @@ export default defineComponent({
                                     if(event.data.includes("success")) {
                                         console.log("Mensaje recibido del servidor", JSON.parse(event.data).success);
                                         message.success(JSON.parse(event.data).success);
+                                        socket.close()
                                     }
                                 };
 
