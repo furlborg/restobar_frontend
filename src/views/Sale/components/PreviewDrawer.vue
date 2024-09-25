@@ -195,7 +195,7 @@ export default defineComponent({
                                         cantidad: order.quantity,
                                         descripcion: order.product_name,
                                         precio: order.price,
-                                        total: order?.["sub_total"]
+                                        total: parseFloat((order.quantity * order.price).toFixed(2))
                                     })),
                                     "totals": {
                                         "exonerado": 0,
