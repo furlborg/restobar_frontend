@@ -394,39 +394,39 @@ export default defineComponent({
 
     const info = ref(generateData());
 
-    const generateFittingData = () => {
-      let data = {
-        ...props.data,
-        order_details: !props.place
-          ? props.data.order_details
-          : props.data.order_details.filter(
-              (detail) =>
-                detail.product_fitting?.preparation_place ===
-                props.place.description
-            ),
-        table: !props.data.table
-          ? ""
-          : tableStore.getTableByID(props.data.table).description,
-        json_sale: !props.data.json_sale
-          ? ""
-          : JSON.parse(props.data.json_sale),
+      const generateFittingData = () => {
+          let data = {
+              ...props.data,
+              order_details: !props.place
+                  ? props.data.order_details
+                  : props.data.order_details.filter(
+                      (detail) =>
+                          detail.product_fitting?.preparation_place ===
+                          props.place.description
+                  ),
+              table: !props.data.table
+                  ? ""
+                  : tableStore.getTableByID(props.data.table).description,
+              json_sale: !props.data.json_sale
+                  ? ""
+                  : JSON.parse(props.data.json_sale)
+          };
+          data.order_details.forEach((detail) => {
+              detail.indication = detail.indication.map((indication) => {
+                  let desc = "";
+                  if(indication.quick_indications.length) {
+                      indication.quick_indications.forEach((ind) => {
+                          desc += `${ind}, `;
+                      });
+                  }
+                  indication.description = !indication.description
+                      ? desc.slice(0, -2)
+                      : desc + indication.description;
+                  return indication;
+              });
+          });
+          return data;
       };
-      data.order_details.forEach((detail) => {
-        detail.indication = detail.indication.map((indication) => {
-          let desc = "";
-          if (indication.quick_indications.length) {
-            indication.quick_indications.forEach((ind) => {
-              desc += `${ind}, `;
-            });
-          }
-          indication.description = !indication.description
-            ? desc.slice(0, -2)
-            : desc + indication.description;
-          return indication;
-        });
-      });
-      return data;
-    };
 
     const fitting_info = ref(generateFittingData());
 

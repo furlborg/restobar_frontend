@@ -81,17 +81,16 @@ export default defineComponent({
     const delivery = ref(null);
     let socket = null;
     const tableStore = useTableStore();
-      // eslint-disable-next-line no-undef
 
-    const places = computed(() => {
-      return productStore.places.filter((place) =>
-        props.data.order_details.some(
-          (detail) =>
-            detail.preparation_place === place.description ||
-            detail.product_fitting?.preparation_place === place.description
-        )
-      );
-    });
+      const places = computed(() => {
+          return productStore.places.filter((place) =>
+              props.data.order_details.some(
+                  (detail) =>
+                      detail.preparation_place === place.description ||
+                      detail.product_fitting?.preparation_place === place.description
+              )
+          );
+      });
 
       const openWebSocket = (callback) => {
           if(!socket || socket.readyState === WebSocket.CLOSED) {
@@ -129,7 +128,8 @@ export default defineComponent({
                           "reference": props.data.ask_for,
                           "username": props.data.username
                       },
-                      "ticket_content": props.data.order_details.filter(pl => pl.preparation_place === place.description).map(it => ({
+                      "ticket_content": props.data.order_details.filter(pl => pl.preparation_place === place.description ||
+                          pl.product_fitting?.preparation_place === place.description).map(it => ({
                           "id": it.id,
                           "cantidad": it.quantity,
                           "descripcion": it.product_name,
