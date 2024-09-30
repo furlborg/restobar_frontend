@@ -142,7 +142,7 @@ export default defineComponent({
                       }))
                   };
                   // Obtener la descripción de la mesa si está presente
-                  jsonTicket.tittle.table = tableStore.getTableByID(props.data.table).description;
+                  if(props.data.table !== null) jsonTicket.tittle.table = tableStore.getTableByID(props.data.table).description;
                   if(props.data.delivery_info || props.data.table) delete jsonTicket.header.reference;
                   if(!props.data.table) jsonTicket.tittle.table = !props.data.delivery_info ? "PARA LLEVAR" : "DELIVERY";
 
@@ -328,7 +328,6 @@ export default defineComponent({
                                       nextTick(() => {
                                           if(delivery.value && delivery.value.$el) {
                                               const format = [delivery.value.$el.clientWidth, delivery.value.$el.clientHeight + 30];
-                                              console.log(format);
                                               const doc = new jsPDF({
                                                   unit: "px",
                                                   format: format,
