@@ -135,7 +135,7 @@ export default defineComponent({
                           "descripcion": it.product_name,
                           "indicaciones": it.indication.filter(indicate => {
                               return (
-                                  (!indicate.description.includes("[]") || indicate.quick_indications.length > 0) &&
+                                  (!indicate.description.includes("[]") || indicate.description.length > 3 || indicate.quick_indications.length > 0) &&
                                   indicate.description !== ""
                               );
                           }).map(indicate => indicate.description) || ""

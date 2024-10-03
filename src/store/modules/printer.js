@@ -52,22 +52,22 @@ export const usePrinterStore = defineStore("printer", {
         // this.startConnection();
       }
     },
-    startConnection() {
-      if (!this.qz.websocket.isActive()) {
-        this.qz.websocket
-          .connect({
-            host: this.host,
-            usingSecure: !/(android)/i.test(navigator.userAgent),
-          })
-          .then(() => {
-            this.getPrinters();
-          })
-          .catch((error) => {
-            console.error(error);
-            message.error(error.message);
-          });
-      }
-    },
+    // startConnection() {
+    //   if (!this.qz.websocket.isActive()) {
+    //     this.qz.websocket
+    //       .connect({
+    //         host: this.host,
+    //         usingSecure: !/(android)/i.test(navigator.userAgent),
+    //       })
+    //       .then(() => {
+    //         this.getPrinters();
+    //       })
+    //       .catch((error) => {
+    //         console.error(error);
+    //         message.error(error.message);
+    //       });
+    //   }
+    // },
     endConnection() {
       if (this.qz.websocket.isActive()) {
         this.qz.websocket.disconnect();
