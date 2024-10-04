@@ -311,11 +311,9 @@ import { isAxiosError } from "axios";
 import CustomerModal from "@/views/Customer/components/CustomerModal";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 import { useSettingsStore } from "@/store/modules/settings";
-import { useRouter } from "vue-router";
 import { useProductStore } from "@/store/modules/product";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
-import { useUserStore } from "@/store/modules/user";
 import { useGenericsStore } from "@/store/modules/generics";
 import { saleRules } from "@/utils/constants";
 import { cloneDeep, isDecimal } from "@/utils";
@@ -325,9 +323,9 @@ import {
   searchRucCustomer,
 } from "@/api/modules/customer";
 import {
-  createSale,
-  getSaleNumber,
-  sendSale,
+    createSale,
+    getSaleNumber, retrieveSale,
+    sendSale
 } from "@/api/modules/sales";
 import { useDialog, useMessage } from "naive-ui";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
@@ -534,20 +532,26 @@ export default defineComponent({
               );
               sale.value.discount = totalDSCT.value;
               await createSale(sale.value)
-                .then((response) => {
+                .then(async (response) => {
                   if (response.status === 201) {
+                      const dataPrint = async() => {
+                          const res = await retrieveSale(response.data?.id);
+                          pdfData.value = res.data;
+                          return res.data;
+                      };
+                      await dataPrint();
                     if (settingsStore.business_settings.printer.print_html) {
-                      pdfData.value = response.data;
+                      // pdfData.value = response.data;
                       showPdf.value = true;
                       if (!ticketPreview.value) {
                         setTimeout(() => previewDrawer.value.generate(), 250);
                       }
                     } else {
-                      VoucherPrint({
-                        data: response.data,
-                        businessStore,
-                        changing: changing.value,
-                        show: true,
+                      await VoucherPrint({
+                          data: await dataPrint(),
+                          businessStore,
+                          changing: changing.value,
+                          show: true,
                       });
                       emit("success");
                     }
