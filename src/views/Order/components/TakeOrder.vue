@@ -1114,7 +1114,11 @@ export default defineComponent({
                             positiveText: "Sí",
                             onPositiveClick: async() => {
                                 loading.value = true;
-                                sale.value.sale_details = saleStore.toSale;
+                                sale.value.sale_details = saleStore.toSale.map((detail) => ({
+                                    ...detail,
+                                    igv_tax: detail.igv_tax.toFixed(2),
+                                    price_base: detail.price_base.toFixed(2)
+                                }));
                                 await takeAwayOrder(
                                     orderStore.orderList,
                                     sale.value,

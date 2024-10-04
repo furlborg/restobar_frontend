@@ -319,9 +319,9 @@ import {
   searchRucCustomer,
 } from "@/api/modules/customer";
 import {
-  createSale,
-  getSaleNumber,
-  sendSale,
+    createSale,
+    getSaleNumber, retrieveSale,
+    sendSale
 } from "@/api/modules/sales";
 import { useDialog, useMessage } from "naive-ui";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
@@ -528,160 +528,160 @@ export default defineComponent({
 
     const businessStore = useBusinessStore();
 
-    const performCreateSale = () => {
-      saleForm.value.validate((errors) => {
-        if (!errors) {
-          dialog.success({
-            closable: false,
-            title: "Venta",
-            content: "Realizar venta?",
-            positiveText: "Sí",
-            onPositiveClick: async () => {
-              loading.value = true;
-              sale.value.order = orderStore.orderId;
-              sale.value.sale_details = saleStore.toSale.map((detail) => ({
-                ...detail,
-                igv_tax: detail.igv_tax.toFixed(2),
-                price_base: detail.price_base.toFixed(2),
-              }));
-              sale.value.discount = totalDSCT.value;
-              await createSale(sale.value)
-                .then((response) => {
-                  if (response.status === 201) {
-                    if (settingsStore.business_settings.printer.print_html) {
-                      pdfData.value = response.data;
-                      showPdf.value = true;
-                      if (!ticketPreview.value) {
-                        setTimeout(() => previewDrawer.value.generate(), 250);
-                      }
-                    } else {
-                      VoucherPrint({
-                        data: response.data,
-                        businessStore,
-                        saleStore,
-                        changing: changing.value,
-                        show: true,
-                      });
-                      router.push({ name: "TableHome" });
-                    }
-
-                    if (
-                      settingsStore.businessSettings.sale.auto_send &&
-                      response.data.invoice_type !== "80"
-                    ) {
-                      sendSale(response.data.id)
-                        .then((response) => {
-                          if (response.status === 200) {
-                            const sale = response.data;
-                            message.success("Enviado!");
-                            // if (whatsappNumber.value.length >= 9) {
-                            //   sendWhatsapp(
-                            //     sale.id,
-                            //     [sale.serie, sale.number],
-                            //     whatsappNumber.value
-                            //   )
-                            //     .then((response) => {
-                            //       if (response.status === 200)
-                            //         window.open(
-                            //           response.data.data.url,
-                            //           "_blank"
-                            //         );
-                            //     })
-                            //     .catch((error) => {
-                            //       console.error(error);
-                            //     });
-                            // }
-                          }
-                        })
-                        .catch((error) => {
-                          if (isAxiosError(error)) {
-                            if (error.response.status === 400) {
-                              console.error(error);
-                              for (const value in error.response.data) {
-                                error.response.data[`${value}`].forEach(
-                                  (err) => {
-                                    if (typeof err === "object") {
-                                      for (const v in err) {
-                                        message.error(`${err[`${v}`]}`);
+      const performCreateSale = () => {
+          saleForm.value.validate((errors) => {
+              if(!errors) {
+                  dialog.success({
+                      closable: false,
+                      title: "Venta",
+                      content: "Realizar venta?",
+                      positiveText: "Sí",
+                      onPositiveClick: async() => {
+                          console.log("gordo puto");
+                          loading.value = true;
+                          sale.value.order = orderStore.orderId;
+                          sale.value.sale_details = saleStore.toSale.map((detail) => ({
+                              ...detail,
+                              igv_tax: detail.igv_tax.toFixed(2),
+                              price_base: detail.price_base.toFixed(2)
+                          }));
+                          sale.value.discount = totalDSCT.value;
+                          await createSale(sale.value).then(async(response) => {
+                              if(response.status === 201) {
+                                  const dataPrint = async() => {
+                                      const res = await retrieveSale(response.data?.id);
+                                      pdfData.value = res.data;
+                                      return res.data;
+                                  };
+                                    await dataPrint();
+                                  if(settingsStore.business_settings.printer.print_html) {
+                                      showPdf.value = true;
+                                      if(!ticketPreview.value) {
+                                          setTimeout(() => previewDrawer.value.generate(), 250);
                                       }
-                                    } else {
-                                      message.error(`${err}`);
-                                    }
+                                  } else {
+                                      await VoucherPrint({
+                                          data: await dataPrint(),
+                                          businessStore,
+                                          saleStore,
+                                          changing: changing.value,
+                                          show: true
+                                      });
+                                      await router.push({ name: "TableHome" });
                                   }
-                                );
+
+                                  if(
+                                      settingsStore.businessSettings.sale.auto_send &&
+                                      response.data.invoice_type !== "80"
+                                  ) {
+                                      sendSale(response.data.id).then((response) => {
+                                          if(response.status === 200) {
+                                              message.success("Enviado!");
+                                              // if (whatsappNumber.value.length >= 9) {
+                                              //   sendWhatsapp(
+                                              //     sale.id,
+                                              //     [sale.serie, sale.number],
+                                              //     whatsappNumber.value
+                                              //   )
+                                              //     .then((response) => {
+                                              //       if (response.status === 200)
+                                              //         window.open(
+                                              //           response.data.data.url,
+                                              //           "_blank"
+                                              //         );
+                                              //     })
+                                              //     .catch((error) => {
+                                              //       console.error(error);
+                                              //     });
+                                              // }
+                                          }
+                                      }).catch((error) => {
+                                          if(isAxiosError(error)) {
+                                              if(error.response.status === 400) {
+                                                  console.error(error);
+                                                  for(const value in error.response.data) {
+                                                      error.response.data[`${value}`].forEach(
+                                                          (err) => {
+                                                              if(typeof err === "object") {
+                                                                  for(const v in err) {
+                                                                      message.error(`${err[`${v}`]}`);
+                                                                  }
+                                                              } else {
+                                                                  message.error(`${err}`);
+                                                              }
+                                                          }
+                                                      );
+                                                  }
+                                              } else {
+                                                  console.error(error);
+                                                  message.error("Algo salió mal...");
+                                              }
+                                          } else {
+                                              console.error(error);
+                                              message.error("Algo salió mal...");
+                                          }
+                                      });
+                                  }
+                                  // else {
+                                  //   if (whatsappNumber.value.length >= 9) {
+                                  //     sendWhatsapp(
+                                  //       response.data.id,
+                                  //       [response.data.serie, response.data.number],
+                                  //       whatsappNumber.value
+                                  //     )
+                                  //       .then((response) => {
+                                  //         if (response.status === 200)
+                                  //           window.open(response.data.data.url, "_blank");
+                                  //       })
+                                  //       .catch((error) => {
+                                  //         console.error(error);
+                                  //       });
+                                  //   }
+                                  // }
+                                  message.success("Venta realizada correctamente!");
+                                  // router.push({ name: "TableHome" });
                               }
-                            } else {
-                              console.error(error);
-                              message.error("Algo salió mal...");
-                            }
-                          } else {
-                            console.error(error);
-                            message.error("Algo salió mal...");
-                          }
-                        });
-                    }
-                    // else {
-                    //   if (whatsappNumber.value.length >= 9) {
-                    //     sendWhatsapp(
-                    //       response.data.id,
-                    //       [response.data.serie, response.data.number],
-                    //       whatsappNumber.value
-                    //     )
-                    //       .then((response) => {
-                    //         if (response.status === 200)
-                    //           window.open(response.data.data.url, "_blank");
-                    //       })
-                    //       .catch((error) => {
-                    //         console.error(error);
-                    //       });
-                    //   }
-                    // }
-                    message.success("Venta realizada correctamente!");
-                    // router.push({ name: "TableHome" });
-                  }
-                })
-                .catch((error) => {
-                  if (isAxiosError(error)) {
-                    if (error.response.status === 400) {
-                      console.error(error);
-                      for (const value in error.response.data) {
-                        error.response.data[`${value}`].forEach((err) => {
-                          if (typeof err === "object") {
-                            for (const v in err) {
-                              message.error(`${err[`${v}`]}`);
-                            }
-                          } else {
-                            message.error(`${err}`);
-                          }
-                        });
+                          }).catch((error) => {
+                              if(isAxiosError(error)) {
+                                  if(error.response.status === 400) {
+                                      console.error(error);
+                                      for(const value in error.response.data) {
+                                          error.response.data[`${value}`].forEach((err) => {
+                                              if(typeof err === "object") {
+                                                  for(const v in err) {
+                                                      message.error(`${err[`${v}`]}`);
+                                                  }
+                                              } else {
+                                                  message.error(`${err}`);
+                                              }
+                                          });
+                                      }
+                                  } else {
+                                      console.error(error);
+                                      message.error("Algo salió mal...");
+                                  }
+                              } else {
+                                  console.error(error);
+                                  message.error("Algo salió mal...");
+                              }
+                          }).finally(() => {
+                              loading.value = false;
+                          });
                       }
-                    } else {
-                      console.error(error);
-                      message.error("Algo salió mal...");
-                    }
-                  } else {
-                    console.error(error);
-                    message.error("Algo salió mal...");
+                  });
+              } else {
+                  if(formRules.value.customer.required) {
+                      if(sale.value.invoice_type === 1) {
+                          message.warning("Debes agregar un cliente cuando la venta es con factura");
+                      } else {
+                          message.error("Debes agregar un cliente porque la venta es mayor a S/ 699");
+                      }
                   }
-                })
-                .finally(() => {
-                  loading.value = false;
-                });
-            },
+                  console.error(errors);
+                  message.error("Datos Incorrectos");
+              }
           });
-        } else {
-          if (formRules.value.customer.required) {
-            if (sale.value.invoice_type === 1) {
-              message.warning("Debes agregar un cliente cuando la venta es con factura");
-            } else {
-              message.error("Debes agregar un cliente porque la venta es mayor a S/ 699");
-            }
-          }
-          console.error(errors);
-          message.error("Datos Incorrectos");
-        }
-      });
-    };
+      };
 
     const obtainSaleNumber = async () => {
       loading.value = true;

@@ -95,6 +95,7 @@ import { isNumber } from "@/utils";
 import { sendWhatsapp } from "@/api/modules/sales";
 import { useBusinessStore } from "@/store/modules/business";
 import { useTableStore } from "@/store/modules/table";
+import { http } from "@/api";
 
 export default defineComponent({
     name: "PreviewDrawer",
@@ -187,13 +188,11 @@ export default defineComponent({
                                     if(order.product_affectation === 20) {
                                         totalOperation = parseFloat((order.quantity * order.price).toFixed(2));
                                         totalUnitPrice = parseFloat((order.price).toFixed(2));
-                                    } else {
-                                        if(order.product_affectation === 10) {
-                                            totalOperation = parseFloat((order.quantity * ((order.price * 0.18) + order.price)).toFixed(2));
-                                            totalUnitPrice = parseFloat(((order.price * 0.18) + order.price)).toFixed(2);
-                                        }
                                     }
-                                    console.log(totalOperation);
+                                    if(order.product_affectation === 10) {
+                                        totalOperation = parseFloat((order.quantity * ((order.price * 0.18) + order.price)).toFixed(2));
+                                        totalUnitPrice = parseFloat(((order.price * 0.18) + order.price)).toFixed(2);
+                                    }
                                     return {
                                         operation: order.product_affectation,
                                         cantidad: order.quantity,
@@ -206,9 +205,10 @@ export default defineComponent({
                                 const totalExo = orders.reduce((acc, it) => { return it.operation === 20 ? acc + it.total : acc; }, 0);
 
                                 const igv = parseFloat((totalIGV - (totalIGV / 1.18)).toFixed(2))
+                                    console.log(igv);
                                 const gravado = parseFloat((totalIGV / 1.18).toFixed(2))
                                 const jsonTicket = {
-                                    "printer_name": settingsStore.business_settings.sale.printer_name,
+                                    "printer_name": settingsStore.business_settings?.sale.printer_name,
                                     "ticket_type": "PRE-ACCOUNT",
                                     "tittle": {
                                         "logo": "",
@@ -266,14 +266,70 @@ export default defineComponent({
                                 sendTicketData();
                             }
                         } else {
-                            doc.autoPrint();
-                            const hiddeFrame = document.createElement("iframe");
-                            hiddeFrame.style.position = "fixed";
-                            hiddeFrame.style.width = "1px";
-                            hiddeFrame.style.height = "1px";
-                            hiddeFrame.style.opacity = "0.01";
-                            hiddeFrame.src = doc.output("bloburl");
-                            document.body.appendChild(hiddeFrame);
+                            const gordoPuto = async() => {
+                                try {
+                                    // eslint-disable-next-line no-undef
+                                    const response = await http.get(`${process.env.VUE_APP_API_URL}/api/v1/sales/${props.data.id}/print`);
+                                    if(response.status === 200) {
+                                        return response.data;
+                                    }
+                                } catch(e) {
+                                    console.log(e);
+                                }
+                                return null;
+                            };
+
+                            const voucherData = await gordoPuto()
+
+                            const sendTicketData = () => {
+
+                                const jsonTicket = {
+                                    ...voucherData,
+                                    printer_name: settingsStore.business_settings.sale.printer_name || ''
+                                };
+                                socket.send(JSON.stringify(jsonTicket));
+                            };
+
+                            if(!socket || socket.readyState === WebSocket.CLOSED) {
+                                // eslint-disable-next-line no-undef
+                                const apiUrl = process.env.VUE_APP_API_URL.replace(/^https?:\/\//, "");
+                                socket = new WebSocket(`${window.location.protocol === "https:" ? "wss" : "ws"}://${apiUrl}/ws/print/`);
+
+                                socket.onopen = function() {
+                                    console.log("Conexión WebSocket abierta");
+                                    sendTicketData();
+                                };
+
+                                socket.onerror = function(error) {
+                                    console.log("Error en WebSocket", error);
+                                    message.error(error);
+                                };
+
+                                socket.onmessage = function(event) {
+                                    if(event.data.includes("success")) {
+                                        console.log("Mensaje recibido del servidor", JSON.parse(event.data).success);
+                                        message.success(JSON.parse(event.data).success);
+                                        socket.close()
+                                    }
+                                };
+
+                                socket.onclose = function(event) {
+                                    console.log("Conexión WebSocket cerrada", event);
+                                };
+                            } else if(socket.readyState === WebSocket.OPEN) {
+                                sendTicketData();
+                            }
+
+                            // const printDataVoucher = await gordoPuto()
+                            // console.log(printDataVoucher);
+                            // doc.autoPrint();
+                            // const hiddeFrame = document.createElement("iframe");
+                            // hiddeFrame.style.position = "fixed";
+                            // hiddeFrame.style.width = "1px";
+                            // hiddeFrame.style.height = "1px";
+                            // hiddeFrame.style.opacity = "0.01";
+                            // hiddeFrame.src = doc.output("bloburl");
+                            // document.body.appendChild(hiddeFrame);
                         }
                     }
                     emit("printed");

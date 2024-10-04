@@ -342,12 +342,12 @@ import { useSaleStore } from "@/store/modules/sale";
 import { useUserStore } from "@/store/modules/user";
 import { useGenericsStore } from "@/store/modules/generics";
 import { saleRules } from "@/utils/constants";
-import { cloneDeep, isDecimal } from "@/utils";
+import { isDecimal } from "@/utils";
 import {
   searchCustomerByName,
   searchRucCustomer,
 } from "@/api/modules/customer";
-import { createSale, getSaleNumber, sendSale } from "@/api/modules/sales";
+import { createSale, getSaleNumber, retrieveSale, sendSale } from "@/api/modules/sales";
 import { useDialog, useMessage } from "naive-ui";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
 import format from "date-fns/format";
@@ -510,11 +510,7 @@ export default defineComponent({
 
     const formRules = computed(() => {
       let rules = saleRules;
-      if (sale.value.invoice_type !== 1 && sale.value.payment_condition === 1 && sale.value.given_amount <= 699) {
-        rules.customer.required = false;
-      } else {
-        rules.customer.required = true;
-      }
+      rules.customer.required = !(sale.value.invoice_type !== 1 && sale.value.payment_condition === 1 && sale.value.given_amount <= 699);
       return rules;
     });
 
@@ -575,23 +571,29 @@ export default defineComponent({
               }));
               sale.value.discount = totalDSCT.value;
               await createSale(sale.value)
-                .then((response) => {
+                .then(async (response) => {
                   if (response.status === 201) {
+                      const dataPrint = async() => {
+                          const res = await retrieveSale(response.data?.id);
+                          pdfData.value = res.data;
+                          return res.data;
+                      };
+                      await dataPrint();
                     if (settingsStore.business_settings.printer.print_html) {
-                      pdfData.value = response.data;
+                      // pdfData.value = response.data;
                       showPdf.value = true;
                       if (!ticketPreview.value) {
                         setTimeout(() => previewDrawer.value.generate(), 250);
                       }
                     } else {
-                      VoucherPrint({
-                        data: response.data,
-                        businessStore,
-                        saleStore,
-                        changing: changing.value,
-                        show: true,
+                      await VoucherPrint({
+                          data: await dataPrint(),
+                          businessStore,
+                          saleStore,
+                          changing: changing.value,
+                          show: true,
                       });
-                      router.push({ name: "TableHome" });
+                      await router.push({ name: "TableHome" });
                     }
 
                     if (

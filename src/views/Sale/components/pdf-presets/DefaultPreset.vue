@@ -319,7 +319,7 @@ export default defineComponent({
     const settingsStore = useSettingsStore();
     const businessStore = useBusinessStore();
     const tableStore = useTableStore();
-
+      console.log(props.data);
     const hasDiscounts = props.data.sale_details.some(
       (detail) => !!Number(detail.discount)
     );
