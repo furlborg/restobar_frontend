@@ -16,7 +16,7 @@
                       :isUpdate="isUpdate"
               />
 
-              <n-button type="info" secondary block @click="printTicket(i, place, false)">
+              <n-button type="info" secondary block @click="printTicket(i, place)">
                   <template #icon>
                       <v-icon name="md-print-round"/>
                   </template>
@@ -147,14 +147,14 @@ export default defineComponent({
                   if(!props.data.table) jsonTicket.tittle.table = !props.data.delivery_info ? "PARA LLEVAR" : "DELIVERY";
 
                   socket.send(JSON.stringify(jsonTicket));  // Envía el ticket al WebSocket
-
+                  console.log(props.data);
                   // Cerrar el WebSocket después de enviar el ticket y recibir respuesta
                   socket.onmessage = function(event) {
                       if(event.data.includes("id")) {
                           if(JSON.parse(event.data).id !== "") {
                               if(event.data.includes("success")) {
                                   message.success(JSON.parse(event.data).success);
-                                  // socket.close();  // Cerramos la conexión tras recibir la confirmación
+                                  socket.close();  // Cerramos la conexión tras recibir la confirmación
                               }
                           } else {
                               message.error("No se pudo establecer conexión con el servidor de impresiones");
@@ -322,7 +322,7 @@ export default defineComponent({
                                   if(JSON.parse(event.data).id !== "") {
                                       if(event.data.includes("success")) {
                                           message.success(JSON.parse(event.data).success);
-                                          // socket.close();  // Cerramos la conexión tras recibir la confirmación
+                                          socket.close();  // Cerramos la conexión tras recibir la confirmación
                                       }
                                   } else {
                                       message.error("No se pudo establecer conexión con el servidor de impresiones");
@@ -373,12 +373,17 @@ export default defineComponent({
 
       const printTicketsForAllPlaces = async () => {
           for (const [i, place] of places.value.entries()) {
-              await printTicket(i, place, true);
+              console.log(i);
+              console.log(place);
+              await printTicket(i, place);
           }
       };
 
       const generate = () => {
+          console.log(places.value);
           places.value.forEach((place, i) => {
+              console.log(place);
+              console.log(i);
               printTicketsForAllPlaces(i, place);
           });
           // if (settingsStore.business_settings.printer.manage_fittings) {
