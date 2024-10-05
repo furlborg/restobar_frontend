@@ -164,7 +164,6 @@ export default defineComponent({
                               nextTick(() => {
                                   if (ticket && ticket.$el) {
                                       const format = [ticket.$el.clientWidth, ticket.$el.clientHeight + 30];
-                                      console.log(format);
                                       const doc = new jsPDF({
                                           unit: "px",
                                           format: format,
@@ -190,10 +189,8 @@ export default defineComponent({
                           }
                       }
                   };
-
                   resolve();  // Notifica que el ticket ha sido enviado
               };
-
               // Mantener el WebSocket abierto y enviar el ticket
               openWebSocket(sendTicketData);
           });
@@ -274,11 +271,17 @@ export default defineComponent({
                                   "payment_method": JSON.parse(props.data.json_sale).informacion_adicional.split("|")[2],
                                   "usuario": props.data.username
                               },
-                              "ticket_content": JSON.parse(props.data.json_sale).items.map(it => ({
-                                  "cantidad": it.cantidad,
-                                  "descripcion": it.descripcion,
-                                  "precio": parseFloat(it?.["precio_unitario"].toFixed(2)),
-                                  "total": parseFloat(it?.["total_item"].toFixed(2))
+                              "ticket_content": props.data.order_details.map(it => ({
+                                  "cantidad": it.quantity,
+                                  "descripcion": it.product_name,
+                                  "precio": parseFloat(it?.["price"].toFixed(2)),
+                                  "total": parseFloat(it?.["sub_total"].toFixed(2)),
+                                  "indicaciones": it.indication.filter(indicate => {
+                                      return (
+                                          (!indicate.description.includes("[]") || indicate.description.length > 3 || indicate.quick_indications.length > 0) &&
+                                          indicate.description !== ""
+                                      );
+                                  }).map(indicate => indicate.description) || ""
                               })),
                               "totals": {
                                   "exonerado": JSON.parse(props.data.json_sale).totales.total_operaciones_exoneradas,
@@ -383,6 +386,9 @@ export default defineComponent({
           //     printFitting(i, place);
           //   });
           // }
+          console.log(props.data.order_type === "D");
+          console.log(settingsStore.business_settings.printer.print_html);
+          console.log(props.data.order_type === "D" && settingsStore.business_settings.printer.print_html);
           if(props.data.order_type === "D" && settingsStore.business_settings.printer.print_html) {
               printDelivery();
           }
