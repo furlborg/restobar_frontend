@@ -104,10 +104,10 @@ export default defineComponent({
                   if(callback) callback();  // Ejecuta el callback cuando el socket esté listo
               };
 
-              socket.onclose = function(event) {
-                  console.log("WebSocket cerrado", event);
-                  socket.close()
-              };
+              // socket.onclose = function(event) {
+              //     console.log("WebSocket cerrado", event);
+              //     socket.close()
+              // };
           } else if(socket.readyState === WebSocket.OPEN) {
               if(callback) callback();  // Si el socket ya está abierto, ejecuta el callback
           }
@@ -154,7 +154,7 @@ export default defineComponent({
                           if(JSON.parse(event.data).id !== "") {
                               if(event.data.includes("success")) {
                                   message.success(JSON.parse(event.data).success);
-                                  socket.close();  // Cerramos la conexión tras recibir la confirmación
+                                  // socket.close();  // Cerramos la conexión tras recibir la confirmación
                               }
                           } else {
                               message.error("No se pudo establecer conexión con el servidor de impresiones");
@@ -322,7 +322,7 @@ export default defineComponent({
                                   if(JSON.parse(event.data).id !== "") {
                                       if(event.data.includes("success")) {
                                           message.success(JSON.parse(event.data).success);
-                                          socket.close();  // Cerramos la conexión tras recibir la confirmación
+                                          // socket.close();  // Cerramos la conexión tras recibir la confirmación
                                       }
                                   } else {
                                       message.error("No se pudo establecer conexión con el servidor de impresiones");
@@ -356,10 +356,10 @@ export default defineComponent({
                                   }
                               }
                           };
-                          socket.onclose = function () {
-                              console.log("Conexión WebSocket cerrada");
-                              socket.close()
-                          };
+                          // socket.onclose = function () {
+                          //     console.log("Conexión WebSocket cerrada");
+                          //     socket.close()
+                          // };
                       } else if (socket.readyState === WebSocket.OPEN) {
                           // Si el WebSocket ya está abierto, envía el ticket
                           sendTicketData();
