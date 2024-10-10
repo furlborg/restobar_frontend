@@ -670,6 +670,50 @@
             </n-grid>
           </n-card>
         </n-tab-pane>
+          <n-tab-pane name="Guarniciones" tab="Guarniciones">
+              <n-card title="Editar Guarniciones" :bordered="false" embedded>
+                  <n-grid responsive="screen" cols="3 xs:3 s:12" :x-gap="12">
+                      <n-gi :span="3">
+                          <n-list class="bg-white m-0" bordered>
+                              <template #header>
+                                  <n-text class="fs-5">Lista de Guarniciones</n-text>
+                              </template>
+                              <n-list-item v-for="guarnition in guarnitionOptions"
+                                           :class="{'bg-selected': selectedGuarnition === guarnition.id }"
+                                      :key="guarnition.id" @click="selectGuarnition(guarnition)">
+                                  <n-space justify="space-between">
+                                      {{ guarnition.name }}
+                                  </n-space>
+                              </n-list-item>
+                          </n-list>
+                      </n-gi>
+                      <n-gi :span="9">
+                          <n-form v-if=" userStore.hasPermission('add_inventoryconcept') || selectedGuarnition" class="mt-2">
+                              <n-grid responsive="screen" cols="4 xs:4 s:8 m:12 l:24" :x-gap="12">
+                                  <n-form-item-gi :span="6" label="Lugar de preparación">
+                                      <n-select :options="placesOptions" v-model:value="guarnition.preparation_place_id" placeholder=""/>
+                                  </n-form-item-gi>
+                                  <n-form-item-gi :span="6" label="N. Guarnición">
+                                      <n-input v-model:value="guarnition.name" placeholder=""/>
+                                  </n-form-item-gi>
+                                  <n-form-item-gi :span="4">
+                                      <n-button class="me-2" :type="!selectedGuarnition ? 'info' : 'warning'"
+                                                :disabled="!guarnition.name || !guarnition.preparation_place" secondary
+                                                @click="!selectedGuarnition ? performCreateGuarnition() : performUpdateGuarnition()">
+                                          {{ !selectedGuarnition ? "Agregar" : "Guardar" }}
+                                      </n-button>
+                                      <n-button type="error" secondary :disabled="!guarnition.name || !guarnition.preparation_place"
+                                                @click="selectedGuarnition = null; guarnition = { name: '', preparation_place: null,
+                            preparation_place_id: null};">
+                                          Cancelar
+                                      </n-button>
+                                  </n-form-item-gi>
+                              </n-grid>
+                          </n-form>
+                      </n-gi>
+                  </n-grid>
+              </n-card>
+          </n-tab-pane>
       </n-tabs>
     </n-card>
   </div>
@@ -696,18 +740,17 @@ import {
   updatePaymentMethodDesc,
 } from "@/api/modules/sales";
 import {
-  getProductPlaces,
-  createProductPlace,
-  updateProductPlace,
-  getProductCategories,
-  createProductCategory,
-  updateProductCategory,
-  getInventoryConcepts,
-  createInventoryConcept,
-  updateInventoryConcept,
+    getProductPlaces,
+    createProductPlace,
+    updateProductPlace,
+    getProductCategories,
+    createProductCategory,
+    updateProductCategory,
+    getInventoryConcepts,
+    createInventoryConcept,
+    updateInventoryConcept, updateGuarnition, createGuarnition, getProductFittings
 } from "@/api/modules/products";
 import { getConcepts, createConcept, updateConcept } from "@/api/modules/tills";
-// import { useSettingsStore } from "@/store/modules/settings";
 
 export default defineComponent({
   name: "GeneralSettings",
@@ -766,6 +809,7 @@ export default defineComponent({
       // getPrinters()
 
     const productCategories = ref([]);
+    const guarnitionOptions = ref([]);
     const productCategory = ref(null);
     const selectedCategory = ref(null);
 
@@ -788,6 +832,13 @@ export default defineComponent({
         description: "",
       };
     };
+
+      const placesOptions = computed(() => {
+          return productStore.places.map((place) => ({
+              label: place.description,
+              value: place.id,
+          }));
+      });
 
     const performCreateTable = async () => {
       isLoadingData.value = true;
@@ -1204,7 +1255,15 @@ export default defineComponent({
       description: "",
       concept_type: null,
     });
+
+    const guarnition = ref({
+      name: "",
+      preparation_place: null,
+      preparation_place_id: null
+    });
+
     const selectedInventoryConcept = ref(null);
+    const selectedGuarnition = ref(null);
 
     const selectInventoryConcept = (single_concept) => {
       if (!selectedInventoryConcept.value) {
@@ -1230,6 +1289,28 @@ export default defineComponent({
       }
     };
 
+      const selectGuarnition = (boobs) => {
+          console.log(boobs);
+          if(!selectedGuarnition.value) {
+              selectedGuarnition.value = boobs.id;
+              guarnition.value.name = cloneDeep(boobs.name);
+              guarnition.value.preparation_place_id = cloneDeep(boobs.preparation_place_id);
+              guarnition.value.preparation_place = cloneDeep(boobs.preparation_place);
+          } else {
+              if(selectedGuarnition.value === boobs.id) {
+                  selectedGuarnition.value = null;
+                  guarnition.value.name = null;
+                  guarnition.value.preparation_place_id = null;
+                  guarnition.value.preparation_place = null;
+              } else {
+                  selectedGuarnition.value = boobs.id;
+                  guarnition.value.name = cloneDeep(boobs.name);
+                  guarnition.value.preparation_place = cloneDeep(boobs.preparation_place);
+                  guarnition.value.preparation_place_id = cloneDeep(boobs.preparation_place_id);
+              }
+          }
+      };
+
     const loadInventoryConcepts = async () => {
       await getInventoryConcepts()
         .then((response) => {
@@ -1243,6 +1324,20 @@ export default defineComponent({
         });
     };
 
+   const loadGuarnition = async () => {
+      await getProductFittings()
+        .then((response) => {
+          if (response.status === 200) {
+              guarnitionOptions.value = response.data
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        });
+    };
+
+   loadGuarnition()
     const performCreateInventoryConcept = async () => {
       await createInventoryConcept(inventory_concept.value)
         .then((response) => {
@@ -1276,6 +1371,42 @@ export default defineComponent({
         .finally(() => {
           selectedInventoryConcept.value = null;
           inventory_concept.value = { description: "", concept_type: null };
+        });
+    };
+
+    const performCreateGuarnition = async () => {
+      await createGuarnition(guarnition.value)
+        .then((response) => {
+          if (response.status === 201) {
+              loadGuarnition();
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          guarnition.value = {};
+        });
+    };
+
+    const performUpdateGuarnition = async () => {
+      await updateGuarnition(
+        selectedGuarnition.value,
+        guarnition.value
+      )
+        .then((response) => {
+          if (response.status === 200) {
+              loadGuarnition();
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          selectedGuarnition.value = null;
+          guarnition.value = {};
         });
     };
 
@@ -1313,6 +1444,8 @@ export default defineComponent({
       preparationPlace,
       printerStore,
       printerName,
+      placesOptions,
+      guarnitionOptions,
       printerFormat,
       printerFormatOptions,
       selectedPlace,
@@ -1320,6 +1453,7 @@ export default defineComponent({
       performCreatePreparationPlace,
       performUpdatePreparationPlace,
       productCategories,
+      guarnition,
       productCategory,
       selectedCategory,
       selectCategory,
@@ -1341,10 +1475,14 @@ export default defineComponent({
       performUpdateConcept,
       inventory_concepts,
       inventory_concept,
+      selectedGuarnition,
       selectedInventoryConcept,
       selectInventoryConcept,
+      selectGuarnition,
       performCreateInventoryConcept,
       performUpdateInventoryConcept,
+      performCreateGuarnition,
+      performUpdateGuarnition,
     };
   },
 });

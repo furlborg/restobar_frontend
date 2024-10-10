@@ -29,6 +29,7 @@ export const useProductStore = defineStore("product", {
       return this.fittings.map((fitting) => ({
         value: fitting.id,
         label: fitting.name,
+        ...fitting
       }));
     },
   },

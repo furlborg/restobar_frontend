@@ -152,6 +152,20 @@ export async function updateInventoryConcept(idConcept, concept) {
   });
 }
 
+export async function createGuarnition(concept) {
+  return await http.post("product-fitting/", {
+    ...concept,
+    preparation_place: concept.preparation_place_id
+  });
+}
+
+export async function updateGuarnition(idConcept, concept) {
+  return await http.put(`product-fitting/${idConcept}/`, {
+    ...concept,
+    preparation_place: concept.preparation_place_id
+  });
+}
+
 export async function disableInventoryConcepts(id) {
   return await http.delete(`inventoryconcept/${id}/`);
 }
