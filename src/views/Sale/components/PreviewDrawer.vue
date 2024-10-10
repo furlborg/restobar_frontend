@@ -205,10 +205,9 @@ export default defineComponent({
                                 const totalExo = orders.reduce((acc, it) => { return it.operation === 20 ? acc + it.total : acc; }, 0);
 
                                 const igv = parseFloat((totalIGV - (totalIGV / 1.18)).toFixed(2))
-                                    console.log(igv);
                                 const gravado = parseFloat((totalIGV / 1.18).toFixed(2))
                                 const jsonTicket = {
-                                    "printer_name": settingsStore.business_settings?.sale.printer_name,
+                                    "printer_name": settingsStore.business_settings?.['qz_config'].host,
                                     "ticket_type": "PRE-ACCOUNT",
                                     "tittle": {
                                         "logo": "",

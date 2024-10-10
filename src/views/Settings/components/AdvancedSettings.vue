@@ -13,7 +13,7 @@
                         cols="6 s:6 m:12 l:12 xl:24 2xl:24"
                         :x-gap="12"
                 >
-                    <n-form-item-gi :span="3" label="Kuceta Address IP">
+                    <n-form-item-gi :span="3" label="Impresora de Pre-Cuentas">
                         <n-input v-model:value="businessSettings.qz_config.host"/>
                     </n-form-item-gi>
                     <n-form-item-gi :span="3" label="Kuceta webSocket">
