@@ -182,7 +182,7 @@
     <template #action>
       <n-space justify="end">
         <n-button
-          v-if="idCustomer === 0"
+          v-if="!idCustomer"
           type="primary"
           :loading="isLoadingData"
           :disabled="isLoadingData"
@@ -307,46 +307,19 @@ export default defineComponent({
                       {
                           description: "",
                           ubigeo: businessStore.business.branchs[0].ubigeo,
-                          is_disabled: false
-                      }
-                  ]
+                          is_disabled: false,
+                      },
+                  ],
               };
-              if(document.value) {
-                  if(document.value.length === 8) {
+              if (document.value) {
+                  if (document.value.length === 8) {
                       customer.value.doc_type = "1";
-                  } else if(document.value.length === 11) {
+                  } else if (document.value.length === 11) {
                       customer.value.doc_type = "6";
                   }
                   changeDocMax();
                   customer.value.doc_num = document.value;
-                  console.log(!customer.value.doc_num);
-                  console.log(customer.value.doc_num);
                   await performSearchByDoc();
-                  if(customer.value.doc_num) {
-                      await createCustomer(customer.value).then((response) => {
-                          if(response.status === 201) {
-                              message.success("Cliente registrado!");
-                              emit("on-success", response.data);
-                          }
-                      }).catch((error) => {
-                          console.log(error);
-                          if(error.response.status === 400) {
-                              for(const value in error.response.data) {
-                                  message.error(
-                                      `${errorLabel(value)}: ${
-                                          error.response.data[`${value}`][0]
-                                      }`
-                                  );
-                              }
-                          } else {
-                              console.error(error);
-                              message.error("Algo salió mal...");
-                          }
-                          /* message.error("Algo salió mal..."); */
-                      }).finally(() => {
-                          isLoadingData.value = false;
-                      });
-                  }
               } else {
                   changeDocMax();
               }

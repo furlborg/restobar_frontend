@@ -69,7 +69,7 @@
       whatsappNumber = '';
       createAddressesOptions();
     }
-      " @keydown.enter="autoCreateCustomer" placeholder="" clearable/>
+      " @keyup.enter="autoCreateCustomer" placeholder="" clearable/>
                                                 <n-button v-if="!sale.customer" type="info" @click="
       (sale.customer = 0), (showCustomerModal = true)
       ">
@@ -307,10 +307,9 @@
                         <CategoriesList v-else/>
                     </transition>
                     <!-- Customer Modal -->
-                    <customer-modal v-model:show="showCustomerModal" :id-customer="sale.customer"
-                                    :doc_type="sale.invoice_type === 1 ? '6' : null" :document="customerDocument"
-                                    @update:show="onCloseModal"
-                                    @on-success="onSuccess"/>
+                    <customer-modal v-model:show="showCustomerModal" :id-customer="sale.customer" :document="customerDocument"
+                                    :doc_type="sale.invoice_type === 1 ? '6' : null"  @update:show="onCloseModal"
+                                    @on-success="onSuccess" />
                 </n-gi>
                 <n-gi span="2">
                     <n-card class="h-100" :bordered="false" embedded>
@@ -966,7 +965,6 @@ export default defineComponent({
             if(!searchingCustomer.value && !customerResults.value.length) {
                 if(!isNaN(sale.value.customer_name) &&((sale.value.customer_name.length === 8 && sale.value.invoice_type !== 1) || sale.value.customer_name.length === 11)) {
                     showCustomerModal.value = true;
-                    console.log(sale.value);
                     customerDocument.value = sale.value.customer_name;
                 }
             }
