@@ -208,7 +208,6 @@
 import { defineComponent, ref, toRefs, watch, computed } from "vue";
 import format from "date-fns/format";
 import { isNumber, isLetter, isLetterOrNumber } from "@/utils";
-import { toTimestamp } from "@/utils/dates";
 import { documentOptions, customerRules } from "@/utils/constants";
 import {
   retrieveCustomer,
@@ -277,61 +276,82 @@ export default defineComponent({
 
     const formRules = computed(() => {
       let rules = customerRules;
-      if (customer.value.doc_type === "0") {
-        rules.doc_num.required = false;
-      } else {
-        rules.doc_num.required = true;
-      }
+      rules.doc_num.required = customer.value.doc_type !== "0";
       return rules;
     });
 
-    watch(show, async () => {
-      if (show.value === true && idCustomer.value !== 0) {
-        modalTitle.value = "Modificar Cliente";
-        isLoadingData.value = true;
-        await retrieveCustomer(idCustomer.value)
-          .then((response) => {
-            customer.value = response.data;
-          })
-          .catch((error) => {
-            console.error(error);
-            message.error("Algo salió mal...");
-          })
-          .finally(() => {
-            isLoadingData.value = false;
-          });
-      } else if (show.value === true && idCustomer.value === 0) {
-        modalTitle.value = "Registrar Cliente";
-        customer.value = {
-          names: null,
-          doc_type: !doc_type.value ? "0" : doc_type.value,
-          doc_num: "",
-          email: null,
-          phone: null,
-          birthdate: null,
-          gender: null,
-          addresses: [
-            {
-              description: "",
-              ubigeo: businessStore.business.branchs[0].ubigeo,
-              is_disabled: false,
-            },
-          ],
-        };
-        if (document.value) {
-          if (document.value.length === 8) {
-            customer.value.doc_type = "1";
-          } else if (document.value.length === 11) {
-            customer.value.doc_type = "6";
+      watch(show, async() => {
+          if(show.value === true && !!idCustomer.value) {
+              modalTitle.value = "Modificar Cliente";
+              isLoadingData.value = true;
+              await retrieveCustomer(idCustomer.value).then((response) => {
+                  customer.value = response.data;
+              }).catch((error) => {
+                  console.error(error);
+                  message.error("Algo salió mal...");
+              }).finally(() => {
+                  isLoadingData.value = false;
+              });
+          } else if(show.value === true && idCustomer.value === null || 0) {
+              console.log(document.value);
+              modalTitle.value = "Registrar Cliente";
+              customer.value = {
+                  names: null,
+                  doc_type: !doc_type.value ? "0" : doc_type.value,
+                  doc_num: "",
+                  email: null,
+                  phone: null,
+                  birthdate: null,
+                  gender: null,
+                  addresses: [
+                      {
+                          description: "",
+                          ubigeo: businessStore.business.branchs[0].ubigeo,
+                          is_disabled: false
+                      }
+                  ]
+              };
+              if(document.value) {
+                  if(document.value.length === 8) {
+                      customer.value.doc_type = "1";
+                  } else if(document.value.length === 11) {
+                      customer.value.doc_type = "6";
+                  }
+                  changeDocMax();
+                  customer.value.doc_num = document.value;
+                  console.log(!customer.value.doc_num);
+                  console.log(customer.value.doc_num);
+                  await performSearchByDoc();
+                  if(customer.value.doc_num) {
+                      await createCustomer(customer.value).then((response) => {
+                          if(response.status === 201) {
+                              message.success("Cliente registrado!");
+                              emit("on-success", response.data);
+                          }
+                      }).catch((error) => {
+                          console.log(error);
+                          if(error.response.status === 400) {
+                              for(const value in error.response.data) {
+                                  message.error(
+                                      `${errorLabel(value)}: ${
+                                          error.response.data[`${value}`][0]
+                                      }`
+                                  );
+                              }
+                          } else {
+                              console.error(error);
+                              message.error("Algo salió mal...");
+                          }
+                          /* message.error("Algo salió mal..."); */
+                      }).finally(() => {
+                          isLoadingData.value = false;
+                      });
+                  }
+              } else {
+                  changeDocMax();
+              }
           }
-          changeDocMax();
-          customer.value.doc_num = document.value;
-          performSearchByDoc();
-        } else {
-          changeDocMax();
-        }
-      }
-    });
+      });
 
     const customer_name = ref(null);
 
@@ -356,45 +376,42 @@ export default defineComponent({
       }
     };
 
-    const performCreate = (e) => {
-      e.preventDefault();
-      customerRef.value.validate(async (errors) => {
-        if (!errors) {
-          isLoadingData.value = true;
-          customer.value.addresses.forEach((address) =>
-            address.description.toUpperCase()
-          );
-          await createCustomer(customer.value)
-            .then((response) => {
-              if (response.status === 201) {
-                message.success("Cliente registrado!");
-                emit("on-success", response.data);
-              }
-            })
-            .catch((error) => {
-              if (error.response.status === 400) {
-                for (const value in error.response.data) {
-                  message.error(
-                    `${errorLabel(value)}: ${
-                      error.response.data[`${value}`][0]
-                    }`
+      const performCreate = (e) => {
+          e.preventDefault();
+          customerRef.value.validate(async(errors) => {
+              if(!errors) {
+                  isLoadingData.value = true;
+                  customer.value.addresses.forEach((address) =>
+                      address.description.toUpperCase()
                   );
-                }
+                  await createCustomer(customer.value).then((response) => {
+                      if(response.status === 201) {
+                          message.success("Cliente registrado!");
+                          emit("on-success", response.data);
+                      }
+                  }).catch((error) => {
+                      if(error.response.status === 400) {
+                          for(const value in error.response.data) {
+                              message.error(
+                                  `${errorLabel(value)}: ${
+                                      error.response.data[`${value}`][0]
+                                  }`
+                              );
+                          }
+                      } else {
+                          console.error(error);
+                          message.error("Algo salió mal...");
+                      }
+                      /* message.error("Algo salió mal..."); */
+                  }).finally(() => {
+                      isLoadingData.value = false;
+                  });
               } else {
-                console.error(error);
-                message.error("Algo salió mal...");
+                  console.error(errors);
+                  message.error("Datos incorrectos");
               }
-              /* message.error("Algo salió mal..."); */
-            })
-            .finally(() => {
-              isLoadingData.value = false;
-            });
-        } else {
-          console.error(errors);
-          message.error("Datos incorrectos");
-        }
-      });
-    };
+          });
+      };
 
     const performUpdate = (e) => {
       e.preventDefault();
@@ -477,7 +494,7 @@ export default defineComponent({
                     },
                   ];
                 }
-                customer_name.value.restoreValidation();
+                // customer_name.value.restoreValidation();
               } else {
                 message.error("Algo salió mal...");
               }

@@ -964,13 +964,9 @@ export default defineComponent({
 
         const autoCreateCustomer = () => {
             if(!searchingCustomer.value && !customerResults.value.length) {
-                if(
-                    !isNaN(sale.value.customer_name) &&
-                    ((sale.value.customer_name.length === 8 &&
-                            sale.value.invoice_type !== 1) ||
-                        sale.value.customer_name.length === 11)
-                ) {
+                if(!isNaN(sale.value.customer_name) &&((sale.value.customer_name.length === 8 && sale.value.invoice_type !== 1) || sale.value.customer_name.length === 11)) {
                     showCustomerModal.value = true;
+                    console.log(sale.value);
                     customerDocument.value = sale.value.customer_name;
                 }
             }
