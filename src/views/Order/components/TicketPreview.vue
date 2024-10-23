@@ -105,7 +105,7 @@ export default defineComponent({
 
 // Inicializar el WebSocket y asignar la función de mensaje globalmente
       const openWebSocket = (callback) => {
-          if (!socket || socket.readyState === WebSocket.CLOSED) {
+          if(!socket || socket.readyState === WebSocket.CLOSED) {
               // eslint-disable-next-line no-undef
               const apiUrl = process.env.VUE_APP_API_URL.replace(/^https?:\/\//, "");
               const socketUrl = `${window.location.protocol === "https:" ? "wss" : "ws"}://${apiUrl}/ws/print/`;
@@ -113,15 +113,18 @@ export default defineComponent({
 
               socket.onopen = (e) => {
                   console.log("WebSocket abierto", e);
-                  if (callback) callback();
+                  if(callback) callback();
               };
 
               socket.onmessage = handleSocketMessage;  // Manejamos el mensaje globalmente aquí
-          } else if (socket.readyState === WebSocket.OPEN) {
-              if (callback) callback();
+          } else if(socket.readyState === WebSocket.OPEN) {
+              socket.onopen = (e) => {
+                  console.log("WebSocket abierto", e);
+                  if(callback) callback();
+              };
+              socket.onmessage = handleSocketMessage;  // Manejamos el mensaje globalmente aquí
           }
       };
-
 
       const printDelivery = async() => {
           return new Promise((resolve) => {
@@ -214,27 +217,6 @@ export default defineComponent({
                           "reference": props.data.ask_for,
                           "username": props.data.username
                       },
-                      // order_details: !place
-                      //     ? props.data.order_details
-                      //     : props.data.order_details.filter((pl) =>
-                      //         settingsStore.business_settings.printer.subticket_mode &&
-                      //         props.place.is_main
-                      //             ? !!pl.preparation_place
-                      //             : pl.preparation_place === props.place.description || pl.product_fitting?.preparation_place === place.description
-                      //     ),
-                      // "ticket_content": props.data.order_details.filter(pl => pl.preparation_place === place.description ||
-                      //     pl.product_fitting?.preparation_place === place.description).map(it => ({
-                      //     "id": it.id,
-                      //     "cantidad": it.quantity,
-                      //     "descripcion": it.product_name,
-                      //     "indicaciones": it.indication.filter(indicate => {
-                      //         return (
-                      //             (!indicate.description.includes("[]") || indicate.description.length > 3 ||
-                      //                 indicate.quick_indications.length > 0) &&
-                      //             indicate.description !== ""
-                      //         );
-                      //     }).map(indicate => indicate.description) || ""
-                      // })),
                       "ticket_content": !place ? props.data.order_details : props.data.order_details.filter((pl) =>
                               settingsStore.business_settings.printer.subticket_mode && place.is_main
                                   ? !!pl.preparation_place : pl.preparation_place === place.description || pl.product_fitting?.preparation_place === place.description
