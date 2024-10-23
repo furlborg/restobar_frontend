@@ -124,14 +124,14 @@ export default defineComponent({
 
     genericsStore.initializeStore();
 
-    const watchWidth = () => {
-      const Width = document.body.clientWidth;
-      collapsed.value = Width <= 1280 && genericsStore.device !== "mobile";
-      genericsStore.updateDevice();
-    };
+    // const watchWidth = () => {
+    //   const Width = document.body.clientWidth;
+    //   collapsed.value = Width <= 1280 && genericsStore.device !== "mobile";
+    //   genericsStore.updateDevice();
+    // };
 
     onMounted(() => {
-      window.addEventListener("resize", watchWidth);
+      // window.addEventListener("resize", watchWidth);
       // cookieStore.onchange = watchCookies;
       // window['$loading'] = useLoadingBar()
       // window['$loading'].finish()

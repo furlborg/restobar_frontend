@@ -36,7 +36,7 @@
           <n-gi>
             <n-input
               placeholder="Buscar"
-              @keydown.enter="SearchFilter()"
+              @keyup.enter="SearchFilter()"
               v-model:value="textsearch"
               round
             >

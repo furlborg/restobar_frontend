@@ -19,7 +19,7 @@
           
         <n-input
           placeholder="Buscar"
-          @keydown.enter="SearchFilter()"
+          @keyup.enter="SearchFilter()"
           v-model:value="textsearch"
           round>
           <template #prefix>
@@ -131,10 +131,10 @@ export default defineComponent({
     const PaginationF = () => {
       let total = supplier.value.count / 15;
 
-      if (total == 0) {
+      if (total === 0) {
         pagecount.value = 1;
       } else {
-        if (total % 1 == 0) {
+        if (total % 1 === 0) {
           pagecount.value = total;
         } else {
           total += 1;
@@ -168,9 +168,9 @@ export default defineComponent({
     });
 
     const changeState = async (id, state) => {
-      const dial = state==false? dialog.success: dialog.error;
-      let titles = state==false?"Habilitar Provedor" :"Deshabilitar Provedor";
-      const button = state==false?"Habilitar":"Deshabilitar";
+      const dial = state === false? dialog.success: dialog.error;
+      let titles = state === false?"Habilitar Provedor" :"Deshabilitar Provedor";
+      const button = state === false?"Habilitar":"Deshabilitar";
 
       dial({
         title: titles,

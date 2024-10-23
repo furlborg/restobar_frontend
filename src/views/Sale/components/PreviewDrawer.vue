@@ -140,7 +140,7 @@ export default defineComponent({
 
         const phoneNumber = ref("");
 
-        const onKeyDown = (event) => {
+        const onKeyUp = (event) => {
             if(event.keyCode === 13 || event.keyCode === 12) {
                 totalEnterPulse.value += 1;
             }
@@ -148,7 +148,7 @@ export default defineComponent({
 
         watchEffect(() => {
             if(props.show && !props.preVoucher && !props.previewOnly) {
-                window.addEventListener("keydown", onKeyDown);
+                window.addEventListener("keyup", onKeyUp);
                 if(totalEnterPulse.value >= 3 && totalEnterPulse.value <= 4) {
                     generate();
                     message.success(

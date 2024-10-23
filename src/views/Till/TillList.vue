@@ -69,28 +69,28 @@
               <n-input
                 v-model:value="filterParams.opening_responsable"
                 placeholder=""
-                @keydown="isLetter($event)"
+                @keyup="isLetter($event)"
               />
             </n-form-item-gi>
             <n-form-item-gi label="Responsable Cierre" :span="3">
               <n-input
                 v-model:value="filterParams.closing_responsable"
                 placeholder=""
-                @keydown="isLetter($event)"
+                @keyup="isLetter($event)"
               />
             </n-form-item-gi>
             <n-form-item-gi label="Saldo inicial" :span="3">
               <n-input
                 v-model:value="filterParams.opening_amount"
                 placeholder=""
-                @keydown="isDecimal($event)"
+                @keyup="isDecimal($event)"
               />
             </n-form-item-gi>
             <n-form-item-gi label="Saldo final" :span="3">
               <n-input
                 v-model:value="filterParams.closing_amount"
                 placeholder=""
-                @keydown="isDecimal($event)"
+                @keyup="isDecimal($event)"
               />
             </n-form-item-gi>
             <n-form-item-gi label="Apertura" :span="6">

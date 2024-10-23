@@ -131,21 +131,21 @@
                   <n-input
                     v-model:value="filterParams.document"
                     placeholder=""
-                    @keydown="isLetterOrNumber($event)"
+                    @keyup="isLetterOrNumber($event)"
                   />
                 </n-form-item-gi>
                 <n-form-item-gi label="Descripción" :span="3">
                   <n-input
                     v-model:value="filterParams.description"
                     placeholder=""
-                    @keydown="isLetterOrNumber($event)"
+                    @keyup="isLetterOrNumber($event)"
                   />
                 </n-form-item-gi>
                 <n-form-item-gi label="Monto" :span="3">
                   <n-input
                     v-model:value="filterParams.amount"
                     placeholder=""
-                    @keydown="isDecimal($event)"
+                    @keyup="isDecimal($event)"
                   />
                 </n-form-item-gi>
                 <n-form-item-gi label="Tipo Concepto" :span="3">

@@ -33,7 +33,7 @@
             <n-input
               placeholder="Buscar..."
               v-model:value="textSearch"
-              @keydown.enter="searchItem(textSearch)"
+              @keyup.enter="searchItem(textSearch)"
             >
               <template #prefix>
                 <n-icon style="margin-top: -4px">

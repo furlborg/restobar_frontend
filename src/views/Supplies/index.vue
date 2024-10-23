@@ -34,7 +34,7 @@
       </template>
 
       <n-form label-placement="left" style="maxwidth: 350px; margin-top: -8px; margin-bottom: 12px">
-        <n-input placeholder="Buscar" @keydown.enter="SearchFilter()" v-model:value="textsearch" round>
+        <n-input placeholder="Buscar" @keyup.enter="SearchFilter()" v-model:value="textsearch" round>
           <template #prefix>
             <n-icon style="margin-top: -4px">
               <v-icon name="md-search-round" />
