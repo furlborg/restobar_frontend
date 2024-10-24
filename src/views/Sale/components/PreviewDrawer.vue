@@ -34,7 +34,7 @@
                                 type="success"
                                 tertiary
                                 @click="send = true"
-                                :disabled="data.invoice_type === '80'"
+                                :disabled="data.invoice_type === '80' || data.status === 'A' || data.status === 'N'"
                         >
                             <v-icon name="bi-whatsapp"/>
                         </n-button>

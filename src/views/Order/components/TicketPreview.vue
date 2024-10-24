@@ -118,11 +118,7 @@ export default defineComponent({
 
               socket.onmessage = handleSocketMessage;  // Manejamos el mensaje globalmente aquí
           } else if(socket.readyState === WebSocket.OPEN) {
-              socket.onopen = (e) => {
-                  console.log("WebSocket abierto", e);
-                  if(callback) callback();
-              };
-              socket.onmessage = handleSocketMessage;  // Manejamos el mensaje globalmente aquí
+              if(callback) callback();
           }
       };
 
