@@ -51,14 +51,14 @@
                     :y-gap="5"
             >
                 <n-gi :span="5" v-for="(category, index) in productStore.categories" :key="index">
+                            <router-link class="text-decoration-none" :to="{ name: 'CategoriesItems', params: { category: category.id } }">
                     <div class="fixed-size-container">
                         <div class="item-zoom">
-                            <router-link class="text-decoration-none" :to="{ name: 'CategoriesItems', params: { category: category.id } }">
 <!--                                 <img src="~@/assets/images/category-bg.jpg" alt=""/>-->
                                 <n-text class="text-overlay">{{ category.description }}</n-text>
-                            </router-link>
                         </div>
                     </div>
+                            </router-link>
                 </n-gi>
 
             </n-grid>
