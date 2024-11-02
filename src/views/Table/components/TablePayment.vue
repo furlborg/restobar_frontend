@@ -572,7 +572,7 @@ export default defineComponent({
 
                                   if(
                                       settingsStore.businessSettings.sale.auto_send &&
-                                      response.data.invoice_type !== "80"
+                                      response.data?.['invoiceType'] !== "80"
                                   ) {
                                       sendSale(response.data.id).then((response) => {
                                           if(response.status === 200) {
