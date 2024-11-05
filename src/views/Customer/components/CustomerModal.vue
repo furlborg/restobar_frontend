@@ -293,7 +293,6 @@ export default defineComponent({
                   isLoadingData.value = false;
               });
           } else if(show.value === true && idCustomer.value === null || 0) {
-              console.log(document.value);
               modalTitle.value = "Registrar Cliente";
               customer.value = {
                   names: null,
@@ -323,6 +322,10 @@ export default defineComponent({
               } else {
                   changeDocMax();
               }
+          }
+          if(doc_type.value !== null) {
+              customer.value.doc_type = "6";
+              changeDocMax();
           }
       });
 

@@ -1,14 +1,6 @@
 <template>
     <div id="Order">
         <n-card title="Pedidos" :segmented="{ content: 'hard' }">
-            <!-- <template #header-extra>
-			  <n-button
-				type="info"
-				secondary
-				@click="$router.push({ name: 'TakeOrder' })"
-				>Realizar pedido</n-button
-			  >
-			</template> -->
             <n-space justify="space-between">
                 <n-button
                         type="info"
@@ -653,6 +645,7 @@ export default defineComponent({
                     message.success("¡Pedido cobrado!");
                     showPayments.value = false;
                     const json = JSON.parse(response.data.json_sale);
+                    console.log(json.codigo_tipo_documento);
                     if(
                         settingsStore.businessSettings.sale.auto_send &&
                         json.codigo_tipo_documento !== "80"
