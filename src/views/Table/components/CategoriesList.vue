@@ -47,20 +47,18 @@
                     v-if="listType === 'grid'"
                     responsive="screen"
                     cols="8 xs:8 s:12 m:12 l:16 xl:20 2xl:20"
-                    :x-gap="5"
-                    :y-gap="5"
+                    :x-gap="10"
+                    :y-gap="10"
             >
-                <n-gi :span="4" v-for="(category, index) in productStore.categories" :key="index">
-                    <div class="item-zoom">
-                        <router-link class="text-decoration-none" :to="{ name: 'CategoriesItems', params: { category: category.id } }">
-                            <img src="~@/assets/images/category-bg.jpg" alt=""/>
-
-                            <n-text style="font-size: 21px; font-weight: 900; text-align: center; color: #000; top: 40%; left: 45%"
-                                    class="position-absolute translate-middle"
-                            >{{ category.description }}
-                            </n-text>
-                        </router-link>
-                    </div>
+                <n-gi :span="5" v-for="(category, index) in productStore.categories" :key="index">
+                    <router-link class="text-decoration-none" :to="{ name: 'CategoriesItems', params: { category: category.id } }">
+                        <div class="fixed-size-container">
+                            <div class="item-zoom">
+                                <!--                                 <img src="~@/assets/images/category-bg.jpg" alt=""/>-->
+                                <n-text class="text-overlay">{{ category.description }}</n-text>
+                            </div>
+                        </div>
+                    </router-link>
                 </n-gi>
             </n-grid>
         </n-scrollbar>
@@ -105,32 +103,23 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-.item-zoom {
+
+.fixed-size-container {
+  width: 100%;
+  height: 180px !important;
   position: relative;
-  border: 1px solid #333;
-  overflow: hidden;
-  -moz-box-sizing: border-box;
-  -webkit-box-sizing: border-box;
-  box-sizing: border-box;
+  background: #d7dadc;
+  border: #0a58ca 1px solid;
 }
 
-.item-zoom img {
-  vertical-align: top;
-  max-width: 100%;
-  -moz-transition: all 0.3s;
-  -webkit-transition: all 0.3s;
-  transition: all 0.3s;
-  -webkit-filter: grayscale(100%);
-  -moz-filter: grayscale(100%);
-  filter: grayscale(100%);
-}
-
-.item-zoom:hover img {
-  -moz-transform: scale(1.1);
-  -webkit-transform: scale(1.1);
-  transform: scale(1.1);
-  -webkit-filter: grayscale(0%);
-  -moz-filter: grayscale(0%);
-  filter: grayscale(0%);
+.text-overlay {
+  font-size: 21px;
+  font-weight: 900;
+  color: #000;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
 }
 </style>

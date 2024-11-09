@@ -37,12 +37,12 @@
           style="cursor: pointer"
         >
           <template #prefix>
-            <img
-              src="~@/assets/images/default-food-image.jpg"
-              alt=""
-              width="75"
-              height="75"
-            />
+<!--            <img-->
+<!--              src="~@/assets/images/default-food-image.jpg"-->
+<!--              alt=""-->
+<!--              width="75"-->
+<!--              height="75"-->
+<!--            />-->
           </template>
           <n-thing>
             <n-space vertical>
