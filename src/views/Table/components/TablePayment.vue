@@ -840,17 +840,27 @@ export default defineComponent({
       }));
     });
 
-    const evalPayments = computed(() => {
-      if (sale.value.payments) {
-        return (
-          sale.value.payments.reduce((acc, val) => {
-            return (acc += parseFloat(val.amount));
-          }, 0) !== Number(sale.value.amount)
-        );
-      } else {
-        return true;
-      }
-    });
+      const evalPayments = computed(() => {
+          const payments = sale.value.payments;
+          const totalAmount = Number(sale.value.amount);
+
+          if (!payments || payments.length === 0) {
+              return true; // Devuelve true si no hay pagos
+          }
+
+          const totalPayments = payments.reduce((accumulator, payment) => {
+              const amount = parseFloat(payment.amount || '0');
+              const scaledAccumulator = Math.round(accumulator * 100); // Escala para manejar decimales
+              const scaledAmount = Math.round(amount * 100); // Escala el monto actual
+
+              const totalScaled = scaledAccumulator + scaledAmount; // Suma los valores escalados
+              return totalScaled / 100; // Devuelve a la escala original
+          }, 0);
+
+
+          return totalPayments !== totalAmount;
+      });
+
 
     const currentPaymentsAmount = computed(() => {
       if (sale.value.payments) {
