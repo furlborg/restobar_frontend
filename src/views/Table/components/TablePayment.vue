@@ -103,49 +103,49 @@
               </tr>
             </thead>
             <tbody>
-              <template v-for="(detail, index) in saleStore.toSale">
+            <template v-for="(detail, index) in saleStore.toSale">
+                {{ detail.product_affectation }}
                 <tr v-if="detail.quantity > 0" :key="index">
-                  <td v-if="settingsStore.businessSettings.sale.manage_affectations
+                    <td v-if="settingsStore.businessSettings.sale.manage_affectations
       ">
-                    <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation"
-                      :disabled="!userStore.hasPermission('change_product_affectation')
+                        <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation"
+                                     :disabled="!userStore.hasPermission('change_product_affectation')
       " :options="productStore.affectationsOptions" @update:value="(v) => saleStore.updateDetail(detail)">
-                      <n-tag size="small" :color="getAfcColor(detail.product_affectation)">{{
-      getAfcShort(detail.product_affectation) }}</n-tag>
-                    </n-popselect>
-                  </td>
-                  <td>{{ detail.quantity }}</td>
-                  <td>
-                    <input class="custom-input" v-model="detail.product_name" v-autowidth
-                      @click="$event.target.select()" />
-                  </td>
-                  <td>
-                    S/.
-                    <input class="custom-input" type="number" min="0" step=".5" v-model="detail.price_sale" @input="() => (
-      saleStore.updateDetail(detail),
-      (detail.discount = parseFloat(0).toFixed(2))
-    )
-      " v-autowidth @click="$event.target.select()" />
-                  </td>
-                  <td>
-                    S/.
-                    <input class="custom-input" type="number" min="0" :max="!detail.price_sale ? 0 : detail.price_sale"
-                      :disabled="detail.product_affectation === 21 ||
+                            <n-tag size="small" :color="getAfcColor(detail.product_affectation)">{{
+                                    getAfcShort(detail.product_affectation) }}
+                            </n-tag>
+                        </n-popselect>
+                    </td>
+                    <td>{{ detail.quantity }}</td>
+                    <td>
+                        <input class="custom-input" v-model="detail.product_name" v-autowidth
+                               @click="$event.target.select()"/>
+                    </td>
+                    <td>
+                        S/.
+                        <input class="custom-input" type="number" :min="detail.product_affectation === 20 ? 1 : 0" step=".5"
+                               v-model="detail.price_sale" v-autowidth @click="$event.target.select()"
+                               @input="() => (saleStore.updateDetail(detail), (detail.discount = parseFloat('0').toFixed(2)))"/>
+                    </td>
+                    <td>
+                        S/.
+                        <input class="custom-input" type="number" min="0" :max="!detail.price_sale ? 0 : detail.price_sale"
+                               :disabled="detail.product_affectation === 21 ||
       !!Number(sale.discount)
-      " step=".5" v-model="detail.discount" v-autowidth @click="$event.target.select()" />
-                  </td>
-                  <td>
-                    {{
-      detail.product_affectation === 21
-        ? "0.00"
-        : parseFloat(
-          detail.quantity * detail.price_sale -
-          detail.discount
-        ).toFixed(2)
-    }}
-                  </td>
+      " step=".5" v-model="detail.discount" v-autowidth @click="$event.target.select()"/>
+                    </td>
+                    <td>
+                        {{
+                            detail.product_affectation === 21
+                                    ? "0.00"
+                                    : parseFloat(
+                                            detail.quantity * detail.price_sale -
+                                            detail.discount
+                                    ).toFixed(2)
+                        }}
+                    </td>
                 </tr>
-              </template>
+            </template>
             </tbody>
           </n-table>
         </n-scrollbar>
@@ -477,11 +477,23 @@ export default defineComponent({
       free_amount: totalGRT,
       igv_amount: totalIGV,
     });
-
-    watch(total, () => {
-      sale.value.given_amount =
-        total.value > 0 ? total.value : parseFloat(0).toFixed(2);
-    });
+      
+      watch(total, () => {
+          sale.value.given_amount =
+              total.value > 0 ? total.value : parseFloat("0").toFixed(2);
+      });
+      
+      // watchEffect(() => {
+      //     console.log(sale.value.amount);
+      //     // if(parseFloat(sale.value.amount) === 0) {
+      //     //     sale.value.payment_condition = 2;
+      //     console.log(sale.value.payment_condition);
+      //     console.log(sale.value.given_amount);
+      //         // sale.value.given_amount = parseFloat("0").toFixed(2);
+      //     //    
+      //     //     // changeCondition(sale.value.payment_condition);
+      //     // }
+      // });
 
     const formRules = computed(() => {
       let rules = saleRules;
@@ -499,7 +511,7 @@ export default defineComponent({
           sale.value.given_amount = total.value;
           break;
         case 2:
-          sale.value.given_amount = parseFloat(0).toFixed(2);
+          sale.value.given_amount = parseFloat('0').toFixed(2);
           break;
         default:
           console.error(`${v} invalido`);
@@ -600,17 +612,21 @@ export default defineComponent({
                                               if(error.response.status === 400) {
                                                   console.error(error);
                                                   for(const value in error.response.data) {
-                                                      error.response.data[`${value}`].forEach(
-                                                          (err) => {
-                                                              if(typeof err === "object") {
-                                                                  for(const v in err) {
-                                                                      message.error(`${err[`${v}`]}`);
+                                                      // eslint-disable-next-line valid-typeof
+                                                      if(typeof error.response.data === "array") {
+                                                          
+                                                          error.response.data[`${value}`].forEach(
+                                                              (err) => {
+                                                                  if(typeof err === "object") {
+                                                                      for(const v in err) {
+                                                                          message.error(`${err[`${v}`]}`);
+                                                                      }
+                                                                  } else {
+                                                                      message.error(`${err}`);
                                                                   }
-                                                              } else {
-                                                                  message.error(`${err}`);
                                                               }
-                                                          }
-                                                      );
+                                                          );
+                                                      }
                                                   }
                                               } else {
                                                   console.error(error);
