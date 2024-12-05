@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   configureWebpack: {
     devtool: "source-map",
   },
