@@ -319,9 +319,9 @@ import {
   searchRucCustomer,
 } from "@/api/modules/customer";
 import {
-  createSale,
-  getSaleNumber,
-  sendSale,
+    createSale,
+    getSaleNumber, retrieveSale,
+    sendSale
 } from "@/api/modules/sales";
 import { useDialog, useMessage } from "naive-ui";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
@@ -546,23 +546,28 @@ export default defineComponent({
               }));
               sale.value.discount = totalDSCT.value;
               await createSale(sale.value)
-                .then((response) => {
+                .then(async (response) => {
                   if (response.status === 201) {
-                    if (settingsStore.business_settings.printer.print_html) {
-                      pdfData.value = response.data;
-                      showPdf.value = true;
-                      if (!ticketPreview.value) {
-                        setTimeout(() => previewDrawer.value.generate(), 250);
-                      }
+                      if(settingsStore.business_settings.printer.print_html) {
+                          const dataPrint = async() => {
+                              const res = await retrieveSale(response.data?.id);
+                              pdfData.value = res.data;
+                              return res.data;
+                          };
+                          await dataPrint();
+                          showPdf.value = true;
+                          if(!ticketPreview.value) {
+                              setTimeout(() => previewDrawer.value.generate(), 250);
+                          }
                     } else {
-                      VoucherPrint({
-                        data: response.data,
-                        businessStore,
-                        saleStore,
-                        changing: changing.value,
-                        show: true,
+                      await VoucherPrint({
+                          data: response.data,
+                          businessStore,
+                          saleStore,
+                          changing: changing.value,
+                          show: true,
                       });
-                      router.push({ name: "TableHome" });
+                      await router.push({ name: "TableHome" });
                     }
 
                     if (
@@ -572,7 +577,7 @@ export default defineComponent({
                       sendSale(response.data.id)
                         .then((response) => {
                           if (response.status === 200) {
-                            const sale = response.data;
+                            // const sale = response.data;
                             message.success("Enviado!");
                             // if (whatsappNumber.value.length >= 9) {
                             //   sendWhatsapp(

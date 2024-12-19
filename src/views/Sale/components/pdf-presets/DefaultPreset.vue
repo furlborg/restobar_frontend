@@ -323,32 +323,36 @@ export default defineComponent({
     const hasDiscounts = props.data.sale_details.some(
       (detail) => !!Number(detail.discount)
     );
-
-    const parseSale = () => {
-      let saleData = JSON.parse(props.data.json_sale);
-      // console.log(JSON.stringify(props.data, null, "  "));
-      // console.log(JSON.stringify(saleData, null, "  "));
-      if (settingsStore.business_settings.printer.detail_items) {
-        props.data.order_data.order_details.forEach((detail) => {
-          const indication = detail.indication.reduce((desc, indication) => {
-            if (indication.quick_indications.length) {
-              indication.quick_indications.forEach((ind) => {
-                desc += `${ind}, `;
+      
+      const parseSale = () => {
+          let saleData = JSON.parse(props.data.json_sale);
+          // console.log(JSON.stringify(props.data, null, "  "));
+          // console.log(JSON.stringify(saleData, null, "  "));
+          if(settingsStore.business_settings.printer.detail_items) {
+              const gordoPendejoOjalaTeDeCancerAnal = !!props.data?.["order_data"]?.order_details
+                  ? props.data?.["order_data"].order_details : props.data?.sale_details;
+              gordoPendejoOjalaTeDeCancerAnal.forEach((detail) => {
+                  detail.indication = detail.indication ? detail.indication : [];
+                  
+                  const indication = detail.indication.reduce((desc, indication) => {
+                      if(indication.quick_indications.length) {
+                          indication.quick_indications.forEach((ind) => {
+                              desc += `${ind}, `;
+                          });
+                      }
+                      desc = !indication.description
+                          ? ` [${desc.slice(0, -2)}]`
+                          : `${desc} [${indication.description}]`;
+                      return desc;
+                  }, "");
+                  const item = saleData.items.find(
+                      (i) => i.descripcion === detail.product_name
+                  );
+                  if(item) item.descripcion += indication;
               });
-            }
-            desc = !indication.description
-              ? ` [${desc.slice(0, -2)}]`
-              : `${desc} [${indication.description}]`;
-            return desc;
-          }, "");
-          const item = saleData.items.find(
-            (i) => i.descripcion === detail.product_name
-          );
-          if (item) item.descripcion += indication;
-        });
-      }
-      return saleData;
-    };
+          }
+          return saleData;
+      };
 
     const sale = parseSale();
 

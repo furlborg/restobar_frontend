@@ -342,12 +342,12 @@ import { useSaleStore } from "@/store/modules/sale";
 import { useUserStore } from "@/store/modules/user";
 import { useGenericsStore } from "@/store/modules/generics";
 import { saleRules } from "@/utils/constants";
-import { cloneDeep, isDecimal } from "@/utils";
+import { isDecimal } from "@/utils";
 import {
   searchCustomerByName,
   searchRucCustomer,
 } from "@/api/modules/customer";
-import { createSale, getSaleNumber, sendSale } from "@/api/modules/sales";
+import { createSale, getSaleNumber, retrieveSale, sendSale } from "@/api/modules/sales";
 import { useDialog, useMessage } from "naive-ui";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
 import format from "date-fns/format";
@@ -575,24 +575,30 @@ export default defineComponent({
               }));
               sale.value.discount = totalDSCT.value;
               await createSale(sale.value)
-                .then((response) => {
+                .then(async (response) => {
                   if (response.status === 201) {
-                    if (settingsStore.business_settings.printer.print_html) {
-                      pdfData.value = response.data;
-                      showPdf.value = true;
-                      if (!ticketPreview.value) {
-                        setTimeout(() => previewDrawer.value.generate(), 250);
+                      if(settingsStore.business_settings.printer.print_html) {
+                          const dataPrint = async() => {
+                              const res = await retrieveSale(response.data?.id);
+                          console.log(res.data);
+                              pdfData.value = res.data;
+                              return res.data;
+                          };
+                          await dataPrint();
+                          showPdf.value = true;
+                          if(!ticketPreview.value) {
+                              setTimeout(() => previewDrawer.value.generate(), 250);
+                          }
+                      } else {
+                          await VoucherPrint({
+                              data: response.data,
+                              businessStore,
+                              saleStore,
+                              changing: changing.value,
+                              show: true
+                          });
+                          await router.push({ name: "TableHome" });
                       }
-                    } else {
-                      VoucherPrint({
-                        data: response.data,
-                        businessStore,
-                        saleStore,
-                        changing: changing.value,
-                        show: true,
-                      });
-                      router.push({ name: "TableHome" });
-                    }
 
                     if (
                       settingsStore.businessSettings.sale.auto_send &&
