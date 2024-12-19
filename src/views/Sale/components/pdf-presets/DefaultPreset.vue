@@ -329,8 +329,10 @@ export default defineComponent({
       // console.log(JSON.stringify(props.data, null, "  "));
       // console.log(JSON.stringify(saleData, null, "  "));
       if (settingsStore.business_settings.printer.detail_items) {
-        props.data.order_data.order_details.forEach((detail) => {
-          const indication = detail.indication.reduce((desc, indication) => {
+          const gordoPendejoOjalaTeDeCancerAnal = !!props.data?.['order_data']?.order_details ? props.data?.['order_data'].order_details : props.data?.sale_details
+          gordoPendejoOjalaTeDeCancerAnal.forEach((detail) => {
+              detail.indication = detail.indication ? detail.indication : []
+          const indication = detail?.indication.reduce((desc, indication) => {
             if (indication.quick_indications.length) {
               indication.quick_indications.forEach((ind) => {
                 desc += `${ind}, `;
