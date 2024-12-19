@@ -6,7 +6,7 @@ demo:
   image: ubuntu:latest
   stage: demo
   only:
-    - dev_igv-hotfix
+    - test_prints
   before_script:
     - 'which sshpass || (apt-get update -y && apt-get install sshpass -y)'
     - mkdir -p ~/.ssh
