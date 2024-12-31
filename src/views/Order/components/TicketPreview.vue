@@ -201,8 +201,16 @@ export default defineComponent({
       const printTicket = async(i, place) => {
           return new Promise((resolve) => {
               const sendTicketData = () => {
+                  let printerNameToPrint;
+                  if(!props.data.table && props.data.delivery_info){
+                      printerNameToPrint = settingsStore.businessSettings.printer?.['print_name_delivery']
+                  }else if(!props.data.table && !props.data.delivery_info){
+                      printerNameToPrint = settingsStore.businessSettings.printer?.['print_name_take_away']
+                  }else{
+                      printerNameToPrint = place.printer_name
+                  }
                   const jsonTicket = {
-                      "printer_name": place.printer_name,
+                      "printer_name": printerNameToPrint,
                       "ticket_type": "ORDER",
                       "tittle": {
                           "table": "",
