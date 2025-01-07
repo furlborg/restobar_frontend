@@ -690,7 +690,8 @@ export default defineComponent({
                 value: product.id,
                 label: product.name,
                 disabled: product.is_disabled,
-                category: productStore.getCategorieDescription(product.category)
+                category: productStore.getCategorieDescription(product.category),
+                stock: product.stock
             }));
         });
 
@@ -795,7 +796,7 @@ export default defineComponent({
                                         {
                                             default: () => text
                                         }
-                                    ),
+                                    ), 
                                     h(
                                         NTag,
                                         {
@@ -805,7 +806,18 @@ export default defineComponent({
                                         {
                                             default: () => option.category
                                         }
-                                    )
+                                    ),
+                                    option.stock ? 
+                                        h(
+                                            NTag,
+                                            {
+                                                size: "small",
+                                                type: "info"
+                                            },
+                                            {
+                                                default: () => `Stock: ${option.stock}`
+                                            }
+                                        ) : ''
                                 ]
                             }
                         )

@@ -13,7 +13,7 @@
 
     <n-list class="m-0 px-2">
       <n-list-item
-        v-for="(product, index) in filteredProducts"
+        v-for="(product) in filteredProducts"
         :key="product.id"
       >
         <n-space vertical>
@@ -29,18 +29,16 @@
                 : null
             "
           >
-            <n-text
-              :delete="!product.has_stock || !product.has_supplies"
-              :type="
-                product.has_stock
-                  ? product.has_supplies
-                    ? 'default'
-                    : 'error'
-                  : 'error'
-              "
-              >{{ product.name }}</n-text
-            >
-            <n-text>S/. {{ parseFloat(product.prices).toFixed(2) }}</n-text>
+                  <n-text :delete="!product.has_stock || !product.has_supplies" 
+                          :type=" product.has_stock ? product.has_supplies ? 'default' : 'error' : 'error' ">
+                      {{ product.name }}
+                  </n-text>
+              <div style="display: inline-flex; flex-direction: column">
+                  <n-text>S/. {{ parseFloat(product.prices).toFixed(2) }}</n-text>
+                  <n-tag type="primary" strong v-if="product.stock" >
+                      Stock: {{ product.stock }}
+                  </n-tag>
+              </div>
           </n-space>
           <n-collapse-transition :show="product.quantity > 0">
             <n-space justify="end">

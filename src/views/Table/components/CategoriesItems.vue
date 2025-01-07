@@ -62,6 +62,9 @@
                   "
                   >{{ product.name }}</n-text
                 >
+                  <n-tag type="primary" strong v-if="product.stock">
+                      Stock: {{product.stock}}
+                  </n-tag>
                 <n-text type="success"
                   >S/. {{ parseFloat(product.prices).toFixed(2) }}</n-text
                 >
