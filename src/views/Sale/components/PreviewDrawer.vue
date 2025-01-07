@@ -169,8 +169,8 @@ export default defineComponent({
                 hotfixes: ["px_scaling"]
             });
 
-            doc.html(ticket.value.$el.innerHTML, {
-                callback: async function(doc) {
+            // doc.html(ticket.value.$el.innerHTML, {
+            //     callback: async function(doc) {
                     if(save === true) {
                         doc.save(
                             `${saleStore.getSerieDescription(props.data.serie)}-${
@@ -268,7 +268,7 @@ export default defineComponent({
                             const gordoPuto = async() => {
                                 try {
                                     // eslint-disable-next-line no-undef
-                                    const response = await http.get(`${process.env.VUE_APP_API_URL}/api/v1/sales/${props.data.id}/print`);
+                                    const response = await http.post(`${process.env.VUE_APP_API_URL}/api/v1/sales/${props.data.id}/print/`);
                                     if(response.status === 200) {
                                         return response.data;
                                     }
@@ -278,7 +278,7 @@ export default defineComponent({
                                 return null;
                             };
 
-                            const voucherData = await gordoPuto()
+                            const voucherData = gordoPuto()
 
                             const sendTicketData = () => {
 
@@ -286,38 +286,39 @@ export default defineComponent({
                                     ...voucherData,
                                     printer_name: settingsStore.business_settings.sale.printer_name || ''
                                 };
-                                socket.send(JSON.stringify(jsonTicket));
+                                socket?.send(JSON.stringify(jsonTicket));
                             };
 
-                            if(!socket || socket.readyState === WebSocket.CLOSED) {
-                                // eslint-disable-next-line no-undef
-                                const apiUrl = process.env.VUE_APP_API_URL.replace(/^https?:\/\//, "");
-                                socket = new WebSocket(`${window.location.protocol === "https:" ? "wss" : "ws"}://${apiUrl}/ws/print/`);
-
-                                socket.onopen = function() {
-                                    console.log("Conexión WebSocket abierta");
-                                    sendTicketData();
-                                };
-
-                                socket.onerror = function(error) {
-                                    console.log("Error en WebSocket", error);
-                                    message.error(error);
-                                };
-
-                                socket.onmessage = function(event) {
-                                    if(event.data.includes("success")) {
-                                        console.log("Mensaje recibido del servidor", JSON.parse(event.data).success);
-                                        message.success(JSON.parse(event.data).success);
-                                        socket.close()
-                                    }
-                                };
-
-                                socket.onclose = function(event) {
-                                    console.log("Conexión WebSocket cerrada", event);
-                                };
-                            } else if(socket.readyState === WebSocket.OPEN) {
+                            // if(!socket || socket.readyState === WebSocket.CLOSED) {
+                            //     // eslint-disable-next-line no-undef
+                            //     const apiUrl = process.env.VUE_APP_API_URL.replace(/^https?:\/\//, "");
+                            //     socket = new WebSocket(`${window.location.protocol === "https:" ? "wss" : "ws"}://${apiUrl}/ws/print/`);
+                            //
+                            //     socket.onopen = function() {
+                            //         console.log("Conexión WebSocket abierta");
+                            //         sendTicketData();
+                            //     };
+                            //
+                            //     socket.onerror = function(error) {
+                            //         console.log("Error en WebSocket", error);
+                            //         message.error(error);
+                            //     };
+                            //
+                            //     socket.onmessage = function(event) {
+                            //         if(event.data.includes("success")) {
+                            //             console.log("Mensaje recibido del servidor", JSON.parse(event.data).success);
+                            //             message.success(JSON.parse(event.data).success);
+                            //             socket.close()
+                            //         }
+                            //     };
+                            //
+                            //     socket.onclose = function(event) {
+                            //         console.log("Conexión WebSocket cerrada", event);
+                            //     };
+                            // } else 
+                            //     if(socket.readyState === WebSocket.OPEN) {
                                 sendTicketData();
-                            }
+                            // }
 
                             // const printDataVoucher = await gordoPuto()
                             // console.log(printDataVoucher);
@@ -333,8 +334,8 @@ export default defineComponent({
                     }
                     emit("printed");
                     emit("update:show", false);
-                }
-            });
+                // }
+            // });
         };
 
         const sendToWhatsapp = () => {
