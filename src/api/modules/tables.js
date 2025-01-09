@@ -21,6 +21,8 @@ export async function updateArea(idArea, area) {
     const userStore = useUserStore();
     return await http.put(`areas/${idArea}/`, {
         description: area.description,
+        sale_printer: area.sale_printer,
+        account_printer: area.account_printer,
         branch: !userStore.user.branchoffice ? businessStore.currentBranch : null
     });
 }
@@ -38,6 +40,7 @@ export async function createTable(areaID, table) {
 }
 
 export async function updateTable(areaID, table) {
+    console.log(table);
     return await http.put(`tables/${table.id}/`, {
         area: areaID,
         code: table.code,

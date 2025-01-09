@@ -35,6 +35,7 @@
                           v-model:value="currentArea"
                           :consistent-menu-width="true"
                           :options="areaOptions"
+                          @update:value="(_, opt) => {area.sale_printer = opt.sale_printer; area.account_printer = opt.account_printer;}"
                           clearable
                         />
                         <n-button
@@ -57,11 +58,14 @@
                         v-model:value="area.description"
                         placeholder=""
                       />
-                    </n-form-item-gi>
-                    <n-form-item-gi
-                      v-if="userStore.hasPermission('add_area') || !!area.id"
-                      :span="4"
-                    >
+                    </n-form-item-gi >
+                      <n-form-item-gi v-if="userStore.hasPermission('add_area') || !!area.id" :span="4" label="Impresora de pre-cuentas">
+                          <n-input v-model:value="area.account_printer"/>
+                      </n-form-item-gi>
+                      <n-form-item-gi v-if="userStore.hasPermission('add_area') || !!area.id" :span="4" label="Impresora de documentos">
+                          <n-input v-model:value="area.sale_printer"/>
+                      </n-form-item-gi>
+                    <n-form-item-gi v-if="userStore.hasPermission('add_area') || !!area.id" :span="4" >
                       <n-space>
                         <n-button
                           :type="!area.id ? 'info' : 'warning'"
@@ -768,6 +772,8 @@ export default defineComponent({
     const area = ref({
       id: null,
       description: "",
+      sale_printer: '',
+      account_printer: '',
     });
     const selectedTable = ref({
       id: null,

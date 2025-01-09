@@ -24,6 +24,8 @@ export const useTableStore = defineStore("table", {
       return areas.map((area) => ({
         label: area.description,
         value: area.id,
+        sale_printer: area.sale_printer,
+        account_printer: area.account_printer,
       }));
     },
     branchAreas() {

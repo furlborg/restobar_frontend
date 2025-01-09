@@ -96,6 +96,7 @@ import { sendWhatsapp } from "@/api/modules/sales";
 import { useBusinessStore } from "@/store/modules/business";
 import { useTableStore } from "@/store/modules/table";
 import { http } from "@/api";
+import businessSettings from "@/views/Settings/components/BusinessSettings.vue";
 
 export default defineComponent({
     name: "PreviewDrawer",
@@ -157,7 +158,7 @@ export default defineComponent({
             }
         });
 
-        const generate = (save = false) => {
+        const generate = async (save = false) => {
             const format = [
                 ticket.value.$el.clientWidth,
                 ticket.value.$el.clientHeight + 10
@@ -207,7 +208,7 @@ export default defineComponent({
                                 const igv = parseFloat((totalIGV - (totalIGV / 1.18)).toFixed(2))
                                 const gravado = parseFloat((totalIGV / 1.18).toFixed(2))
                                 const jsonTicket = {
-                                    "printer_name": settingsStore.business_settings?.['qz_config'].host,
+                                    "printer_name": props.data.printer_name || settingsStore.business_settings?.['qz_config'].host,
                                     "ticket_type": "PRE-ACCOUNT",
                                     "tittle": {
                                         "logo": "",
@@ -278,13 +279,13 @@ export default defineComponent({
                                 return null;
                             };
 
-                            const voucherData = gordoPuto()
+                            const voucherData = await gordoPuto()
 
                             const sendTicketData = () => {
-
+                                console.log(voucherData);
                                 const jsonTicket = {
                                     ...voucherData,
-                                    printer_name: settingsStore.business_settings.sale.printer_name || ''
+                                    printer_name: voucherData.printer_name ? voucherData.printer_name : settingsStore.business_settings.sale.printer_name  
                                 };
                                 socket?.send(JSON.stringify(jsonTicket));
                             };

@@ -104,7 +104,6 @@
             </thead>
             <tbody>
             <template v-for="(detail, index) in saleStore.toSale">
-                {{ detail.product_affectation }}
                 <tr v-if="detail.quantity > 0" :key="index">
                     <td v-if="settingsStore.businessSettings.sale.manage_affectations
       ">

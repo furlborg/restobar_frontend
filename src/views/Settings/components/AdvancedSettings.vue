@@ -315,6 +315,9 @@
                                 placeholder=""
                         />
                     </n-form-item-gi>
+                    <n-form-item-gi :span="3" label="Impresión automática">
+                        <n-switch v-model:value="businessSettings.sale.auto_print"/>
+                    </n-form-item-gi>
                     <n-form-item-gi :span="3" label="Documento por defecto">
                         <n-select
                                 v-model:value="businessSettings.sale.default_invoice"
