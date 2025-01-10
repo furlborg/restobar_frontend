@@ -61,7 +61,6 @@
 
 <script>
 import { defineComponent, onUpdated, ref, toRefs } from "vue";
-import { useUserStore } from "@/store/modules/user";
 import { useMessage } from "naive-ui";
 import {
   createSupplieMovement,
@@ -84,7 +83,6 @@ export default defineComponent({
   setup(props, { emit }) {
     const formitem = ref({});
     const message = useMessage();
-    const userStore = useUserStore();
     const formRef = ref(null);
     const optionsConcept = ref([]);
     const optionsEstablishment = ref([]);
@@ -111,7 +109,7 @@ export default defineComponent({
     };
 
     const supplieSearch = async (search) => {
-      getSupplies(`supplies/search/?search=${search}`)
+      getSupplies(`supplies/search/`, {search})
         .then((response) => {
           optionsSupplies.value = response.data.map((v) => ({
             label: v.name,

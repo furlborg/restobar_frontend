@@ -450,7 +450,7 @@ export default defineComponent({
     });
 
     const supplieSearch = async (search) => {
-      getSupplies(`supplies/search/?search=${search}`)
+      getSupplies(`supplies/`, {search})
         .then((response) => {
           optionsSupplie.value = response.data.map((v) => ({
             label: v.name,

@@ -1,7 +1,8 @@
 import { http } from "@/api";
 
-export async function getSupplies(url) {
-  return await http.get(url);
+export async function getSupplies(url, params) {
+  console.log(url, params);
+  return await http.get(url, { params: { ...params, limit: 15 } });
 }
 
 export async function retrieveSupplies(id) {

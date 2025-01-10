@@ -34,7 +34,7 @@
       </template>
 
       <n-form label-placement="left" style="maxwidth: 350px; margin-top: -8px; margin-bottom: 12px">
-        <n-input placeholder="Buscar" @keyup.enter="SearchFilter()" v-model:value="textsearch" round>
+        <n-input placeholder="Buscar" @keyup.enter="listSupplies()" v-model:value="textSearch" round>
           <template #prefix>
             <n-icon style="margin-top: -4px">
               <v-icon name="md-search-round" />
@@ -43,8 +43,8 @@
         </n-input>
       </n-form>
 
-      <n-data-table :columns="tableColumns" :data="supplies.results" size="small" :scroll-x="900"
-        :loading="isLoadingData" remote :pagination="pagination" />
+      <n-data-table :columns="tableColumns" :data="supplies" size="small" :scroll-x="900" :loading="isLoadingData" remote
+                    :pagination="pagination" />
     </n-card>
     <!-- Customer Modal -->
     <supplies-modal v-model:show="showModal" @on-success="listSupplies()" :items="items" />
@@ -78,27 +78,28 @@ export default defineComponent({
     const items = reactive({});
     const itemsMovement = reactive({});
     const isLoadingData = ref(false);
-    const textsearch = ref("");
+    const textSearch = ref("");
     const page = ref(1);
     const type = ref(0);
-    const linksearch = ref(null);
-    const pagecount = ref(null);
-    const pagination = ref({
-      previusPage: null,
-      offset: 0,
-      page: page,
-      pageSize: 15,
-      pageCount: pagecount,
-      pageSlot: 5,
-      suffix: () => {
-        return "Total: " + supplies.value.count;
-      },
-
-      onChange: (page) => {
-        pagination.value.page = page;
-        SearchFilter(page);
-      },
-    });
+    const pageCount = ref(null);
+      const pagination = ref({
+          previusPage: null,
+          offset: 0,
+          page: page,
+          pageSize: 15,
+          itemCount: pageCount,
+          pageCount: 0,
+          pageSlot: 5,
+          suffix: () => {
+              return "Total: " + pagination.value.itemCount;
+          },
+          
+          onChange: async (page) => {
+              pagination.value.page = page;
+              pagination.value.offset = (page - 1) * pagination.value.pageSize; // Recalcular el offset
+              await listSupplies();
+          },
+      });
     const newSupplies = () => {
       (items.id = undefined),
         (items.code = undefined),
@@ -125,69 +126,35 @@ export default defineComponent({
         (itemsMovement.concept = undefined),
         (itemsMovement.amount = undefined);
     };
-
-    const listSupplies = (search) => {
-      isLoadingData.value = true;
-      let filter = "supplies/";
-      if (search) {
-        filter = "supplies/" + search;
-      }
-      getSupplies(filter)
-        .then((response) => {
-          supplies.value = response.data;
-          PaginationF();
-        })
-        .catch((error) => {
-          message.error("Algo salió mal...");
-        })
-        .finally(() => {
-          isLoadingData.value = false;
-        });
-    };
-
-    const PaginationF = () => {
-      let total = supplies.value.count / 15;
-
-      if (total == 0) {
-        pagecount.value = 1;
-      } else {
-        if (total % 1 == 0) {
-          pagecount.value = total;
-        } else {
-          total += 1;
-          pagecount.value = Math.trunc(total);
-        }
-      }
-    };
-
-    const SearchFilter = (val) => {
-      let search;
-
-      if (val) {
-        search = "?page=" + page.value;
-        if (linksearch.value !== null) {
-          search = linksearch.value + "page=" + page.value;
-        }
-      } else {
-        page.value = 1;
-        linksearch.value = null;
-
-        if (textsearch.value !== "") {
-          search = "?search=" + textsearch.value + "&";
-          linksearch.value = search;
-        }
-      }
-      listSupplies(search);
-    };
+      
+      const listSupplies = async() => {
+          isLoadingData.value = true;
+          
+          // Solicitar datos con offset y limit
+          getSupplies("supplies", {
+              offset: pagination.value.offset,
+              limit: pagination.value.pageSize,
+              search: textSearch.value
+          }).then((response) => {
+              supplies.value = response.data.results; // Datos de la página actual
+              pagination.value.itemCount = response.data.count; // Total de elementos
+              pagination.value.pageCount = Math.ceil(response.data.count / pagination.value.pageSize); // Calcular total de páginas
+          }).catch((error) => {
+              console.error(error);
+              message.error("Algo salió mal...");
+          }).finally(() => {
+              isLoadingData.value = false;
+          });
+      };
 
     onMounted(() => {
       listSupplies();
     });
 
     const changeState = async (id, state) => {
-      const dial = state == false ? dialog.success : dialog.error;
-      let titles = state == false ? "Habilitar Insumo" : "Deshabilitar Insumo";
-      const button = state == false ? "Habilitar" : "Deshabilitar";
+      const dial = state === false ? dialog.success : dialog.error;
+      let titles = state === false ? "Habilitar Insumo" : "Deshabilitar Insumo";
+      const button = state === false ? "Habilitar" : "Deshabilitar";
 
       dial({
         title: titles,
@@ -197,11 +164,13 @@ export default defineComponent({
         onPositiveClick: async () => {
           disableSupplies(id)
             .then((response) => {
+              console.log(response);
               listSupplies();
               message.success("Insumo deshabilitado correctamente.");
             })
             .catch((error) => {
-              message.error("Algo salió mal...");
+              console.log(error);
+                message.error("Algo salió mal...");
             });
         },
       });
@@ -211,10 +180,9 @@ export default defineComponent({
       userStore,
       showModal,
       showModalMovement,
-      textsearch,
+      textSearch,
       isLoadingData,
-      listSupplies,
-      SearchFilter,
+      listSupplies, 
       newSupplies,
       newMovement,
       type,
