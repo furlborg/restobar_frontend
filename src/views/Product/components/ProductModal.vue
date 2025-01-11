@@ -364,7 +364,6 @@ import {
 import { getSupplies, getMeasureUnit } from "@/api/modules/supplies";
 import { useProductStore } from "@/store/modules/product";
 import { useSettingsStore } from "@/store/modules/settings";
-import { useBusinessStore } from "@/store/modules/business";
 import { useUserStore } from "@/store/modules/user";
 import { NButton, useMessage } from "naive-ui";
 import { productRules } from "@/utils/constants";
@@ -450,7 +449,7 @@ export default defineComponent({
     });
 
     const supplieSearch = async (search) => {
-      getSupplies(`supplies/`, {search})
+        getSupplies(`supplies/search/?search=${search}`)
         .then((response) => {
           optionsSupplie.value = response.data.map((v) => ({
             label: v.name,
@@ -486,7 +485,7 @@ export default defineComponent({
             }
           });
         })
-        .catch((error) => {
+        .catch(() => {
           message.error("Algo salió mal...");
         });
     };
@@ -500,7 +499,7 @@ export default defineComponent({
             value: v.id,
           }));
         })
-        .catch((error) => {
+        .catch(() => {
           message.error("Algo salió mal...");
         });
     };
