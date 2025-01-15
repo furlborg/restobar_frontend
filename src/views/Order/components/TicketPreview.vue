@@ -199,6 +199,8 @@ export default defineComponent({
       };
 
       const printTicket = async(i, place) => {
+          console.log(place);
+          console.log(props.data);
           return new Promise((resolve) => {
               const sendTicketData = () => {
                   let printerNameToPrint;
@@ -213,6 +215,7 @@ export default defineComponent({
                       "printer_name": printerNameToPrint,
                       "ticket_type": "ORDER",
                       "tittle": {
+                          "area": props.data.area,
                           "table": "",
                           "order": props.data.id
                       },
@@ -316,6 +319,7 @@ export default defineComponent({
 
       const printTicketsForAllPlaces = async () => {
           for (const [i, place] of places.value.entries()) {
+              console.log(place);
               await printTicket(i, place);
           }
       };

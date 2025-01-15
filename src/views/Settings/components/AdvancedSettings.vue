@@ -240,6 +240,13 @@
                         </n-checkbox
                         >
                     </n-form-item-gi>
+                    <n-form-item-gi :span="4">
+                        <n-checkbox
+                                v-model:checked="businessSettings.order.print_area_on_order"
+                        >Mostrar nombre del area en ticket
+                        </n-checkbox
+                        >
+                    </n-form-item-gi>
                     <n-form-item-gi :span="3">
                         <n-checkbox
                                 v-model:checked="businessSettings.order.order_customer_name"

@@ -190,6 +190,12 @@
               >Insumos</n-checkbox
             >
           </n-form-item-gi>
+        <n-form-item-gi :span="4">
+            <n-checkbox
+                    v-model:checked="product.area_print"
+            > Area de impresión
+            </n-checkbox>
+        </n-form-item-gi>
           <n-form-item-gi
             label="Indicaciones rápidas"
             path="quick_indications"
@@ -284,8 +290,8 @@
               v-model:value="supplieItem.stock"
               :min="0"
               :show-button="false"
-              @keydown="isDecimal($event)"
             />
+<!--              @keydown="isDecimal($event)"-->
           </n-form-item-gi>
           <n-form-item-gi v-if="product.control_supplie" :span="4">
             <n-button
@@ -425,6 +431,7 @@ export default defineComponent({
       control_supplie: false,
       branchoffice: null,
       quick_indications: null,
+      area_print: false,
       supplies: [],
       affectation: settingsStore.businessSettings.sale.default_affectation,
       igv_tax: 0,

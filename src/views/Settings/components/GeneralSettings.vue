@@ -702,7 +702,7 @@
                                   </n-form-item-gi>
                                   <n-form-item-gi :span="4">
                                       <n-button class="me-2" :type="!selectedGuarnition ? 'info' : 'warning'"
-                                                :disabled="!guarnition.name || !guarnition.preparation_place" secondary
+                                                :disabled="!guarnition.name || !guarnition.preparation_place_id" secondary
                                                 @click="!selectedGuarnition ? performCreateGuarnition() : performUpdateGuarnition()">
                                           {{ !selectedGuarnition ? "Agregar" : "Guardar" }}
                                       </n-button>

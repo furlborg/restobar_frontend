@@ -96,7 +96,6 @@ import { sendWhatsapp } from "@/api/modules/sales";
 import { useBusinessStore } from "@/store/modules/business";
 import { useTableStore } from "@/store/modules/table";
 import { http } from "@/api";
-import businessSettings from "@/views/Settings/components/BusinessSettings.vue";
 
 export default defineComponent({
     name: "PreviewDrawer",
@@ -130,23 +129,23 @@ export default defineComponent({
         // eslint-disable-next-line no-undef
         // const apiUrl = process.env.VUE_APP_API_URL.replace(/^https?:\/\//, ''); // Elimina 'http://' o 'https://'
         let socket = null;
-
+        
         const message = useMessage();
-
+        
         const ticket = ref(null);
-
+        
         const loading = ref(false);
-
+        
         const send = ref(false);
-
+        
         const phoneNumber = ref("");
-
+        
         const onKeyUp = (event) => {
             if(event.keyCode === 13 || event.keyCode === 12) {
                 totalEnterPulse.value += 1;
             }
         };
-
+        
         watchEffect(() => {
             if(props.show && !props.preVoucher && !props.previewOnly) {
                 window.addEventListener("keyup", onKeyUp);
@@ -157,8 +156,8 @@ export default defineComponent({
                 }
             }
         });
-
-        const generate = async (save = false) => {
+        
+        const generate = async(save = false) => {
             const format = [
                 ticket.value.$el.clientWidth,
                 ticket.value.$el.clientHeight + 10
@@ -169,176 +168,178 @@ export default defineComponent({
                 orientation: "p",
                 hotfixes: ["px_scaling"]
             });
-
-            // doc.html(ticket.value.$el.innerHTML, {
-            //     callback: async function(doc) {
-                    if(save === true) {
+            
+            if(save === true) {
+                doc.html(ticket.value.$el.innerHTML, {
+                    callback: async function(doc) {
                         doc.save(
                             `${saleStore.getSerieDescription(props.data.serie)}-${
                                 props.data.number
                             }`
                         );
-                    } else {
-                        if(props.preVoucher) {
-                            const business = businessStore.business;
-                            const sendTicketData = () => {
-
-                                const orders = props.data.order_details.map(order => {
-                                    let totalOperation = 0;
-                                    let totalUnitPrice = 0;
-                                    if(order.product_affectation === 20) {
-                                        totalOperation = parseFloat((order.quantity * order.price).toFixed(2));
-                                        totalUnitPrice = parseFloat((order.price).toFixed(2));
-                                    }
-                                    if(order.product_affectation === 10) {
-                                        totalOperation = parseFloat((order.quantity * ((order.price * 0.18) + order.price)).toFixed(2));
-                                        totalUnitPrice = parseFloat(((order.price * 0.18) + order.price)).toFixed(2);
-                                    }
-                                    return {
-                                        operation: order.product_affectation,
-                                        cantidad: order.quantity,
-                                        descripcion: order.product_name,
-                                        precio: totalUnitPrice,
-                                        total: totalOperation
-                                    };
-                                });
-                                const totalIGV = orders.reduce((acc, it) => { return it.operation === 10 ? acc + it.total : acc; }, 0);
-                                const totalExo = orders.reduce((acc, it) => { return it.operation === 20 ? acc + it.total : acc; }, 0);
-
-                                const igv = parseFloat((totalIGV - (totalIGV / 1.18)).toFixed(2))
-                                const gravado = parseFloat((totalIGV / 1.18).toFixed(2))
-                                const jsonTicket = {
-                                    "printer_name": props.data.printer_name || settingsStore.business_settings?.['qz_config'].host,
-                                    "ticket_type": "PRE-ACCOUNT",
-                                    "tittle": {
-                                        "logo": "",
-                                        "ruc": business.ruc,
-                                        "company": business.commercial_name,
-                                        "address": business.fiscal_address,
-                                        "table": tableStore.getTableByID(props.data.table).description,
-                                        "order": props.data.id
-                                    },
-                                    "ticket_content": orders,
-                                    "totals": {
-                                        "exonerado": totalExo,
-                                        "gravado": gravado,
-                                        "icbper": 0,
-                                        "igv": igv,
-                                        "total": parseFloat(totalExo + totalIGV).toFixed(2)
-                                    },
-                                    "footer": {
-                                        "date": props.data.created,
-                                        "username": props.data.username
-                                    }
-                                };
-                                socket.send(JSON.stringify(jsonTicket));
-                            };
-
-                            // Verifica el estado del WebSocket y maneja la conexión
-                            if(!socket || socket.readyState === WebSocket.CLOSED) {
-                                // eslint-disable-next-line no-undef
-                                const apiUrl = process.env.VUE_APP_API_URL.replace(/^https?:\/\//, "");
-                                socket = new WebSocket(`${window.location.protocol === "https:" ? "wss" : "ws"}://${apiUrl}/ws/print/`);
-
-                                socket.onopen = function() {
-                                    console.log("Conexión WebSocket abierta");
-                                    sendTicketData();
-                                };
-
-                                socket.onerror = function(error) {
-                                    console.log("Error en WebSocket", error);
-                                    message.error(error);
-                                };
-
-                                socket.onmessage = function(event) {
-                                    if(event.data.includes("success")) {
-                                        console.log("Mensaje recibido del servidor", JSON.parse(event.data).success);
-                                        message.success(JSON.parse(event.data).success);
-                                        socket.close()
-                                    }
-                                };
-
-                                socket.onclose = function(event) {
-                                    console.log("Conexión WebSocket cerrada", event);
-                                };
-                            } else if(socket.readyState === WebSocket.OPEN) {
-                                // Si el WebSocket ya está abierto, envía el mensaje directamente
-                                sendTicketData();
-                            }
-                        } else {
-                            const gordoPuto = async() => {
-                                try {
-                                    // eslint-disable-next-line no-undef
-                                    const response = await http.post(`${process.env.VUE_APP_API_URL}/api/v1/sales/${props.data.id}/print/`);
-                                    if(response.status === 200) {
-                                        return response.data;
-                                    }
-                                } catch(e) {
-                                    console.log(e);
-                                }
-                                return null;
-                            };
-
-                            const voucherData = await gordoPuto()
-
-                            const sendTicketData = () => {
-                                console.log(voucherData);
-                                const jsonTicket = {
-                                    ...voucherData,
-                                    printer_name: voucherData.printer_name ? voucherData.printer_name : settingsStore.business_settings.sale.printer_name  
-                                };
-                                socket?.send(JSON.stringify(jsonTicket));
-                            };
-
-                            // if(!socket || socket.readyState === WebSocket.CLOSED) {
-                            //     // eslint-disable-next-line no-undef
-                            //     const apiUrl = process.env.VUE_APP_API_URL.replace(/^https?:\/\//, "");
-                            //     socket = new WebSocket(`${window.location.protocol === "https:" ? "wss" : "ws"}://${apiUrl}/ws/print/`);
-                            //
-                            //     socket.onopen = function() {
-                            //         console.log("Conexión WebSocket abierta");
-                            //         sendTicketData();
-                            //     };
-                            //
-                            //     socket.onerror = function(error) {
-                            //         console.log("Error en WebSocket", error);
-                            //         message.error(error);
-                            //     };
-                            //
-                            //     socket.onmessage = function(event) {
-                            //         if(event.data.includes("success")) {
-                            //             console.log("Mensaje recibido del servidor", JSON.parse(event.data).success);
-                            //             message.success(JSON.parse(event.data).success);
-                            //             socket.close()
-                            //         }
-                            //     };
-                            //
-                            //     socket.onclose = function(event) {
-                            //         console.log("Conexión WebSocket cerrada", event);
-                            //     };
-                            // } else 
-                            //     if(socket.readyState === WebSocket.OPEN) {
-                                sendTicketData();
-                            // }
-
-                            // const printDataVoucher = await gordoPuto()
-                            // console.log(printDataVoucher);
-                            // doc.autoPrint();
-                            // const hiddeFrame = document.createElement("iframe");
-                            // hiddeFrame.style.position = "fixed";
-                            // hiddeFrame.style.width = "1px";
-                            // hiddeFrame.style.height = "1px";
-                            // hiddeFrame.style.opacity = "0.01";
-                            // hiddeFrame.src = doc.output("bloburl");
-                            // document.body.appendChild(hiddeFrame);
-                        }
                     }
-                    emit("printed");
-                    emit("update:show", false);
-                // }
-            // });
+                });
+            } else {
+                if(props.preVoucher) {
+                    const business = businessStore.business;
+                    const sendTicketData = () => {
+                        
+                        const orders = props.data.order_details.map(order => {
+                            let totalOperation = 0;
+                            let totalUnitPrice = 0;
+                            if(order.product_affectation === 20) {
+                                totalOperation = parseFloat((order.quantity * order.price).toFixed(2));
+                                totalUnitPrice = parseFloat((order.price).toFixed(2));
+                            }
+                            if(order.product_affectation === 10) {
+                                totalOperation = parseFloat((order.quantity * ((order.price * 0.18) + order.price)).toFixed(2));
+                                totalUnitPrice = parseFloat(((order.price * 0.18) + order.price)).toFixed(2);
+                            }
+                            return {
+                                operation: order.product_affectation,
+                                cantidad: order.quantity,
+                                descripcion: order.product_name,
+                                precio: totalUnitPrice,
+                                total: totalOperation
+                            };
+                        });
+                        const totalIGV = orders.reduce((acc, it) => { return it.operation === 10 ? acc + it.total : acc; }, 0);
+                        const totalExo = orders.reduce((acc, it) => { return it.operation === 20 ? acc + it.total : acc; }, 0);
+                        
+                        const igv = parseFloat((totalIGV - (totalIGV / 1.18)).toFixed(2));
+                        const gravado = parseFloat((totalIGV / 1.18).toFixed(2));
+                        const jsonTicket = {
+                            "printer_name": props.data.printer_name || settingsStore.business_settings?.["qz_config"].host,
+                            "ticket_type": "PRE-ACCOUNT",
+                            "tittle": {
+                                "logo": "",
+                                "ruc": business.ruc,
+                                "company": business.commercial_name,
+                                "address": business.fiscal_address,
+                                "table": tableStore.getTableByID(props.data.table).description,
+                                "order": props.data.id
+                            },
+                            "ticket_content": orders,
+                            "totals": {
+                                "exonerado": totalExo,
+                                "gravado": gravado,
+                                "icbper": 0,
+                                "igv": igv,
+                                "total": parseFloat(totalExo + totalIGV).toFixed(2)
+                            },
+                            "footer": {
+                                "date": props.data.created,
+                                "username": props.data.username
+                            }
+                        };
+                        socket.send(JSON.stringify(jsonTicket));
+                    };
+                    
+                    // Verifica el estado del WebSocket y maneja la conexión
+                    if(!socket || socket.readyState === WebSocket.CLOSED) {
+                        // eslint-disable-next-line no-undef
+                        const apiUrl = process.env.VUE_APP_API_URL.replace(/^https?:\/\//, "");
+                        socket = new WebSocket(`${window.location.protocol === "https:" ? "wss" : "ws"}://${apiUrl}/ws/print/`);
+                        
+                        socket.onopen = function() {
+                            console.log("Conexión WebSocket abierta");
+                            sendTicketData();
+                        };
+                        
+                        socket.onerror = function(error) {
+                            console.log("Error en WebSocket", error);
+                            message.error(error);
+                        };
+                        
+                        socket.onmessage = function(event) {
+                            if(event.data.includes("success")) {
+                                console.log("Mensaje recibido del servidor", JSON.parse(event.data).success);
+                                message.success(JSON.parse(event.data).success);
+                                socket.close();
+                            }
+                        };
+                        
+                        socket.onclose = function(event) {
+                            console.log("Conexión WebSocket cerrada", event);
+                        };
+                    } else if(socket.readyState === WebSocket.OPEN) {
+                        // Si el WebSocket ya está abierto, envía el mensaje directamente
+                        sendTicketData();
+                    }
+                } else {
+                    const gordoPuto = async() => {
+                        try {
+                            // eslint-disable-next-line no-undef
+                            const response = await http.post(`${process.env.VUE_APP_API_URL}/api/v1/sales/${props.data.id}/print/`);
+                            if(response.status === 200) {
+                                return response.data;
+                            }
+                        } catch(e) {
+                            console.log(e);
+                        }
+                        return null;
+                    };
+                    
+                    const voucherData = await gordoPuto();
+                    
+                    const sendTicketData = () => {
+                        console.log(voucherData);
+                        const jsonTicket = {
+                            ...voucherData,
+                            printer_name: voucherData.printer_name
+                                ? voucherData.printer_name
+                                : settingsStore.business_settings.sale.printer_name
+                        };
+                        socket?.send(JSON.stringify(jsonTicket));
+                    };
+                    
+                    // if(!socket || socket.readyState === WebSocket.CLOSED) {
+                    //     // eslint-disable-next-line no-undef
+                    //     const apiUrl = process.env.VUE_APP_API_URL.replace(/^https?:\/\//, "");
+                    //     socket = new WebSocket(`${window.location.protocol === "https:" ? "wss" : "ws"}://${apiUrl}/ws/print/`);
+                    //
+                    //     socket.onopen = function() {
+                    //         console.log("Conexión WebSocket abierta");
+                    //         sendTicketData();
+                    //     };
+                    //
+                    //     socket.onerror = function(error) {
+                    //         console.log("Error en WebSocket", error);
+                    //         message.error(error);
+                    //     };
+                    //
+                    //     socket.onmessage = function(event) {
+                    //         if(event.data.includes("success")) {
+                    //             console.log("Mensaje recibido del servidor", JSON.parse(event.data).success);
+                    //             message.success(JSON.parse(event.data).success);
+                    //             socket.close()
+                    //         }
+                    //     };
+                    //
+                    //     socket.onclose = function(event) {
+                    //         console.log("Conexión WebSocket cerrada", event);
+                    //     };
+                    // } else 
+                    //     if(socket.readyState === WebSocket.OPEN) {
+                    sendTicketData();
+                    // }
+                    
+                    // const printDataVoucher = await gordoPuto()
+                    // console.log(printDataVoucher);
+                    // doc.autoPrint();
+                    // const hiddeFrame = document.createElement("iframe");
+                    // hiddeFrame.style.position = "fixed";
+                    // hiddeFrame.style.width = "1px";
+                    // hiddeFrame.style.height = "1px";
+                    // hiddeFrame.style.opacity = "0.01";
+                    // hiddeFrame.src = doc.output("bloburl");
+                    // document.body.appendChild(hiddeFrame);
+                }
+            }
+            emit("printed");
+            emit("update:show", false);
         };
-
+        
         const sendToWhatsapp = () => {
             loading.value = true;
             sendWhatsapp(
@@ -357,7 +358,7 @@ export default defineComponent({
                 send.value = false;
             });
         };
-
+        
         return {
             loading,
             ticket,
