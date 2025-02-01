@@ -62,7 +62,7 @@
                   "
                   >{{ product.name }}</n-text
                 >
-                  <n-tag type="primary" strong v-if="product.stock">
+                  <n-tag type="primary" strong v-if="product.stock && product.control_stock">
                       Stock: {{product.stock}}
                   </n-tag>
                 <n-text type="success"

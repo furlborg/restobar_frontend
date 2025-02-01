@@ -35,7 +35,7 @@
                   </n-text>
               <div style="display: inline-flex; flex-direction: column">
                   <n-text>S/. {{ parseFloat(product.prices).toFixed(2) }}</n-text>
-                  <n-tag type="primary" strong v-if="product.stock" >
+                  <n-tag type="primary" strong v-if="product.stock && product.control_stock" >
                       Stock: {{ product.stock }}
                   </n-tag>
               </div>
@@ -246,7 +246,6 @@
 import { useSettingsStore } from "@/store/modules/settings";
 import { defineComponent, ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
-import { useRouter } from "vue-router";
 import { useMessage } from "naive-ui";
 import ProductIndications from "./ProductIndications";
 import TicketPreview from "@/views/Order/components/TicketPreview";
@@ -269,7 +268,6 @@ export default defineComponent({
   setup() {
     const message = useMessage();
     const route = useRoute();
-    const router = useRouter();
     const productStore = useProductStore();
     const settingsStore = useSettingsStore();
     const orderStore = useOrderStore();
@@ -282,7 +280,6 @@ export default defineComponent({
     const orderItemIndex = ref(null);
     const search = ref("");
     const products = ref([]);
-    const table = route.params.table;
 
     const filteredProducts = computed(() => {
       return products.value.filter((product) =>
