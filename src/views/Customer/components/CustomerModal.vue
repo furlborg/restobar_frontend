@@ -444,10 +444,10 @@ export default defineComponent({
                 message.success("Éxito");
                 if (customer.value.doc_num.length === 8) {
                   customer.value.names = response.data.nombre_completo;
-                  customer.value.birthdate = format(
+                  customer.value.birthdate = response.data.fecha_nacimiento ? format(
                     new Date(response.data.fecha_nacimiento),
                     "dd/MM/yyyy"
-                  );
+                  ) : null;
                   if (response.data.sexo === "FEMENINO") {
                     customer.value.gender = "F";
                   } else if (response.data.sexo === "MASCULINO") {
