@@ -368,36 +368,51 @@ export default defineComponent({
         return (acc += 0);
       }, 0);
     });
-
-    const totalGRV = computed(() => {
-      return saleStore.toSale.reduce((acc, curVal) => {
-        return curVal.product_affectation === 10
-          ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
-          : acc;
-      }, 0);
-    });
-
-    const totalEXN = computed(() => {
-      return saleStore.toSale.reduce((acc, curVal) => {
-        return curVal.product_affectation === 20
-          ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
-          : acc;
-      }, 0);
-    });
-
-    const totalGRT = computed(() => {
-      return saleStore.toSale.reduce((acc, curVal) => {
-        return curVal.product_affectation === 21
-          ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
-          : acc;
-      }, 0);
-    });
-
-    const totalIGV = computed(() => {
-      return saleStore.toSale.reduce((acc, curVal) => {
-        return (acc += curVal.igv_tax * curVal.quantity);
-      }, 0);
-    });
+      
+      const precision = 10000; // Trabajamos con 4 decimales
+      
+      const totalGRV = computed(() => {
+          const totalScaled = saleStore.toSale.reduce((acc, curVal) => {
+              if (curVal.product_affectation === 10) {
+                  // Multiplica el precio por la cantidad y por la precisión
+                  const value = Math.round(parseFloat(curVal.price_sale) * curVal.quantity * precision);
+                  return acc + value;
+              }
+              return acc;
+          }, 0);
+          return totalScaled / precision;
+      });
+      
+      const totalEXN = computed(() => {
+          const totalScaled = saleStore.toSale.reduce((acc, curVal) => {
+              if (curVal.product_affectation === 20) {
+                  const value = Math.round(parseFloat(curVal.price_sale) * curVal.quantity * precision);
+                  return acc + value;
+              }
+              return acc;
+          }, 0);
+          return totalScaled / precision;
+      });
+      
+      const totalGRT = computed(() => {
+          const totalScaled = saleStore.toSale.reduce((acc, curVal) => {
+              if (curVal.product_affectation === 21) {
+                  const value = Math.round(parseFloat(curVal.price_sale) * curVal.quantity * precision);
+                  return acc + value;
+              }
+              return acc;
+          }, 0);
+          return totalScaled / precision;
+      });
+      
+      const totalIGV = computed(() => {
+          const totalScaled = saleStore.toSale.reduce((acc, curVal) => {
+              // Suponiendo que igv_tax ya es un valor decimal
+              const value = Math.round(curVal.igv_tax * curVal.quantity * precision);
+              return acc + value;
+          }, 0);
+          return totalScaled / precision;
+      });
 
     const totalDSCT = computed({
       get: () => {

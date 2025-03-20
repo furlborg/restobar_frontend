@@ -187,18 +187,21 @@ export default defineComponent({
                         const orders = props.data.order_details.map(order => {
                             let totalOperation = 0;
                             let totalUnitPrice = 0;
+                            let totalIGV = 0;
                             if(order.product_affectation === 20) {
                                 totalOperation = parseFloat((order.quantity * order.price).toFixed(2));
                                 totalUnitPrice = parseFloat((order.price).toFixed(2));
                             }
                             if(order.product_affectation === 10) {
-                                totalOperation = parseFloat((order.quantity * ((order.price * 0.18) + order.price)).toFixed(2));
-                                totalUnitPrice = parseFloat(((order.price * 0.18) + order.price)).toFixed(2);
+                                totalOperation = parseFloat((order.quantity * ((order.price * order.product_igv) + order.price)).toFixed(2));
+                                totalUnitPrice = parseFloat(((order.price * order.product_igv) + order.price)).toFixed(2);
+                                totalIGV = (order?.['sub_total']) *  (order.product_igv);
                             }
                             return {
                                 operation: order.product_affectation,
                                 cantidad: order.quantity,
                                 descripcion: order.product_name,
+                                igv: totalIGV.toFixed(2),
                                 precio: totalUnitPrice,
                                 total: totalOperation
                             };
@@ -206,8 +209,9 @@ export default defineComponent({
                         const totalIGV = orders.reduce((acc, it) => { return it.operation === 10 ? acc + it.total : acc; }, 0);
                         const totalExo = orders.reduce((acc, it) => { return it.operation === 20 ? acc + it.total : acc; }, 0);
                         
-                        const igv = parseFloat((totalIGV - (totalIGV / 1.18)).toFixed(2));
-                        const gravado = parseFloat((totalIGV / 1.18).toFixed(2));
+                        const igvTotal = orders.reduce((acc, it) => { return it.operation === 10 ? acc + it.igv : acc; }, 0);
+                        const gravado = parseFloat((totalIGV - igvTotal).toFixed(2));
+ 
                         const jsonTicket = {
                             "printer_name": props.data.printer_name || settingsStore.business_settings?.["qz_config"].host,
                             "ticket_type": "PRE-ACCOUNT",
@@ -224,7 +228,7 @@ export default defineComponent({
                                 "exonerado": totalExo,
                                 "gravado": gravado,
                                 "icbper": 0,
-                                "igv": igv,
+                                "igv": igvTotal || 0,
                                 "total": parseFloat(totalExo + totalIGV).toFixed(2)
                             },
                             "footer": {

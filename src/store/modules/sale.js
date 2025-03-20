@@ -169,25 +169,26 @@ export const useSaleStore = defineStore("sale", {
       return order ? order.quantity : null;
     },
     updateDetail(detail) {
+      // detail.product_igv = detail.product_igv + 1
       switch (detail.product_affectation) {
         case 10:
           detail.price_base = detail.price_sale
-            ? parseFloat(detail.price_sale) / (Number(detail.product_igv) + 1)
-            : 0;
+              ? parseFloat(detail.product_igv + 1) * (Number(detail. price_sale))
+              : 0;
           detail.igv_tax = detail.price_sale
-            ? parseFloat(detail.price_sale) - parseFloat(detail.price_base)
-            : 0;
+              ? parseFloat(detail.price_base) - parseFloat(detail.price_sale)
+              : 0;
           break;
         case 20:
           detail.price_base = detail.price_sale
-            ? parseFloat(detail.price_sale)
-            : 0;
+              ? parseFloat(detail.price_sale)
+              : 0;
           detail.igv_tax = 0;
           break;
         case 21:
           detail.price_base = detail.price_sale
-            ? parseFloat(detail.price_sale)
-            : 0;
+              ? parseFloat(detail.price_sale)
+              : 0;
           detail.igv_tax = 0;
           break;
         default:
