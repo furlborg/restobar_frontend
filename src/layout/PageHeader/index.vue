@@ -67,14 +67,14 @@
 
 <script>
 import { defineComponent, reactive, ref, computed, toRefs } from "vue";
-import { useDialog, useMessage } from "naive-ui";
+import { useDialog } from "naive-ui";
 import { useRouter } from "vue-router";
 import { useUserStore } from "@/store/modules/user";
 import { retrieveCurrentTill } from "@/api/modules/tills";
 import { useTillStore } from "@/store/modules/till";
 import { usePrinterStore } from "@/store/modules/printer";
 import { useBusinessStore } from "@/store/modules/business";
-import ProjectSetting from "./ProjectSetting";
+import ProjectSetting from "./ProjectSetting.vue";
 import { renderIcon } from "@/utils";
 
 export default defineComponent({
@@ -89,7 +89,6 @@ export default defineComponent({
   },
   setup() {
     const router = useRouter();
-    const message = useMessage();
     const dialog = useDialog();
     const drawerSetting = ref();
     const userStore = useUserStore();

@@ -81,12 +81,12 @@
 </template>
 
 <script>
-import { defineComponent, onMounted, ref, h } from "vue";
+import { defineComponent, h, onMounted, ref } from "vue";
 import { NTag, useMessage } from "naive-ui";
 import { getSaleCredits } from "@/api/modules/sales";
 import { debounce } from "lodash";
 import format from "date-fns/format";
-import SaleCreditModal from "./components/SaleCreditModal";
+import SaleCreditModal from "./components/SaleCreditModal.vue";
 
 export default defineComponent({
   name: "SaleCredits",
@@ -241,8 +241,7 @@ export default defineComponent({
                     : Number(curVal.amount);
                 acc += curVal.amount;
                 curVal.paid_amount = acc;
-                const pending_amount = credit.amount - curVal.paid_amount;
-                curVal.pending_amount = pending_amount;
+                curVal.pending_amount = credit.amount - curVal.paid_amount;
                 return acc;
               }, 0);
             } else {

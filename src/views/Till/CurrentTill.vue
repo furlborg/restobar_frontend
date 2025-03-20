@@ -198,7 +198,7 @@
 import { CreatePdfFile } from "@/hooks/CreatePdfFile";
 import { defineComponent, ref, onMounted, computed } from "vue";
 import { useMessage, useDialog } from "naive-ui";
-import MovementModal from "./components/MovementModal";
+import MovementModal from "./components/MovementModal.vue";
 import { isDecimal, isLetter, isNumber, isLetterOrNumber } from "@/utils";
 import { createMovementsColumns } from "@/utils/constants";
 import { useTillStore } from "@/store/modules/till";
@@ -210,7 +210,7 @@ import {
   filterTillDetails,
   nullifyDetail,
 } from "@/api/modules/tills";
-import { useUserStore } from "../../store/modules/user";
+import { useUserStore } from "@/store/modules/user";
 
 export default defineComponent({
   name: "CurrentTill",
@@ -219,7 +219,6 @@ export default defineComponent({
   },
   setup() {
     const dateNow = ref(null);
-    const urlImg = ref(null);
     const businnessStore = useBusinessStore();
     const settingsStore = useSettingsStore();
     const userStore = useUserStore();

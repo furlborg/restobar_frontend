@@ -148,8 +148,8 @@ import { defineComponent, ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useMessage } from "naive-ui";
 import { jsPDF } from "jspdf";
-import TillApertureModal from "./components/TillApertureModal";
-import TillClosureModal from "./components/TillClosureModal";
+import TillApertureModal from "./components/TillApertureModal.vue";
+import TillClosureModal from "./components/TillClosureModal.vue";
 import { createTillColumns } from "@/utils/constants";
 import { isDecimal, isLetter, isNumber } from "@/utils";
 import {

@@ -14,8 +14,8 @@
 
 <script>
 import { defineComponent } from "vue";
-import MessageContent from "@/components/MessageContent";
-import DialogContent from "@/components/DialogContent";
+import MessageContent from "@/components/MessageContent/index.vue";
+import DialogContent from "@/components/DialogContent/index.vue";
 
 export default defineComponent({
   name: "Application",

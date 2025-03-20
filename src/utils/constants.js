@@ -943,7 +943,7 @@ export const createMovementsColumns = ({
       },
     },
   ];
-  if (!settingsStore.business_settings?.['till'].closure_cash_total) {
+  if (!settingsStore.business_settings?.['till']?.closure_cash_total) {
     cols.splice(2, 0, {
       title: "Método Pago",
       key: "payment_method",

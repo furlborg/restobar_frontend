@@ -111,6 +111,60 @@ export async function updateTableOrder(
     });
 }
 
+export async function createTableOrderPuta(
+    idTable,
+    orders,  // Ahora recibe orders en vez de details directamente
+    user,
+    ask_for = undefined
+) {
+    const tillStore = useTillStore();
+    
+    let order_details = orders.flatMap(order =>
+        order.ordersData.map(detail => ({
+            product: detail.product,
+            indication: detail.indication || [],
+            quantity: detail.quantity
+        }))
+    );
+    
+    return await http.post(`tables/${idTable}/take_order/`, {
+        till: tillStore.currentTillID,
+        order_type: "M",
+        order_details: order_details,
+        ask_for: ask_for,
+        user: user || null
+    });
+}
+
+export async function updateTableOrderPuta(
+    idTable,
+    orderId,
+    orders, // Ahora recibe orders en vez de details directamente
+    user,
+    ask_for = undefined
+) {
+    const tillStore = useTillStore();
+    
+    let order_details = orders.flatMap(order =>
+        order.ordersData.map(detail => ({
+            id: detail.id,
+            product: detail.product,
+            indication: detail.indication || [],
+            quantity: detail.quantity
+        }))
+    ).filter(detail => detail.quantity > 0);
+    
+    return await http.patch(`tables/${idTable}/change_order/`, {
+        id: orderId,
+        till: tillStore.currentTillID,
+        order_type: "M",
+        order_details: order_details,
+        ask_for: ask_for,
+        user: user || null
+    });
+}
+
+
 export async function cancelTableOrder(idTable, dataAnulate) {
     console.log(dataAnulate);
     return http.post(`tables/${idTable}/cancel_order/`, {

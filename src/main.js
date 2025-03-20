@@ -1,10 +1,18 @@
-import { createApp } from 'vue'
-import App from './App.vue'
-import router from './router'
-import { store } from './store'
-import { naive } from './plugins/naive'
-import { OhVueIcon } from "@/plugins/icon"
-import '@/style/bootstrap-utilities.min.css'
-import 'vfonts/Lato.css'
+import { createApp } from "vue";
+import App from "./App.vue";
+import router from "./router";
+import { store } from "./store";
+import { naive } from "./plugins/naive";
+import { OhVueIcon } from "@/plugins/icon";
+import "@/style/bootstrap-utilities";
+import "vfonts/Lato.css";
+import VueCookies from "vue-cookies";
 
-createApp(App).use(store).use(router).use(naive).component("v-icon", OhVueIcon).mount('#app')
+const app = createApp(App);
+
+app.use(store);
+app.use(router);
+app.use(naive);
+app.use(VueCookies, { expireTimes: "1d" });
+app.component("v-icon", OhVueIcon);
+app.mount("#app");

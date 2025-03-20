@@ -1,7 +1,7 @@
 <template>
-  <div :class="{ logo: !collapsed, 'logo-collapsed': collapsed }">
-    <img draggable="false" :src="image" alt="" />
-  </div>
+    <div :class="{ logo: !collapsed, 'logo-collapsed': collapsed }">
+        <img draggable="false" :src="image" alt=""/>
+    </div>
 </template>
 
 <script>
@@ -10,28 +10,25 @@ import logo from "@/assets/images/logo.png";
 import axios from "axios";
 
 export default defineComponent({
-  name: "Logo",
-  props: {
-    collapsed: {
-      type: Boolean,
-    },
-  },
-  setup() {
-    const image = ref(null);
-    axios
-      .get(`${process.env.VUE_APP_API_URL}/media/business/logo.png`)
-      .then((response) => {
-        if (response.status === 200) {
-          image.value = `${process.env.VUE_APP_API_URL}/media/business/logo.png`;
-        } else {
-          image.value = logo;
+    name: "Logo",
+    props: {
+        collapsed: {
+            type: Boolean
         }
-      })
-      .catch((e) => (image.value = logo));
-    return {
-      image,
-    };
-  },
+    },
+    setup() {
+        const image = ref(null);
+        axios.get(`${import.meta.env.VITE_APP_URL}/media/business/logo.png`).then((response) => {
+            if(response.status === 200) {
+                image.value = `${import.meta.env.VITE_APP_URL}/media/business/logo.png`;
+            } else {
+                image.value = logo;
+            }
+        }).catch(() => (image.value = logo));
+        return {
+            image
+        };
+    }
 });
 </script>
 

@@ -369,7 +369,7 @@
                                     <td colspan="3">
                                     </td>
                                     <td colspan="2" class="fs-6 fw-bold">
-                                        S/. {{ orderStore.orderTotal.toFixed(2) }}
+                                        S/. {{ orderStore.orderTotalDelivery.toFixed(2) }}
                                     </td>
                                 </tr>
                                 </tfoot>

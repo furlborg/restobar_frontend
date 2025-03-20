@@ -7,7 +7,7 @@
                     Recargar
                 </n-button>
                 <template
-                        v-if="settingsStore.business_settings.order.divide_delivery_takeaway"
+                        v-if="settingsStore.business_settings.order?.divide_delivery_takeaway"
                 >
                     <n-button
                             v-if="userStore.hasPermission('take_away_order')"
@@ -334,7 +334,7 @@ import {
 } from "@/api/modules/tables";
 import { cloneDeep } from "@/utils";
 import { useBusinessStore } from "@/store/modules/business";
-import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
+import PreviewDrawer from "@/views/Sale/components/PreviewDrawer.vue";
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 import ModalAnulateSale from "@/views/Sale/modalAnulateSale.vue";
 

@@ -39,8 +39,8 @@
 
 <script>
 import { defineComponent, ref, computed, nextTick } from "vue";
-import DefaultTicket from "./ticket-presets/DefaultTicket";
-import TicketDelivery from "./ticket-presets/TicketDelivery";
+import DefaultTicket from "./ticket-presets/DefaultTicket.vue";
+import TicketDelivery from "./ticket-presets/TicketDelivery.vue";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useProductStore } from "@/store/modules/product";
 import { jsPDF } from "jspdf";
@@ -107,7 +107,7 @@ export default defineComponent({
         const openWebSocket = (callback) => {
             if(!socket || socket.readyState === WebSocket.CLOSED) {
                 // eslint-disable-next-line no-undef
-                const apiUrl = process.env.VUE_APP_API_URL.replace(/^https?:\/\//, "");
+                const apiUrl = import.meta.env.VITE_APP_URL.replace(/^https?:\/\//, "");
                 const socketUrl = `${window.location.protocol === "https:" ? "wss" : "ws"}://${apiUrl}/ws/print/`;
                 socket = new WebSocket(socketUrl);
                 

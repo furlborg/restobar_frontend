@@ -6,7 +6,7 @@
 
 <script>
 import { defineComponent } from "vue";
-import AppProvider from "@/components/Application";
+import AppProvider from "@/components/Application/index.vue";
 
 export default defineComponent({
   name: "App",

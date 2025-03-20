@@ -1,54 +1,54 @@
 <template>
-  <n-config-provider
-    :locale="commonEsPE"
-    :date-locale="dateEsPE"
-    :theme="getDarkTheme"
-    :theme-overrides="getThemeOverrides"
-  >
-    <!-- <app-provider> -->
-    <n-layout class="layout" position="absolute" has-sider>
-      <n-layout-sider
-        v-if="genericsStore.device !== 'mobile'"
-        class="layout-sider"
-        @collapse="collapsed = true"
-        @expand="collapsed = false"
-        :collapsed="userStore.user.role !== 'MOZO' ? collapsed : true"
-        :collapsed-width="userStore.user.role !== 'MOZO' ? 64 : 0"
-        collapse-mode="width"
-        :width="175"
-        :native-scrollbar="false"
-        bordered
-      >
-        <Logo :collapsed="collapsed" />
-        <AsideMenu v-model:collapsed="collapsed" />
-      </n-layout-sider>
-      <n-drawer v-else v-model:show="collapsed" :width="200" placement="left">
-        <n-drawer-content :body-content-style="{ padding: 0 }">
-          <Logo :collapsed="false" />
-          <AsideMenu :collapsed="false" />
-        </n-drawer-content>
-      </n-drawer>
-      <n-layout :native-scrollbar="false">
-        <n-layout-header position="absolute" bordered>
-          <PageHeader v-model:collapsed="collapsed" />
-        </n-layout-header>
-        <n-layout-content
-          class="layout-content"
-          :class="{ 'layout-default-background': getDarkTheme === undefined }"
-          :native-scrollbar="false"
-        >
-          <div class="layout-content-main">
-            <router-view v-slot="{ Component }">
-              <transition name="zoom-fade" mode="out-in" appear>
-                <component :is="Component" />
-              </transition>
-            </router-view>
-          </div>
-        </n-layout-content>
-      </n-layout>
-    </n-layout>
-    <!-- </app-provider> -->
-  </n-config-provider>
+    <n-config-provider
+            :locale="commonEsPE"
+            :date-locale="dateEsPE"
+            :theme="getDarkTheme"
+            :theme-overrides="getThemeOverrides"
+    >
+        <!-- <app-provider> -->
+        <n-layout class="layout" position="absolute" has-sider>
+            <n-layout-sider
+                    v-if="genericsStore.device !== 'mobile'"
+                    class="layout-sider"
+                    @collapse="collapsed = true"
+                    @expand="collapsed = false"
+                    :collapsed="userStore.user.role !== 'MOZO' ? collapsed : true"
+                    :collapsed-width="userStore.user.role !== 'MOZO' ? 64 : 0"
+                    collapse-mode="width"
+                    :width="175"
+                    :native-scrollbar="false"
+                    bordered
+            >
+                <Logo :collapsed="collapsed"/>
+                <AsideMenu v-model:collapsed="collapsed"/>
+            </n-layout-sider>
+            <n-drawer v-else v-model:show="collapsed" :width="200" placement="left">
+                <n-drawer-content :body-content-style="{ padding: 0 }">
+                    <Logo :collapsed="false"/>
+                    <AsideMenu :collapsed="false"/>
+                </n-drawer-content>
+            </n-drawer>
+            <n-layout :native-scrollbar="false">
+                <n-layout-header position="absolute" bordered>
+                    <PageHeader v-model:collapsed="collapsed"/>
+                </n-layout-header>
+                <n-layout-content content-style="padding: 0"
+                                  class="layout-content"
+                                  :class="{ 'layout-default-background': getDarkTheme === undefined }"
+                                  :native-scrollbar="false"
+                >
+                    <div class="layout-content-main">
+                        <router-view v-slot="{ Component }">
+                            <transition name="zoom-fade" mode="out-in" appear>
+                                <component :is="Component"/>
+                            </transition>
+                        </router-view>
+                    </div>
+                </n-layout-content>
+            </n-layout>
+        </n-layout>
+        <!-- </app-provider> -->
+    </n-config-provider>
 </template>
 
 <script>
@@ -64,115 +64,115 @@ import { useProductStore } from "@/store/modules/product";
 import { useTableStore } from "@/store/modules/table";
 import { useTillStore } from "@/store/modules/till";
 import { useSaleStore } from "@/store/modules/sale";
-import AppProvider from "@/components/Application";
-import Logo from "@/layout/Logo";
-import AsideMenu from "@/layout/AsideMenu";
-import PageHeader from "@/layout/PageHeader";
+import AppProvider from "@/components/Application/index.vue";
+import Logo from "@/layout/Logo/index.vue";
+import AsideMenu from "@/layout/AsideMenu/index.vue";
+import PageHeader from "@/layout/PageHeader/index.vue";
 import { useDesignSettingStore } from "@/store/modules/designSetting";
 import { lighten } from "@/utils";
 
 export default defineComponent({
-  name: "Layout",
-  components: {
-    AppProvider,
-    Logo,
-    AsideMenu,
-    PageHeader,
-  },
-  setup() {
-    const collapsed = ref(false);
-
-    const userStore = useUserStore();
-
-    const activeUsersStore = useActiveUsersStore();
-
-    activeUsersStore.initializeStore();
-
-    const designStore = useDesignSettingStore();
-
-    designStore.initializeStore();
-
-    const businessStore = useBusinessStore();
-
-    businessStore.initializeStore();
-
-    const settingsStore = useSettingsStore();
-
-    settingsStore.initializeStore();
-
-    const customerStore = useCustomerStore();
-
-    customerStore.initializeStore();
-
-    const tableStore = useTableStore();
-
-    tableStore.initializeStore();
-
-    const productStore = useProductStore();
-
-    productStore.initializeStore();
-
-    const tillStore = useTillStore();
-
-    tillStore.initializeStore();
-
-    const saleStore = useSaleStore();
-
-    saleStore.initializeStore();
-
-    const genericsStore = useGenericsStore();
-
-    genericsStore.initializeStore();
-
-    // const watchWidth = () => {
-    //   const Width = document.body.clientWidth;
-    //   collapsed.value = Width <= 1280 && genericsStore.device !== "mobile";
-    //   genericsStore.updateDevice();
-    // };
-
-    onMounted(() => {
-      // window.addEventListener("resize", watchWidth);
-      // cookieStore.onchange = watchCookies;
-      // window['$loading'] = useLoadingBar()
-      // window['$loading'].finish()
-    });
-
-    /* const watchCookies = ({ deleted }) => {
-      if (deleted.some((item) => item.name === "token")) {
-        userStore.updateToken();
-      }
-    }; */
-
-    const getThemeOverrides = computed(() => {
-      const appTheme = designStore.appTheme;
-      const lightenStr = lighten(designStore.appTheme, 6);
-      return {
-        common: {
-          primaryColor: appTheme,
-          primaryColorHover: lightenStr,
-          primaryColorPressed: lightenStr,
-        },
-        LoadingBar: {
-          colorLoading: appTheme,
-        },
-      };
-    });
-
-    const getDarkTheme = computed(() =>
-      designStore.darkTheme ? darkTheme : undefined
-    );
-
-    return {
-      commonEsPE,
-      dateEsPE,
-      getThemeOverrides,
-      getDarkTheme,
-      darkTheme: createTheme([inputDark, datePickerDark]),
-      collapsed,
-      userStore,
-      genericsStore,
-    };
-  },
+    name: "Layout",
+    components: {
+        AppProvider,
+        Logo,
+        AsideMenu,
+        PageHeader
+    },
+    setup() {
+        const collapsed = ref(false);
+        
+        const userStore = useUserStore();
+        
+        const activeUsersStore = useActiveUsersStore();
+        
+        activeUsersStore.initializeStore();
+        
+        const designStore = useDesignSettingStore();
+        
+        designStore.initializeStore();
+        
+        const businessStore = useBusinessStore();
+        
+        businessStore.initializeStore();
+        
+        const settingsStore = useSettingsStore();
+        
+        settingsStore.initializeStore();
+        
+        const customerStore = useCustomerStore();
+        
+        customerStore.initializeStore();
+        
+        const tableStore = useTableStore();
+        
+        tableStore.initializeStore();
+        
+        const productStore = useProductStore();
+        
+        productStore.initializeStore();
+        
+        const tillStore = useTillStore();
+        
+        tillStore.initializeStore();
+        
+        const saleStore = useSaleStore();
+        
+        saleStore.initializeStore();
+        
+        const genericsStore = useGenericsStore();
+        
+        genericsStore.initializeStore();
+        
+        // const watchWidth = () => {
+        //   const Width = document.body.clientWidth;
+        //   collapsed.value = Width <= 1280 && genericsStore.device !== "mobile";
+        //   genericsStore.updateDevice();
+        // };
+        
+        onMounted(() => {
+            // window.addEventListener("resize", watchWidth);
+            // cookieStore.onchange = watchCookies;
+            // window['$loading'] = useLoadingBar()
+            // window['$loading'].finish()
+        });
+        
+        /* const watchCookies = ({ deleted }) => {
+		  if (deleted.some((item) => item.name === "token")) {
+			userStore.updateToken();
+		  }
+		}; */
+        
+        const getThemeOverrides = computed(() => {
+            const appTheme = designStore.appTheme;
+            const lightenStr = lighten(designStore.appTheme, 6);
+            return {
+                common: {
+                    primaryColor: appTheme,
+                    primaryColorHover: lightenStr,
+                    primaryColorPressed: lightenStr
+                },
+                LoadingBar: {
+                    colorLoading: appTheme
+                }
+            };
+        });
+        
+        const getDarkTheme = computed(() =>
+            designStore.darkTheme ? darkTheme : undefined
+        );
+        
+        return {
+            commonEsPE,
+            dateEsPE,
+            getThemeOverrides,
+            getDarkTheme,
+            darkTheme: createTheme([inputDark, datePickerDark]),
+            collapsed,
+            userStore,
+            genericsStore
+        };
+    }
 });
 </script>
 <style lang="scss">
@@ -222,7 +222,7 @@ export default defineComponent({
 }
 
 .layout-content-main {
-  margin: 10px 25px 25px;
+  margin: 10px 10px 10px;
   position: relative;
 }
 
