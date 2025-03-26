@@ -21,14 +21,14 @@ export function lighten(color, amount) {
   color = color.indexOf("#") >= 0 ? color.substring(1, color.length) : color;
   amount = Math.trunc((255 * amount) / 100);
   return `#${addLight(color.substring(0, 2), amount)}${addLight(
-    color.substring(2, 4),
-    amount
+      color.substring(2, 4),
+      amount
   )}${addLight(color.substring(4, 6), amount)}`;
 }
 
 export function isNumber(e) {
   let char = String.fromCharCode(e.keyCode);
-  if (/^[0-9]+$/.test(char)) {
+  if(/^[0-9]+$/.test(char)) {
     return true;
   } else {
     e.preventDefault();
@@ -37,7 +37,7 @@ export function isNumber(e) {
 
 export function isDecimal(e) {
   let char = String.fromCharCode(e.keyCode);
-  if (/^[0-9.]+$/.test(char)) {
+  if(/^[0-9.]+$/.test(char)) {
     return true;
   } else {
     e.preventDefault();
@@ -46,7 +46,7 @@ export function isDecimal(e) {
 
 export function isLetter(e) {
   let char = String.fromCharCode(e.keyCode);
-  if (/^[A-Za-zÀ-ÖØ-öø-ÿ\s]+$/.test(char)) {
+  if(/^[A-Za-zÀ-ÖØ-öø-ÿ\s]+$/.test(char)) {
     return true;
   } else {
     e.preventDefault();
@@ -55,7 +55,7 @@ export function isLetter(e) {
 
 export function isLetterOrNumber(e) {
   let char = String.fromCharCode(e.keyCode);
-  if (/^[A-Za-zÀ-ÖØ-öø-ÿ0-9\-\s]+$/.test(char)) {
+  if(/^[A-Za-zÀ-ÖØ-öø-ÿ0-9\-\s]+$/.test(char)) {
     return true;
   } else {
     e.preventDefault();
@@ -64,17 +64,17 @@ export function isLetterOrNumber(e) {
 
 export function getDeviceType() {
   const ua = navigator.userAgent;
-  if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
+  if(/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
     return "tablet";
   }
-  if (
-    /Mobile|iP(hone|od)|Android|BlackBerry|IEMobile|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(
-      ua
-    )
+  if(
+      /Mobile|iP(hone|od)|Android|BlackBerry|IEMobile|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(
+          ua
+      )
   ) {
     return "mobile";
   }
   return "desktop";
 }
 
-export const cloneDeep = require("clone-deep");
+export { default as cloneDeep } from "clone-deep";

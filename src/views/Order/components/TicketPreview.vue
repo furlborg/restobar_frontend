@@ -107,7 +107,7 @@ export default defineComponent({
         const openWebSocket = (callback) => {
             if(!socket || socket.readyState === WebSocket.CLOSED) {
                 // eslint-disable-next-line no-undef
-                const apiUrl = process.env.VUE_APP_API_URL.replace(/^https?:\/\//, "");
+                const apiUrl = import.meta.env.VITE_APP_URL.replace(/^https?:\/\//, "");
                 const socketUrl = `${window.location.protocol === "https:" ? "wss" : "ws"}://${apiUrl}/ws/print/`;
                 socket = new WebSocket(socketUrl);
                 

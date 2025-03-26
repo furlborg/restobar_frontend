@@ -19,10 +19,10 @@ export default defineComponent({
   setup() {
     const image = ref(null);
     axios
-      .get(`${process.env.VUE_APP_API_URL}/media/business/logo.png`)
+      .get(`${import.meta.env.VITE_APP_URL}/media/business/logo.png`)
       .then((response) => {
         if (response.status === 200) {
-          image.value = `${process.env.VUE_APP_API_URL}/media/business/logo.png`;
+          image.value = `${import.meta.env.VITE_APP_URL}/media/business/logo.png`;
         } else {
           image.value = logo;
         }

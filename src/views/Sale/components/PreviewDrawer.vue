@@ -127,7 +127,7 @@ export default defineComponent({
         const totalEnterPulse = ref(0);
         const businessStore = useBusinessStore();
         // eslint-disable-next-line no-undef
-        // const apiUrl = process.env.VUE_APP_API_URL.replace(/^https?:\/\//, ''); // Elimina 'http://' o 'https://'
+        // const apiUrl = import.meta.env.VITE_APP_URL.replace(/^https?:\/\//, ''); // Elimina 'http://' o 'https://'
         let socket = null;
         
         const message = useMessage();
@@ -242,7 +242,7 @@ export default defineComponent({
                     // Verifica el estado del WebSocket y maneja la conexión
                     if(!socket || socket.readyState === WebSocket.CLOSED) {
                         // eslint-disable-next-line no-undef
-                        const apiUrl = process.env.VUE_APP_API_URL.replace(/^https?:\/\//, "");
+                        const apiUrl = import.meta.env.VITE_APP_URL.replace(/^https?:\/\//, "");
                         socket = new WebSocket(`${window.location.protocol === "https:" ? "wss" : "ws"}://${apiUrl}/ws/print/`);
                         
                         socket.onopen = function() {
@@ -274,7 +274,7 @@ export default defineComponent({
                     const gordoPuto = async() => {
                         try {
                             // eslint-disable-next-line no-undef
-                            const response = await http.post(`${process.env.VUE_APP_API_URL}/api/v1/sales/${props.data.id}/print/`);
+                            const response = await http.post(`${import.meta.env.VITE_APP_URL}/api/v1/sales/${props.data.id}/print/`);
                             if(response.status === 200) {
                                 return response.data;
                             }
@@ -299,7 +299,7 @@ export default defineComponent({
                     
                     // if(!socket || socket.readyState === WebSocket.CLOSED) {
                     //     // eslint-disable-next-line no-undef
-                    //     const apiUrl = process.env.VUE_APP_API_URL.replace(/^https?:\/\//, "");
+                    //     const apiUrl = import.meta.env.VITE_APP_URL.replace(/^https?:\/\//, "");
                     //     socket = new WebSocket(`${window.location.protocol === "https:" ? "wss" : "ws"}://${apiUrl}/ws/print/`);
                     //
                     //     socket.onopen = function() {

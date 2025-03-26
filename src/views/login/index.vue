@@ -78,10 +78,10 @@ export default defineComponent({
     const loading = ref(false);
     const image = ref(null);
     axios
-      .get(`${process.env.VUE_APP_API_URL}/media/business/logo.png`)
+      .get(`${import.meta.env.VITE_APP_URL}/media/business/logo.png`)
       .then((response) => {
         if (response.status === 200) {
-          image.value = `${process.env.VUE_APP_API_URL}/media/business/logo.png`;
+          image.value = `${import.meta.env.VITE_APP_URL}/media/business/logo.png`;
         } else {
           image.value = logo;
         }
@@ -174,7 +174,7 @@ export default defineComponent({
     padding: 32px;
     width: 384px;
     margin: auto;
-    box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+    box-shadow: rgba(99, 99, 99, 0.2) 0 2px 8px 0;
   }
   &-top {
     text-align: center;
