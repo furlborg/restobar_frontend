@@ -88,7 +88,7 @@
                                             <n-select v-model:value="sale.address" :options="addressesOptions" :disabled="!sale.customer"
                                                       placeholder="" @update:value="changeAddress"/>
                                         </n-form-item-gi>
-                                        <n-form-item-gi :span="2" label="Método Pago">
+                                        <n-form-item-gi :span="4" label="Método Pago">
                                             <n-select v-model:value="sale.payment_method" :options="saleStore.getPaymentMethodsOptions"
                                                       filterable/>
                                         </n-form-item-gi>

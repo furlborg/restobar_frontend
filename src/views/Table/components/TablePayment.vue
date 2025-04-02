@@ -62,11 +62,11 @@
               <n-date-picker class="w-100" type="datetime" :is-date-disabled="dateDisabled"  disabled
                 v-model:formatted-value="sale.date_sale" />
             </n-form-item-gi>
-            <n-form-item-gi :span="6" label="Dirección">
+            <n-form-item-gi :span="5" label="Dirección">
               <n-select v-model:value="sale.address" :options="addressesOptions" :disabled="!sale.customer"
                 placeholder="" />
             </n-form-item-gi>
-            <n-form-item-gi :span="2" label="Método Pago">
+            <n-form-item-gi :span="3" label="Método Pago">
               <n-select v-model:value="sale.payment_method" :options="saleStore.getPaymentMethodsOptions" filterable />
             </n-form-item-gi>
             <n-form-item-gi :span="2">
