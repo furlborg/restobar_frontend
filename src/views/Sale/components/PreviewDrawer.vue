@@ -33,7 +33,7 @@
                                 style="width: 90px"
                                 type="success"
                                 tertiary
-                                @click="send = true"
+                                @click="dataModalWhatsApp()"
                                 :disabled="data.invoice_type === '80' || data.status === 'A' || data.status === 'N'"
                         >
                             <v-icon name="bi-whatsapp"/>
@@ -79,6 +79,7 @@
                     </n-drawer>
                 </div>
             </template>
+            <send-to-whats-app-mervin-gay :data-message="data" :data-modal="putaOscar"/>
         </n-drawer-content>
     </n-drawer>
 </template>
@@ -96,14 +97,16 @@ import { sendWhatsapp } from "@/api/modules/sales";
 import { useBusinessStore } from "@/store/modules/business";
 import { useTableStore } from "@/store/modules/table";
 import { http } from "@/api";
+import SendToWhatsAppMervinGay from "@/components/sendToWhatsAppMervinGay.vue";
 
 export default defineComponent({
     name: "PreviewDrawer",
     components: {
+        SendToWhatsAppMervinGay,
         DefaultPreset,
         PreviewPreset
     },
-    emits: ["update:show", "printed", "canceled"],
+    emits: [ "update:show", "printed", "canceled" ],
     props: {
         show: {
             type: Boolean
@@ -129,34 +132,46 @@ export default defineComponent({
         // eslint-disable-next-line no-undef
         // const apiUrl = import.meta.env.VITE_APP_URL.replace(/^https?:\/\//, ''); // Elimina 'http://' o 'https://'
         let socket = null;
-        
+
+        const showModalWhatsApp = ref(false);
+        const closeModal = () => (showModalWhatsApp.value = false);
+
+        const putaOscar = {
+            closeModal,
+            show: showModalWhatsApp
+        };
+
+        const dataModalWhatsApp = () => {
+            showModalWhatsApp.value = true;
+        };
+
         const message = useMessage();
-        
+
         const ticket = ref(null);
-        
+
         const loading = ref(false);
-        
+
         const send = ref(false);
-        
+
         const phoneNumber = ref("");
-        
+
         const onKeyUp = (event) => {
-            if(event.keyCode === 13 || event.keyCode === 12) {
+            if (event.keyCode === 13 || event.keyCode === 12) {
                 totalEnterPulse.value += 1;
             }
         };
-        
+
         watchEffect(() => {
-            if(props.show && !props.preVoucher && !props.previewOnly) {
+            if (props.show && !props.preVoucher && !props.previewOnly) {
                 window.addEventListener("keyup", onKeyUp);
-                if(totalEnterPulse.value >= 3 && totalEnterPulse.value <= 4) {
+                if (totalEnterPulse.value >= 3 && totalEnterPulse.value <= 4) {
                     generate();
                     message.success(
-                        `"Total de pulsaciones: ", ${totalEnterPulse.value}, "si no se imprime es porque el qz esta mal configurado..."`);
+                        `"Total de pulsaciones: ", ${ totalEnterPulse.value }, "si no se imprime es porque el qz esta mal configurado..."`);
                 }
             }
         });
-        
+
         const generate = async(save = false) => {
             const format = [
                 ticket.value.$el.clientWidth,
@@ -166,36 +181,36 @@ export default defineComponent({
                 unit: "px",
                 format: format,
                 orientation: "p",
-                hotfixes: ["px_scaling"]
+                hotfixes: [ "px_scaling" ]
             });
-            
-            if(save === true) {
+
+            if (save === true) {
                 doc.html(ticket.value.$el.innerHTML, {
                     callback: async function(doc) {
                         doc.save(
-                            `${saleStore.getSerieDescription(props.data.serie)}-${
+                            `${ saleStore.getSerieDescription(props.data.serie) }-${
                                 props.data.number
                             }`
                         );
                     }
                 });
             } else {
-                if(props.preVoucher) {
+                if (props.preVoucher) {
                     const business = businessStore.business;
                     const sendTicketData = () => {
-                        
+
                         const orders = props.data.order_details.map(order => {
                             let totalOperation = 0;
                             let totalUnitPrice = 0;
                             let totalIGV = 0;
-                            if(order.product_affectation === 20) {
+                            if (order.product_affectation === 20) {
                                 totalOperation = parseFloat((order.quantity * order.price).toFixed(2));
                                 totalUnitPrice = parseFloat((order.price).toFixed(2));
                             }
-                            if(order.product_affectation === 10) {
+                            if (order.product_affectation === 10) {
                                 totalOperation = parseFloat((order.quantity * ((order.price * order.product_igv) + order.price)).toFixed(2));
                                 totalUnitPrice = parseFloat(((order.price * order.product_igv) + order.price)).toFixed(2);
-                                totalIGV = (order?.['sub_total']) *  (order.product_igv);
+                                totalIGV = (order?.["sub_total"]) * (order.product_igv);
                             }
                             return {
                                 operation: order.product_affectation,
@@ -206,12 +221,18 @@ export default defineComponent({
                                 total: totalOperation
                             };
                         });
-                        const totalIGV = orders.reduce((acc, it) => { return it.operation === 10 ? acc + it.total : acc; }, 0);
-                        const totalExo = orders.reduce((acc, it) => { return it.operation === 20 ? acc + it.total : acc; }, 0);
-                        
-                        const igvTotal = orders.reduce((acc, it) => { return it.operation === 10 ? acc + it.igv : acc; }, 0);
+                        const totalIGV = orders.reduce((acc, it) => {
+                            return it.operation === 10 ? acc + it.total : acc;
+                        }, 0);
+                        const totalExo = orders.reduce((acc, it) => {
+                            return it.operation === 20 ? acc + it.total : acc;
+                        }, 0);
+
+                        const igvTotal = orders.reduce((acc, it) => {
+                            return it.operation === 10 ? acc + it.igv : acc;
+                        }, 0);
                         const gravado = parseFloat((totalIGV - igvTotal).toFixed(2));
- 
+
                         const jsonTicket = {
                             "printer_name": props.data.printer_name || settingsStore.business_settings?.["qz_config"].host,
                             "ticket_type": "PRE-ACCOUNT",
@@ -238,35 +259,35 @@ export default defineComponent({
                         };
                         socket.send(JSON.stringify(jsonTicket));
                     };
-                    
+
                     // Verifica el estado del WebSocket y maneja la conexión
-                    if(!socket || socket.readyState === WebSocket.CLOSED) {
+                    if ( !socket || socket.readyState === WebSocket.CLOSED) {
                         // eslint-disable-next-line no-undef
                         const apiUrl = import.meta.env.VITE_APP_URL.replace(/^https?:\/\//, "");
-                        socket = new WebSocket(`${window.location.protocol === "https:" ? "wss" : "ws"}://${apiUrl}/ws/print/`);
-                        
+                        socket = new WebSocket(`${ window.location.protocol === "https:" ? "wss" : "ws" }://${ apiUrl }/ws/print/`);
+
                         socket.onopen = function() {
                             console.log("Conexión WebSocket abierta");
                             sendTicketData();
                         };
-                        
+
                         socket.onerror = function(error) {
                             console.log("Error en WebSocket", error);
                             message.error(error);
                         };
-                        
+
                         socket.onmessage = function(event) {
-                            if(event.data.includes("success")) {
+                            if (event.data.includes("success")) {
                                 console.log("Mensaje recibido del servidor", JSON.parse(event.data).success);
                                 message.success(JSON.parse(event.data).success);
                                 socket.close();
                             }
                         };
-                        
+
                         socket.onclose = function(event) {
                             console.log("Conexión WebSocket cerrada", event);
                         };
-                    } else if(socket.readyState === WebSocket.OPEN) {
+                    } else if (socket.readyState === WebSocket.OPEN) {
                         // Si el WebSocket ya está abierto, envía el mensaje directamente
                         sendTicketData();
                     }
@@ -274,29 +295,29 @@ export default defineComponent({
                     const gordoPuto = async() => {
                         try {
                             // eslint-disable-next-line no-undef
-                            const response = await http.post(`${import.meta.env.VITE_APP_URL}/api/v1/sales/${props.data.id}/print/`);
-                            if(response.status === 200) {
+                            const response = await http.post(`${ import.meta.env.VITE_APP_URL }/api/v1/sales/${ props.data.id }/print/`);
+                            if (response.status === 200) {
                                 return response.data;
                             }
-                        } catch(e) {
+                        } catch (e) {
                             console.log(e);
                         }
                         return null;
                     };
-                    
+
                     const voucherData = await gordoPuto();
-                    
+
                     const sendTicketData = () => {
                         console.log(voucherData);
                         const jsonTicket = {
                             ...voucherData,
                             printer_name: voucherData.printer_name
-                                ? voucherData.printer_name
-                                : settingsStore.business_settings.sale.printer_name
+                                          ? voucherData.printer_name
+                                          : settingsStore.business_settings.sale.printer_name
                         };
                         socket?.send(JSON.stringify(jsonTicket));
                     };
-                    
+
                     // if(!socket || socket.readyState === WebSocket.CLOSED) {
                     //     // eslint-disable-next-line no-undef
                     //     const apiUrl = import.meta.env.VITE_APP_URL.replace(/^https?:\/\//, "");
@@ -327,7 +348,7 @@ export default defineComponent({
                     //     if(socket.readyState === WebSocket.OPEN) {
                     sendTicketData();
                     // }
-                    
+
                     // const printDataVoucher = await gordoPuto()
                     // console.log(printDataVoucher);
                     // doc.autoPrint();
@@ -343,15 +364,15 @@ export default defineComponent({
             emit("printed");
             emit("update:show", false);
         };
-        
+
         const sendToWhatsapp = () => {
             loading.value = true;
             sendWhatsapp(
                 props.data.id,
-                [props.data.serie, props.data.number],
+                [ props.data.serie, props.data.number ],
                 phoneNumber.value
             ).then((response) => {
-                if(response.status === 200)
+                if (response.status === 200)
                     window.open(response.data.data.url, "_blank");
             }).catch((error) => {
                 console.error(error);
@@ -362,7 +383,7 @@ export default defineComponent({
                 send.value = false;
             });
         };
-        
+
         return {
             loading,
             ticket,
@@ -370,6 +391,8 @@ export default defineComponent({
             send,
             isNumber,
             sendToWhatsapp,
+            dataModalWhatsApp,
+            putaOscar,
             phoneNumber
         };
     }

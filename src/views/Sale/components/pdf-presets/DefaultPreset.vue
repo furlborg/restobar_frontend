@@ -241,7 +241,7 @@
             {{ businessStore.business.website }}/buscar
           </div>
           <div>
-            BIENES CONSUMIDOS/SEVICIOS PRESTADOS EN LA AMAZONIA PARA SER
+            BIENES CONSUMIDOS/SERVICIOS PRESTADOS EN LA AMAZONIA PARA SER
             CONSUMIDAS EN LA MISMA
           </div>
         </div>

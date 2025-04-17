@@ -1350,14 +1350,17 @@ export const createSaleColumns = ({
     {
       title: "#",
       key: "id",
+      width: 10,
     },
     {
       title: "Cliente",
       key: "customer",
+      width: 170,
     },
     {
       title: "Documento",
       key: "document",
+      width: 60,
       render(row) {
         return `${row.serie}-${row.number}`;
       },
@@ -1365,10 +1368,12 @@ export const createSaleColumns = ({
     {
       title: "Método Pago",
       key: "payment_method",
+      width: 60,
     },
     {
       title: "Monto",
       key: "amount",
+      width: 50,
       render(row) {
         return `S/. ${row.amount}`;
       },
@@ -1376,10 +1381,12 @@ export const createSaleColumns = ({
     {
       title: "Emisión",
       key: "date_sale",
+      width: 90,
     },
     {
       title: "Estado",
       key: "status",
+      width: 30,
       render(row) {
         let type, text;
         if (row.status === "N") {
@@ -1426,7 +1433,7 @@ export const createSaleColumns = ({
     {
       title: "Acciones",
       key: "actions",
-      width: 250,
+      width: 110,
       render(row) {
         return [
           userStore.hasPermission("send_sale") && row.invoice_type !== "80"
