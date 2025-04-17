@@ -94,10 +94,10 @@
                   <td></td>
                   <td></td>
                   <td v-if="hasDiscounts" align="right">
-                    {{ sale.totales.total_descuentos.toFixed(2) }}
+                    {{ sale.totales?.total_descuentos?.toFixed(2) || '0' }}
                   </td>
                   <td align="right">
-                    {{ sale.totales.total_venta.toFixed(2) }}
+                    {{ sale.totales?.total_venta.toFixed(2) }}
                   </td>
                 </tr>
               </tbody>
@@ -125,7 +125,7 @@
               </tbody>
             </template>
             <tfoot>
-              <tr v-if="Number(sale.totales.total_operaciones_gravadas)">
+              <tr v-if="Number(sale.totales?.total_operaciones_gravadas)">
                 <td align="right" :colspan="!!hasDiscounts ? 4 : 3">
                   OP. GRAVADAS:
                 </td>
@@ -133,7 +133,7 @@
                   {{ sale.totales.total_operaciones_gravadas.toFixed(2) }}
                 </td>
               </tr>
-              <tr v-if="Number(sale.totales.total_operaciones_exoneradas)">
+              <tr v-if="Number(sale.totales?.total_operaciones_exoneradas)">
                 <td align="right" :colspan="!!hasDiscounts ? 4 : 3">
                   OP. EXONERADAS:
                 </td>
