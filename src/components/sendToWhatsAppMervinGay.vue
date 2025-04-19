@@ -17,8 +17,8 @@ const message = useMessage();
 const loading = ref(false);
 
 const formValues = ref({
-    phone: "989260750",
-    message: "HOLA TE MANDAMOS A LA VERGA JUNTO CON TU COMPROBANTE DE NO SE QUE",
+    phone: "",
+    message: "",
     prefix: "",
     file: ""
 });
@@ -40,6 +40,7 @@ const sentFileToWhatsApp = async(info) => {
         });
         if (data.status === 200) {
             message.success("Enviado con éxito");
+            // eslint-disable-next-line vue/no-mutating-props
             props.dataModal.show.value = false;
             console.log("Enviado con éxito:", data);
             loading.value = false;

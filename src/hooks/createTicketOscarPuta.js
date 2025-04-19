@@ -146,37 +146,37 @@ export const generateVoucherPDF = async(data, infoHeader, dataOrder) => {
 
     y = doc?.["lastAutoTable"].finalY + 4;
     if (totales?.["total_operaciones_gravadas"]) {
-        doc.text(`OP. GRAVADAS: S/ ${ totales?.["total_operaciones_gravadas"].toFixed(2) }`, 5, y);
+        doc.text(`OP. GRAVADAS: S/ ${ totales?.["total_operaciones_gravadas"].toFixed(2) }`, 35, y);
         y += 4;
     }
     if (totales?.["total_operaciones_exoneradas"]) {
-        doc.text(`OP. EXONERADA: S/ ${ totales?.["total_operaciones_exoneradas"].toFixed(2) }`, 5, y);
+        doc.text(`OP. EXONERADA: S/ ${ totales?.["total_operaciones_exoneradas"].toFixed(2) }`, 33, y);
         y += 4;
     }
     if (totales?.["total_operaciones_gratuitas"]) {
-        doc.text(`OP. GRATUITAS: S/ ${ totales?.["total_operaciones_gratuitas"].toFixed(2) }`, 5, y);
+        doc.text(`OP. GRATUITAS: S/ ${ totales?.["total_operaciones_gratuitas"].toFixed(2) }`, 34.5, y);
         y += 4;
     }
     if (totales?.["total_descuentos"]) {
-        doc.text(`DESCUENTO TOTAL: S/ ${ totales?.["total_descuentos"].toFixed(2) }`, 5, y);
+        doc.text(`DESCUENTO TOTAL: S/ ${ totales?.["total_descuentos"]?.toFixed(2) || "0.00" }`, 28.5, y);
         y += 4;
     }
     if (totales?.["total_impuestos_bolsa_plastica"]) {
-        doc.text(`ICBPER: S/ ${ totales?.["total_impuestos_bolsa_plastica"].toFixed(2) }`, 5, y);
+        doc.text(`ICBPER: S/ ${ totales?.["total_impuestos_bolsa_plastica"].toFixed(2) }`, 46, y);
         y += 4;
     }
     if (totales?.["total_igv"]) {
-        doc.text(`I.G.V. : S/ ${ totales?.["total_igv"].toFixed(2) }`, 5, y);
+        doc.text(`I.G.V. : S/ ${ totales?.["total_igv"].toFixed(2) }`, 48.5, y);
         y += 4;
     }
-    doc.text(`IMPORTE TOTAL : S/ ${ totales?.["total_venta"].toFixed(2) }`, 5, y);
+    doc.text(`IMPORTE TOTAL : S/ ${ totales?.["total_venta"].toFixed(2) }`, 33, y);
     y += 4;
 
     doc.text(`EFECTIVO: S/ ${ dataOrder.payment_condition === 1
-                              ? parseFloat(dataOrder.given_amount).toFixed(2) : totales?.["total_venta"].toFixed(2) }`, 5, y);
+                              ? parseFloat(dataOrder.given_amount).toFixed(2) : totales?.["total_venta"].toFixed(2) }`, 42.5, y);
     y += 4;
 
-    doc.text(`SON: ${ totalSale }`, 5, y);
+    doc.text(`SON: ${ totalSale }`, 3, y);
     y += 6;
 
     doc.addImage(generateQR(), "PNG", 0, y - 5, 30, 30);
@@ -188,8 +188,8 @@ export const generateVoucherPDF = async(data, infoHeader, dataOrder) => {
     doc.text(`MÉTODO PAGO: ${ info[2] }`, 30, rightY);
     rightY += 4;
 
-    doc.text(`S/ ${ totales?.["total_venta"].toFixed(2) }`, 30, rightY);
-    rightY += 4;
+    // doc.text(`S/ ${ totales?.["total_venta"].toFixed(2) }`, 30, rightY);
+    // rightY += 4;
 
     doc.text(`USUARIO: ${ info[0] }`, 30, rightY);
     rightY += 4;
@@ -213,6 +213,6 @@ export const generateVoucherPDF = async(data, infoHeader, dataOrder) => {
             y += 4;
         });
     }
-
+    // doc.save("xd.pdf");
     return doc.output("blob");
 };
