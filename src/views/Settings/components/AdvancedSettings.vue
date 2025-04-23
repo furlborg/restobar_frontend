@@ -360,6 +360,10 @@
                         </n-checkbox
                         >
                     </n-form-item-gi>
+                    <n-form-item-gi :span="3">
+                        <n-checkbox v-model:checked="businessSettings.sale.show_discount_label">Ver y cambiar descuento en venta
+                        </n-checkbox>
+                    </n-form-item-gi>
                     <n-form-item-gi :span="4">
                         <n-checkbox
                                 v-model:checked="businessSettings.sale.required_null_reason"
@@ -512,12 +516,12 @@ export default defineComponent({
         const message = useMessage();
         const businessSettings = ref(cloneDeep(settingsStore.businessSettings));
         const editMode = ref(false);
-        
+
         const igv_percentage = computed({
             get: () => Math.round(Number(businessSettings.value.sale.igv_tax) * 100),
             set: (v) => (businessSettings.value.sale.igv_tax = v / 100)
         });
-        
+
         const printOptions = [
             {
                 label: "80 mm",
@@ -528,7 +532,7 @@ export default defineComponent({
                 value: 58
             }
         ];
-        
+
         const invoiceOptions = [
             {
                 label: "FACTURA",
@@ -543,7 +547,7 @@ export default defineComponent({
                 value: 80
             }
         ];
-        
+
         const kitchenPrinterFormatOptions = [
             {
                 label: "FORMATO 1",
@@ -562,7 +566,7 @@ export default defineComponent({
                 value: 4
             }
         ];
-        
+
         const infoLocationOptions = [
             {
                 label: "Cabecera",
@@ -573,10 +577,10 @@ export default defineComponent({
                 value: "footer"
             }
         ];
-        
+
         const performUpdateBusinessSettings = () => {
             updateBusinessSettings(businessSettings.value).then((response) => {
-                if(response.status === 202) {
+                if (response.status === 202) {
                     message.success("Actualizado correctamente!");
                     settingsStore.business_settings = response.data;
                     editMode.value = false;
@@ -586,7 +590,7 @@ export default defineComponent({
                 message.error("Algo salió mal...");
             });
         };
-        
+
         // const getPrinters = async () => {
         //     try {
         //         const response = await fetch(`${settingsStore.business_settings.qz_config.host}/printers`, {
@@ -607,18 +611,18 @@ export default defineComponent({
         //         console.error('Error al hacer la solicitud:', error);
         //     }
         // };
-        
+
         // getPrinters()
-        
+
         const handleBack = () => {
             router.push({ name: "HomeSettings" });
         };
-        
+
         const resetSettings = () => {
             businessSettings.value = cloneDeep(settingsStore.businessSettings);
             editMode.value = false;
         };
-        
+
         const orderTypeOptions = [
             {
                 value: "M",
@@ -633,7 +637,7 @@ export default defineComponent({
                 label: "DELIVERY"
             }
         ];
-        
+
         return {
             igv_percentage,
             handleBack,
