@@ -105,11 +105,11 @@
             <tbody>
             <template v-for="(detail, index) in saleStore.toSale">
                 <tr v-if="detail.quantity > 0" :key="index">
-                    <td v-if="settingsStore.businessSettings.sale.manage_affectations
+                    <td v-if="settingsStore.businessSettings.sale?.manage_affectations
       ">
                         <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation"
-                                     :disabled="!userStore.hasPermission('change_product_affectation')
-      " :options="productStore.affectationsOptions" @update:value="(v) => saleStore.updateDetail(detail)">
+                                     :disabled="!userStore.hasPermission('change_product_affectation')"
+                                     :options="productStore.affectationsOptions" @update:value="() => saleStore.updateDetail(detail)">
                             <n-tag size="small" :color="getAfcColor(detail.product_affectation)">{{
                                     getAfcShort(detail.product_affectation) }}
                             </n-tag>
@@ -117,8 +117,7 @@
                     </td>
                     <td>{{ detail.quantity }}</td>
                     <td>
-                        <input class="custom-input" v-model="detail.product_name" v-autowidth
-                               @click="$event.target.select()"/>
+                        <input class="custom-input" v-model="detail.product_name" v-autowidth @click="$event.target.select()"/>
                     </td>
                     <td>
                         S/.
@@ -126,22 +125,14 @@
                                v-model="detail.price_sale" v-autowidth @click="$event.target.select()"
                                @input="() => (saleStore.updateDetail(detail), (detail.discount = parseFloat('0').toFixed(2)))"/>
                     </td>
-                    <td>
+                    <td v-if="settingsStore.business_settings.sale?.show_discount_label">
                         S/.
-                        <input class="custom-input" type="number" min="0" :max="!detail.price_sale ? 0 : detail.price_sale"
-                               :disabled="detail.product_affectation === 21 ||
-      !!Number(sale.discount)
-      " step=".5" v-model="detail.discount" v-autowidth @click="$event.target.select()"/>
+                        <input class="custom-input" type="number" min="0" :max="!detail.price_sale ? 0 : detail.price_sale" step=".5"
+                               :disabled="detail.product_affectation === 21 || !!Number(sale.discount)" v-model="detail.discount" 
+                               v-autowidth @click="$event.target.select()"/>
                     </td>
                     <td>
-                        {{
-                            detail.product_affectation === 21
-                                    ? "0.00"
-                                    : parseFloat(
-                                            detail.quantity * detail.price_sale -
-                                            detail.discount
-                                    ).toFixed(2)
-                        }}
+                        {{ detail.product_affectation === 21 ? "0.00" : parseFloat(detail.quantity * detail.price_sale - detail.discount).toFixed(2) }}
                     </td>
                 </tr>
             </template>
@@ -184,8 +175,7 @@
               <div v-if="totalIGV">
                 IGV: <span>S/. {{ totalIGV.toFixed(2) }}</span>
               </div>
-              <div v-if="settingsStore.business_settings.sale?.show_discount_label
- ">
+              <div v-if="settingsStore.business_settings.sale?.show_discount_label">
                 DSCT:
                 <span>S/.</span>
                 <input class="custom-input fw-bold" type="number" min="0" step=".5" v-model="totalDSCT" v-autowidth
