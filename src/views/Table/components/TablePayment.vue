@@ -98,7 +98,7 @@
                 <th>Cantidad</th>
                 <th>Producto</th>
                 <th>Precio Unitario</th>
-                <th>Descuento</th>
+                <th v-if="settingsStore.business_settings.sale?.show_discount_label">Descuento</th>
                 <th>Precio Total</th>
               </tr>
             </thead>
@@ -122,7 +122,7 @@
                     <td>
                         S/.
                         <input class="custom-input" type="number" :min="detail.product_affectation === 20 ? 1 : 0" step=".5"
-                               v-model="detail.price_sale" v-autowidth @click="$event.target.select()"
+                               v-model="detail.price_sale" v-autowidth @click="$event.target.select()" :disabled="!settingsStore.business_settings.sale?.show_discount_label"
                                @input="() => (saleStore.updateDetail(detail), (detail.discount = parseFloat('0').toFixed(2)))"/>
                     </td>
                     <td v-if="settingsStore.business_settings.sale?.show_discount_label">
