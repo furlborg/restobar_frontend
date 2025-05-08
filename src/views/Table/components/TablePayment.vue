@@ -175,7 +175,7 @@
               <div v-if="totalIGV">
                 IGV: <span>S/. {{ totalIGV.toFixed(2) }}</span>
               </div>
-              <div v-if="settingsStore.business_settings.sale?.show_discount_label">
+              <div v-if="!settingsStore.business_settings.sale?.show_discount_label">
                 DSCT:
                 <span>S/.</span>
                 <input class="custom-input fw-bold" type="number" min="0" step=".5" v-model="totalDSCT" v-autowidth
