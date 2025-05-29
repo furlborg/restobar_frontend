@@ -15,6 +15,8 @@ import { useGenericsStore } from "@/store/modules/generics";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useTableStore } from "@/store/modules/table";
 import { parse, differenceInDays } from "date-fns";
+import { generateDynamicCajaReport } from "@/hooks/PrintsTemplates/Ticket/newTillReport";
+import { http } from "@/api";
 
 const userStore = useUserStore();
 
@@ -609,6 +611,10 @@ export const createTillColumns = ({
                         label: "Reporte de caja",
                       },
                       {
+                        key: 17,
+                        label: "Nuevo Reporte de caja",
+                      },
+                      {
                         key: 12,
                         label: "Reporte simple de caja",
                       },
@@ -696,10 +702,15 @@ export const createTillColumns = ({
                     key: 3,
                   },
                 ],
-                onSelect: (key) => {
+                onSelect: async (key) => {
                   switch (key) {
                     case 11:
                       makeTillReport(row);
+                      break;
+                      case 17:
+                          // eslint-disable-next-line no-case-declarations
+                        const response = await http.get("till-payment-totals", { params: { till: row?.id } });
+                        await generateDynamicCajaReport(response.data);
                       break;
                     case 12:
                       makeSimpleTillReport(row);

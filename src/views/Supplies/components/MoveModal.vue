@@ -22,7 +22,6 @@
           <n-input
             type="number"
             v-model:value="formitem.amount"
-            @input="formitem.amount = restrictDecimal(formitem.amount)"
             placeholder=""
           />
         </n-form-item-gi>
