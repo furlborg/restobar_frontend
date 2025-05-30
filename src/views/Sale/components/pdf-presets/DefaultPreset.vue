@@ -189,6 +189,14 @@
                   }}
                 </td>
               </tr>
+              <tr>
+                <td align="right" :colspan="!!hasDiscounts ? 4 : 3">
+                  OTROS :
+                </td>
+                <td align="right">
+                    {{ data.other_charges }}
+                </td>
+              </tr>
               <tr
                 v-if="
                   data.payment_condition === 1 &&
@@ -206,6 +214,10 @@
           </table>
           <div class="amount-text">SON {{ amountText }}</div>
         </div>
+<!--<pre>-->
+<!--          {{ data }}-->
+<!--</pre>-->
+          
         <div v-if="sale.codigo_tipo_documento !== '80'" class="ticket-footer">
           <div class="ticket-footer-extra">
             <div class="qr-code">
@@ -232,6 +244,11 @@
                 }}
               </div>
             </div>
+          </div>
+          <div v-if="data.observations" style="text-align: left; font-weight: bold">
+              <p>
+                  OBSERVACIONES: {{ data.observations }}
+              </p>
           </div>
           <div>
             Representación impresa del comprobante electrónico. Puede verificar
