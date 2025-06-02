@@ -141,12 +141,12 @@ export class printTicketOrderAnulate {
             this.doc.setFont(undefined, "normal");
             this.doc.text(v?.["canceled_type_description"], data_x, y);
             y += 5;
-            
+            console.log(v.amount);
             this.doc.setFontSize(8).setFont(undefined, "bold");
             this.doc.text("Total", x, y);
             this.doc.text(":", dots_x, y);
             this.doc.setFont(undefined, "normal");
-            this.doc.text("S/. " + v.amount.toFixed(2), data_x, y);
+            this.doc.text("S/. " + parseFloat(v.amount)?.toFixed(2) || '0.00', data_x, y);
             y += 5;
             
             // this.doc.setLineWidth(0.3);
