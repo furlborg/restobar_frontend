@@ -307,7 +307,6 @@ import {
   watch,
   onMounted,
 } from "vue";
-import { isAxiosError } from "axios";
 import CustomerModal from "@/views/Customer/components/CustomerModal";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 import { useSettingsStore } from "@/store/modules/settings";
@@ -579,33 +578,9 @@ export default defineComponent({
                           //       console.error(error);
                           //     });
                           // }
-                        })
-                        .catch((error) => {
-                          if (isAxiosError(error)) {
-                            if (error.response.status === 400) {
-                              console.error(error);
-                              for (const value in error.response.data) {
-                                error.response.data[`${value}`].forEach(
-                                  (err) => {
-                                    if (typeof err === "object") {
-                                      for (const v in err) {
-                                        message.error(`${err[`${v}`]}`);
-                                      }
-                                    } else {
-                                      message.error(`${err}`);
-                                    }
-                                  }
-                                );
-                              }
-                            } else {
-                              console.error(error);
-                              message.error("Algo salió mal...");
-                            }
-                          } else {
-                            console.error(error);
-                            message.error("Algo salió mal...");
-                          }
-                        });
+                        }).catch((error) => {
+                          console.error(error);
+                      });
                     }
                     // else {
                     //   if (whatsappNumber.value.length >= 9) {
@@ -639,30 +614,9 @@ export default defineComponent({
                     message.success("Venta realizada correctamente!");
                     // emit("success");
                   }
-                })
-                .catch((error) => {
-                  if (isAxiosError(error)) {
-                    if (error.response.status === 400) {
-                      for (const value in error.response.data) {
-                        error.response.data[`${value}`].forEach((err) => {
-                          if (typeof err === "object") {
-                            for (const v in err) {
-                              message.error(`${err[`${v}`]}`);
-                            }
-                          } else {
-                            message.error(`${err}`);
-                          }
-                        });
-                      }
-                    } else {
-                      console.error(error);
-                      message.error("Algo salió mal...");
-                    }
-                  } else {
-                    console.error(error);
-                    message.error("Algo salió mal...");
-                  }
-                })
+                }).catch((error) => {
+                  console.error(error);
+              })
                 .finally(() => {
                   loading.value = false;
                 });

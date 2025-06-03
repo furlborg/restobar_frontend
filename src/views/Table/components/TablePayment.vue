@@ -292,7 +292,6 @@
 
 <script>
 import { defineComponent, ref, toRefs, computed, watch, onMounted } from "vue";
-import { isAxiosError } from "axios";
 import CustomerModal from "@/views/Customer/components/CustomerModal";
 import SeparatePaymentsModal from "./SeparatePaymentsModal";
 import { useSettingsStore } from "@/store/modules/settings";
@@ -613,34 +612,8 @@ export default defineComponent({
                                               // }
                                           }
                                       }).catch((error) => {
-                                          if(isAxiosError(error)) {
-                                              if(error.response.status === 400) {
-                                                  console.error(error);
-                                                  for(const value in error.response.data) {
-                                                      // eslint-disable-next-line valid-typeof
-                                                      if(typeof error.response.data === "array") {
-                                                          
-                                                          error.response.data[`${value}`].forEach(
-                                                              (err) => {
-                                                                  if(typeof err === "object") {
-                                                                      for(const v in err) {
-                                                                          message.error(`${err[`${v}`]}`);
-                                                                      }
-                                                                  } else {
-                                                                      message.error(`${err}`);
-                                                                  }
-                                                              }
-                                                          );
-                                                      }
-                                                  }
-                                              } else {
-                                                  console.error(error);
-                                                  message.error("Algo salió mal...");
-                                              }
-                                          } else {
-                                              console.error(error);
-                                              message.error("Algo salió mal...");
-                                          }
+                                          console.error(error);
+                                          message.error("Algo salió mal...");
                                       });
                                   }
                                   // else {
@@ -663,28 +636,8 @@ export default defineComponent({
                                   // router.push({ name: "TableHome" });
                               }
                           }).catch((error) => {
-                              if(isAxiosError(error)) {
-                                  if(error.response.status === 400) {
-                                      console.error(error);
-                                      for(const value in error.response.data) {
-                                          error.response.data[`${value}`].forEach((err) => {
-                                              if(typeof err === "object") {
-                                                  for(const v in err) {
-                                                      message.error(`${err[`${v}`]}`);
-                                                  }
-                                              } else {
-                                                  message.error(`${err}`);
-                                              }
-                                          });
-                                      }
-                                  } else {
-                                      console.error(error);
-                                      message.error("Algo salió mal...");
-                                  }
-                              } else {
-                                  console.error(error);
-                                  message.error("Algo salió mal...");
-                              }
+                              console.error(error);
+                              message.error("Algo salió mal...");
                           }).finally(() => {
                               loading.value = false;
                           });

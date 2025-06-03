@@ -319,7 +319,6 @@
 </template>
 
 <script>
-import { isAxiosError } from "axios";
 import { defineComponent, ref, onMounted } from "vue";
 import { useMessage } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
@@ -388,28 +387,6 @@ export default defineComponent({
                     }
                 }
             }).catch((error) => {
-                if(isAxiosError(error)) {
-                    if(error.response.status === 400) {
-                        for(const value in error.response.data) {
-                            error.response.data[`${value}`].forEach((err) => {
-                                if(typeof err === "object") {
-                                    for(const v in err) {
-                                        message.error(`${err[`${v}`]}`);
-                                    }
-                                } else {
-                                    message.error(`${err}`);
-                                }
-                            });
-                        }
-                    } else {
-                        console.error(error);
-                        message.error("Algo salió mal...");
-                    }
-                } else {
-                    console.error(error);
-                    message.error("Algo salió mal...");
-                }
-                message.error("Algo salió mal...");
                 console.error(error);
             });
         };
@@ -446,14 +423,8 @@ export default defineComponent({
                     loadTablesData();
                 }
             }).catch((error) => {
-                if(isAxiosError(error)) {
-                    if(error.response.status === 400) {
-                        message.error("Error al anular pedido, verifique los datos...");
-                    } else {
-                        console.error(error);
-                        message.error("Error al anular pedido...");
-                    }
-                }
+                console.error(error);
+                message.error("Error al anular pedido...");
                 passConfirm.value = "";
                 isLoading.value = false;
             });

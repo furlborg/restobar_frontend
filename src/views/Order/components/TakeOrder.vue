@@ -16,7 +16,7 @@
                                 <n-space class="mb-2" align="center" justify="space-between">
                                     <div class="d-flex align-items-center">
                                         <n-text class="fs-4">{{
-                                                `${saleStore.getSerieDescription(sale.serie)}-${sale.number
+                                                `${ saleStore.getSerieDescription(sale.serie) }-${ sale.number
                                                 }`
                                             }}
                                         </n-text>
@@ -189,11 +189,11 @@
                                         <td>
                                             {{
                                                 detail.product_affectation === 21
-                                                        ? "0.00"
-                                                        : parseFloat(
-                                                                detail.quantity * detail.price_sale -
-                                                                detail.discount
-                                                        ).toFixed(2)
+                                                ? "0.00"
+                                                : parseFloat(
+                                                        detail.quantity * detail.price_sale -
+                                                        detail.discount
+                                                ).toFixed(2)
                                             }}
                                         </td>
                                     </tr>
@@ -293,8 +293,8 @@
                                     <v-icon class="me-2" name="fa-coins" scale="2"/>
                                     {{
                                         userStore.user.role !== "MOZO"
-                                                ? "Cobrar"
-                                                : "Realizar pedido"
+                                        ? "Cobrar"
+                                        : "Realizar pedido"
                                     }}
                                 </n-button>
                                 <ticket-preview ref="ticketPreviewRef" v-model:show="showPdf" :data="pdfData" :hidden="true"
@@ -308,8 +308,8 @@
                     </transition>
                     <!-- Customer Modal -->
                     <customer-modal v-model:show="showCustomerModal" :id-customer="sale.customer" :document="customerDocument"
-                                    :doc_type="sale.invoice_type === 1 ? '6' : null"  @update:show="onCloseModal"
-                                    @on-success="onSuccess" />
+                                    :doc_type="sale.invoice_type === 1 ? '6' : null" @update:show="onCloseModal"
+                                    @on-success="onSuccess"/>
                 </n-gi>
                 <n-gi span="2">
                     <n-card class="h-100" :bordered="false" embedded>
@@ -407,8 +407,8 @@
                     <n-tag :type="evalPayments ? 'error' : 'warning'">Faltante: S/.
                         {{
                             showPayments
-                                    ? parseFloat(sale.amount - currentPaymentsAmount).toFixed(2)
-                                    : null
+                            ? parseFloat(sale.amount - currentPaymentsAmount).toFixed(2)
+                            : null
                         }}
                     </n-tag>
                 </n-space>
@@ -451,7 +451,6 @@ import {
     onMounted,
     h
 } from "vue";
-import { isAxiosError } from "axios";
 import { NThing, NTag, NSpace, NText, useDialog, useMessage } from "naive-ui";
 import { useRoute, useRouter } from "vue-router";
 import { useSettingsStore } from "@/store/modules/settings";
@@ -513,13 +512,13 @@ export default defineComponent({
 
         const changing = computed(() => {
             return sale.value.given_amount > total.value
-                ? total.value - sale.value.given_amount
-                : 0.0;
+                   ? total.value - sale.value.given_amount
+                   : 0.0;
         });
 
         const icbper = computed(() => {
             return orderStore.orderList.reduce((acc, curVal) => {
-                if(curVal.icbper) {
+                if (curVal.icbper) {
                     return (acc += curVal.icbper_amount);
                 }
                 return (acc += 0);
@@ -529,24 +528,24 @@ export default defineComponent({
         const totalGRV = computed(() => {
             return saleStore.toSale.reduce((acc, curVal) => {
                 return curVal.product_affectation === 10
-                    ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
-                    : acc;
+                       ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
+                       : acc;
             }, 0);
         });
 
         const totalEXN = computed(() => {
             return saleStore.toSale.reduce((acc, curVal) => {
                 return curVal.product_affectation === 20
-                    ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
-                    : acc;
+                       ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
+                       : acc;
             }, 0);
         });
 
         const totalGRT = computed(() => {
             return saleStore.toSale.reduce((acc, curVal) => {
                 return curVal.product_affectation === 21
-                    ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
-                    : acc;
+                       ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
+                       : acc;
             }, 0);
         });
 
@@ -558,7 +557,7 @@ export default defineComponent({
 
         const totalDSCT = computed({
             get: () => {
-                if(saleStore.toSale.some((detail) => Number(detail.discount) > 0)) {
+                if (saleStore.toSale.some((detail) => Number(detail.discount) > 0)) {
                     return saleStore.toSale.reduce((acc, curVal) => {
                         return (acc += Number(curVal.discount));
                     }, 0);
@@ -566,7 +565,7 @@ export default defineComponent({
                 return sale.value.discount;
             },
             set: (v) => {
-                if(!saleStore.toSale.some((detail) => Number(detail.discount) > 0)) {
+                if ( !saleStore.toSale.some((detail) => Number(detail.discount) > 0)) {
                     sale.value.discount = v;
                 } else {
                     sale.value.discount = saleStore.toSale.reduce((acc, curVal) => {
@@ -581,8 +580,8 @@ export default defineComponent({
         const subTotal = computed(() => {
             return saleStore.toSale.reduce((acc, curVal) => {
                 return curVal.product_affectation === 21
-                    ? (acc += 0)
-                    : (acc += curVal.price_sale * curVal.quantity);
+                       ? (acc += 0)
+                       : (acc += curVal.price_sale * curVal.quantity);
             }, 0);
         });
 
@@ -599,7 +598,7 @@ export default defineComponent({
                 icbper.value +
                 parseFloat(sale.value.other_charges)
             );
-            if(sale.value.delivery_info) {
+            if (sale.value.delivery_info) {
                 cal = cal + parseFloat(sale.value.delivery_info.amount);
             }
             return cal.toFixed(2);
@@ -630,14 +629,14 @@ export default defineComponent({
             ask_for: "",
             delivery_info:
                 !(route.query.delivery === undefined) && route.query.delivery === "true"
-                    ? {
+                ? {
                         person: "",
                         address: "",
                         phone: "",
                         deliveryman: "",
                         amount: parseFloat(0).toFixed(2)
                     }
-                    : null,
+                : null,
             payments: null,
             do_update: true,
             is_change: true,
@@ -654,22 +653,22 @@ export default defineComponent({
 
         const formRules = computed(() => {
             let rules = saleRules;
-            rules.customer.required = !(sale.value.invoice_type !== 1 && sale.value.payment_condition === 1 && parseFloat(sale.value.given_amount) < 699)
-            if(sale.value.delivery_info) {
+            rules.customer.required = !(sale.value.invoice_type !== 1 && sale.value.payment_condition === 1 && parseFloat(sale.value.given_amount) < 699);
+            if (sale.value.delivery_info) {
                 rules.delivery_info = {
                     person: {
                         required: true,
-                        trigger: ["blur", "input"],
+                        trigger: [ "blur", "input" ],
                         message: "Campo requerido"
                     },
                     address: {
                         required: true,
-                        trigger: ["blur", "change"],
+                        trigger: [ "blur", "change" ],
                         message: "Campo requerido"
                     },
                     phone: {
                         required: true,
-                        trigger: ["blur", "change"],
+                        trigger: [ "blur", "change" ],
                         message: "Campo requerido"
                     }
                 };
@@ -684,7 +683,7 @@ export default defineComponent({
         };
 
         const changeCondition = (v) => {
-            switch(v) {
+            switch (v) {
                 case 1:
                     sale.value.given_amount = total.value;
                     break;
@@ -692,13 +691,13 @@ export default defineComponent({
                     sale.value.given_amount = parseFloat(0).toFixed(2);
                     break;
                 default:
-                    console.error(`${v} invalido`);
+                    console.error(`${ v } invalido`);
                     break;
             }
         };
 
         const changeSerie = (v) => {
-            switch(v) {
+            switch (v) {
                 case 1:
                     sale.value.customer_name = "";
                     sale.value.customer = null;
@@ -735,10 +734,10 @@ export default defineComponent({
         });
 
         const showOptions = (value) => {
-            if(value.length >= 3) {
+            if (value.length >= 3) {
                 searching.value = true;
                 searchProductByName(value).then((response) => {
-                    if(response.status === 200) {
+                    if (response.status === 200) {
                         products.value = response.data;
                     }
                 }).catch((error) => {
@@ -754,8 +753,8 @@ export default defineComponent({
 
         const selectProduct = (v) => {
             const item = products.value.find((product) => product.id === v);
-            if(item.has_supplies) {
-                if(item.has_stock) {
+            if (item.has_supplies) {
+                if (item.has_stock) {
                     orderStore.addOrder(item);
                     saleStore.sale_details = orderStore.orderList;
                 }
@@ -771,27 +770,27 @@ export default defineComponent({
             const t = option.label.split("-");
             let color = "#3B689F";
             let text = "MESA";
-            if(t.length > 1) {
-                if(t[1].includes("LL")) {
+            if (t.length > 1) {
+                if (t[1].includes("LL")) {
                     color = "#926ED7";
                     text = "PARA LLEVAR";
-                } else if(t[1].includes("D")) {
+                } else if (t[1].includes("D")) {
                     color = "#995C4E";
                     text = "DELIVERY";
                 }
                 /* switch (t[1]) {
-				  case " LL":
-					color = "#926ED7";
-					text = "PARA LLEVAR";
-					break;
-				  case " D":
-					color = "#995C4E";
-					text = "DELIVERY";
-					break;
-				  default:
-					console.error(t[1]);
-					break;
-				} */
+                 case " LL":
+                 color = "#926ED7";
+                 text = "PARA LLEVAR";
+                 break;
+                 case " D":
+                 color = "#995C4E";
+                 text = "DELIVERY";
+                 break;
+                 default:
+                 console.error(t[1]);
+                 break;
+                 } */
             }
             return h(
                 NThing,
@@ -806,10 +805,10 @@ export default defineComponent({
                                     !searchProductOption(option.value).has_stock ||
                                     !searchProductOption(option.value).has_supplies,
                                 type: searchProductOption(option.value).has_supplies
-                                    ? searchProductOption(option.value).has_stock
+                                      ? searchProductOption(option.value).has_stock
                                         ? "default"
                                         : "error"
-                                    : "error"
+                                      : "error"
                             },
                             {
                                 default: () => t[0]
@@ -830,10 +829,10 @@ export default defineComponent({
                                         {
                                             default: () =>
                                                 option.category.toLowerCase().includes("menu")
-                                                    ? "MENU"
-                                                    : option.category.toLowerCase().includes("comb")
-                                                        ? "COMBO"
-                                                        : "CARTA"
+                                                ? "MENU"
+                                                : option.category.toLowerCase().includes("comb")
+                                                  ? "COMBO"
+                                                  : "CARTA"
                                         }
                                     ),
                                     h(
@@ -870,7 +869,7 @@ export default defineComponent({
         const obtainSaleNumber = async() => {
             loading.value = true;
             await getSaleNumber(sale.value.serie).then((response) => {
-                if(response.status === 200) {
+                if (response.status === 200) {
                     sale.value.number = Number(response.data.number) + 1;
                 }
             }).catch((error) => {
@@ -889,7 +888,7 @@ export default defineComponent({
         const customerOptions = computed(() => {
             return customerResults.value.map((customer) => ({
                 value: customer.id,
-                label: `${customer.doc_num} - ${customer.names}`,
+                label: `${ customer.doc_num } - ${ customer.names }`,
                 disabled: customer.is_disabled
             }));
         });
@@ -901,36 +900,36 @@ export default defineComponent({
                 (customer) => customer.id === sale.value.customer
             );
             whatsappNumber.value = !customer.phone ? "" : customer.phone;
-            if(typeof customer !== "undefined") {
+            if (typeof customer !== "undefined") {
                 addressesOptions.value = customer.addresses.map((address) => ({
                     value: address.id,
-                    label: `${address.ubigeo} - ${address.description}`
+                    label: `${ address.ubigeo } - ${ address.description }`
                 }));
             }
-            if(addressesOptions.value.length) {
+            if (addressesOptions.value.length) {
                 sale.value.address = addressesOptions.value[0].value;
             }
-            if(sale.value.delivery_info) {
+            if (sale.value.delivery_info) {
                 sale.value.delivery_info.person = customer.names;
                 sale.value.delivery_info.phone = customer.phone;
                 sale.value.delivery_info.address = customer.addresses.length
-                    ? customer.addresses[0].description
-                    : "";
+                                                   ? customer.addresses[0].description
+                                                   : "";
             }
         };
 
         const changeAddress = (v, o) => {
-            if(sale.value.delivery_info) {
+            if (sale.value.delivery_info) {
                 sale.value.delivery_info.address = o.label.split(" - ")[1];
             }
         };
 
         const showCustomerOptions = async(value) => {
-            if(value.length >= 3 && value.length <= 11) {
+            if (value.length >= 3 && value.length <= 11) {
                 searchingCustomer.value = true;
-                if(sale.value.invoice_type === 1) {
+                if (sale.value.invoice_type === 1) {
                     await searchRucCustomer(value).then((response) => {
-                        if(response.status === 200) {
+                        if (response.status === 200) {
                             customerResults.value = response.data;
                         }
                     }).catch((error) => {
@@ -942,7 +941,7 @@ export default defineComponent({
                     return true;
                 } else {
                     await searchCustomerByName(value).then((response) => {
-                        if(response.status === 200) {
+                        if (response.status === 200) {
                             customerResults.value = response.data;
                         }
                     }).catch((error) => {
@@ -962,8 +961,8 @@ export default defineComponent({
         const customerDocument = ref("");
 
         const autoCreateCustomer = () => {
-            if(!searchingCustomer.value && !customerResults.value.length) {
-                if(!isNaN(sale.value.customer_name) &&((sale.value.customer_name.length === 8 && sale.value.invoice_type !== 1) || sale.value.customer_name.length === 11)) {
+            if ( !searchingCustomer.value && !customerResults.value.length) {
+                if ( !isNaN(sale.value.customer_name) && ((sale.value.customer_name.length === 8 && sale.value.invoice_type !== 1) || sale.value.customer_name.length === 11)) {
                     showCustomerModal.value = true;
                     customerDocument.value = sale.value.customer_name;
                 }
@@ -977,15 +976,15 @@ export default defineComponent({
         });
         const handleDelivery = (v) => {
             v
-                ? ((sale.value.delivery_info = {
-                    person: "",
-                    address: "",
-                    phone: "",
-                    deliveryman: "",
-                    amount: parseFloat(0).toFixed(2)
-                }),
-                    (sale.value.ask_for = ""))
-                : (sale.value.delivery_info = null);
+            ? ((sale.value.delivery_info = {
+                person: "",
+                address: "",
+                phone: "",
+                deliveryman: "",
+                amount: parseFloat(0).toFixed(2)
+            }),
+                (sale.value.ask_for = ""))
+            : (sale.value.delivery_info = null);
         };
 
         const showConfirm = ref(false);
@@ -993,25 +992,25 @@ export default defineComponent({
         const userConfirm = ref("");
 
         /* const errorLabel = (field) => {
-		  switch (field) {
-			case "names":
-			  return "Nombres";
-			case "doc_type":
-			  return "Tipo Documento";
-			case "doc_num":
-			  return "N° Documento";
-			case "birthdate":
-			  return "Fecha de Nacimiento";
-			case "email":
-			  return "Correo";
-			case "phone":
-			  return "Teléfono";
-			case "gender":
-			  return "Género";
-			default:
-			  return null;
-		  }
-		}; */
+         switch (field) {
+         case "names":
+         return "Nombres";
+         case "doc_type":
+         return "Tipo Documento";
+         case "doc_num":
+         return "N° Documento";
+         case "birthdate":
+         return "Fecha de Nacimiento";
+         case "email":
+         return "Correo";
+         case "phone":
+         return "Teléfono";
+         case "gender":
+         return "Género";
+         default:
+         return null;
+         }
+         }; */
 
         const PrintsAfterTakeOrder = (val) => {
             let values = { ...val.order, ...val.sale };
@@ -1024,7 +1023,7 @@ export default defineComponent({
                 show: true
             });
 
-            if(
+            if (
                 !!values.delivery_info &&
                 settingsStore.business_settings.printer.print_delivery_ticket
             ) {
@@ -1042,16 +1041,16 @@ export default defineComponent({
             }));
             sale.value.discount = totalDSCT.value;
             await takeAwayOrder(orderStore.orderList, sale.value, userConfirm.value).then((response) => {
-                if(response.status === 201) {
+                if (response.status === 201) {
                     message.success("Venta realizada correctamente!");
                     pdfData.value = response.data.order;
                     showPdf.value = true;
                     setTimeout(() => {
                         ticketPreviewRef.value.generate();
-                        if(settingsStore.business_settings.printer.print_html) {
+                        if (settingsStore.business_settings.printer.print_html) {
                             voucherData.value = response.data.sale;
                             showVoucher.value = true;
-                            if(!ticketPreview.value) {
+                            if ( !ticketPreview.value) {
                                 setTimeout(() => voucherDrawer.value.generate(), 250);
                             }
                         } else {
@@ -1062,26 +1061,6 @@ export default defineComponent({
                 }
             }).catch((error) => {
                 console.error(error);
-                if(isAxiosError(error)) {
-                    if(error.response.status === 400) {
-                        for(const value in error.response.data) {
-                            for(const ser in error.response.data[`${value}`]) {
-                                error.response.data[`${value}`][`${ser}`].forEach((err) => {
-                                    if(typeof err === "object") {
-                                        for(const v in err) {
-                                            message.error(`${err[`${v}`]}`);
-                                        }
-                                    } else {
-                                        message.error(`${err}`);
-                                    }
-                                });
-                            }
-                        }
-                    } else {
-                        console.error(error);
-                        message.error("Algo salió mal...");
-                    }
-                }
             }).finally(() => {
                 userConfirm.value = "";
                 showConfirm.value = false;
@@ -1090,15 +1069,15 @@ export default defineComponent({
         };
 
         const performTakeAway = () => {
-            formRules.effect
+            formRules.effect;
             saleForm.value.validate((errors) => {
                 // console.log(sale.value.customer);
                 // if(parseFloat(sale.value.given_amount) > 699 && sale.value.invoice_type === 80 || sale.value.invoice_type === 3 && sale.value.customer){
                 //     message.warning('El monto es mayor a 699, debes de agregar un cliente')
                 //     return
                 // }
-                if(!errors) {
-                    if(userStore.user.role === "MOZO") {
+                if ( !errors) {
+                    if (userStore.user.role === "MOZO") {
                         showConfirm.value = true;
                     } else {
                         dialog.success({
@@ -1118,18 +1097,18 @@ export default defineComponent({
                                     sale.value,
                                     userConfirm.value
                                 ).then((response) => {
-                                    if(response.status === 201) {
+                                    if (response.status === 201) {
                                         message.success("Venta realizada correctamente!");
                                         pdfData.value = response.data.order;
                                         showPdf.value = true;
                                         setTimeout(() => {
                                             ticketPreviewRef.value.generate();
-                                            if(
+                                            if (
                                                 settingsStore.business_settings.printer.print_html
                                             ) {
                                                 voucherData.value = response.data.sale;
                                                 showVoucher.value = true;
-                                                if(!ticketPreview.value) {
+                                                if ( !ticketPreview.value) {
                                                     setTimeout(
                                                         () => voucherDrawer.value.generate(),
                                                         250
@@ -1139,13 +1118,13 @@ export default defineComponent({
                                                 PrintsAfterTakeOrder(response.data);
                                             }
                                         }, 250);
-                                        if(
+                                        if (
                                             settingsStore.businessSettings.sale.auto_send &&
                                             !sale.value.delivery_info &&
                                             response.data.sale.invoice_type !== "80"
                                         ) {
                                             sendSale(response.data.sale.id).then((response) => {
-                                                if(response.status === 200) {
+                                                if (response.status === 200) {
                                                     message.success("Enviado!");
                                                     // if (whatsappNumber.value.length >= 9) {
                                                     //   sendWhatsapp(
@@ -1166,30 +1145,8 @@ export default defineComponent({
                                                     // }
                                                 }
                                             }).catch((error) => {
-                                                if(isAxiosError(error)) {
-                                                    if(error.response.status === 400) {
-                                                        console.error(error);
-                                                        for(const value in error.response.data) {
-                                                            error.response.data[`${value}`].forEach(
-                                                                (err) => {
-                                                                    if(typeof err === "object") {
-                                                                        for(const v in err) {
-                                                                            message.error(`${err[`${v}`]}`);
-                                                                        }
-                                                                    } else {
-                                                                        message.error(`${err}`);
-                                                                    }
-                                                                }
-                                                            );
-                                                        }
-                                                    } else {
-                                                        console.error(error);
-                                                        message.error("Algo salió mal...");
-                                                    }
-                                                } else {
-                                                    console.error(error);
-                                                    message.error("Algo salió mal...");
-                                                }
+                                                console.error(error);
+                                                message.error("Algo salió mal...");
                                             });
                                         }
                                         // else {
@@ -1211,28 +1168,7 @@ export default defineComponent({
                                         // router.push({ name: "TableHome" });
                                     }
                                 }).catch((error) => {
-                                    if(isAxiosError(error)) {
-                                        if(error.response.status === 400) {
-                                            for(const value in error.response.data) {
-                                                for(const ser in error.response.data[`${value}`]) {
-                                                    error.response.data[`${value}`][`${ser}`].forEach(
-                                                        (err) => {
-                                                            if(typeof err === "object") {
-                                                                for(const v in err) {
-                                                                    message.error(`${err[`${v}`]}`);
-                                                                }
-                                                            } else {
-                                                                message.error(`${err}`);
-                                                            }
-                                                        }
-                                                    );
-                                                }
-                                            }
-                                        } else {
-                                            console.error(error);
-                                            message.error("Algo salió mal...");
-                                        }
-                                    }
+                                    console.error(error);
                                 }).finally(() => {
                                     loading.value = false;
                                 });
@@ -1240,8 +1176,8 @@ export default defineComponent({
                         });
                     }
                 } else {
-                    if(formRules.value.customer.required) {
-                        if(sale.value.invoice_type === 1) {
+                    if (formRules.value.customer.required) {
+                        if (sale.value.invoice_type === 1) {
                             message.warning("Debes agregar un cliente cuando la venta es con factura");
                         } else {
                             message.error("Debes agregar un cliente porque la venta es mayor a S/ 699");
@@ -1263,21 +1199,22 @@ export default defineComponent({
             const hh = fetch.getHours();
             const msms = fetch.getMinutes();
 
-            dateNow.value = `${dd}/${mm + 1}/${yy} ${hh}:${msms}`;
+            dateNow.value = `${ dd }/${ mm + 1 }/${ yy } ${ hh }:${ msms }`;
         });
 
-        const onCloseModal = () => { };
+        const onCloseModal = () => {
+        };
 
         const onSuccess = (customer) => {
-            if(sale.value.invoice_type === 1 && customer.doc_type === "6") {
+            if (sale.value.invoice_type === 1 && customer.doc_type === "6") {
                 customerResults.value.push(customer);
-                sale.value.customer_name = `${customer.doc_num} - ${customer.names}`;
+                sale.value.customer_name = `${ customer.doc_num } - ${ customer.names }`;
                 sale.value.customer = customer.id;
                 whatsappNumber.value = !customer.phone ? "" : customer.phone;
                 createAddressesOptions();
-            } else if(sale.value.invoice_type !== 1) {
+            } else if (sale.value.invoice_type !== 1) {
                 customerResults.value.push(customer);
-                sale.value.customer_name = `${customer.doc_num} - ${customer.names}`;
+                sale.value.customer_name = `${ customer.doc_num } - ${ customer.names }`;
                 sale.value.customer = customer.id;
                 createAddressesOptions();
             }
@@ -1319,7 +1256,7 @@ export default defineComponent({
         });
 
         const evalPayments = computed(() => {
-            if(sale.value.payments) {
+            if (sale.value.payments) {
                 return (
                     sale.value.payments.reduce((acc, val) => {
                         return (acc += parseFloat(val.amount));
@@ -1331,7 +1268,7 @@ export default defineComponent({
         });
 
         const currentPaymentsAmount = computed(() => {
-            if(sale.value.payments) {
+            if (sale.value.payments) {
                 let sum = sale.value.payments.reduce((acc, val) => {
                     return (acc += parseFloat(val.amount));
                 }, 0);
@@ -1346,7 +1283,7 @@ export default defineComponent({
         };
 
         function getAfcColor(afc) {
-            switch(afc) {
+            switch (afc) {
                 case 10:
                     return {
                         color: lighten("#008B8B", 48),
@@ -1375,7 +1312,7 @@ export default defineComponent({
         }
 
         function getAfcShort(afc) {
-            switch(afc) {
+            switch (afc) {
                 case 10:
                     return "GRV";
                 case 20:

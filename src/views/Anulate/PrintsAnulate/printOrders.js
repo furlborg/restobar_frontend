@@ -141,7 +141,7 @@ export class printTicketOrderAnulate {
             this.doc.setFont(undefined, "normal");
             this.doc.text(v?.["canceled_type_description"], data_x, y);
             y += 5;
-            console.log(v.amount);
+
             this.doc.setFontSize(8).setFont(undefined, "bold");
             this.doc.text("Total", x, y);
             this.doc.text(":", dots_x, y);

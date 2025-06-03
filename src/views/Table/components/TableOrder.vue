@@ -323,7 +323,6 @@ import {
     onBeforeRouteLeave,
     onBeforeRouteUpdate
 } from "vue-router";
-import { isAxiosError } from "axios";
 import { NThing, NTag, NSpace, NText, useDialog, useMessage } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useUserStore, useActiveUsersStore } from "@/store/modules/user";
@@ -474,36 +473,7 @@ export default defineComponent({
                     checkState.value = true;
                 }
             }).catch((error) => {
-                if(isAxiosError(error)) {
-                    if(error.response.status === 400) {
-                        console.error(error);
-                        for(const value in error.response.data) {
-                            for(const ser in error.response.data[`${value}`]) {
-                                if(
-                                    Array.isArray(error.response.data[`${value}`][`${ser}`])
-                                ) {
-                                    error.response.data[`${value}`][`${ser}`].forEach((err) => {
-                                        if(typeof err === "object") {
-                                            for(const v in err) {
-                                                message.error(`${err[`${v}`]} (${ser})`);
-                                            }
-                                        } else {
-                                            message.error(`${err}`);
-                                        }
-                                    });
-                                } else {
-                                    message.error(error.response.data[`${value}`][`${ser}`]);
-                                }
-                            }
-                        }
-                    } else {
-                        console.error(error);
-                        message.error("Algo salió mal...");
-                    }
-                } else {
-                    console.error(error);
-                    message.error("Algo salió mal...");
-                }
+                console.error(error);
             }).finally(() => {
                 userConfirm.value = "";
                 loadingConfirm.value = false;
@@ -553,36 +523,8 @@ export default defineComponent({
                     checkState.value = true;
                 }
             }).catch((error) => {
-                if(isAxiosError(error)) {
-                    if(error.response.status === 400) {
-                        console.error(error);
-                        for(const value in error.response.data) {
-                            for(const ser in error.response.data[`${value}`]) {
-                                if(
-                                    Array.isArray(error.response.data[`${value}`][`${ser}`])
-                                ) {
-                                    error.response.data[`${value}`][`${ser}`].forEach((err) => {
-                                        if(typeof err === "object") {
-                                            for(const v in err) {
-                                                message.error(`${err[`${v}`]} (${ser})`);
-                                            }
-                                        } else {
-                                            message.error(`${err}`);
-                                        }
-                                    });
-                                } else {
-                                    message.error(error.response.data[`${value}`][`${ser}`]);
-                                }
-                            }
-                        }
-                    } else {
-                        console.error(error);
-                        message.error("Algo salió mal...");
-                    }
-                } else {
-                    console.error(error);
-                    message.error("Algo salió mal...");
-                }
+                console.error(error);
+                message.error("Algo salió mal...");
             }).finally(() => {
                 userConfirm.value = "";
                 loadingConfirm.value = false;
