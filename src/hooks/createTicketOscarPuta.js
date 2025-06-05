@@ -58,17 +58,18 @@ export const generateVoucherPDF = async(data, infoHeader, dataOrder) => {
 
     let y = 5;
 
-    const logoBase64 = await getImageBase64FromURL(infoHeader.business?.["logo_url"]);
+    const logoUrl = `${ infoHeader.business?.["logo_url"] }?t=${ Date.now() }`;
+    const logoBase64 = await getImageBase64FromURL(logoUrl);
 
     if (logoBase64) {
-        doc.addImage(logoBase64, "PNG", 5, y, 70, 20);
-        y += 22;
+        doc.addImage(logoBase64, "PNG", 10, y-3, 60, 50);
+        y += 48;
     }
 
     doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
-    doc.text(infoHeader.business.ruc, 40, y, { align: "center" });
-    y += 4;
+    doc.text(`RUC: ${infoHeader.business.ruc}`, 40, y, { align: "center" });
+    y += 2;
     const businessNameLines = doc.splitTextToSize(infoHeader.business.name, 70);
     businessNameLines.forEach(line => {
         y += 4;
@@ -86,10 +87,10 @@ export const generateVoucherPDF = async(data, infoHeader, dataOrder) => {
     y += 4;
 
     [ title() ].forEach(line => {
-        y += 4;
+        // y += 3;
         doc.text(line, 40, y, { align: "center" });
     });
-    y += 4;
+    y += 3;
 
     doc.setFontSize(10);
     doc.text(`${ data?.["serie_documento"] }-${ data?.["numero_documento"] }`, 40, y, { align: "center" });
@@ -193,12 +194,15 @@ export const generateVoucherPDF = async(data, infoHeader, dataOrder) => {
 
     doc.text(`USUARIO: ${ info[0] }`, 30, rightY);
     rightY += 4;
-
-    doc.text(`ORDEN N°: ${ dataOrder.order_id }`, 30, rightY);
-    rightY += 4;
-    doc.text(`${ !orderData.table ? !orderData.delivery_info ? "PARA LLEVAR" : "DELIVERY"
-                                  : tableStore.getTableByID(orderData.table).description }`, 30, rightY);
-    y = Math.max(y + 25, rightY + 6);
+    if (dataOrder.order_id) {
+        doc.text(`ORDEN N°: ${ dataOrder.order_id }`, 30, rightY);
+        rightY += 4;
+    }
+    if (data?.["serie_documento"].includes("FL") && data?.["serie_documento"].includes("BL")) { 
+        doc.text(`${ !orderData?.table ? !orderData.delivery_info ? "PARA LLEVAR" : "DELIVERY"
+                                       : tableStore.getTableByID(orderData.table).description }`, 30, rightY);
+    }
+        y = Math.max(y + 25, rightY + 6);
 
     const footer = [
         "Representación impresa del comprobante electrónico. Puede verificar utilizando su clave SOL o ingresando a:",
@@ -210,7 +214,7 @@ export const generateVoucherPDF = async(data, infoHeader, dataOrder) => {
         doc.setFontSize(6);
         footer.forEach(line => {
             doc.text(doc.splitTextToSize(line, 70), 40, y, { align: "center" });
-            y += 4;
+            y += 5;
         });
     }
     // doc.save("xd.pdf");
