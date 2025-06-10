@@ -322,6 +322,9 @@
                     <n-form-item-gi :span="4" label="Descripción">
                       <n-input v-model:value="productCategory" placeholder="" />
                     </n-form-item-gi>
+                      <n-form-item-gi :span="4" label="Inactivo">
+                      <n-switch v-model:value="is_disabled" />
+                    </n-form-item-gi>
                     <n-form-item-gi :span="4">
                       <n-button
                         class="me-2"
@@ -817,6 +820,7 @@ export default defineComponent({
     const productCategories = ref([]);
     const guarnitionOptions = ref([]);
     const productCategory = ref(null);
+    const is_disabled = ref(false);
     const selectedCategory = ref(null);
 
     const selectTable = (table) => {
@@ -1052,6 +1056,7 @@ export default defineComponent({
       if (!selectedCategory.value) {
         selectedCategory.value = category.id;
         productCategory.value = cloneDeep(category.description);
+        is_disabled.value = cloneDeep(category.is_disabled)
       } else {
         if (selectedCategory.value === category.id) {
           selectedCategory.value = null;
@@ -1059,6 +1064,7 @@ export default defineComponent({
         } else {
           selectedCategory.value = category.id;
           productCategory.value = cloneDeep(category.description);
+          is_disabled.value = cloneDeep(category.is_disabled)
         }
       }
     };
@@ -1077,7 +1083,7 @@ export default defineComponent({
     };
 
     const performCreateProductCategory = async () => {
-      await createProductCategory(productCategory.value)
+      await createProductCategory(productCategory.value, is_disabled.value)
         .then((response) => {
           if (response.status === 201) {
             loadProductCategories();
@@ -1093,7 +1099,7 @@ export default defineComponent({
     };
 
     const performUpdateProductCategory = async () => {
-      await updateProductCategory(selectedCategory.value, productCategory.value)
+      await updateProductCategory(selectedCategory.value, productCategory.value, is_disabled.value)
         .then((response) => {
           if (response.status === 202) {
             loadProductCategories();
@@ -1461,6 +1467,7 @@ export default defineComponent({
       productCategories,
       guarnition,
       productCategory,
+      is_disabled,
       selectedCategory,
       selectCategory,
       performCreateProductCategory,

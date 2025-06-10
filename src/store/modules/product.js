@@ -35,9 +35,10 @@ export const useProductStore = defineStore("product", {
   },
   actions: {
     async initializeStore() {
+      console.log('oscar puta');
       await getProductCategories()
         .then((response) => {
-          this.categories = response.data;
+          this.categories = response.data.filter(cat =>!cat.is_disabled);
         })
         .catch((error) => {
           console.error(error);
@@ -75,9 +76,10 @@ export const useProductStore = defineStore("product", {
         });
     },
     async refreshCategories() {
+      console.log('oscar puta x2');
       return await getProductCategories()
         .then((response) => {
-          this.categories = response.data;
+          this.categories = response.data.filter(cat =>!cat.is_disabled);
         })
         .catch((error) => {
           console.error(error);

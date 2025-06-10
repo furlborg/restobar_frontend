@@ -114,15 +114,17 @@ export async function getProductsByCategory(categoryId) {
   return await http.get(`product-categories/${categoryId}/products/`);
 }
 
-export async function createProductCategory(categorie) {
+export async function createProductCategory(categorie, is_disabled) {
   return await http.post("product-categories/", {
     description: categorie.toUpperCase(),
+    is_disabled
   });
 }
 
-export async function updateProductCategory(idCategorie, description) {
+export async function updateProductCategory(idCategorie, description, is_disabled) {
   return await http.put(`product-categories/${idCategorie}/`, {
     description: description.toUpperCase(),
+    is_disabled
   });
 }
 

@@ -632,7 +632,7 @@ export default defineComponent({
     });
 
     const performCreateProductCategory = () => {
-      createProductCategory(categorie.value.description)
+      createProductCategory(categorie.value.description, false)
         .then((response) => {
           if (response.status === 201) {
             productStore.refreshCategories().then(() => {
@@ -652,7 +652,7 @@ export default defineComponent({
     };
 
     const performUpdateProductCategory = () => {
-      updateProductCategory(categorie.value.id, categorie.value.description)
+      updateProductCategory(categorie.value.id, categorie.value.description, false)
         .then((response) => {
           if (response.status === 202) {
             productStore.refreshCategories();
