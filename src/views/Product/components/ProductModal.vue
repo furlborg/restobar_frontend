@@ -433,7 +433,7 @@ export default defineComponent({
       quick_indications: null,
       area_print: false,
       supplies: [],
-      affectation: settingsStore.businessSettings.sale.default_affectation,
+      affectation: settingsStore.businessSettings.sale?.default_affectation,
       igv_tax: 0,
     });
 
@@ -548,7 +548,7 @@ export default defineComponent({
           quick_indications: null,
           branchoffice: optionsEstablishment.value[0].value,
           supplies: [],
-          affectation: settingsStore.businessSettings.sale.default_affectation,
+          affectation: settingsStore.businessSettings.sale?.default_affectation,
           igv_tax: 0,
         };
       }

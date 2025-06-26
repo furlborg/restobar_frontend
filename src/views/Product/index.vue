@@ -7,6 +7,16 @@
         > -->
         <n-space justify="space-around">
           <n-button
+            type="primary"
+            @click="showSalesReportModal = true"
+            secondary
+          >
+            <template #icon
+              ><n-icon><v-icon name="md-equalizer-twotone" /></n-icon
+            ></template>
+            Registro de ventas
+          </n-button>
+          <n-button
             v-if="userStore.hasPermission('add_stock')"
             type="success"
             @click="newMovement(0), (showModalMovement = true)"
@@ -213,6 +223,12 @@
       @on-success="onSuccess"
     />
 
+    <!-- Sales Report Modal -->
+    <sales-report-modal
+      v-model:show="showSalesReportModal"
+      @update:show="onCloseSalesReportModal"
+    />
+
     <move-modal
       v-model:show="showModalMovement"
       @on-success="loadProductsData"
@@ -227,6 +243,7 @@ import { defineComponent, ref, onMounted, reactive, computed } from "vue";
 import { useMessage, useDialog } from "naive-ui";
 import { renderIcon } from "@/utils";
 import ProductModal from "./components/ProductModal";
+import SalesReportModal from "./components/SalesReportModal";
 import { useProductStore } from "@/store/modules/product";
 import { useUserStore } from "@/store/modules/user";
 import {
@@ -240,6 +257,7 @@ export default defineComponent({
   name: "Product",
   components: {
     ProductModal,
+    SalesReportModal,
     MoveModal,
   },
   setup() {
@@ -250,6 +268,7 @@ export default defineComponent({
     const dialog = useDialog();
     const listType = ref("list");
     const showModal = ref(false);
+    const showSalesReportModal = ref(false);
     const showModalMovement = ref(false);
     const showButtons = ref(false);
     const search = ref('');
@@ -474,6 +493,10 @@ export default defineComponent({
       idProduct.value = 0;
     };
 
+    const onCloseSalesReportModal = () => {
+      document.title = "Productos | App";
+    };
+
     const onSuccess = async () => {
       showModal.value = false;
       onCloseModal();
@@ -489,11 +512,13 @@ export default defineComponent({
       listType,
       type,
       showModal,
+      showSalesReportModal,
       showModalMovement,
       loadProductsData,
       showButtons,
       productOptions,
       onCloseModal,
+      onCloseSalesReportModal,
       onSuccess,
       pagination,
       search,
