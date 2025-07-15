@@ -241,6 +241,10 @@
                         >
                     </n-form-item-gi>
                     <n-form-item-gi :span="4">
+                        <n-checkbox v-model:checked="businessSettings.order.print_category_on_order">Mostrar categoria en pedido
+                        </n-checkbox>
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="4">
                         <n-checkbox
                                 v-model:checked="businessSettings.order.print_area_on_order"
                         >Mostrar nombre del area en ticket
