@@ -233,6 +233,9 @@ export default defineComponent({
                             "id": it.id,
                             "cantidad": it.quantity,
                             "descripcion": it.product_name,
+                            "product_name": it.product_name,
+                            "product_description": it.product_description,
+                            "product_category": it.product_category,
                             "indicaciones": it.indication.filter(indicate => {
                                 return (
                                     (!indicate.description.includes("[]") || indicate.description.length > 3 ||
