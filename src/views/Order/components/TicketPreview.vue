@@ -147,6 +147,9 @@ export default defineComponent({
                         "ticket_content": props.data.order_details.map(it => ({
                             "cantidad": it.quantity,
                             "descripcion": it.product_name,
+                            "product_name": it.product_name,
+                            "product_description": it.product_description,
+                            "product_category": it.product_category,
                             "precio": parseFloat(it?.["price"].toFixed(2)),
                             "total": parseFloat(it?.["sub_total"].toFixed(2)),
                             "indicaciones": it.indication.filter(indicate => {

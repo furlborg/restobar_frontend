@@ -216,6 +216,9 @@ export default defineComponent({
                                 operation: order.product_affectation,
                                 cantidad: order.quantity,
                                 descripcion: order.product_name,
+                                "product_name": order.product_name,
+                                "product_description": order.product_description,
+                                "product_category": order.product_category,
                                 igv: totalIGV.toFixed(2),
                                 precio: totalUnitPrice,
                                 total: totalOperation
