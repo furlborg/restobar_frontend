@@ -1,6 +1,6 @@
 <template>
   <div id="DefaultPreset">
-    <div class="ticket">
+    <div class="ticket" :class="{ 'ticket-print-mode': isPrintMode }">
       <div class="ticket-header">
         <div class="ticket-header-logo">
           <img
@@ -75,7 +75,7 @@
           </table>
         </div>
         <div class="ticket-body-details">
-          <table width="272px">
+          <table :width="isPrintMode ? '272px' : '100%'">
             <template v-if="data.by_consumption">
               <thead>
                 <tr>
@@ -103,26 +103,72 @@
               </tbody>
             </template>
             <template v-else>
-              <thead>
-                <tr>
-                  <th width="15%">CANT</th>
-                  <th width="40%">DESCRIPCIÓN</th>
-                  <th :width="!!hasDiscounts ? '15%' : '20%'">PRECIO</th>
-                  <th v-if="hasDiscounts" width="15%">DESCT</th>
-                  <th :width="!!hasDiscounts ? '15%' : '20%'">TOTAL</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(item, index) in sale.items" :key="index">
-                  <td>{{ item.cantidad }}</td>
-                  <td align="left">{{ item.descripcion }}</td>
-                  <td align="right">{{ item.precio_unitario.toFixed(2) }}</td>
-                  <td v-if="hasDiscounts" align="right">
-                    {{ data.sale_details[index].discount }}
-                  </td>
-                  <td align="right">{{ item.total_item.toFixed(2) }}</td>
-                </tr>
-              </tbody>
+              <!-- Vista normal para modo tradicional -->
+              <template v-if="!isCustomerMode">
+                <thead>
+                  <tr>
+                    <th width="15%">CANT</th>
+                    <th width="40%">DESCRIPCIÓN</th>
+                    <th :width="!!hasDiscounts ? '15%' : '20%'">PRECIO</th>
+                    <th v-if="hasDiscounts" width="15%">DESCT</th>
+                    <th :width="!!hasDiscounts ? '15%' : '20%'">TOTAL</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(item, index) in sale.items" :key="index">
+                    <td>{{ item.cantidad }}</td>
+                    <td align="left">{{ item.descripcion }}</td>
+                    <td align="right">{{ item.precio_unitario.toFixed(2) }}</td>
+                    <td v-if="hasDiscounts" align="right">
+                      {{ data.sale_details[index].discount }}
+                    </td>
+                    <td align="right">{{ item.total_item.toFixed(2) }}</td>
+                  </tr>
+                </tbody>
+              </template>
+              
+              <!-- Vista agrupada por clientes para modo CLIENTES -->
+              <template v-else>
+                <thead>
+                  <tr>
+                    <th width="15%">CANT</th>
+                    <th width="35%">DESCRIPCIÓN</th>
+                    <th width="25%">CLIENTE</th>
+                    <th :width="!!hasDiscounts ? '10%' : '15%'">PRECIO</th>
+                    <th v-if="hasDiscounts" width="10%">DESCT</th>
+                    <th :width="!!hasDiscounts ? '10%' : '15%'">TOTAL</th>
+                  </tr>
+                </thead>
+                <tbody v-for="customer in groupedByCustomer" :key="customer.customerName">
+                  <!-- Encabezado del cliente -->
+                  <tr style="background-color: #f0f0f0; font-weight: bold;">
+                    <td colspan="6" align="center" style="padding: 4px; border-top: 1px solid #000; border-bottom: 1px solid #000;">
+                      {{ customer.customerName.toUpperCase() }}
+                    </td>
+                  </tr>
+                  <!-- Items del cliente -->
+                  <tr v-for="(item, index) in customer.items" :key="`${customer.customerName}-${index}`">
+                    <td>{{ item.cantidad }}</td>
+                    <td align="left">{{ item.descripcion }}</td>
+                    <td align="center" style="font-size: 10px;">{{ customer.customerName }}</td>
+                    <td align="right">{{ item.precio_unitario.toFixed(2) }}</td>
+                    <td v-if="hasDiscounts" align="right">
+                      {{ data.sale_details[sale.items.indexOf(item)]?.discount || '0.00' }}
+                    </td>
+                    <td align="right">{{ item.total_item.toFixed(2) }}</td>
+                  </tr>
+                  <!-- Subtotal del cliente -->
+                  <tr style="font-weight: bold; font-style: italic;">
+                    <td colspan="3" align="right">Subtotal {{ customer.customerName }}:</td>
+                    <td v-if="hasDiscounts"></td>
+                    <td align="right">{{ customer.total.toFixed(2) }}</td>
+                  </tr>
+                  <!-- Separador -->
+                  <tr>
+                    <td colspan="6" style="border-bottom: 1px dashed #ccc; height: 8px;"></td>
+                  </tr>
+                </tbody>
+              </template>
             </template>
             <tfoot>
               <tr v-if="Number(sale.totales?.total_operaciones_gravadas)">
@@ -319,7 +365,7 @@
 </template>
 
 <script>
-import { defineComponent } from "vue";
+import { defineComponent, computed } from "vue";
 import { useBusinessStore } from "@/store/modules/business";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useTableStore } from "@/store/modules/table";
@@ -331,6 +377,10 @@ export default defineComponent({
     data: {
       type: Object,
     },
+    isPrintMode: {
+      type: Boolean,
+      default: false,
+    },
   },
   setup(props) {
     const settingsStore = useSettingsStore();
@@ -341,13 +391,56 @@ export default defineComponent({
       (detail) => !!Number(detail.discount)
     );
 
+    // Detectar si es modo clientes
+    const isCustomerMode = computed(() => {
+      return props.data.order_mode === 'order_by_customer' || 
+             (props.data.original_sale_details && 
+              props.data.original_sale_details.some(detail => 
+                detail.customer_id && detail.customer_name
+              ));
+    });
+
+    // Agrupar items por cliente para modo clientes
+    const groupedByCustomer = computed(() => {
+      if (!isCustomerMode.value) return null;
+      
+      const groups = {};
+      const saleDetails = props.data.original_sale_details || props.data.sale_details;
+      const saleData = parseSale(); // Obtener los datos de venta aquí
+      
+      saleDetails.forEach((detail, index) => {
+        const customerId = detail.customer_id || 'sin_cliente';
+        const customerName = detail.customer_name || 'Sin cliente';
+        
+        if (!groups[customerId]) {
+          groups[customerId] = {
+            customerName,
+            items: [],
+            total: 0
+          };
+        }
+        
+        // Obtener el item correspondiente de saleData.items
+        const saleItem = saleData.items[index];
+        if (saleItem) {
+          groups[customerId].items.push({
+            ...saleItem,
+            customerName
+          });
+          groups[customerId].total += saleItem.total_item;
+        }
+      });
+      
+      return Object.values(groups);
+    });
+
     const parseSale = () => {
       let saleData = JSON.parse(props.data.json_sale);
       // console.log(JSON.stringify(props.data, null, "  "));
       // console.log(JSON.stringify(saleData, null, "  "));
       if (settingsStore.business_settings.printer.detail_items) {
-          const gordoPendejoOjalaTeDeCancerAnal = !!props.data?.['order_data']?.order_details ? props.data?.['order_data'].order_details : props.data?.sale_details
-          gordoPendejoOjalaTeDeCancerAnal.forEach((detail) => {
+          const orderDetails = props.data?.order_data?.order_details || props.data?.sale_details || [];
+          orderDetails.forEach((detail) => {
               detail.indication = detail.indication ? detail.indication : []
           const indication = detail?.indication.reduce((desc, indication) => {
             if (indication.quick_indications.length) {
@@ -414,6 +507,8 @@ export default defineComponent({
       generateQR,
       amountText,
       hasDiscounts,
+      isCustomerMode,
+      groupedByCustomer,
     };
   },
 });
@@ -425,7 +520,17 @@ export default defineComponent({
   background-color: White;
   text-align: center;
   line-height: normal;
-  min-width: 272px;
+  min-width: 300px;
+  max-width: 100%;
+  width: 100%;
+  margin: 0 auto;
+
+  // Modo impresión: usar dimensiones exactas para impresora térmica
+  &.ticket-print-mode {
+    width: 272px;
+    min-width: 272px;
+    max-width: 272px;
+  }
   &-header {
     font-weight: bold;
     margin-bottom: 5px;
@@ -451,7 +556,7 @@ export default defineComponent({
     &-info {
       font-weight: bold;
       table {
-        width: 272px;
+        width: 100%;
         td {
           &:first-child {
             width: 37%;
@@ -466,13 +571,23 @@ export default defineComponent({
     }
     &-details {
       table {
-        width: 272px;
+        width: 100%;
         th {
           font-size: 12px;
         }
         tfoot {
           font-weight: bold;
         }
+      }
+    }
+
+    // En modo impresión, usar anchos fijos para impresora térmica
+    .ticket-print-mode & {
+      &-info table {
+        width: 272px;
+      }
+      &-details table {
+        width: 272px;
       }
     }
     .amount-text {
@@ -497,7 +612,7 @@ export default defineComponent({
       font-weight: bold;
     }
     table {
-      width: 272px;
+      width: 100%;
       td {
         &:first-child {
           width: 50%;
@@ -508,6 +623,13 @@ export default defineComponent({
           font-weight: bold;
           text-align: right;
         }
+      }
+    }
+
+    // En modo impresión, usar ancho fijo para impresora térmica
+    .ticket-print-mode & {
+      table {
+        width: 272px;
       }
     }
   }

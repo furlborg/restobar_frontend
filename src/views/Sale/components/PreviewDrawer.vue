@@ -4,7 +4,7 @@
             :show="show"
             @update:show="(v) => $emit('update:show', v)"
             placement="right"
-            width="272px"
+            width="400px"
             :on-after-leave="() => (send = false)"
             :mask-closable="false"
             :on-esc="() => ($emit('update:show', false), $emit('canceled'))"
@@ -21,13 +21,13 @@
                         @back="() => ($emit('update:show', false), $emit('canceled'))"
                 ></n-page-header>
             </template>
-            <default-preset v-if="!preVoucher" ref="ticket" :data="data"/>
-            <preview-preset v-else ref="ticket" :data="data"/>
+            <default-preset v-if="!preVoucher" ref="ticket" :data="data" :isPrintMode="isPrintMode"/>
+            <preview-preset v-else ref="ticket" :data="data" :isPrintMode="isPrintMode"/>
             <template v-if="!previewOnly" #footer>
                 <n-button class="fs-4" type="info" secondary block @click="generate">
                     Imprimir
                 </n-button>
-                <div style="width: 272px; display: flex">
+                <div style="width: 100%; display: flex">
                     <n-button-group>
                         <n-button
                                 style="width: 90px"
@@ -129,6 +129,7 @@ export default defineComponent({
         const tableStore = useTableStore();
         const totalEnterPulse = ref(0);
         const businessStore = useBusinessStore();
+        const isPrintMode = ref(false);
         // eslint-disable-next-line no-undef
         // const apiUrl = import.meta.env.VITE_APP_URL.replace(/^https?:\/\//, ''); // Elimina 'http://' o 'https://'
         let socket = null;
@@ -173,6 +174,12 @@ export default defineComponent({
         });
 
         const generate = async(save = false) => {
+            // Activar modo impresión para usar dimensiones correctas
+            isPrintMode.value = true;
+            
+            // Esperar a que Vue actualice el DOM
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
             const format = [
                 ticket.value.$el.clientWidth,
                 ticket.value.$el.clientHeight + 10
@@ -192,6 +199,8 @@ export default defineComponent({
                                 props.data.number
                             }`
                         );
+                        // Desactivar modo impresión después de guardar
+                        isPrintMode.value = false;
                     }
                 });
             } else {
@@ -361,6 +370,10 @@ export default defineComponent({
                     // document.body.appendChild(hiddeFrame);
                 }
             }
+            
+            // Desactivar modo impresión después de generar el PDF
+            isPrintMode.value = false;
+            
             emit("printed");
             emit("update:show", false);
         };
@@ -393,7 +406,8 @@ export default defineComponent({
             sendToWhatsapp,
             dataModalWhatsApp,
             putaOscar,
-            phoneNumber
+            phoneNumber,
+            isPrintMode
         };
     }
 });

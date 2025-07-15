@@ -97,6 +97,7 @@
                 </th>
                 <th>Cantidad</th>
                 <th>Producto</th>
+                <th v-if="isOrderByCustomer">Cliente</th>
                 <th>Precio Unitario</th>
                 <th v-if="settingsStore.business_settings.sale?.show_discount_label">Descuento</th>
                 <th>Precio Total</th>
@@ -118,6 +119,9 @@
                     <td>{{ detail.quantity }}</td>
                     <td>
                         <input class="custom-input" v-model="detail.product_name" v-autowidth @click="$event.target.select()"/>
+                    </td>
+                    <td v-if="isOrderByCustomer">
+                        <n-tag size="small" type="info">{{ detail.customer_name || 'Sin cliente' }}</n-tag>
                     </td>
                     <td>
                         S/.
@@ -343,7 +347,52 @@ export default defineComponent({
     const showModal = ref(false);
     const payment_amount = ref(parseFloat(0).toFixed(2));
     const saleForm = ref();
-    const ticketPreview = ref(settingsStore.businessSettings.sale.show_preview);
+    const ticketPreview = ref(settingsStore.businessSettings?.sale?.show_preview ?? true);
+    
+    // Variable para almacenar el modo en que fue creado el pedido actual (igual que en TableOrder.vue)
+    const orderCreationMode = ref('traditional'); // 'traditional' o 'order_by_customer'
+    
+    // Función para detectar automáticamente el modo en que fue creado el pedido (copiada desde TableOrder.vue)
+    const detectOrderCreationMode = (orderDetails) => {
+      if (!orderDetails || orderDetails.length === 0) {
+        return 'traditional'; // Por defecto, modo tradicional
+      }
+
+      // Verificar si algún order_detail tiene información de clientes
+      const hasCustomerInfo = orderDetails.some(detail => 
+        detail.customer_id !== null && 
+        detail.customer_id !== undefined && 
+        detail.customer_name && 
+        detail.customer_name.trim() !== ''
+      );
+
+      // Verificar si hay múltiples clientes diferentes
+      const uniqueCustomers = new Set();
+      orderDetails.forEach(detail => {
+        if (detail.customer_id !== null && detail.customer_id !== undefined) {
+          uniqueCustomers.add(detail.customer_id);
+        }
+      });
+
+      // Si hay información de clientes válida, especialmente si hay múltiples clientes,
+      // entonces fue creado en modo order_by_customer
+      if (hasCustomerInfo && uniqueCustomers.size > 0) {
+        console.log('TablePayment - Detectado modo order_by_customer:', {
+          hasCustomerInfo,
+          uniqueCustomersCount: uniqueCustomers.size,
+          customerIds: Array.from(uniqueCustomers)
+        });
+        return 'order_by_customer';
+      }
+
+      console.log('TablePayment - Detectado modo traditional');
+      return 'traditional';
+    };
+    
+    // Detectar si estamos en modo de pedidos por cliente basado en la detección del modo real
+    const isOrderByCustomer = computed(() => {
+      return orderCreationMode.value === 'order_by_customer';
+    });
     const changing = computed(() => {
       return sale.value.given_amount > total.value
         ? total.value - sale.value.given_amount
@@ -553,28 +602,59 @@ export default defineComponent({
                       content: "Realizar venta?",
                       positiveText: "Sí",
                       onPositiveClick: async() => {
-                          console.log("gordo puto");
+                          console.log("TablePayment - Creando venta en modo:", orderCreationMode.value);
                           loading.value = true;
                           sale.value.order = orderStore.orderId;
-                          sale.value.sale_details = saleStore.toSale.map((detail) => ({
+                          
+                          // Estructurar sale_details basándose en el modo detectado
+                          if (orderCreationMode.value === 'order_by_customer') {
+                            // Para modo clientes, incluir información del cliente en cada detail
+                            sale.value.sale_details = saleStore.toSale.map((detail) => ({
+                              ...detail,
+                              igv_tax: detail.igv_tax.toFixed(2),
+                              price_base: detail.price_base.toFixed(2),
+                              // Incluir información del cliente si está disponible
+                              customer_id: detail.customer_id || null,
+                              customer_name: detail.customer_name || null
+                            }));
+                            console.log("TablePayment - Sale details con info de clientes:", sale.value.sale_details);
+                          } else {
+                            // Para modo tradicional, usar estructura estándar
+                            sale.value.sale_details = saleStore.toSale.map((detail) => ({
                               ...detail,
                               igv_tax: detail.igv_tax.toFixed(2),
                               price_base: detail.price_base.toFixed(2)
-                          }));
+                            }));
+                            console.log("TablePayment - Sale details modo tradicional:", sale.value.sale_details);
+                          }
+                          
                           sale.value.discount = totalDSCT.value;
                           await createSale(sale.value).then(async(response) => {
                               if(response.status === 201) {
                                   const dataPrint = async() => {
                                       const res = await retrieveSale(response.data?.id);
                                       pdfData.value = res.data;
+                                      // Agregar información del modo de orden para el ticket
+                                      pdfData.value.order_mode = orderCreationMode.value;
+                                      pdfData.value.original_sale_details = sale.value.sale_details;
                                       return res.data;
                                   };
                                     await dataPrint();
                                   if(settingsStore.business_settings.printer.print_html) {
+                                      console.log("TablePayment - Configurando PDF preview:", {
+                                        showPdf: true,
+                                        ticketPreview: ticketPreview.value,
+                                        pdfData: pdfData.value
+                                      });
                                       showPdf.value = true;
                                       if(!ticketPreview.value) {
+                                          // Auto-imprimir sin mostrar previsualización
+                                          console.log("TablePayment - Auto-imprimiendo ticket");
                                           setTimeout(() => previewDrawer.value.generate(), 250);
+                                      } else {
+                                          console.log("TablePayment - Mostrando previsualización de ticket");
                                       }
+                                      // Si ticketPreview es true, simplemente se muestra el modal de previsualización
                                   } else {
                                       await VoucherPrint({
                                           data: await dataPrint(),
@@ -753,6 +833,25 @@ export default defineComponent({
     onMounted(async () => {
       sale.value.given_amount = total.value;
       await obtainSaleNumber();
+      
+      // Debug: Ver qué contiene orderStore.orders
+      console.log('TablePayment - orderStore.orders:', orderStore.orders);
+      console.log('TablePayment - saleStore.toSale antes de detección:', saleStore.toSale);
+      
+      // Detectar el modo del pedido basándose en los order_details actuales
+      if (orderStore.orders && orderStore.orders.length > 0) {
+        const detectedMode = detectOrderCreationMode(orderStore.orders);
+        orderCreationMode.value = detectedMode;
+        console.log('TablePayment - Modo detectado:', detectedMode);
+        
+        // Forzar re-evaluación del getter para asegurar que tiene los datos correctos
+        const updatedToSale = saleStore.toSale;
+        console.log('TablePayment - saleStore.toSale después de detección (forzado):', updatedToSale);
+      } else {
+        // Si no hay órdenes, usar la configuración actual como fallback
+        orderCreationMode.value = settingsStore.businessSettings?.order?.order_by_customer ? 'order_by_customer' : 'traditional';
+        console.log('TablePayment - Sin órdenes, usando configuración actual:', orderCreationMode.value);
+      }
 
       const fetch = new Date();
       const dd = fetch.getDate();
@@ -996,6 +1095,7 @@ export default defineComponent({
       previewDrawer,
       showPdf,
       pdfData,
+      isOrderByCustomer,
     };
   },
 });
@@ -1021,6 +1121,7 @@ input::-webkit-inner-spin-button {
 }
 
 input[type="number"] {
+  appearance: textfield;
   -moz-appearance: textfield;
   /* Firefox */
 }
