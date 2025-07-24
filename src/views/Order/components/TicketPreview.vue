@@ -333,6 +333,7 @@ export default defineComponent({
         };
         
         const generate = async() => {
+            console.log(props);
             if(props.data.order_type === "D" && settingsStore.business_settings.printer.print_html) {
                 await printDelivery();
             }

@@ -349,8 +349,8 @@ export default defineComponent({
     },
     setup() {
         const rules = {
-            username: { required: true, trigger: ["blur", "input"], message: "" },
-            pass: { required: true, trigger: ["blur", "input"], message: "" }
+            username: { required: true, trigger: [ "blur", "input" ], message: "" },
+            pass: { required: true, trigger: [ "blur", "input" ], message: "" }
         };
         const dataAnulate = ref({ username: "", pass: "" });
         const userStore = useUserStore();
@@ -386,8 +386,9 @@ export default defineComponent({
         });
 
         onBeforeRouteUpdate((to) => {
-            if(to.name !== "ProductCategories" && to.name !== "CategoriesItems") {
-                if(!checkState.value) {
+            console.log("tetas 1");
+            if (to.name !== "ProductCategories" && to.name !== "CategoriesItems") {
+                if ( !checkState.value) {
                     dialog.error({
                         title: "Cambios sin guardar",
                         content: "¿Salir de todos modos?",
@@ -405,8 +406,9 @@ export default defineComponent({
         });
 
         onBeforeRouteLeave((to) => {
-            if(to.name !== "ProductCategories" && to.name !== "CategoriesItems") {
-                if(!checkState.value) {
+            console.log("tetas 2");
+            if (to.name !== "ProductCategories" && to.name !== "CategoriesItems") {
+                if ( !checkState.value) {
                     dialog.error({
                         title: "Cambios sin guardar",
                         content: "¿Salir de todos modos?",
@@ -425,17 +427,17 @@ export default defineComponent({
 
         const performRetrieveTableOrder = async() => {
             await retrieveTableOrder(route.params.table).then((response) => {
-                if(response.status === 200) {
+                if (response.status === 200) {
                     ask_for.value = response.data.ask_for;
                     orderStore.orders = response.data.order_details;
                     saleStore.order_initial = cloneDeep(orderStore.orderList);
                     orderStore.orderId = response.data.id;
-                    if(settingsStore.businessSettings.order.select_order_user) {
+                    if (settingsStore.businessSettings.order.select_order_user) {
                         orderUser.value = response.data.user_id;
                     }
                 }
             }).catch((error) => {
-                if(error.response.status === 404) {
+                if (error.response.status === 404) {
                     orderStore.orders = [];
                     saleStore.order_initial = [];
                     orderStore.orderId = null;
@@ -455,7 +457,7 @@ export default defineComponent({
             const hh = fetch.getHours();
             const msms = fetch.getMinutes();
 
-            dateNow.value = `${dd}/${mm + 1}/${yy} ${hh}:${msms}`;
+            dateNow.value = `${ dd }/${ mm + 1 }/${ yy } ${ hh }:${ msms }`;
         });
 
         const performCreateTableOrder = async() => {
@@ -466,7 +468,7 @@ export default defineComponent({
                 !orderUser.value ? userConfirm.value : orderUser.value,
                 ask_for.value
             ).then(async(response) => {
-                if(response.status === 201) {
+                if (response.status === 201) {
                     pdfData.value = response.data;
                     showPdf.value = true;
                     setTimeout(() => ticketPreview.value.generate(), 250);
@@ -486,18 +488,18 @@ export default defineComponent({
             let list = [];
             details.forEach((order) => {
                 let item = saleStore.order_initial.find((v) => v.id === order.id);
-                if(!!item && order.quantity > item.quantity) {
+                if ( !!item && order.quantity > item.quantity) {
                     let newOrder = cloneDeep(order);
                     newOrder.quantity = order.quantity - item.quantity;
                     newOrder.indication = newOrder.indication.slice(order.quantity - 1);
                     list.push(newOrder);
-                } else if(
+                } else if (
                     !!item &&
                     JSON.stringify(order.indication) !== JSON.stringify(item.indication)
                 ) {
                     let newOrder = cloneDeep(order);
                     list.push(newOrder);
-                } else if(typeof item === "undefined") {
+                } else if (typeof item === "undefined") {
                     list.push(order);
                 }
             });
@@ -513,7 +515,7 @@ export default defineComponent({
                 !orderUser.value ? userConfirm.value : orderUser.value,
                 ask_for.value
             ).then(async(response) => {
-                if(response.status === 202) {
+                if (response.status === 202) {
                     response.data.order_details = evalOrderList(
                         response.data.order_details
                     );
@@ -534,23 +536,23 @@ export default defineComponent({
         };
 
         const nullifyTableOrder = async() => {
-            if(!orderStore.orderList.length && orderStore.orderId) {
+            if ( !orderStore.orderList.length && orderStore.orderId) {
                 await performNullifyTableOrder();
                 /* dialog.error({
-				  title: "Anular pedido",
-				  content: "¿Está seguro?",
-				  positiveText: "Sí",
-				  negativeText: "No",
-				  onPositiveClick: async () => {
-					await performNullifyTableOrder();
-				  },
-				}); */
+                 title: "Anular pedido",
+                 content: "¿Está seguro?",
+                 positiveText: "Sí",
+                 negativeText: "No",
+                 onPositiveClick: async () => {
+                 await performNullifyTableOrder();
+                 },
+                 }); */
             }
         };
 
         const performNullifyTableOrder = async() => {
             await cancelTableOrder(table, dataAnulate.value).then((response) => {
-                if(response.status === 202) {
+                if (response.status === 202) {
                     message.success("Pedido anulado correctamente!");
                     checkState.value = true;
                     router.push({ name: "TableHome" });
@@ -578,7 +580,7 @@ export default defineComponent({
                 dataAnulate.value,
                 deleteQuantity.value
             ).then((response) => {
-                if(response.status === 204) {
+                if (response.status === 204) {
                     orderStore.orderList.splice(removingItem.value.ind, 1);
                     saleStore.order_initial.splice(removingItem.value.ind, 1);
                     nullifyTableOrder();
@@ -590,7 +592,7 @@ export default defineComponent({
                     maxQuantity.value = 1;
                     showConfirm.value = false;
                     dataAnulate.value = { username: "", pass: "" };
-                } else if(response.status === 202) {
+                } else if (response.status === 202) {
                     orderStore.orderList[removingItem.value.ind].quantity -=
                         response.data.quantity;
                     saleStore.order_initial[removingItem.value.ind].quantity -=
@@ -638,10 +640,10 @@ export default defineComponent({
         });
 
         const showOptions = (value) => {
-            if(value.length >= 3) {
+            if (value.length >= 3) {
                 searching.value = true;
                 searchProductByName(value).then((response) => {
-                    if(response.status === 200) {
+                    if (response.status === 200) {
                         products.value = response.data;
                     }
                 }).catch((error) => {
@@ -657,8 +659,8 @@ export default defineComponent({
 
         const selectProduct = (v) => {
             const item = products.value.find((product) => product.id === v);
-            if(item.has_supplies) {
-                if(item.has_stock) {
+            if (item.has_supplies) {
+                if (item.has_stock) {
                     orderStore.addOrder(item);
                 }
             }
@@ -673,11 +675,11 @@ export default defineComponent({
             const t = option.label.split("-");
             let color = "#3B689F";
             let text = "MESA";
-            if(t.length > 1) {
-                if(t[1].includes("LL")) {
+            if (t.length > 1) {
+                if (t[1].includes("LL")) {
                     color = "#926ED7";
                     text = "PARA LLEVAR";
-                } else if(t[1].includes("D")) {
+                } else if (t[1].includes("D")) {
                     color = "#995C4E";
                     text = "DELIVERY";
                 }
@@ -695,10 +697,10 @@ export default defineComponent({
                                     !searchProductOption(option.value).has_stock ||
                                     !searchProductOption(option.value).has_supplies,
                                 type: searchProductOption(option.value).has_supplies
-                                    ? searchProductOption(option.value).has_stock
+                                      ? searchProductOption(option.value).has_stock
                                         ? "default"
                                         : "error"
-                                    : "error"
+                                      : "error"
                             },
                             {
                                 default: () => t[0]
@@ -719,10 +721,10 @@ export default defineComponent({
                                         {
                                             default: () =>
                                                 option.category.toLowerCase().includes("menu")
-                                                    ? "MENU"
-                                                    : option.category.toLowerCase().includes("comb")
-                                                        ? "COMBO"
-                                                        : "CARTA"
+                                                ? "MENU"
+                                                : option.category.toLowerCase().includes("comb")
+                                                  ? "COMBO"
+                                                  : "CARTA"
                                         }
                                     ),
                                     h(
@@ -738,7 +740,7 @@ export default defineComponent({
                                         {
                                             default: () => text
                                         }
-                                    ), 
+                                    ),
                                     h(
                                         NTag,
                                         {
@@ -749,17 +751,17 @@ export default defineComponent({
                                             default: () => option.category
                                         }
                                     ),
-                                    option.stock ? 
-                                        h(
-                                            NTag,
-                                            {
-                                                size: "small",
-                                                type: "info"
-                                            },
-                                            {
-                                                default: () => `Stock: ${option.stock}`
-                                            }
-                                        ) : ''
+                                    option.stock ?
+                                    h(
+                                        NTag,
+                                        {
+                                            size: "small",
+                                            type: "info"
+                                        },
+                                        {
+                                            default: () => `Stock: ${ option.stock }`
+                                        }
+                                    ) : ""
                                 ]
                             }
                         )
@@ -778,10 +780,10 @@ export default defineComponent({
         };
 
         const validateSend = () => {
-            if(userStore.user.role === "MOZO") {
+            if (userStore.user.role === "MOZO") {
                 showUserConfirm.value = true;
             } else {
-                if(!orderStore.orderId) {
+                if ( !orderStore.orderId) {
                     performCreateTableOrder();
                 } else {
                     performUpdateTableOrder();
