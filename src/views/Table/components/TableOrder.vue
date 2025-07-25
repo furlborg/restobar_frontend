@@ -465,7 +465,7 @@ export default defineComponent({
             await createTableOrder(
                 route.params.table,
                 orderStore.orderList,
-                !orderUser.value ? userConfirm.value : orderUser.value,
+                orderUser.value,
                 ask_for.value
             ).then(async(response) => {
                 if (response.status === 201) {
@@ -512,7 +512,7 @@ export default defineComponent({
                 route.params.table,
                 orderStore.orderId,
                 orderStore.orderList,
-                !orderUser.value ? userConfirm.value : orderUser.value,
+                orderUser.value,
                 ask_for.value
             ).then(async(response) => {
                 if (response.status === 202) {

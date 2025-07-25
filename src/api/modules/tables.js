@@ -19,7 +19,7 @@ export async function createArea(area) {
 export async function updateArea(idArea, area) {
     const businessStore = useBusinessStore();
     const userStore = useUserStore();
-    return await http.put(`areas/${idArea}/`, {
+    return await http.put(`areas/${ idArea }/`, {
         description: area.description,
         sale_printer: area.sale_printer,
         account_printer: area.account_printer,
@@ -41,7 +41,7 @@ export async function createTable(areaID, table) {
 
 export async function updateTable(areaID, table) {
     console.log(table);
-    return await http.put(`tables/${table.id}/`, {
+    return await http.put(`tables/${ table.id }/`, {
         area: areaID,
         code: table.code,
         description: table.description
@@ -49,11 +49,11 @@ export async function updateTable(areaID, table) {
 }
 
 export async function disableTable(id) {
-    return await http.delete(`tables/${id}/`);
+    return await http.delete(`tables/${ id }/`);
 }
 
 export async function changeOrderTable(id, table) {
-    return await http.post(`tables/${id}/change_order_table/`, {
+    return await http.post(`tables/${ id }/change_order_table/`, {
         table: table
     });
 }
@@ -63,7 +63,7 @@ export async function getAreasTables() {
 }
 
 export async function retrieveTableOrder(idTable) {
-    return await http.get(`tables/${idTable}/order/`);
+    return await http.get(`tables/${ idTable }/order/`);
 }
 
 export async function createTableOrder(
@@ -73,17 +73,18 @@ export async function createTableOrder(
     ask_for = undefined
 ) {
     const tillStore = useTillStore();
+    console.log('aumenten mi sueldo pe kousin');
     let order_details = details.map((order) => ({
         product: order.product,
         indication: order.indication || [],
         quantity: order.quantity
     }));
-    return await http.post(`tables/${idTable}/take_order/`, {
+    return await http.post(`tables/${ idTable }/take_order/`, {
         till: tillStore.currentTillID,
         order_type: "M",
         order_details: order_details,
         ask_for: ask_for,
-        user: !user ? null : user
+        user: user ?? null
     });
 }
 
@@ -95,25 +96,26 @@ export async function updateTableOrder(
     ask_for = undefined
 ) {
     const tillStore = useTillStore();
+    console.log('aumenten mi sueldo pe kousin');
     let order_details = details.map((order) => ({
         id: order.id,
         product: order.product,
         indication: order.indication || [],
         quantity: order.quantity
     })).filter((detail) => detail.quantity > 0);
-    return await http.patch(`tables/${idTable}/change_order/`, {
+    return await http.patch(`tables/${ idTable }/change_order/`, {
         id: orderId,
         till: tillStore.currentTillID,
         order_type: "M",
         order_details: order_details,
         ask_for: ask_for,
-        user: !user ? null : user
+        user: user ?? null
     });
 }
 
 export async function cancelTableOrder(idTable, dataAnulate) {
     console.log(dataAnulate);
-    return http.post(`tables/${idTable}/cancel_order/`, {
+    return http.post(`tables/${ idTable }/cancel_order/`, {
         ...dataAnulate
     });
 }
@@ -124,7 +126,7 @@ export async function performDeleteOrderDetail(
     pass,
     quantity
 ) {
-    return await http.post(`tables/${idTable}/remove_detail/`, {
+    return await http.post(`tables/${ idTable }/remove_detail/`, {
         id: orderId,
         ...pass,
         quantity: quantity
