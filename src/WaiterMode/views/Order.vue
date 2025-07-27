@@ -1,76 +1,77 @@
 <template>
-  <n-tabs type="line" justify-content="space-around">
-    <template #prefix>
-      <n-button
-        class="ms-2"
-        :disabled="$route.name !== 'WCategories'"
-        text
-        @click="showDrawer = true"
-      >
-        <v-icon name="md-search-round" />
-      </n-button>
-      <ProductsDrawer v-model:show="showDrawer" />
-    </template>
-    <n-tab-pane class="p-0" name="menu" tab="Carta">
-      <router-view></router-view>
-    </n-tab-pane>
-    <n-tab-pane
-      id="OrderPane"
-      name="order"
-      tab="Pedido"
-      :disabled="!orderStore.orderId"
-    >
-      <n-card title="Pedido" size="small" :segmented="{ content: 'hard' }">
-        <template #header-extra>
-          <n-button
-            v-if="userStore.hasPermission('print_order_prebill')"
-            type="info"
-            secondary
-            size="small"
-            @click="printOrderPrebill"
-          >
-            <v-icon name="fa-file-invoice-dollar" />
-          </n-button>
+    <n-tabs type="line" justify-content="space-around">
+        <template #prefix>
+            <n-button
+                    class="ms-2"
+                    :disabled="$route.name !== 'WCategories'"
+                    text
+                    @click="showDrawer = true"
+            >
+                <v-icon name="md-search-round"/>
+            </n-button>
+            <ProductsDrawer v-model:show="showDrawer"/>
         </template>
-        <!-- <n-h2>Pedido</n-h2> -->
-        <n-list class="m-0">
-          <template v-for="(order, index) in orderStore.orderList">
-            <n-list-item v-if="order.quantity > 0" :key="index">
-              <n-thing>
-                <template #header>
-                  <n-tag>{{ order.quantity }}</n-tag>
-                  <n-text class="ms-2">{{ order.product_name }}</n-text>
-                </template>
+        <n-tab-pane class="p-0" name="menu" tab="Carta">
+            <router-view></router-view>
+        </n-tab-pane>
+        <n-tab-pane
+                id="OrderPane"
+                name="order"
+                tab="Pedido"
+                :disabled="!orderStore.orderId"
+        >
+            <n-card title="Pedido" size="small" :segmented="{ content: 'hard' }">
                 <template #header-extra>
-                  <n-text>{{
-                    `S/. ${order.quantity * order.price.toFixed(2)}`
-                  }}</n-text>
+                    <n-button
+                            v-if="userStore.hasPermission('print_order_prebill')"
+                            type="info"
+                            secondary
+                            size="small"
+                            @click="printOrderPrebill"
+                    >
+                        <v-icon name="fa-file-invoice-dollar"/>
+                    </n-button>
                 </template>
-              </n-thing>
-              <!-- @click="
-                itemIndex = index;
-                showModal = true;
-              " -->
-            </n-list-item>
-          </template>
-        </n-list>
-      </n-card>
-      <ProductIndications
-        v-model:show="showModal"
-        preset="card"
-        title="Indicaciones"
-        :product="orderStore.orderList[itemIndex]"
-        @success="showModal = false"
-      />
-      <preview-drawer
-        ref="previewDrawer"
-        v-model:show="showPreview"
-        :data="previewData"
-        :preVoucher="true"
-        :previewOnly="true"
-      />
-    </n-tab-pane>
-  </n-tabs>
+                <!-- <n-h2>Pedido</n-h2> -->
+                <n-list class="m-0">
+                    <template v-for="(order, index) in orderStore.orderList">
+                        <n-list-item v-if="order.quantity > 0" :key="index">
+                            <n-thing>
+                                <template #header>
+                                    <n-tag>{{ order.quantity }}</n-tag>
+                                    <n-text class="ms-2">{{ order.product_name }}</n-text>
+                                </template>
+                                <template #header-extra>
+                                    <n-text>{{
+                                            `S/. ${ order.quantity * order.price.toFixed(2) }`
+                                        }}
+                                    </n-text>
+                                </template>
+                            </n-thing>
+                            <!-- @click="
+							  itemIndex = index;
+							  showModal = true;
+							" -->
+                        </n-list-item>
+                    </template>
+                </n-list>
+            </n-card>
+            <ProductIndications
+                    v-model:show="showModal"
+                    preset="card"
+                    title="Indicaciones"
+                    :product="orderStore.orderList[itemIndex]"
+                    @success="showModal = false"
+            />
+            <preview-drawer
+                    ref="previewDrawer"
+                    v-model:show="showPreview"
+                    :data="previewData"
+                    :preVoucher="true"
+                    :previewOnly="true"
+            />
+        </n-tab-pane>
+    </n-tabs>
 </template>
 
 <script>
@@ -78,10 +79,10 @@ import { defineComponent, ref, onUpdated, onMounted } from "vue";
 import ProductsDrawer from "../components/ProductsDrawer";
 import { useMessage, useDialog } from "naive-ui";
 import {
-  useRoute,
-  useRouter,
-  onBeforeRouteLeave,
-  onBeforeRouteUpdate,
+    useRoute,
+    useRouter,
+    onBeforeRouteLeave,
+    onBeforeRouteUpdate
 } from "vue-router";
 import ProductIndications from "./ProductIndications";
 import { useSettingsStore } from "@/store/modules/settings";
@@ -96,149 +97,148 @@ import { cloneDeep } from "@/utils";
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 
 export default defineComponent({
-  name: "WOrder",
-  components: {
-    ProductIndications,
-    ProductsDrawer,
-    PreviewDrawer,
-  },
-  setup() {
-    const settingsStore = useSettingsStore();
-    const businessStore = useBusinessStore();
-    const waiterStore = useWaiterStore();
-    const orderStore = useOrderStore();
-    const saleStore = useSaleStore();
-    const userStore = useUserStore();
-    const message = useMessage();
-    const dialog = useDialog();
-    const route = useRoute();
-    const router = useRouter();
-    const showDrawer = ref(false);
-    const showModal = ref(false);
-    const itemIndex = ref(null);
-    const orderDetails = ref([]);
+    name: "WOrder",
+    components: {
+        ProductIndications,
+        ProductsDrawer,
+        PreviewDrawer
+    },
+    setup() {
+        const settingsStore = useSettingsStore();
+        const businessStore = useBusinessStore();
+        const waiterStore = useWaiterStore();
+        const orderStore = useOrderStore();
+        const saleStore = useSaleStore();
+        const userStore = useUserStore();
+        const message = useMessage();
+        const dialog = useDialog();
+        const route = useRoute();
+        const router = useRouter();
+        const showDrawer = ref(false);
+        const showModal = ref(false);
+        const itemIndex = ref(null);
+        const orderDetails = ref([]);
 
-    orderStore.orders = [];
-    saleStore.order_initial = [];
-    orderStore.orderId = null;
+        orderStore.orders = [];
+        saleStore.order_initial = [];
+        orderStore.orderId = null;
 
-    onBeforeRouteUpdate((to, from) => {
-      if (to.name !== "WCategories" && to.name !== "WProducts") {
-        if (waiterStore.preOrderList.length) {
-          dialog.error({
-            title: "Cambios sin guardar",
-            content: "¿Salir de todos modos?",
-            positiveText: "Sí",
-            negativeText: "No",
-            onPositiveClick: () => {
-              waiterStore.preOrderList = [];
-              router.push(to);
-            },
-          });
-          return false;
-        }
-      }
-    });
-
-    onBeforeRouteLeave((to, from) => {
-      if (to.name !== "WCategories" && to.name !== "WProducts") {
-        if (waiterStore.preOrderList.length) {
-          dialog.error({
-            title: "Cambios sin guardar",
-            content: "¿Salir de todos modos?",
-            positiveText: "Sí",
-            onPositiveClick: () => {
-              waiterStore.preOrderList = [];
-              router.push(to);
-            },
-          });
-          return false;
-        }
-      }
-    });
-
-    const performRetrieveTableOrder = () => {
-      retrieveTableOrder(route.params.table)
-        .then((response) => {
-          if (response.status === 200) {
-            orderStore.orders = response.data.order_details;
-            saleStore.order_initial = cloneDeep(orderStore.orderList);
-            orderStore.orderId = response.data.id;
-          }
-        })
-        .catch((error) => {
-          if (error.response.status === 404) {
-            orderStore.orders = [];
-            saleStore.order_initial = [];
-            orderStore.orderId = null;
-          } else {
-            console.error(error);
-            message.error("Algo salió mal...");
-          }
-        });
-    };
-
-    const printOrderPrebill = async () => {
-      await retrieveTableOrder(route.params.table)
-        .then((response) => {
-          if (response.status === 200) {
-            if (settingsStore.business_settings.printer.print_html) {
-              previewData.value = response.data;
-              showPreview.value = true;
-              setTimeout(() => previewDrawer.value.generate(), 250);
-            } else {
-              VoucherPrint({
-                data: response.data,
-                businessStore,
-                prePayment: true,
-                auto: true,
-              });
+        onBeforeRouteUpdate((to) => {
+            console.log("tetas ddd");
+            if (to.name !== "WCategories" && to.name !== "WProducts") {
+                if (waiterStore.preOrderList.length) {
+                    dialog.error({
+                        title: "Cambios sin guardar",
+                        content: "¿Salir de todos modos?",
+                        positiveText: "Sí",
+                        negativeText: "No",
+                        onPositiveClick: () => {
+                            waiterStore.preOrderList = [];
+                            router.push(to);
+                        }
+                    });
+                    return false;
+                }
             }
-          }
-        }).catch((error) => {
-          console.error(error);
-      });
-    };
+        });
 
-    function setTabStyle() {
-      let tab_nav = document.getElementsByClassName("n-tabs-nav");
-      for (let i = 0; i < tab_nav.length; i++) {
-        tab_nav[i].style.position = "absolute";
-        tab_nav[i].style.zIndex = 1;
-        tab_nav[i].style.backgroundColor = "White";
-      }
+        onBeforeRouteLeave((to) => {
+            console.log("tetas xxx");
+            if (to.name !== "WCategories" && to.name !== "WProducts") {
+                if (waiterStore.preOrderList.length) {
+                    dialog.error({
+                        content: "¿Salir de todos modos?",
+                        positiveText: "Sí",
+                        title: "Cambios sin guardar",
+                        onPositiveClick: () => {
+                            waiterStore.preOrderList = [];
+                            router.push(to);
+                        }
+                    });
+                    return false;
+                }
+            }
+        });
+
+        const performRetrieveTableOrder = () => {
+            retrieveTableOrder(route.params.table).then((response) => {
+                if (response.status === 200) {
+                    orderStore.orders = response.data.order_details;
+                    saleStore.order_initial = cloneDeep(orderStore.orderList);
+                    orderStore.orderId = response.data.id;
+                }
+            }).catch((error) => {
+                if (error.response.status === 404) {
+                    orderStore.orders = [];
+                    saleStore.order_initial = [];
+                    orderStore.orderId = null;
+                } else {
+                    console.error(error);
+                    message.error("Algo salió mal...");
+                }
+            });
+        };
+
+        const printOrderPrebill = async() => {
+            await retrieveTableOrder(route.params.table).then((response) => {
+                if (response.status === 200) {
+                    if (settingsStore.business_settings.printer.print_html) {
+                        previewData.value = response.data;
+                        showPreview.value = true;
+                        setTimeout(() => previewDrawer.value.generate(), 250);
+                    } else {
+                        VoucherPrint({
+                            data: response.data,
+                            businessStore,
+                            prePayment: true,
+                            auto: true
+                        });
+                    }
+                }
+            }).catch((error) => {
+                console.error(error);
+            });
+        };
+
+        function setTabStyle() {
+            let tab_nav = document.getElementsByClassName("n-tabs-nav");
+            for (let i = 0; i < tab_nav.length; i++) {
+                tab_nav[i].style.position = "absolute";
+                tab_nav[i].style.zIndex = 1;
+                tab_nav[i].style.backgroundColor = "White";
+            }
+        }
+
+        onMounted(() => {
+            waiterStore.preOrderList = [];
+            performRetrieveTableOrder();
+            setTabStyle();
+        });
+
+        onUpdated(() => {
+            setTabStyle();
+        });
+
+        const previewDrawer = ref(null);
+
+        const showPreview = ref(false);
+
+        const previewData = ref(null);
+
+        return {
+            waiterStore,
+            orderStore,
+            showModal,
+            itemIndex,
+            orderDetails,
+            showDrawer,
+            printOrderPrebill,
+            userStore,
+            previewDrawer,
+            showPreview,
+            previewData
+        };
     }
-
-    onMounted(() => {
-      waiterStore.preOrderList = [];
-      performRetrieveTableOrder();
-      setTabStyle();
-    });
-
-    onUpdated(() => {
-      setTabStyle();
-    });
-
-    const previewDrawer = ref(null);
-
-    const showPreview = ref(false);
-
-    const previewData = ref(null);
-
-    return {
-      waiterStore,
-      orderStore,
-      showModal,
-      itemIndex,
-      orderDetails,
-      showDrawer,
-      printOrderPrebill,
-      userStore,
-      previewDrawer,
-      showPreview,
-      previewData,
-    };
-  },
 });
 </script>
 

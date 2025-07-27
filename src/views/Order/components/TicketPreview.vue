@@ -147,6 +147,9 @@ export default defineComponent({
                         "ticket_content": props.data.order_details.map(it => ({
                             "cantidad": it.quantity,
                             "descripcion": it.product_name,
+                            "product_name": it.product_name,
+                            "product_description": it.product_description,
+                            "product_category": it.product_category,
                             "precio": parseFloat(it?.["price"].toFixed(2)),
                             "total": parseFloat(it?.["sub_total"].toFixed(2)),
                             "indicaciones": it.indication.filter(indicate => {
@@ -233,6 +236,9 @@ export default defineComponent({
                             "id": it.id,
                             "cantidad": it.quantity,
                             "descripcion": it.product_name,
+                            "product_name": it.product_name,
+                            "product_description": it.product_description,
+                            "product_category": it.product_category,
                             "indicaciones": it.indication.filter(indicate => {
                                 return (
                                     (!indicate.description.includes("[]") || indicate.description.length > 3 ||
@@ -327,6 +333,7 @@ export default defineComponent({
         };
         
         const generate = async() => {
+            console.log(props);
             if(props.data.order_type === "D" && settingsStore.business_settings.printer.print_html) {
                 await printDelivery();
             }
