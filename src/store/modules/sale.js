@@ -17,7 +17,7 @@ export const useSaleStore = defineStore("sale", {
   }),
   getters: {
     getPaymentMethodsOptions(state) {
-      return state.payment_methods.map((payment_method) => ({
+      return state.payment_methods.filter(it => !it.is_disabled).map((payment_method) => ({
         label: payment_method.description,
         value: payment_method.id,
       }));
