@@ -254,7 +254,7 @@
                     <n-form-item-gi :span="3">
                         <n-checkbox
                                 v-model:checked="businessSettings.order.order_by_customer"
-                        >Pedidos por clientes
+                        >Pedidos por Clientes
                         </n-checkbox
                         >
                     </n-form-item-gi>
