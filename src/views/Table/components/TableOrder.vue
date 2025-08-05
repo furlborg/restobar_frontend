@@ -779,15 +779,11 @@ export default defineComponent({
             router.push({ name: "TableHome" });
         };
 
-        const validateSend = () => {
-            if (userStore.user.role === "MOZO") {
-                showUserConfirm.value = true;
+        const validateSend = () => { 
+            if ( !orderStore.orderId) {
+                performCreateTableOrder();
             } else {
-                if ( !orderStore.orderId) {
-                    performCreateTableOrder();
-                } else {
-                    performUpdateTableOrder();
-                }
+                performUpdateTableOrder();
             }
         };
 
