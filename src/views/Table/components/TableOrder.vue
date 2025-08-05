@@ -373,7 +373,7 @@ export default defineComponent({
         const loading = ref(false);
         const dateNow = ref(null);
         const ask_for = ref(undefined);
-        const orderUser = ref(null);
+        const orderUser = ref(userStore.user.id);
 
         orderStore.orders = [];
         saleStore.order_initial = [];
@@ -444,6 +444,7 @@ export default defineComponent({
                 } else {
                     console.error(error);
                     message.error("Algo salió mal...");
+                    console.log('aumenten mi sueldo p, no seas tacaño mewin');
                 }
             });
         };
@@ -462,6 +463,7 @@ export default defineComponent({
 
         const performCreateTableOrder = async() => {
             loading.value = true;
+            console.log('aumenten mi sueldo p, no seas tacaño mewin');
             await createTableOrder(
                 route.params.table,
                 orderStore.orderList,
@@ -779,12 +781,14 @@ export default defineComponent({
             router.push({ name: "TableHome" });
         };
 
-        const validateSend = () => { 
-            if ( !orderStore.orderId) {
-                performCreateTableOrder();
-            } else {
-                performUpdateTableOrder();
-            }
+        const validateSend = () => {
+            
+                if ( !orderStore.orderId) {
+                    performCreateTableOrder();
+                } else {
+                    performUpdateTableOrder();
+                }
+            
         };
 
         const ticketPreview = ref(null);
