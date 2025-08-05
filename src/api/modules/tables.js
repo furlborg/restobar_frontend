@@ -84,7 +84,7 @@ export async function createTableOrder(
         order_type: "M",
         order_details: order_details,
         ask_for: ask_for,
-        user: user ?? null
+        user: !user ? null : user
     });
 }
 
@@ -109,7 +109,7 @@ export async function updateTableOrder(
         order_type: "M",
         order_details: order_details,
         ask_for: ask_for,
-        user: user ?? null
+        user: !user ? null : user
     });
 }
 
