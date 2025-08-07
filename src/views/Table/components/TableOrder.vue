@@ -588,7 +588,6 @@ export default defineComponent({
 
         const performRetrieveTableOrder = async () => {
             // CLEAR CURRENT STATE
-            orderStore.orders = [];
             orderStore.orderId = null;
             orderStore.orders = [];
             saleStore.order_initial = [];
@@ -618,14 +617,8 @@ export default defineComponent({
                 })
                 .catch(error => {
                     if (error.response?.status === 404) {
-                        if (settingsStore.businessSettings?.order?.order_by_customer) {
-                            customers.value = [];
-                            customers_initial.value = [];
-                            selectedCustomerId.value = null;
-                        } else {
-                            orderStore.orders = [];
-                            saleStore.order_initial = [];
-                        }
+                        orderStore.orders = [];
+                        saleStore.order_initial = [];
                         orderStore.orderId = null;
 
                         // Inicializar estado del usuario para nuevos pedidos
@@ -861,9 +854,7 @@ export default defineComponent({
                 if (item.has_stock) {
                     orderStore.addOrder(
                         item,
-                        settingsStore.businessSettings.order?.order_by_customer
-                            ? customers.value[customers.value.findIndex(c => c.id === selectedCustomerId.value)]
-                            : undefined
+                        customers.value[customers.value.findIndex(c => c.id === selectedCustomerId.value)]
                     );
                     console.log('Producto agregado a la orden');
                 }

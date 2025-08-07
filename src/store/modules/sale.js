@@ -52,6 +52,7 @@ export const useSaleStore = defineStore("sale", {
           price_sale: parseFloat(order.price).toFixed(2),
           quantity: Number(order.quantity),
           icbper: parseFloat(order.icbper_amount).toFixed(2),
+          customer: order.customer
         };
         this.updateDetail(detail);
         return detail;

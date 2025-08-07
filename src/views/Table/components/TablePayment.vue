@@ -21,9 +21,9 @@
                 </n-dropdown>
               </div>
               <n-radio-group v-model:value="sale.invoice_type" name="docType" size="small" @update:value="changeSerie">
-                <n-radio-button :disabled="!settingsStore.businessSettings.sale.enable_invoices" :value="1"
+                <n-radio-button :disabled="!settingsStore.businessSettings.sale?.enable_invoices" :value="1"
                   :key="1">FACTURA</n-radio-button>
-                <n-radio-button :disabled="!settingsStore.businessSettings.sale.enable_invoices" :value="3"
+                <n-radio-button :disabled="!settingsStore.businessSettings.sale?.enable_invoices" :value="3"
                   :key="3">BOLETA</n-radio-button>
                 <n-radio-button :value="80" :key="80">N. VENTA</n-radio-button>
               </n-radio-group>
@@ -94,16 +94,16 @@
                 </n-gi>
               </n-grid>
             </n-form>
-            <n-scrollbar :x-scrollable="true" style="max-width: 1000px">
-              <n-table class="fs-6 m-auto text-center" :bordered="false">
+            <n-scrollbar style="max-width: 1000px">
+              <!-- Tabla única cuando no es order by customer -->
+              <n-table v-if="!isOrderByCustomer" class="fs-6 m-auto text-center" :bordered="false">
                 <thead>
                   <tr>
-                    <th v-if="settingsStore.businessSettings.sale.manage_affectations">
+                    <th v-if="settingsStore.businessSettings.sale?.manage_affectations">
                       #
                     </th>
                     <th>Cantidad</th>
                     <th>Producto</th>
-                    <th v-if="isOrderByCustomer">Cliente</th>
                     <th>Precio Unitario</th>
                     <th v-if="settingsStore.business_settings.sale?.show_discount_label">Descuento</th>
                     <th>Precio Total</th>
@@ -112,8 +112,7 @@
                 <tbody>
                 <template v-for="(detail, index) in saleStore.toSale">
                     <tr v-if="detail.quantity > 0" :key="index">
-                        <td v-if="settingsStore.businessSettings.sale?.manage_affectations
-          ">
+                        <td v-if="settingsStore.businessSettings.sale?.manage_affectations">
                             <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation"
                                         :disabled="!userStore.hasPermission('change_product_affectation')"
                                         :options="productStore.affectationsOptions" @update:value="() => saleStore.updateDetail(detail)">
@@ -125,9 +124,6 @@
                         <td>{{ detail.quantity }}</td>
                         <td>
                             <input class="custom-input" v-model="detail.product_name" v-autowidth @click="$event.target.select()"/>
-                        </td>
-                        <td v-if="isOrderByCustomer">
-                            <n-tag size="small" type="info">{{ detail.customer_name || 'Sin cliente' }}</n-tag>
                         </td>
                         <td>
                             S/.
@@ -148,6 +144,73 @@
                 </template>
                 </tbody>
               </n-table>
+
+              <!-- Tablas separadas por cliente cuando es order by customer -->
+              <div v-else>
+                <template v-for="customer in customers" :key="customer.id">
+                  <n-card class="mb-3" :bordered="true" size="small">
+                    <template #header>
+                      <n-space justify="space-between" align="center">
+                        <div>
+                          <n-text class="fs-5">Cliente: </n-text>
+                          <n-tag type="info" size="medium">{{ customer.name }}</n-tag>
+                        </div>
+                        <n-tag type="success" size="medium">SubTotal: S/. {{ getCustomerTotal(customer.id).toFixed(2) }}</n-tag>
+                      </n-space>
+                    </template>
+                    <n-scrollbar x-scrollable>
+                      <n-table class="fs-6 text-center w-100" :bordered="false" size="small">
+                        <thead>
+                          <tr>
+                            <th v-if="settingsStore.businessSettings.sale?.manage_affectations">
+                              #
+                            </th>
+                            <th>Cantidad</th>
+                            <th>Producto</th>
+                            <th>Precio Unitario</th>
+                            <th v-if="settingsStore.business_settings.sale?.show_discount_label">Descuento</th>
+                            <th>Precio Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <template v-for="(detail, index) in getCustomerOrders(customer.id)" :key="index">
+                            <tr>
+                              <td v-if="settingsStore.businessSettings.sale?.manage_affectations">
+                                <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation"
+                                            :disabled="!userStore.hasPermission('change_product_affectation')"
+                                            :options="productStore.affectationsOptions" @update:value="() => saleStore.updateDetail(detail)">
+                                    <n-tag size="small" :color="getAfcColor(detail.product_affectation)">{{
+                                            getAfcShort(detail.product_affectation) }}
+                                    </n-tag>
+                                </n-popselect>
+                              </td>
+                              <td>{{ detail.quantity }}</td>
+                              <td>
+                                  <input class="custom-input" v-model="detail.product_name" v-autowidth @click="$event.target.select()"/>
+                              </td>
+                              <td>
+                                  S/.
+                                  <input class="custom-input" type="number" :min="detail.product_affectation === 20 ? 1 : 0" step=".5"
+                                        v-model="detail.price_sale" v-autowidth @click="$event.target.select()" :disabled="!settingsStore.business_settings.sale?.show_discount_label"
+                                        @input="() => (saleStore.updateDetail(detail), (detail.discount = parseFloat('0').toFixed(2)))"/>
+                              </td>
+                              <td v-if="settingsStore.business_settings.sale?.show_discount_label">
+                                  S/.
+                                  <input class="custom-input" type="number" min="0" :max="!detail.price_sale ? 0 : detail.price_sale" step=".5"
+                                        :disabled="detail.product_affectation === 21 || !!Number(sale.discount)" v-model="detail.discount" 
+                                        v-autowidth @click="$event.target.select()"/>
+                              </td>
+                              <td>
+                                  {{ detail.product_affectation === 21 ? "0.00" : parseFloat(detail.quantity * detail.price_sale - detail.discount).toFixed(2) }}
+                              </td>
+                            </tr>
+                          </template>
+                        </tbody>
+                      </n-table>
+                    </n-scrollbar>
+                  </n-card>
+                </template>
+              </div>
             </n-scrollbar>
             <n-grid cols="3">
               <n-gi :span="2">
@@ -303,7 +366,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, toRefs, computed, watch, onMounted } from "vue";
+import { defineComponent, ref, toRefs, computed, watch, onMounted, watchEffect } from "vue";
 import CustomerModal from "@/views/Customer/components/CustomerModal";
 import SeparatePaymentsModal from "./SeparatePaymentsModal";
 import { useSettingsStore } from "@/store/modules/settings";
@@ -356,51 +419,11 @@ export default defineComponent({
     const payment_amount = ref(parseFloat(0).toFixed(2));
     const saleForm = ref();
     const ticketPreview = ref(settingsStore.businessSettings?.sale?.show_preview ?? true);
-    
-    // Variable para almacenar el modo en que fue creado el pedido actual (igual que en TableOrder.vue)
-    const orderCreationMode = ref('traditional'); // 'traditional' o 'order_by_customer'
-    
-    // Función para detectar automáticamente el modo en que fue creado el pedido (copiada desde TableOrder.vue)
-    const detectOrderCreationMode = (orderDetails) => {
-      if (!orderDetails || orderDetails.length === 0) {
-        return 'traditional'; // Por defecto, modo tradicional
-      }
 
-      // Verificar si algún order_detail tiene información de clientes
-      const hasCustomerInfo = orderDetails.some(detail => 
-        detail.customer_id !== null && 
-        detail.customer_id !== undefined && 
-        detail.customer_name && 
-        detail.customer_name.trim() !== ''
-      );
+    const orderHasCustomer = orderDetail => !!orderDetail.customer;
 
-      // Verificar si hay múltiples clientes diferentes
-      const uniqueCustomers = new Set();
-      orderDetails.forEach(detail => {
-        if (detail.customer_id !== null && detail.customer_id !== undefined) {
-          uniqueCustomers.add(detail.customer_id);
-        }
-      });
+    const isOrderByCustomer = computed(() => !!saleStore.toSale?.some(orderHasCustomer));
 
-      // Si hay información de clientes válida, especialmente si hay múltiples clientes,
-      // entonces fue creado en modo order_by_customer
-      if (hasCustomerInfo && uniqueCustomers.size > 0) {
-        console.log('TablePayment - Detectado modo order_by_customer:', {
-          hasCustomerInfo,
-          uniqueCustomersCount: uniqueCustomers.size,
-          customerIds: Array.from(uniqueCustomers)
-        });
-        return 'order_by_customer';
-      }
-
-      console.log('TablePayment - Detectado modo traditional');
-      return 'traditional';
-    };
-    
-    // Detectar si estamos en modo de pedidos por cliente basado en la detección del modo real
-    const isOrderByCustomer = computed(() => {
-      return orderCreationMode.value === 'order_by_customer';
-    });
     const changing = computed(() => {
       return sale.value.given_amount > total.value
         ? total.value - sale.value.given_amount
@@ -511,14 +534,14 @@ export default defineComponent({
     const sale = ref({
       order: null,
       serie: saleStore.getFirstOption(
-        settingsStore.businessSettings.sale.enable_invoices ? settingsStore.businessSettings.sale.default_invoice : 80
+        settingsStore.businessSettings.sale?.enable_invoices ? settingsStore.businessSettings.sale.default_invoice : 80
       ),
       number: "",
       date_sale: format(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss"),
       count: products_count,
       amount: total,
       given_amount: parseFloat(0).toFixed(2),
-      invoice_type: settingsStore.businessSettings.sale.enable_invoices ? settingsStore.businessSettings.sale.default_invoice : 80,
+      invoice_type: settingsStore.businessSettings.sale?.enable_invoices ? settingsStore.businessSettings.sale.default_invoice : 80,
       payment_method: 1,
       payment_condition: 1,
       customer_name: "",
@@ -610,32 +633,14 @@ export default defineComponent({
                       content: "Realizar venta?",
                       positiveText: "Sí",
                       onPositiveClick: async() => {
-                          console.log("TablePayment - Creando venta en modo:", orderCreationMode.value);
                           loading.value = true;
                           sale.value.order = orderStore.orderId;
-                          
-                          // Estructurar sale_details basándose en el modo detectado
-                          if (orderCreationMode.value === 'order_by_customer') {
-                            // Para modo clientes, incluir información del cliente en cada detail
-                            sale.value.sale_details = saleStore.toSale.map((detail) => ({
-                              ...detail,
-                              igv_tax: detail.igv_tax.toFixed(2),
-                              price_base: detail.price_base.toFixed(2),
-                              // Incluir información del cliente si está disponible
-                              customer_id: detail.customer_id || null,
-                              customer_name: detail.customer_name || null
-                            }));
-                            console.log("TablePayment - Sale details con info de clientes:", sale.value.sale_details);
-                          } else {
-                            // Para modo tradicional, usar estructura estándar
-                            sale.value.sale_details = saleStore.toSale.map((detail) => ({
-                              ...detail,
-                              igv_tax: detail.igv_tax.toFixed(2),
-                              price_base: detail.price_base.toFixed(2)
-                            }));
-                            console.log("TablePayment - Sale details modo tradicional:", sale.value.sale_details);
-                          }
-                          
+
+                          sale.value.sale_details = saleStore.toSale.map((detail) => ({
+                            ...detail,
+                            igv_tax: detail.igv_tax.toFixed(2),
+                            price_base: detail.price_base.toFixed(2)
+                          }));
                           sale.value.discount = totalDSCT.value;
                           await createSale(sale.value).then(async(response) => {
                               if(response.status === 201) {
@@ -643,26 +648,16 @@ export default defineComponent({
                                       const res = await retrieveSale(response.data?.id);
                                       pdfData.value = res.data;
                                       // Agregar información del modo de orden para el ticket
-                                      pdfData.value.order_mode = orderCreationMode.value;
+                                      pdfData.value.order_by_customer = isOrderByCustomer.value;
                                       pdfData.value.original_sale_details = sale.value.sale_details;
                                       return res.data;
                                   };
                                     await dataPrint();
                                   if(settingsStore.business_settings.printer.print_html) {
-                                      console.log("TablePayment - Configurando PDF preview:", {
-                                        showPdf: true,
-                                        ticketPreview: ticketPreview.value,
-                                        pdfData: pdfData.value
-                                      });
                                       showPdf.value = true;
                                       if(!ticketPreview.value) {
-                                          // Auto-imprimir sin mostrar previsualización
-                                          console.log("TablePayment - Auto-imprimiendo ticket");
                                           setTimeout(() => previewDrawer.value.generate(), 250);
-                                      } else {
-                                          console.log("TablePayment - Mostrando previsualización de ticket");
                                       }
-                                      // Si ticketPreview es true, simplemente se muestra el modal de previsualización
                                   } else {
                                       await VoucherPrint({
                                           data: await dataPrint(),
@@ -838,28 +833,14 @@ export default defineComponent({
       await obtainSaleNumber();
     });
 
+    watchEffect(() => {
+      console.log(saleStore.toSale);
+      console.log(isOrderByCustomer.value)
+    })
+
     onMounted(async () => {
       sale.value.given_amount = total.value;
       await obtainSaleNumber();
-      
-      // Debug: Ver qué contiene orderStore.orders
-      console.log('TablePayment - orderStore.orders:', orderStore.orders);
-      console.log('TablePayment - saleStore.toSale antes de detección:', saleStore.toSale);
-      
-      // Detectar el modo del pedido basándose en los order_details actuales
-      if (orderStore.orders && orderStore.orders.length > 0) {
-        const detectedMode = detectOrderCreationMode(orderStore.orders);
-        orderCreationMode.value = detectedMode;
-        console.log('TablePayment - Modo detectado:', detectedMode);
-        
-        // Forzar re-evaluación del getter para asegurar que tiene los datos correctos
-        const updatedToSale = saleStore.toSale;
-        console.log('TablePayment - saleStore.toSale después de detección (forzado):', updatedToSale);
-      } else {
-        // Si no hay órdenes, usar la configuración actual como fallback
-        orderCreationMode.value = settingsStore.businessSettings?.order?.order_by_customer ? 'order_by_customer' : 'traditional';
-        console.log('TablePayment - Sin órdenes, usando configuración actual:', orderCreationMode.value);
-      }
 
       const fetch = new Date();
       const dd = fetch.getDate();
@@ -1047,6 +1028,49 @@ export default defineComponent({
 
     const pdfData = ref(null);
 
+    // Funciones para manejar ventas por cliente
+    const customers = computed(() => {
+      const customerMap = new Map();
+      saleStore.toSale.forEach(detail => {
+        if (detail.customer && detail.quantity > 0) {
+          if (!customerMap.has(detail.customer.id)) {
+            customerMap.set(detail.customer.id, {
+              id: detail.customer.id,
+              name: detail.customer.name || 'Sin nombre'
+            });
+          }
+        }
+      });
+      return Array.from(customerMap.values());
+    });
+
+    const getCustomerOrders = (customerId) => {
+      const customerOrders = saleStore.toSale.filter(detail => detail.customer.id === customerId && detail.quantity > 0);
+      return customerOrders;
+    };
+
+    const getCustomerTotal = (customerId) => {
+      const customerOrders = getCustomerOrders(customerId);
+      const total = customerOrders.reduce((total, detail) => {
+        const subTotal = detail.product_affectation === 21 ? 0 : (detail.price_sale * detail.quantity - detail.discount);
+        return total + (isNaN(subTotal) ? 0 : subTotal);
+      }, 0);
+
+      return isNaN(total) ? 0 : total;
+    };
+
+    const getTotalAmount = () => {
+      const total = saleStore.toSale.reduce((total, detail) => {
+        if (detail.quantity > 0) {
+          const subTotal = detail.product_affectation === 21 ? 0 : (detail.price_sale * detail.quantity - detail.discount);
+          return total + (isNaN(subTotal) ? 0 : subTotal);
+        }
+        return total;
+      }, 0);
+
+      return isNaN(total) ? 0 : total;
+    };
+
     return {
       showModal,
       userStore,
@@ -1104,6 +1128,10 @@ export default defineComponent({
       showPdf,
       pdfData,
       isOrderByCustomer,
+      customers,
+      getCustomerOrders,
+      getCustomerTotal,
+      getTotalAmount,
     };
   },
 });
@@ -1122,15 +1150,12 @@ export default defineComponent({
 
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
-  /* display: none; <- Crashes Chrome on hover */
   -webkit-appearance: none;
   margin: 0;
-  /* <-- Apparently some margin are still there even though it's hidden */
 }
 
 input[type="number"] {
   appearance: textfield;
   -moz-appearance: textfield;
-  /* Firefox */
 }
 </style>

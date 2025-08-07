@@ -4,7 +4,7 @@
             :show="show"
             @update:show="(v) => $emit('update:show', v)"
             placement="right"
-            width="400px"
+            width="272px"
             :on-after-leave="() => (send = false)"
             :mask-closable="false"
             :on-esc="() => ($emit('update:show', false), $emit('canceled'))"
