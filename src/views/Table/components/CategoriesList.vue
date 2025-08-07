@@ -1,70 +1,75 @@
 <template>
-    <div id="CategoriesList">
-        <n-text class="fs-4">Categorías</n-text>
-        <n-scrollbar class="mt-2" style="height: 700px">
-            <n-list v-if="listType === 'list'" class="me-2">
-                <n-list-item
-                        v-for="(category, index) in productStore.categories"
-                        :key="index"
-                >
-                    <template #prefix>
-                        <img
-                                src="~@/assets/images/category-bg.jpg"
-                                alt=""
-                                width="75"
-                                height="50"
-                        />
-                    </template>
-                    <n-thing>
-                        <n-space vertical>
-                            <n-space align="center">
-                                <router-link
-                                        class="text-decoration-none"
-                                        :to="{
-                    name: 'CategoriesItems',
-                    params: { category: category.id },
-                  }"
+    <n-card
+        title="Categorías"
+        :bordered="false"
+        class="h-100"
+        content-class="overflow-auto"
+    >
+        <n-scrollbar>
+            <div>
+                <n-list v-if="listType === 'list'" class="me-2">
+                    <n-list-item
+                            v-for="(category, index) in productStore.categories"
+                            :key="index"
+                    >
+                        <template #prefix>
+                            <img
+                                    src="~@/assets/images/category-bg.jpg"
+                                    alt=""
+                                    width="75"
+                                    height="50"
+                            />
+                        </template>
+                        <n-thing>
+                            <n-space vertical>
+                                <n-space align="center">
+                                    <router-link
+                                            class="text-decoration-none"
+                                            :to="{
+                        name: 'CategoriesItems',
+                        params: { category: category.id },
+                    }"
+                                    >
+                                        <n-text class="fs-4">{{ category.description }}</n-text>
+                                    </router-link>
+                                    <n-text class="fs-6" type="success">S/. 10.00</n-text>
+                                </n-space>
+                                <n-text
+                                >Lorem ipsum dolor sit, amet consectetur adipisicing
+                                    elit.
+                                </n-text
                                 >
-                                    <n-text class="fs-4">{{ category.description }}</n-text>
-                                </router-link>
-                                <n-text class="fs-6" type="success">S/. 10.00</n-text>
                             </n-space>
-                            <n-text
-                            >Lorem ipsum dolor sit, amet consectetur adipisicing
-                                elit.
-                            </n-text
-                            >
-                        </n-space>
-                    </n-thing>
-                    <template #suffix>
-                        <n-button type="info" text>
-                            <v-icon name="md-addbox-round" scale="2"/>
-                        </n-button>
-                    </template>
-                </n-list-item>
-            </n-list>
-            <n-grid
-                    v-if="listType === 'grid'"
-                    responsive="screen"
-                    cols="8 xs:8 s:12 m:12 l:16 xl:20 2xl:20"
-                    :x-gap="5"
-                    :y-gap="5"
-            >
-                <n-gi :span="4" v-for="(category, index) in productStore.categories" :key="index">
-                    <div class="item-zoom">
-                        <router-link class="text-decoration-none" :to="{ name: 'CategoriesItems', params: { category: category.id } }">
-                            <img src="~@/assets/images/category-bg.jpg" alt=""/>
+                        </n-thing>
+                        <template #suffix>
+                            <n-button type="info" text>
+                                <v-icon name="md-addbox-round" scale="2"/>
+                            </n-button>
+                        </template>
+                    </n-list-item>
+                </n-list>
+                <n-grid
+                        v-if="listType === 'grid'"
+                        responsive="screen"
+                        cols="8 xs:8 s:12 m:12 l:16 xl:20 2xl:20"
+                        :x-gap="5"
+                        :y-gap="5"
+                >
+                    <n-gi :span="4" v-for="(category, index) in productStore.categories" :key="index">
+                        <div class="item-zoom">
+                            <router-link class="text-decoration-none" :to="{ name: 'CategoriesItems', params: { category: category.id } }">
+                                <img src="~@/assets/images/category-bg.jpg" alt=""/>
 
-                            <n-text style="font-size: 21px; font-weight: 900; text-align: center; color: #000; top: 40%; left: 45%"
-                                    class="position-absolute translate-middle"
-                            >{{ category.description }}
-                            </n-text>
-                        </router-link>
-                    </div>
-                </n-gi>
-            </n-grid>
+                                <n-text class="position-absolute translate-middle fs-7 fw-bold w-100 top-50 start-50 text-center" style="color: #000;"
+                                >{{ category.description }}
+                                </n-text>
+                            </router-link>
+                        </div>
+                    </n-gi>
+                </n-grid>
+            </div>
         </n-scrollbar>
-    </div>
+    </n-card>
 </template>
 
 <script>

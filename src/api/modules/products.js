@@ -87,14 +87,20 @@ export async function searchProduct(
   pageLimit,
   pageOffset
 ) {
+  const params = {
+    search: search,
+    disabled: disabled,
+    limit: pageLimit,
+    offset: pageOffset,
+  };
+
+  // Solo agregar category si tiene un valor válido
+  if (category && category !== false) {
+    params.category = category;
+  }
+
   return await http.get("products/", {
-    params: {
-      search: search,
-      category: category,
-      disabled: disabled,
-      limit: pageLimit,
-      offset: pageOffset,
-    },
+    params: params,
   });
 }
 

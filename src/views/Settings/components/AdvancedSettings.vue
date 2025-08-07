@@ -253,6 +253,13 @@
                     </n-form-item-gi>
                     <n-form-item-gi :span="3">
                         <n-checkbox
+                                v-model:checked="businessSettings.order.order_by_customer"
+                        >Pedidos por Clientes
+                        </n-checkbox
+                        >
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3">
+                        <n-checkbox
                                 v-model:checked="businessSettings.order.order_customer_name"
                         >Nombre de Cliente
                         </n-checkbox

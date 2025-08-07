@@ -69,23 +69,24 @@ export async function retrieveTableOrder(idTable) {
 export async function createTableOrder(
     idTable,
     details,
-    user,
+    user = null,
     ask_for = undefined
 ) {
     const tillStore = useTillStore();
-    console.log('aumenten mi sueldo pe kousin');
-    let order_details = details.map((order) => ({
+    let order_details = details.map(order => ({
         product: order.product,
         indication: order.indication || [],
-        quantity: order.quantity
+        quantity: order.quantity,
+        customer: order.customer || null
     }));
-    return await http.post(`tables/${ idTable }/take_order/`, {
+    const bodyRequest = {
         till: tillStore.currentTillID,
         order_type: "M",
-        order_details: order_details,
-        ask_for: ask_for,
-        user: !user ? null : user
-    });
+        order_details,
+        ask_for,
+        user
+    }
+    return await http.post(`tables/${idTable}/take_order/`, bodyRequest);
 }
 
 export async function updateTableOrder(
@@ -101,7 +102,8 @@ export async function updateTableOrder(
         id: order.id,
         product: order.product,
         indication: order.indication || [],
-        quantity: order.quantity
+        quantity: order.quantity,
+        customer: order.customer || null
     })).filter((detail) => detail.quantity > 0);
     return await http.patch(`tables/${ idTable }/change_order/`, {
         id: orderId,

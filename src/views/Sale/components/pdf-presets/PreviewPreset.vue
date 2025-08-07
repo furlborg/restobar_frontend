@@ -101,8 +101,12 @@ export default defineComponent({
     data: {
       type: Object,
     },
+    isPrintMode: {
+      type: Boolean,
+      default: false,
+    },
   },
-  setup(props) {
+  setup() {
     const tableStore = useTableStore();
     const settingsStore = useSettingsStore();
     const businessStore = useBusinessStore();
