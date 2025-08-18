@@ -205,6 +205,16 @@ export default defineComponent({
           // disabled: !userStore.hasPermission("view_customer"),
         },
         {
+          label: () => h(
+            RouterLink,
+            { to: { name: 'Reports' } },
+            () => h('span', 'Reportes')
+          ),
+          key: 'Reports',
+          icon: renderIcon('md-insertchart-outlined'),
+          disabled: !userStore.hasPermission('view_sale'),
+        },
+        {
           label: () =>
             h(
               RouterLink,

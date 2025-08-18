@@ -8,6 +8,14 @@ export async function getProducts(disabled = false) {
   });
 }
 
+export async function getProductsAll(disabled = false) {
+  return await http.get("products/all", {
+    params: {
+      disabled: disabled,
+    },
+  });
+}
+
 export async function getProductSimpleSearch(search) {
   return await http.get("products/simplesearch/" + search);
 }
@@ -223,4 +231,48 @@ export async function getProductAffectations() {
 
 export async function getProductFittings() {
   return await http.get("product-fitting/");
+}
+
+export async function downloadProductsSoldReport({
+  date_from,
+  date_to,
+  product,
+  branch_office,
+  category
+} = {}) {
+  const params = {};
+  if (date_from) params.date_from = date_from; // YYYY-MM-DD
+  if (date_to) params.date_to = date_to;       // YYYY-MM-DD
+  if (product) params.product = product;
+  if (branch_office) params.branch_office = branch_office;
+  if (category) params.category = category;
+
+  params.format = 'xlsx';
+
+  return await http.get("products-sold/", {
+    params,
+    responseType: "blob", // XLSX
+  });
+}
+
+export async function getProductsSold({
+  date_from,
+  date_to,
+  product,
+  branch_office,
+  category,
+  ordering,
+} = {}) {
+  const params = {};
+  if (date_from) params.date_from = date_from; // YYYY-MM-DD
+  if (date_to) params.date_to = date_to;       // YYYY-MM-DD
+  if (product) params.product = product;
+  if (branch_office) params.branch_office = branch_office;
+  if (category) params.category = category;
+  if (ordering) params.ordering = ordering; // e.g. '-total' or '-counter'
+  params.format = 'json'; // fuerza JSON en DRF si está habilitado
+
+  return await http.get('products-sold/', {
+    params,
+  });
 }
