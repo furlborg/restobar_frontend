@@ -1,6 +1,5 @@
 stages:
   - demo
-  - test_prints
 
 demo:
   image: ubuntu:latest
