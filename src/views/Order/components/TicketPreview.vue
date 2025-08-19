@@ -145,13 +145,14 @@ export default defineComponent({
                             "usuario": props.data.username
                         },
                         "ticket_content": props.data.order_details.map(it => ({
+                        // "ticket_content": JSON.parse(props.data.json_sale).items.map(it => ({
                             "cantidad": it.quantity,
                             "descripcion": it.product_name,
                             "product_name": it.product_name,
                             "product_description": it.product_description,
                             "product_category": it.product_category,
-                            "precio": parseFloat(it?.["price"].toFixed(2)),
-                            "total": parseFloat(it?.["sub_total"].toFixed(2)),
+                            "precio": parseFloat(it?.["sale_detail_price"].toFixed(2)),
+                            "total": parseFloat(it?.["sale_detail_total"].toFixed(2)),
                             "indicaciones": it.indication.filter(indicate => {
                                 return (
                                     (!indicate.description.includes("[]") || indicate.description.length > 3 ||
@@ -165,6 +166,7 @@ export default defineComponent({
                             "gravado": JSON.parse(props.data.json_sale).totales.total_operaciones_gravadas,
                             "icbper": JSON.parse(props.data.json_sale).totales.total_impuestos_bolsa_plastica,
                             "igv": JSON.parse(props.data.json_sale).totales.total_igv,
+                            "delivery": JSON.parse(props.data.json_sale).totales.total_delivery,
                             "total": JSON.parse(props.data.json_sale).totales.total_venta,
                             "pago": parseFloat(props.data.given_amount),
                             "vuelto": parseFloat(
