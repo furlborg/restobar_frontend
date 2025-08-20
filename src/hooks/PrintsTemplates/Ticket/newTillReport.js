@@ -151,14 +151,15 @@ export const generateDynamicCajaReport = async(dataTill) => {
     const ingresoOpen = parseFloat(dataTill?.["resumen_ingresos"]?.["open_till"] ?? 0);
     const ingresoVentas = parseFloat(dataTill?.["resumen_ingresos"]?.["ventas"] ?? 0);
     const ingresoOtros = parseFloat(dataTill?.["resumen_ingresos"]?.["otros_ingresos"] ?? 0);
-    const totalIngresos = ingresoOpen + ingresoVentas + ingresoOtros;
+    const totalOtrosIngresos = ingresoOpen - ingresoOtros;
+    const totalIngresos = ingresoOpen + ingresoVentas + totalOtrosIngresos;
 
     autoTable(doc, {
         startY: currentY,
         body: [
             [ { content: "APERTURA DE CAJA" }, { content: safe(ingresoOpen) } ],
             [ { content: "VENTAS" }, { content: safe(ingresoVentas) } ],
-            [ { content: "OTROS INGRESOS" }, { content: safe(ingresoOtros) } ],
+            [ { content: "OTROS INGRESOS" }, { content: safe(totalOtrosIngresos) } ],
             [ { content: "----------------------------" }, { content: "---------------" } ],
             [ { content: "TOTAL", styles: { fontStyle: "bold" } }, safe(totalIngresos) ]
         ],
