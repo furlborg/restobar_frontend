@@ -34,7 +34,7 @@
                                 type="success"
                                 tertiary
                                 @click="dataModalWhatsApp()"
-                                :disabled="data.invoice_type === '80' || data.status === 'A' || data.status === 'N'"
+                                :disabled="data.status === 'A'"
                         >
                             <v-icon name="bi-whatsapp"/>
                         </n-button>
@@ -190,7 +190,8 @@ export default defineComponent({
                 orientation: "p",
                 hotfixes: [ "px_scaling" ]
             });
-
+            
+            
             if (save === true) {
                 doc.html(ticket.value.$el.innerHTML, {
                     callback: async function(doc) {

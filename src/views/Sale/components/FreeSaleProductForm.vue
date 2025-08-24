@@ -49,7 +49,7 @@ export default defineComponent({
     const product = ref({
       product_name: "",
       price_sale: 0,
-      product_affectation: 20,
+      product_affectation: settingsStore.businessSettings.sale.default_affectation,
     });
 
     const rules = {
@@ -83,10 +83,15 @@ export default defineComponent({
             product_name: product.value.product_name,
             product_affectation: product.value.product_affectation,
             product_igv: 0,
-            price_base: product.value.price_sale,
-            igv_tax: 0,
-            discount: 0,
+            igv_tax:
+              product.value.product_affectation !== 10
+                ? 0
+                : (settingsStore.businessSettings.sale.igv_tax * product.value.price_sale),
             price_sale: product.value.price_sale,
+            discount: 0,
+            price_base: product.value.product_affectation !== 10
+                ? product.value.price_sale
+                : (product.value.price_sale - (settingsStore.businessSettings.sale.igv_tax * product.value.price_sale)),
             quantity: 1,
             icbper: 0,
           });

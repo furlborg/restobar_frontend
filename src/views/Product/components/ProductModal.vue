@@ -535,7 +535,7 @@ export default defineComponent({
           name: null,
           description: null,
           prices: null,
-          purchase_price: null,
+          purchase_price: 0,
           measure_unit: 1,
           control_stock: false,
           stock: "",
