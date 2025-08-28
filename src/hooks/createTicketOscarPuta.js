@@ -18,6 +18,7 @@ export const generateVoucherPDF = async(data, infoHeader, dataOrder) => {
     const info = data.informacion_adicional.split("|");
     const tableStore = useTableStore();
     const orderData = dataOrder?.["order_data"];
+    const byConsumption = Boolean(dataOrder?.by_consumption);
 
     const title = () => {
         switch (data?.["codigo_tipo_documento"]) {
@@ -123,14 +124,59 @@ export const generateVoucherPDF = async(data, infoHeader, dataOrder) => {
         y += 4;
     });
 
+    // autoTable(doc, {
+    //     startY: y,
+    //     head: [ [ "CANT", "DESCRIPCIÓN", "PRECIO", "TOTAL" ] ],
+    //     body: data.items.map(item => [
+    //         String(item?.["cantidad"]),
+    //         doc.splitTextToSize(item.descripcion, 40),
+    //         item?.["valor_unitario"].toFixed(2),
+    //         item?.["total_item"].toFixed(2)
+    //     ]),
+    //     theme: "grid",
+    //     styles: { fontSize: 6, cellPadding: 0.5 },
+    //     headStyles: { fillColor: "FFFFFF", fontSize: 6.5, cellPadding: 0.5, textColor: "000000" },
+    //     bodyStyles: { fontSize: 7, fontStyle: "bold", cellPadding: 0.5, textColor: "000000" },
+    //     margin: { left: 3, right: 3 },
+    //     columnStyles: {
+    //         0: { cellWidth: 10 },
+    //         1: { cellWidth: 40 },
+    //         2: { cellWidth: 12 },
+    //         3: { cellWidth: 12 }
+    //     }
+    // });
+
+    // Si es por consumo (impresión simplificada)
+    if (byConsumption) {
+    const head = [[ "DESCRIPCIÓN", "TOTAL" ]];
+    const totalVenta = Number(totales?.["total_venta"] ?? 0).toFixed(2);
+    const body = [["POR CONSUMO DE ALIMENTOS", totalVenta]];
+
     autoTable(doc, {
         startY: y,
-        head: [ [ "CANT", "DESCRIPCIÓN", "PRECIO", "TOTAL" ] ],
-        body: data.items.map(item => [
-            String(item?.["cantidad"]),
-            doc.splitTextToSize(item.descripcion, 40),
-            item?.["valor_unitario"].toFixed(2),
-            item?.["total_item"].toFixed(2)
+        head,
+        body,
+        theme: "grid",
+        styles: { fontSize: 7, cellPadding: 0.6 },
+        headStyles: { fillColor: "FFFFFF", fontSize: 7.5, textColor: "000000" },
+        bodyStyles: { fontSize: 7, fontStyle: "normal", textColor: "000000" },
+        margin: { left: 3, right: 3 },
+        columnStyles: {
+        0: { cellWidth: 55 }, // ancho para descripción
+        1: { cellWidth: 19, halign: "left" } // ancho para total y alineado a la derecha
+        }
+    });
+
+    } else {
+    // comportamiento original de 4 columnas (ajustado para usar join en descripciones)
+    autoTable(doc, {
+        startY: y,
+        head: [[ "CANT", "DESCRIPCIÓN", "PRECIO", "TOTAL" ]],
+        body: (data.items || []).map(item => [
+        String(item?.["cantidad"] ?? ""),
+        (doc.splitTextToSize(item?.descripcion ?? "", 40) || []).join("\n"),
+        Number(item?.["valor_unitario"] ?? 0).toFixed(2),
+        Number(item?.["total_item"] ?? item?.total ?? 0).toFixed(2)
         ]),
         theme: "grid",
         styles: { fontSize: 6, cellPadding: 0.5 },
@@ -138,12 +184,16 @@ export const generateVoucherPDF = async(data, infoHeader, dataOrder) => {
         bodyStyles: { fontSize: 7, fontStyle: "bold", cellPadding: 0.5, textColor: "000000" },
         margin: { left: 3, right: 3 },
         columnStyles: {
-            0: { cellWidth: 10 },
-            1: { cellWidth: 40 },
-            2: { cellWidth: 12 },
-            3: { cellWidth: 12 }
+        0: { cellWidth: 10 },
+        1: { cellWidth: 40 },
+        2: { cellWidth: 12, halign: "right" },
+        3: { cellWidth: 12, halign: "right" }
         }
     });
+    }
+
+    // actualizar y usando lastAutoTable (fallback por si no se creó)
+    y = doc.lastAutoTable ? doc.lastAutoTable.finalY + 4 : y + 4;
 
     y = doc?.["lastAutoTable"].finalY + 4;
     if (totales?.["total_operaciones_gravadas"]) {
