@@ -43,6 +43,7 @@ const sentFileToWhatsApp = async(info) => {
             // eslint-disable-next-line vue/no-mutating-props
             props.dataModal.show.value = false;
             console.log("Enviado con éxito:", data);
+            console.log(info.by_consumption);
             loading.value = false;
 
         }
