@@ -386,7 +386,6 @@ export default defineComponent({
         });
 
         onBeforeRouteUpdate((to) => {
-            console.log("tetas 1");
             if (to.name !== "ProductCategories" && to.name !== "CategoriesItems") {
                 if ( !checkState.value) {
                     dialog.error({
@@ -406,7 +405,6 @@ export default defineComponent({
         });
 
         onBeforeRouteLeave((to) => {
-            console.log("tetas 2");
             if (to.name !== "ProductCategories" && to.name !== "CategoriesItems") {
                 if ( !checkState.value) {
                     dialog.error({
