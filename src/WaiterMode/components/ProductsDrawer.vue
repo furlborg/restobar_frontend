@@ -375,7 +375,6 @@ export default defineComponent({
                         waiterStore.preOrderList = [];
                         await nextTick();
                         await ticketPreview.value.generate();
-                        console.log("Oscar puta, suicidate");
                         emit("update:show", false);
                         await tableStore.refreshData();
                         // router.push({ name: "WHome" });
@@ -433,8 +432,6 @@ export default defineComponent({
                         waiterStore.preOrderList = [];
                         await nextTick();
                         await ticketPreview.value.generate();
-                        console.log("Oscar puta, suicidate perra fracasada");
-
                         emit("update:show", false);
                         await tableStore.refreshData();
                         // router.push({ name: "WHome" });

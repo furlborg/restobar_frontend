@@ -124,7 +124,6 @@ export default defineComponent({
         orderStore.orderId = null;
 
         onBeforeRouteUpdate((to) => {
-            console.log("tetas ddd");
             if (to.name !== "WCategories" && to.name !== "WProducts") {
                 if (waiterStore.preOrderList.length) {
                     dialog.error({
@@ -143,7 +142,6 @@ export default defineComponent({
         });
 
         onBeforeRouteLeave((to) => {
-            console.log("tetas xxx");
             if (to.name !== "WCategories" && to.name !== "WProducts") {
                 if (waiterStore.preOrderList.length) {
                     dialog.error({
