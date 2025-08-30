@@ -26,8 +26,7 @@
           <n-radio-button :value="1" :key="1">FACTURA</n-radio-button>
           <n-radio-button :value="3" :key="3">BOLETA</n-radio-button>
         </n-radio-group>
-        <n-radio-group v-model:value="sale.payment_condition" name="saleType" size="small"
-          @update:value="changeCondition" disabled>
+        <n-radio-group v-model:value="sale.payment_condition" name="saleType" size="small" @update:value="changeCondition">
           <n-radio-button :value="1" :key="1">CONTADO</n-radio-button>
           <n-radio-button :value="2" :key="2">CRÉDITO</n-radio-button>
         </n-radio-group>
@@ -71,9 +70,16 @@
             <n-date-picker class="w-100" type="datetime" :is-date-disabled="dateDisabled"
               v-model:formatted-value="sale.date_sale" />
           </n-form-item-gi>
-          <n-form-item-gi :span="2" label="Fecha Vencimiento" path="due_date">
-            <n-date-picker class="w-100" type="datetime" v-model:formatted-value="sale.due_date"
-              :is-date-disabled="(ts) => ts <= new Date(sale.date_sale)" />
+          <n-form-item-gi v-if="sale.payment_condition === 2" :span="2" label="Fecha Vencimiento" path="due_date">
+            <n-date-picker
+              class="w-100"
+              type="datetime"
+              v-model:formatted-value="sale.due_date"
+              :is-date-disabled="(ts) => ts <= new Date(sale.date_sale)"
+            />
+          </n-form-item-gi>
+          <n-form-item-gi v-if="sale.payment_condition === 1" label="Método Pago">
+            <n-select v-model:value="sale.payment_method" :options="saleStore.getPaymentMethodsOptions" filterable />
           </n-form-item-gi>
           <n-form-item-gi>
             <n-checkbox v-model:checked="sale.by_consumption" :disabled="sale.payment_condition === 2">Por
@@ -130,36 +136,36 @@
                 <td>
                   S/.
                   <input class="custom-input" type="number" min="0" step=".5" v-model="detail.price_sale" @input="(v) => (
-                    saleStore.updateDetail(detail),
-                    (detail.discount = parseFloat(0).toFixed(2))
-                  )
-                    " v-autowidth @click="$event.target.select()" />
-                              </td>
-                              <!-- <td>
-                                S/.
-                                <input
-                                  class="custom-input"
-                                  type="number"
-                                  min="0"
-                                  :max="!detail.price_sale ? 0 : detail.price_sale"
-                                  :disabled="
-                                    detail.product_affectation === 21 ||
-                                    !!Number(sale.discount)
-                                  "
-                                  step=".5"
-                                  v-model="detail.discount"
-                                  v-autowidth
-                                  @click="$event.target.select()"
-                                />
-                              </td> -->
+      saleStore.updateDetail(detail),
+      (detail.discount = parseFloat(0).toFixed(2))
+    )
+      " v-autowidth @click="$event.target.select()" />
+                </td>
+                <!-- <td>
+                  S/.
+                  <input
+                    class="custom-input"
+                    type="number"
+                    min="0"
+                    :max="!detail.price_sale ? 0 : detail.price_sale"
+                    :disabled="
+                      detail.product_affectation === 21 ||
+                      !!Number(sale.discount)
+                    "
+                    step=".5"
+                    v-model="detail.discount"
+                    v-autowidth
+                    @click="$event.target.select()"
+                  />
+                </td> -->
                 <td>
                   {{
-                    detail.product_affectation === 21
-                      ? "0.00"
-                      : parseFloat(
-                        detail.quantity * detail.price_sale - detail.discount
-                      ).toFixed(2)
-                  }}
+      detail.product_affectation === 21
+        ? "0.00"
+        : parseFloat(
+          detail.quantity * detail.price_sale - detail.discount
+        ).toFixed(2)
+    }}
                 </td>
                 <td>
                   <n-button type="error" text @click="saleStore.toSale.splice(index, 1)">
@@ -172,7 +178,7 @@
         </n-table>
       </n-scrollbar>
       <n-grid cols="3">
-        <n-gi :span="2">
+        <n-gi v-if="sale.payment_condition === 1" :span="2">
           <n-space class="h-100" align="center" justify="space-around">
             <n-space align="center" vertical>
               <span class="fs-4">Pago</span>
@@ -256,6 +262,9 @@
         @click.prevent="performCreateSale"
         ><v-icon class="me-2" name="fa-coins" scale="2" />Cobrar</n-button
       > -->
+      <n-space v-if="sale.payment_condition === 1" justify="space-between">
+        <n-checkbox v-model:checked="isMultiple">Pago multiple</n-checkbox>
+      </n-space>
       <n-divider />
       <n-grid responsive="screen" cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12" :x-gap="12">
         <!-- <n-gi :span="4">
@@ -278,10 +287,46 @@
       sale.payment_condition === 1
       ? sale.given_amount < sale.amount
       : !(sale.given_amount < sale.amount)
-      " secondary block @click.prevent="performCreateSale()">
+      " secondary block @click.prevent="isMultiple ? doMultiplePayment() : performCreateSale()">
         <v-icon class="me-2" name="fa-coins" scale="2" />Cobrar
       </n-button>
     </n-card>
+    <n-modal :class="{
+      'w-100': genericsStore.device === 'mobile',
+      'w-50': genericsStore.device === 'tablet',
+      'w-25': genericsStore.device === 'desktop',
+    }" preset="card" v-model:show="showPayments" title="Realizar venta" :mask-closable="false" closable
+      @close="sale.payments = null">
+      <n-space justify="space-between">
+        <n-tag type="info">Total: S/. {{ showPayments ? sale.amount : null }}</n-tag>
+        <n-tag :type="evalPayments ? 'error' : 'success'">Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}
+        </n-tag>
+        <n-tag :type="evalPayments ? 'error' : 'warning'">Faltante: S/.
+          {{
+      showPayments
+        ? parseFloat(sale.amount - currentPaymentsAmount).toFixed(2)
+        : null
+    }}</n-tag>
+      </n-space>
+      <n-form-item class="mt-2" label="Pagos">
+        <n-dynamic-input v-model:value="sale.payments" :min="1" @create="createPayment">
+          <template #default="{ value }">
+            <div style="display: flex; align-items: center; width: 100%">
+              <n-select v-model:value="value.payment_method" :options="filteredMethods" :disabled="loading" />
+              <n-input class="ms-2" v-model:value="value.amount" placeholder="" :disabled="loading"
+                @keypress="isDecimal($event)" />
+            </div>
+          </template>
+        </n-dynamic-input>
+      </n-form-item>
+      <n-space justify="end">
+        <n-button type="success" :disabled="evalPayments ||
+      sale.payments.some((pay) => pay.payment_method === null) ||
+      sale.payments.some((pay) => Number(pay.amount) <= 0) ||
+      loading
+      " secondary :loading="loading" @click="performCreateSale">Confirmar</n-button>
+      </n-space>
+    </n-modal>
     <!-- Customer Modal -->
     <customer-modal v-model:show="showModal" :id-customer="sale.customer"
       :doc_type="sale.invoice_type === 1 ? '6' : null" :document="customerDocument" @update:show="onCloseModal"
@@ -473,18 +518,30 @@ export default defineComponent({
     const formRules = computed(() => {
       let rules = saleRules;
       rules.customer.required = !(sale.value.invoice_type !== 1 && sale.value.payment_condition === 1 && sale.value.given_amount <= 699);
-      rules.due_date = {
-        required: true,
-        validator: (_, value) => {
-          if (!value) return new Error("Debes seleccionar fecha de vencimiento");
-          const due = new Date(value.split("/").reverse().join("-"));
-          const saleDate = new Date(sale.value.date_sale.split("/").reverse().join("-"));
-          if (due <= saleDate) {
-            return new Error("La fecha de vencimiento debe ser mayor a la de emisión");
+      rules.due_date = sale.value.payment_condition === 2
+        ? {
+            required: true,
+            validator: (_, value) => {
+              if (!value) return new Error("Debes seleccionar fecha de vencimiento");
+              const toDate = (str) => {
+                const [datePart, timePart] = str.split(" ");
+                const [d, m, y] = datePart.split("/").map(Number);
+                const [hh, mm, ss] = timePart.split(":").map(Number);
+                return new Date(y, m - 1, d, hh, mm, ss);
+              };
+              try {
+                const due = toDate(value);
+                const saleDate = toDate(sale.value.date_sale);
+                if (!(due > saleDate)) {
+                  return new Error("La fecha de vencimiento debe ser mayor a la de emisión");
+                }
+                return true;
+              } catch(e) {
+                return new Error("Fecha de vencimiento inválida");
+              }
+            }
           }
-          return true;
-        }
-      };
+        : { required: false };
       return rules;
     });
 
@@ -494,11 +551,20 @@ export default defineComponent({
 
     const changeCondition = (v) => {
       switch (v) {
-        case 1:
+        case 1: // CONTADO
           sale.value.given_amount = total.value;
           break;
-        case 2:
+        case 2: // CREDITO
           sale.value.given_amount = parseFloat(0).toFixed(2);
+          try {
+            const [datePart, timePart] = sale.value.date_sale.split(" ");
+            const [d, m, y] = datePart.split("/").map(Number);
+            const [hh, mm, ss] = timePart.split(":").map(Number);
+            const base = new Date(y, m - 1, d, hh, mm, ss);
+            const due = new Date(base.getTime() + 60 * 60 * 1000);
+            const pad = (n) => (n < 10 ? "0" + n : String(n));
+            sale.value.due_date = `${pad(due.getDate())}/${pad(due.getMonth() + 1)}/${due.getFullYear()} ${pad(due.getHours())}:${pad(due.getMinutes())}:${pad(due.getSeconds())}`;
+          } catch (e) { /* noop */ }
           break;
         default:
           console.error(`${v} invalido`);
@@ -768,6 +834,59 @@ export default defineComponent({
       onCloseModal();
     };
 
+    const isMultiple = ref(false);
+
+    const showPayments = ref(false);
+
+    const createPayment = () => {
+      return {
+        payment_method: null,
+        amount: "0",
+      };
+    };
+
+    const doMultiplePayment = () => {
+      sale.value.payments = [
+        {
+          payment_method: sale.value.payment_method,
+          amount: String(sale.value.amount),
+        },
+      ];
+      showPayments.value = true;
+    };
+
+    const filteredMethods = computed(() => {
+      return saleStore.getPaymentMethodsOptions.map((option) => ({
+        value: option.value,
+        label: option.label,
+        disabled: sale.value.payments.some(
+          (pay) => pay.payment_method === option.value
+        ),
+      }));
+    });
+
+    const evalPayments = computed(() => {
+      if (sale.value.payments) {
+        return (
+          sale.value.payments.reduce((acc, val) => {
+            return (acc += parseFloat(val.amount));
+          }, 0) !== Number(sale.value.amount)
+        );
+      } else {
+        return true;
+      }
+    });
+
+    const currentPaymentsAmount = computed(() => {
+      if (sale.value.payments) {
+        let sum = sale.value.payments.reduce((acc, val) => {
+          return (acc += parseFloat(val.amount));
+        }, 0);
+        return isNaN(sum) ? "0.00" : sum.toFixed(2);
+      } else {
+        return "0.00";
+      }
+    });
 
     const dateDisabled = (ts) => {
       return ts > new Date(Date.now());
@@ -887,6 +1006,13 @@ export default defineComponent({
       onSuccess,
       genericsStore,
       icbper,
+      isMultiple,
+      showPayments,
+      createPayment,
+      doMultiplePayment,
+      filteredMethods,
+      evalPayments,
+      currentPaymentsAmount,
       dateDisabled,
       getAfcShort,
       getAfcColor,

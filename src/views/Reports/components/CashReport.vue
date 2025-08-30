@@ -36,7 +36,7 @@
 
     <div class="grid-2">
       <n-card size="small" title="Resumen (Ingresos - Egresos)">
-        <div class="summary">
+        <div class="summary highlight">
           <div><strong>Ingresos:</strong> {{ formatMoney(summary.income_total) }}</div>
           <div><strong>Egresos:</strong> {{ formatMoney(summary.outcome_total) }}</div>
           <div><strong>Neto:</strong> {{ formatMoney(summary.net_total) }}</div>
@@ -125,4 +125,11 @@ async function fetchData() {
 .card-title { font-weight: 600; }
 .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
 .summary { display: grid; gap: 6px; }
+.summary.highlight {
+  background-color: #f0f9ff;
+  border: 1px solid #91d5ff;
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 1.2rem;
+}
 </style>
