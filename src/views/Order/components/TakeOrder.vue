@@ -281,15 +281,15 @@
                                     </n-gi>
                                 </n-grid>
                                 <n-button class="mt-2 py-5 fs-1" type="success" :disabled="!saleStore.toSale.length || sale.payment_condition === 1
-      ? sale.given_amount < sale.amount
-      : !(sale.given_amount < sale.amount)
-      " secondary block @click="
-      userStore.user.role !== 'MOZO'
-        ? isMultiple
-          ? doMultiplePayment()
-          : performTakeAway()
-        : performTakeAway()
-      ">
+                                    ? sale.given_amount < sale.amount
+                                    : !(sale.given_amount < sale.amount)
+                                    " secondary block @click="
+                                    userStore.user.role !== 'MOZO'
+                                        ? isMultiple
+                                        ? doMultiplePayment()
+                                        : performTakeAway()
+                                        : performTakeAway()
+                                    ">
                                     <v-icon class="me-2" name="fa-coins" scale="2"/>
                                     {{
                                         userStore.user.role !== "MOZO"

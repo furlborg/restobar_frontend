@@ -87,7 +87,7 @@
             >
               <template #prefix>
                 <img
-                  src="~@/assets/images/default-food-image.jpg"
+                  :src="productImage(product)"
                   alt
                   width="90"
                   height="90"
@@ -192,7 +192,7 @@
                   </n-dropdown>
                 </template>
                 <template #cover>
-                  <img src="~@/assets/images/default-food-image.jpg" alt />
+                  <img :src="productImage(product)" alt />
                 </template>
                 <n-text>{{ product.description }}</n-text>
               </n-card>
@@ -240,6 +240,7 @@
 
 <script>
 import { defineComponent, ref, onMounted, reactive, computed } from "vue";
+import defaultFoodImage from "@/assets/images/default-food-image.jpg";
 import { useMessage, useDialog } from "naive-ui";
 import { renderIcon } from "@/utils";
 import ProductModal from "./components/ProductModal";
@@ -261,6 +262,7 @@ export default defineComponent({
     MoveModal,
   },
   setup() {
+    const productImage = (p) => p?.image || p?.image_url || defaultFoodImage;
     const productStore = useProductStore();
     const userStore = useUserStore();
     const isLoadingData = ref(false);
@@ -533,6 +535,7 @@ export default defineComponent({
       itemsMovement,
       newMovement,
       performDisableProduct,
+      productImage,
     };
   },
 });

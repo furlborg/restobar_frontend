@@ -598,9 +598,13 @@ export default defineComponent({
                         const orderDetails = response.data.order_details;
                         const userId = response.data.user;
                         const detectedCustomers = [];
+                        const seenIds = new Set();
                         for (const item of orderDetails) {
-                            if (item.customer?.id && !detectedCustomers.includes(item.customer.id)) {
-                                detectedCustomers.push(item.customer);
+                            const c = item.customer;
+                            const cid = c?.id;
+                            if (cid && !seenIds.has(cid)) {
+                                seenIds.add(cid);
+                                detectedCustomers.push(c);
                             }
                         }
                         orderStore.orders = orderDetails;

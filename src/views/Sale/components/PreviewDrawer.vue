@@ -90,6 +90,7 @@ import { useMessage } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useSaleStore } from "@/store/modules/sale";
 import { jsPDF } from "jspdf";
+import html2canvas from "html2canvas";
 import DefaultPreset from "./pdf-presets/DefaultPreset";
 import PreviewPreset from "./pdf-presets/PreviewPreset";
 import { isNumber } from "@/utils";
@@ -176,34 +177,40 @@ export default defineComponent({
         const generate = async(save = false) => {
             // Activar modo impresión para usar dimensiones correctas
             isPrintMode.value = true;
-            
+
             // Esperar a que Vue actualice el DOM
             await new Promise(resolve => setTimeout(resolve, 100));
-            
-            const format = [
-                ticket.value.$el.clientWidth,
-                ticket.value.$el.clientHeight + 10
-            ];
-            const doc = new jsPDF({
-                unit: "px",
-                format: format,
-                orientation: "p",
-                hotfixes: [ "px_scaling" ]
-            });
-            
-            
+
             if (save === true) {
-                doc.html(ticket.value.$el.innerHTML, {
-                    callback: async function(doc) {
-                        doc.save(
-                            `${ saleStore.getSerieDescription(props.data.serie) }-${
-                                props.data.number
-                            }`
-                        );
-                        // Desactivar modo impresión después de guardar
-                        isPrintMode.value = false;
-                    }
-                });
+                try {
+                    const el = ticket.value?.$el;
+                    if (!el) throw new Error("Ticket DOM no disponible");
+                    const canvas = await html2canvas(el, {
+                        scale: 2,            
+                        useCORS: true,       
+                        logging: false,
+                        backgroundColor: '#ffffff'
+                    });
+
+                    const imgData = canvas.toDataURL('image/png');
+                    const pdfW = canvas.width;
+                    const pdfH = canvas.height + 10;
+
+                    const doc = new jsPDF({
+                        unit: 'px',
+                        format: [pdfW, pdfH],
+                        orientation: 'p',
+                        hotfixes: ['px_scaling']
+                    });
+
+                    doc.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH, undefined, 'FAST');
+                    doc.save(`${ saleStore.getSerieDescription(props.data.serie) }-${ props.data.number }`);
+                } catch (e) {
+                    console.error(e);
+                } finally {
+                    isPrintMode.value = false;
+                }
+                return;
             } else {
                 if (props.preVoucher) {
                     const business = businessStore.business;

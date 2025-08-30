@@ -704,16 +704,21 @@
                                       <n-input v-model:value="guarnition.name" placeholder=""/>
                                   </n-form-item-gi>
                                   <n-form-item-gi :span="4">
+                                    <n-space>
                                       <n-button class="me-2" :type="!selectedGuarnition ? 'info' : 'warning'"
                                                 :disabled="!guarnition.name || !guarnition.preparation_place_id" secondary
-                                                @click="!selectedGuarnition ? performCreateGuarnition() : performUpdateGuarnition()">
+                                              @click="!selectedGuarnition ? performCreateGuarnition() : performUpdateGuarnition()">
                                           {{ !selectedGuarnition ? "Agregar" : "Guardar" }}
                                       </n-button>
                                       <n-button type="error" secondary :disabled="!guarnition.name || !guarnition.preparation_place"
                                                 @click="selectedGuarnition = null; guarnition = { name: '', preparation_place: null,
-                            preparation_place_id: null};">
+                                          preparation_place_id: null};">
                                           Cancelar
                                       </n-button>
+                                      <n-button v-if="selectedGuarnition" type="error" tertiary @click="performDeleteGuarnition()">
+                                        Eliminar
+                                      </n-button>
+                                    </n-space>
                                   </n-form-item-gi>
                               </n-grid>
                           </n-form>
@@ -755,7 +760,11 @@ import {
     updateProductCategory,
     getInventoryConcepts,
     createInventoryConcept,
-    updateInventoryConcept, updateGuarnition, createGuarnition, getProductFittings
+    updateInventoryConcept,
+    updateGuarnition, 
+    createGuarnition, 
+    getProductFittings,
+    deleteGuarnition
 } from "@/api/modules/products";
 import { getConcepts, createConcept, updateConcept } from "@/api/modules/tills";
 
@@ -1398,7 +1407,27 @@ export default defineComponent({
           message.error("Algo salió mal...");
         })
         .finally(() => {
-          guarnition.value = {};
+          guarnition.value.name = "";
+          guarnition.value.preparation_place_id = null;
+        });
+    };
+
+    const performDeleteGuarnition = async () => {
+      if (!selectedGuarnition.value) return;
+      await deleteGuarnition(selectedGuarnition.value)
+        .then((response) => {
+          if (response.status === 204) {
+              loadGuarnition();
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          guarnition.value.name = "";
+          guarnition.value.preparation_place_id = null;
+          selectedGuarnition.value = false;
         });
     };
 
@@ -1417,8 +1446,9 @@ export default defineComponent({
           message.error("Algo salió mal...");
         })
         .finally(() => {
-          selectedGuarnition.value = null;
-          guarnition.value = {};
+          guarnition.value.name = "";
+          guarnition.value.preparation_place_id = null;
+          selectedGuarnition.value = false;
         });
     };
 
@@ -1496,6 +1526,7 @@ export default defineComponent({
       performUpdateInventoryConcept,
       performCreateGuarnition,
       performUpdateGuarnition,
+      performDeleteGuarnition
     };
   },
 });

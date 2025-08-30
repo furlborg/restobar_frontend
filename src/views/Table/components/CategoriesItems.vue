@@ -32,7 +32,7 @@
         >
           <template #prefix>
             <img
-              src="~@/assets/images/default-food-image.jpg"
+               :src="productImage(product)"
               alt=""
               width="75"
               height="75"
@@ -93,7 +93,7 @@
               </n-dropdown>
             </template>
             <template #cover>
-              <img src="~@/assets/images/default-food-image.jpg" alt="" />
+              <img  :src="productImage(product)" alt="" />
             </template>
             <n-text
               >Lorem ipsum dolor sit, amet consectetur adipisicing elit.</n-text
@@ -116,10 +116,12 @@ import { useGenericsStore } from "@/store/modules/generics";
 import { useSettingsStore } from "@/store/modules/settings";
 import { getProductsByCategory } from "@/api/modules/products";
 import { useProductStore } from "@/store/modules/product";
+import defaultFoodImage from "@/assets/images/default-food-image.jpg";
 
 export default defineComponent({
   name: "CategoriesItems",
   setup() {
+    const productImage = (p) => p?.image || p?.image_url || defaultFoodImage;
     const message = useMessage();
     const route = useRoute();
     const router = useRouter();
@@ -215,6 +217,7 @@ export default defineComponent({
       orderStore,
       search,
       itemsList,
+      productImage,
     };
   },
 });
