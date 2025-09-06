@@ -7,7 +7,7 @@
                     Recargar
                 </n-button>
                 <template
-                        v-if="settingsStore.business_settings.order.divide_delivery_takeaway"
+                        v-if="settingsStore.business_settings.order?.divide_delivery_takeaway"
                 >
                     <n-button
                             v-if="userStore.hasPermission('take_away_order')"

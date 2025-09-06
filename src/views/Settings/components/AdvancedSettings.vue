@@ -233,7 +233,7 @@
                                 multiple
                         />
                     </n-form-item-gi>
-                    <n-form-item-gi :span="4">
+                    <n-form-item-gi v-if="businessSettings.order" :span="4">
                         <n-checkbox
                                 v-model:checked="businessSettings.order.divide_delivery_takeaway"
                         >Dividir delivery y para llevar

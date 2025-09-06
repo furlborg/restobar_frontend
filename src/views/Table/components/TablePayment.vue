@@ -1,299 +1,353 @@
 <template>
-  <div id="TablePayment">
-    <n-spin :show="loading">
-      <n-card>
-        <n-space class="mb-2" align="center" justify="space-between">
-          <div class="d-flex align-items-center">
-            <n-text class="fs-4">{{
-      `${saleStore.getSerieDescription(sale.serie)}-${sale.number}`
-    }}</n-text>
-            <n-dropdown trigger="click" :options="saleStore.getDocumentSeriesOptions(sale.invoice_type)"
-              :show-arrow="true" placement="bottom-end" size="huge" @select="selectSerie">
-              <n-button type="info" text>
-                <v-icon class="p-0" name="md-arrowdropdown-round" scale="1.75" />
-              </n-button>
-            </n-dropdown>
-          </div>
-          <n-radio-group v-model:value="sale.invoice_type" name="docType" size="small" @update:value="changeSerie">
-            <n-radio-button :disabled="!settingsStore.businessSettings.sale.enable_invoices" :value="1"
-              :key="1">FACTURA</n-radio-button>
-            <n-radio-button :disabled="!settingsStore.businessSettings.sale.enable_invoices" :value="3"
-              :key="3">BOLETA</n-radio-button>
-            <n-radio-button :value="80" :key="80">N. VENTA</n-radio-button>
-          </n-radio-group>
-          <n-radio-group v-model:value="sale.payment_condition" name="saleType" size="small"
-            @update:value="changeCondition" :disabled="!(settingsStore.businessSettings?.sale?.enable_credits === true)
-      ">
-            <n-radio-button :value="1" :key="1">CONTADO</n-radio-button>
-            <n-radio-button :value="2" :key="2">CRÉDITO</n-radio-button>
-          </n-radio-group>
-        </n-space>
-        <n-form class="mb-2" ref="saleForm" :model="sale" :rules="formRules">
-          <n-grid responsive="screen" cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12" :x-gap="12">
-            <n-form-item-gi :span="9" label="Cliente" :show-require-mark="formRules.customer.required" path="customer">
-              <n-input-group>
-                <n-auto-complete blur-after-select :input-props="{
-      autocomplete: 'disabled',
-    }" v-model:value="sale.customer_name" :options="customerOptions" :get-show="showOptions" :loading="searching"
-                  @keypress.enter="autoCreateCustomer" @update:value="(v) => {
-      !v
-        ? ((sale.customer = 0),
-          (sale.address = null),
-          (whatsappNumber = ''),
-          (addressesOptions = []))
-        : null;
-    }
-      " @select="(value) => {
-      sale.customer = value;
-      sale.address = null;
-      whatsappNumber = '';
-      createAddressesOptions();
-    }
-      " placeholder="" clearable />
-                <n-button v-if="!sale.customer" type="info" @click="(sale.customer = 0), (showModal = true)">
-                  <v-icon name="md-add-round" />
-                </n-button>
-                <n-button v-else type="warning" @click="showModal = true">
-                  <v-icon name="ri-edit-fill" />
-                </n-button>
-              </n-input-group>
-            </n-form-item-gi>
-            <n-form-item-gi :span="3" label="Fecha">
-              <n-date-picker class="w-100" type="datetime" :is-date-disabled="dateDisabled"  disabled
-                v-model:formatted-value="sale.date_sale" />
-            </n-form-item-gi>
-            <n-form-item-gi :span="5" label="Dirección">
-              <n-select v-model:value="sale.address" :options="addressesOptions" :disabled="!sale.customer"
-                placeholder="" />
-            </n-form-item-gi>
-            <n-form-item-gi :span="3" label="Método Pago">
-              <n-select v-model:value="sale.payment_method" :options="saleStore.getPaymentMethodsOptions" filterable />
-            </n-form-item-gi>
-            <n-form-item-gi :span="2">
-              <n-checkbox v-model:checked="sale.by_consumption" :disabled="sale.payment_condition === 2">Por
-                consumo</n-checkbox>
-            </n-form-item-gi>
-            <n-form-item-gi :span="2">
-              <n-button type="info" text @click="showObservations = !showObservations">{{
-      !showObservations ? "Ver" : "Ocultar"
-    }}
-                Observaciones</n-button>
-            </n-form-item-gi>
-            <n-gi :span="12">
-              <n-collapse-transition :show="showObservations">
-                <n-form-item label="Observaciones">
-                  <n-input type="textarea" v-model:value="sale.observations"/>
-                </n-form-item>
-              </n-collapse-transition>
-            </n-gi>
-          </n-grid>
-        </n-form>
-        <n-scrollbar :x-scrollable="true" style="max-width: 1000px">
-          <n-table class="fs-6 m-auto text-center" :bordered="false">
-            <thead>
-              <tr>
-                <th v-if="settingsStore.businessSettings.sale.manage_affectations">
-                  #
-                </th>
-                <th>Cantidad</th>
-                <th>Producto</th>
-                <th>Precio Unitario</th>
-                <th v-if="settingsStore.business_settings.sale?.show_discount_label">Descuento</th>
-                <th>Precio Total</th>
-              </tr>
-            </thead>
-            <tbody>
-            <template v-for="(detail, index) in saleStore.toSale">
-                <tr v-if="detail.quantity > 0" :key="index">
-                    <td v-if="settingsStore.businessSettings.sale?.manage_affectations
-      ">
-                        <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation"
-                                     :disabled="!userStore.hasPermission('change_product_affectation')"
-                                     :options="productStore.affectationsOptions" @update:value="() => saleStore.updateDetail(detail)">
-                            <n-tag size="small" :color="getAfcColor(detail.product_affectation)">{{
-                                    getAfcShort(detail.product_affectation) }}
-                            </n-tag>
-                        </n-popselect>
+  <n-card :bordered="false" class="h-100" content-class="p-0 overflow-auto">
+    <n-scrollbar>
+      <div id="TablePayment">
+        <n-spin :show="loading">
+          <n-card :bordered="false" content-class="p-0">
+            <n-space class="mb-2" align="center" justify="space-between">
+              <div class="d-flex align-items-center">
+                <n-text class="fs-4">{{ `${saleStore.getSerieDescription(sale.serie)}-${sale.number}` }}</n-text>
+                <n-dropdown trigger="click" :options="saleStore.getDocumentSeriesOptions(sale.invoice_type)"
+                  :show-arrow="true" placement="bottom-end" size="huge" @select="sale.serie = $event">
+                  <n-button type="info" text>
+                    <v-icon class="p-0" name="md-arrowdropdown-round" scale="1.75" />
+                  </n-button>
+                </n-dropdown>
+              </div>
+              <n-radio-group v-model:value="sale.invoice_type" name="docType" size="small" @update:value="changeSerie">
+                <n-radio-button :disabled="!settingsStore.businessSettings.sale?.enable_invoices" :value="1">FACTURA</n-radio-button>
+                <n-radio-button :disabled="!settingsStore.businessSettings.sale?.enable_invoices" :value="3">BOLETA</n-radio-button>
+                <n-radio-button :value="80">N. VENTA</n-radio-button>
+              </n-radio-group>
+              <n-radio-group v-model:value="sale.payment_condition" name="saleType" size="small"
+                :disabled="!settingsStore.businessSettings?.sale?.enable_credits" @update:value="changeCondition">
+                <n-radio-button :value="1">CONTADO</n-radio-button>
+                <n-radio-button :value="2">CRÉDITO</n-radio-button>
+              </n-radio-group>
+            </n-space>
+            <n-form class="mb-2" ref="saleForm" :model="sale" :rules="formRules">
+              <n-grid responsive="screen" cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12" :x-gap="12">
+                <n-form-item-gi :span="9" label="Cliente" :show-require-mark="formRules.customer.required" path="customer">
+                  <n-input-group>
+                    <n-auto-complete blur-after-select :input-props="{ autocomplete: 'disabled' }"
+                      v-model:value="sale.customer_name" :options="customerOptions" :get-show="showOptions"
+                      :loading="searching" @keypress.enter="autoCreateCustomer"
+                      @update:value="v => !v ? (sale.customer = 0, sale.address = null, whatsappNumber = '', addressesOptions = []) : null"
+                      @select="value => (sale.customer = value, sale.address = null, whatsappNumber = '', createAddressesOptions())"
+                      placeholder="" clearable />
+                    <n-button :type="!sale.customer ? 'info' : 'warning'"
+                      @click="sale.customer = 0, showModal = true">
+                      <v-icon :name="!sale.customer ? 'md-add-round' : 'ri-edit-fill'" />
+                    </n-button>
+                  </n-input-group>
+                </n-form-item-gi>
+                <n-form-item-gi :span="3" label="Fecha">
+                  <n-date-picker class="w-100" type="datetime" :is-date-disabled="ts => ts > new Date()"
+                    disabled v-model:formatted-value="sale.date_sale" />
+                </n-form-item-gi>
+                <n-form-item-gi :span="5" label="Dirección">
+                  <n-select v-model:value="sale.address" :options="addressesOptions"
+                    :disabled="!sale.customer" placeholder="" />
+                </n-form-item-gi>
+                <n-form-item-gi :span="3" label="Método Pago">
+                  <n-select v-model:value="sale.payment_method" :options="saleStore.getPaymentMethodsOptions" filterable />
+                </n-form-item-gi>
+                <n-form-item-gi :span="2">
+                  <n-checkbox v-model:checked="sale.by_consumption" :disabled="sale.payment_condition === 2">Por consumo</n-checkbox>
+                </n-form-item-gi>
+                <n-form-item-gi :span="2">
+                  <n-button type="info" text @click="showObservations = !showObservations">
+                    {{ showObservations ? "Ocultar" : "Ver" }} Observaciones
+                  </n-button>
+                </n-form-item-gi>
+                <n-gi :span="12">
+                  <n-collapse-transition :show="showObservations">
+                    <n-form-item label="Observaciones">
+                      <n-input type="textarea" v-model:value="sale.observations"/>
+                    </n-form-item>
+                  </n-collapse-transition>
+                </n-gi>
+              </n-grid>
+            </n-form>
+            <n-scrollbar style="max-width: 1000px">
+              <n-table class="fs-6 m-auto text-center" :bordered="false">
+                <thead>
+                  <tr>
+                    <th v-if="settingsStore.businessSettings.sale?.manage_affectations">#</th>
+                    <th>Cantidad</th>
+                    <th>Producto</th>
+                    <th>Precio Unitario</th>
+                    <th v-if="settingsStore.business_settings.sale?.show_discount_label">Descuento</th>
+                    <th>Precio Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(detail, index) in saleStore.toSale.filter(d => d.quantity > 0)" :key="index">
+                    <td v-if="settingsStore.businessSettings.sale?.manage_affectations">
+                      <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation"
+                        :disabled="!userStore.hasPermission('change_product_affectation')"
+                        :options="productStore.affectationsOptions" @update:value="saleStore.updateDetail(detail)">
+                        <n-tag size="small" :color="getAfcColor(detail.product_affectation)">
+                          {{ getAfcShort(detail.product_affectation) }}
+                        </n-tag>
+                      </n-popselect>
                     </td>
                     <td>{{ detail.quantity }}</td>
+                    <td><input class="custom-input" v-model="detail.product_name" v-autowidth @click="$event.target.select()"/></td>
                     <td>
-                        <input class="custom-input" v-model="detail.product_name" v-autowidth @click="$event.target.select()"/>
-                    </td>
-                    <td>
-                        S/.
-                        <input class="custom-input" type="number" :min="detail.product_affectation === 20 ? 1 : 0" step=".5"
-                               v-model="detail.price_sale" v-autowidth @click="$event.target.select()" :disabled="!settingsStore.business_settings.sale?.show_discount_label"
-                               @input="() => (saleStore.updateDetail(detail), (detail.discount = parseFloat('0').toFixed(2)))"/>
+                      S/. <input class="custom-input" type="number" :min="detail.product_affectation === 20 ? 1 : 0"
+                        step=".5" v-model="detail.price_sale" v-autowidth @click="$event.target.select()"
+                        :disabled="!settingsStore.business_settings.sale?.show_discount_label"
+                        @input="saleStore.updateDetail(detail), detail.discount = '0.00'"/>
                     </td>
                     <td v-if="settingsStore.business_settings.sale?.show_discount_label">
-                        S/.
-                        <input class="custom-input" type="number" min="0" :max="!detail.price_sale ? 0 : detail.price_sale" step=".5"
-                               :disabled="detail.product_affectation === 21 || !!Number(sale.discount)" v-model="detail.discount" 
-                               v-autowidth @click="$event.target.select()"/>
+                      S/. <input class="custom-input" type="number" min="0" :max="detail.price_sale || 0" step=".5"
+                        :disabled="detail.product_affectation === 21 || !!Number(sale.discount)"
+                        v-model="detail.discount" v-autowidth @click="$event.target.select()"/>
                     </td>
-                    <td>
-                        {{ detail.product_affectation === 21 ? "0.00" : parseFloat(detail.quantity * detail.price_sale - detail.discount).toFixed(2) }}
-                    </td>
-                </tr>
-            </template>
-            </tbody>
-          </n-table>
-        </n-scrollbar>
-        <n-grid cols="3">
-          <n-gi :span="2">
-            <n-space class="h-100" align="center" justify="space-around">
-              <n-space align="center" vertical>
-                <span class="fs-4">Pago</span>
-                <div class="fs-5">
-                  S/.
-                  <input class="fs-1 custom-input" type="number" min="0" step=".01" v-model="sale.given_amount"
-                    v-autowidth @click="$event.target.select()" />
+                    <td>{{ detail.product_affectation === 21 ? "0.00" : (detail.quantity * detail.price_sale - detail.discount).toFixed(2) }}</td>
+                  </tr>
+                </tbody>
+              </n-table>
+            </n-scrollbar>
+            <div class="payment-section d-block d-md-none mt-3">
+              <n-card class="mb-3" size="small">
+                <template #header>
+                  <span class="fw-bold">Resumen de Venta</span>
+                </template>
+                <div class="mobile-totals">
+                  <div v-if="subTotal" class="total-row">
+                    <span class="label">SUBTOTAL:</span>
+                    <span class="amount">S/. {{ subTotal.toFixed(2) }}</span>
+                  </div>
+                  <div v-if="totalGRV" class="total-row">
+                    <span class="label">OP. GRAVADAS:</span>
+                    <span class="amount">S/. {{ totalGRV.toFixed(2) }}</span>
+                  </div>
+                  <div v-if="totalEXN" class="total-row">
+                    <span class="label">OP. EXONERADAS:</span>
+                    <span class="amount">S/. {{ totalEXN.toFixed(2) }}</span>
+                  </div>
+                  <div v-if="totalGRT" class="total-row">
+                    <span class="label">OP. GRATUITAS:</span>
+                    <span class="amount">S/. {{ totalGRT.toFixed(2) }}</span>
+                  </div>
+                  <div v-if="totalIGV" class="total-row">
+                    <span class="label">IGV:</span>
+                    <span class="amount">S/. {{ totalIGV.toFixed(2) }}</span>
+                  </div>
+                  <div v-if="!settingsStore.business_settings.sale?.show_discount_label" class="total-row">
+                    <span class="label">DSCT:</span>
+                    <div class="input-group">
+                      <span>S/.</span>
+                      <input class="custom-input fw-bold discount-input" type="number" min="0" step=".5" 
+                        v-model="totalDSCT" :disabled="saleStore.toSale.some(d => Number(d.discount) > 0)"
+                        @click="$event.target.select()" />
+                    </div>
+                  </div>
+                  <div v-if="icbper" class="total-row">
+                    <span class="label">ICBPER:</span>
+                    <span class="amount">S/. {{ icbper.toFixed(2) }}</span>
+                  </div>
+                  <div class="total-row">
+                    <span class="label">OTROS:</span>
+                    <div class="input-group">
+                      <span>S/.</span>
+                      <input class="custom-input fw-bold others-input" type="number" min="0" step=".5"
+                        v-model="sale.other_charges" @click="$event.target.select()" />
+                    </div>
+                  </div>
                 </div>
-              </n-space>
-              <n-space align="center" vertical>
-                <span class="fs-4">Vuelto</span>
-                <div class="fs-5">
-                  S/. <span class="fs-1">{{ changing.toFixed(2) }}</span>
+                <n-divider />
+                <div class="total-final">
+                  <span class="label-total">TOTAL:</span>
+                  <span class="amount-total">S/. {{ sale.amount }}</span>
                 </div>
-              </n-space>
-            </n-space>
-          </n-gi>
-          <n-gi>
-            <n-space class="mt-2 fs-6 fw-bold" align="end" vertical>
-              <div v-if="subTotal">
-                SUBTOTAL: <span>S/. {{ subTotal.toFixed(2) }}</span>
-              </div>
-              <div v-if="totalGRV">
-                OP. GRAVADAS: <span>S/. {{ totalGRV.toFixed(2) }}</span>
-              </div>
-              <div v-if="totalEXN">
-                OP. EXONERADAS: <span>S/. {{ totalEXN.toFixed(2) }}</span>
-              </div>
-              <div v-if="totalGRT">
-                OP. GRATUITAS: <span>S/. {{ totalGRT.toFixed(2) }}</span>
-              </div>
-              <div v-if="totalIGV">
-                IGV: <span>S/. {{ totalIGV.toFixed(2) }}</span>
-              </div>
-              <div v-if="!settingsStore.business_settings.sale?.show_discount_label">
-                DSCT:
-                <span>S/.</span>
-                <input class="custom-input fw-bold" type="number" min="0" step=".5" v-model="totalDSCT" v-autowidth
-                  :disabled="saleStore.toSale.some(
-      (detail) => Number(detail.discount) > 0
-    )
-      " @click="$event.target.select()" />
-              </div>
-              <div v-if="icbper">
-                ICBPER: <span>S/. {{ icbper.toFixed(2) }}</span>
-              </div>
-              <div>
-                OTROS:
-                <span>S/.</span>
-                <input class="custom-input fw-bold" type="number" min="0" step=".5" v-model="sale.other_charges"
-                  v-autowidth @click="$event.target.select()" />
-              </div>
-              <div>
-                TOTAL: <span>S/. {{ sale.amount }}</span>
-              </div>
-            </n-space>
-          </n-gi>
-        </n-grid>
-        <!-- <n-button
-          class="fs-1 py-5 mt-2"
-          type="success"
-          :disabled="
-            !saleStore.toSale.length || sale.given_amount < sale.amount
-          "
-          secondary
-          block
-          @click.prevent="performCreateSale"
-          ><v-icon class="me-2" name="fa-coins" scale="2" />Cobrar</n-button
-        > -->
-        <n-space v-if="sale.payment_condition === 1" justify="space-between">
-          <n-checkbox v-model:checked="isMultiple">Pago multiple</n-checkbox>
-          <n-button type="info" text @click="openSeparatePaymentsModal">Nueva cuenta</n-button>
-        </n-space>
-        <n-divider />
-        <n-grid responsive="screen" cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12" :x-gap="12">
-          <!-- <n-gi :span="4">
-            <n-input-group>
-              <n-button
-                type="success"
-                :disabled="!(whatsappNumber.length >= 9)"
-                secondary
-              >
-                <v-icon name="bi-whatsapp" />
-              </n-button>
-              <n-input placeholder="" v-model:value="whatsappNumber" />
-            </n-input-group>
-          </n-gi> -->
-          <n-gi class="d-flex align-items-center" :span="3">
-            <n-checkbox v-model:checked="ticketPreview">Previsualizar ticket</n-checkbox>
-          </n-gi>
-        </n-grid>
-        <n-button class="fs-1 py-5 mt-2" type="success" :disabled="!saleStore.toSale.filter((detail) => !!detail.quantity).length ||
-      sale.payment_condition === 1
-      ? sale.given_amount < sale.amount
-      : !(sale.given_amount < sale.amount)
-      " secondary block @click.prevent="
-      isMultiple ? doMultiplePayment() : performCreateSale()
-      ">
-          <v-icon class="me-2" name="fa-coins" scale="2" />Cobrar
-        </n-button>
-      </n-card>
-    </n-spin>
-    <n-modal :class="{
-      'w-100': genericsStore.device === 'mobile',
-      'w-50': genericsStore.device === 'tablet',
-      'w-25': genericsStore.device === 'desktop',
-    }" preset="card" v-model:show="showPayments" title="Realizar venta" :mask-closable="false" closable
-      @close="sale.payments = null">
-      <n-space justify="space-between">
-        <n-tag type="info">Total: S/. {{ showPayments ? sale.amount : null }}</n-tag>
-        <n-tag :type="evalPayments ? 'error' : 'success'">Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}
-        </n-tag>
-        <n-tag :type="evalPayments ? 'error' : 'warning'">Faltante: S/.
-          {{
-      showPayments
-        ? parseFloat(sale.amount - currentPaymentsAmount).toFixed(2)
-        : null
-    }}</n-tag>
-      </n-space>
-      <n-form-item class="mt-2" label="Pagos">
-        <n-dynamic-input v-model:value="sale.payments" :min="1" @create="createPayment">
-          <template #default="{ value }">
-            <div style="display: flex; align-items: center; width: 100%">
-              <n-select v-model:value="value.payment_method" :options="filteredMethods" :disabled="loading" />
-              <n-input class="ms-2" v-model:value="value.amount" placeholder="" :disabled="loading"
-                @keypress="isDecimal($event)" />
+              </n-card>
+              <n-grid cols="2" :x-gap="12">
+                <n-gi>
+                  <n-card size="small" class="payment-card">
+                    <div class="payment-section-mobile">
+                      <span class="payment-label">Pago</span>
+                      <div class="payment-input-container">
+                        <span class="currency">S/.</span>
+                        <input class="payment-input" type="number" min="0" step=".01"
+                          v-model="sale.given_amount" @click="$event.target.select()" />
+                      </div>
+                    </div>
+                  </n-card>
+                </n-gi>
+                <n-gi>
+                  <n-card size="small" class="payment-card">
+                    <div class="payment-section-mobile">
+                      <span class="payment-label">Vuelto</span>
+                      <div class="payment-amount-display">
+                        <span class="currency">S/.</span>
+                        <span class="payment-amount">{{ changing.toFixed(2) }}</span>
+                      </div>
+                    </div>
+                  </n-card>
+                </n-gi>
+              </n-grid>
             </div>
-          </template>
-        </n-dynamic-input>
-      </n-form-item>
-      <n-space justify="end">
-        <n-button type="success" :disabled="evalPayments ||
-      sale.payments.some((pay) => pay.payment_method === null) ||
-      sale.payments.some((pay) => Number(pay.amount) <= 0) ||
-      loading
-      " secondary :loading="loading" @click="performCreateSale">Confirmar</n-button>
-      </n-space>
-    </n-modal>
-    <!-- Customer Modal -->
-    <customer-modal v-model:show="showModal" :id-customer="sale.customer"
-      :doc_type="sale.invoice_type === 1 ? '6' : null" :document="customerDocument" @update:show="onCloseModal"
-      @on-success="onSuccess" />
-    <separate-payments-modal v-model:show="showSeparateModal" :data="separatePayments"
-      :on-close="closeSeparatePaymentsModal" @success="successSeparatePaymentsModal" />
-    <preview-drawer ref="previewDrawer" v-model:show="showPdf" :data="pdfData" :previewOnly="!ticketPreview"
-      @printed="() => $router.push({ name: 'TableHome' })" @canceled="() => $router.push({ name: 'TableHome' })" />
-  </div>
+
+            <div class="payment-section d-none d-md-block">
+              <n-card class="mb-3 totals-card-desktop">
+                <template #header>
+                  <span class="totals-header">Resumen de Venta</span>
+                </template>
+                <n-grid cols="3" :x-gap="16">
+                  <n-gi>
+                    <div class="desktop-totals-column">
+                      <div v-if="subTotal" class="total-row-desktop">
+                        <span class="label-desktop">SUBTOTAL:</span>
+                        <span class="amount-desktop">S/. {{ subTotal.toFixed(2) }}</span>
+                      </div>
+                      <div v-if="totalGRV" class="total-row-desktop">
+                        <span class="label-desktop">OP. GRAVADAS:</span>
+                        <span class="amount-desktop">S/. {{ totalGRV.toFixed(2) }}</span>
+                      </div>
+                      <div v-if="totalEXN" class="total-row-desktop">
+                        <span class="label-desktop">OP. EXONERADAS:</span>
+                        <span class="amount-desktop">S/. {{ totalEXN.toFixed(2) }}</span>
+                      </div>
+                    </div>
+                  </n-gi>
+                  <n-gi>
+                    <div class="desktop-totals-column">
+                      <div v-if="totalGRT" class="total-row-desktop">
+                        <span class="label-desktop">OP. GRATUITAS:</span>
+                        <span class="amount-desktop">S/. {{ totalGRT.toFixed(2) }}</span>
+                      </div>
+                      <div v-if="totalIGV" class="total-row-desktop">
+                        <span class="label-desktop">IGV:</span>
+                        <span class="amount-desktop">S/. {{ totalIGV.toFixed(2) }}</span>
+                      </div>
+                      <div v-if="icbper" class="total-row-desktop">
+                        <span class="label-desktop">ICBPER:</span>
+                        <span class="amount-desktop">S/. {{ icbper.toFixed(2) }}</span>
+                      </div>
+                    </div>
+                  </n-gi>
+                  <n-gi>
+                    <div class="desktop-totals-column">
+                      <div v-if="!settingsStore.business_settings.sale?.show_discount_label" class="total-row-desktop">
+                        <span class="label-desktop">DSCT:</span>
+                        <div class="input-group-desktop">
+                          <span>S/.</span>
+                          <input class="custom-input fw-bold discount-input-desktop" type="number" min="0" step=".5"
+                            v-model="totalDSCT" :disabled="saleStore.toSale.some(d => Number(d.discount) > 0)"
+                            @click="$event.target.select()" />
+                        </div>
+                      </div>
+                      <div class="total-row-desktop">
+                        <span class="label-desktop">OTROS:</span>
+                        <div class="input-group-desktop">
+                          <span>S/.</span>
+                          <input class="custom-input fw-bold others-input-desktop" type="number" min="0" step=".5"
+                            v-model="sale.other_charges" @click="$event.target.select()" />
+                        </div>
+                      </div>
+                    </div>
+                  </n-gi>
+                </n-grid>
+                <n-divider />
+                <div class="total-final-desktop">
+                  <span class="label-total-desktop">TOTAL:</span>
+                  <span class="amount-total-desktop">S/. {{ sale.amount }}</span>
+                </div>
+              </n-card>
+              <n-grid cols="2" :x-gap="16">
+                <n-gi>
+                  <n-card class="payment-card-desktop">
+                    <div class="payment-section-desktop">
+                      <span class="payment-label-desktop">Pago</span>
+                      <div class="payment-input-container-desktop">
+                        <span class="currency-desktop">S/.</span>
+                        <input class="payment-input-desktop" type="number" min="0" step=".01"
+                          v-model="sale.given_amount" @click="$event.target.select()" />
+                      </div>
+                    </div>
+                  </n-card>
+                </n-gi>
+                <n-gi>
+                  <n-card class="payment-card-desktop">
+                    <div class="payment-section-desktop">
+                      <span class="payment-label-desktop">Vuelto</span>
+                      <div class="payment-amount-display-desktop">
+                        <span class="currency-desktop">S/.</span>
+                        <span class="payment-amount-desktop">{{ changing.toFixed(2) }}</span>
+                      </div>
+                    </div>
+                  </n-card>
+                </n-gi>
+              </n-grid>
+            </div>
+            <n-space v-if="sale.payment_condition === 1" justify="space-between">
+              <n-checkbox v-model:checked="isMultiple">Pago multiple</n-checkbox>
+              <n-button type="info" text @click="openSeparatePaymentsModal">Nueva cuenta</n-button>
+            </n-space>
+            <n-divider />
+            <n-grid responsive="screen" cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12" :x-gap="12">
+              <n-gi class="d-flex align-items-center" :span="3">
+                <n-checkbox v-model:checked="ticketPreview">Previsualizar ticket</n-checkbox>
+              </n-gi>
+            </n-grid>
+            <n-button class="fs-1 py-5 mt-2" type="success"
+              :disabled="!saleStore.toSale.filter(d => !!d.quantity).length ||
+                (sale.payment_condition === 1 ? sale.given_amount < sale.amount : !(sale.given_amount < sale.amount))"
+              secondary block @click.prevent="isMultiple ? doMultiplePayment() : performCreateSale()">
+              <v-icon class="me-2" name="fa-coins" scale="2" />Cobrar
+            </n-button>
+          </n-card>
+        </n-spin>
+        <n-modal :class="{
+          'w-100': genericsStore.device === 'mobile',
+          'w-50': genericsStore.device === 'tablet',
+          'w-25': genericsStore.device === 'desktop',
+        }" preset="card" v-model:show="showPayments" title="Realizar venta" :mask-closable="false"
+          closable @close="sale.payments = null">
+          <n-space justify="space-between">
+            <n-tag type="info">Total: S/. {{ showPayments ? sale.amount : null }}</n-tag>
+            <n-tag :type="evalPayments ? 'error' : 'success'">Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}</n-tag>
+            <n-tag :type="evalPayments ? 'error' : 'warning'">
+              Faltante: S/. {{ showPayments ? parseFloat(sale.amount - currentPaymentsAmount).toFixed(2) : null }}
+            </n-tag>
+          </n-space>
+          <n-form-item class="mt-2" label="Pagos">
+            <n-dynamic-input v-model:value="sale.payments" :min="1" @create="createPayment">
+              <template #default="{ value }">
+                <div style="display: flex; align-items: center; width: 100%">
+                  <n-select v-model:value="value.payment_method" :options="filteredMethods" :disabled="loading" />
+                  <n-input class="ms-2" v-model:value="value.amount" placeholder="" :disabled="loading" @keypress="isDecimal($event)" />
+                </div>
+              </template>
+            </n-dynamic-input>
+          </n-form-item>
+          <n-space justify="end">
+            <n-button type="success" :disabled="evalPayments || sale.payments.some(p => p.payment_method === null) ||
+              sale.payments.some(p => Number(p.amount) <= 0) || loading" secondary :loading="loading" @click="performCreateSale">
+              Confirmar
+            </n-button>
+          </n-space>
+        </n-modal>
+        <customer-modal v-model:show="showModal" :id-customer="sale.customer"
+          :doc_type="sale.invoice_type === 1 ? '6' : null" :document="customerDocument" @update:show="onCloseModal"
+          @on-success="onSuccess" />
+        <separate-payments-modal v-model:show="showSeparateModal" :data="separatePayments"
+          :on-close="closeSeparatePaymentsModal" @success="successSeparatePaymentsModal" />
+        <preview-drawer ref="previewDrawer" v-model:show="showPdf" :data="pdfData" :previewOnly="!ticketPreview"
+          @printed="$router.push({ name: 'TableHome' })" @canceled="$router.push({ name: 'TableHome' })" />
+      </div>
+    </n-scrollbar>
+  </n-card>
 </template>
 
 <script>
-import { defineComponent, ref, toRefs, computed, watch, onMounted } from "vue";
+import { defineComponent, ref, computed, watch, onMounted } from "vue";
 import CustomerModal from "@/views/Customer/components/CustomerModal";
 import SeparatePaymentsModal from "./SeparatePaymentsModal";
+import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useRouter } from "vue-router";
 import { useOrderStore } from "@/store/modules/order";
@@ -303,33 +357,20 @@ import { useUserStore } from "@/store/modules/user";
 import { useGenericsStore } from "@/store/modules/generics";
 import { saleRules } from "@/utils/constants";
 import { cloneDeep, isDecimal } from "@/utils";
-import {
-  searchCustomerByName,
-  searchRucCustomer,
-} from "@/api/modules/customer";
-import {
-    createSale,
-    getSaleNumber, retrieveSale,
-    sendSale
-} from "@/api/modules/sales";
 import { useDialog, useMessage } from "naive-ui";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
 import format from "date-fns/format";
 import { lighten } from "@/utils";
-import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 import { useBusinessStore } from "@/store/modules/business";
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
+import { searchCustomerByName, searchRucCustomer } from "@/api/modules/customer";
+import { createSale, getSaleNumber, retrieveSale, sendSale } from "@/api/modules/sales";
 
 export default defineComponent({
   name: "TablePayment",
   directives: { autowidth: VueInputAutowidth },
-  components: {
-    CustomerModal,
-    SeparatePaymentsModal,
-    PreviewDrawer,
-  },
+  components: { CustomerModal, SeparatePaymentsModal, PreviewDrawer },
   setup() {
-    const dateNow = ref(null);
     const router = useRouter();
     const productStore = useProductStore();
     const orderStore = useOrderStore();
@@ -337,131 +378,92 @@ export default defineComponent({
     const userStore = useUserStore();
     const settingsStore = useSettingsStore();
     const genericsStore = useGenericsStore();
+    const businessStore = useBusinessStore();
     const message = useMessage();
-    const loading = ref(false);
     const dialog = useDialog();
-    const showModal = ref(false);
-    const payment_amount = ref(parseFloat(0).toFixed(2));
-    const saleForm = ref();
-    const ticketPreview = ref(settingsStore.businessSettings.sale.show_preview);
-    const changing = computed(() => {
-      return sale.value.given_amount > total.value
-        ? total.value - sale.value.given_amount
-        : 0.0;
-    });
 
-    const icbper = computed(() => {
-      return orderStore.orderList.reduce((acc, curVal) => {
-        if (curVal.icbper) {
-          return (acc += curVal.icbper_amount);
+    const loading = ref(false);
+    const showModal = ref(false);
+    const saleForm = ref();
+    const ticketPreview = ref(settingsStore.businessSettings?.sale?.show_preview ?? true);
+    const showObservations = ref(false);
+    const searching = ref(false);
+    const customerResults = ref([]);
+    const addressesOptions = ref([]);
+    const isMultiple = ref(false);
+    const showPayments = ref(false);
+    const separatePayments = ref({});
+    const showSeparateModal = ref(false);
+    const customerDocument = ref("");
+    const whatsappNumber = ref("");
+    const showPdf = ref(false);
+    const previewDrawer = ref(null);
+    const pdfData = ref(null);
+
+    const changing = computed(() => sale.value.given_amount > total.value ? total.value - sale.value.given_amount : 0.0);
+
+    const icbper = computed(() => orderStore.orderList.reduce((acc, curVal) =>
+      curVal.icbper ? acc + curVal.icbper_amount : acc, 0));
+
+    const precision = 10000;
+    const calculateTotal = (affectation) => {
+      const totalScaled = saleStore.toSale.reduce((acc, curVal) => {
+        if (curVal.product_affectation === affectation) {
+          const value = Math.round(parseFloat(curVal.price_sale) * curVal.quantity * precision);
+          return acc + value;
         }
-        return (acc += 0);
+        return acc;
       }, 0);
+      return totalScaled / precision;
+    };
+
+    const totalGRV = computed(() => calculateTotal(10));
+    const totalEXN = computed(() => calculateTotal(20));
+    const totalGRT = computed(() => calculateTotal(21));
+
+    const totalIGV = computed(() => {
+      const totalScaled = saleStore.toSale.reduce((acc, curVal) => {
+        const value = Math.round(curVal.igv_tax * curVal.quantity * precision);
+        return acc + value;
+      }, 0);
+      return totalScaled / precision;
     });
-      
-      const precision = 10000; // Trabajamos con 4 decimales
-      
-      const totalGRV = computed(() => {
-          const totalScaled = saleStore.toSale.reduce((acc, curVal) => {
-              if (curVal.product_affectation === 10) {
-                  // Multiplica el precio por la cantidad y por la precisión
-                  const value = Math.round(parseFloat(curVal.price_sale) * curVal.quantity * precision);
-                  return acc + value;
-              }
-              return acc;
-          }, 0);
-          return totalScaled / precision;
-      });
-      
-      const totalEXN = computed(() => {
-          const totalScaled = saleStore.toSale.reduce((acc, curVal) => {
-              if (curVal.product_affectation === 20) {
-                  const value = Math.round(parseFloat(curVal.price_sale) * curVal.quantity * precision);
-                  return acc + value;
-              }
-              return acc;
-          }, 0);
-          return totalScaled / precision;
-      });
-      
-      const totalGRT = computed(() => {
-          const totalScaled = saleStore.toSale.reduce((acc, curVal) => {
-              if (curVal.product_affectation === 21) {
-                  const value = Math.round(parseFloat(curVal.price_sale) * curVal.quantity * precision);
-                  return acc + value;
-              }
-              return acc;
-          }, 0);
-          return totalScaled / precision;
-      });
-      
-      const totalIGV = computed(() => {
-          const totalScaled = saleStore.toSale.reduce((acc, curVal) => {
-              // Suponiendo que igv_tax ya es un valor decimal
-              const value = Math.round(curVal.igv_tax * curVal.quantity * precision);
-              return acc + value;
-          }, 0);
-          return totalScaled / precision;
-      });
 
     const totalDSCT = computed({
-      get: () => {
-        if (saleStore.toSale.some((detail) => Number(detail.discount) > 0)) {
-          return saleStore.toSale.reduce((acc, curVal) => {
-            return (acc += Number(curVal.discount));
-          }, 0);
-        }
-        return sale.value.discount;
-      },
+      get: () => saleStore.toSale.some(detail => Number(detail.discount) > 0)
+        ? saleStore.toSale.reduce((acc, curVal) => acc + Number(curVal.discount), 0)
+        : sale.value.discount,
       set: (v) => {
-        if (!saleStore.toSale.some((detail) => Number(detail.discount) > 0)) {
+        if (!saleStore.toSale.some(detail => Number(detail.discount) > 0)) {
           sale.value.discount = v;
         } else {
-          sale.value.discount = saleStore.toSale.reduce((acc, curVal) => {
-            return (acc += Number(curVal.discount));
-          }, 0);
+          sale.value.discount = saleStore.toSale.reduce((acc, curVal) => acc + Number(curVal.discount), 0);
         }
       },
     });
 
-    const showObservations = ref(false);
+    const subTotal = computed(() => saleStore.toSale.reduce((acc, curVal) =>
+      curVal.product_affectation === 21 ? acc : acc + (curVal.price_sale * curVal.quantity), 0));
 
-    const subTotal = computed(() => {
-      return saleStore.toSale.reduce((acc, curVal) => {
-        return curVal.product_affectation === 21
-          ? (acc += 0)
-          : (acc += curVal.price_sale * curVal.quantity);
-      }, 0);
-    });
+    const products_count = computed(() => saleStore.toSale.reduce((acc, curVal) => acc + curVal.quantity, 0));
 
-    const products_count = computed(() => {
-      return saleStore.toSale.reduce((acc, curVal) => {
-        return (acc += curVal.quantity);
-      }, 0);
-    });
+    const total = computed(() => parseFloat(
+      totalIGV.value + totalGRV.value + totalEXN.value - parseFloat(totalDSCT.value) +
+      icbper.value + parseFloat(sale.value.other_charges)
+    ).toFixed(2));
 
-    const total = computed(() => {
-      return parseFloat(
-        totalIGV.value +
-        totalGRV.value +
-        totalEXN.value -
-        parseFloat(totalDSCT.value) +
-        icbper.value +
-        parseFloat(sale.value.other_charges)
-      ).toFixed(2);
-    });
+    const defaultInvoiceType = settingsStore.businessSettings.sale?.enable_invoices
+      ? settingsStore.businessSettings.sale.default_invoice : 80;
 
     const sale = ref({
       order: null,
-      serie: saleStore.getFirstOption(
-        settingsStore.businessSettings.sale.enable_invoices ? settingsStore.businessSettings.sale.default_invoice : 80
-      ),
+      serie: saleStore.getFirstOption(defaultInvoiceType),
       number: "",
-      date_sale: format(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss"),
+      date_sale: format(new Date(), "dd/MM/yyyy HH:mm:ss"),
       count: products_count,
       amount: total,
       given_amount: parseFloat(0).toFixed(2),
-      invoice_type: settingsStore.businessSettings.sale.enable_invoices ? settingsStore.businessSettings.sale.default_invoice : 80,
+      invoice_type: defaultInvoiceType,
       payment_method: 1,
       payment_condition: 1,
       customer_name: "",
@@ -481,23 +483,6 @@ export default defineComponent({
       free_amount: totalGRT,
       igv_amount: totalIGV,
     });
-      
-      watch(total, () => {
-          sale.value.given_amount =
-              total.value > 0 ? total.value : parseFloat("0").toFixed(2);
-      });
-      
-      // watchEffect(() => {
-      //     console.log(sale.value.amount);
-      //     // if(parseFloat(sale.value.amount) === 0) {
-      //     //     sale.value.payment_condition = 2;
-      //     console.log(sale.value.payment_condition);
-      //     console.log(sale.value.given_amount);
-      //         // sale.value.given_amount = parseFloat("0").toFixed(2);
-      //     //    
-      //     //     // changeCondition(sale.value.payment_condition);
-      //     // }
-      // });
 
     const formRules = computed(() => {
       let rules = saleRules;
@@ -505,496 +490,246 @@ export default defineComponent({
       return rules;
     });
 
-    const selectSerie = (v) => {
-      sale.value.serie = v;
-    };
-
     const changeCondition = (v) => {
-      switch (v) {
-        case 1:
-          sale.value.given_amount = total.value;
-          break;
-        case 2:
-          sale.value.given_amount = parseFloat('0').toFixed(2);
-          break;
-        default:
-          console.error(`${v} invalido`);
-          break;
-      }
+      sale.value.given_amount = v === 1 ? total.value : parseFloat('0').toFixed(2);
     };
 
     const changeSerie = (v) => {
-      switch (v) {
-        case 1:
-          sale.value.customer_name = "";
-          sale.value.customer = null;
-          sale.value.address = null;
-          sale.value.serie = saleStore.getFirstOption(v);
-          break;
-        case 3:
-          sale.value.serie = saleStore.getFirstOption(v);
-          break;
-        case 80:
-          sale.value.serie = saleStore.getFirstOption(v);
-          break;
-        default:
-          break;
+      if (v === 1) {
+        sale.value.customer_name = "";
+        sale.value.customer = null;
+        sale.value.address = null;
       }
+      sale.value.serie = saleStore.getFirstOption(v);
     };
 
-    const businessStore = useBusinessStore();
+    const performCreateSale = () => {
+      saleForm.value.validate((errors) => {
+        if (errors) {
+          if (formRules.value.customer.required) {
+            const msg = sale.value.invoice_type === 1
+              ? "Debes agregar un cliente cuando la venta es con factura"
+              : "Debes agregar un cliente porque la venta es mayor a S/ 699";
+            message.warning(msg);
+          }
+          message.error("Datos Incorrectos");
+          return;
+        }
 
-      const performCreateSale = () => {
-          saleForm.value.validate((errors) => {
-              if(!errors) {
-                  dialog.success({
-                      closable: false,
-                      title: "Venta",
-                      content: "Realizar venta?",
-                      positiveText: "Sí",
-                      onPositiveClick: async() => {
-                          console.log("gordo puto");
-                          loading.value = true;
-                          sale.value.order = orderStore.orderId;
-                          sale.value.sale_details = saleStore.toSale.map((detail) => ({
-                              ...detail,
-                              igv_tax: detail.igv_tax.toFixed(2),
-                              price_base: detail.price_base.toFixed(2)
-                          }));
-                          sale.value.discount = totalDSCT.value;
-                          await createSale(sale.value).then(async(response) => {
-                              if(response.status === 201) {
-                                  const dataPrint = async() => {
-                                      const res = await retrieveSale(response.data?.id);
-                                      pdfData.value = res.data;
-                                      return res.data;
-                                  };
-                                    await dataPrint();
-                                  if(settingsStore.business_settings.printer.print_html) {
-                                      showPdf.value = true;
-                                      if(!ticketPreview.value) {
-                                          setTimeout(() => previewDrawer.value.generate(), 250);
-                                      }
-                                  } else {
-                                      await VoucherPrint({
-                                          data: await dataPrint(),
-                                          businessStore,
-                                          saleStore,
-                                          changing: changing.value,
-                                          show: true
-                                      });
-                                      await router.push({ name: "TableHome" });
-                                  }
+        dialog.success({
+          closable: false,
+          title: "Venta",
+          content: "Realizar venta?",
+          positiveText: "Sí",
+          onPositiveClick: async () => {
+            loading.value = true;
+            sale.value.order = orderStore.orderId;
+            sale.value.sale_details = saleStore.toSale.map(detail => ({
+              ...detail,
+              igv_tax: detail.igv_tax.toFixed(2),
+              price_base: detail.price_base.toFixed(2)
+            }));
+            sale.value.discount = totalDSCT.value;
 
-                                  if(
-                                      settingsStore.businessSettings.sale.auto_send &&
-                                      response.data?.['invoiceType'] !== "80"
-                                  ) {
-                                      sendSale(response.data.id).then((response) => {
-                                          if(response.status === 200) {
-                                              message.success("Enviado!");
-                                              // if (whatsappNumber.value.length >= 9) {
-                                              //   sendWhatsapp(
-                                              //     sale.id,
-                                              //     [sale.serie, sale.number],
-                                              //     whatsappNumber.value
-                                              //   )
-                                              //     .then((response) => {
-                                              //       if (response.status === 200)
-                                              //         window.open(
-                                              //           response.data.data.url,
-                                              //           "_blank"
-                                              //         );
-                                              //     })
-                                              //     .catch((error) => {
-                                              //       console.error(error);
-                                              //     });
-                                              // }
-                                          }
-                                      }).catch((error) => {
-                                          console.error(error);
-                                          message.error("Algo salió mal...");
-                                      });
-                                  }
-                                  // else {
-                                  //   if (whatsappNumber.value.length >= 9) {
-                                  //     sendWhatsapp(
-                                  //       response.data.id,
-                                  //       [response.data.serie, response.data.number],
-                                  //       whatsappNumber.value
-                                  //     )
-                                  //       .then((response) => {
-                                  //         if (response.status === 200)
-                                  //           window.open(response.data.data.url, "_blank");
-                                  //       })
-                                  //       .catch((error) => {
-                                  //         console.error(error);
-                                  //       });
-                                  //   }
-                                  // }
-                                  message.success("Venta realizada correctamente!");
-                                  // router.push({ name: "TableHome" });
-                              }
-                          }).catch((error) => {
-                              console.error(error);
-                              message.error("Algo salió mal...");
-                          }).finally(() => {
-                              loading.value = false;
-                          });
-                      }
-                  });
-              } else {
-                  if(formRules.value.customer.required) {
-                      if(sale.value.invoice_type === 1) {
-                          message.warning("Debes agregar un cliente cuando la venta es con factura");
-                      } else {
-                          message.error("Debes agregar un cliente porque la venta es mayor a S/ 699");
-                      }
+            try {
+              const response = await createSale(sale.value);
+              if (response.status === 201) {
+                const res = await retrieveSale(response.data?.id);
+                pdfData.value = res.data;
+                pdfData.value.original_sale_details = sale.value.sale_details;
+
+                if (settingsStore.business_settings.printer.print_html) {
+                  showPdf.value = true;
+                  if (!ticketPreview.value) {
+                    setTimeout(() => previewDrawer.value.generate(), 250);
                   }
-                  console.error(errors);
-                  message.error("Datos Incorrectos");
+                } else {
+                  await VoucherPrint({
+                    data: res.data,
+                    businessStore,
+                    saleStore,
+                    changing: changing.value,
+                    show: true
+                  });
+                  await router.push({ name: "TableHome" });
+                }
+
+                if (settingsStore.businessSettings.sale.auto_send && response.data?.['invoiceType'] !== "80") {
+                  try {
+                    const sendResponse = await sendSale(response.data.id);
+                    if (sendResponse.status === 200) message.success("Enviado!");
+                  } catch (error) {
+                    console.error(error);
+                    message.error("Algo salió mal...");
+                  }
+                }
+                message.success("Venta realizada correctamente!");
               }
-          });
-      };
+            } catch (error) {
+              console.error(error);
+              message.error("Algo salió mal...");
+            } finally {
+              loading.value = false;
+            }
+          }
+        });
+      });
+    };
 
     const obtainSaleNumber = async () => {
       loading.value = true;
-      await getSaleNumber(sale.value.serie)
-        .then((response) => {
-          if (response.status === 200) {
-            sale.value.number = Number(response.data.number) + 1;
-          }
-        })
-        .catch((error) => {
-          console.error(error);
-          message.error("Algo salió mal...");
-        })
-        .finally(() => {
-          loading.value = false;
-        });
+      try {
+        const response = await getSaleNumber(sale.value.serie);
+        if (response.status === 200) {
+          sale.value.number = Number(response.data.number) + 1;
+        }
+      } catch (error) {
+        console.error(error);
+        message.error("Algo salió mal...");
+      } finally {
+        loading.value = false;
+      }
     };
 
-    const searching = ref(false);
-
-    const customerResults = ref([]);
-
-    const customerOptions = computed(() => {
-      return customerResults.value.map((customer) => ({
-        value: customer.id,
-        label: `${customer.doc_num} - ${customer.names}`,
-        disabled: customer.is_disabled,
-      }));
-    });
-
-    const addressesOptions = ref([]);
+    const customerOptions = computed(() => customerResults.value.map(customer => ({
+      value: customer.id,
+      label: `${customer.doc_num} - ${customer.names}`,
+      disabled: customer.is_disabled,
+    })));
 
     const createAddressesOptions = () => {
-      const customer = customerResults.value.find(
-        (customer) => customer.id === sale.value.customer
-      );
-      whatsappNumber.value = !customer.phone ? "" : customer.phone;
-      if (typeof customer !== "undefined") {
-        addressesOptions.value = customer.addresses.map((address) => ({
+      const customer = customerResults.value.find(c => c.id === sale.value.customer);
+      whatsappNumber.value = customer?.phone || "";
+      if (customer) {
+        addressesOptions.value = customer.addresses.map(address => ({
           value: address.id,
           label: `${address.ubigeo} - ${address.description}`,
         }));
-      }
-      if (addressesOptions.value.length) {
-        sale.value.address = addressesOptions.value[0].value;
+        if (addressesOptions.value.length) {
+          sale.value.address = addressesOptions.value[0].value;
+        }
       }
     };
 
     const showOptions = async (value) => {
-      if (value.length >= 3 && value.length <= 11) {
-        searching.value = true;
-        if (sale.value.invoice_type === 1) {
-          await searchRucCustomer(value)
-            .then((response) => {
-              if (response.status === 200) {
-                customerResults.value = response.data;
-              }
-            })
-            .catch((error) => {
-              console.error(error);
-              message.error("Algo salió mal...");
-            })
-            .finally(() => {
-              searching.value = false;
-            });
-          return true;
-        } else {
-          await searchCustomerByName(value)
-            .then((response) => {
-              if (response.status === 200) {
-                customerResults.value = response.data;
-              }
-            })
-            .catch((error) => {
-              console.error(error);
-              message.error("Algo salió mal...");
-            })
-            .finally(() => {
-              searching.value = false;
-            });
-          return true;
-        }
-      } else {
+      if (value.length < 3 || value.length > 11) {
         customerResults.value = [];
         return false;
       }
+      
+      searching.value = true;
+      try {
+        const response = sale.value.invoice_type === 1 
+          ? await searchRucCustomer(value)
+          : await searchCustomerByName(value);
+        
+        if (response.status === 200) {
+          customerResults.value = response.data;
+        }
+        return true;
+      } catch (error) {
+        console.error(error);
+        message.error("Algo salió mal...");
+        return false;
+      } finally {
+        searching.value = false;
+      }
     };
 
-    const { serie } = toRefs(sale.value);
-
-    watch(serie, async () => {
-      await obtainSaleNumber();
-    });
-
-    onMounted(async () => {
-      sale.value.given_amount = total.value;
-      await obtainSaleNumber();
-
-      const fetch = new Date();
-      const dd = fetch.getDate();
-      const mm = fetch.getMonth();
-      const yy = fetch.getFullYear();
-      const hh = fetch.getHours();
-      const msms = fetch.getMinutes();
-
-      dateNow.value = `${dd}/${mm}/${yy} ${hh}:${msms}`;
-    });
-
-    const onCloseModal = () => { };
-
     const onSuccess = (customer) => {
-      if (sale.value.invoice_type === 1 && customer.doc_type === "6") {
-        customerResults.value.push(customer);
-        sale.value.customer_name = `${customer.doc_num} - ${customer.names}`;
-        sale.value.customer = customer.id;
-        whatsappNumber.value = !customer.phone ? "" : customer.phone;
-        createAddressesOptions();
-      } else if (sale.value.invoice_type !== 1) {
+      const isValidCustomer = (sale.value.invoice_type === 1 && customer.doc_type === "6") || 
+                             sale.value.invoice_type !== 1;
+      
+      if (isValidCustomer) {
         customerResults.value.push(customer);
         sale.value.customer_name = `${customer.doc_num} - ${customer.names}`;
         sale.value.customer = customer.id;
         createAddressesOptions();
       }
       showModal.value = false;
-      onCloseModal();
     };
 
-    const isMultiple = ref(false);
-
-    const showPayments = ref(false);
-
-    const createPayment = () => {
-      return {
-        payment_method: null,
-        amount: "0",
-      };
-    };
+    const createPayment = () => ({ payment_method: null, amount: "0" });
 
     const doMultiplePayment = () => {
-      sale.value.payments = [
-        {
-          payment_method: sale.value.payment_method,
-          amount: String(sale.value.amount),
-        },
-      ];
+      sale.value.payments = [{ payment_method: sale.value.payment_method, amount: String(sale.value.amount) }];
       showPayments.value = true;
     };
 
-    const filteredMethods = computed(() => {
-      return saleStore.getPaymentMethodsOptions.map((option) => ({
-        value: option.value,
-        label: option.label,
-        disabled: sale.value.payments.some(
-          (pay) => pay.payment_method === option.value
-        ),
-      }));
+    const filteredMethods = computed(() => saleStore.getPaymentMethodsOptions.map(option => ({
+      ...option,
+      disabled: sale.value.payments?.some(pay => pay.payment_method === option.value) || false,
+    })));
+
+    const evalPayments = computed(() => {
+      if (!sale.value.payments?.length) return true;
+      const totalAmount = Number(sale.value.amount);
+      const totalPayments = sale.value.payments.reduce((acc, payment) => {
+        const amount = parseFloat(payment.amount || '0');
+        return Math.round((acc + amount) * 100) / 100;
+      }, 0);
+      return totalPayments !== totalAmount;
     });
-
-      const evalPayments = computed(() => {
-          const payments = sale.value.payments;
-          const totalAmount = Number(sale.value.amount);
-
-          if (!payments || payments.length === 0) {
-              return true; // Devuelve true si no hay pagos
-          }
-
-          const totalPayments = payments.reduce((accumulator, payment) => {
-              const amount = parseFloat(payment.amount || '0');
-              const scaledAccumulator = Math.round(accumulator * 100); // Escala para manejar decimales
-              const scaledAmount = Math.round(amount * 100); // Escala el monto actual
-
-              const totalScaled = scaledAccumulator + scaledAmount; // Suma los valores escalados
-              return totalScaled / 100; // Devuelve a la escala original
-          }, 0);
-
-
-          return totalPayments !== totalAmount;
-      });
-
 
     const currentPaymentsAmount = computed(() => {
-      if (sale.value.payments) {
-        let sum = sale.value.payments.reduce((acc, val) => {
-          return (acc += parseFloat(val.amount));
-        }, 0);
-        return isNaN(sum) ? "0.00" : sum.toFixed(2);
-      } else {
-        return "0.00";
-      }
+      if (!sale.value.payments) return "0.00";
+      const sum = sale.value.payments.reduce((acc, val) => acc + parseFloat(val.amount), 0);
+      return isNaN(sum) ? "0.00" : sum.toFixed(2);
     });
-
-    const separatePayments = ref({});
-
-    const showSeparateModal = ref(false);
 
     const openSeparatePaymentsModal = () => {
       separatePayments.value = cloneDeep(sale.value);
       separatePayments.value.order = cloneDeep(orderStore.orderId);
       separatePayments.value.sale_details = cloneDeep(saleStore.toSale);
-      separatePayments.value.sale_details.forEach(
-        (detail) => (detail.max = detail.quantity)
-      );
+      separatePayments.value.sale_details.forEach(detail => detail.max = detail.quantity);
       showSeparateModal.value = true;
     };
 
-    const closeSeparatePaymentsModal = () => {
-      // console.log(separatePayments.value);
-    };
-
-    const successSeparatePaymentsModal = () => {
-      obtainSaleNumber();
-    };
-
-    const dateDisabled = (ts) => {
-      return ts > new Date(Date.now());
-    };
-
-    const customerDocument = ref("");
-
     const autoCreateCustomer = () => {
       if (!searching.value && !customerResults.value.length) {
-        if (
-          !isNaN(sale.value.customer_name) &&
-          ((sale.value.customer_name.length === 8 &&
-            sale.value.invoice_type !== 1) ||
-            sale.value.customer_name.length === 11)
-        ) {
-          customerDocument.value = sale.value.customer_name;
+        const value = sale.value.customer_name;
+        const isValidDoc = !isNaN(value) && 
+          ((value.length === 8 && sale.value.invoice_type !== 1) || value.length === 11);
+        
+        if (isValidDoc) {
+          customerDocument.value = value;
           showModal.value = true;
         }
       }
     };
 
-    function getAfcColor(afc) {
-      switch (afc) {
-        case 10:
-          return {
-            color: lighten("#008B8B", 48),
-            textColor: "#008B8B",
-            borderColor: lighten("#008B8B", 24),
-          };
-        case 20:
-          return {
-            color: lighten("#9932CC", 48),
-            textColor: "#9932CC",
-            borderColor: lighten("#9932CC", 24),
-          };
-        case 21:
-          return {
-            color: lighten("#006400", 48),
-            textColor: "#006400",
-            borderColor: lighten("#006400", 24),
-          };
-        default:
-          return {
-            color: lighten("#8B0000", 48),
-            textColor: "#8B0000",
-            borderColor: lighten("#8B0000", 24),
-          };
-      }
-    }
+    const getAfcColor = (afc) => {
+      const colors = {
+        10: { color: lighten("#008B8B", 48), textColor: "#008B8B", borderColor: lighten("#008B8B", 24) },
+        20: { color: lighten("#9932CC", 48), textColor: "#9932CC", borderColor: lighten("#9932CC", 24) },
+        21: { color: lighten("#006400", 48), textColor: "#006400", borderColor: lighten("#006400", 24) }
+      };
+      return colors[afc] || { color: lighten("#8B0000", 48), textColor: "#8B0000", borderColor: lighten("#8B0000", 24) };
+    };
 
-    function getAfcShort(afc) {
-      switch (afc) {
-        case 10:
-          return "GRV";
-        case 20:
-          return "EXN";
-        case 21:
-          return "GRT";
-        default:
-          console.error("Afectación inválida");
-          return "---";
-      }
-    }
+    const getAfcShort = (afc) => ({ 10: "GRV", 20: "EXN", 21: "GRT" }[afc] || "---");
 
-    const whatsappNumber = ref("");
+    watch(total, () => {
+      sale.value.given_amount = total.value > 0 ? total.value : parseFloat("0").toFixed(2);
+    });
 
-    const showPdf = ref(false);
+    watch(() => sale.value.serie, obtainSaleNumber);
 
-    const previewDrawer = ref(null);
-
-    const pdfData = ref(null);
+    onMounted(async () => {
+      sale.value.given_amount = total.value;
+      await obtainSaleNumber();
+    });
 
     return {
-      showModal,
-      userStore,
-      saleStore,
-      orderStore,
-      productStore,
-      settingsStore,
-      sale,
-      isDecimal,
-      loading,
-      saleForm,
-      formRules,
-      showOptions,
-      customerOptions,
-      autoCreateCustomer,
-      customerDocument,
-      searching,
-      changing,
-      payment_amount,
-      subTotal,
-      selectSerie,
-      changeCondition,
-      changeSerie,
-      showObservations,
-      performCreateSale,
-      addressesOptions,
-      createAddressesOptions,
-      onCloseModal,
-      onSuccess,
-      genericsStore,
-      icbper,
-      isMultiple,
-      showPayments,
-      createPayment,
-      doMultiplePayment,
-      filteredMethods,
-      evalPayments,
-      currentPaymentsAmount,
-      openSeparatePaymentsModal,
-      closeSeparatePaymentsModal,
-      successSeparatePaymentsModal,
-      separatePayments,
-      showSeparateModal,
-      dateDisabled,
-      getAfcShort,
-      getAfcColor,
-      totalIGV,
-      totalGRV,
-      totalEXN,
-      totalGRT,
-      totalDSCT,
-      whatsappNumber,
-      ticketPreview,
-      previewDrawer,
-      showPdf,
+      showModal, userStore, saleStore, orderStore, productStore, settingsStore, sale, isDecimal,
+      loading, saleForm, formRules, showOptions, customerOptions, autoCreateCustomer, customerDocument,
+      searching, changing, subTotal, changeCondition, changeSerie, showObservations, performCreateSale,
+      addressesOptions, createAddressesOptions, onCloseModal: () => {}, onSuccess, genericsStore,
+      icbper, isMultiple, showPayments, createPayment, doMultiplePayment, filteredMethods,
+      evalPayments, currentPaymentsAmount, openSeparatePaymentsModal, 
+      closeSeparatePaymentsModal: () => {}, successSeparatePaymentsModal: obtainSaleNumber,
+      separatePayments, showSeparateModal, getAfcShort, getAfcColor, totalIGV, totalGRV,
+      totalEXN, totalGRT, totalDSCT, whatsappNumber, ticketPreview, previewDrawer, showPdf,
       pdfData,
     };
   },
@@ -1002,6 +737,7 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
+
 .custom-input {
   border: none;
   outline: none;
@@ -1014,14 +750,270 @@ export default defineComponent({
 
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
-  /* display: none; <- Crashes Chrome on hover */
   -webkit-appearance: none;
   margin: 0;
-  /* <-- Apparently some margin are still there even though it's hidden */
 }
 
 input[type="number"] {
+  appearance: textfield;
   -moz-appearance: textfield;
-  /* Firefox */
+}
+
+.mobile-totals {
+  .total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 14px;
+    .label {
+      font-weight: 500;
+      color: #666;
+      white-space: nowrap;
+      min-width: 100px;
+    }
+    .amount {
+      font-weight: 600;
+      color: #333;
+      white-space: nowrap;
+      text-align: right;
+    }
+    .input-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      span {
+        font-weight: 600;
+        color: #333;
+      }
+      .discount-input, .others-input {
+        width: 50px;
+        padding: 2px 4px;
+        text-align: right;
+        font-size: 13px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        &:focus {
+          border-color: #409eff;
+          outline: none;
+        }
+      }
+    }
+  }
+}
+
+.total-final {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  .label-total {
+    font-size: 16px;
+    font-weight: 700;
+    color: #333;
+  }
+  .amount-total {
+    font-size: 18px;
+    font-weight: 700;
+    color: #52c41a;
+  }
+}
+
+.payment-card {
+  min-width: 0;
+  flex: 1;
+  .payment-section-mobile {
+    text-align: center;
+    padding: 8px;
+    .payment-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 8px;
+    }
+    .payment-input-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      white-space: nowrap;
+      min-width: fit-content;
+      .currency {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        flex-shrink: 0;
+      }
+      .payment-input {
+        width: 80px;
+        min-width: 80px;
+        padding: 4px 8px;
+        font-size: 16px;
+        font-weight: 600;
+        text-align: center;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        flex-shrink: 0;
+        &:focus {
+          border-color: #409eff;
+          outline: none;
+        }
+      }
+    }
+    .payment-amount-display {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      white-space: nowrap;
+      min-width: fit-content;
+      .currency {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        flex-shrink: 0;
+      }
+      .payment-amount {
+        font-size: 16px;
+        font-weight: 700;
+        color: #409eff;
+        flex-shrink: 0;
+      }
+    }
+  }
+}
+
+.payment-card-desktop {
+  .payment-section-desktop {
+    text-align: center;
+    padding: 20px 16px;
+    .payment-label-desktop {
+      display: block;
+      font-size: 26px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .payment-input-container-desktop {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      .currency-desktop {
+        font-size: 20px;
+        font-weight: 600;
+        color: #333;
+      }
+      .payment-input-desktop {
+        width: 120px;
+        padding: 8px 12px;
+        font-size: 18px;
+        font-weight: 600;
+        text-align: center;
+        border: 2px solid #ddd;
+        border-radius: 6px;
+        &:focus {
+          border-color: #409eff;
+          outline: none;
+          box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+        }
+      }
+    }
+    .payment-amount-display-desktop {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      .currency-desktop {
+        font-size: 20px;
+        font-weight: 600;
+        color: #333;
+      }
+      .payment-amount-desktop {
+        font-size: 20px;
+        font-weight: 700;
+        color: #409eff;
+      }
+    }
+  }
+}
+
+.totals-card-desktop {
+  .totals-header {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+  }
+}
+
+.desktop-totals-column {
+  .total-row-desktop {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 14px;
+    .label-desktop {
+      font-weight: 500;
+      color: #666;
+      white-space: nowrap;
+      min-width: 100px;
+    }
+    .amount-desktop {
+      font-weight: 600;
+      color: #333;
+      white-space: nowrap;
+      text-align: right;
+    }
+    .input-group-desktop {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      span {
+        font-weight: 600;
+        color: #333;
+      }
+      .discount-input-desktop, .others-input-desktop {
+        width: 60px;
+        padding: 4px 6px;
+        text-align: right;
+        font-size: 13px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        &:focus {
+          border-color: #409eff;
+          outline: none;
+          box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
+        }
+      }
+    }
+  }
+}
+
+.total-final-desktop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  .label-total-desktop {
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+  }
+  .amount-total-desktop {
+    font-size: 22px;
+    font-weight: 700;
+    color: #52c41a;
+  }
+}
+
+@media (max-width: 768px) {
+  .payment-section .payment-inputs {
+    justify-content: flex-start !important;
+    flex-direction: column;
+  }
+  .payment-section .totals {
+    align-items: flex-start !important;
+  }
 }
 </style>

@@ -180,7 +180,7 @@ export const routes = [
             path: ":table",
             meta: { requiredPerm: "view_order" },
             redirect: { name: "ProductCategories" },
-            component: () => import("@/views/Table/components/TableOrder.vue" ),
+            component: () => import("@/views/Table/components/TableOrderLayout.vue" ),
             children: [
               {
                 name: "ProductCategories",

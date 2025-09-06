@@ -226,6 +226,12 @@ export default defineComponent({
   position: relative;
 }
 
+@media (max-width: 768px) {
+  .layout-content-main {
+    margin: 10px 0 25px;
+  }
+}
+
 /* router view transition */
 .zoom-fade-enter-active,
 .zoom-fade-leave-active {
