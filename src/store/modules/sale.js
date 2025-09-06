@@ -82,7 +82,9 @@ export const useSaleStore = defineStore("sale", {
     },
     getFreeSaleSerieByType(doc_type) {
       return this.series
-        .filter((s) => !s.is_disabled && s.free_sale)
+        .filter((s) => !s.is_disabled
+          && s.free_sale // IGNORE
+        )
         .find((serie) => serie.doc_type === doc_type);
     },
     async refreshPaymentMethods() {
