@@ -20,22 +20,8 @@
                 <div>
                     <n-form v-if="!($route.name === 'TablePayment')">
                         <n-grid cols="2" x-gap="12">
-                            <n-form-item-gi v-if="shouldEnterCustomerName" :span="!shouldEnterCustomerName ? 2 : 1" label="Cliente">
-                                <n-input v-model:value="localAskFor" placeholder="Nombre del cliente" :readonly="isWaiter" :disabled="isWaiter" />
-                            </n-form-item-gi>
-                            <n-form-item-gi v-if="shouldSelectOrderUser" :span="!shouldEnterCustomerName ? 2 : 1" label="Mozo">
+                            <n-form-item-gi v-if="shouldSelectOrderUser" :span="2" label="Mozo">
                                 <n-select :options="activeUsersStore.usersOptions" v-model:value="localOrderUser" placeholder="Seleccione un mozo" filterable />
-                            </n-form-item-gi>
-                            <n-form-item-gi v-if="shouldShowCustomerMode" :span="!shouldShowCustomerMode ? 2 : customers.length > 0 ? 1 : 2" label="Agregar Cliente">
-                                <n-input-group>
-                                    <n-input v-model:value="newCustomerName" placeholder="Nombre del cliente" @keyup.enter="addCustomerLocal" />
-                                    <n-button type="primary" @click="addCustomerLocal" :disabled="!newCustomerName.trim()">
-                                        <v-icon class="me-1" name="md-personadd-round" />
-                                    </n-button>
-                                </n-input-group>
-                            </n-form-item-gi>
-                            <n-form-item-gi v-if="shouldShowCustomerMode && customers.length > 0" :span="1" label="Seleccionar Cliente">
-                                <n-select :options="customerOptions" v-model:value="localSelectedCustomerId" placeholder="Seleccione un cliente" filterable />
                             </n-form-item-gi>
                             <n-form-item-gi v-if="shouldAllowAddingProducts" :span="2" label="Buscar producto">
                                 <n-input-group>
@@ -47,7 +33,7 @@
                         </n-grid>
                     </n-form>
 
-                    <n-table v-if="!shouldShowCustomerMode" size="small">
+                    <n-table size="small">
                         <thead>
                             <tr>
                                 <th style="width: 10%"></th>
@@ -90,7 +76,7 @@
                             <tr>
                                 <td colspan="3">
                                     <n-button v-if="!isPaymentRoute" :type="orderStore.orderId ? 'info' : 'primary'" :loading="loading"
-                                        :disabled="!orderStore.orderList.length || checkState || loading" @click="validateSend()" text block>
+                                        :disabled="orderChanged" @click="validateSend()" text block>
                                         <v-icon class="me-2" name="md-notealt-twotone" scale="1.5" />
                                         <span class="fs-4">{{ orderStore.orderId ? 'Actualizar' : 'Realizar' }} pedido</span>
                                     </n-button>
@@ -99,78 +85,8 @@
                             </tr>
                         </tfoot>
                     </n-table>
-
-                    <div v-else>
-                        <template v-for="(customer, customerIndex) in customers" :key="customer.id">
-                            <n-card class="mb-4" size="small" :title="customer.name" :bordered="false" header-class="p-0 pb-2" content-class="p-0">
-                                <template #header-extra>
-                                    <n-space>
-                                        <n-text class="fs-6 fw-bold">S/. {{ formatPrice(getCustomerTotal(customer.id)) }}</n-text>
-                                        <n-button v-if="!isPaymentRoute" type="error" size="small" @click="confirmRemoveCustomer(customerIndex, customer.name)"
-                                            :title="`Eliminar cliente ${customer.name}`">
-                                            <v-icon name="md-delete-round" />
-                                        </n-button>
-                                    </n-space>
-                                </template>
-
-                                <n-table size="small">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 10%"></th>
-                                            <th style="width: 40%">Producto</th>
-                                            <th style="width: 25%">Cantidad</th>
-                                            <th style="width: 15%">SubTotal</th>
-                                            <th style="width: 10%"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <template v-for="(order, orderIndex) in getCustomerOrders(customer.id)" :key="orderIndex">
-                                            <tr v-if="order.quantity > 0" style="cursor: pointer" @click="openOrderModal(getGlobalOrderIndex(order.id))">
-                                                <td>
-                                                    <n-button v-if="!isPaymentRoute" type="info" text><v-icon name="md-listalt-round" /></n-button>
-                                                </td>
-                                                <td>
-                                                    <span>{{ order.product_name }}</span><br>
-                                                    <span style="color: #15151c; font-size: 12px;">{{ order.modified }}</span>
-                                                </td>
-                                                <td>
-                                                    <n-input-number v-if="!isPaymentRoute" class="border-top-0" size="small"
-                                                        :min="order.id ? saleStore.getOrderQuantity(order.id) : 1" v-model:value="order.quantity" @click.stop />
-                                                    <template v-else>{{ order.quantity }}</template>
-                                                </td>
-                                                <td>S/. {{ formatPrice(order.subTotal) }}</td>
-                                                <td>
-                                                    <n-button v-if="!isPaymentRoute" type="error" text @click.stop="removeOrderItem(order.product, order.customer?.id)">
-                                                        <v-icon name="md-disabledbydefault-round" />
-                                                    </n-button>
-                                                </td>
-                                            </tr>
-                                        </template>
-                                    </tbody>
-                                </n-table>
-                                <n-empty v-if="getCustomerOrders(customer.id).length === 0" description="No hay productos agregados" size="small" class="my-4" />
-                            </n-card>
-                        </template>
-                        <n-empty v-if="customers.length === 0" description="No hay clientes agregados" class="m-4" />
-                    </div>
                 </div>
             </n-scrollbar>
-        </template>
-
-        <template #footer>
-            <div v-if="shouldShowCustomerMode" class="order-actions p-2" style="flex-shrink: 0; background: #f8f9fa; border-radius: 6px;">
-                <n-space vertical>
-                    <n-space justify="space-between" align="center">
-                        <n-text class="fs-5 fw-bold">Total General: S/. {{ formatPrice(getTotalAmount()) }}</n-text>
-                        <n-text type="info">{{ customers.length }} cliente(s)</n-text>
-                    </n-space>
-                    <n-button v-if="!isPaymentRoute" :loading="loading" :type="orderStore.orderId ? 'info' : 'primary'"
-                        :disabled="!hasAnyOrders() || checkState || loading" size="large" @click="validateSend()" block>
-                        <v-icon class="me-2" name="md-notealt-twotone" scale="1.2" />
-                        <span class="fs-5">{{ orderStore.orderId ? 'Actualizar' : 'Realizar' }} pedido</span>
-                    </n-button>
-                </n-space>
-            </div>
         </template>
     </n-card>
 
@@ -196,22 +112,6 @@ export default defineComponent({
     name: "TableOrder",
     components: { OrderIndications },
     props: {
-        customers: {
-            type: Array,
-            default: () => []
-        },
-        selectedCustomerId: {
-            type: [Number, String],
-            default: null
-        },
-        shouldShowCustomerMode: {
-            type: Boolean,
-            default: false
-        },
-        selectedCustomer: {
-            type: Object,
-            default: null
-        },
         ask_for: {
             type: String,
             default: ''
@@ -235,7 +135,6 @@ export default defineComponent({
         'removeCustomer',
         'deleteOrderDetail',
         'goToFirstTab',
-        'update:selectedCustomerId',
         'update:ask_for',
         'update:orderUser'
     ],
@@ -254,12 +153,6 @@ export default defineComponent({
         const orderStore = useOrderStore();
         const saleStore = useSaleStore();
 
-        // Computed properties basadas en props
-        const localSelectedCustomerId = computed({
-            get: () => props.selectedCustomerId,
-            set: (value) => emit('update:selectedCustomerId', value)
-        });
-
         const localAskFor = computed({
             get: () => props.ask_for,
             set: (value) => emit('update:ask_for', value)
@@ -270,7 +163,10 @@ export default defineComponent({
             set: (value) => emit('update:orderUser', value)
         });
 
-        // Funciones que emiten eventos
+        const orderChanged = computed(() => {
+            return !orderStore.orderList.length || props.checkState || props.loading;
+        });
+
         const validateSend = () => emit('validateSend');
         const addCustomer = (name) => emit('addCustomer', name);
         const removeCustomer = (index) => emit('removeCustomer', index);
@@ -286,12 +182,9 @@ export default defineComponent({
 
         const isWaiter = computed(() => userStore.user.role === 'MOZO');
         const isPaymentRoute = computed(() => route.name === 'TablePayment');
-        const shouldEnterCustomerName = computed(() => settingsStore.businessSettings?.order?.order_customer_name && !props.shouldShowCustomerMode);
         const shouldSelectOrderUser = computed(() => settingsStore.businessSettings?.order?.select_order_user && !isWaiter.value);
-        const shouldAllowAddingProducts = computed(() => !props.shouldShowCustomerMode || props.selectedCustomerId);
         const currentOrder = computed(() => orderStore.orderList[itemIndex.value]);
 
-        const customerOptions = computed(() => props.customers.map(customer => ({ value: customer.id, label: customer.name })));
         const productOptions = computed(() => products.value.map((product) => ({
             value: product.id, label: product.name, disabled: product.is_disabled,
             category: productStore.getCategorieDescription(product.category), stock: product.stock
@@ -368,7 +261,7 @@ export default defineComponent({
         const selectProduct = id => {
             const item = products.value.find(product => product.id === id);
             if (item.has_supplies && item.has_stock) {
-                orderStore.addOrder(item, props.customers[props.customers.findIndex(c => c.id === props.selectedCustomerId)]);
+                orderStore.addOrder(item);
                 console.log('Producto agregado a la orden');
             }
         };
@@ -416,8 +309,8 @@ export default defineComponent({
             // Reactive state
             newCustomerName, showModal, itemIndex, searching, productSearch, products,
             // Computed properties
-            localSelectedCustomerId, localAskFor, localOrderUser, shouldEnterCustomerName, shouldSelectOrderUser,
-            shouldAllowAddingProducts, currentOrder, customerOptions, productOptions, isWaiter, isPaymentRoute,
+            localAskFor, localOrderUser, shouldSelectOrderUser, orderChanged,
+            currentOrder, productOptions, isWaiter, isPaymentRoute,
             // Methods
             showOptions, selectProduct, renderLabel, navigateToPayment, addCustomerLocal, confirmRemoveCustomer,
             getCustomerOrders, getCustomerTotal, getTotalAmount, formatPrice, hasAnyOrders, getGlobalOrderIndex,

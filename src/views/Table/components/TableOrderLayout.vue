@@ -12,10 +12,6 @@
                 </n-gi>
                 <n-gi :span="!shouldShowCustomerMode ? '4' : '5 xl:4'" style="height: calc(100vh - 165px);">
                     <TableOrder
-                        :customers="customers"
-                        :selectedCustomerId="selectedCustomerId"
-                        :shouldShowCustomerMode="shouldShowCustomerMode"
-                        :selectedCustomer="selectedCustomer"
                         :ask_for="ask_for"
                         :orderUser="orderUser"
                         :loading="loading"
@@ -38,10 +34,6 @@
             </n-tab-pane>
             <n-tab-pane name="payment" tab="Orden">
                 <TableOrder
-                    :customers="customers"
-                    :selectedCustomerId="selectedCustomerId"
-                    :shouldShowCustomerMode="shouldShowCustomerMode"
-                    :selectedCustomer="selectedCustomer"
                     :ask_for="ask_for"
                     :orderUser="orderUser"
                     :loading="loading"

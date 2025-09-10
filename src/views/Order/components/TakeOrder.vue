@@ -27,22 +27,12 @@
                                             </n-button>
                                         </n-dropdown>
                                     </div>
-                                    <n-radio-group v-model:value="sale.invoice_type" name="docType" size="small"
-                                                   @update:value="changeSerie">
-                                        <n-radio-button :disabled="!settingsStore.businessSettings.sale.enable_invoices" :value="1"
-                                                        :key="1">FACTURA
-                                        </n-radio-button>
-                                        <n-radio-button :disabled="!settingsStore.businessSettings.sale.enable_invoices" :value="3"
-                                                        :key="3">BOLETA
-                                        </n-radio-button>
+                                    <n-radio-group v-model:value="sale.invoice_type" name="docType" size="small" @update:value="changeSerie">
+                                        <n-radio-button :disabled="!settingsStore.businessSettings.sale.enable_invoices" :value="1" :key="1">FACTURA</n-radio-button>
+                                        <n-radio-button :disabled="!settingsStore.businessSettings.sale.enable_invoices" :value="3" :key="3">BOLETA</n-radio-button>
                                         <n-radio-button :value="80" :key="80">N. VENTA</n-radio-button>
                                     </n-radio-group>
-                                    <n-radio-group v-model:value="sale.payment_condition" name="saleType" size="small"
-                                                   @update:value="changeCondition" :disabled="!(
-      settingsStore.businessSettings?.sale?.enable_credits ===
-      true
-    )
-      ">
+                                    <n-radio-group v-model:value="sale.payment_condition" name="saleType" size="small" @update:value="changeCondition" :disabled="!(settingsStore.businessSettings?.sale?.enable_credits === true)">
                                         <n-radio-button :value="1" :key="1">CONTADO</n-radio-button>
                                         <n-radio-button :value="2" :key="2">CRÉDITO</n-radio-button>
                                     </n-radio-group>
@@ -55,24 +45,8 @@
                                                 <n-auto-complete blur-after-select :input-props="{
       autocomplete: 'disabled',
     }" v-model:value="sale.customer_name" :options="customerOptions" :get-show="showCustomerOptions"
-                                                                 :loading="searchingCustomer" @update:value="(v) => {
-      !v
-        ? ((sale.customer = 0),
-          (sale.address = null),
-          (whatsappNumber = ''),
-          (addressesOptions = []))
-        : null;
-    }
-      " @select="(value) => {
-      sale.customer = value;
-      sale.address = null;
-      whatsappNumber = '';
-      createAddressesOptions();
-    }
-      " @keyup.enter="autoCreateCustomer" placeholder="" clearable/>
-                                                <n-button v-if="!sale.customer" type="info" @click="
-      (sale.customer = 0), (showCustomerModal = true)
-      ">
+                                                                 :loading="searchingCustomer"                                                                  @update:value="(v) => { if (!v) { sale.customer = 0; sale.address = null; whatsappNumber = ''; addressesOptions = []; } }" @select="(value) => { sale.customer = value; sale.address = null; whatsappNumber = ''; createAddressesOptions(); }" @keyup.enter="autoCreateCustomer" placeholder="" clearable/>
+                                                <n-button v-if="!sale.customer" type="info" @click="sale.customer = 0, showCustomerModal = true">
                                                     <v-icon name="md-add-round"/>
                                                 </n-button>
                                                 <n-button v-else type="warning" @click="showCustomerModal = true">
@@ -85,27 +59,19 @@
                                                            v-model:formatted-value="sale.date_sale" disabled/>
                                         </n-form-item-gi>
                                         <n-form-item-gi :span="4" label="Dirección">
-                                            <n-select v-model:value="sale.address" :options="addressesOptions" :disabled="!sale.customer"
-                                                      placeholder="" @update:value="changeAddress"/>
+                                            <n-select v-model:value="sale.address" :options="addressesOptions" :disabled="!sale.customer" placeholder="" @update:value="changeAddress"/>
                                         </n-form-item-gi>
                                         <n-form-item-gi :span="4" label="Método Pago">
-                                            <n-select v-model:value="sale.payment_method" :options="saleStore.getPaymentMethodsOptions"
-                                                      filterable/>
+                                            <n-select v-model:value="sale.payment_method" :options="saleStore.getPaymentMethodsOptions" filterable/>
                                         </n-form-item-gi>
                                         <n-form-item-gi :span="2" label="Preguntar por">
                                             <n-input v-model:value="sale.ask_for" placeholder="" :disabled="!!sale.delivery_info"/>
                                         </n-form-item-gi>
                                         <n-form-item-gi v-if="$route.query.delivery === undefined" :span="2">
-                                            <n-checkbox @update:checked="handleDelivery">
-                                                Delivery
-                                            </n-checkbox>
+                                            <n-checkbox @update:checked="handleDelivery">Delivery</n-checkbox>
                                         </n-form-item-gi>
                                         <n-form-item-gi :span="2">
-                                            <n-button type="info" text @click="showObservations = !showObservations">{{
-                                                    !showObservations ? "Ver" : "Ocultar"
-                                                }}
-                                                Observaciones
-                                            </n-button>
+                                            <n-button type="info" text @click="showObservations = !showObservations">{{ !showObservations ? "Ver" : "Ocultar" }} Observaciones</n-button>
                                         </n-form-item-gi>
                                         <n-gi :span="12">
                                             <n-collapse-transition :show="showObservations">
@@ -140,11 +106,7 @@
                                 <n-table class="m-auto text-center fs-6" :bordered="false">
                                     <thead>
                                     <tr>
-                                        <th v-if="settingsStore.businessSettings.sale
-      .manage_affectations
-      ">
-                                            #
-                                        </th>
+                                        <th v-if="settingsStore.businessSettings.sale.manage_affectations">#</th>
                                         <th>Cantidad</th>
                                         <th>Producto</th>
                                         <th>Precio Unitario</th>
@@ -154,16 +116,9 @@
                                     </thead>
                                     <tbody>
                                     <tr v-for="(detail, index) in saleStore.toSale" :key="index">
-                                        <td v-if="settingsStore.businessSettings.sale
-      .manage_affectations
-      ">
-                                            <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation"
-                                                         :options="productStore.affectationsOptions"
-                                                         @update:value="(v) => saleStore.updateDetail(detail)">
-                                                <n-tag size="small" :color="getAfcColor(detail.product_affectation)">{{
-                                                        getAfcShort(detail.product_affectation)
-                                                    }}
-                                                </n-tag>
+                                        <td v-if="settingsStore.businessSettings.sale.manage_affectations">
+                                            <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation" :options="productStore.affectationsOptions" @update:value="(v) => saleStore.updateDetail(detail)">
+                                                <n-tag size="small" :color="getAfcColor(detail.product_affectation)">{{ getAfcShort(detail.product_affectation) }}</n-tag>
                                             </n-popselect>
                                         </td>
                                         <td>{{ detail.quantity }}</td>
@@ -173,29 +128,13 @@
                                         </td>
                                         <td>
                                             S/.
-                                            <input class="custom-input" type="number" min="0" step=".5" v-model="detail.price_sale" @input="(v) => (
-      saleStore.updateDetail(detail),
-      (detail.discount = parseFloat(0).toFixed(2))
-    )
-      " v-autowidth @click="$event.target.select()"/>
+                                            <input class="custom-input" type="number" min="0" step=".5" v-model="detail.price_sale" @input="saleStore.updateDetail(detail), (detail.discount = parseFloat(0).toFixed(2))" v-autowidth @click="$event.target.select()"/>
                                         </td>
                                         <td>
                                             S/.
-                                            <input class="custom-input" type="number" min="0"
-                                                   :max="!detail.price_sale ? 0 : detail.price_sale" :disabled="detail.product_affectation === 21 ||
-      !!Number(sale.discount)
-      " step=".5" v-model="detail.discount" v-autowidth @click="$event.target.select()"/>
+                                            <input class="custom-input" type="number" min="0" :max="!detail.price_sale ? 0 : detail.price_sale" :disabled="detail.product_affectation === 21 || !!Number(sale.discount)" step=".5" v-model="detail.discount" v-autowidth @click="$event.target.select()"/>
                                         </td>
-                                        <td>
-                                            {{
-                                                detail.product_affectation === 21
-                                                ? "0.00"
-                                                : parseFloat(
-                                                        detail.quantity * detail.price_sale -
-                                                        detail.discount
-                                                ).toFixed(2)
-                                            }}
-                                        </td>
+                                        <td>{{ detail.product_affectation === 21 ? "0.00" : (detail.quantity * detail.price_sale - detail.discount).toFixed(2) }}</td>
                                     </tr>
                                     </tbody>
                                 </n-table>
@@ -251,11 +190,7 @@
                                             <div>
                                                 DSCT:
                                                 <span>S/.</span>
-                                                <input class="custom-input fw-bold" type="number" min="0" step=".5" v-model="totalDSCT"
-                                                       v-autowidth :disabled="saleStore.toSale.some(
-      (detail) => Number(detail.discount) > 0
-    )
-      " @click="$event.target.select()"/>
+                                                <input class="custom-input fw-bold" type="number" min="0" step=".5" v-model="totalDSCT" v-autowidth :disabled="saleStore.toSale.some(d => Number(d.discount) > 0)" @click="$event.target.select()"/>
                                             </div>
                                             <div>
                                                 OTROS:
@@ -270,32 +205,16 @@
                                         </n-space>
                                     </n-gi>
                                 </n-grid>
-                                <n-checkbox v-if="!sale.delivery_info || sale.payment_condition === 1" v-model:checked="isMultiple"
-                                            :disabled="settingsStore.businessSettings.order.pending_takeaway
-      ">Pago multiple
-                                </n-checkbox>
+                                <n-checkbox v-if="!sale.delivery_info || sale.payment_condition === 1" v-model:checked="isMultiple" :disabled="settingsStore.businessSettings.order.pending_takeaway">Pago multiple</n-checkbox>
                                 <n-divider/>
                                 <n-grid responsive="screen" cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12" :x-gap="12">
                                     <n-gi class="d-flex align-items-center" :span="3">
                                         <n-checkbox v-model:checked="ticketPreview">Previsualizar ticket</n-checkbox>
                                     </n-gi>
                                 </n-grid>
-                                <n-button class="mt-2 py-5 fs-1" type="success" :disabled="!saleStore.toSale.length || sale.payment_condition === 1
-      ? sale.given_amount < sale.amount
-      : !(sale.given_amount < sale.amount)
-      " secondary block @click="
-      userStore.user.role !== 'MOZO'
-        ? isMultiple
-          ? doMultiplePayment()
-          : performTakeAway()
-        : performTakeAway()
-      ">
+                                <n-button class="mt-2 py-5 fs-1" type="success" :disabled="!saleStore.toSale.length || (sale.payment_condition === 1 ? sale.given_amount < sale.amount : !(sale.given_amount < sale.amount))" secondary block @click="userStore.user.role !== 'MOZO' ? (isMultiple ? doMultiplePayment() : performTakeAway()) : performTakeAway()">
                                     <v-icon class="me-2" name="fa-coins" scale="2"/>
-                                    {{
-                                        userStore.user.role !== "MOZO"
-                                        ? "Cobrar"
-                                        : "Realizar pedido"
-                                    }}
+                                    {{ userStore.user.role !== "MOZO" ? "Cobrar" : "Realizar pedido" }}
                                 </n-button>
                                 <ticket-preview ref="ticketPreviewRef" v-model:show="showPdf" :data="pdfData" :hidden="true"
                                                 :isUpdate="false"/>
@@ -314,10 +233,7 @@
                 <n-gi span="2">
                     <n-card class="h-100" :bordered="false" embedded>
                         <template #header>
-                            <n-button type="info" secondary @click="selectProducts = !selectProducts">{{
-                                    selectProducts ? "Seleccionar productos" : "Cobrar"
-                                }}
-                            </n-button>
+                            <n-button type="info" secondary @click="selectProducts = !selectProducts">{{ selectProducts ? "Seleccionar productos" : "Cobrar" }}</n-button>
                         </template>
                         <n-input-group>
                             <n-auto-complete :input-props="{
@@ -338,10 +254,7 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                <tr v-for="(order, index) in orderStore.orderList" :key="index" style="cursor: pointer" @click="
-      itemIndex = index;
-    showModal = true;
-    ">
+                                                                    <tr v-for="(order, index) in orderStore.orderList" :key="index" style="cursor: pointer" @click="itemIndex = index; showModal = true;">
                                     <td>
                                         <n-button type="info" text>
                                             <v-icon name="md-listalt-round"/>
@@ -351,10 +264,7 @@
                                         {{ order.product_name }}
                                     </td>
                                     <td>
-                                        <n-input-number class="border-top-0" size="small" :min="1" v-model:value="order.quantity"
-                                                        @update:value="
-      saleStore.sale_details = orderStore.orderList
-      " @click.stop/>
+                                        <n-input-number class="border-top-0" size="small" :min="1" v-model:value="order.quantity" @update:value="saleStore.sale_details = orderStore.orderList" @click.stop/>
                                     </td>
                                     <td>S/. {{ order.subTotal.toFixed(2) }}</td>
                                     <td>
@@ -402,15 +312,8 @@
                      @close="sale.payments = null">
                 <n-space justify="space-between">
                     <n-tag type="info">Total: S/. {{ showPayments ? sale.amount : null }}</n-tag>
-                    <n-tag :type="evalPayments ? 'error' : 'success'">Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}
-                    </n-tag>
-                    <n-tag :type="evalPayments ? 'error' : 'warning'">Faltante: S/.
-                        {{
-                            showPayments
-                            ? parseFloat(sale.amount - currentPaymentsAmount).toFixed(2)
-                            : null
-                        }}
-                    </n-tag>
+                    <n-tag :type="evalPayments ? 'error' : 'success'">Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}</n-tag>
+                    <n-tag :type="evalPayments ? 'error' : 'warning'">Faltante: S/. {{ showPayments ? (parseFloat(sale.amount) - currentPaymentsAmount).toFixed(2) : null }}</n-tag>
                 </n-space>
                 <n-form-item class="mt-2" label="Pagos">
                     <n-dynamic-input v-model:value="sale.payments" :min="1" @create="createPayment">
@@ -424,12 +327,7 @@
                     </n-dynamic-input>
                 </n-form-item>
                 <n-space justify="end">
-                    <n-button type="success" :disabled="evalPayments ||
-      sale.payments.some((pay) => pay.payment_method === null) ||
-      sale.payments.some((pay) => Number(pay.amount) <= 0) ||
-      loading
-      " :loading="loading" secondary @click="performTakeAway">Confirmar
-                    </n-button>
+                    <n-button type="success" :disabled="evalPayments || sale.payments.some(p => p.payment_method === null) || sale.payments.some(p => Number(p.amount) <= 0) || loading" :loading="loading" secondary @click="performTakeAway">Confirmar</n-button>
                 </n-space>
             </n-modal>
             <OrderIndications v-model:show="showModal" preset="card" title="Indicaciones" :order="orderStore.orderList[itemIndex]"
@@ -516,91 +414,34 @@ export default defineComponent({
                    : 0.0;
         });
 
-        const icbper = computed(() => {
-            return orderStore.orderList.reduce((acc, curVal) => {
-                if (curVal.icbper) {
-                    return (acc += curVal.icbper_amount);
-                }
-                return (acc += 0);
-            }, 0);
+        const icbper = computed(() => orderStore.orderList.reduce((acc, cur) => cur.icbper ? acc + cur.icbper_amount : acc, 0));
+
+        const totals = computed(() => {
+            const toSale = saleStore.toSale;
+            return {
+                GRV: toSale.reduce((acc, cur) => cur.product_affectation === 10 ? acc + parseFloat(cur.price_sale) * cur.quantity : acc, 0),
+                EXN: toSale.reduce((acc, cur) => cur.product_affectation === 20 ? acc + parseFloat(cur.price_sale) * cur.quantity : acc, 0),
+                GRT: toSale.reduce((acc, cur) => cur.product_affectation === 21 ? acc + parseFloat(cur.price_sale) * cur.quantity : acc, 0),
+                IGV: toSale.reduce((acc, cur) => acc + cur.igv_tax * cur.quantity, 0),
+                DSCT: toSale.some(d => Number(d.discount) > 0) ? toSale.reduce((acc, cur) => acc + Number(cur.discount), 0) : sale.value.discount
+            };
         });
 
-        const totalGRV = computed(() => {
-            return saleStore.toSale.reduce((acc, curVal) => {
-                return curVal.product_affectation === 10
-                       ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
-                       : acc;
-            }, 0);
-        });
-
-        const totalEXN = computed(() => {
-            return saleStore.toSale.reduce((acc, curVal) => {
-                return curVal.product_affectation === 20
-                       ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
-                       : acc;
-            }, 0);
-        });
-
-        const totalGRT = computed(() => {
-            return saleStore.toSale.reduce((acc, curVal) => {
-                return curVal.product_affectation === 21
-                       ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
-                       : acc;
-            }, 0);
-        });
-
-        const totalIGV = computed(() => {
-            return saleStore.toSale.reduce((acc, curVal) => {
-                return (acc += curVal.igv_tax * curVal.quantity);
-            }, 0);
-        });
-
-        const totalDSCT = computed({
-            get: () => {
-                if (saleStore.toSale.some((detail) => Number(detail.discount) > 0)) {
-                    return saleStore.toSale.reduce((acc, curVal) => {
-                        return (acc += Number(curVal.discount));
-                    }, 0);
-                }
-                return sale.value.discount;
-            },
-            set: (v) => {
-                if ( !saleStore.toSale.some((detail) => Number(detail.discount) > 0)) {
-                    sale.value.discount = v;
-                } else {
-                    sale.value.discount = saleStore.toSale.reduce((acc, curVal) => {
-                        return (acc += Number(curVal.discount));
-                    }, 0);
-                }
-            }
-        });
+        const totalGRV = computed(() => totals.value.GRV);
+        const totalEXN = computed(() => totals.value.EXN);
+        const totalGRT = computed(() => totals.value.GRT);
+        const totalIGV = computed(() => totals.value.IGV);
+        const totalDSCT = computed(() => totals.value.DSCT);
 
         const showObservations = ref(false);
 
-        const subTotal = computed(() => {
-            return saleStore.toSale.reduce((acc, curVal) => {
-                return curVal.product_affectation === 21
-                       ? (acc += 0)
-                       : (acc += curVal.price_sale * curVal.quantity);
-            }, 0);
-        });
+        const subTotal = computed(() => saleStore.toSale.reduce((acc, cur) => cur.product_affectation === 21 ? acc : acc + cur.price_sale * cur.quantity, 0));
 
-        const products_count = computed(() => {
-            return saleStore.toSale.reduce((acc, curVal) => {
-                return (acc += curVal.quantity);
-            }, 0);
-        });
+        const products_count = computed(() => saleStore.toSale.reduce((acc, cur) => acc + cur.quantity, 0));
 
         const total = computed(() => {
-            let cal = parseFloat(
-                subTotal.value -
-                parseFloat(totalDSCT.value) +
-                icbper.value +
-                parseFloat(sale.value.other_charges)
-            );
-            if (sale.value.delivery_info) {
-                cal = cal + parseFloat(sale.value.delivery_info.amount);
-            }
+            let cal = parseFloat(subTotal.value - parseFloat(totalDSCT.value) + icbper.value + parseFloat(sale.value.other_charges));
+            if (sale.value.delivery_info) cal += parseFloat(sale.value.delivery_info.amount);
             return cal.toFixed(2);
         });
 
@@ -652,25 +493,13 @@ export default defineComponent({
         });
 
         const formRules = computed(() => {
-            let rules = saleRules;
+            const rules = { ...saleRules };
             rules.customer.required = !(sale.value.invoice_type !== 1 && sale.value.payment_condition === 1 && parseFloat(sale.value.given_amount) < 699);
             if (sale.value.delivery_info) {
                 rules.delivery_info = {
-                    person: {
-                        required: true,
-                        trigger: [ "blur", "input" ],
-                        message: "Campo requerido"
-                    },
-                    address: {
-                        required: true,
-                        trigger: [ "blur", "change" ],
-                        message: "Campo requerido"
-                    },
-                    phone: {
-                        required: true,
-                        trigger: [ "blur", "change" ],
-                        message: "Campo requerido"
-                    }
+                    person: { required: true, trigger: ["blur", "input"], message: "Campo requerido" },
+                    address: { required: true, trigger: ["blur", "change"], message: "Campo requerido" },
+                    phone: { required: true, trigger: ["blur", "change"], message: "Campo requerido" }
                 };
             } else {
                 rules.delivery_info = null;
@@ -683,36 +512,16 @@ export default defineComponent({
         };
 
         const changeCondition = (v) => {
-            switch (v) {
-                case 1:
-                    sale.value.given_amount = total.value;
-                    break;
-                case 2:
-                    sale.value.given_amount = parseFloat(0).toFixed(2);
-                    break;
-                default:
-                    console.error(`${ v } invalido`);
-                    break;
-            }
+            sale.value.given_amount = v === 1 ? total.value : parseFloat(0).toFixed(2);
         };
 
         const changeSerie = (v) => {
-            switch (v) {
-                case 1:
-                    sale.value.customer_name = "";
-                    sale.value.customer = null;
-                    sale.value.address = null;
-                    sale.value.serie = saleStore.getFirstOption(v);
-                    break;
-                case 3:
-                    sale.value.serie = saleStore.getFirstOption(v);
-                    break;
-                case 80:
-                    sale.value.serie = saleStore.getFirstOption(v);
-                    break;
-                default:
-                    break;
+            if (v === 1) {
+                sale.value.customer_name = "";
+                sale.value.customer = null;
+                sale.value.address = null;
             }
+            sale.value.serie = saleStore.getFirstOption(v);
         };
 
         const showModal = ref(false);
@@ -724,40 +533,32 @@ export default defineComponent({
 
         const products = ref([]);
 
-        const productOptions = computed(() => {
-            return products.value.map((product) => ({
-                value: product.id,
-                label: product.name,
-                disabled: product.is_disabled,
-                category: productStore.getCategorieDescription(product.category)
-            }));
-        });
+        const productOptions = computed(() => products.value.map(product => ({
+            value: product.id,
+            label: product.name,
+            disabled: product.is_disabled,
+            category: productStore.getCategorieDescription(product.category)
+        })));
 
         const showOptions = (value) => {
             if (value.length >= 3) {
                 searching.value = true;
                 searchProductByName(value).then((response) => {
-                    if (response.status === 200) {
-                        products.value = response.data;
-                    }
+                    if (response.status === 200) products.value = response.data;
                 }).catch((error) => {
                     console.error(error);
                     message.error("Algo salió mal...");
-                }).finally(() => {
-                    searching.value = false;
-                });
+                }).finally(() => searching.value = false);
                 return true;
             }
             return false;
         };
 
         const selectProduct = (v) => {
-            const item = products.value.find((product) => product.id === v);
-            if (item.has_supplies) {
-                if (item.has_stock) {
-                    orderStore.addOrder(item);
-                    saleStore.sale_details = orderStore.orderList;
-                }
+            const item = products.value.find(p => p.id === v);
+            if (item?.has_supplies && item?.has_stock) {
+                orderStore.addOrder(item);
+                saleStore.sale_details = orderStore.orderList;
             }
         };
 
@@ -778,19 +579,6 @@ export default defineComponent({
                     color = "#995C4E";
                     text = "DELIVERY";
                 }
-                /* switch (t[1]) {
-                 case " LL":
-                 color = "#926ED7";
-                 text = "PARA LLEVAR";
-                 break;
-                 case " D":
-                 color = "#995C4E";
-                 text = "DELIVERY";
-                 break;
-                 default:
-                 console.error(t[1]);
-                 break;
-                 } */
             }
             return h(
                 NThing,
@@ -869,15 +657,11 @@ export default defineComponent({
         const obtainSaleNumber = async() => {
             loading.value = true;
             await getSaleNumber(sale.value.serie).then((response) => {
-                if (response.status === 200) {
-                    sale.value.number = Number(response.data.number) + 1;
-                }
+                if (response.status === 200) sale.value.number = Number(response.data.number) + 1;
             }).catch((error) => {
                 console.error(error);
                 message.error("Algo salió mal...");
-            }).finally(() => {
-                loading.value = false;
-            });
+            }).finally(() => loading.value = false);
         };
 
         const showCustomerModal = ref(false);
@@ -885,73 +669,46 @@ export default defineComponent({
 
         const customerResults = ref([]);
 
-        const customerOptions = computed(() => {
-            return customerResults.value.map((customer) => ({
-                value: customer.id,
-                label: `${ customer.doc_num } - ${ customer.names }`,
-                disabled: customer.is_disabled
-            }));
-        });
+        const customerOptions = computed(() => customerResults.value.map(customer => ({
+            value: customer.id,
+            label: `${customer.doc_num} - ${customer.names}`,
+            disabled: customer.is_disabled
+        })));
 
         const addressesOptions = ref([]);
 
         const createAddressesOptions = () => {
-            const customer = customerResults.value.find(
-                (customer) => customer.id === sale.value.customer
-            );
-            whatsappNumber.value = !customer.phone ? "" : customer.phone;
-            if (typeof customer !== "undefined") {
-                addressesOptions.value = customer.addresses.map((address) => ({
+            const customer = customerResults.value.find(c => c.id === sale.value.customer);
+            whatsappNumber.value = customer?.phone || "";
+            if (customer) {
+                addressesOptions.value = customer.addresses.map(address => ({
                     value: address.id,
-                    label: `${ address.ubigeo } - ${ address.description }`
+                    label: `${address.ubigeo} - ${address.description}`
                 }));
-            }
-            if (addressesOptions.value.length) {
-                sale.value.address = addressesOptions.value[0].value;
-            }
-            if (sale.value.delivery_info) {
-                sale.value.delivery_info.person = customer.names;
-                sale.value.delivery_info.phone = customer.phone;
-                sale.value.delivery_info.address = customer.addresses.length
-                                                   ? customer.addresses[0].description
-                                                   : "";
+                if (addressesOptions.value.length) sale.value.address = addressesOptions.value[0].value;
+                if (sale.value.delivery_info) {
+                    sale.value.delivery_info.person = customer.names;
+                    sale.value.delivery_info.phone = customer.phone;
+                    sale.value.delivery_info.address = customer.addresses.length ? customer.addresses[0].description : "";
+                }
             }
         };
 
         const changeAddress = (v, o) => {
-            if (sale.value.delivery_info) {
-                sale.value.delivery_info.address = o.label.split(" - ")[1];
-            }
+            if (sale.value.delivery_info) sale.value.delivery_info.address = o.label.split(" - ")[1];
         };
 
         const showCustomerOptions = async(value) => {
             if (value.length >= 3 && value.length <= 11) {
                 searchingCustomer.value = true;
-                if (sale.value.invoice_type === 1) {
-                    await searchRucCustomer(value).then((response) => {
-                        if (response.status === 200) {
-                            customerResults.value = response.data;
-                        }
-                    }).catch((error) => {
-                        console.error(error);
-                        message.error("Algo salió mal...");
-                    }).finally(() => {
-                        searchingCustomer.value = false;
-                    });
-                    return true;
-                } else {
-                    await searchCustomerByName(value).then((response) => {
-                        if (response.status === 200) {
-                            customerResults.value = response.data;
-                        }
-                    }).catch((error) => {
-                        console.error(error);
-                        message.error("Algo salió mal...");
-                    }).finally(() => {
-                        searchingCustomer.value = false;
-                    });
-                    return true;
-                }
+                const searchFunc = sale.value.invoice_type === 1 ? searchRucCustomer : searchCustomerByName;
+                await searchFunc(value).then((response) => {
+                    if (response.status === 200) customerResults.value = response.data;
+                }).catch((error) => {
+                    console.error(error);
+                    message.error("Algo salió mal...");
+                }).finally(() => searchingCustomer.value = false);
+                return true;
             } else {
                 customerResults.value = [];
                 return false;
@@ -961,10 +718,11 @@ export default defineComponent({
         const customerDocument = ref("");
 
         const autoCreateCustomer = () => {
-            if ( !searchingCustomer.value && !customerResults.value.length) {
-                if ( !isNaN(sale.value.customer_name) && ((sale.value.customer_name.length === 8 && sale.value.invoice_type !== 1) || sale.value.customer_name.length === 11)) {
+            if (!searchingCustomer.value && !customerResults.value.length) {
+                const name = sale.value.customer_name;
+                if (!isNaN(name) && ((name.length === 8 && sale.value.invoice_type !== 1) || name.length === 11)) {
                     showCustomerModal.value = true;
-                    customerDocument.value = sale.value.customer_name;
+                    customerDocument.value = name;
                 }
             }
         };
@@ -975,58 +733,24 @@ export default defineComponent({
             await obtainSaleNumber();
         });
         const handleDelivery = (v) => {
-            v
-            ? ((sale.value.delivery_info = {
+            sale.value.delivery_info = v ? {
                 person: "",
                 address: "",
                 phone: "",
                 deliveryman: "",
                 amount: parseFloat(0).toFixed(2)
-            }),
-                (sale.value.ask_for = ""))
-            : (sale.value.delivery_info = null);
+            } : null;
+            if (v) sale.value.ask_for = "";
         };
 
         const showConfirm = ref(false);
 
         const userConfirm = ref("");
 
-        /* const errorLabel = (field) => {
-         switch (field) {
-         case "names":
-         return "Nombres";
-         case "doc_type":
-         return "Tipo Documento";
-         case "doc_num":
-         return "N° Documento";
-         case "birthdate":
-         return "Fecha de Nacimiento";
-         case "email":
-         return "Correo";
-         case "phone":
-         return "Teléfono";
-         case "gender":
-         return "Género";
-         default:
-         return null;
-         }
-         }; */
-
         const PrintsAfterTakeOrder = (val) => {
-            let values = { ...val.order, ...val.sale };
-
-            VoucherPrint({
-                data: values,
-                businessStore,
-                saleStore,
-                changing: changing.value,
-                show: true
-            });
-
-            if (
-                !!values.delivery_info &&
-                settingsStore.business_settings.printer.print_delivery_ticket
-            ) {
+            const values = { ...val.order, ...val.sale };
+            VoucherPrint({ data: values, businessStore, saleStore, changing: changing.value, show: true });
+            if (values.delivery_info && settingsStore.business_settings.printer.print_delivery_ticket) {
                 printDeliveryInfo({ data: values, changing: changing.value });
             }
             router.push({ name: "TableHome" });
@@ -1034,7 +758,7 @@ export default defineComponent({
 
         const performCreateOrder = async() => {
             loading.value = true;
-            sale.value.sale_details = saleStore.toSale.map((detail) => ({
+            sale.value.sale_details = saleStore.toSale.map(detail => ({
                 ...detail,
                 igv_tax: detail.igv_tax.toFixed(2),
                 price_base: detail.price_base.toFixed(2)
@@ -1050,18 +774,13 @@ export default defineComponent({
                         if (settingsStore.business_settings.printer.print_html) {
                             voucherData.value = response.data.sale;
                             showVoucher.value = true;
-                            if ( !ticketPreview.value) {
-                                setTimeout(() => voucherDrawer.value.generate(), 250);
-                            }
+                            if (!ticketPreview.value) setTimeout(() => voucherDrawer.value.generate(), 250);
                         } else {
                             PrintsAfterTakeOrder(response.data);
                         }
                     }, 250);
-                    // router.push({ name: "TableHome" });
                 }
-            }).catch((error) => {
-                console.error(error);
-            }).finally(() => {
+            }).catch((error) => console.error(error)).finally(() => {
                 userConfirm.value = "";
                 showConfirm.value = false;
                 loading.value = false;
@@ -1071,12 +790,7 @@ export default defineComponent({
         const performTakeAway = () => {
             formRules.effect;
             saleForm.value.validate((errors) => {
-                // console.log(sale.value.customer);
-                // if(parseFloat(sale.value.given_amount) > 699 && sale.value.invoice_type === 80 || sale.value.invoice_type === 3 && sale.value.customer){
-                //     message.warning('El monto es mayor a 699, debes de agregar un cliente')
-                //     return
-                // }
-                if ( !errors) {
+                if (!errors) {
                     if (userStore.user.role === "MOZO") {
                         showConfirm.value = true;
                     } else {
@@ -1108,7 +822,7 @@ export default defineComponent({
                                             ) {
                                                 voucherData.value = response.data.sale;
                                                 showVoucher.value = true;
-                                                if ( !ticketPreview.value) {
+                                                if (!ticketPreview.value) {
                                                     setTimeout(
                                                         () => voucherDrawer.value.generate(),
                                                         250
@@ -1126,46 +840,12 @@ export default defineComponent({
                                             sendSale(response.data.sale.id).then((response) => {
                                                 if (response.status === 200) {
                                                     message.success("Enviado!");
-                                                    // if (whatsappNumber.value.length >= 9) {
-                                                    //   sendWhatsapp(
-                                                    //     response.data.id,
-                                                    //     [response.data.serie, response.data.number],
-                                                    //     whatsappNumber.value
-                                                    //   )
-                                                    //     .then((response) => {
-                                                    //       if (response.status === 200)
-                                                    //         window.open(
-                                                    //           response.data.data.url,
-                                                    //           "_blank"
-                                                    //         );
-                                                    //     })
-                                                    //     .catch((error) => {
-                                                    //       console.error(error);
-                                                    //     });
-                                                    // }
                                                 }
                                             }).catch((error) => {
                                                 console.error(error);
                                                 message.error("Algo salió mal...");
                                             });
                                         }
-                                        // else {
-                                        //   if (whatsappNumber.value.length >= 9) {
-                                        //     sendWhatsapp(
-                                        //       response.data.id,
-                                        //       [response.data.serie, response.data.number],
-                                        //       whatsappNumber.value
-                                        //     )
-                                        //       .then((response) => {
-                                        //         if (response.status === 200)
-                                        //           window.open(response.data.data.url, "_blank");
-                                        //       })
-                                        //       .catch((error) => {
-                                        //         console.error(error);
-                                        //       });
-                                        //   }
-                                        // }
-                                        // router.push({ name: "TableHome" });
                                     }
                                 }).catch((error) => {
                                     console.error(error);
@@ -1191,30 +871,17 @@ export default defineComponent({
 
         onMounted(async() => {
             await obtainSaleNumber();
-
             const fetch = new Date();
-            const dd = fetch.getDate();
-            const mm = fetch.getMonth();
-            const yy = fetch.getFullYear();
-            const hh = fetch.getHours();
-            const msms = fetch.getMinutes();
-
-            dateNow.value = `${ dd }/${ mm + 1 }/${ yy } ${ hh }:${ msms }`;
+            dateNow.value = `${fetch.getDate()}/${fetch.getMonth() + 1}/${fetch.getFullYear()} ${fetch.getHours()}:${fetch.getMinutes()}`;
         });
 
         const onCloseModal = () => {
         };
 
         const onSuccess = (customer) => {
-            if (sale.value.invoice_type === 1 && customer.doc_type === "6") {
+            if ((sale.value.invoice_type === 1 && customer.doc_type === "6") || sale.value.invoice_type !== 1) {
                 customerResults.value.push(customer);
-                sale.value.customer_name = `${ customer.doc_num } - ${ customer.names }`;
-                sale.value.customer = customer.id;
-                whatsappNumber.value = !customer.phone ? "" : customer.phone;
-                createAddressesOptions();
-            } else if (sale.value.invoice_type !== 1) {
-                customerResults.value.push(customer);
-                sale.value.customer_name = `${ customer.doc_num } - ${ customer.names }`;
+                sale.value.customer_name = `${customer.doc_num} - ${customer.names}`;
                 sale.value.customer = customer.id;
                 createAddressesOptions();
             }
@@ -1228,101 +895,54 @@ export default defineComponent({
 
         const showPayments = ref(false);
 
-        const createPayment = () => {
-            return {
-                payment_method: null,
-                amount: "0"
-            };
-        };
+        const createPayment = () => ({ payment_method: null, amount: "0" });
 
         const doMultiplePayment = () => {
-            sale.value.payments = [
-                {
-                    payment_method: sale.value.payment_method,
-                    amount: String(sale.value.amount)
-                }
-            ];
+            sale.value.payments = [{ payment_method: sale.value.payment_method, amount: String(sale.value.amount) }];
             showPayments.value = true;
         };
 
-        const filteredMethods = computed(() => {
-            return saleStore.getPaymentMethodsOptions.map((option) => ({
-                value: option.value,
-                label: option.label,
-                disabled: sale.value.payments.some(
-                    (pay) => pay.payment_method === option.value
-                )
-            }));
-        });
+        const filteredMethods = computed(() => saleStore.getPaymentMethodsOptions.map(option => ({
+            ...option,
+            disabled: sale.value.payments?.some(pay => pay.payment_method === option.value)
+        })));
 
         const evalPayments = computed(() => {
             if (sale.value.payments) {
-                return (
-                    sale.value.payments.reduce((acc, val) => {
-                        return (acc += parseFloat(val.amount));
-                    }, 0) !== Number(sale.value.amount)
-                );
-            } else {
-                return true;
+                const sum = sale.value.payments.reduce((acc, val) => acc + parseFloat(val.amount), 0);
+                return sum !== Number(sale.value.amount);
             }
+            return true;
         });
 
         const currentPaymentsAmount = computed(() => {
             if (sale.value.payments) {
-                let sum = sale.value.payments.reduce((acc, val) => {
-                    return (acc += parseFloat(val.amount));
-                }, 0);
+                const sum = sale.value.payments.reduce((acc, val) => acc + parseFloat(val.amount), 0);
                 return isNaN(sum) ? "0.00" : sum.toFixed(2);
-            } else {
-                return "0.00";
             }
+            return "0.00";
         });
 
-        const dateDisabled = (ts) => {
-            return ts > new Date(Date.now());
+        const dateDisabled = (ts) => ts > new Date(Date.now());
+
+        const afcData = {
+            10: { short: "GRV", color: "#008B8B" },
+            20: { short: "EXN", color: "#9932CC" },
+            21: { short: "GRT", color: "#006400" },
+            default: { short: "---", color: "#8B0000" }
         };
 
         function getAfcColor(afc) {
-            switch (afc) {
-                case 10:
-                    return {
-                        color: lighten("#008B8B", 48),
-                        textColor: "#008B8B",
-                        borderColor: lighten("#008B8B", 24)
-                    };
-                case 20:
-                    return {
-                        color: lighten("#9932CC", 48),
-                        textColor: "#9932CC",
-                        borderColor: lighten("#9932CC", 24)
-                    };
-                case 21:
-                    return {
-                        color: lighten("#006400", 48),
-                        textColor: "#006400",
-                        borderColor: lighten("#006400", 24)
-                    };
-                default:
-                    return {
-                        color: lighten("#8B0000", 48),
-                        textColor: "#8B0000",
-                        borderColor: lighten("#8B0000", 24)
-                    };
-            }
+            const data = afcData[afc] || afcData.default;
+            return {
+                color: lighten(data.color, 48),
+                textColor: data.color,
+                borderColor: lighten(data.color, 24)
+            };
         }
 
         function getAfcShort(afc) {
-            switch (afc) {
-                case 10:
-                    return "GRV";
-                case 20:
-                    return "EXN";
-                case 21:
-                    return "GRT";
-                default:
-                    console.error("Afectación inválida");
-                    return "---";
-            }
+            return (afcData[afc] || afcData.default).short;
         }
 
         const whatsappNumber = ref("");

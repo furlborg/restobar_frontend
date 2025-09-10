@@ -173,7 +173,7 @@ export const routes = [
             name: "TakeOrder",
             path: "/take-order",
             meta: { requiredPerm: "take_away_order" },
-            component: () => import("@/views/Order/components/TakeOrder.vue")
+            component: () => import("@/views/Order/components/TakeOrderLayout.vue")
           },
           {
             name: "TableOrder",
