@@ -59,6 +59,14 @@ export const routes = [
         component: () => import(/* webpackChunkName: "sale" */ "@/views/Sale/index.vue")
       },
       {
+        path: "/menus",
+        name: "Menu",
+        meta: {
+          requiredPerm: "view_sale"
+        },
+        component: () => import(/* webpackChunkName: "menu" */ "@/views/Menu/index.vue")
+      },
+      {
         path: "/reports",
         name: "Reports",
         meta: {

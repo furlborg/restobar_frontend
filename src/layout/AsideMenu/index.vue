@@ -127,6 +127,16 @@ export default defineComponent({
           icon: renderIcon("md-fastfood-twotone"),
           disabled: !userStore.hasPermission("view_product"),
         },
+        {
+          label: () => h(
+            RouterLink,
+            { to: { name: 'Menu' } },
+            () => h('span', 'Menu')
+          ),
+          key: 'Menu',
+          icon: renderIcon('md-insertchart-outlined'),
+          disabled: !userStore.hasPermission('view_sale'),
+        },
         /* {
           label: () =>
             h(
