@@ -71,8 +71,8 @@
                 :input-props="{ autocomplete: 'disabled' }"
                 v-model:value="localCustomerName"
                 :options="customerOptions"
-                :get-show="(v) => $emit('showCustomerOptions', v)"
                 :loading="searchingCustomer"
+                :get-show="showCustomerOptions"
                 @update:value="handleCustomerNameChange"
                 @select="handleCustomerSelect"
                 @keyup.enter="$emit('autoCreateCustomer')"
@@ -191,16 +191,12 @@
       />
 
       <PaymentTotals
-        :sale="sale"
-        :changing="changing"
-        :sub-total="subTotal"
-        :total-grv="totalGRV"
-        :total-exn="totalEXN"
-        :total-grt="totalGRT"
-        :total-igv="totalIGV"
-        :icbper="icbper"
-        :total-dsct="totalDSCT"
-        @update:sale="updateSale"
+        :items="paymentTotalsItems"
+        :total-amount="totalAmount"
+        :payment-amount="sale.given_amount"
+        :change-amount="changing"
+        @value-changed="handleValueChange"
+        @payment-changed="handlePaymentChange"
       />
 
       <n-checkbox
@@ -238,13 +234,18 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed, watch } from "vue";
+import { defineComponent, ref, computed, watch, watchEffect } from "vue";
+import { useMessage } from "naive-ui";
 import { useRoute } from "vue-router";
 import { useSaleStore } from "@/store/modules/sale";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useUserStore } from "@/store/modules/user";
 import ProductTable from "./ProductTable.vue";
 import PaymentTotals from "./PaymentTotals.vue";
+import {
+  searchCustomerByName,
+  searchRucCustomer
+} from "@/api/modules/customer";
 
 export default defineComponent({
   name: "OrderTaking",
@@ -330,7 +331,6 @@ export default defineComponent({
     'selectSerie',
     'changeSerie',
     'changeCondition',
-    'showCustomerOptions',
     'autoCreateCustomer',
     'createAddressesOptions',
     'changeAddress',
@@ -344,8 +344,13 @@ export default defineComponent({
     const saleStore = useSaleStore();
     const settingsStore = useSettingsStore();
     const userStore = useUserStore();
+    const message = useMessage();
 
     const saleForm = ref();
+
+    watchEffect(() => {
+      console.log(props.sale)
+    })
 
     const localInvoiceType = ref(props.sale.invoice_type);
     const localPaymentCondition = ref(props.sale.payment_condition);
@@ -397,6 +402,43 @@ export default defineComponent({
           !(props.sale.given_amount < props.sale.amount)
         );
     });
+    const searchingCustomer = ref(false);
+
+    const customerResults = ref([]);
+
+    const showCustomerOptions = async(value) => {
+      if (value.length >= 3 && value.length <= 11) {
+          searchingCustomer.value = true;
+          if (props.sale.invoice_type === 1) {
+              await searchRucCustomer(value).then((response) => {
+                  if (response.status === 200) {
+                      customerResults.value = response.data;
+                  }
+              }).catch((error) => {
+                  console.error(error);
+                  message.error("Algo salió mal...");
+              }).finally(() => {
+                  searchingCustomer.value = false;
+              });
+              return true;
+          } else {
+              await searchCustomerByName(value).then((response) => {
+                  if (response.status === 200) {
+                      customerResults.value = response.data;
+                  }
+              }).catch((error) => {
+                  console.error(error);
+                  message.error("Algo salió mal...");
+              }).finally(() => {
+                  searchingCustomer.value = false;
+              });
+              return true;
+          }
+      } else {
+          customerResults.value = [];
+          return false;
+      }
+  };
 
     const dateDisabled = (ts) => ts > new Date(Date.now());
 
@@ -518,6 +560,54 @@ export default defineComponent({
     const updateSale = (updates) => {
       emit('update:sale', updates);
     };
+    
+    // Crear los items para PaymentTotals
+    const paymentTotalsItems = computed(() => {
+      return [
+        { label: "SUBTOTAL", value: props.subTotal, editable: false },
+        { label: "OP. GRAVADAS", value: props.totalGrv, editable: false },
+        { label: "OP. EXONERADAS", value: props.totalExn, editable: false, alwaysShow: false },
+        { label: "OP. GRATUITAS", value: props.totalGrt, editable: false, alwaysShow: false },
+        { label: "IGV", value: props.totalIgv, editable: false },
+        { label: "ICBPER", value: props.icbper, editable: false, alwaysShow: false },
+        { 
+          label: "DSCT", 
+          value: props.totalDsct, 
+          editable: true, 
+          field: "discount", 
+          step: 0.5, 
+          disabled: false 
+        },
+        {
+          label: "OTROS CARGOS",
+          value: props.sale.other_charges || 0,
+          editable: true,
+          field: "other_charges",
+          step: 0.5,
+          disabled: false
+        }
+      ];
+    });
+    
+    // Computar el monto total
+    const totalAmount = computed(() => {
+      return props.sale.amount || 0;
+    });
+    
+    // Manejar cambios en los valores editables
+    const handleValueChange = ({ field, value }) => {
+      if (field && value !== undefined) {
+        const updates = { ...props.sale };
+        updates[field] = value;
+        emit('update:sale', updates);
+      }
+    };
+    
+    // Manejar cambios en el monto de pago
+    const handlePaymentChange = (value) => {
+      const updates = { ...props.sale, given_amount: value };
+      emit('update:sale', updates);
+    };
 
     return {
       route,
@@ -539,6 +629,10 @@ export default defineComponent({
       formRules,
       isPaymentDisabled,
       dateDisabled,
+      paymentTotalsItems,
+      totalAmount,
+      handleValueChange,
+      handlePaymentChange,
       handleCustomerNameChange,
       handleCustomerSelect,
       handleNewCustomer,
@@ -555,7 +649,9 @@ export default defineComponent({
       handleIsMultipleChange,
       handleTicketPreviewChange,
       handleMainAction,
-      updateSale
+      showCustomerOptions,
+      updateSale,
+      ...props
     };
   }
 });

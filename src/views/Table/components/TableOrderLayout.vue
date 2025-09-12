@@ -28,7 +28,7 @@
                 </n-gi>
             </n-grid>
         </n-card>
-        <n-tabs v-else v-model:value="activeTab" type="segment" animated>
+        <n-tabs v-else tab-style="background: #fff;" v-model:value="activeTab" type="segment" animated>
             <n-tab-pane name="main" tab="Principal">
                 <n-card><router-view /></n-card>
             </n-tab-pane>

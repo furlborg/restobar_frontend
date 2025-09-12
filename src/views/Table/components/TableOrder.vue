@@ -6,12 +6,10 @@
                     <v-icon class="me-1" name="fa-coins" />
                     <span class="fs-6">Cobrar</span>
                 </n-button>
-                <router-link v-else class="text-decoration-none" :to="{ name: 'ProductCategories', params: { table: $route.params.table } }">
-                    <n-button type="info" text>
-                        <v-icon class="me-1" name="md-add-round" />
-                        <span class="fs-6">Añadir pedido</span>
-                    </n-button>
-                </router-link>
+                <n-button v-else type="info" text @click="navigateToTakeOrder">
+                    <v-icon class="me-1" name="md-add-round" />
+                    <span class="fs-6">Añadir pedido</span>
+                </n-button>
             </div>
         </template>
 
@@ -303,6 +301,11 @@ export default defineComponent({
             router.push({ name: 'TablePayment', params: { table: route.params.table } });
         };
 
+        const navigateToTakeOrder = () => {
+            goToFirstTab();
+            router.push({ name: 'ProductCategories', params: { table: route.params.table } });
+        };
+
         return {
             // Stores and router
             userStore, activeUsersStore, route, router, tableStore, settingsStore, genericsStore, productStore, orderStore, saleStore,
@@ -312,9 +315,9 @@ export default defineComponent({
             localAskFor, localOrderUser, shouldSelectOrderUser, orderChanged,
             currentOrder, productOptions, isWaiter, isPaymentRoute,
             // Methods
-            showOptions, selectProduct, renderLabel, navigateToPayment, addCustomerLocal, confirmRemoveCustomer,
-            getCustomerOrders, getCustomerTotal, getTotalAmount, formatPrice, hasAnyOrders, getGlobalOrderIndex,
-            removeOrderItem, validateSend, deleteOrderDetail, nullifyTableOrder, openOrderModal, handleRemoveOrder,
+            showOptions, selectProduct, renderLabel, navigateToPayment, addCustomerLocal, confirmRemoveCustomer, navigateToTakeOrder,
+            getCustomerOrders, getCustomerTotal, getTotalAmount, formatPrice, hasAnyOrders, getGlobalOrderIndex, removeOrderItem,
+            validateSend, deleteOrderDetail, nullifyTableOrder, openOrderModal, handleRemoveOrder,
             // Props (direct access for template)
             ...props
         };

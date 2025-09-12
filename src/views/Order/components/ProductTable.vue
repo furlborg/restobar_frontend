@@ -1,5 +1,5 @@
 <template>
-  <n-table class="m-auto text-center fs-6" :bordered="false">
+  <n-table class="m-auto text-center fs-6 mb-3" :bordered="false">
     <thead>
       <tr>
         <th v-if="settingsStore.businessSettings.sale.manage_affectations">#</th>

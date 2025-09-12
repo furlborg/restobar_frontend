@@ -128,6 +128,13 @@ export async function takeAwayOrder(order_details, sale_data, user) {
         ? "1"
         : "2",
   };
+  // Verificar y formatear el total_igv para asegurar que es un string con dos decimales
+  const safeIgvValue = parseFloat(sale_data.total_igv || sale_data.igv_amount || 0).toFixed(2);
+  
+  console.log("API - total_igv recibido:", sale_data.total_igv, 
+              "- igv_amount recibido:", sale_data.igv_amount,
+              "- valor formateado:", safeIgvValue);
+  
   let sale = {
     order: sale_data.order,
     serie: sale_data.serie,
@@ -157,11 +164,38 @@ export async function takeAwayOrder(order_details, sale_data, user) {
     exempt_amount: sale_data.exempt_amount.toFixed(2),
     free_amount: sale_data.free_amount.toFixed(2),
     igv_amount: sale_data.igv_amount.toFixed(2),
+    total_igv: safeIgvValue,
   };
-  return await http.post("orders/take_away/", {
+  // Asegurar que total_igv esté presente y formateado correctamente
+  const total_igv = typeof sale.total_igv === 'number' ? sale.total_igv.toFixed(2) : sale.total_igv || "0.00";
+  
+  // Crear una copia de sale con total_igv asegurado
+  const saleCopy = {
+    ...sale,
+    total_igv: total_igv
+  };
+  
+  // Log completo de la estructura que se está enviando
+  console.log("Enviando orden al backend:", {
     order: order,
-    sale: sale,
+    sale: saleCopy,
+    total_igv: total_igv
   });
+  
+  // Enviar tanto en el objeto sale como en el nivel principal para asegurar que el backend lo reciba
+  // Añadir total_igv de tres maneras diferentes para asegurar que el backend lo reciba
+  const payload = {
+    order: order,
+    sale: saleCopy,
+    total_igv: total_igv,
+    // Añadir como propiedades adicionales para mayor seguridad
+    igv_total: total_igv,
+    igv: total_igv
+  };
+  
+  console.log("Payload final enviado a API:", payload);
+  
+  return await http.post("orders/take_away/", payload);
 }
 
 export async function retrieveOrderTicket(id) {

@@ -1,26 +1,27 @@
 <template>
   <n-card class="h-100" :bordered="false" embedded>
     <template #header>
-      <n-button 
-        type="info" 
-        secondary 
+      <n-button
+        type="info"
+        secondary
         @click="$emit('update:selectProducts', !selectProducts)"
       >
         {{ selectProducts ? "Seleccionar productos" : "Cobrar" }}
       </n-button>
     </template>
 
-    <!-- Búsqueda de productos -->
     <n-input-group>
-      <n-auto-complete 
+      <n-auto-complete
         :input-props="{ autocomplete: 'disabled' }"
         :value="productSearch"
         @update:value="$emit('update:productSearch', $event)"
-        :options="productOptions" 
-        :get-show="showOptions" 
+        :options="productOptions"
+        :get-show="(value) => {
+          return !!value && productOptions.length > 0;
+        }"
         :loading="searching"
-        clear-after-select 
-        :render-label="renderLabel" 
+        clear-after-select
+        :render-label="renderLabel"
         placeholder="Buscar producto"
         @select="selectProduct"
       />
@@ -39,10 +40,10 @@
           </tr>
         </thead>
         <tbody>
-          <tr 
-            v-for="(order, index) in orderStore.orderList" 
-            :key="index" 
-            style="cursor: pointer" 
+          <tr
+            v-for="(order, index) in orderStore.orderList"
+            :key="index"
+            style="cursor: pointer"
             @click="handleRowClick(index)"
           >
             <td>
@@ -52,20 +53,20 @@
             </td>
             <td>{{ order.product_name }}</td>
             <td>
-              <n-input-number 
-                class="border-top-0" 
-                size="small" 
-                :min="1" 
-                v-model:value="order.quantity" 
-                @update:value="updateOrderDetails" 
+              <n-input-number
+                class="border-top-0"
+                size="small"
+                :min="1"
+                v-model:value="order.quantity"
+                @update:value="updateOrderDetails"
                 @click.stop
               />
             </td>
             <td>S/. {{ order.subTotal.toFixed(2) }}</td>
             <td>
-              <n-button 
-                type="error" 
-                text 
+              <n-button
+                type="error"
+                text
                 @click.stop="removeOrderItem(index)"
               >
                 <v-icon name="md-disabledbydefault-round"/>
@@ -121,10 +122,9 @@ export default defineComponent({
   },
   emits: [
     'update:selectProducts',
-    'update:productSearch', 
+    'update:productSearch',
     'update:showModal',
     'update:itemIndex',
-    'showOptions',
     'selectProduct',
     'renderLabel'
   ],
@@ -146,10 +146,6 @@ export default defineComponent({
       saleStore.sale_details = orderStore.orderList;
     };
 
-    const showOptions = (value) => {
-      return emit('showOptions', value);
-    };
-
     const selectProduct = (value) => {
       emit('selectProduct', value);
     };
@@ -164,9 +160,9 @@ export default defineComponent({
       handleRowClick,
       removeOrderItem,
       updateOrderDetails,
-      showOptions,
       selectProduct,
-      renderLabel
+      renderLabel,
+      ...props
     };
   }
 });

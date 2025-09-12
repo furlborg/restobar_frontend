@@ -69,8 +69,8 @@
                 </n-gi>
               </n-grid>
             </n-form>
-            <n-scrollbar style="max-width: 1000px">
-              <n-table class="fs-6 m-auto text-center" :bordered="false">
+            <n-scrollbar>
+              <n-table class="m-auto text-center fs-6 mb-3" :bordered="false">
                 <thead>
                   <tr>
                     <th v-if="settingsStore.businessSettings.sale?.manage_affectations">#</th>

@@ -1,77 +1,24 @@
 <template>
-  <!-- Version Mobile -->
-  <div class="payment-section d-block d-md-none">
-    <n-card class="my-3" size="small">
+  <div class="payment-section d-block d-md-none mt-3">
+    <n-card class="mb-3" size="small">
       <template #header>
-        <span class="fw-bold">Resumen de Venta</span>
+        <span class="fw-bold">{{ title }}</span>
       </template>
       <div class="mobile-totals">
-        <div v-if="subTotal" class="total-row">
-          <span class="label">SUBTOTAL:</span>
-          <span class="amount">S/. {{ subTotal.toFixed(2) }}</span>
-        </div>
-        <div v-if="totalGrv" class="total-row">
-          <span class="label">OP. GRAVADAS:</span>
-          <span class="amount">S/. {{ totalGrv.toFixed(2) }}</span>
-        </div>
-        <div v-if="totalExn" class="total-row">
-          <span class="label">OP. EXONERADAS:</span>
-          <span class="amount">S/. {{ totalExn.toFixed(2) }}</span>
-        </div>
-        <div v-if="totalGrt" class="total-row">
-          <span class="label">OP. GRATUITAS:</span>
-          <span class="amount">S/. {{ totalGrt.toFixed(2) }}</span>
-        </div>
-        <div v-if="totalIgv" class="total-row">
-          <span class="label">IGV:</span>
-          <span class="amount">S/. {{ totalIgv.toFixed(2) }}</span>
-        </div>
-        <div v-if="icbper" class="total-row">
-          <span class="label">ICBPER:</span>
-          <span class="amount">S/. {{ icbper.toFixed(2) }}</span>
-        </div>
-        <div v-if="!!sale.delivery_info" class="total-row" key="delivery">
-          <span class="label">DELIVERY:</span>
-          <div class="input-group">
-            <span>S/.</span>
-            <input 
-              class="custom-input fw-bold delivery-input" 
-              type="number" 
-              min="0" 
-              step=".1"
-              :value="sale.delivery_info.amount"
-              @input="handleDeliveryAmountChange"
-              @click="$event.target.select()"
-            />
-          </div>
-        </div>
-        <div class="total-row">
-          <span class="label">DSCT:</span>
-          <div class="input-group">
-            <span>S/.</span>
-            <input 
-              class="custom-input fw-bold discount-input" 
-              type="number" 
-              min="0" 
-              step=".5" 
-              :value="totalDsct"
-              @input="handleDiscountChange"
-              :disabled="saleStore.toSale.some(d => Number(d.discount) > 0)" 
-              @click="$event.target.select()"
-            />
-          </div>
-        </div>
-        <div class="total-row">
-          <span class="label">OTROS:</span>
-          <div class="input-group">
-            <span>S/.</span>
-            <input 
-              class="custom-input fw-bold others-input" 
-              type="number" 
-              min="0" 
-              step=".1"
-              :value="sale.other_charges"
-              @input="handleOtherChargesChange"
+        <div v-for="(item, index) in itemsToShow" :key="index" class="total-row">
+          <span class="label">{{ item.label }}:</span>
+          <span v-if="!item.editable" class="amount">{{ currencySymbol }} {{ formatNumber(item.value) }}</span>
+          <div v-else class="input-group">
+            <span>{{ currencySymbol }}</span>
+            <input
+              class="custom-input fw-bold"
+              :class="item.field === 'discount' ? 'discount-input' : 'others-input'"
+              type="number"
+              :min="item.min || 0"
+              :step="item.step || 0.1"
+              :value="item.value"
+              :disabled="item.disabled"
+              @input="$emit('valueChanged', { field: item.field, value: $event.target.value })"
               @click="$event.target.select()"
             />
           </div>
@@ -79,25 +26,25 @@
       </div>
       <n-divider />
       <div class="total-final">
-        <span class="label-total">TOTAL:</span>
-        <span class="amount-total">S/. {{ sale.amount }}</span>
+        <span class="label-total">{{ totalLabel }}:</span>
+        <span class="amount-total">{{ currencySymbol }} {{ formatNumber(totalAmount) }}</span>
       </div>
     </n-card>
     <n-grid cols="2" :x-gap="12">
       <n-gi>
         <n-card size="small" class="payment-card">
           <div class="payment-section-mobile">
-            <span class="payment-label">Pago</span>
+            <span class="payment-label">{{ paymentLabel }}</span>
             <div class="payment-input-container">
-              <span class="currency">S/.</span>
-              <input 
-                class="payment-input" 
-                type="number" 
-                min="0" 
-                step=".01"
-                :value="sale.given_amount"
-                @input="handleGivenAmountChange"
-                @click="$event.target.select()" 
+              <span class="currency">{{ currencySymbol }}</span>
+              <input
+                class="payment-input"
+                type="number"
+                :min="paymentMin"
+                :step="paymentStep"
+                :value="paymentAmount"
+                @input="$emit('paymentChanged', $event.target.value)"
+                @click="$event.target.select()"
               />
             </div>
           </div>
@@ -106,10 +53,10 @@
       <n-gi>
         <n-card size="small" class="payment-card">
           <div class="payment-section-mobile">
-            <span class="payment-label">Vuelto</span>
+            <span class="payment-label">{{ changeLabel }}</span>
             <div class="payment-amount-display">
-              <span class="currency">S/.</span>
-              <span class="payment-amount">{{ changing.toFixed(2) }}</span>
+              <span class="currency">{{ currencySymbol }}</span>
+              <span class="payment-amount">{{ formatNumber(changeAmount) }}</span>
             </div>
           </div>
         </n-card>
@@ -121,85 +68,25 @@
   <div class="payment-section d-none d-md-block">
     <n-card class="mb-3 totals-card-desktop">
       <template #header>
-        <span class="totals-header">Resumen de Venta</span>
+        <span class="totals-header">{{ title }}</span>
       </template>
       <n-grid cols="3" :x-gap="16">
-        <n-gi>
+        <n-gi v-for="(column, colIndex) in groupedItems" :key="colIndex">
           <div class="desktop-totals-column">
-            <div v-if="subTotal" class="total-row-desktop">
-              <span class="label-desktop">SUBTOTAL:</span>
-              <span class="amount-desktop">S/. {{ subTotal.toFixed(2) }}</span>
-            </div>
-            <div v-if="totalGrv" class="total-row-desktop">
-              <span class="label-desktop">OP. GRAVADAS:</span>
-              <span class="amount-desktop">S/. {{ totalGrv.toFixed(2) }}</span>
-            </div>
-            <div v-if="totalExn" class="total-row-desktop">
-              <span class="label-desktop">OP. EXONERADAS:</span>
-              <span class="amount-desktop">S/. {{ totalExn.toFixed(2) }}</span>
-            </div>
-          </div>
-        </n-gi>
-        <n-gi>
-          <div class="desktop-totals-column">
-            <div v-if="totalGrt" class="total-row-desktop">
-              <span class="label-desktop">OP. GRATUITAS:</span>
-              <span class="amount-desktop">S/. {{ totalGrt.toFixed(2) }}</span>
-            </div>
-            <div v-if="totalIgv" class="total-row-desktop">
-              <span class="label-desktop">IGV:</span>
-              <span class="amount-desktop">S/. {{ totalIgv.toFixed(2) }}</span>
-            </div>
-            <div v-if="icbper" class="total-row-desktop">
-              <span class="label-desktop">ICBPER:</span>
-              <span class="amount-desktop">S/. {{ icbper.toFixed(2) }}</span>
-            </div>
-          </div>
-        </n-gi>
-        <n-gi>
-          <div class="desktop-totals-column">
-            <div v-if="!!sale.delivery_info" class="total-row-desktop" key="delivery">
-              <span class="label-desktop">DELIVERY:</span>
-              <div class="input-group-desktop">
-                <span>S/.</span>
+            <div v-for="(item, itemIndex) in column" :key="itemIndex" class="total-row-desktop">
+              <span class="label-desktop">{{ item.label }}:</span>
+              <span v-if="!item.editable" class="amount-desktop">{{ currencySymbol }} {{ formatNumber(item.value) }}</span>
+              <div v-else class="input-group-desktop">
+                <span>{{ currencySymbol }}</span>
                 <input 
-                  class="custom-input fw-bold delivery-input-desktop" 
+                  class="custom-input fw-bold" 
+                  :class="item.field === 'discount' ? 'discount-input-desktop' : 'others-input-desktop'"
                   type="number" 
-                  min="0" 
-                  step=".1"
-                  :value="sale.delivery_info.amount"
-                  @input="handleDeliveryAmountChange"
-                  @click="$event.target.select()"
-                />
-              </div>
-            </div>
-            <div class="total-row-desktop">
-              <span class="label-desktop">DSCT:</span>
-              <div class="input-group-desktop">
-                <span>S/.</span>
-                <input 
-                  class="custom-input fw-bold discount-input-desktop" 
-                  type="number" 
-                  min="0" 
-                  step=".5"
-                  :value="totalDsct"
-                  @input="handleDiscountChange"
-                  :disabled="saleStore.toSale.some(d => Number(d.discount) > 0)"
-                  @click="$event.target.select()" 
-                />
-              </div>
-            </div>
-            <div class="total-row-desktop">
-              <span class="label-desktop">OTROS:</span>
-              <div class="input-group-desktop">
-                <span>S/.</span>
-                <input 
-                  class="custom-input fw-bold others-input-desktop" 
-                  type="number" 
-                  min="0" 
-                  step=".1"
-                  :value="sale.other_charges"
-                  @input="handleOtherChargesChange"
+                  :min="item.min || 0" 
+                  :step="item.step || 0.1"
+                  :value="item.value"
+                  :disabled="item.disabled"
+                  @input="$emit('valueChanged', { field: item.field, value: $event.target.value })"
                   @click="$event.target.select()" 
                 />
               </div>
@@ -209,24 +96,24 @@
       </n-grid>
       <n-divider />
       <div class="total-final-desktop">
-        <span class="label-total-desktop">TOTAL:</span>
-        <span class="amount-total-desktop">S/. {{ sale.amount }}</span>
+        <span class="label-total-desktop">{{ totalLabel }}:</span>
+        <span class="amount-total-desktop">{{ currencySymbol }} {{ formatNumber(totalAmount) }}</span>
       </div>
     </n-card>
     <n-grid cols="2" :x-gap="16">
       <n-gi>
         <n-card class="payment-card-desktop">
           <div class="payment-section-desktop">
-            <span class="payment-label-desktop">Pago</span>
+            <span class="payment-label-desktop">{{ paymentLabel }}</span>
             <div class="payment-input-container-desktop">
-              <span class="currency-desktop">S/.</span>
+              <span class="currency-desktop">{{ currencySymbol }}</span>
               <input 
                 class="payment-input-desktop" 
                 type="number" 
-                min="0" 
-                step=".01"
-                :value="sale.given_amount"
-                @input="handleGivenAmountChange"
+                :min="paymentMin" 
+                :step="paymentStep"
+                :value="paymentAmount" 
+                @input="$emit('paymentChanged', $event.target.value)"
                 @click="$event.target.select()" 
               />
             </div>
@@ -236,10 +123,10 @@
       <n-gi>
         <n-card class="payment-card-desktop">
           <div class="payment-section-desktop">
-            <span class="payment-label-desktop">Vuelto</span>
+            <span class="payment-label-desktop">{{ changeLabel }}</span>
             <div class="payment-amount-display-desktop">
-              <span class="currency-desktop">S/.</span>
-              <span class="payment-amount-desktop">{{ changing.toFixed(2) }}</span>
+              <span class="currency-desktop">{{ currencySymbol }}</span>
+              <span class="payment-amount-desktop">{{ formatNumber(changeAmount) }}</span>
             </div>
           </div>
         </n-card>
@@ -249,86 +136,98 @@
 </template>
 
 <script>
-import { defineComponent } from "vue";
-import { useSaleStore } from "@/store/modules/sale";
+import { defineComponent, computed } from "vue";
 
 export default defineComponent({
   name: "PaymentTotals",
   props: {
-    sale: {
-      type: Object,
-      required: true
+    // Configuración general
+    title: {
+      type: String,
+      default: "Resumen de Venta"
     },
-    changing: {
-      type: Number,
-      required: true
+    currencySymbol: {
+      type: String,
+      default: "S/."
     },
-    subTotal: {
-      type: Number,
-      required: true
+    // Items a mostrar (valores y configuración)
+    items: {
+      type: Array,
+      default: () => []
     },
-    totalGrv: {
-      type: Number,
-      required: true
+    // Etiqueta y valor total
+    totalLabel: {
+      type: String,
+      default: "TOTAL"
     },
-    totalExn: {
-      type: Number,
-      required: true
+    totalAmount: {
+      type: [Number, String],
+      default: 0
     },
-    totalGrt: {
-      type: Number,
-      required: true
+    // Configuración del campo de pago
+    paymentLabel: {
+      type: String,
+      default: "Pago"
     },
-    totalIgv: {
-      type: Number,
-      required: true
+    paymentAmount: {
+      type: [Number, String],
+      default: 0
     },
-    icbper: {
+    paymentMin: {
       type: Number,
-      required: true
+      default: 0
     },
-    totalDsct: {
+    paymentStep: {
       type: Number,
-      required: true
+      default: 0.01
+    },
+    // Configuración del campo de vuelto
+    changeLabel: {
+      type: String,
+      default: "Vuelto"
+    },
+    changeAmount: {
+      type: [Number, String],
+      default: 0
     }
   },
-  emits: ['update:sale'],
-  setup(props, { emit }) {
-    const saleStore = useSaleStore();
 
-    const updateSaleField = (field, value) => {
-      const updatedSale = { ...props.sale };
-      if (field.includes('.')) {
-        const [parent, child] = field.split('.');
-        updatedSale[parent] = { ...updatedSale[parent], [child]: value };
-      } else {
-        updatedSale[field] = value;
+  emits: [
+    'valueChanged',
+    'paymentChanged'
+  ],
+
+  setup(props) {
+    const itemsToShow = computed(() => {
+      return props.items.filter(item =>
+        (item.value && Number(item.value) > 0) || item.editable ||
+        (item.alwaysShow !== undefined ? item.alwaysShow : false)
+      );
+    });
+
+    // Agrupar los items en 3 columnas para la vista desktop
+    const groupedItems = computed(() => {
+      const columns = [[], [], []];
+      const itemsToGroup = [...itemsToShow.value];
+      const itemsPerColumn = Math.ceil(itemsToGroup.length / 3);
+      for (let i = 0; i < 3; i++) {
+        columns[i] = itemsToGroup.slice(i * itemsPerColumn, (i + 1) * itemsPerColumn);
       }
-      emit('update:sale', updatedSale);
-    };
+      return columns;
+    });
 
-    const handleGivenAmountChange = (event) => {
-      updateSaleField('given_amount', event.target.value);
+    // Función para formatear números
+    const formatNumber = (value) => {
+      if (value === undefined || value === null || isNaN(Number(value))) {
+        return "0.00";
+      }
+      return Number(value).toFixed(2);
     };
-
-    const handleDeliveryAmountChange = (event) => {
-      updateSaleField('delivery_info.amount', event.target.value);
-    };
-
-    const handleDiscountChange = (event) => {
-      updateSaleField('discount', event.target.value);
-    };
-
-    const handleOtherChargesChange = (event) => {
-      updateSaleField('other_charges', event.target.value);
-    };
-
+    
     return {
-      saleStore,
-      handleGivenAmountChange,
-      handleDeliveryAmountChange,
-      handleDiscountChange,
-      handleOtherChargesChange
+      itemsToShow,
+      groupedItems,
+      formatNumber
     };
   }
 });
@@ -348,17 +247,12 @@ export default defineComponent({
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
   -webkit-appearance: none;
-  appearance: none;
   margin: 0;
 }
 
 input[type="number"] {
   appearance: textfield;
   -moz-appearance: textfield;
-}
-
-.fw-bold {
-  font-weight: bold;
 }
 
 .mobile-totals {
@@ -388,7 +282,7 @@ input[type="number"] {
         font-weight: 600;
         color: #333;
       }
-      .discount-input, .others-input, .delivery-input {
+      .discount-input, .others-input {
         width: 50px;
         padding: 2px 4px;
         text-align: right;
@@ -575,7 +469,7 @@ input[type="number"] {
         font-weight: 600;
         color: #333;
       }
-      .discount-input-desktop, .others-input-desktop, .delivery-input-desktop {
+      .discount-input-desktop, .others-input-desktop {
         width: 60px;
         padding: 4px 6px;
         text-align: right;

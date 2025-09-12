@@ -7,9 +7,8 @@
         </n-space>
       </template>
     </n-page-header>
-    <n-card class="d-none d-md-flex">
+    <n-card class="d-none d-lg-flex">
       <n-grid responsive="screen" cols="1 xs:1 s:1 m:5 l:5 xl:5 2xl:5" :x-gap="12">
-        <!-- Componente Principal de Toma de Orden -->
         <n-gi :span="3">
           <transition name="mode-fade" mode="out-in">
             <OrderTaking
@@ -38,7 +37,6 @@
               @select-serie="selectSerie"
               @change-serie="changeSerie"
               @change-condition="changeCondition"
-              @show-customer-options="showCustomerOptions"
               @auto-create-customer="autoCreateCustomer"
               @create-addresses-options="createAddressesOptions"
               @change-address="changeAddress"
@@ -59,7 +57,7 @@
             :searching="searching"
             :show-modal="showModal"
             :item-index="itemIndex"
-            @update:select-products="selectProducts = $event"
+            @update:select-products="selectProducts = $event;"
             @update:product-search="productSearch = $event"
             @update:show-modal="showModal = $event"
             @update:item-index="itemIndex = $event"
@@ -70,8 +68,8 @@
         </n-gi>
       </n-grid>
     </n-card>
-    <n-tabs class="d-md-none" v-model:value="activeTab" type="segment" animated>
-      <n-tab-pane name="main" tab="Principal">
+    <n-tabs class="d-lg-none" tab-style="background: #fff;" v-model:value="activeTab" type="segment" animated>
+      <n-tab-pane name="main" tab="Tomar pedido">
         <n-card>
           <transition name="mode-fade" mode="out-in">
             <OrderTaking
@@ -122,10 +120,11 @@
           :searching="searching"
           :show-modal="showModal"
           :item-index="itemIndex"
-          @update:select-products="selectProducts = $event"
+          @update:select-products="selectProducts = $event; goToFirstTab();"
           @update:product-search="productSearch = $event"
           @update:show-modal="showModal = $event"
           @update:item-index="itemIndex = $event"
+          @go-to-first-tab="goToFirstTab"
           @show-options="showOptions"
           @select-product="selectProduct"
           @render-label="renderLabel"
@@ -150,7 +149,7 @@
             <n-button
               type="success"
               :loading="loading"
-              :disabled="!userConfirm || loading" 
+              :disabled="!userConfirm || loading"
               secondary
               @click.prevent="performCreateOrder"
             >
@@ -248,9 +247,16 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed } from "vue";
+import { defineComponent, ref, computed, watch, onMounted } from "vue";
+import { useRoute } from "vue-router";
+import { useMessage, useDialog } from "naive-ui";
+import { getSaleNumber } from "@/api/modules/sales";
+import { takeAwayOrder } from "@/api/modules/orders";
 import { useOrderStore } from "@/store/modules/order";
+import { useSaleStore } from "@/store/modules/sale";
+import { useSettingsStore } from "@/store/modules/settings";
 import { useGenericsStore } from "@/store/modules/generics";
+import { useUserStore } from "@/store/modules/user";
 import { useBreakpoint } from 'vooks';
 
 import OrderTaking from "./OrderTaking.vue";
@@ -260,6 +266,7 @@ import OrderIndications from "./OrderIndications.vue";
 import CustomerModal from "@/views/Customer/components/CustomerModal.vue";
 import TicketPreview from "@/views/Order/components/TicketPreview.vue";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer.vue";
+import format from "date-fns/format";
 
 export default defineComponent({
   name: "TakeOrderLayout",
@@ -275,7 +282,13 @@ export default defineComponent({
   setup() {
     const breakpointRef = useBreakpoint();
     const orderStore = useOrderStore();
+    const message = useMessage();
+    const dialog = useDialog();
     const genericsStore = useGenericsStore();
+    const saleStore = useSaleStore();
+    const settingsStore = useSettingsStore();
+    const userStore = useUserStore();
+    const route = useRoute();
 
     // Estados principales
     const loading = ref(false);
@@ -300,8 +313,18 @@ export default defineComponent({
     const userConfirm = ref("");
     const productSearch = ref("");
 
-    // Datos
-    const sale = ref({});
+    const total = computed(() => {
+        let cal = parseFloat(
+            subTotal.value -
+            parseFloat(totalDSCT.value) +
+            icbper.value +
+            parseFloat(sale.value.other_charges || 0)
+        );
+        if (sale.value.delivery_info && sale.value.delivery_info.amount) {
+            cal = cal + parseFloat(sale.value.delivery_info.amount);
+        }
+        return cal.toFixed(2);
+    });
     const pdfData = ref(null);
     const voucherData = ref(null);
     const addressesOptions = ref([]);
@@ -315,14 +338,80 @@ export default defineComponent({
     const customerDocument = ref("");
 
     // Computados para totales
-    const changing = computed(() => 0);
-    const subTotal = computed(() => 0);
-    const totalGRV = computed(() => 0);
-    const totalEXN = computed(() => 0);
-    const totalGRT = computed(() => 0);
-    const totalIGV = computed(() => 0);
-    const totalDSCT = computed(() => 0);
-    const icbper = computed(() => 0);
+    const changing = computed(() => {
+        return sale.value.given_amount > total.value
+               ? (sale.value.given_amount - total.value).toFixed(2)
+               : 0.0;
+    });
+
+    // Cálculo del ICBPER (Impuesto a las bolsas de plástico)
+    const icbper = computed(() => {
+        return orderStore.orderList.reduce((acc, curVal) => {
+            if (curVal.icbper) {
+                return (acc += curVal.icbper_amount);
+            }
+            return (acc += 0);
+        }, 0);
+    });
+
+    // Cálculo de importe gravado (afectación 10)
+    const totalGRV = computed(() => {
+        return saleStore.toSale.reduce((acc, curVal) => {
+            return curVal.product_affectation === 10
+                  ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
+                  : acc;
+        }, 0);
+    });
+
+    // Cálculo de importe exonerado (afectación 20)
+    const totalEXN = computed(() => {
+        return saleStore.toSale.reduce((acc, curVal) => {
+            return curVal.product_affectation === 20
+                  ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
+                  : acc;
+        }, 0);
+    });
+
+    // Cálculo de importe gratuito (afectación 21)
+    const totalGRT = computed(() => {
+        return saleStore.toSale.reduce((acc, curVal) => {
+            return curVal.product_affectation === 21
+                  ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
+                  : acc;
+        }, 0);
+    });
+
+    // Cálculo del IGV total
+    const totalIGV = computed(() => {
+        // Calcular el IGV total de todos los productos
+        const igvTotal = saleStore.toSale.reduce((acc, curVal) => {
+            const igvTax = parseFloat(curVal.igv_tax || 0);
+            const quantity = parseFloat(curVal.quantity || 0);
+            return acc + (igvTax * quantity);
+        }, 0);
+        
+        // Formatear a 2 decimales para que coincida con lo que espera el backend
+        return parseFloat(igvTotal.toFixed(2));
+    });
+
+    // Cálculo del descuento total
+    const totalDSCT = computed(() => {
+        if (saleStore.toSale.some((detail) => Number(detail.discount) > 0)) {
+            return saleStore.toSale.reduce((acc, curVal) => {
+                return (acc += Number(curVal.discount));
+            }, 0);
+        }
+        return Number(sale.value.discount);
+    });
+    
+    // Cálculo del subtotal (sin productos gratuitos)
+    const subTotal = computed(() => {
+        return saleStore.toSale.reduce((acc, curVal) => {
+            return curVal.product_affectation === 21
+                  ? (acc += 0)
+                  : (acc += curVal.price_sale * curVal.quantity);
+        }, 0);
+    });
 
     const isMobile = computed(() => ['xs', 's'].includes(breakpointRef.value));
 
@@ -332,7 +421,80 @@ export default defineComponent({
       'w-25': genericsStore.device === 'desktop',
     }));
 
-    // Métodos que serán implementados por los componentes padres
+    // Determinar el tipo de factura predeterminado
+    const defaultInvoiceType = settingsStore.businessSettings.sale?.enable_invoices 
+      ? settingsStore.businessSettings.sale?.default_invoice 
+      : 80;
+    console.log(`Tipo de factura predeterminado: ${defaultInvoiceType}`);
+    
+    // Obtener el ID de serie predeterminado para este tipo de factura
+    const defaultSerieId = saleStore.getFirstOption(defaultInvoiceType);
+    console.log(`ID de serie predeterminado: ${defaultSerieId}, Descripción: ${saleStore.getSerieDescription(defaultSerieId)}`);
+    
+    const sale = ref({
+      serie: defaultSerieId,
+      number: "",
+      date_sale: format(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss"),
+      count: 0,
+      amount: "0.00",
+      given_amount: parseFloat(0).toFixed(2),
+      invoice_type: settingsStore.businessSettings.sale?.enable_invoices ? settingsStore.businessSettings.sale?.default_invoice : 80,
+      payment_method: 1,
+      payment_condition: 1,
+      customer_name: "",
+      customer: null,
+      address: null,
+      discount: "0.00",
+      icbper: 0,
+      other_charges: "0.00",
+      observations: "",
+      by_consumption: false,
+      sale_details: [],
+      ask_for: "",
+      delivery_info:
+          !(route.query.delivery === undefined) && route.query.delivery === "true"
+          ? {
+                  person: "",
+                  address: "",
+                  phone: "",
+                  deliveryman: "",
+                  amount: parseFloat(0).toFixed(2)
+              }
+          : null,
+      payments: null,
+      do_update: true,
+      is_change: true,
+      taxed_amount: 0,
+      exempt_amount: 0,
+      free_amount: 0,
+      igv_amount: 0,
+      total_igv: "0.00" // Inicializar como string con formato decimal
+    });
+    // Observar cambios en la lista de productos
+    watch(() => saleStore.toSale, (newVal) => {
+      console.log("Productos actualizados:", newVal);
+    }, { deep: true });
+
+    // Actualizar los valores calculados en el objeto sale cuando cambien
+    watch([total, icbper, totalGRV, totalEXN, totalGRT, totalIGV, totalDSCT, () => saleStore.toSale], () => {
+      // Calcular la cantidad de productos directamente
+      sale.value.count = saleStore.toSale.reduce((acc, curVal) => acc + curVal.quantity, 0);
+      sale.value.amount = total.value;
+      sale.value.icbper = icbper.value;
+      sale.value.taxed_amount = totalGRV.value;
+      sale.value.exempt_amount = totalEXN.value;
+      sale.value.free_amount = totalGRT.value;
+      sale.value.igv_amount = totalIGV.value;
+      // Formatear total_igv como string con dos decimales
+      const igvValue = parseFloat(totalIGV.value || 0);
+      sale.value.total_igv = igvValue.toFixed(2);
+      console.log("total_igv actualizado:", sale.value.total_igv, "tipo:", typeof sale.value.total_igv);
+      // Actualizar el monto dado cuando cambia el total (para contado)
+      if (sale.value.payment_condition === 1) {
+        sale.value.given_amount = total.value > 0 ? total.value : parseFloat(0).toFixed(2);
+      }
+    });
+
     const updateSale = (newSale) => {
       sale.value = { ...sale.value, ...newSale };
     };
@@ -341,17 +503,103 @@ export default defineComponent({
       activeTab.value = 'main'
     }
 
-    // Métodos de placeholder (deberán ser implementados)
-    const selectSerie = () => {};
-    const changeSerie = () => {};
-    const changeCondition = () => {};
+    const obtainSaleNumber = async() => {
+        // Verificar si tenemos un ID de serie válido
+        const serieId = sale.value.serie;
+        console.log(`Obteniendo número para serie ID: ${serieId}, Descripción: ${saleStore.getSerieDescription(serieId)}`);
+        if (!serieId) {
+          console.warn("No hay serie seleccionada para obtener número de venta");
+          return;
+        }
+        loading.value = true;
+        try {
+          console.log(`Llamando a getSaleNumber con serie ID: ${serieId}`);
+          const response = await getSaleNumber(serieId);
+          console.log("Respuesta completa:", response);
+          if (response.status === 200) {
+            const newNumber = Number(response.data.number) + 1;
+            sale.value.number = newNumber;
+            console.log(`Número de venta obtenido: ${newNumber} para serie: ${saleStore.getSerieDescription(serieId)}-${newNumber}`);
+          } else {
+            console.warn("Respuesta inesperada al obtener número de venta:", response);
+            message.warning("No se pudo obtener el número de venta");
+          }
+        } catch (error) {
+          console.error("Error al obtener número de venta:", error);
+          message.error("Algo salió mal al obtener el número de venta");
+        } finally {
+          loading.value = false;
+        }
+    };
+
+    watch(() => sale.value.serie, async (newValue, oldValue) => {
+      console.log('Serie cambiada:', newValue, 'Anterior:', oldValue);
+      if (newValue !== undefined && newValue !== null) {
+        await obtainSaleNumber();
+      } else {
+        console.warn("El valor de serie es inválido, no se puede obtener número de venta");
+      }
+    });
+
+    onMounted(async () => {
+      console.log('Componente montado, obteniendo número de venta inicial');
+      await obtainSaleNumber();
+    });
+
+    const selectSerie = (serieId) => {
+      if (serieId !== undefined && serieId !== null) {
+        sale.value.serie = serieId;
+        console.log("Serie seleccionada (ID):", serieId);
+      } else {
+        console.warn("Se recibió un ID de serie inválido:", serieId);
+      }
+    };
+    const changeSerie = (v) => {
+      const tipoDocumento = v === 1 ? "Factura" : v === 3 ? "Boleta" : v === 80 ? "Nota de Venta" : "Desconocido";
+      console.log(`Cambiando serie por tipo de documento: ${tipoDocumento} (${v})`);
+      
+      let nuevaSerie;
+      switch (v) {
+        case 1: // Factura
+          nuevaSerie = saleStore.getFirstOption(1);
+          break;
+        case 3: // Boleta
+          nuevaSerie = saleStore.getFirstOption(3);
+          break;
+        case 80: // Nota de Venta
+          nuevaSerie = saleStore.getFirstOption(80);
+          break;
+        default:
+          nuevaSerie = saleStore.getFirstOption(80);
+      }
+      
+      if (nuevaSerie !== undefined && nuevaSerie !== null) {
+        sale.value.serie = nuevaSerie;
+        console.log(`Serie cambiada a: ${nuevaSerie} para ${tipoDocumento}`);
+      } else {
+        console.warn(`No se encontró serie disponible para el tipo: ${tipoDocumento}`);
+      }
+    };
+    const changeCondition = (v) => {
+      switch (v) {
+        case 1: // CONTADO
+          sale.value.given_amount = sale.value.amount;
+          break;
+        case 2: // CRÉDITO
+          sale.value.given_amount = parseFloat(0).toFixed(2);
+          break;
+        default:
+          sale.value.given_amount = sale.value.amount;
+      }
+      console.log("Condición de pago cambiada a:", v);
+    };
+
+    // Funciones auxiliares básicas
     const showCustomerOptions = () => {};
     const autoCreateCustomer = () => {};
     const createAddressesOptions = () => {};
     const changeAddress = () => {};
     const handleDelivery = () => {};
-    const performTakeAway = () => {};
-    const doMultiplePayment = () => {};
     const showOptions = () => {};
     const selectProduct = () => {};
     const renderLabel = () => {};
@@ -360,6 +608,97 @@ export default defineComponent({
     const onCloseModal = () => {};
     const onSuccess = () => {};
     const isDecimal = () => {};
+    
+    // Función principal para realizar el pedido y cobrar
+    const performTakeAway = () => {
+      console.log("Realizando pedido/venta...");
+      
+      // Validar antes de proceder
+      if (userStore.user.role === "MOZO") {
+        showConfirm.value = true;
+        return;
+      }
+      
+      dialog.success({
+        closable: false,
+        title: "Confirmar pedido",
+        content: "¿Realizar pedido?",
+        positiveText: "Sí",
+        onPositiveClick: async () => {
+          loading.value = true;
+          
+          try {
+            // Preparar los detalles de venta con formatos correctos
+            sale.value.sale_details = saleStore.toSale.map((detail) => ({
+              ...detail,
+              igv_tax: typeof detail.igv_tax === 'number' ? detail.igv_tax.toFixed(2) : detail.igv_tax,
+              price_base: typeof detail.price_base === 'number' ? detail.price_base.toFixed(2) : detail.price_base
+            }));
+            
+            // Garantizar que total_igv siempre sea un string formateado con dos decimales
+            const igvValue = parseFloat(sale.value.total_igv || sale.value.igv_amount || 0);
+            sale.value.total_igv = igvValue.toFixed(2);
+            
+            // Agregar una propiedad independiente también para mayor seguridad
+            const saleObj = JSON.parse(JSON.stringify(sale.value));
+            saleObj.total_igv_duplicado = sale.value.total_igv;
+            
+            console.log("Enviando venta con total_igv:", sale.value.total_igv, "tipo:", typeof sale.value.total_igv);
+            
+            // Clonar el objeto sale para evitar problemas de referencia
+            const saleClone = JSON.parse(JSON.stringify(sale.value));
+            
+            // Añadir el total_igv como parámetro independiente también
+            saleClone.total_igv_independiente = saleClone.total_igv;
+            
+            // Mostrar el objeto completo para depuración
+            console.log("Objeto sale completo que se enviará:", saleClone);
+            
+            // Llamar a la API para realizar la orden
+            const response = await takeAwayOrder(
+              orderStore.orderList,
+              saleClone,
+              userConfirm.value
+            );
+            
+            if (response.status === 201) {
+              message.success("¡Venta realizada correctamente!");
+              pdfData.value = response.data.order;
+              showPdf.value = true;
+              
+              setTimeout(() => {
+                ticketPreviewRef.value.generate();
+                
+                if (settingsStore.businessSettings.printer.print_html) {
+                  voucherData.value = response.data.sale;
+                  showVoucher.value = true;
+                  
+                  if (!ticketPreview.value) {
+                    setTimeout(() => voucherDrawer.value.generate(), 250);
+                  }
+                }
+              }, 250);
+            }
+          } catch (error) {
+            console.error("Error al realizar la venta:", error);
+            message.error("Ha ocurrido un error al procesar la venta");
+          } finally {
+            loading.value = false;
+          }
+        }
+      });
+    };
+    
+    // Función para pago múltiple
+    const doMultiplePayment = () => {
+      sale.value.payments = [
+        {
+          payment_method: sale.value.payment_method,
+          amount: String(sale.value.amount)
+        }
+      ];
+      showPayments.value = true;
+    };
 
     const evalPayments = computed(() => false);
     const currentPaymentsAmount = computed(() => "0.00");
@@ -379,14 +718,12 @@ export default defineComponent({
       showPdf,
       showVoucher,
       activeTab,
-      
       // Referencias
       ticketPreviewRef,
       voucherDrawer,
       itemIndex,
       userConfirm,
       productSearch,
-      
       // Datos
       sale,
       pdfData,
@@ -398,7 +735,6 @@ export default defineComponent({
       searching,
       whatsappNumber,
       customerDocument,
-      
       // Computados
       changing,
       subTotal,
@@ -413,10 +749,10 @@ export default defineComponent({
       evalPayments,
       currentPaymentsAmount,
       filteredMethods,
-      
+
       // Stores
       orderStore,
-      
+
       // Métodos
       updateSale,
       selectSerie,
