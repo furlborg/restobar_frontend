@@ -21,7 +21,7 @@
                             <n-form-item-gi v-if="shouldSelectOrderUser" :span="2" label="Mozo">
                                 <n-select :options="activeUsersStore.usersOptions" v-model:value="localOrderUser" placeholder="Seleccione un mozo" filterable />
                             </n-form-item-gi>
-                            <n-form-item-gi v-if="shouldAllowAddingProducts" :span="2" label="Buscar producto">
+                            <n-form-item-gi :span="2" label="Buscar producto">
                                 <n-input-group>
                                     <n-auto-complete v-model:value="productSearch" :options="productOptions" :get-show="showOptions" :loading="searching"
                                         :render-label="renderLabel" :input-props="{ autocomplete: 'disabled' }" placeholder="Nombre del producto"
