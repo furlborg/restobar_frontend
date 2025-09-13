@@ -1,5 +1,3 @@
-
-
 import { http } from "@/api";
 
 // -----------------------------
@@ -8,11 +6,16 @@ import { http } from "@/api";
 export async function getMenus({ search, active, page = 1, page_size = 20 } = {}) {
   const params = { page, page_size };
   if (search) params.search = search;
-  if (active !== undefined && active !== null) params.active = active;
+  params.active = true;
   return await http.get("menus/", { params });
 }
 
 export async function retrieveMenu(id) {
+  return await http.get(`menus/${id}/`);
+}
+
+export async function getMenuDetail(id) {
+  // GET /api/menus/{id}/detail/
   return await http.get(`menus/${id}/`);
 }
 
@@ -202,6 +205,44 @@ export async function getMenuWeeklyAvailability(menuId) {
 export async function saveMenuWeeklyAvailability(menuId, items) {
   return await http.post(`menus/${menuId}/weekly-availability/bulk-apply/`, { items })
 }
+
+// -----------------------------
+// CALENDAR (for MenuDailyProgramation)
+// -----------------------------
+export async function getScheduledDaysForMonth(year, month) {
+  // GET /api/menu-scheduled-days/?year=YYYY&month=MM
+  return await http.get("menu-scheduled-days/", { params: { year, month } })
+}
+
+export async function applyMenuDailyProgramation(menuId, date, products) {
+  // POST /api/menus/{id}/schedule/apply/
+  // products: array of product_phase ids
+  return await http.post(`menus/${menuId}/schedule/apply/`, {
+    date,
+    active: true,
+    items: products.map(p => ({ product_phase: p, available: true }))
+  })
+}
+
+export async function applyMenuScheduledDay(menuId, payload) {
+  // payload:
+  // {
+  //   date: "2025-09-11",
+  //   active: true,
+  //   items: [
+  //     { product_phase: 3, available: true, stock_override: null },
+  //     { product_phase: 4, available: true, stock_override: 10 }
+  //   ]
+  // }
+  return await http.post(`/menus/${menuId}/schedule/apply/`, payload)
+}
+
+export async function getMenuScheduledDay(date) {
+  return await http.get(`/menus/scheduled_day/`, {
+    params: { date }
+  })
+}
+
 
 // -----------------------------
 // PROGRAMATION (MenuProgramation)

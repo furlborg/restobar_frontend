@@ -146,6 +146,12 @@ export async function getProductCategories() {
   return await http.get("product-categories/");
 }
 
+export async function getMenuToday(menu_id = null) {
+  const params = {};
+  if (menu_id) params.menu_id = menu_id;
+  return await http.get("menus/today", { params });
+}
+
 export async function getProductsByCategory(categoryId) {
   return await http.get(`product-categories/${categoryId}/products/`);
 }
