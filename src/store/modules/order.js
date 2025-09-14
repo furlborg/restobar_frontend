@@ -10,12 +10,9 @@ export const useOrderStore = defineStore("order", {
     orderList(state) {
       const settingsStore = useSettingsStore();
       state.orders.forEach((order) => {
-        order.subTotal =
-          Number(order.quantity) * parseFloat(order.price).toFixed(2);
+        order.subTotal = Number(order.quantity) * parseFloat(order.price).toFixed(2);
         if (order.icbper) {
-          order.icbper_amount =
-            Number(order.quantity) *
-            parseFloat(settingsStore.businessSettings.sale.icbper_tax);
+          order.icbper_amount = Number(order.quantity) * parseFloat(settingsStore.businessSettings.sale.icbper_tax);
         } else {
           order.icbper_amount = 0;
         }
@@ -43,11 +40,9 @@ export const useOrderStore = defineStore("order", {
     initializeStore() {
       return null;
     },
-    addOrder(product) {
+    addOrder(product, customer) {
       const settingsStore = useSettingsStore();
-      const existence = this.orders.find(
-        (order) => order.product === product.id
-      );
+      const existence = this.orders.find(order => order.product === product.id && (customer && order.customer.id === customer.id));
       if (typeof existence !== "undefined") {
         existence.quantity++;
       } else {
@@ -63,6 +58,7 @@ export const useOrderStore = defineStore("order", {
             ? settingsStore.businessSettings.sale.igv_tax
             : Number(product.igv_tax),
           quick_indications: product.quick_indications,
+          customer: customer || null,
         };
         this.orders.push(order);
       }

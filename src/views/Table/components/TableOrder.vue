@@ -321,23 +321,6 @@ export default defineComponent({
             // Props (direct access for template)
             ...props
         };
-    }
+  }
 });
 </script>
-
-<style lang="scss">
-.slide-enter-active,
-.slide-leave-active {
-  transition: opacity 1s, transform 1s;
-}
-
-.slide-enter,
-.slide-leave-to {
-  opacity: 0;
-  transform: translateX(-30%);
-}
-
-.n-form-item .n-form-item-feedback-wrapper {
-  min-height: 12px;
-}
-</style>

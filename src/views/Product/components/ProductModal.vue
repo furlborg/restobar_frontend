@@ -251,11 +251,22 @@
               placeholder=""
             />
           </n-form-item-gi>
-          <!-- <n-form-item-gi label="Imagen" :span="4">
-            <n-upload list-type="image" ref="uploadRef">
-              <n-button>Seleccionar Imagen</n-button>
+          <n-form-item-gi label="Imagen" :span="6">
+            <n-upload
+              ref="uploadRef"
+              list-type="image-card"
+              :max="1"
+              accept="image/*"
+              :default-upload="false"
+              :on-change="onImageChange"
+              :file-list="imageFileList"
+            >
+              Subir imagen
             </n-upload>
-          </n-form-item-gi> -->
+          </n-form-item-gi>
+          <n-form-item-gi v-if="product.image_url && !imageFileList.length" label="Vista previa" :span="6">
+            <img :src="product.image_url" alt="imagen producto" style="max-width: 120px; border: 1px solid #eee; padding: 4px;" />
+          </n-form-item-gi>
           <n-form-item-gi
             v-if="product.control_supplie"
             label="Lista de Insumos"
@@ -403,6 +414,13 @@ export default defineComponent({
     const userStore = useUserStore();
     const { idProduct, show } = toRefs(props);
     const uploadRef = ref(null);
+    const imageFileList = ref([]);
+    const onImageChange = ({ file, fileList }) => {
+      if (file?.file) {
+        product.value.image = file.file;
+      }
+      imageFileList.value = fileList.slice(0, 1);
+    };
     const modalTitle = ref("Registrar Producto");
     const productRef = ref(null);
     const items = reactive({});
@@ -433,7 +451,7 @@ export default defineComponent({
       quick_indications: null,
       area_print: false,
       supplies: [],
-      affectation: settingsStore.businessSettings.sale.default_affectation,
+      affectation: settingsStore.businessSettings.sale?.default_affectation,
       igv_tax: 0,
     });
 
@@ -520,6 +538,12 @@ export default defineComponent({
           .then((response) => {
             product.value = response.data;
             product.value.branchoffice = optionsEstablishment.value[0].value;
+            product.value.image = null; // limpiar selección de nueva imagen
+            imageFileList.value = [];
+            // Si el backend devuelve image como url, normalizar
+            if (response.data.image) {
+              product.value.image_url = response.data.image;
+            }
           })
           .catch((error) => {
             console.error(error);
@@ -535,7 +559,7 @@ export default defineComponent({
           name: null,
           description: null,
           prices: null,
-          purchase_price: null,
+          purchase_price: 0,
           measure_unit: 1,
           control_stock: false,
           stock: "",
@@ -548,9 +572,11 @@ export default defineComponent({
           quick_indications: null,
           branchoffice: optionsEstablishment.value[0].value,
           supplies: [],
-          affectation: settingsStore.businessSettings.sale.default_affectation,
+          affectation: settingsStore.businessSettings.sale?.default_affectation,
           igv_tax: 0,
         };
+        imageFileList.value = [];
+        product.value.image = null;
       }
     });
 
@@ -800,6 +826,8 @@ export default defineComponent({
           return null;
         }
       },
+      onImageChange,
+      imageFileList,
     };
   },
 });

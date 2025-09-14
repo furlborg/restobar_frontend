@@ -21,20 +21,20 @@
                         @back="() => ($emit('update:show', false), $emit('canceled'))"
                 ></n-page-header>
             </template>
-            <default-preset v-if="!preVoucher" ref="ticket" :data="data"/>
-            <preview-preset v-else ref="ticket" :data="data"/>
+            <default-preset v-if="!preVoucher" ref="ticket" :data="data" :isPrintMode="isPrintMode"/>
+            <preview-preset v-else ref="ticket" :data="data" :isPrintMode="isPrintMode"/>
             <template v-if="!previewOnly" #footer>
                 <n-button class="fs-4" type="info" secondary block @click="generate">
                     Imprimir
                 </n-button>
-                <div style="width: 272px; display: flex">
+                <div style="width: 100%; display: flex">
                     <n-button-group>
                         <n-button
                                 style="width: 90px"
                                 type="success"
                                 tertiary
                                 @click="dataModalWhatsApp()"
-                                :disabled="data.invoice_type === '80' || data.status === 'A' || data.status === 'N'"
+                                :disabled="data.status === 'A'"
                         >
                             <v-icon name="bi-whatsapp"/>
                         </n-button>
@@ -90,6 +90,7 @@ import { useMessage } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useSaleStore } from "@/store/modules/sale";
 import { jsPDF } from "jspdf";
+import html2canvas from "html2canvas";
 import DefaultPreset from "./pdf-presets/DefaultPreset";
 import PreviewPreset from "./pdf-presets/PreviewPreset";
 import { isNumber } from "@/utils";
@@ -129,6 +130,7 @@ export default defineComponent({
         const tableStore = useTableStore();
         const totalEnterPulse = ref(0);
         const businessStore = useBusinessStore();
+        const isPrintMode = ref(false);
         // eslint-disable-next-line no-undef
         // const apiUrl = import.meta.env.VITE_APP_URL.replace(/^https?:\/\//, ''); // Elimina 'http://' o 'https://'
         let socket = null;
@@ -173,27 +175,42 @@ export default defineComponent({
         });
 
         const generate = async(save = false) => {
-            const format = [
-                ticket.value.$el.clientWidth,
-                ticket.value.$el.clientHeight + 10
-            ];
-            const doc = new jsPDF({
-                unit: "px",
-                format: format,
-                orientation: "p",
-                hotfixes: [ "px_scaling" ]
-            });
+            // Activar modo impresión para usar dimensiones correctas
+            isPrintMode.value = true;
+
+            // Esperar a que Vue actualice el DOM
+            await new Promise(resolve => setTimeout(resolve, 100));
 
             if (save === true) {
-                doc.html(ticket.value.$el.innerHTML, {
-                    callback: async function(doc) {
-                        doc.save(
-                            `${ saleStore.getSerieDescription(props.data.serie) }-${
-                                props.data.number
-                            }`
-                        );
-                    }
-                });
+                try {
+                    const el = ticket.value?.$el;
+                    if (!el) throw new Error("Ticket DOM no disponible");
+                    const canvas = await html2canvas(el, {
+                        scale: 2,            
+                        useCORS: true,       
+                        logging: false,
+                        backgroundColor: '#ffffff'
+                    });
+
+                    const imgData = canvas.toDataURL('image/png');
+                    const pdfW = canvas.width;
+                    const pdfH = canvas.height + 10;
+
+                    const doc = new jsPDF({
+                        unit: 'px',
+                        format: [pdfW, pdfH],
+                        orientation: 'p',
+                        hotfixes: ['px_scaling']
+                    });
+
+                    doc.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH, undefined, 'FAST');
+                    doc.save(`${ saleStore.getSerieDescription(props.data.serie) }-${ props.data.number }`);
+                } catch (e) {
+                    console.error(e);
+                } finally {
+                    isPrintMode.value = false;
+                }
+                return;
             } else {
                 if (props.preVoucher) {
                     const business = businessStore.business;
@@ -364,6 +381,10 @@ export default defineComponent({
                     // document.body.appendChild(hiddeFrame);
                 }
             }
+            
+            // Desactivar modo impresión después de generar el PDF
+            isPrintMode.value = false;
+            
             emit("printed");
             emit("update:show", false);
         };
@@ -396,7 +417,8 @@ export default defineComponent({
             sendToWhatsapp,
             dataModalWhatsApp,
             putaOscar,
-            phoneNumber
+            phoneNumber,
+            isPrintMode
         };
     }
 });

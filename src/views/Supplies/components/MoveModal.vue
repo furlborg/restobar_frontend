@@ -150,7 +150,7 @@ export default defineComponent({
     const save = (formitem) => {
       formRef.value.validate(async (errors) => {
         if (!errors) {
-          if (formitem.amount == "" || parseInt(formitem.amount) <= 0) {
+          if (formitem.amount == "" || parseFloat(formitem.amount) <= 0) {
             message.warning("La cantidad debe ser mayor a 0.");
           } else {
             createSupplieMovement(formitem)

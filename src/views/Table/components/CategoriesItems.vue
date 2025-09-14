@@ -27,18 +27,12 @@
           class="w-100 p-0"
           v-for="(product, index) in itemsList"
           :key="index"
-          @click="
-            product.has_stock
-              ? product.has_supplies
-                ? orderStore.addOrder(product)
-                : null
-              : null
-          "
+          @click="handleProductClick(product)"
           style="cursor: pointer"
         >
           <template #prefix>
             <img
-              src="~@/assets/images/default-food-image.jpg"
+               :src="productImage(product)"
               alt=""
               width="75"
               height="75"
@@ -99,7 +93,7 @@
               </n-dropdown>
             </template>
             <template #cover>
-              <img src="~@/assets/images/default-food-image.jpg" alt="" />
+              <img  :src="productImage(product)" alt="" />
             </template>
             <n-text
               >Lorem ipsum dolor sit, amet consectetur adipisicing elit.</n-text
@@ -112,29 +106,51 @@
 </template>
 
 <script>
-import { defineComponent, computed, onMounted, ref } from "vue";
+import { defineComponent, computed, onMounted, ref, inject } from "vue";
 import { useRoute } from "vue-router";
 import { useRouter } from "vue-router";
 import { useMessage } from "naive-ui";
 import { renderIcon } from "@/utils";
 import { useOrderStore } from "@/store/modules/order";
 import { useGenericsStore } from "@/store/modules/generics";
+import { useSettingsStore } from "@/store/modules/settings";
 import { getProductsByCategory } from "@/api/modules/products";
 import { useProductStore } from "@/store/modules/product";
+import defaultFoodImage from "@/assets/images/default-food-image.jpg";
 
 export default defineComponent({
   name: "CategoriesItems",
   setup() {
+    const productImage = (p) => p?.image || p?.image_url || defaultFoodImage;
     const message = useMessage();
     const route = useRoute();
     const router = useRouter();
     const genericsStore = useGenericsStore();
     const orderStore = useOrderStore();
     const productStore = useProductStore();
+    const settingsStore = useSettingsStore();
     const category = route.params.category;
     const listType = ref("list");
     const products = ref([]);
     const search = ref("");
+
+    // Inyectar funciones del componente padre para el flujo de clientes
+    const addOrderToCustomer = inject('addOrderToCustomer', null);
+    const selectedCustomerId = inject('selectedCustomerId', ref(null));
+
+    const handleProductClick = (product) => {
+      if (!product.has_stock || !product.has_supplies) return;
+      
+      if (settingsStore.businessSettings.order.order_by_customer) {
+        // Nuevo flujo por cliente
+        if (selectedCustomerId.value && addOrderToCustomer) {
+          addOrderToCustomer(product, selectedCustomerId.value);
+        }
+      } else {
+        // Flujo tradicional
+        orderStore.addOrder(product);
+      }
+    };
 
     const itemsList = computed(() => {
       const list = products.value.filter((product) =>
@@ -191,6 +207,7 @@ export default defineComponent({
 
     return {
       handleBack,
+      handleProductClick,
       listType,
       genericsStore,
       productOptions,
@@ -200,6 +217,7 @@ export default defineComponent({
       orderStore,
       search,
       itemsList,
+      productImage,
     };
   },
 });

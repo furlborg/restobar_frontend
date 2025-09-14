@@ -39,6 +39,7 @@ export const useSaleStore = defineStore("sale", {
       }));
     },
     toSale(state) {
+      console.log('Store toSale - orderStore.orderList:', orderStore.orderList);
       state.sale_details = orderStore.orderList.map((order) => {
         let detail = {
           product: order.product,
@@ -51,6 +52,7 @@ export const useSaleStore = defineStore("sale", {
           price_sale: parseFloat(order.price).toFixed(2),
           quantity: Number(order.quantity),
           icbper: parseFloat(order.icbper_amount).toFixed(2),
+          customer: order.customer
         };
         this.updateDetail(detail);
         return detail;
@@ -171,26 +173,27 @@ export const useSaleStore = defineStore("sale", {
       return order ? order.quantity : null;
     },
     updateDetail(detail) {
-      // detail.product_igv = detail.product_igv + 1
+      // Corrección: La lógica del IGV estaba invertida
       switch (detail.product_affectation) {
-        case 10:
+        case 10: // Operación Gravada
+          // El price_sale ya incluye IGV, necesitamos calcular la base imponible
           detail.price_base = detail.price_sale
-              ? parseFloat(detail.product_igv + 1) * (Number(detail. price_sale))
-              : 0;
+            ? parseFloat(detail.price_sale) / (1 + parseFloat(detail.product_igv))
+            : 0;
           detail.igv_tax = detail.price_sale
-              ? parseFloat(detail.price_base) - parseFloat(detail.price_sale)
-              : 0;
+            ? parseFloat(detail.price_sale) - parseFloat(detail.price_base)
+            : 0;
           break;
-        case 20:
+        case 20: // Operación Exonerada
           detail.price_base = detail.price_sale
-              ? parseFloat(detail.price_sale)
-              : 0;
+            ? parseFloat(detail.price_sale)
+            : 0;
           detail.igv_tax = 0;
           break;
-        case 21:
+        case 21: // Operación Gratuita
           detail.price_base = detail.price_sale
-              ? parseFloat(detail.price_sale)
-              : 0;
+            ? parseFloat(detail.price_sale)
+            : 0;
           detail.igv_tax = 0;
           break;
         default:

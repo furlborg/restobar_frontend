@@ -731,6 +731,11 @@ export default defineComponent({
       separatePayments, showSeparateModal, getAfcShort, getAfcColor, totalIGV, totalGRV,
       totalEXN, totalGRT, totalDSCT, whatsappNumber, ticketPreview, previewDrawer, showPdf,
       pdfData,
+      isOrderByCustomer,
+      customers,
+      getCustomerOrders,
+      getCustomerTotal,
+      getTotalAmount,
     };
   },
 });
@@ -755,6 +760,7 @@ input::-webkit-inner-spin-button {
 }
 
 input[type="number"] {
+  appearance: textfield;
   appearance: textfield;
   -moz-appearance: textfield;
 }

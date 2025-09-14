@@ -124,6 +124,7 @@ export async function createSale(sale, pass = null) {
             serie: sale.serie,
             number: sale.number,
             date_sale: sale.date_sale,
+            due_date: sale.due_date,
             count: sale.count,
             amount: sale.amount,
             given_amount: sale.given_amount,
@@ -158,6 +159,7 @@ export async function createSale(sale, pass = null) {
             serie: sale.serie,
             number: sale.number,
             date_sale: sale.date_sale,
+            due_date: sale.due_date,
             count: sale.count,
             amount: sale.amount,
             given_amount: sale.given_amount,
@@ -276,4 +278,43 @@ export async function createSaleCredit(data) {
         ...data,
         till: tillStore.currentTillID
     });
+}
+
+export async function getSaleDetails(productId, dateFrom = null, dateTo = null) {
+  const params = {};
+  
+  if (productId) {
+    params.product = productId;
+  }
+  
+  if (dateFrom) {
+    params.date_from = dateFrom;
+  }
+  
+  if (dateTo) {
+    params.date_to = dateTo;
+  }
+
+  return await http.get("saledetail/", { params });
+}
+
+export async function getSalesReportByProduct(productId, dateFrom = null, dateTo = null) {
+  const params = {};
+  
+  if (productId) {
+    params.product = productId;
+  }
+  
+  if (dateFrom) {
+    params.date_from = dateFrom;
+  }
+  
+  if (dateTo) {
+    params.date_to = dateTo;
+  }
+
+  return await http.get("sales_by_product/", { 
+    params,
+    responseType: "arraybuffer"
+  });
 }

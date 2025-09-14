@@ -26,8 +26,7 @@
           <n-radio-button :value="1" :key="1">FACTURA</n-radio-button>
           <n-radio-button :value="3" :key="3">BOLETA</n-radio-button>
         </n-radio-group>
-        <n-radio-group v-model:value="sale.payment_condition" name="saleType" size="small"
-          @update:value="changeCondition" disabled>
+        <n-radio-group v-model:value="sale.payment_condition" name="saleType" size="small" @update:value="changeCondition">
           <n-radio-button :value="1" :key="1">CONTADO</n-radio-button>
           <n-radio-button :value="2" :key="2">CRÉDITO</n-radio-button>
         </n-radio-group>
@@ -71,7 +70,15 @@
             <n-date-picker class="w-100" type="datetime" :is-date-disabled="dateDisabled"
               v-model:formatted-value="sale.date_sale" />
           </n-form-item-gi>
-          <n-form-item-gi label="Método Pago">
+          <n-form-item-gi v-if="sale.payment_condition === 2" :span="2" label="Fecha Vencimiento" path="due_date">
+            <n-date-picker
+              class="w-100"
+              type="datetime"
+              v-model:formatted-value="sale.due_date"
+              :is-date-disabled="(ts) => ts <= new Date(sale.date_sale)"
+            />
+          </n-form-item-gi>
+          <n-form-item-gi v-if="sale.payment_condition === 1" label="Método Pago">
             <n-select v-model:value="sale.payment_method" :options="saleStore.getPaymentMethodsOptions" filterable />
           </n-form-item-gi>
           <n-form-item-gi>
@@ -171,7 +178,7 @@
         </n-table>
       </n-scrollbar>
       <n-grid cols="3">
-        <n-gi :span="2">
+        <n-gi v-if="sale.payment_condition === 1" :span="2">
           <n-space class="h-100" align="center" justify="space-around">
             <n-space align="center" vertical>
               <span class="fs-4">Pago</span>
@@ -398,7 +405,7 @@ export default defineComponent({
     const totalGRV = computed(() => {
       return saleStore.toSale.reduce((acc, curVal) => {
         return curVal.product_affectation === 10
-          ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
+          ? (acc += parseFloat(curVal.price_base) * curVal.quantity)
           : acc;
       }, 0);
     });
@@ -477,6 +484,7 @@ export default defineComponent({
       serie: saleStore.getFreeSaleSerieByType("3")?.id,
       number: "",
       date_sale: format(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss"),
+      due_date: format(new Date(Date.now() + 3600 * 1000), "dd/MM/yyyy HH:mm:ss"),
       count: products_count,
       amount: total,
       given_amount: parseFloat(0).toFixed(2),
@@ -510,6 +518,30 @@ export default defineComponent({
     const formRules = computed(() => {
       let rules = saleRules;
       rules.customer.required = !(sale.value.invoice_type !== 1 && sale.value.payment_condition === 1 && sale.value.given_amount <= 699);
+      rules.due_date = sale.value.payment_condition === 2
+        ? {
+            required: true,
+            validator: (_, value) => {
+              if (!value) return new Error("Debes seleccionar fecha de vencimiento");
+              const toDate = (str) => {
+                const [datePart, timePart] = str.split(" ");
+                const [d, m, y] = datePart.split("/").map(Number);
+                const [hh, mm, ss] = timePart.split(":").map(Number);
+                return new Date(y, m - 1, d, hh, mm, ss);
+              };
+              try {
+                const due = toDate(value);
+                const saleDate = toDate(sale.value.date_sale);
+                if (!(due > saleDate)) {
+                  return new Error("La fecha de vencimiento debe ser mayor a la de emisión");
+                }
+                return true;
+              } catch(e) {
+                return new Error("Fecha de vencimiento inválida");
+              }
+            }
+          }
+        : { required: false };
       return rules;
     });
 
@@ -519,11 +551,20 @@ export default defineComponent({
 
     const changeCondition = (v) => {
       switch (v) {
-        case 1:
+        case 1: // CONTADO
           sale.value.given_amount = total.value;
           break;
-        case 2:
+        case 2: // CREDITO
           sale.value.given_amount = parseFloat(0).toFixed(2);
+          try {
+            const [datePart, timePart] = sale.value.date_sale.split(" ");
+            const [d, m, y] = datePart.split("/").map(Number);
+            const [hh, mm, ss] = timePart.split(":").map(Number);
+            const base = new Date(y, m - 1, d, hh, mm, ss);
+            const due = new Date(base.getTime() + 60 * 60 * 1000);
+            const pad = (n) => (n < 10 ? "0" + n : String(n));
+            sale.value.due_date = `${pad(due.getDate())}/${pad(due.getMonth() + 1)}/${due.getFullYear()} ${pad(due.getHours())}:${pad(due.getMinutes())}:${pad(due.getSeconds())}`;
+          } catch (e) { /* noop */ }
           break;
         default:
           console.error(`${v} invalido`);

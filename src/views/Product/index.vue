@@ -7,6 +7,16 @@
         > -->
         <n-space justify="space-around">
           <n-button
+            type="primary"
+            @click="showSalesReportModal = true"
+            secondary
+          >
+            <template #icon
+              ><n-icon><v-icon name="md-equalizer-twotone" /></n-icon
+            ></template>
+            Registro de ventas
+          </n-button>
+          <n-button
             v-if="userStore.hasPermission('add_stock')"
             type="success"
             @click="newMovement(0), (showModalMovement = true)"
@@ -77,7 +87,7 @@
             >
               <template #prefix>
                 <img
-                  src="~@/assets/images/default-food-image.jpg"
+                  :src="productImage(product)"
                   alt
                   width="90"
                   height="90"
@@ -182,7 +192,7 @@
                   </n-dropdown>
                 </template>
                 <template #cover>
-                  <img src="~@/assets/images/default-food-image.jpg" alt />
+                  <img :src="productImage(product)" alt />
                 </template>
                 <n-text>{{ product.description }}</n-text>
               </n-card>
@@ -213,6 +223,12 @@
       @on-success="onSuccess"
     />
 
+    <!-- Sales Report Modal -->
+    <sales-report-modal
+      v-model:show="showSalesReportModal"
+      @update:show="onCloseSalesReportModal"
+    />
+
     <move-modal
       v-model:show="showModalMovement"
       @on-success="loadProductsData"
@@ -224,9 +240,11 @@
 
 <script>
 import { defineComponent, ref, onMounted, reactive, computed } from "vue";
+import defaultFoodImage from "@/assets/images/default-food-image.jpg";
 import { useMessage, useDialog } from "naive-ui";
 import { renderIcon } from "@/utils";
 import ProductModal from "./components/ProductModal";
+import SalesReportModal from "./components/SalesReportModal";
 import { useProductStore } from "@/store/modules/product";
 import { useUserStore } from "@/store/modules/user";
 import {
@@ -240,9 +258,11 @@ export default defineComponent({
   name: "Product",
   components: {
     ProductModal,
+    SalesReportModal,
     MoveModal,
   },
   setup() {
+    const productImage = (p) => p?.image || p?.image_url || defaultFoodImage;
     const productStore = useProductStore();
     const userStore = useUserStore();
     const isLoadingData = ref(false);
@@ -250,6 +270,7 @@ export default defineComponent({
     const dialog = useDialog();
     const listType = ref("list");
     const showModal = ref(false);
+    const showSalesReportModal = ref(false);
     const showModalMovement = ref(false);
     const showButtons = ref(false);
     const search = ref('');
@@ -474,6 +495,10 @@ export default defineComponent({
       idProduct.value = 0;
     };
 
+    const onCloseSalesReportModal = () => {
+      document.title = "Productos | App";
+    };
+
     const onSuccess = async () => {
       showModal.value = false;
       onCloseModal();
@@ -489,11 +514,13 @@ export default defineComponent({
       listType,
       type,
       showModal,
+      showSalesReportModal,
       showModalMovement,
       loadProductsData,
       showButtons,
       productOptions,
       onCloseModal,
+      onCloseSalesReportModal,
       onSuccess,
       pagination,
       search,
@@ -508,6 +535,7 @@ export default defineComponent({
       itemsMovement,
       newMovement,
       performDisableProduct,
+      productImage,
     };
   },
 });

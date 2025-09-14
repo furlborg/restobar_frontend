@@ -116,7 +116,9 @@ import {
   FaCircle,
   MdCreditcardTwotone,
   CoBirthdayCake,
-  MdCancelpresentationTwotone
+  MdCancelpresentationTwotone,
+  MdPersonaddRound,
+  MdDeleteRound
 } from "oh-vue-icons/icons";
 
 addIcons(
@@ -236,6 +238,8 @@ addIcons(
     MdOutgoingmail,
     FaDownload,
     FaCircle,
-    MdCreditcardTwotone
+    MdCreditcardTwotone,
+    MdPersonaddRound,
+    MdDeleteRound
 );
 export { OhVueIcon };

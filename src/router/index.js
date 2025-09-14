@@ -59,6 +59,34 @@ export const routes = [
         component: () => import(/* webpackChunkName: "sale" */ "@/views/Sale/index.vue")
       },
       {
+        path: "/menus",
+        name: "Menu",
+        meta: {
+          requiredPerm: "view_sale"
+        },
+        component: () => import(/* webpackChunkName: "menu" */ "@/views/Menu/index.vue")
+      },
+      {
+        path: "/reports",
+        name: "Reports",
+        meta: {
+          requiredPerm: "view_sale" // ajustar si existe un permiso específico de reportes
+        },
+        component: () => import(/* webpackChunkName: "reports" */ "@/views/Reports/index.vue"),
+        children: [
+          {
+            path: "products-sold",
+            name: "ProductsSoldReport",
+            component: () => import(/* webpackChunkName: "reports-products-sold" */ "@/views/Reports/components/ProductsSold.vue")
+          },
+          {
+            path: "cash-flow",
+            name: "CashFlowReport",
+            component: () => import("@/views/Reports/components/CashReport.vue")
+          }
+        ]
+      },
+      {
         path: "/credits",
         name: "Credits",
         // meta: {
