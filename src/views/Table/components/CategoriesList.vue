@@ -1,90 +1,134 @@
 <template>
-    <n-card
-        title="Categorías"
-        :bordered="false"
-        class="h-100"
-        content-class="overflow-auto"
-    >
-        <n-scrollbar>
-            <div>
-                <n-list v-if="listType === 'list'" class="me-2">
-                    <n-list-item
-                            v-for="(category, index) in productStore.categories"
-                            :key="index"
-                    >
-                        <template #prefix>
-                            <img
-                                    src="~@/assets/images/category-bg.jpg"
-                                    alt=""
-                                    width="75"
-                                    height="50"
-                            />
-                        </template>
+    <n-tabs type="line" animated>
+        <n-tab-pane name="categorias" tab="Categorías">
+            <n-card
+            title="Categorías"
+            :bordered="false"
+            class="h-100"
+            content-class="overflow-auto"
+            >
+                <n-scrollbar>
+                    <div>
+                        <n-list v-if="listType === 'list'" class="me-2">
+                            <n-list-item
+                                    v-for="(category, index) in productStore.categories"
+                                    :key="index"
+                            >
+                                <template #prefix>
+                                    <img
+                                        src="~@/assets/images/category-bg.jpg"
+                                        alt=""
+                                        width="75"
+                                        height="50"
+                                    />
+                                </template>
+                                <n-thing>
+                                    <n-space vertical>
+                                        <n-space align="center">
+                                            <router-link
+                                                    class="text-decoration-none"
+                                                    :to="{
+                                                        name: 'CategoriesItems',
+                                                        params: { category: category.id },
+                                                    }"
+                                            >
+                                                <n-text class="fs-4">{{ category.description }}</n-text>
+                                            </router-link>
+                                            <n-text class="fs-6" type="success">S/. 10.00</n-text>
+                                        </n-space>
+                                        <n-text
+                                        >Lorem ipsum dolor sit, amet consectetur adipisicing
+                                            elit.
+                                        </n-text
+                                        >
+                                    </n-space>
+                                </n-thing>
+                                <template #suffix>
+                                    <n-button type="info" text>
+                                        <v-icon name="md-addbox-round" scale="2"/>
+                                    </n-button>
+                                </template>
+                            </n-list-item>
+                        </n-list>
+                        <n-grid
+                                v-if="listType === 'grid'"
+                                responsive="screen"
+                                cols="8 xs:8 s:12 m:12 l:16 xl:20 2xl:20"
+                                :x-gap="5"
+                                :y-gap="5"
+                        >
+                            <n-gi :span="4" v-for="(category, index) in productStore.categories" :key="index">
+                                <div class="item-zoom">
+                                    <router-link class="text-decoration-none" :to="{ name: 'CategoriesItems', params: { category: category.id } }">
+                                        <img src="~@/assets/images/category-bg.jpg" alt=""/>
+
+                                        <n-text class="position-absolute translate-middle fs-7 fw-bold w-100 top-50 start-50 text-center" style="color: #000;"
+                                        >{{ category.description }}
+                                        </n-text>
+                                    </router-link>
+                                </div>
+                            </n-gi>
+                        </n-grid>
+                    </div>
+                </n-scrollbar>
+            </n-card>
+        </n-tab-pane>
+        <n-tab-pane name="menu" tab="Menú">
+            <n-card
+            title="Menú Programado"
+            :bordered="false"
+            class="h-100"
+            content-class="overflow-auto"
+            >
+                <n-list>
+                    <n-list-item v-for="menu in scheduledMenus" :key="menu.id" @click="handleOpenMenuModal(menu)" style="cursor: pointer">
                         <n-thing>
                             <n-space vertical>
-                                <n-space align="center">
-                                    <router-link
-                                            class="text-decoration-none"
-                                            :to="{
-                        name: 'CategoriesItems',
-                        params: { category: category.id },
-                    }"
-                                    >
-                                        <n-text class="fs-4">{{ category.description }}</n-text>
-                                    </router-link>
-                                    <n-text class="fs-6" type="success">S/. 10.00</n-text>
-                                </n-space>
-                                <n-text
-                                >Lorem ipsum dolor sit, amet consectetur adipisicing
-                                    elit.
-                                </n-text
-                                >
+                                <n-text class="fs-4">{{ menu.name }}</n-text>
+                                <n-text class="fs-6" type="info">Price: {{ menu.price.toFixed(2) }}</n-text>
                             </n-space>
                         </n-thing>
-                        <template #suffix>
-                            <n-button type="info" text>
-                                <v-icon name="md-addbox-round" scale="2"/>
-                            </n-button>
-                        </template>
                     </n-list-item>
                 </n-list>
-                <n-grid
-                        v-if="listType === 'grid'"
-                        responsive="screen"
-                        cols="8 xs:8 s:12 m:12 l:16 xl:20 2xl:20"
-                        :x-gap="5"
-                        :y-gap="5"
-                >
-                    <n-gi :span="4" v-for="(category, index) in productStore.categories" :key="index">
-                        <div class="item-zoom">
-                            <router-link class="text-decoration-none" :to="{ name: 'CategoriesItems', params: { category: category.id } }">
-                                <img src="~@/assets/images/category-bg.jpg" alt=""/>
-
-                                <n-text class="position-absolute translate-middle fs-7 fw-bold w-100 top-50 start-50 text-center" style="color: #000;"
-                                >{{ category.description }}
-                                </n-text>
-                            </router-link>
-                        </div>
-                    </n-gi>
-                </n-grid>
-            </div>
-        </n-scrollbar>
-    </n-card>
-</template>
+            </n-card>
+        </n-tab-pane>
+    </n-tabs>
+    <MenuProductModal v-if="showMenuModal" :menu="selectedMenu" @close="showMenuModal = false" /></template>
 
 <script>
 import { defineComponent, ref, onMounted } from "vue";
 import { renderIcon } from "@/utils";
 import { useProductStore } from "@/store/modules/product";
+import { getMenuToday } from "@/api/modules/products";
+import MenuProductModal from "./MenuProductModal.vue";
+
+
 
 export default defineComponent({
     name: "CategoriesList",
+    components: {
+        MenuProductModal, // <-- ¡registra aquí!
+    },
     setup() {
         const productStore = useProductStore();
         const listType = ref("grid");
+        const scheduledMenus = ref([]);
+        const showMenuModal = ref(false);
+        const selectedMenu = ref(null);
+
+        const handleOpenMenuModal = async (menu) => {
+            const menuData = await getMenuToday(menu.id);
+            if (menuData?.data?.length) {
+                selectedMenu.value = menuData.data[0];
+                showMenuModal.value = true;
+            }
+        };
 
         onMounted(async() => {
             await productStore.refreshCategories();
+            const today = new Date().toISOString().slice(0, 10);
+            const menuData = await getMenuToday();
+            scheduledMenus.value = menuData.data
         });
 
         const productOptions = [
@@ -103,7 +147,11 @@ export default defineComponent({
         return {
             listType,
             productOptions,
-            productStore
+            productStore,
+            scheduledMenus,
+            showMenuModal,
+            selectedMenu,
+            handleOpenMenuModal,
         };
     }
 });

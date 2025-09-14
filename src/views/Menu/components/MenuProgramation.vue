@@ -51,12 +51,11 @@
                 class="mb-1"
                 style="height: 50px;"
               >
-                <div>
+                <div class="phase-block">
                   <span>
                     <small style="display:block; font-size: 0.95em; color: #555;">{{ item.phase_name }}</small>
-                    {{ item.product_name }}
+                      {{ item.product_name }}
                   </span>
-
                 </div>
               </n-tag>
             </div>

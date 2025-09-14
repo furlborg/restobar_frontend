@@ -16,6 +16,7 @@
     "jspdf": "^3.0.0",
     "jspdf-autotable": "^5.0.2",
     "jsrsasign": "11.0.0",
+    "naive-ui": "^2.41.0",
     "oh-vue-icons": "^1.0.0-rc3",
     "path": "^0.12.7",
     "path-browserify": "^1.0.1",
@@ -26,7 +27,7 @@
     "vue-cookies": "^1.8.2",
     "vue-input-autowidth": "^2.2.0",
     "vue-router": "^4.1.6",
-    "naive-ui": "^2.41.0"
+    "vue-simple-calendar": "^7.2.1"
   },
   "devDependencies": {
     "eslint": "^8.32.0",

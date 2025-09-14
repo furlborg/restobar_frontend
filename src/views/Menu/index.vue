@@ -57,6 +57,13 @@
       v-model:show="showProgramationModal"
       :menu-id="selectedMenuId"
     />
+    <MenuDetailModal
+      v-model:show="showDetailModal"
+      :menu-id="selectedMenuId"
+    />
+    <MenuDailyProgramation
+      v-model:show="showDailyProgramationModal"
+    />
   </div>
 </template>
 
@@ -67,6 +74,8 @@ import { useRouter } from 'vue-router'
 import { getMenus } from '@/api/modules/menu'
 import MenuCreateModal from './components/MenuCreateModal.vue'
 import MenuProgramation from './components/MenuProgramation.vue'
+import MenuDetailModal from './components/MenuDetailModal.vue'
+import MenuDailyProgramation from './components/MenuDailyProgramation.vue'
 
 
 const router = useRouter()
@@ -113,7 +122,6 @@ async function fetchMenus(params = null, page = 1, pageSize = 20) {
     const response = await getMenus({ search: params?.name, active: params?.active, page, page_size: pageSize })
     const data = response.data
     if (Array.isArray(data)) {
-      // sin paginación DRF (fallback)
       menus.value = data
       pagination.value.total = data.length
       pagination.value.pageCount = 1
@@ -160,6 +168,8 @@ async function refreshTable() {
 
 const showCreateModal = ref(false)
 const showProgramationModal = ref(false)
+const showDetailModal = ref(false)
+const showDailyProgramationModal = ref(false)
 
 
 const modalMode = ref('create')
@@ -174,13 +184,17 @@ function goCreate() {
 }
 
 function goSchedule() {
-  message.info('Ir a programar menú del día (pendiente de ruta)')
-  // router.push({ name: 'MenuSchedule' })
+  showDailyProgramationModal.value = true
 }
 
 function onSchedule(row) {
   selectedMenuId.value = row.id
   showProgramationModal.value = true
+}
+
+function onDetail(row) {
+  selectedMenuId.value = row.id
+  showDetailModal.value = true
 }
 
 function handleCreated(menu) {
@@ -195,7 +209,7 @@ const tableColumns = [
   { title: 'Fases', key: 'phases_count', render: (row) => String(row.phases_count ?? 0) },
   { title: 'Precio', key: 'price', render: (row) => {
       const p = Number(row.price ?? 0)
-      return `$${p.toFixed(2)}`
+      return `${p.toFixed(2)}`
     }
   },
   { title: 'Estado', key: 'active', render: (row) => (row.active ? 'Activo' : 'Inactivo') },
@@ -203,7 +217,7 @@ const tableColumns = [
     title: 'Opciones', key: 'actions', render: (row) => h('div', { style: 'display:flex; gap:8px;' }, [
       //h(NButton, { size: 'small', text: true, onClick: () => onView(row) }, { default: () => 'Ver' }),
       h(NButton, { size: 'small', text: true, onClick: () => onEdit(row) }, { default: () => 'Editar' }),
-      h(NButton, { size: 'small', text: true, onClick: () => onDelete(row) }, { default: () => 'Eliminar' }),
+      h(NButton, { size: 'small', text: true, onClick: () => onDetail(row) }, { default: () => 'Detalle' }),
       h(NButton, { size: 'small', text: true, onClick: () => onSchedule(row) }, { default: () => 'Programar' })
     ])
   }
