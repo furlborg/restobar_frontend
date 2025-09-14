@@ -616,13 +616,11 @@ export default defineComponent({
         customerResults.value = [];
         return false;
       }
-      
       searching.value = true;
       try {
-        const response = sale.value.invoice_type === 1 
+        const response = sale.value.invoice_type === 1
           ? await searchRucCustomer(value)
           : await searchCustomerByName(value);
-        
         if (response.status === 200) {
           customerResults.value = response.data;
         }
@@ -637,9 +635,8 @@ export default defineComponent({
     };
 
     const onSuccess = (customer) => {
-      const isValidCustomer = (sale.value.invoice_type === 1 && customer.doc_type === "6") || 
+      const isValidCustomer = (sale.value.invoice_type === 1 && customer.doc_type === "6") ||
                              sale.value.invoice_type !== 1;
-      
       if (isValidCustomer) {
         customerResults.value.push(customer);
         sale.value.customer_name = `${customer.doc_num} - ${customer.names}`;
@@ -688,9 +685,8 @@ export default defineComponent({
     const autoCreateCustomer = () => {
       if (!searching.value && !customerResults.value.length) {
         const value = sale.value.customer_name;
-        const isValidDoc = !isNaN(value) && 
+        const isValidDoc = !isNaN(value) &&
           ((value.length === 8 && sale.value.invoice_type !== 1) || value.length === 11);
-        
         if (isValidDoc) {
           customerDocument.value = value;
           showModal.value = true;
@@ -726,16 +722,10 @@ export default defineComponent({
       searching, changing, subTotal, changeCondition, changeSerie, showObservations, performCreateSale,
       addressesOptions, createAddressesOptions, onCloseModal: () => {}, onSuccess, genericsStore,
       icbper, isMultiple, showPayments, createPayment, doMultiplePayment, filteredMethods,
-      evalPayments, currentPaymentsAmount, openSeparatePaymentsModal, 
+      evalPayments, currentPaymentsAmount, openSeparatePaymentsModal,
       closeSeparatePaymentsModal: () => {}, successSeparatePaymentsModal: obtainSaleNumber,
       separatePayments, showSeparateModal, getAfcShort, getAfcColor, totalIGV, totalGRV,
-      totalEXN, totalGRT, totalDSCT, whatsappNumber, ticketPreview, previewDrawer, showPdf,
-      pdfData,
-      isOrderByCustomer,
-      customers,
-      getCustomerOrders,
-      getCustomerTotal,
-      getTotalAmount,
+      totalEXN, totalGRT, totalDSCT, whatsappNumber, ticketPreview, previewDrawer, showPdf, pdfData
     };
   },
 });
