@@ -52,15 +52,12 @@
           <PaymentSummary
             :select-products="selectProducts"
             :product-search="productSearch"
-            :product-options="productOptions"
-            :searching="searching"
             :show-modal="showModal"
             :item-index="itemIndex"
             @update:select-products="selectProducts = $event"
             @update:product-search="productSearch = $event"
             @update:show-modal="showModal = $event"
             @update:item-index="itemIndex = $event"
-            @product-selected="selectProduct"
           />
         </n-gi>
       </n-grid>
@@ -113,8 +110,6 @@
         <PaymentSummary
           :select-products="selectProducts"
           :product-search="productSearch"
-          :product-options="productOptions"
-          :searching="searching"
           :show-modal="showModal"
           :item-index="itemIndex"
           @update:select-products="(value) => { selectProducts = value; goToFirstTab(); }"
@@ -122,7 +117,6 @@
           @update:show-modal="showModal = $event"
           @update:item-index="itemIndex = $event"
           @go-to-first-tab="goToFirstTab"
-          @product-selected="selectProduct"
         />
       </n-tab-pane>
     </n-tabs>
@@ -233,9 +227,7 @@ export default defineComponent({
     const voucherData = ref(null);
     const addressesOptions = ref([]);
     const customerOptions = ref([]);
-    const productOptions = ref([]);
     const searchingCustomer = ref(false);
-    const searching = ref(false);
     const whatsappNumber = ref("");
     const customerDocument = ref("");
 
@@ -371,24 +363,6 @@ export default defineComponent({
 
     const goToFirstTab = () => activeTab.value = "main";
 
-    const selectProduct = (productValue) => {
-      if (!productValue) return;
-      const existingIndex = orderStore.orderList.findIndex(item => item.id === productValue.id);
-      if (existingIndex !== -1) {
-        orderStore.orderList[existingIndex].quantity += 1;
-        message.success(`Se agregó otra unidad de ${productValue.name}`);
-      } else {
-        orderStore.orderList.push({
-          ...productValue,
-          quantity: 1,
-          icbper_amount: productValue.icbper ? settingsStore.businessSettings.sale?.icbper_amount : 0,
-        });
-        message.success(`Producto ${productValue.name} agregado al pedido`);
-      }
-      productSearch.value = "";
-      searching.value = false;
-    };
-
     const performTakeAway = () => {
       if (userStore.user.role === "MOZO") {
         showConfirm.value = true;
@@ -495,13 +469,13 @@ export default defineComponent({
       loading, selectProducts, showObservations, isMultiple, ticketPreview, activeTab,
       showModal, showConfirm, showPayments, showCustomerModal, showPdf, showVoucher,
       ticketPreviewRef, voucherDrawer, itemIndex, userConfirm, productSearch,
-      sale, pdfData, voucherData, addressesOptions, customerOptions, productOptions,
-      searchingCustomer, searching, whatsappNumber, customerDocument,
+      sale, pdfData, voucherData, addressesOptions, customerOptions,
+      searchingCustomer, whatsappNumber, customerDocument,
       changing, subTotal, totalGRV, totalEXN, totalGRT, totalIGV, totalDSCT, icbper,
       getModalClass, evalPayments, currentPaymentsAmount, filteredMethods,
       orderStore, selectSerie, changeSerie, changeCondition, showCustomerOptions,
       autoCreateCustomer, createAddressesOptions, changeAddress, handleDelivery,
-      performTakeAway, doMultiplePayment, selectProduct, performCreateOrder,
+      performTakeAway, doMultiplePayment, performCreateOrder,
       createPayment, onCloseModal, onSuccess, isDecimal, goToFirstTab,
       checkState, hasUnsavedChanges,
     };
