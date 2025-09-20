@@ -30,7 +30,7 @@
               :total-dsct="totalDSCT"
               :is-multiple="isMultiple"
               :ticket-preview="ticketPreview"
-              @update:sale="updateSale"
+              @update:sale="(newSale) => Object.assign(sale, newSale)"
               @update:show-observations="showObservations = $event"
               @update:is-multiple="isMultiple = $event"
               @update:ticket-preview="ticketPreview = $event"
@@ -48,7 +48,6 @@
             <CategoriesList v-else />
           </transition>
         </n-gi>
-
         <n-gi span="2">
           <PaymentSummary
             :select-products="selectProducts"
@@ -57,13 +56,11 @@
             :searching="searching"
             :show-modal="showModal"
             :item-index="itemIndex"
-            @update:select-products="selectProducts = $event;"
+            @update:select-products="selectProducts = $event"
             @update:product-search="productSearch = $event"
             @update:show-modal="showModal = $event"
             @update:item-index="itemIndex = $event"
-            @show-options="showOptions"
-            @select-product="selectProduct"
-            @render-label="renderLabel"
+            @product-selected="selectProduct"
           />
         </n-gi>
       </n-grid>
@@ -91,7 +88,7 @@
               :total-dsct="totalDSCT"
               :is-multiple="isMultiple"
               :ticket-preview="ticketPreview"
-              @update:sale="updateSale"
+              @update:sale="(newSale) => Object.assign(sale, newSale)"
               @update:show-observations="showObservations = $event"
               @update:is-multiple="isMultiple = $event"
               @update:ticket-preview="ticketPreview = $event"
@@ -120,135 +117,65 @@
           :searching="searching"
           :show-modal="showModal"
           :item-index="itemIndex"
-          @update:select-products="selectProducts = $event; goToFirstTab();"
+          @update:select-products="(value) => { selectProducts = value; goToFirstTab(); }"
           @update:product-search="productSearch = $event"
           @update:show-modal="showModal = $event"
           @update:item-index="itemIndex = $event"
           @go-to-first-tab="goToFirstTab"
-          @show-options="showOptions"
-          @select-product="selectProduct"
-          @render-label="renderLabel"
+          @product-selected="selectProduct"
         />
       </n-tab-pane>
     </n-tabs>
-
-    <!-- Modales -->
-    <n-modal
-        :class="getModalClass"
-        preset="card"
-        v-model:show="showConfirm"
-        title="Registrar pedido"
-        :mask-closable="false"
-        closable
-      >
-        <n-form-item label="Ingrese código de usuario">
-          <n-input type="password" v-model:value="userConfirm" placeholder="" />
-        </n-form-item>
-        <template #action>
-          <n-space justify="end">
-            <n-button
-              type="success"
-              :loading="loading"
-              :disabled="!userConfirm || loading"
-              secondary
-              @click.prevent="performCreateOrder"
-            >
-              Confirmar
-            </n-button>
-          </n-space>
-        </template>
-      </n-modal>
-
-      <n-modal
-        :class="getModalClass"
-        preset="card"
-        v-model:show="showPayments"
-        title="Realizar venta"
-        :mask-closable="false"
-        closable
-        @close="sale.payments = null"
-      >
-        <n-space justify="space-between">
-          <n-tag type="info">Total: S/. {{ showPayments ? sale.amount : null }}</n-tag>
-          <n-tag :type="evalPayments ? 'error' : 'success'">
-            Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}
-          </n-tag>
-          <n-tag :type="evalPayments ? 'error' : 'warning'">
-            Faltante: S/. {{ showPayments ? (parseFloat(sale.amount) - currentPaymentsAmount).toFixed(2) : null }}
-          </n-tag>
-        </n-space>
-        <n-form-item class="mt-2" label="Pagos">
-          <n-dynamic-input v-model:value="sale.payments" :min="1" @create="createPayment">
-            <template #default="{ value }">
-              <div style="display: flex; align-items: center; width: 100%">
-                <n-select
-                  v-model:value="value.payment_method"
-                  :disabled="loading"
-                  :options="filteredMethods"
-                />
-                <n-input
-                  class="ms-2"
-                  v-model:value="value.amount"
-                  placeholder=""
-                  :disabled="loading"
-                  @keypress="isDecimal($event)"
-                />
-              </div>
-            </template>
-          </n-dynamic-input>
-        </n-form-item>
+    <n-modal :class="getModalClass" preset="card" v-model:show="showConfirm" title="Registrar pedido" :mask-closable="false" closable>
+      <n-form-item label="Ingrese código de usuario">
+        <n-input type="password" v-model:value="userConfirm" placeholder="" />
+      </n-form-item>
+      <template #action>
         <n-space justify="end">
-          <n-button
-            type="success"
-            :disabled="evalPayments || sale.payments.some(p => p.payment_method === null) || sale.payments.some(p => Number(p.amount) <= 0) || loading"
-            :loading="loading"
-            secondary
-            @click="performTakeAway"
-          >
+          <n-button type="success" :loading="loading" :disabled="!userConfirm || loading" secondary @click.prevent="performCreateOrder">
             Confirmar
           </n-button>
         </n-space>
-      </n-modal>
-
-      <OrderIndications
-        v-model:show="showModal"
-        preset="card"
-        title="Indicaciones"
-        :order="orderStore.orderList[itemIndex]"
-        @success="showModal = false"
-      />
-
-      <customer-modal
-        v-model:show="showCustomerModal"
-        :id-customer="sale.customer"
-        :document="customerDocument"
-        :doc_type="sale.invoice_type === 1 ? '6' : null"
-        @update:show="onCloseModal"
-        @on-success="onSuccess"
-      />
-
-      <ticket-preview
-        ref="ticketPreviewRef"
-        v-model:show="showPdf"
-        :data="pdfData"
-        :hidden="true"
-        :isUpdate="false"
-      />
-
-      <preview-drawer
-        ref="voucherDrawer"
-        v-model:show="showVoucher"
-        :data="voucherData"
-        :previewOnly="!ticketPreview"
-        @printed="() => $router.push({ name: 'TableHome' })"
-        @canceled="() => $router.push({ name: 'TableHome' })"
-      />
+      </template>
+    </n-modal>
+    <n-modal :class="getModalClass" preset="card" v-model:show="showPayments" title="Realizar venta" :mask-closable="false" closable @close="sale.payments = null">
+      <n-space justify="space-between">
+        <n-tag type="info">Total: S/. {{ showPayments ? sale.amount : null }}</n-tag>
+        <n-tag :type="evalPayments ? 'error' : 'success'">Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}</n-tag>
+        <n-tag :type="evalPayments ? 'error' : 'warning'">Faltante: S/. {{ showPayments ? (parseFloat(sale.amount) - currentPaymentsAmount).toFixed(2) : null }}</n-tag>
+      </n-space>
+      <n-form-item class="mt-2" label="Pagos">
+        <n-dynamic-input v-model:value="sale.payments" :min="1" @create="createPayment">
+          <template #default="{ value }">
+            <div style="display: flex; align-items: center; width: 100%">
+              <n-select v-model:value="value.payment_method" :disabled="loading" :options="filteredMethods" />
+              <n-input class="ms-2" v-model:value="value.amount" placeholder="" :disabled="loading" @keypress="isDecimal($event)" />
+            </div>
+          </template>
+        </n-dynamic-input>
+      </n-form-item>
+      <n-space justify="end">
+        <n-button 
+          type="success" 
+          :disabled="evalPayments || sale.payments?.some(p => p.payment_method === null) || sale.payments?.some(p => Number(p.amount) <= 0) || loading" 
+          :loading="loading" 
+          secondary 
+          @click="performTakeAway"
+        >
+          Confirmar
+        </n-button>
+      </n-space>
+    </n-modal>
+    <OrderIndications v-model:show="showModal" preset="card" title="Indicaciones" :order="orderStore.orderList[itemIndex]" @success="showModal = false" />
+    <customer-modal v-model:show="showCustomerModal" :id-customer="sale.customer" :document="customerDocument" :doc_type="sale.invoice_type === 1 ? '6' : null" @update:show="onCloseModal" @on-success="onSuccess" />
+    <ticket-preview ref="ticketPreviewRef" v-model:show="showPdf" :data="pdfData" :hidden="true" :isUpdate="false" />
+    <preview-drawer ref="voucherDrawer" v-model:show="showVoucher" :data="voucherData" :previewOnly="!ticketPreview" @printed="() => $router.push({ name: 'TableHome' })" @canceled="() => $router.push({ name: 'TableHome' })" />
   </div>
 </template>
 
 <script>
 import { defineComponent, ref, computed, watch, onMounted } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router";
 import { useMessage, useDialog } from "naive-ui";
 import { getSaleNumber } from "@/api/modules/sales";
 import { takeAwayOrder } from "@/api/modules/orders";
@@ -257,8 +184,7 @@ import { useSaleStore } from "@/store/modules/sale";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useUserStore } from "@/store/modules/user";
-import { useBreakpoint } from 'vooks';
-
+import { useBreakpoint } from "vooks";
 import OrderTaking from "./OrderTaking.vue";
 import PaymentSummary from "./PaymentSummary.vue";
 import CategoriesList from "./CategoriesList.vue";
@@ -271,13 +197,8 @@ import format from "date-fns/format";
 export default defineComponent({
   name: "TakeOrderLayout",
   components: {
-    OrderTaking,
-    PaymentSummary,
-    CategoriesList,
-    OrderIndications,
-    CustomerModal,
-    TicketPreview,
-    PreviewDrawer
+    OrderTaking, PaymentSummary, CategoriesList, OrderIndications,
+    CustomerModal, TicketPreview, PreviewDrawer,
   },
   setup() {
     const breakpointRef = useBreakpoint();
@@ -289,148 +210,40 @@ export default defineComponent({
     const settingsStore = useSettingsStore();
     const userStore = useUserStore();
     const route = useRoute();
+    const router = useRouter();
 
-    // Estados principales
     const loading = ref(false);
     const selectProducts = ref(false);
     const showObservations = ref(false);
     const isMultiple = ref(false);
     const ticketPreview = ref(false);
-    const activeTab = ref('main');
-
-    // Estados de modales
+    const activeTab = ref("main");
     const showModal = ref(false);
     const showConfirm = ref(false);
     const showPayments = ref(false);
     const showCustomerModal = ref(false);
     const showPdf = ref(false);
     const showVoucher = ref(false);
-
-    // Referencias
     const ticketPreviewRef = ref(null);
     const voucherDrawer = ref(null);
     const itemIndex = ref(null);
     const userConfirm = ref("");
     const productSearch = ref("");
-
-    const total = computed(() => {
-        let cal = parseFloat(
-            subTotal.value -
-            parseFloat(totalDSCT.value) +
-            icbper.value +
-            parseFloat(sale.value.other_charges || 0)
-        );
-        if (sale.value.delivery_info && sale.value.delivery_info.amount) {
-            cal = cal + parseFloat(sale.value.delivery_info.amount);
-        }
-        return cal.toFixed(2);
-    });
     const pdfData = ref(null);
     const voucherData = ref(null);
     const addressesOptions = ref([]);
     const customerOptions = ref([]);
     const productOptions = ref([]);
-
-    // Estados de búsqueda
     const searchingCustomer = ref(false);
     const searching = ref(false);
     const whatsappNumber = ref("");
     const customerDocument = ref("");
 
-    // Computados para totales
-    const changing = computed(() => {
-        return sale.value.given_amount > total.value
-               ? (sale.value.given_amount - total.value).toFixed(2)
-               : 0.0;
-    });
-
-    // Cálculo del ICBPER (Impuesto a las bolsas de plástico)
-    const icbper = computed(() => {
-        return orderStore.orderList.reduce((acc, curVal) => {
-            if (curVal.icbper) {
-                return (acc += curVal.icbper_amount);
-            }
-            return (acc += 0);
-        }, 0);
-    });
-
-    // Cálculo de importe gravado (afectación 10)
-    const totalGRV = computed(() => {
-        return saleStore.toSale.reduce((acc, curVal) => {
-            return curVal.product_affectation === 10
-                  ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
-                  : acc;
-        }, 0);
-    });
-
-    // Cálculo de importe exonerado (afectación 20)
-    const totalEXN = computed(() => {
-        return saleStore.toSale.reduce((acc, curVal) => {
-            return curVal.product_affectation === 20
-                  ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
-                  : acc;
-        }, 0);
-    });
-
-    // Cálculo de importe gratuito (afectación 21)
-    const totalGRT = computed(() => {
-        return saleStore.toSale.reduce((acc, curVal) => {
-            return curVal.product_affectation === 21
-                  ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
-                  : acc;
-        }, 0);
-    });
-
-    // Cálculo del IGV total
-    const totalIGV = computed(() => {
-        // Calcular el IGV total de todos los productos
-        const igvTotal = saleStore.toSale.reduce((acc, curVal) => {
-            const igvTax = parseFloat(curVal.igv_tax || 0);
-            const quantity = parseFloat(curVal.quantity || 0);
-            return acc + (igvTax * quantity);
-        }, 0);
-        
-        // Formatear a 2 decimales para que coincida con lo que espera el backend
-        return parseFloat(igvTotal.toFixed(2));
-    });
-
-    // Cálculo del descuento total
-    const totalDSCT = computed(() => {
-        if (saleStore.toSale.some((detail) => Number(detail.discount) > 0)) {
-            return saleStore.toSale.reduce((acc, curVal) => {
-                return (acc += Number(curVal.discount));
-            }, 0);
-        }
-        return Number(sale.value.discount);
-    });
-    
-    // Cálculo del subtotal (sin productos gratuitos)
-    const subTotal = computed(() => {
-        return saleStore.toSale.reduce((acc, curVal) => {
-            return curVal.product_affectation === 21
-                  ? (acc += 0)
-                  : (acc += curVal.price_sale * curVal.quantity);
-        }, 0);
-    });
-
-    const isMobile = computed(() => ['xs', 's'].includes(breakpointRef.value));
-
-    const getModalClass = computed(() => ({
-      'w-100': genericsStore.device === 'mobile',
-      'w-50': genericsStore.device === 'tablet',
-      'w-25': genericsStore.device === 'desktop',
-    }));
-
-    // Determinar el tipo de factura predeterminado
-    const defaultInvoiceType = settingsStore.businessSettings.sale?.enable_invoices 
-      ? settingsStore.businessSettings.sale?.default_invoice 
+    const defaultInvoiceType = settingsStore.businessSettings.sale?.enable_invoices
+      ? settingsStore.businessSettings.sale?.default_invoice
       : 80;
-    console.log(`Tipo de factura predeterminado: ${defaultInvoiceType}`);
-    
-    // Obtener el ID de serie predeterminado para este tipo de factura
     const defaultSerieId = saleStore.getFirstOption(defaultInvoiceType);
-    console.log(`ID de serie predeterminado: ${defaultSerieId}, Descripción: ${saleStore.getSerieDescription(defaultSerieId)}`);
-    
+
     const sale = ref({
       serie: defaultSerieId,
       number: "",
@@ -438,7 +251,7 @@ export default defineComponent({
       count: 0,
       amount: "0.00",
       given_amount: parseFloat(0).toFixed(2),
-      invoice_type: settingsStore.businessSettings.sale?.enable_invoices ? settingsStore.businessSettings.sale?.default_invoice : 80,
+      invoice_type: defaultInvoiceType,
       payment_method: 1,
       payment_condition: 1,
       customer_name: "",
@@ -451,16 +264,9 @@ export default defineComponent({
       by_consumption: false,
       sale_details: [],
       ask_for: "",
-      delivery_info:
-          !(route.query.delivery === undefined) && route.query.delivery === "true"
-          ? {
-                  person: "",
-                  address: "",
-                  phone: "",
-                  deliveryman: "",
-                  amount: parseFloat(0).toFixed(2)
-              }
-          : null,
+      delivery_info: !(route.query.delivery === undefined) && route.query.delivery === "true"
+        ? { person: "", address: "", phone: "", deliveryman: "", amount: parseFloat(0).toFixed(2) }
+        : null,
       payments: null,
       do_update: true,
       is_change: true,
@@ -468,157 +274,126 @@ export default defineComponent({
       exempt_amount: 0,
       free_amount: 0,
       igv_amount: 0,
-      total_igv: "0.00" // Inicializar como string con formato decimal
+      total_igv: "0.00",
     });
-    // Observar cambios en la lista de productos
-    watch(() => saleStore.toSale, (newVal) => {
-      console.log("Productos actualizados:", newVal);
-    }, { deep: true });
 
-    // Actualizar los valores calculados en el objeto sale cuando cambien
+    const computeTaxTotals = (affectation) => saleStore.toSale.reduce((acc, curVal) => 
+      curVal.product_affectation === affectation ? acc + parseFloat(curVal.price_sale) * curVal.quantity : acc, 0);
+
+    const icbper = computed(() => orderStore.orderList.reduce((acc, curVal) => 
+      acc + (curVal.icbper ? curVal.icbper_amount : 0), 0));
+    
+    const totalGRV = computed(() => computeTaxTotals(10));
+    const totalEXN = computed(() => computeTaxTotals(20));
+    const totalGRT = computed(() => computeTaxTotals(21));
+    
+    const totalIGV = computed(() => {
+      const igvTotal = saleStore.toSale.reduce((acc, curVal) => 
+        acc + parseFloat(curVal.igv_tax || 0) * parseFloat(curVal.quantity || 0), 0);
+      return parseFloat(igvTotal.toFixed(2));
+    });
+
+    const totalDSCT = computed(() => 
+      saleStore.toSale.some(detail => Number(detail.discount) > 0)
+        ? saleStore.toSale.reduce((acc, curVal) => acc + Number(curVal.discount), 0)
+        : Number(sale.value.discount));
+
+    const subTotal = computed(() => saleStore.toSale.reduce((acc, curVal) => 
+      curVal.product_affectation === 21 ? acc : acc + curVal.price_sale * curVal.quantity, 0));
+
+    const total = computed(() => {
+      let cal = parseFloat(subTotal.value - parseFloat(totalDSCT.value) + icbper.value + parseFloat(sale.value.other_charges || 0));
+      if (sale.value.delivery_info?.amount) cal += parseFloat(sale.value.delivery_info.amount);
+      return cal.toFixed(2);
+    });
+
+    const changing = computed(() => 
+      sale.value.given_amount > total.value ? (sale.value.given_amount - total.value).toFixed(2) : 0.0);
+
+    const getModalClass = computed(() => ({
+      "w-100": genericsStore.device === "mobile",
+      "w-50": genericsStore.device === "tablet", 
+      "w-25": genericsStore.device === "desktop",
+    }));
+
     watch([total, icbper, totalGRV, totalEXN, totalGRT, totalIGV, totalDSCT, () => saleStore.toSale], () => {
-      // Calcular la cantidad de productos directamente
-      sale.value.count = saleStore.toSale.reduce((acc, curVal) => acc + curVal.quantity, 0);
-      sale.value.amount = total.value;
-      sale.value.icbper = icbper.value;
-      sale.value.taxed_amount = totalGRV.value;
-      sale.value.exempt_amount = totalEXN.value;
-      sale.value.free_amount = totalGRT.value;
-      sale.value.igv_amount = totalIGV.value;
-      // Formatear total_igv como string con dos decimales
-      const igvValue = parseFloat(totalIGV.value || 0);
-      sale.value.total_igv = igvValue.toFixed(2);
-      console.log("total_igv actualizado:", sale.value.total_igv, "tipo:", typeof sale.value.total_igv);
-      // Actualizar el monto dado cuando cambia el total (para contado)
+      Object.assign(sale.value, {
+        count: saleStore.toSale.reduce((acc, curVal) => acc + curVal.quantity, 0),
+        amount: total.value,
+        icbper: icbper.value,
+        taxed_amount: totalGRV.value,
+        exempt_amount: totalEXN.value,
+        free_amount: totalGRT.value,
+        igv_amount: totalIGV.value,
+        total_igv: parseFloat(totalIGV.value || 0).toFixed(2),
+      });
       if (sale.value.payment_condition === 1) {
         sale.value.given_amount = total.value > 0 ? total.value : parseFloat(0).toFixed(2);
       }
     });
 
-    const updateSale = (newSale) => {
-      sale.value = { ...sale.value, ...newSale };
-    };
-
-    const goToFirstTab = () => {
-      activeTab.value = 'main'
-    }
-
-    const obtainSaleNumber = async() => {
-        // Verificar si tenemos un ID de serie válido
-        const serieId = sale.value.serie;
-        console.log(`Obteniendo número para serie ID: ${serieId}, Descripción: ${saleStore.getSerieDescription(serieId)}`);
-        if (!serieId) {
-          console.warn("No hay serie seleccionada para obtener número de venta");
-          return;
+    const obtainSaleNumber = async () => {
+      if (!sale.value.serie) return;
+      loading.value = true;
+      try {
+        const response = await getSaleNumber(sale.value.serie);
+        if (response.status === 200) {
+          sale.value.number = Number(response.data.number) + 1;
+        } else {
+          message.warning("No se pudo obtener el número de venta");
         }
-        loading.value = true;
-        try {
-          console.log(`Llamando a getSaleNumber con serie ID: ${serieId}`);
-          const response = await getSaleNumber(serieId);
-          console.log("Respuesta completa:", response);
-          if (response.status === 200) {
-            const newNumber = Number(response.data.number) + 1;
-            sale.value.number = newNumber;
-            console.log(`Número de venta obtenido: ${newNumber} para serie: ${saleStore.getSerieDescription(serieId)}-${newNumber}`);
-          } else {
-            console.warn("Respuesta inesperada al obtener número de venta:", response);
-            message.warning("No se pudo obtener el número de venta");
-          }
-        } catch (error) {
-          console.error("Error al obtener número de venta:", error);
-          message.error("Algo salió mal al obtener el número de venta");
-        } finally {
-          loading.value = false;
-        }
-    };
-
-    watch(() => sale.value.serie, async (newValue, oldValue) => {
-      console.log('Serie cambiada:', newValue, 'Anterior:', oldValue);
-      if (newValue !== undefined && newValue !== null) {
-        await obtainSaleNumber();
-      } else {
-        console.warn("El valor de serie es inválido, no se puede obtener número de venta");
+      } catch (error) {
+        message.error("Algo salió mal al obtener el número de venta");
+      } finally {
+        loading.value = false;
       }
+    };
+
+    watch(() => sale.value.serie, async (newValue) => {
+      if (newValue !== undefined && newValue !== null) await obtainSaleNumber();
     });
 
-    onMounted(async () => {
-      console.log('Componente montado, obteniendo número de venta inicial');
-      await obtainSaleNumber();
-    });
+    onMounted(() => obtainSaleNumber());
 
     const selectSerie = (serieId) => {
-      if (serieId !== undefined && serieId !== null) {
-        sale.value.serie = serieId;
-        console.log("Serie seleccionada (ID):", serieId);
-      } else {
-        console.warn("Se recibió un ID de serie inválido:", serieId);
-      }
-    };
-    const changeSerie = (v) => {
-      const tipoDocumento = v === 1 ? "Factura" : v === 3 ? "Boleta" : v === 80 ? "Nota de Venta" : "Desconocido";
-      console.log(`Cambiando serie por tipo de documento: ${tipoDocumento} (${v})`);
-      
-      let nuevaSerie;
-      switch (v) {
-        case 1: // Factura
-          nuevaSerie = saleStore.getFirstOption(1);
-          break;
-        case 3: // Boleta
-          nuevaSerie = saleStore.getFirstOption(3);
-          break;
-        case 80: // Nota de Venta
-          nuevaSerie = saleStore.getFirstOption(80);
-          break;
-        default:
-          nuevaSerie = saleStore.getFirstOption(80);
-      }
-      
-      if (nuevaSerie !== undefined && nuevaSerie !== null) {
-        sale.value.serie = nuevaSerie;
-        console.log(`Serie cambiada a: ${nuevaSerie} para ${tipoDocumento}`);
-      } else {
-        console.warn(`No se encontró serie disponible para el tipo: ${tipoDocumento}`);
-      }
-    };
-    const changeCondition = (v) => {
-      switch (v) {
-        case 1: // CONTADO
-          sale.value.given_amount = sale.value.amount;
-          break;
-        case 2: // CRÉDITO
-          sale.value.given_amount = parseFloat(0).toFixed(2);
-          break;
-        default:
-          sale.value.given_amount = sale.value.amount;
-      }
-      console.log("Condición de pago cambiada a:", v);
+      if (serieId !== undefined && serieId !== null) sale.value.serie = serieId;
     };
 
-    // Funciones auxiliares básicas
-    const showCustomerOptions = () => {};
-    const autoCreateCustomer = () => {};
-    const createAddressesOptions = () => {};
-    const changeAddress = () => {};
-    const handleDelivery = () => {};
-    const showOptions = () => {};
-    const selectProduct = () => {};
-    const renderLabel = () => {};
-    const performCreateOrder = () => {};
-    const createPayment = () => {};
-    const onCloseModal = () => {};
-    const onSuccess = () => {};
-    const isDecimal = () => {};
-    
-    // Función principal para realizar el pedido y cobrar
+    const changeSerie = (v) => {
+      const serieMap = { 1: 1, 3: 3, 80: 80 };
+      const nuevaSerie = saleStore.getFirstOption(serieMap[v] || 80);
+      if (nuevaSerie !== undefined && nuevaSerie !== null) sale.value.serie = nuevaSerie;
+    };
+
+    const changeCondition = (v) => {
+      sale.value.given_amount = v === 1 ? sale.value.amount : parseFloat(0).toFixed(2);
+    };
+
+    const goToFirstTab = () => activeTab.value = "main";
+
+    const selectProduct = (productValue) => {
+      if (!productValue) return;
+      const existingIndex = orderStore.orderList.findIndex(item => item.id === productValue.id);
+      if (existingIndex !== -1) {
+        orderStore.orderList[existingIndex].quantity += 1;
+        message.success(`Se agregó otra unidad de ${productValue.name}`);
+      } else {
+        orderStore.orderList.push({
+          ...productValue,
+          quantity: 1,
+          icbper_amount: productValue.icbper ? settingsStore.businessSettings.sale?.icbper_amount : 0,
+        });
+        message.success(`Producto ${productValue.name} agregado al pedido`);
+      }
+      productSearch.value = "";
+      searching.value = false;
+    };
+
     const performTakeAway = () => {
-      console.log("Realizando pedido/venta...");
-      
-      // Validar antes de proceder
       if (userStore.user.role === "MOZO") {
         showConfirm.value = true;
         return;
       }
-      
       dialog.success({
         closable: false,
         title: "Confirmar pedido",
@@ -626,53 +401,26 @@ export default defineComponent({
         positiveText: "Sí",
         onPositiveClick: async () => {
           loading.value = true;
-          
           try {
-            // Preparar los detalles de venta con formatos correctos
-            sale.value.sale_details = saleStore.toSale.map((detail) => ({
+            sale.value.sale_details = saleStore.toSale.map(detail => ({
               ...detail,
-              igv_tax: typeof detail.igv_tax === 'number' ? detail.igv_tax.toFixed(2) : detail.igv_tax,
-              price_base: typeof detail.price_base === 'number' ? detail.price_base.toFixed(2) : detail.price_base
+              igv_tax: typeof detail.igv_tax === "number" ? detail.igv_tax.toFixed(2) : detail.igv_tax,
+              price_base: typeof detail.price_base === "number" ? detail.price_base.toFixed(2) : detail.price_base,
             }));
-            
-            // Garantizar que total_igv siempre sea un string formateado con dos decimales
             const igvValue = parseFloat(sale.value.total_igv || sale.value.igv_amount || 0);
             sale.value.total_igv = igvValue.toFixed(2);
-            
-            // Agregar una propiedad independiente también para mayor seguridad
-            const saleObj = JSON.parse(JSON.stringify(sale.value));
-            saleObj.total_igv_duplicado = sale.value.total_igv;
-            
-            console.log("Enviando venta con total_igv:", sale.value.total_igv, "tipo:", typeof sale.value.total_igv);
-            
-            // Clonar el objeto sale para evitar problemas de referencia
             const saleClone = JSON.parse(JSON.stringify(sale.value));
-            
-            // Añadir el total_igv como parámetro independiente también
-            saleClone.total_igv_independiente = saleClone.total_igv;
-            
-            // Mostrar el objeto completo para depuración
-            console.log("Objeto sale completo que se enviará:", saleClone);
-            
-            // Llamar a la API para realizar la orden
-            const response = await takeAwayOrder(
-              orderStore.orderList,
-              saleClone,
-              userConfirm.value
-            );
-            
+            const response = await takeAwayOrder(orderStore.orderList, saleClone, userConfirm.value);
             if (response.status === 201) {
-              message.success("¡Venta realizada correctamente!");
+              checkState.value = true;
+              cleanupOrderStore();
               pdfData.value = response.data.order;
               showPdf.value = true;
-              
               setTimeout(() => {
                 ticketPreviewRef.value.generate();
-                
                 if (settingsStore.businessSettings.printer.print_html) {
                   voucherData.value = response.data.sale;
                   showVoucher.value = true;
-                  
                   if (!ticketPreview.value) {
                     setTimeout(() => voucherDrawer.value.generate(), 250);
                   }
@@ -680,23 +428,16 @@ export default defineComponent({
               }, 250);
             }
           } catch (error) {
-            console.error("Error al realizar la venta:", error);
             message.error("Ha ocurrido un error al procesar la venta");
           } finally {
             loading.value = false;
           }
-        }
+        },
       });
     };
-    
-    // Función para pago múltiple
+
     const doMultiplePayment = () => {
-      sale.value.payments = [
-        {
-          payment_method: sale.value.payment_method,
-          amount: String(sale.value.amount)
-        }
-      ];
+      sale.value.payments = [{ payment_method: sale.value.payment_method, amount: String(sale.value.amount) }];
       showPayments.value = true;
     };
 
@@ -704,78 +445,67 @@ export default defineComponent({
     const currentPaymentsAmount = computed(() => "0.00");
     const filteredMethods = computed(() => []);
 
-    return {
-      // Estados
-      loading,
-      selectProducts,
-      showObservations,
-      isMultiple,
-      ticketPreview,
-      showModal,
-      showConfirm,
-      showPayments,
-      showCustomerModal,
-      showPdf,
-      showVoucher,
-      activeTab,
-      // Referencias
-      ticketPreviewRef,
-      voucherDrawer,
-      itemIndex,
-      userConfirm,
-      productSearch,
-      // Datos
-      sale,
-      pdfData,
-      voucherData,
-      addressesOptions,
-      customerOptions,
-      productOptions,
-      searchingCustomer,
-      searching,
-      whatsappNumber,
-      customerDocument,
-      // Computados
-      changing,
-      subTotal,
-      totalGRV,
-      totalEXN,
-      totalGRT,
-      totalIGV,
-      totalDSCT,
-      icbper,
-      isMobile,
-      getModalClass,
-      evalPayments,
-      currentPaymentsAmount,
-      filteredMethods,
-
-      // Stores
-      orderStore,
-
-      // Métodos
-      updateSale,
-      selectSerie,
-      changeSerie,
-      changeCondition,
-      showCustomerOptions,
-      autoCreateCustomer,
-      createAddressesOptions,
-      changeAddress,
-      handleDelivery,
-      performTakeAway,
-      doMultiplePayment,
-      showOptions,
-      selectProduct,
-      renderLabel,
-      performCreateOrder,
-      createPayment,
-      onCloseModal,
-      onSuccess,
-      isDecimal,
-      goToFirstTab
+    const showCustomerOptions = () => {};
+    const autoCreateCustomer = () => {};
+    const createAddressesOptions = () => {};
+    const changeAddress = () => {};
+    const handleDelivery = () => {};
+    const performCreateOrder = () => {
+      performTakeAway();
     };
-  }
+    const createPayment = () => {};
+    const onCloseModal = () => {};
+    const onSuccess = () => {};
+    const isDecimal = () => {};
+
+    const checkState = ref(false);
+    const hasUnsavedChanges = computed(() => orderStore.orderList.length > 0 && !checkState.value);
+
+    const handleRouteGuard = (to, isLeave = false) => {
+      if (!hasUnsavedChanges.value) {
+        cleanupOrderStore();
+        return;
+      }
+
+      const config = {
+        title: "Pedido sin procesar",
+        content: "¿Salir sin procesar el pedido?",
+        positiveText: "Sí",
+        onPositiveClick: () => {
+          checkState.value = true;
+          cleanupOrderStore();
+          router.push(to);
+        },
+        ...(isLeave ? {} : { negativeText: "No" }),
+        closable: !isLeave
+      };
+
+      dialog.error(config);
+      return false;
+    };
+
+    const cleanupOrderStore = () => {
+      orderStore.orderList.splice(0);
+      saleStore.toSale.splice(0);
+    };
+
+    onBeforeRouteLeave((to) => handleRouteGuard(to, true));
+
+    return {
+      loading, selectProducts, showObservations, isMultiple, ticketPreview, activeTab,
+      showModal, showConfirm, showPayments, showCustomerModal, showPdf, showVoucher,
+      ticketPreviewRef, voucherDrawer, itemIndex, userConfirm, productSearch,
+      sale, pdfData, voucherData, addressesOptions, customerOptions, productOptions,
+      searchingCustomer, searching, whatsappNumber, customerDocument,
+      changing, subTotal, totalGRV, totalEXN, totalGRT, totalIGV, totalDSCT, icbper,
+      getModalClass, evalPayments, currentPaymentsAmount, filteredMethods,
+      orderStore, selectSerie, changeSerie, changeCondition, showCustomerOptions,
+      autoCreateCustomer, createAddressesOptions, changeAddress, handleDelivery,
+      performTakeAway, doMultiplePayment, selectProduct, performCreateOrder,
+      createPayment, onCloseModal, onSuccess, isDecimal, goToFirstTab,
+      checkState, hasUnsavedChanges,
+    };
+  },
 });
 </script>
 

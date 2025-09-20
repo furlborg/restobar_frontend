@@ -560,7 +560,6 @@ export default defineComponent({
     const updateSale = (updates) => {
       emit('update:sale', updates);
     };
-    
     // Crear los items para PaymentTotals
     const paymentTotalsItems = computed(() => {
       return [
@@ -570,13 +569,13 @@ export default defineComponent({
         { label: "OP. GRATUITAS", value: props.totalGrt, editable: false, alwaysShow: false },
         { label: "IGV", value: props.totalIgv, editable: false },
         { label: "ICBPER", value: props.icbper, editable: false, alwaysShow: false },
-        { 
-          label: "DSCT", 
-          value: props.totalDsct, 
-          editable: true, 
-          field: "discount", 
-          step: 0.5, 
-          disabled: false 
+        {
+          label: "DSCT",
+          value: props.totalDsct,
+          editable: true,
+          field: "discount",
+          step: 0.5,
+          disabled: false
         },
         {
           label: "OTROS CARGOS",
@@ -588,12 +587,12 @@ export default defineComponent({
         }
       ];
     });
-    
+
     // Computar el monto total
     const totalAmount = computed(() => {
       return props.sale.amount || 0;
     });
-    
+
     // Manejar cambios en los valores editables
     const handleValueChange = ({ field, value }) => {
       if (field && value !== undefined) {
@@ -602,7 +601,7 @@ export default defineComponent({
         emit('update:sale', updates);
       }
     };
-    
+
     // Manejar cambios en el monto de pago
     const handlePaymentChange = (value) => {
       const updates = { ...props.sale, given_amount: value };

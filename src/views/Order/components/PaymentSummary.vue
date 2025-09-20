@@ -1,20 +1,20 @@
 <template>
-  <n-card class="h-100" :bordered="false" embedded>
+  <n-card :bordered="false" style="background: white;" embedded>
     <template #header>
       <n-button
         type="info"
         secondary
-        @click="$emit('update:selectProducts', !selectProducts)"
+        :disabled="orderStore.orderList.length === 0"
+        @click="handleButtonClick"
       >
-        {{ selectProducts ? "Seleccionar productos" : "Cobrar" }}
+        {{ buttonText }}
       </n-button>
     </template>
 
     <n-input-group>
       <n-auto-complete
         :input-props="{ autocomplete: 'disabled' }"
-        :value="productSearch"
-        @update:value="$emit('update:productSearch', $event)"
+        v-model:value="localProductSearch"
         :options="productOptions"
         :get-show="(value) => {
           return !!value && productOptions.length > 0;
@@ -88,7 +88,7 @@
 </template>
 
 <script>
-import { defineComponent } from "vue";
+import { defineComponent, computed } from "vue";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 
@@ -125,44 +125,85 @@ export default defineComponent({
     'update:productSearch',
     'update:showModal',
     'update:itemIndex',
-    'selectProduct',
-    'renderLabel'
+    'product-selected'
   ],
   setup(props, { emit }) {
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
 
+    // Variable local para el buscador de productos
+    const localProductSearch = computed({
+      get: () => props.productSearch,
+      set: (value) => emit('update:productSearch', value)
+    });
+
+    const buttonText = computed(() => props.selectProducts ? "Seleccionar productos" : "Cobrar");
+
     const handleRowClick = (index) => {
-      emit('update:itemIndex', index);
-      emit('update:showModal', true);
+      try {
+        emit('update:itemIndex', index);
+        emit('update:showModal', true);
+      } catch (error) {
+        console.error('Error en handleRowClick:', error);
+      }
     };
 
     const removeOrderItem = (index) => {
-      orderStore.orderList.splice(index, 1);
-      updateOrderDetails();
+      try {
+        orderStore.orderList.splice(index, 1);
+        updateOrderDetails();
+      } catch (error) {
+        console.error('Error en removeOrderItem:', error);
+      }
     };
 
     const updateOrderDetails = () => {
-      saleStore.sale_details = orderStore.orderList;
+      try {
+        saleStore.sale_details = orderStore.orderList;
+      } catch (error) {
+        console.error('Error en updateOrderDetails:', error);
+      }
     };
 
     const selectProduct = (value) => {
-      emit('selectProduct', value);
+      try {
+        emit('product-selected', value);
+      } catch (error) {
+        console.error('Error en selectProduct:', error);
+      }
     };
 
     const renderLabel = (option) => {
-      return emit('renderLabel', option);
+      try {
+        // Renderizar las opciones del autocomplete directamente
+        // En lugar de emitir, devolvemos el valor formateado
+        return option?.label || option?.name || option?.value || "";
+      } catch (error) {
+        console.error('Error en renderLabel:', error);
+        return "";
+      }
+    };
+
+    const handleButtonClick = () => {
+      try {
+        console.log('Botón clicked, selectProducts actual:', props.selectProducts, 'enviando:', !props.selectProducts);
+        emit('update:selectProducts', !props.selectProducts);
+      } catch (error) {
+        console.error('Error en handleButtonClick:', error);
+      }
     };
 
     return {
       orderStore,
       saleStore,
+      localProductSearch,
+      buttonText,
       handleRowClick,
       removeOrderItem,
       updateOrderDetails,
       selectProduct,
       renderLabel,
-      ...props
+      handleButtonClick
     };
   }
 });

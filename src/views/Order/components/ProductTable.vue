@@ -1,79 +1,85 @@
 <template>
-  <n-table class="m-auto text-center fs-6 mb-3" :bordered="false">
-    <thead>
-      <tr>
-        <th v-if="settingsStore.businessSettings.sale.manage_affectations">#</th>
-        <th>Cantidad</th>
-        <th>Producto</th>
-        <th>Precio Unitario</th>
-        <th>Descuento</th>
-        <th>Precio Total</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr v-for="(detail, index) in saleDetails" :key="index">
-        <td v-if="settingsStore.businessSettings.sale.manage_affectations">
-          <n-popselect 
-            size="small" 
-            placement="bottom-start" 
-            v-model:value="detail.product_affectation" 
-            :options="productStore.affectationsOptions" 
-            @update:value="() => $emit('updateDetail', detail)"
-          >
-            <n-tag 
-              size="small" 
-              :color="getAfcColor(detail.product_affectation)"
+  <div class="table-container">
+    <n-table class="product-details-table" :bordered="false">
+      <thead>
+        <tr>
+          <th v-if="settingsStore.businessSettings.sale.manage_affectations">#</th>
+          <th>Cantidad</th>
+          <th>Producto</th>
+          <th>Precio Unitario</th>
+          <th>Descuento</th>
+          <th>Precio Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(detail, index) in saleDetails" :key="index">
+          <td v-if="settingsStore.businessSettings.sale.manage_affectations">
+            <n-popselect
+              size="small"
+              placement="bottom-start"
+              v-model:value="detail.product_affectation"
+              :options="productStore.affectationsOptions"
+              @update:value="() => $emit('updateDetail', detail)"
             >
-              {{ getAfcShort(detail.product_affectation) }}
-            </n-tag>
-          </n-popselect>
-        </td>
-        <td>{{ detail.quantity }}</td>
-        <td>
-          <input 
-            class="custom-input" 
-            v-model="detail.product_name" 
-            v-autowidth
-            @click="$event.target.select()"
-          />
-        </td>
-        <td>
-          S/.
-          <input 
-            class="custom-input" 
-            type="number" 
-            min="0" 
-            step=".5" 
-            v-model="detail.price_sale" 
-            @input="handlePriceChange(detail)" 
-            v-autowidth 
-            @click="$event.target.select()"
-          />
-        </td>
-        <td>
-          S/.
-          <input 
-            class="custom-input" 
-            type="number" 
-            min="0" 
-            :max="!detail.price_sale ? 0 : detail.price_sale" 
-            :disabled="detail.product_affectation === 21 || !!Number(sale.discount)" 
-            step=".5" 
-            v-model="detail.discount" 
-            v-autowidth 
-            @click="$event.target.select()"
-          />
-        </td>
-        <td>
-          {{ 
-            detail.product_affectation === 21 
-              ? "0.00" 
-              : (detail.quantity * detail.price_sale - detail.discount).toFixed(2) 
-          }}
-        </td>
-      </tr>
-    </tbody>
-  </n-table>
+              <n-tag
+                size="small"
+                :color="getAfcColor(detail.product_affectation)"
+              >
+                {{ getAfcShort(detail.product_affectation) }}
+              </n-tag>
+            </n-popselect>
+          </td>
+          <td>{{ detail.quantity }}</td>
+          <td>
+            <input
+              class="custom-input product-name-input"
+              v-model="detail.product_name"
+              v-autowidth
+              @click="$event.target.select()"
+            />
+          </td>
+          <td>
+            <div class="currency-input-wrapper">
+              <span class="currency-symbol">S/.</span>
+              <input 
+                class="custom-input price-input" 
+                type="number" 
+                min="0" 
+                step=".5" 
+                v-model="detail.price_sale" 
+                @input="handlePriceChange(detail)" 
+                v-autowidth 
+                @click="$event.target.select()"
+              />
+            </div>
+          </td>
+          <td>
+            <div class="currency-input-wrapper">
+              <span class="currency-symbol">S/.</span>
+              <input 
+                class="custom-input discount-input" 
+                type="number" 
+                min="0" 
+                :max="!detail.price_sale ? 0 : detail.price_sale" 
+                :disabled="detail.product_affectation === 21 || !!Number(sale.discount)" 
+                step=".5" 
+                v-model="detail.discount" 
+                v-autowidth 
+                @click="$event.target.select()"
+              />
+            </div>
+          </td>
+          <td class="total-cell">
+            S/. {{ 
+              detail.product_affectation === 21 
+                ? "0.00" 
+                : (detail.quantity * detail.price_sale - detail.discount).toFixed(2) 
+            }}
+          </td>
+        </tr>
+      </tbody>
+    </n-table>
+  </div>
 </template>
 
 <script>
@@ -85,8 +91,8 @@ import { directive as VueInputAutowidth } from "vue-input-autowidth";
 
 export default defineComponent({
   name: "ProductTable",
-  directives: { 
-    autowidth: VueInputAutowidth 
+  directives: {
+    autowidth: VueInputAutowidth
   },
   props: {
     sale: {
@@ -141,16 +147,32 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
+/* Solo lo esencial que NaiveUI no puede manejar */
+.table-container {
+  overflow-x: auto;
+}
+
+.product-details-table {
+  min-width: 800px;
+}
+
+.currency-input-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
 .custom-input {
   border: none;
   outline: none;
+
+  &:hover {
+    outline: 2px solid #3b82f6;
+  }
 }
 
-.custom-input:hover {
-  border-radius: 5px;
-  outline: LightBlue solid 2px;
-}
-
+/* Remover controles de número */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -159,5 +181,6 @@ input::-webkit-inner-spin-button {
 
 input[type="number"] {
   -moz-appearance: textfield;
+  appearance: textfield;
 }
 </style>
