@@ -37,8 +37,10 @@
         <div class="ticket-body-info">
           <table>
             <thead>
-              <th></th>
-              <th></th>
+              <tr>
+                <th></th>
+                <th></th>
+              </tr>
             </thead>
             <tbody>
               <tr>
@@ -293,8 +295,10 @@
         <div v-else class="ticket-footer">
           <table>
             <thead>
-              <th></th>
-              <th></th>
+              <tr>
+                <th></th>
+                <th></th>
+              </tr>
             </thead>
             <tbody>
               <tr>
