@@ -102,7 +102,7 @@ const handleAddMenu = () => {
 
   const menuOrder = {
     from_menu: true,
-    menu_id: props.menu.id,
+    order_detail_id: null,
     name: props.menu.menu.name,
     price: props.menu.menu.price,
     quantity: totalMenus,

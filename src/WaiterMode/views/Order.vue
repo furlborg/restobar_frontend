@@ -34,24 +34,41 @@
                 </template>
                 <!-- <n-h2>Pedido</n-h2> -->
                 <n-list class="m-0">
-                    <template v-for="(order, index) in orderStore.orderList">
-                        <n-list-item v-if="order.quantity > 0" :key="index">
-                            <n-thing>
-                                <template #header>
-                                    <n-tag>{{ order.quantity }}</n-tag>
-                                    <n-text class="ms-2">{{ order.product_name }}</n-text>
-                                </template>
-                                <template #header-extra>
-                                    <n-text>{{
-                                            `S/. ${ order.quantity * order.price.toFixed(2) }`
-                                        }}
-                                    </n-text>
-                                </template>
-                            </n-thing>
-                            <!-- @click="
-							  itemIndex = index;
-							  showModal = true;
-							" -->
+                    <template v-for="(order, index) in orderStore.orderList" :key="index">
+                        <n-list-item v-if="order.quantity > 0">
+                        <n-thing>
+                            <template #header>
+                            <n-tag>{{ order.quantity }}</n-tag>
+                            <!-- Caso producto normal -->
+                            <n-text v-if="order.product_name" class="ms-2">
+                                {{ order.product_name }}
+                            </n-text>
+                            <!-- Caso product_set -->
+                            <n-text v-else-if="order.product_set" class="ms-2">
+                                {{ order.product_set.name }}: {{ order.product_set.menu_name }}
+                            </n-text>
+                            </template>
+
+                            <template #header-extra>
+                            <n-text>
+                                S/. {{
+                                order.product_set
+                                    ? (order.quantity * order.product_set.price).toFixed(2)
+                                    : (order.quantity * order.price).toFixed(2)
+                                }}
+                            </n-text>
+                            </template>
+
+                            <!-- Listar los items si es un product_set -->
+                            <template v-if="order.product_set && order.product_set.items">
+                            <ul class="ms-4">
+                                <li v-for="(item, idx) in order.product_set.items" :key="idx">
+                                {{ item.quantity }} x
+                                {{ item.product?.name || item.product_phase?.product?.name }}
+                                </li>
+                            </ul>
+                            </template>
+                        </n-thing>
                         </n-list-item>
                     </template>
                 </n-list>

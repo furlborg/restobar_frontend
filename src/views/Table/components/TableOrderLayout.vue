@@ -240,14 +240,16 @@ export default defineComponent({
                             // product_set should contain menu_id, name, price, quantity, items
                             return {
                                 from_menu: true,
-                                menu_id: detail.product_set.menu_id ?? detail.product_set.id,
+                                product_set_id: detail.product_set.id,
+                                order_detail_id: detail.id,
                                 name: detail.product_set.menu_name,
                                 price: detail.product_set.price,
                                 quantity: detail.product_set.quantity,
                                 items: Array.isArray(detail.product_set.items)
                                     ? detail.product_set.items.map(item => ({
-                                        product_phase_id: item.product_phase_id ?? item.product_phase?.id,
-                                        product_id: item.product_id,
+                                        id: item.id,
+                                        product_phase_id: item.product_phase.id,
+                                        product_id: item.product.id,
                                         product_name: item.product.name,
                                         phase_name: item.product_phase.phase_name,
                                         quantity: item.quantity,

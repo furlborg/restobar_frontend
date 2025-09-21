@@ -126,19 +126,24 @@ export async function updateTableOrder(
     details.forEach(order => {
         if (order.from_menu) {
             // Build product set object and push to product_sets
-            order_details.push({
-                id: order.id,
-                menu_id: order.menu_id,
-                name: order.name || order.menu_name,
+            const productSet = {
+                order_detail_id: order.id,
+                menu_id: order.menu_name,
+                name: order.name,
                 price: order.price || order.menu_price,
                 quantity: order.quantity,
                 items: (order.items || []).map(item => ({
+                    id: item.id,
                     product_phase_id: item.product_phase_id,
                     product_id: item.product_id,
                     quantity: item.quantity,
                     indication: "",
                 }))
-            });
+            };
+            if (order.product_set_id) {
+                productSet.id = order.product_set_id;
+            }
+            product_sets.push(productSet);
         } else {
             // Normal order_detail
             order_details.push({
@@ -156,6 +161,7 @@ export async function updateTableOrder(
         till: tillStore.currentTillID,
         order_type: "M",
         order_details: order_details,
+        product_sets: product_sets,
         ask_for: ask_for,
         user: user ?? null
     });
