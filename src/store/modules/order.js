@@ -40,6 +40,12 @@ export const useOrderStore = defineStore("order", {
     initializeStore() {
       return null;
     },
+    addMenuOrder(menuOrder) {
+      this.orders.push({
+        ...menuOrder,
+        created_at: Date.now()
+      });
+    },
     addOrder(product, customer) {
       const settingsStore = useSettingsStore();
       const existence = this.orders.find(order => order.product === product.id && (customer && order.customer.id === customer.id));

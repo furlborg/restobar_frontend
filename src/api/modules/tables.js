@@ -73,16 +73,39 @@ export async function createTableOrder(
     ask_for = undefined
 ) {
     const tillStore = useTillStore();
-    let order_details = details.map(order => ({
-        product: order.product,
-        indication: order.indication || [],
-        quantity: order.quantity,
-        customer: order.customer || null
-    }));
+    let order_details = [];
+    let product_sets = [];
+    details.forEach(order => {
+        if (order.from_menu) {
+            // Push to product_sets
+            product_sets.push({
+                //menu_id: order.menu_id,
+                name: "MENU",
+                menu_name: order.name,
+                price: order.price || order.menu_price,
+                quantity: order.quantity,
+                items: (order.items || []).map(item => ({
+                    product_phase_id: item.product_phase_id,
+                    product_id: item.product_id,
+                    quantity: item.quantity,
+                    indication: "",
+                }))
+            });
+        } else {
+            // Normal order_detail
+            order_details.push({
+                product: order.product,
+                indication: order.indication || [],
+                quantity: order.quantity,
+                customer: order.customer || null
+            });
+        }
+    });
     const bodyRequest = {
         till: tillStore.currentTillID,
         order_type: "M",
         order_details,
+        product_sets,
         ask_for,
         user
     }
@@ -97,14 +120,37 @@ export async function updateTableOrder(
     ask_for = undefined
 ) {
     const tillStore = useTillStore();
-    console.log('aumenten mi sueldo pe kousin');
-    let order_details = details.map((order) => ({
-        id: order.id,
-        product: order.product,
-        indication: order.indication || [],
-        quantity: order.quantity,
-        customer: order.customer || null
-    })).filter((detail) => detail.quantity > 0);
+    // Handle both order_details and product_sets
+    let order_details = [];
+    let product_sets = [];
+    details.forEach(order => {
+        if (order.from_menu) {
+            // Build product set object and push to product_sets
+            order_details.push({
+                id: order.id,
+                menu_id: order.menu_id,
+                name: order.name || order.menu_name,
+                price: order.price || order.menu_price,
+                quantity: order.quantity,
+                items: (order.items || []).map(item => ({
+                    product_phase_id: item.product_phase_id,
+                    product_id: item.product_id,
+                    quantity: item.quantity,
+                    indication: "",
+                }))
+            });
+        } else {
+            // Normal order_detail
+            order_details.push({
+                id: order.id,
+                product: order.product,
+                indication: order.indication || [],
+                quantity: order.quantity,
+                customer: order.customer || null
+            });
+        }
+    });
+    // Optionally filter out zero-quantity order_details/product_sets if required (not specified)
     return await http.patch(`tables/${ idTable }/change_order/`, {
         id: orderId,
         till: tillStore.currentTillID,

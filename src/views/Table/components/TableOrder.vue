@@ -42,8 +42,28 @@
                             </tr>
                         </thead>
                         <tbody>
+                            <template v-for="(order, index) in orderStore.orders" :key="index">
+                            <tr v-if="order.from_menu" style="background-color: #f8f8f8">
+                                <td colspan="2"><b>Menú: {{ order.name }}</b></td>
+                                <td>{{ order.quantity }}</td>
+                                <td>S/. {{ formatPrice(order.price * order.quantity)}}</td>
+                                <td>
+                                <n-button type="error" text @click.stop="handleRemoveOrder(order, index)">
+                                    <v-icon name="md-disabledbydefault-round" />
+                                </n-button>
+                                </td>
+                            </tr>
+                            <tr v-for="item in order.items" :key="item.product_id">
+                                <td></td>
+                                <td>{{ item.product_name }} <small>({{ item.phase_name }})</small></td>
+                                <td>{{ item.quantity }}</td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            </template>
+
                             <template v-for="(order, index) in orderStore.orderList">
-                                <tr v-if="order.quantity > 0" :key="index" style="cursor: pointer" @click="openOrderModal(index)">
+                                <tr v-if="order.quantity > 0 && !order.from_menu" :key="index" style="cursor: pointer" @click="openOrderModal(index)">
                                     <td>
                                         <n-button v-if="!isPaymentRoute" type="info" text><v-icon name="md-listalt-round" /></n-button>
                                     </td>

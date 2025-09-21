@@ -15,7 +15,7 @@
               class="product-card"
             >
               <div>{{ product.product_name }}</div>
-              <n-text type="success">Stock: {{ product.stock }}</n-text>
+              <n-text type="success">Stock: {{ product.stock_override }}</n-text>
               <n-input-number
                 v-model:value="quantities[product.product_id]"
                 :min="0"
@@ -36,8 +36,15 @@
 </template>
 
 <script setup>
-import { computed, ref, defineProps } from 'vue'
+import { computed, ref, defineProps, defineEmits } from 'vue'
+import { inject } from 'vue'
+import { useOrderStore } from '@/store/modules/order'
 
+const emit = defineEmits(['close'])
+
+const orderStore = useOrderStore()
+const selectedCustomerId = inject('selectedCustomerId', ref(null))
+const addOrderToCustomer = inject('addOrderToCustomer', null)
 
 const props = defineProps({
   menu: Object,
@@ -57,12 +64,58 @@ const groupedProducts = computed(() => {
 })
 
 const handleAddMenu = () => {
-  const selected = Object.entries(quantities.value)
-    .filter(([, qty]) => qty > 0)
-    .map(([id, qty]) => ({ product_id: id, quantity: qty }))
-  // emitir al padre o agregar directamente
-  console.log('Seleccionados:', selected)
-  // $emit('add-menu', selected) si fuera necesario
+  const quantitiesByPhase = {};
+
+  for (const [phase, products] of Object.entries(groupedProducts.value)) {
+    const totalPhaseQuantity = products.reduce((sum, p) => sum + (quantities.value[p.product_id] || 0), 0);
+
+    if (totalPhaseQuantity === 0) {
+      window.$message?.error(`Selecciona al menos un producto en la fase "${phase}"`);
+      return;
+    }
+
+    quantitiesByPhase[phase] = totalPhaseQuantity;
+  }
+
+  const uniqueQuantities = [...new Set(Object.values(quantitiesByPhase))];
+  if (uniqueQuantities.length > 1) {
+    window.$message?.error("La cantidad total de productos seleccionados debe ser igual para cada fase");
+    return;
+  }
+
+  const totalMenus = uniqueQuantities[0];
+
+  const selectedItems = props.menu.items
+    .filter(item => quantities.value[item.product_id] > 0)
+    .map(item => ({
+      product_phase_id: item.product_phase.id,
+      product_id: item.product_id,
+      product_name: item.product_name,
+      phase_name: item.phase_name,
+      quantity: quantities.value[item.product_id]
+    }));
+
+  if (!selectedItems.length) {
+    window.$message?.error("Selecciona al menos un producto");
+    return;
+  }
+
+  const menuOrder = {
+    from_menu: true,
+    menu_id: props.menu.id,
+    name: props.menu.menu.name,
+    price: props.menu.menu.price,
+    quantity: totalMenus,
+    items: selectedItems
+  };
+
+  if (selectedCustomerId.value && addOrderToCustomer) {
+    addOrderToCustomer(menuOrder, selectedCustomerId.value);
+  } else {
+    orderStore.addMenuOrder(menuOrder);
+  }
+
+  emit('close')
 }
 </script>
 
