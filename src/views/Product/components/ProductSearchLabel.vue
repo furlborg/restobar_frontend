@@ -5,10 +5,10 @@
         <n-text :depth="2">{{ option.label }}</n-text>
         <n-tag
           size="small"
-          :color="{ 
-            color: lighten(tagColor, 48), 
-            textColor: tagColor, 
-            borderColor: lighten(tagColor, 24) 
+          :color="{
+            color: lighten(tagColor, 48),
+            textColor: tagColor,
+            borderColor: lighten(tagColor, 24)
           }"
         >
           {{ tagText }}

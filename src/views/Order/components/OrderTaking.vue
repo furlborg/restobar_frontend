@@ -2,23 +2,12 @@
   <n-spin :show="loading">
     <n-card>
       <n-space class="mb-2" align="center" justify="space-between">
-        <div class="d-flex align-items-center">
-          <n-text class="fs-4">
-            {{ `${saleStore.getSerieDescription(sale.serie)}-${sale.number}` }}
-          </n-text>
-          <n-dropdown
-            trigger="click"
-            :options="saleStore.getDocumentSeriesOptions(sale.invoice_type)"
-            :show-arrow="true"
-            placement="bottom-end"
-            size="huge"
-            @select="$emit('selectSerie', $event)"
-          >
-            <n-button type="info" text>
-              <v-icon class="p-0" name="md-arrowdropdown-round" scale="1.75"/>
-            </n-button>
-          </n-dropdown>
-        </div>
+        <SaleSerieSelector
+          :sale="sale"
+          :invoice-type="sale.invoice_type"
+          @update:serie="handleSerieUpdate"
+          @serie-changed="handleSerieChanged"
+        />
 
         <n-radio-group
           v-model:value="localInvoiceType"
@@ -213,7 +202,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed, watch, watchEffect } from "vue";
+import { defineComponent, ref, computed, watch, watchEffect, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useSaleStore } from "@/store/modules/sale";
 import { useSettingsStore } from "@/store/modules/settings";
@@ -221,13 +210,15 @@ import { useUserStore } from "@/store/modules/user";
 import ProductTable from "./ProductTable.vue";
 import PaymentTotals from "./PaymentTotals.vue";
 import ClientSelectInput from "@/views/Customer/components/ClientSelectInput.vue";
+import SaleSerieSelector from "./SaleSerieSelector.vue";
 
 export default defineComponent({
   name: "OrderTaking",
   components: {
     ProductTable,
     PaymentTotals,
-    ClientSelectInput
+    ClientSelectInput,
+    SaleSerieSelector
   },
   props: {
     loading: {
@@ -351,6 +342,32 @@ export default defineComponent({
     watch(() => props.isMultiple, (newVal) => { localIsMultiple.value = newVal; });
     watch(() => props.ticketPreview, (newVal) => { localTicketPreview.value = newVal; });
 
+    watch(() => saleStore.series, (newSeries) => {
+      if (newSeries.length > 0 && !props.sale.serie) {
+        const defaultInvoiceType = settingsStore.businessSettings.sale?.enable_invoices
+          ? settingsStore.businessSettings.sale.default_invoice : 80;
+        const newSerie = saleStore.getFirstOption(defaultInvoiceType);
+        if (newSerie) {
+          const updatedSale = { ...props.sale, serie: newSerie };
+          emit('update:sale', updatedSale);
+          emit('selectSerie', newSerie);
+        }
+      }
+    }, { immediate: true });
+
+    onMounted(() => {
+      if (!props.sale.serie && saleStore.series.length > 0) {
+        const defaultInvoiceType = settingsStore.businessSettings.sale?.enable_invoices
+          ? settingsStore.businessSettings.sale.default_invoice : 80;
+        const newSerie = saleStore.getFirstOption(defaultInvoiceType);
+        if (newSerie) {
+          const updatedSale = { ...props.sale, serie: newSerie };
+          emit('update:sale', updatedSale);
+          emit('selectSerie', newSerie);
+        }
+      }
+    });
+
     const formRules = computed(() => {
       const rules = {
         customer: {
@@ -409,6 +426,20 @@ export default defineComponent({
         updatedSale.address = null;
       }
       emit('update:sale', updatedSale);
+    };
+
+    // Métodos para manejar los eventos del SaleSerieSelector
+    const handleSerieUpdate = (newSerie) => {
+      if (!newSerie) {
+        return;
+      }
+      const updatedSale = { ...props.sale, serie: newSerie };
+      emit('update:sale', updatedSale);
+      emit('selectSerie', newSerie);
+    };
+
+    const handleSerieChanged = () => {
+      console.log('[OrderTaking] handleSerieChanged called');
     };
 
     const handleInvoiceTypeChange = (value) => {
@@ -576,9 +607,11 @@ export default defineComponent({
       totalAmount,
       handleValueChange,
       handlePaymentChange,
-  handleCustomerNameInput,
+      handleCustomerNameInput,
       handleCustomerSelected,
       handleCustomerCleared,
+      handleSerieUpdate,
+      handleSerieChanged,
       handleInvoiceTypeChange,
       handlePaymentConditionChange,
       handleAddressChange,

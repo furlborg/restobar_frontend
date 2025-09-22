@@ -5,15 +5,12 @@
         <n-spin :show="loading">
           <n-card :bordered="false" content-class="p-0">
             <n-space class="mb-2" align="center" justify="space-between">
-              <div class="d-flex align-items-center">
-                <n-text class="fs-4">{{ `${saleStore.getSerieDescription(sale.serie)}-${sale.number}` }}</n-text>
-                <n-dropdown trigger="click" :options="saleStore.getDocumentSeriesOptions(sale.invoice_type)"
-                  :show-arrow="true" placement="bottom-end" size="huge" @select="sale.serie = $event">
-                  <n-button type="info" text>
-                    <v-icon class="p-0" name="md-arrowdropdown-round" scale="1.75" />
-                  </n-button>
-                </n-dropdown>
-              </div>
+              <SaleSerieSelector
+                :sale="sale"
+                :invoice-type="sale.invoice_type"
+                @update:serie="handleSerieUpdate"
+                @serie-changed="handleSerieChanged"
+              />
               <n-radio-group v-model:value="sale.invoice_type" name="docType" size="small" @update:value="changeSerie">
                 <n-radio-button :disabled="!settingsStore.businessSettings.sale?.enable_invoices" :value="1">FACTURA</n-radio-button>
                 <n-radio-button :disabled="!settingsStore.businessSettings.sale?.enable_invoices" :value="3">BOLETA</n-radio-button>
@@ -340,6 +337,7 @@ import { defineComponent, ref, computed, watch, onMounted } from "vue";
 import SeparatePaymentsModal from "./SeparatePaymentsModal";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 import ClientSelectInput from "@/views/Customer/components/ClientSelectInput.vue";
+import SaleSerieSelector from "@/views/Order/components/SaleSerieSelector.vue";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useRouter } from "vue-router";
 import { useOrderStore } from "@/store/modules/order";
@@ -360,7 +358,7 @@ import { createSale, getSaleNumber, retrieveSale, sendSale } from "@/api/modules
 export default defineComponent({
   name: "TablePayment",
   directives: { autowidth: VueInputAutowidth },
-  components: { SeparatePaymentsModal, PreviewDrawer, ClientSelectInput },
+  components: { SeparatePaymentsModal, PreviewDrawer, ClientSelectInput, SaleSerieSelector },
   setup() {
     const router = useRouter();
     const productStore = useProductStore();
@@ -442,9 +440,11 @@ export default defineComponent({
     const defaultInvoiceType = settingsStore.businessSettings.sale?.enable_invoices
       ? settingsStore.businessSettings.sale.default_invoice : 80;
 
+    const initialSerie = saleStore.series.length > 0 ? saleStore.getFirstOption(defaultInvoiceType) : null;
+
     const sale = ref({
       order: null,
-      serie: saleStore.getFirstOption(defaultInvoiceType),
+      serie: initialSerie,
       number: "",
       date_sale: format(new Date(), "dd/MM/yyyy HH:mm:ss"),
       count: products_count,
@@ -487,7 +487,19 @@ export default defineComponent({
         sale.value.customer = null;
         sale.value.address = null;
       }
-      sale.value.serie = saleStore.getFirstOption(v);
+      const newSerie = saleStore.getFirstOption(v);
+      sale.value.serie = newSerie;
+    };
+
+    const handleSerieUpdate = (newSerie) => {
+      if (!newSerie) {
+        return;
+      }
+      sale.value.serie = newSerie;
+    };
+
+    const handleSerieChanged = () => {
+      obtainSaleNumber();
     };
 
     const performCreateSale = () => {
@@ -564,14 +576,17 @@ export default defineComponent({
     };
 
     const obtainSaleNumber = async () => {
+      if (!sale.value.serie) {
+        return;
+      }
       loading.value = true;
       try {
         const response = await getSaleNumber(sale.value.serie);
         if (response.status === 200) {
-          sale.value.number = Number(response.data.number) + 1;
+          const newNumber = Number(response.data.number) + 1;
+          sale.value.number = newNumber;
         }
       } catch (error) {
-        console.error(error);
         message.error("Algo salió mal...");
       } finally {
         loading.value = false;
@@ -591,7 +606,6 @@ export default defineComponent({
       }
     };
 
-    // Handlers para el componente ClientSelectInput
     const handleCustomerSelected = (customer) => {
       createAddressesOptions(customer);
     };
@@ -653,17 +667,37 @@ export default defineComponent({
       sale.value.given_amount = total.value > 0 ? total.value : parseFloat("0").toFixed(2);
     });
 
-    watch(() => sale.value.serie, obtainSaleNumber);
+    // Watcher específico para sale.serie solamente
+    watch(() => sale.value.serie, (newSerie, oldSerie) => {
+      if (newSerie && newSerie !== oldSerie) {
+        obtainSaleNumber();
+      }
+    });
+
+    // Watcher para cuando el store se hidrate y tengamos series disponibles
+    watch(() => saleStore.series, (newSeries) => {
+      if (newSeries.length > 0 && !sale.value.serie) {
+        const defaultInvoiceType = settingsStore.businessSettings.sale?.enable_invoices
+          ? settingsStore.businessSettings.sale.default_invoice : 80;
+        const newSerie = saleStore.getFirstOption(defaultInvoiceType);
+        if (newSerie) {
+          sale.value.serie = newSerie;
+        }
+      }
+    }, { immediate: true });
 
     onMounted(async () => {
       sale.value.given_amount = total.value;
-      await obtainSaleNumber();
+      if (sale.value.serie) {
+        await obtainSaleNumber();
+      }
     });
 
     return {
       userStore, saleStore, orderStore, productStore, settingsStore, sale, isDecimal,
       loading, saleForm, formRules, handleCustomerSelected, handleCustomerCleared,
-      changing, subTotal, changeCondition, changeSerie, showObservations, performCreateSale,
+      changing, subTotal, changeCondition, changeSerie, handleSerieUpdate, handleSerieChanged, 
+      showObservations, performCreateSale,
       addressesOptions, createAddressesOptions, genericsStore,
       icbper, isMultiple, showPayments, createPayment, doMultiplePayment, filteredMethods,
       evalPayments, currentPaymentsAmount, openSeparatePaymentsModal, 

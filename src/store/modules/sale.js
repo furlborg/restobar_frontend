@@ -134,13 +134,14 @@ export const useSaleStore = defineStore("sale", {
           (serie) => serie.sucursal === userStore.user.branchoffice
         );
       }
-      return series
-        .filter((serie) => serie.doc_type === String(doc_type))
-        .map((serie) => ({ label: serie.description, value: serie.id }));
+      const filteredSeries = series.filter((serie) => serie.doc_type === String(doc_type));
+      const options = filteredSeries.map((serie) => ({ label: serie.description, value: serie.id }));
+      return options;
     },
     getSerieDescription(id) {
       const serie = this.series.find((serie) => serie.id === id);
-      return serie ? serie.description : null;
+      const description = serie ? serie.description : null;
+      return description;
     },
     getSerieID(description) {
       const serie = this.series.find(
@@ -163,7 +164,8 @@ export const useSaleStore = defineStore("sale", {
       if (!series.length) {
         return null;
       } else {
-        return series[0].id;
+        const firstOption = series[0].id;
+        return firstOption;
       }
     },
     getOrderQuantity(id) {
