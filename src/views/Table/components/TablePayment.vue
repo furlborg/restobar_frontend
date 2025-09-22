@@ -28,18 +28,13 @@
             <n-form class="mb-2" ref="saleForm" :model="sale" :rules="formRules">
               <n-grid responsive="screen" cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12" :x-gap="12">
                 <n-form-item-gi :span="9" label="Cliente" :show-require-mark="formRules.customer.required" path="customer">
-                  <n-input-group>
-                    <n-auto-complete blur-after-select :input-props="{ autocomplete: 'disabled' }"
-                      v-model:value="sale.customer_name" :options="customerOptions" :get-show="showOptions"
-                      :loading="searching" @keypress.enter="autoCreateCustomer"
-                      @update:value="v => !v ? (sale.customer = 0, sale.address = null, whatsappNumber = '', addressesOptions = []) : null"
-                      @select="value => (sale.customer = value, sale.address = null, whatsappNumber = '', createAddressesOptions())"
-                      placeholder="" clearable />
-                    <n-button :type="!sale.customer ? 'info' : 'warning'"
-                      @click="sale.customer = 0, showModal = true">
-                      <v-icon :name="!sale.customer ? 'md-add-round' : 'ri-edit-fill'" />
-                    </n-button>
-                  </n-input-group>
+                  <ClientSelectInput
+                    v-model:customer-name="sale.customer_name"
+                    v-model:customer-id="sale.customer"
+                    :invoice-type="sale.invoice_type"
+                    @customer-selected="handleCustomerSelected"
+                    @customer-cleared="handleCustomerCleared"
+                  />
                 </n-form-item-gi>
                 <n-form-item-gi :span="3" label="Fecha">
                   <n-date-picker class="w-100" type="datetime" :is-date-disabled="ts => ts > new Date()"
@@ -331,9 +326,6 @@
             </n-button>
           </n-space>
         </n-modal>
-        <customer-modal v-model:show="showModal" :id-customer="sale.customer"
-          :doc_type="sale.invoice_type === 1 ? '6' : null" :document="customerDocument" @update:show="onCloseModal"
-          @on-success="onSuccess" />
         <separate-payments-modal v-model:show="showSeparateModal" :data="separatePayments"
           :on-close="closeSeparatePaymentsModal" @success="successSeparatePaymentsModal" />
         <preview-drawer ref="previewDrawer" v-model:show="showPdf" :data="pdfData" :previewOnly="!ticketPreview"
@@ -345,9 +337,9 @@
 
 <script>
 import { defineComponent, ref, computed, watch, onMounted } from "vue";
-import CustomerModal from "@/views/Customer/components/CustomerModal";
 import SeparatePaymentsModal from "./SeparatePaymentsModal";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
+import ClientSelectInput from "@/views/Customer/components/ClientSelectInput.vue";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useRouter } from "vue-router";
 import { useOrderStore } from "@/store/modules/order";
@@ -363,13 +355,12 @@ import format from "date-fns/format";
 import { lighten } from "@/utils";
 import { useBusinessStore } from "@/store/modules/business";
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
-import { searchCustomerByName, searchRucCustomer } from "@/api/modules/customer";
 import { createSale, getSaleNumber, retrieveSale, sendSale } from "@/api/modules/sales";
 
 export default defineComponent({
   name: "TablePayment",
   directives: { autowidth: VueInputAutowidth },
-  components: { CustomerModal, SeparatePaymentsModal, PreviewDrawer },
+  components: { SeparatePaymentsModal, PreviewDrawer, ClientSelectInput },
   setup() {
     const router = useRouter();
     const productStore = useProductStore();
@@ -383,18 +374,14 @@ export default defineComponent({
     const dialog = useDialog();
 
     const loading = ref(false);
-    const showModal = ref(false);
     const saleForm = ref();
     const ticketPreview = ref(settingsStore.businessSettings?.sale?.show_preview ?? true);
     const showObservations = ref(false);
-    const searching = ref(false);
-    const customerResults = ref([]);
     const addressesOptions = ref([]);
     const isMultiple = ref(false);
     const showPayments = ref(false);
     const separatePayments = ref({});
     const showSeparateModal = ref(false);
-    const customerDocument = ref("");
     const whatsappNumber = ref("");
     const showPdf = ref(false);
     const previewDrawer = ref(null);
@@ -591,14 +578,7 @@ export default defineComponent({
       }
     };
 
-    const customerOptions = computed(() => customerResults.value.map(customer => ({
-      value: customer.id,
-      label: `${customer.doc_num} - ${customer.names}`,
-      disabled: customer.is_disabled,
-    })));
-
-    const createAddressesOptions = () => {
-      const customer = customerResults.value.find(c => c.id === sale.value.customer);
+    const createAddressesOptions = (customer) => {
       whatsappNumber.value = customer?.phone || "";
       if (customer) {
         addressesOptions.value = customer.addresses.map(address => ({
@@ -611,42 +591,15 @@ export default defineComponent({
       }
     };
 
-    const showOptions = async (value) => {
-      if (value.length < 3 || value.length > 11) {
-        customerResults.value = [];
-        return false;
-      }
-      
-      searching.value = true;
-      try {
-        const response = sale.value.invoice_type === 1 
-          ? await searchRucCustomer(value)
-          : await searchCustomerByName(value);
-        
-        if (response.status === 200) {
-          customerResults.value = response.data;
-        }
-        return true;
-      } catch (error) {
-        console.error(error);
-        message.error("Algo salió mal...");
-        return false;
-      } finally {
-        searching.value = false;
-      }
+    // Handlers para el componente ClientSelectInput
+    const handleCustomerSelected = (customer) => {
+      createAddressesOptions(customer);
     };
 
-    const onSuccess = (customer) => {
-      const isValidCustomer = (sale.value.invoice_type === 1 && customer.doc_type === "6") || 
-                             sale.value.invoice_type !== 1;
-      
-      if (isValidCustomer) {
-        customerResults.value.push(customer);
-        sale.value.customer_name = `${customer.doc_num} - ${customer.names}`;
-        sale.value.customer = customer.id;
-        createAddressesOptions();
-      }
-      showModal.value = false;
+    const handleCustomerCleared = () => {
+      sale.value.address = null;
+      whatsappNumber.value = '';
+      addressesOptions.value = [];
     };
 
     const createPayment = () => ({ payment_method: null, amount: "0" });
@@ -685,19 +638,6 @@ export default defineComponent({
       showSeparateModal.value = true;
     };
 
-    const autoCreateCustomer = () => {
-      if (!searching.value && !customerResults.value.length) {
-        const value = sale.value.customer_name;
-        const isValidDoc = !isNaN(value) && 
-          ((value.length === 8 && sale.value.invoice_type !== 1) || value.length === 11);
-        
-        if (isValidDoc) {
-          customerDocument.value = value;
-          showModal.value = true;
-        }
-      }
-    };
-
     const getAfcColor = (afc) => {
       const colors = {
         10: { color: lighten("#008B8B", 48), textColor: "#008B8B", borderColor: lighten("#008B8B", 24) },
@@ -721,10 +661,10 @@ export default defineComponent({
     });
 
     return {
-      showModal, userStore, saleStore, orderStore, productStore, settingsStore, sale, isDecimal,
-      loading, saleForm, formRules, showOptions, customerOptions, autoCreateCustomer, customerDocument,
-      searching, changing, subTotal, changeCondition, changeSerie, showObservations, performCreateSale,
-      addressesOptions, createAddressesOptions, onCloseModal: () => {}, onSuccess, genericsStore,
+      userStore, saleStore, orderStore, productStore, settingsStore, sale, isDecimal,
+      loading, saleForm, formRules, handleCustomerSelected, handleCustomerCleared,
+      changing, subTotal, changeCondition, changeSerie, showObservations, performCreateSale,
+      addressesOptions, createAddressesOptions, genericsStore,
       icbper, isMultiple, showPayments, createPayment, doMultiplePayment, filteredMethods,
       evalPayments, currentPaymentsAmount, openSeparatePaymentsModal, 
       closeSeparatePaymentsModal: () => {}, successSeparatePaymentsModal: obtainSaleNumber,

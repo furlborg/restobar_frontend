@@ -15,7 +15,7 @@
         </n-tag>
       </n-space>
     </template>
-    
+
     <template #description>
       <n-space size="small">
         <n-text :depth="3">{{ option.category }}</n-text>

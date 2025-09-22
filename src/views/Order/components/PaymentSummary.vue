@@ -92,7 +92,7 @@ import { useSaleStore } from "@/store/modules/sale";
 import { useProductStore } from "@/store/modules/product";
 import { useMessage } from "naive-ui";
 import { searchProductByName } from "@/api/modules/products";
-import ProductSearchLabel from "@/components/Order/ProductSearchLabel.vue";
+import ProductSearchLabel from "@/views/Product/components/ProductSearchLabel.vue";
 
 export default defineComponent({
   name: "PaymentSummary",

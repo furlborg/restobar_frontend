@@ -93,7 +93,7 @@
 
 <script>
 import OrderIndications from "./OrderIndications";
-import ProductSearchLabel from "@/components/Order/ProductSearchLabel.vue";
+import ProductSearchLabel from "@/views/Product/components/ProductSearchLabel.vue";
 import { defineComponent, ref, computed, h } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useMessage, useDialog } from "naive-ui";
