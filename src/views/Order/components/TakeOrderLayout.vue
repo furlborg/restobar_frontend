@@ -210,7 +210,7 @@ export default defineComponent({
     const selectProducts = ref(false);
     const showObservations = ref(false);
     const isMultiple = ref(false);
-    const ticketPreview = ref(false);
+    const ticketPreview = ref(settingsStore.businessSettings?.sale?.show_preview ?? true);
     const activeTab = ref("main");
     const showModal = ref(false);
     const showConfirm = ref(false);
