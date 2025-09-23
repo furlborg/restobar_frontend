@@ -186,13 +186,13 @@ export default defineComponent({
         }
 
         const handleRouteGuard = (to, isLeave = false) => {
-            if (["ProductCategories", "CategoriesItems"].includes(to.name)) return;
-            
+            if (["ProductCategories", "CategoriesItems", "TablePayment"].includes(to.name)) return;
+
             if (checkState.value) {
                 cleanupOrderStore();
                 return;
             }
-            
+
             const config = {
                 title: "Cambios sin guardar",
                 content: "¿Salir de todos modos?",

@@ -142,7 +142,7 @@ const columns = [
                     break;
                 case "P":
                     color = "#926ED7";
-                    text = "PARA LLEVAR";
+                    text = "PARA LLEVA9R";
                     break;
                 case "D":
                     color = "#995C4E";

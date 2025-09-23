@@ -7,19 +7,11 @@
             <n-text class="fs-4">Categorías</n-text>
           </router-link>
         </n-breadcrumb-item>
-        <n-breadcrumb-item v-if="$route.params.category">{{
-          productStore.getCategorieDescription($route.params.category)
-        }}</n-breadcrumb-item>
+        <n-breadcrumb-item v-if="$route.params.category">
+          {{ productStore.getCategorieDescription($route.params.category) }}
+        </n-breadcrumb-item>
       </n-breadcrumb>
       <n-input v-model:value="search" placeholder="Buscar..." />
-      <!-- <n-radio-group v-model:value="listType" name="listType" size="small">
-        <n-radio-button class="p-0" value="list" key="list">
-          <v-icon class="m-1" name="md-list-round" />
-        </n-radio-button>
-        <n-radio-button class="p-0" value="grid" key="grid">
-          <v-icon class="m-1" name="md-gridview-round" />
-        </n-radio-button>
-      </n-radio-group> -->
     </n-space>
     <n-scrollbar v-if="products.length > 0" style="max-height: 700px">
       <n-list v-if="listType === 'list'" class="me-2">
@@ -74,39 +66,6 @@
           </n-thing>
         </n-list-item>
       </n-list>
-      <n-grid
-        v-if="listType === 'grid'"
-        responsive="screen"
-        cols="5 s:5 m:10 l:10 xl:24 2xl:24"
-        :x-gap="12"
-        :y-gap="12"
-      >
-        <n-gi :span="4" v-for="index in 10" :key="index">
-          <n-card>
-            <template #header>
-              <n-h2 class="mb-0">Product</n-h2>
-              <n-text type="success">S/. 10.00</n-text>
-            </template>
-            <template #header-extra>
-              <n-dropdown
-                :options="productOptions"
-                placement="left-start"
-                size="small"
-              >
-                <n-button text size="small">
-                  <v-icon name="bi-three-dots-vertical" />
-                </n-button>
-              </n-dropdown>
-            </template>
-            <template #cover>
-              <img src="~@/assets/images/default-food-image.jpg" alt="" />
-            </template>
-            <n-text
-              >Lorem ipsum dolor sit, amet consectetur adipisicing elit.</n-text
-            >
-          </n-card>
-        </n-gi>
-      </n-grid>
     </n-scrollbar>
   </div>
 </template>
@@ -137,9 +96,12 @@ export default defineComponent({
     const search = ref("");
 
     const itemsList = computed(() => {
-      const list = products.value.filter((product) =>
-        product.name.toLowerCase().includes(search.value.toLowerCase())
-      );
+      const list = products.value.filter((product) => {
+        const searchTerm = search.value.toLowerCase();
+        const productName = product.name.toLowerCase();
+        const productPrice = parseFloat(product.prices).toFixed(2);
+        return productName.includes(searchTerm) || productPrice.includes(searchTerm);
+      });
       if (products.value.every((product) => !!product.order_index)) {
         return list.sort((a, b) => {
           if (a.order_index > b.order_index) {

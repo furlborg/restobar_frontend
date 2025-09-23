@@ -23,8 +23,8 @@
         </n-gi>
       </n-grid>
       <div v-else>
-        <n-space align="center" justify="space-between">
-          <n-button type="info" text @click="(products = []), (search = '')"
+        <n-space align="center" justify="space-between" class="mb-3">
+          <n-button class="fs-5" type="info" text @click="(products = []), (search = '')"
             >Volver a Categorias</n-button
           >
           <n-input v-model:value="search" placeholder="Buscar..." />
@@ -124,9 +124,12 @@ export default defineComponent({
     };
 
     const itemsList = computed(() => {
-      const list = products.value.filter((product) =>
-        product.name.toLowerCase().includes(search.value.toLowerCase())
-      );
+      const list = products.value.filter((product) => {
+        const searchTerm = search.value.toLowerCase();
+        const productName = product.name.toLowerCase();
+        const productPrice = parseFloat(product.prices).toFixed(2);
+        return productName.includes(searchTerm) || productPrice.includes(searchTerm);
+      });
       if (products.value.every((product) => !!product.order_index)) {
         return list.sort((a, b) => {
           if (a.order_index > b.order_index) {

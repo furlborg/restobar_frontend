@@ -26,7 +26,7 @@
                             @click="
               $router.push({ name: 'TakeOrder', query: { delivery: false } })
             "
-                    >Llevar
+                    >Venta Rápida
                     </n-button
                     >
                 </template>
@@ -36,7 +36,7 @@
                             type="info"
                             secondary
                             @click="$router.push({ name: 'TakeOrder' })"
-                    >Llevar / Delivery
+                    >Venta Rápida / Delivery
                     </n-button
                     >
                 </template>
