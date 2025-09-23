@@ -1,24 +1,22 @@
 <template>
-  <n-card class="h-100" :bordered="false" embedded>
+  <n-card :bordered="false" style="background: white;" embedded>
     <template #header>
       <n-button
         type="info"
         secondary
-        @click="$emit('update:selectProducts', !selectProducts)"
+        :disabled="orderStore.orderList.length === 0"
+        @click="handleButtonClick"
       >
-        {{ selectProducts ? "Seleccionar productos" : "Cobrar" }}
+        {{ buttonText }}
       </n-button>
     </template>
 
     <n-input-group>
       <n-auto-complete
         :input-props="{ autocomplete: 'disabled' }"
-        :value="productSearch"
-        @update:value="$emit('update:productSearch', $event)"
+        v-model:value="localProductSearch"
         :options="productOptions"
-        :get-show="(value) => {
-          return !!value && productOptions.length > 0;
-        }"
+        :get-show="showOptions"
         :loading="searching"
         clear-after-select
         :render-label="renderLabel"
@@ -88,12 +86,19 @@
 </template>
 
 <script>
-import { defineComponent } from "vue";
+import { defineComponent, computed, ref, h } from "vue";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
+import { useProductStore } from "@/store/modules/product";
+import { useMessage } from "naive-ui";
+import { searchProductByName } from "@/api/modules/products";
+import ProductSearchLabel from "@/views/Product/components/ProductSearchLabel.vue";
 
 export default defineComponent({
   name: "PaymentSummary",
+  components: {
+    ProductSearchLabel
+  },
   props: {
     selectProducts: {
       type: Boolean,
@@ -125,44 +130,129 @@ export default defineComponent({
     'update:productSearch',
     'update:showModal',
     'update:itemIndex',
-    'selectProduct',
-    'renderLabel'
+    'product-selected'
   ],
   setup(props, { emit }) {
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
+    const productStore = useProductStore();
+    const message = useMessage();
+
+    const products = ref([]);
+    const searching = ref(false);
+
+    // Variable local para el buscador de productos
+    const localProductSearch = computed({
+      get: () => props.productSearch,
+      set: (value) => emit('update:productSearch', value)
+    });
+
+    const buttonText = computed(() => props.selectProducts ? "Seleccionar productos" : "Cobrar");
+
+    // Opciones del producto para el autocompletar (igual que TableOrder)
+    const productOptions = computed(() => products.value.map((product) => ({
+      value: product.id,
+      label: product.name,
+      disabled: product.is_disabled,
+      category: productStore.getCategorieDescription(product.category),
+      stock: product.stock
+    })));
+
+    // Función para mostrar opciones cuando se busca (igual que TableOrder)
+    const showOptions = (value) => {
+      if (value.length >= 3) {
+        searching.value = true;
+        searchProductByName(value)
+          .then((response) => {
+            if (response.status === 200) {
+              products.value = response.data;
+            }
+          })
+          .catch((error) => {
+            console.error(error);
+            message.error("Algo salió mal...");
+          })
+          .finally(() => {
+            searching.value = false;
+          });
+        return true;
+      }
+      return false;
+    };
+
+    // Función para seleccionar producto (igual que TableOrder)
+    const selectProductInternal = (id) => {
+      const item = products.value.find(product => product.id === id);
+      if (item && item.has_supplies && item.has_stock) {
+        orderStore.addOrder(item);
+        console.log('Producto agregado a la orden');
+        // Limpiar búsqueda después de seleccionar
+        emit('update:productSearch', '');
+      }
+    };
+
+    // Renderizar etiquetas de productos (usando componente compartido)
+    const renderLabel = (option) => {
+      return h(ProductSearchLabel, { option });
+    };
 
     const handleRowClick = (index) => {
-      emit('update:itemIndex', index);
-      emit('update:showModal', true);
+      try {
+        emit('update:itemIndex', index);
+        emit('update:showModal', true);
+      } catch (error) {
+        console.error('Error en handleRowClick:', error);
+      }
     };
 
     const removeOrderItem = (index) => {
-      orderStore.orderList.splice(index, 1);
-      updateOrderDetails();
+      try {
+        orderStore.orderList.splice(index, 1);
+        updateOrderDetails();
+      } catch (error) {
+        console.error('Error en removeOrderItem:', error);
+      }
     };
 
     const updateOrderDetails = () => {
-      saleStore.sale_details = orderStore.orderList;
+      try {
+        saleStore.sale_details = orderStore.orderList;
+      } catch (error) {
+        console.error('Error en updateOrderDetails:', error);
+      }
     };
 
     const selectProduct = (value) => {
-      emit('selectProduct', value);
+      try {
+        selectProductInternal(value);
+      } catch (error) {
+        console.error('Error en selectProduct:', error);
+      }
     };
 
-    const renderLabel = (option) => {
-      return emit('renderLabel', option);
+    const handleButtonClick = () => {
+      try {
+        console.log('Botón clicked, selectProducts actual:', props.selectProducts, 'enviando:', !props.selectProducts);
+        emit('update:selectProducts', !props.selectProducts);
+      } catch (error) {
+        console.error('Error en handleButtonClick:', error);
+      }
     };
 
     return {
       orderStore,
       saleStore,
+      localProductSearch,
+      buttonText,
+      productOptions,
+      searching,
+      showOptions,
       handleRowClick,
       removeOrderItem,
       updateOrderDetails,
       selectProduct,
       renderLabel,
-      ...props
+      handleButtonClick
     };
   }
 });
