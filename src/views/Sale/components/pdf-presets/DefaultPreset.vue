@@ -295,7 +295,7 @@
                   {{
                     !data.order_data.table
                       ? !data.order_data.delivery_info
-                        ? "VENTA RÁPIDA"
+                        ? settingsStore.business_settings.order?.fast_sale_format ? "VENTA RÁPIDA" : "PARA LLEVAR"  
                         : "DELIVERY"
                       : tableStore.getTableByID(data.order_data.table)
                           .description
