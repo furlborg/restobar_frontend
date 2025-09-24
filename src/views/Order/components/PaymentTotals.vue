@@ -1,5 +1,5 @@
 <template>
-  <div class="payment-section d-block d-md-none mt-3">
+  <div class="payment-section d-block d-md-none my-3">
     <n-card class="mb-3" size="small">
       <template #header>
         <span class="fw-bold">{{ title }}</span>
@@ -15,7 +15,7 @@
               :class="item.field === 'discount' ? 'discount-input' : 'others-input'"
               type="number"
               :min="item.min || 0"
-              :step="item.step || 0.1"
+              :step="item.step || 0.5"
               :value="item.value"
               :disabled="item.disabled"
               @input="$emit('valueChanged', { field: item.field, value: $event.target.value })"
@@ -34,14 +34,14 @@
       <n-gi>
         <n-card size="small" class="payment-card">
           <div class="payment-section-mobile">
-            <span class="payment-label">{{ paymentLabel }}</span>
+            <span class="payment-label">Pago</span>
             <div class="payment-input-container">
               <span class="currency">{{ currencySymbol }}</span>
               <input
                 class="payment-input"
                 type="number"
                 :min="paymentMin"
-                :step="paymentStep"
+                :step="0.5"
                 :value="paymentAmount"
                 @input="$emit('paymentChanged', $event.target.value)"
                 @click="$event.target.select()"
@@ -53,10 +53,10 @@
       <n-gi>
         <n-card size="small" class="payment-card">
           <div class="payment-section-mobile">
-            <span class="payment-label">{{ changeLabel }}</span>
+            <span class="payment-label">Vuelto</span>
             <div class="payment-amount-display">
               <span class="currency">{{ currencySymbol }}</span>
-              <span class="payment-amount">{{ formatNumber(changeAmount) }}</span>
+              <span class="payment-amount">{{ formatNumber(calculatedChange) }}</span>
             </div>
           </div>
         </n-card>
@@ -65,7 +65,7 @@
   </div>
 
   <!-- Version Desktop -->
-  <div class="payment-section d-none d-md-block">
+  <div class="payment-section d-none d-md-block my-3">
     <n-card class="mb-3 totals-card-desktop">
       <template #header>
         <span class="totals-header">{{ title }}</span>
@@ -78,16 +78,16 @@
               <span v-if="!item.editable" class="amount-desktop">{{ currencySymbol }} {{ formatNumber(item.value) }}</span>
               <div v-else class="input-group-desktop">
                 <span>{{ currencySymbol }}</span>
-                <input 
-                  class="custom-input fw-bold" 
+                <input
+                  class="custom-input fw-bold"
                   :class="item.field === 'discount' ? 'discount-input-desktop' : 'others-input-desktop'"
-                  type="number" 
-                  :min="item.min || 0" 
+                  type="number"
+                  :min="item.min || 0"
                   :step="item.step || 0.1"
                   :value="item.value"
                   :disabled="item.disabled"
                   @input="$emit('valueChanged', { field: item.field, value: $event.target.value })"
-                  @click="$event.target.select()" 
+                  @click="$event.target.select()"
                 />
               </div>
             </div>
@@ -102,19 +102,19 @@
     </n-card>
     <n-grid cols="2" :x-gap="16">
       <n-gi>
-        <n-card class="payment-card-desktop">
+        <n-card class="payment-card-desktop" :hoverable="false">
           <div class="payment-section-desktop">
-            <span class="payment-label-desktop">{{ paymentLabel }}</span>
+            <n-text class="fs-4">PAGO</n-text>
             <div class="payment-input-container-desktop">
               <span class="currency-desktop">{{ currencySymbol }}</span>
-              <input 
-                class="payment-input-desktop" 
-                type="number" 
-                :min="paymentMin" 
-                :step="paymentStep"
-                :value="paymentAmount" 
+              <input
+                class="payment-input-desktop"
+                type="number"
+                :min="paymentMin"
+                :step="0.5"
+                :value="paymentAmount"
                 @input="$emit('paymentChanged', $event.target.value)"
-                @click="$event.target.select()" 
+                @click="$event.target.select()"
               />
             </div>
           </div>
@@ -123,10 +123,10 @@
       <n-gi>
         <n-card class="payment-card-desktop">
           <div class="payment-section-desktop">
-            <span class="payment-label-desktop">{{ changeLabel }}</span>
+            <n-text class="fs-4">VUELTO</n-text>
             <div class="payment-amount-display-desktop">
               <span class="currency-desktop">{{ currencySymbol }}</span>
-              <span class="payment-amount-desktop">{{ formatNumber(changeAmount) }}</span>
+              <span class="payment-amount-desktop">{{ formatNumber(calculatedChange) }}</span>
             </div>
           </div>
         </n-card>
@@ -164,11 +164,6 @@ export default defineComponent({
       type: [Number, String],
       default: 0
     },
-    // Configuración del campo de pago
-    paymentLabel: {
-      type: String,
-      default: "Pago"
-    },
     paymentAmount: {
       type: [Number, String],
       default: 0
@@ -176,15 +171,6 @@ export default defineComponent({
     paymentMin: {
       type: Number,
       default: 0
-    },
-    paymentStep: {
-      type: Number,
-      default: 0.01
-    },
-    // Configuración del campo de vuelto
-    changeLabel: {
-      type: String,
-      default: "Vuelto"
     },
     changeAmount: {
       type: [Number, String],
@@ -207,15 +193,23 @@ export default defineComponent({
 
     // Agrupar los items en 3 columnas para la vista desktop
     const groupedItems = computed(() => {
-      console.log(itemsToShow.value.length > 4);
       const columns = itemsToShow.value.length > 4 ? [[], [], []] : [[], []];
       const itemsToGroup = [...itemsToShow.value];
       const itemsPerColumn = 2;
       for (let i = 0; i < columns.length; i++) {
         columns[i] = itemsToGroup.slice(i * itemsPerColumn, (i + 1) * itemsPerColumn);
       }
-      console.log(columns);
       return columns;
+    });
+
+    // Calcular el vuelto correctamente
+    const calculatedChange = computed(() => {
+      const payment = parseFloat(props.paymentAmount) || 0;
+      const total = parseFloat(props.totalAmount) || 0;
+
+      // El vuelto es la diferencia entre lo pagado y el total, solo si el pago es mayor
+      const change = payment > total ? payment - total : 0;
+      return change;
     });
 
     // Función para formatear números
@@ -225,9 +219,11 @@ export default defineComponent({
       }
       return Number(value).toFixed(2);
     };
+    
     return {
       itemsToShow,
       groupedItems,
+      calculatedChange,
       formatNumber
     };
   }
@@ -323,12 +319,6 @@ $shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
           background: white;
           flex-shrink: 0;
 
-          &:focus {
-            outline: none;
-            border-color: $primary-color;
-            box-shadow: 0 0 0 2px rgba(24, 160, 88, 0.1);
-          }
-
           &.discount-input {
             border-color: #f59e0b;
             &:focus {
@@ -418,12 +408,6 @@ $shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
           font-weight: 600;
           text-align: center;
           background: white;
-
-          &:focus {
-            outline: none;
-            border-color: $primary-color;
-            box-shadow: 0 0 0 3px rgba(24, 160, 88, 0.1);
-          }
         }
       }
 
@@ -513,12 +497,6 @@ $shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
         background: white;
         flex-shrink: 0;
 
-        &:focus {
-          outline: none;
-          border-color: $primary-color;
-          box-shadow: 0 0 0 2px rgba(24, 160, 88, 0.1);
-        }
-
         &.discount-input-desktop {
           border-color: #f59e0b;
           &:focus {
@@ -575,17 +553,6 @@ $shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
     gap: 12px;
     padding: 16px;
 
-    .payment-label-desktop {
-      @include text-ellipsis(2);
-      font-size: 14px;
-      font-weight: 600;
-      color: $text-muted;
-      text-transform: uppercase;
-      text-align: center;
-      width: 100%;
-      min-height: 32px;
-    }
-
     .payment-input-container-desktop {
       display: flex;
       align-items: center;
@@ -608,12 +575,6 @@ $shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
         font-weight: 600;
         text-align: center;
         background: white;
-
-        &:focus {
-          outline: none;
-          border-color: $primary-color;
-          box-shadow: 0 0 0 3px rgba(24, 160, 88, 0.1);
-        }
       }
     }
 
