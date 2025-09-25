@@ -415,6 +415,13 @@
                         >
                     </n-form-item-gi>
                     <n-form-item-gi :span="4">
+                        <n-checkbox
+                                v-model:checked="businessSettings.sale.free_sale_send_doc"
+                        >Venta libre emite comprobante
+                        </n-checkbox
+                        >
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="4">
                         <n-checkbox v-model:checked="businessSettings.sale.show_preview"
                         >Mostrar previsualización
                         </n-checkbox
