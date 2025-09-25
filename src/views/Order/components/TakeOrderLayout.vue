@@ -149,11 +149,11 @@
         </n-dynamic-input>
       </n-form-item>
       <n-space justify="end">
-        <n-button 
-          type="success" 
-          :disabled="evalPayments || sale.payments?.some(p => p.payment_method === null) || sale.payments?.some(p => Number(p.amount) <= 0) || loading" 
-          :loading="loading" 
-          secondary 
+        <n-button
+          type="success"
+          :disabled="evalPayments || sale.payments?.some(p => p.payment_method === null) || sale.payments?.some(p => Number(p.amount) <= 0) || loading"
+          :loading="loading"
+          secondary
           @click="performTakeAway"
         >
           Confirmar
@@ -416,8 +416,19 @@ export default defineComponent({
     };
 
     const evalPayments = computed(() => false);
-    const currentPaymentsAmount = computed(() => "0.00");
-    const filteredMethods = computed(() => []);
+
+    const currentPaymentsAmount = computed(() => {
+        if (sale.value.payments) {
+            const sum = sale.value.payments.reduce((acc, val) => acc + parseFloat(val.amount), 0);
+            return isNaN(sum) ? "0.00" : sum.toFixed(2);
+        }
+        return "0.00";
+    });
+
+    const filteredMethods = computed(() => saleStore.getPaymentMethodsOptions.map(option => ({
+        ...option,
+        disabled: sale.value.payments?.some(pay => pay.payment_method === option.value)
+    })));
 
     const showCustomerOptions = () => {};
     const autoCreateCustomer = () => {};
