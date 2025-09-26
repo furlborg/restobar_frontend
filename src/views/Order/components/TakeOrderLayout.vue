@@ -173,12 +173,14 @@ import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router";
 import { useMessage, useDialog } from "naive-ui";
 import { getSaleNumber } from "@/api/modules/sales";
 import { takeAwayOrder } from "@/api/modules/orders";
+import { searchCustomerByName, searchRucCustomer } from "@/api/modules/customer";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useUserStore } from "@/store/modules/user";
 import { useBreakpoint } from "vooks";
+import { isDecimal } from "@/utils";
 import OrderTaking from "./OrderTaking.vue";
 import PaymentSummary from "./PaymentSummary.vue";
 import CategoriesList from "./CategoriesList.vue";
@@ -227,6 +229,7 @@ export default defineComponent({
     const voucherData = ref(null);
     const addressesOptions = ref([]);
     const customerOptions = ref([]);
+    const customerResults = ref([]);
     const searchingCustomer = ref(false);
     const whatsappNumber = ref("");
     const customerDocument = ref("");
@@ -415,14 +418,20 @@ export default defineComponent({
       showPayments.value = true;
     };
 
-    const evalPayments = computed(() => false);
+    const evalPayments = computed(() => {
+      if (sale.value.payments) {
+        const sum = sale.value.payments.reduce((acc, val) => acc + parseFloat(val.amount), 0);
+        return sum !== Number(sale.value.amount);
+      }
+      return true;
+    });
 
     const currentPaymentsAmount = computed(() => {
-        if (sale.value.payments) {
-            const sum = sale.value.payments.reduce((acc, val) => acc + parseFloat(val.amount), 0);
-            return isNaN(sum) ? "0.00" : sum.toFixed(2);
-        }
-        return "0.00";
+      if (sale.value.payments) {
+        const sum = sale.value.payments.reduce((acc, val) => acc + parseFloat(val.amount), 0);
+        return isNaN(sum) ? "0.00" : sum.toFixed(2);
+      }
+      return "0.00";
     });
 
     const filteredMethods = computed(() => saleStore.getPaymentMethodsOptions.map(option => ({
@@ -430,18 +439,134 @@ export default defineComponent({
         disabled: sale.value.payments?.some(pay => pay.payment_method === option.value)
     })));
 
-    const showCustomerOptions = () => {};
-    const autoCreateCustomer = () => {};
-    const createAddressesOptions = () => {};
-    const changeAddress = () => {};
-    const handleDelivery = () => {};
-    const performCreateOrder = () => {
-      performTakeAway();
+    const showCustomerOptions = async (value) => {
+      if (value.length >= 3 && value.length <= 11) {
+        searchingCustomer.value = true;
+        try {
+          const searchFunc = sale.value.invoice_type === 1 ? searchRucCustomer : searchCustomerByName;
+          const response = await searchFunc(value);
+          if (response.status === 200) {
+            customerResults.value = response.data;
+            customerOptions.value = response.data.map(customer => ({
+              value: customer.id,
+              label: `${customer.doc_num} - ${customer.names}`,
+              disabled: customer.is_disabled
+            }));
+          }
+        } catch (error) {
+          console.error(error);
+          message.error("Algo salió mal...");
+        } finally {
+          searchingCustomer.value = false;
+        }
+        return true;
+      } else {
+        customerResults.value = [];
+        customerOptions.value = [];
+        return false;
+      }
     };
-    const createPayment = () => {};
-    const onCloseModal = () => {};
-    const onSuccess = () => {};
-    const isDecimal = () => {};
+
+    const autoCreateCustomer = () => {
+      if (!searchingCustomer.value && !customerResults.value.length) {
+        const name = sale.value.customer_name;
+        if (!isNaN(name) && ((name.length === 8 && sale.value.invoice_type !== 1) || name.length === 11)) {
+          showCustomerModal.value = true;
+          customerDocument.value = name;
+        }
+      }
+    };
+
+    const createAddressesOptions = () => {
+      const customer = customerResults.value.find(c => c.id === sale.value.customer);
+      whatsappNumber.value = customer?.phone || "";
+      if (customer) {
+        addressesOptions.value = customer.addresses.map(address => ({
+          value: address.id,
+          label: `${address.ubigeo} - ${address.description}`
+        }));
+        if (addressesOptions.value.length) {
+          sale.value.address = addressesOptions.value[0].value;
+        }
+        if (sale.value.delivery_info) {
+          sale.value.delivery_info.person = customer.names;
+          sale.value.delivery_info.phone = customer.phone;
+          sale.value.delivery_info.address = customer.addresses.length ? customer.addresses[0].description : "";
+        }
+      }
+    };
+
+    const changeAddress = (v, o) => {
+      if (sale.value.delivery_info && o?.label) {
+        sale.value.delivery_info.address = o.label.split(" - ")[1];
+      }
+    };
+
+    const handleDelivery = (v) => {
+      sale.value.delivery_info = v ? {
+        person: "",
+        address: "",
+        phone: "",
+        deliveryman: "",
+        amount: parseFloat(0).toFixed(2)
+      } : null;
+      if (v) sale.value.ask_for = "";
+    };
+
+    const performCreateOrder = async () => {
+      loading.value = true;
+      try {
+        sale.value.sale_details = saleStore.toSale.map(detail => ({
+          ...detail,
+          igv_tax: detail.igv_tax.toFixed(2),
+          price_base: detail.price_base.toFixed(2)
+        }));
+        sale.value.discount = totalDSCT.value;
+        
+        const response = await takeAwayOrder(orderStore.orderList, sale.value, userConfirm.value);
+        if (response.status === 201) {
+          message.success("Venta realizada correctamente!");
+          checkState.value = true;
+          cleanupOrderStore();
+          pdfData.value = response.data.order;
+          showPdf.value = true;
+          setTimeout(() => {
+            ticketPreviewRef.value.generate();
+            if (settingsStore.businessSettings.printer.print_html) {
+              voucherData.value = response.data.sale;
+              showVoucher.value = true;
+              if (!ticketPreview.value) {
+                setTimeout(() => voucherDrawer.value.generate(), 250);
+              }
+            }
+          }, 250);
+        }
+      } catch (error) {
+        console.error(error);
+        message.error("Algo salió mal...");
+      } finally {
+        loading.value = false;
+        showConfirm.value = false;
+        userConfirm.value = "";
+      }
+    };
+
+    const createPayment = () => ({ payment_method: null, amount: "0" });
+
+    const onCloseModal = () => {
+      showCustomerModal.value = false;
+    };
+
+    const onSuccess = (customer) => {
+      if ((sale.value.invoice_type === 1 && customer.doc_type === "6") || sale.value.invoice_type !== 1) {
+        customerResults.value.push(customer);
+        sale.value.customer_name = `${customer.doc_num} - ${customer.names}`;
+        sale.value.customer = customer.id;
+        createAddressesOptions();
+      }
+      showCustomerModal.value = false;
+      onCloseModal();
+    };
 
     const checkState = ref(false);
     const hasUnsavedChanges = computed(() => orderStore.orderList.length > 0 && !checkState.value);
@@ -480,7 +605,7 @@ export default defineComponent({
       loading, selectProducts, showObservations, isMultiple, ticketPreview, activeTab,
       showModal, showConfirm, showPayments, showCustomerModal, showPdf, showVoucher,
       ticketPreviewRef, voucherDrawer, itemIndex, userConfirm, productSearch,
-      sale, pdfData, voucherData, addressesOptions, customerOptions,
+      sale, pdfData, voucherData, addressesOptions, customerOptions, customerResults,
       searchingCustomer, whatsappNumber, customerDocument,
       changing, subTotal, totalGRV, totalEXN, totalGRT, totalIGV, totalDSCT, icbper,
       getModalClass, evalPayments, currentPaymentsAmount, filteredMethods,

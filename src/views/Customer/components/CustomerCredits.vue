@@ -19,7 +19,7 @@
           v-model:value="payment.amount"
           placeholder="0.00"
           :show-button="false"
-          step="0.5"
+          step="0.1"
           min="0"
           readonly
           @update:value="amountChanged"
