@@ -132,7 +132,7 @@
           </transition>
         </n-card>
       </n-tab-pane>
-      <n-tab-pane name="menu" tab="Menú" v-if="selectProducts">
+      <n-tab-pane name="menu" tab="Menú" v-if="!selectProducts">
         <n-card title="Menú Programado" :bordered="false">
           <n-list>
             <n-list-item v-for="menu in scheduledMenus" :key="menu.id" @click="handleOpenMenuModal(menu)" style="cursor: pointer">
@@ -294,6 +294,7 @@ import { useSaleStore } from "@/store/modules/sale";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useUserStore } from "@/store/modules/user";
+import { useSaleTotals } from "@/composables/useSaleTotals";
 import { useBreakpoint } from 'vooks';
 
 import OrderTaking from "./OrderTaking.vue";
@@ -328,6 +329,7 @@ export default defineComponent({
     const settingsStore = useSettingsStore();
     const userStore = useUserStore();
     const route = useRoute();
+    const { grandTotal, formattedTotals } = useSaleTotals();
 
     // Estados principales
     const loading = ref(false);
@@ -356,13 +358,9 @@ export default defineComponent({
     const userConfirm = ref("");
     const productSearch = ref("");
 
+    // Usar el total del composable que incluye menús
     const total = computed(() => {
-        let cal = parseFloat(
-            subTotal.value -
-            parseFloat(totalDSCT.value) +
-            icbper.value +
-            parseFloat(sale.value.other_charges || 0)
-        );
+        let cal = grandTotal.value + parseFloat(sale.value.other_charges || 0);
         if (sale.value.delivery_info && sale.value.delivery_info.amount) {
             cal = cal + parseFloat(sale.value.delivery_info.amount);
         }
@@ -519,9 +517,12 @@ export default defineComponent({
     }, { deep: true });
 
     // Actualizar los valores calculados en el objeto sale cuando cambien
-    watch([total, icbper, totalGRV, totalEXN, totalGRT, totalIGV, totalDSCT, () => saleStore.toSale], () => {
-      // Calcular la cantidad de productos directamente
-      sale.value.count = saleStore.toSale.reduce((acc, curVal) => acc + curVal.quantity, 0);
+    watch([total, icbper, totalGRV, totalEXN, totalGRT, totalIGV, totalDSCT, () => saleStore.toSale, grandTotal, () => orderStore.orderList.length], () => {
+      // Calcular la cantidad de productos directamente (incluyendo menús)
+      const productCount = saleStore.toSale.reduce((acc, curVal) => acc + curVal.quantity, 0);
+      const menuCount = (saleStore.salePayload.sale_product_sets || []).reduce((acc, curVal) => acc + curVal.quantity, 0);
+      sale.value.count = productCount + menuCount;
+      
       sale.value.amount = total.value;
       sale.value.icbper = icbper.value;
       sale.value.taxed_amount = totalGRV.value;
@@ -531,10 +532,16 @@ export default defineComponent({
       // Formatear total_igv como string con dos decimales
       const igvValue = parseFloat(totalIGV.value || 0);
       sale.value.total_igv = igvValue.toFixed(2);
-      console.log("total_igv actualizado:", sale.value.total_igv, "tipo:", typeof sale.value.total_igv);
+      console.log("TakeOrderLayout - total_igv actualizado:", sale.value.total_igv, "tipo:", typeof sale.value.total_igv);
+      console.log("TakeOrderLayout - Total con menús:", total.value, "Grand Total:", grandTotal.value);
+      
       // Actualizar el monto dado cuando cambia el total (para contado)
       if (sale.value.payment_condition === 1) {
-        sale.value.given_amount = total.value > 0 ? total.value : parseFloat(0).toFixed(2);
+        const newGivenAmount = total.value > 0 ? total.value : parseFloat(0).toFixed(2);
+        if (sale.value.given_amount !== newGivenAmount) {
+          sale.value.given_amount = newGivenAmount;
+          console.log("TakeOrderLayout - Monto de pago actualizado a:", newGivenAmount);
+        }
       }
     });
 

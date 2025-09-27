@@ -61,7 +61,8 @@
                 </n-button>
               </td>
               <td><b>Menú: {{ menu.name }}</b></td>
-              <td>
+              <td></td>
+<!--               <td>
                 <n-input-number
                   class="border-top-0"
                   size="small"
@@ -70,7 +71,7 @@
                   @update:value="updateOrderDetails"
                   @click.stop
                 />
-              </td>
+              </td> -->
               <td>S/. {{ formatPrice(menu.price * menu.quantity)}}</td>
               <td>
                 <n-button type="error" text @click.stop="removeMenuSet(menuIndex)">
@@ -223,6 +224,16 @@ export default defineComponent({
       // Actualizar el store de sales con los datos actuales
       saleStore.sale_details = orderStore.productLines;
       saleStore.sale_product_sets = orderStore.menuSets;
+      
+      // Forzar la actualización del payload para disparar reactividad
+      saleStore.buildSalePayload();
+      
+      // Log para debug
+      console.log('PaymentSummary - Items actualizados:', {
+        products: orderStore.productLines.length,
+        menus: orderStore.menuSets.length,
+        totalOrders: orderStore.orderList.length
+      });
     };
 
     const selectProduct = (value) => {

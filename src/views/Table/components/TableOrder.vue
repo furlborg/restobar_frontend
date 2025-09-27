@@ -51,11 +51,12 @@
                                         </n-button>
                                     </td>
                                     <td><b>Menú: {{ menu.name }}</b></td>
-                                    <td>
+                                    <td></td>
+<!--                                     <td>
                                         <n-input-number v-if="!isPaymentRoute" size="small" :min="1"
                                             v-model:value="menu.quantity" @click.stop />
                                         <template v-else>{{ menu.quantity }}</template>
-                                    </td>
+                                    </td> -->
                                     <td>S/. {{ formatPrice(menu.price * menu.quantity) }}</td>
                                     <td>
                                         <n-button v-if="!isPaymentRoute" type="error" text @click.stop="handleRemoveMenuSet(menuIndex)">
@@ -279,6 +280,9 @@ export default defineComponent({
                     } else {
                         deleteOrderDetail(orderIndex, menuToRemove.id);
                     }
+                    
+                    // Actualizar saleStore para forzar reactividad
+                    updateSaleStore();
                 }
             }
         };
@@ -298,6 +302,9 @@ export default defineComponent({
                     } else {
                         deleteOrderDetail(orderIndex, productToRemove.id);
                     }
+                    
+                    // Actualizar saleStore para forzar reactividad
+                    updateSaleStore();
                 }
             }
         };
@@ -308,6 +315,23 @@ export default defineComponent({
                 const order = orderStore.orderList[index];
                 handleRemoveOrder(order, index);
             }
+        };
+
+        // Función para actualizar el saleStore y forzar reactividad
+        const updateSaleStore = () => {
+            // Actualizar el store de sales con los datos actuales
+            saleStore.sale_details = orderStore.productLines;
+            saleStore.sale_product_sets = orderStore.menuSets;
+            
+            // Forzar la actualización del payload para disparar reactividad
+            saleStore.buildSalePayload();
+            
+            // Log para debug
+            console.log('TableOrder - Items actualizados:', {
+                products: orderStore.productLines.length,
+                menus: orderStore.menuSets.length,
+                totalOrders: orderStore.orderList.length
+            });
         };
 
         const nullifyTableOrder = async (order) => {
@@ -394,6 +418,7 @@ export default defineComponent({
             showOptions, selectProduct, renderLabel, navigateToPayment, addCustomerLocal, confirmRemoveCustomer, navigateToTakeOrder,
             getCustomerOrders, getCustomerTotal, getTotalAmount, formatPrice, hasAnyOrders, getGlobalOrderIndex, removeOrderItem,
             validateSend, deleteOrderDetail, nullifyTableOrder, openOrderModal, handleRemoveOrder, handleRemoveMenuSet, handleRemoveProductLine,
+            updateSaleStore,
             // Composables
             formattedTotals,
             // Props (direct access for template)
