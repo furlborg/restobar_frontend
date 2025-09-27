@@ -45,7 +45,27 @@
               @perform-take-away="performTakeAway"
               @do-multiple-payment="doMultiplePayment"
             />
-            <CategoriesList v-else />
+            <div v-else>
+            <n-tabs type="line" animated>
+              <n-tab-pane name="categories" tab="Categorías">
+                <CategoriesList />
+              </n-tab-pane>
+              <n-tab-pane name="menu" tab="Menú">
+                <n-card title="Menú Programado" :bordered="false">
+                  <n-list>
+                    <n-list-item v-for="menu in scheduledMenus" :key="menu.id" @click="handleOpenMenuModal(menu)" style="cursor: pointer">
+                      <n-thing>
+                        <n-space vertical>
+                          <n-text class="fs-4">{{ menu.menu.name }}</n-text>
+                          <n-text class="fs-6" type="info">Price: {{ menu.menu.price}}</n-text>
+                        </n-space>
+                      </n-thing>
+                    </n-list-item>
+                  </n-list>
+                </n-card>
+              </n-tab-pane>
+            </n-tabs>
+          </div>
           </transition>
         </n-gi>
 
@@ -110,6 +130,20 @@
             />
             <CategoriesList v-else />
           </transition>
+        </n-card>
+      </n-tab-pane>
+      <n-tab-pane name="menu" tab="Menú" v-if="selectProducts">
+        <n-card title="Menú Programado" :bordered="false">
+          <n-list>
+            <n-list-item v-for="menu in scheduledMenus" :key="menu.id" @click="handleOpenMenuModal(menu)" style="cursor: pointer">
+              <n-thing>
+                <n-space vertical>
+                  <n-text class="fs-4">{{ menu.menu.name }}</n-text>
+                  <n-text class="fs-6" type="info">Price: {{ menu.menu.price}}</n-text>
+                </n-space>
+              </n-thing>
+            </n-list-item>
+          </n-list>
         </n-card>
       </n-tab-pane>
       <n-tab-pane name="payment" tab="Resumen">
@@ -243,6 +277,8 @@
         @printed="() => $router.push({ name: 'TableHome' })"
         @canceled="() => $router.push({ name: 'TableHome' })"
       />
+      <MenuProductModal v-if="showMenuModal" :menu="selectedMenu" @close="showMenuModal = false" />
+
   </div>
 </template>
 
@@ -252,6 +288,7 @@ import { useRoute } from "vue-router";
 import { useMessage, useDialog } from "naive-ui";
 import { getSaleNumber } from "@/api/modules/sales";
 import { takeAwayOrder } from "@/api/modules/orders";
+import { getMenuToday } from '@/api/modules/products';
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { useSettingsStore } from "@/store/modules/settings";
@@ -266,6 +303,7 @@ import OrderIndications from "./OrderIndications.vue";
 import CustomerModal from "@/views/Customer/components/CustomerModal.vue";
 import TicketPreview from "@/views/Order/components/TicketPreview.vue";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer.vue";
+import MenuProductModal from "@/views/Table/components/MenuProductModal.vue";
 import format from "date-fns/format";
 
 export default defineComponent({
@@ -277,7 +315,8 @@ export default defineComponent({
     OrderIndications,
     CustomerModal,
     TicketPreview,
-    PreviewDrawer
+    PreviewDrawer,
+    MenuProductModal,
   },
   setup() {
     const breakpointRef = useBreakpoint();
@@ -297,6 +336,8 @@ export default defineComponent({
     const isMultiple = ref(false);
     const ticketPreview = ref(false);
     const activeTab = ref('main');
+    const selectedMenu = ref(null);
+
 
     // Estados de modales
     const showModal = ref(false);
@@ -305,6 +346,8 @@ export default defineComponent({
     const showCustomerModal = ref(false);
     const showPdf = ref(false);
     const showVoucher = ref(false);
+    const showMenuModal = ref(false);
+    const scheduledMenus = ref([]);
 
     // Referencias
     const ticketPreviewRef = ref(null);
@@ -543,8 +586,18 @@ export default defineComponent({
 
     onMounted(async () => {
       console.log('Componente montado, obteniendo número de venta inicial');
+      const menuData = await getMenuToday();
+      scheduledMenus.value = menuData.data;
       await obtainSaleNumber();
     });
+
+    const handleOpenMenuModal = async (menu) => {
+      const menuData = await getMenuToday(menu.id);
+      if (menuData?.data?.length) {
+        selectedMenu.value = menuData.data[0];
+        showMenuModal.value = true;
+      }
+    };
 
     const selectSerie = (serieId) => {
       if (serieId !== undefined && serieId !== null) {
@@ -718,6 +771,10 @@ export default defineComponent({
       showPdf,
       showVoucher,
       activeTab,
+      showMenuModal,
+      selectedMenu,
+      scheduledMenus,
+      handleOpenMenuModal,
       // Referencias
       ticketPreviewRef,
       voucherDrawer,

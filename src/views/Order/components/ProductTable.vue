@@ -11,7 +11,43 @@
       </tr>
     </thead>
     <tbody>
-      <tr v-for="(detail, index) in saleDetails" :key="index">
+      <!-- Menús -->
+      <template v-for="(menuSet, menuIndex) in saleMenuSets" :key="`menu-${menuIndex}`">
+        <tr style="background-color: #f8f8f8; font-weight: bold;">
+          <td v-if="settingsStore.businessSettings.sale.manage_affectations">
+            <n-tag size="small" type="warning">MENÚ</n-tag>
+          </td>
+          <td>{{ menuSet.quantity }}</td>
+          <td>
+            <input 
+              class="custom-input" 
+              v-model="menuSet.name" 
+              v-autowidth
+              readonly
+              style="font-weight: bold;"
+            />
+          </td>
+          <td>S/. {{ Number(menuSet.price || 0).toFixed(2) }}</td>
+          <td>0.00</td>
+          <td>{{ (menuSet.quantity * menuSet.price).toFixed(2) }}</td>
+        </tr>
+        <!-- Items del menú -->
+<!--         <tr v-for="(item, itemIndex) in menuSet.items" :key="`menu-item-${menuIndex}-${itemIndex}`" 
+            style="background-color: #fafafa; font-size: 0.9em;">
+          <td v-if="settingsStore.businessSettings.sale.manage_affectations"></td>
+          <td>{{ item.quantity }}</td>
+          <td style="padding-left: 20px;">
+            • {{ item.product_name }}
+            <small v-if="item.phase_name" style="color: #666;">({{ item.phase_name }})</small>
+          </td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+        </tr> -->
+      </template>
+
+      <!-- Productos individuales -->
+      <tr v-for="(detail, index) in saleDetails" :key="`product-${index}`">
         <td v-if="settingsStore.businessSettings.sale.manage_affectations">
           <n-popselect 
             size="small" 
@@ -96,6 +132,10 @@ export default defineComponent({
     saleDetails: {
       type: Array,
       required: true
+    },
+    saleMenuSets: {
+      type: Array,
+      default: () => []
     }
   },
   emits: ['updateDetail'],
@@ -159,5 +199,6 @@ input::-webkit-inner-spin-button {
 
 input[type="number"] {
   -moz-appearance: textfield;
+  appearance: textfield;
 }
 </style>

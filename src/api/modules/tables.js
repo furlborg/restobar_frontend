@@ -2,6 +2,7 @@ import { http } from "@/api";
 import { useBusinessStore } from "@/store/modules/business";
 import { useUserStore } from "@/store/modules/user";
 import { useTillStore } from "@/store/modules/till";
+import { buildTableOrderPayload } from "@/services/saleAssembler";
 
 export async function getAreas() {
     return await http.get("areas/");
@@ -73,43 +74,16 @@ export async function createTableOrder(
     ask_for = undefined
 ) {
     const tillStore = useTillStore();
-    let order_details = [];
-    let product_sets = [];
-    details.forEach(order => {
-        if (order.from_menu) {
-            // Push to product_sets
-            product_sets.push({
-                //menu_id: order.menu_id,
-                name: "MENU",
-                menu_name: order.name,
-                price: order.price || order.menu_price,
-                quantity: order.quantity,
-                items: (order.items || []).map(item => ({
-                    product_phase_id: item.product_phase_id,
-                    product_id: item.product_id,
-                    quantity: item.quantity,
-                    indication: "",
-                }))
-            });
-        } else {
-            // Normal order_detail
-            order_details.push({
-                product: order.product,
-                indication: order.indication || [],
-                quantity: order.quantity,
-                customer: order.customer || null
-            });
-        }
-    });
-    const bodyRequest = {
-        till: tillStore.currentTillID,
-        order_type: "M",
-        order_details,
-        product_sets,
-        ask_for,
+    
+    // Use centralized assembler instead of inline logic
+    const payload = buildTableOrderPayload(details, {
+        tillId: tillStore.currentTillID,
+        orderType: "M",
+        askFor: ask_for,
         user
-    }
-    return await http.post(`tables/${idTable}/take_order/`, bodyRequest);
+    });
+    
+    return await http.post(`tables/${idTable}/take_order/`, payload);
 }
 
 export async function updateTableOrder(
@@ -120,51 +94,19 @@ export async function updateTableOrder(
     ask_for = undefined
 ) {
     const tillStore = useTillStore();
-    // Handle both order_details and product_sets
-    let order_details = [];
-    let product_sets = [];
-    details.forEach(order => {
-        if (order.from_menu) {
-            // Build product set object and push to product_sets
-            const productSet = {
-                order_detail_id: order.id,
-                menu_id: order.menu_name,
-                name: order.name,
-                price: order.price || order.menu_price,
-                quantity: order.quantity,
-                items: (order.items || []).map(item => ({
-                    id: item.id,
-                    product_phase_id: item.product_phase_id,
-                    product_id: item.product_id,
-                    quantity: item.quantity,
-                    indication: "",
-                }))
-            };
-            if (order.product_set_id) {
-                productSet.id = order.product_set_id;
-            }
-            product_sets.push(productSet);
-        } else {
-            // Normal order_detail
-            order_details.push({
-                id: order.id,
-                product: order.product,
-                indication: order.indication || [],
-                quantity: order.quantity,
-                customer: order.customer || null
-            });
-        }
-    });
-    // Optionally filter out zero-quantity order_details/product_sets if required (not specified)
-    return await http.patch(`tables/${ idTable }/change_order/`, {
-        id: orderId,
-        till: tillStore.currentTillID,
-        order_type: "M",
-        order_details: order_details,
-        product_sets: product_sets,
-        ask_for: ask_for,
+    
+    // Use centralized assembler for updates
+    const payload = buildTableOrderPayload(details, {
+        tillId: tillStore.currentTillID,
+        orderType: "M",
+        askFor: ask_for,
         user: user ?? null
     });
+    
+    // Add update-specific fields
+    payload.id = orderId;
+    
+    return await http.patch(`tables/${idTable}/change_order/`, payload);
 }
 
 export async function cancelTableOrder(idTable, dataAnulate) {

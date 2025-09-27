@@ -4,6 +4,7 @@ import { getDocumentSeries } from "@/api/modules/business";
 import { useBusinessStore } from "@/store/modules/business";
 import { useUserStore } from "@/store/modules/user";
 import { useOrderStore } from "@/store/modules/order";
+import { buildSalePayload, computePayloadTotals } from "@/services/saleAssembler";
 const businessStore = useBusinessStore();
 const userStore = useUserStore();
 const orderStore = useOrderStore();
@@ -12,7 +13,8 @@ export const useSaleStore = defineStore("sale", {
   state: () => ({
     payment_methods: [],
     series: [],
-    sale_details: [],
+    sale_details: [], // legacy flat product lines
+    sale_product_sets: [], // menu sets
     order_initial: [],
   }),
   getters: {
@@ -38,26 +40,19 @@ export const useSaleStore = defineStore("sale", {
         value: serie.id,
       }));
     },
+    // Legacy getter (returns only product lines). Avoid mutating state; use buildSalePayload action for full structure.
     toSale(state) {
-      console.log('Store toSale - orderStore.orderList:', orderStore.orderList);
-      state.sale_details = orderStore.orderList.map((order) => {
-        let detail = {
-          product: order.product,
-          product_name: order.product_name,
-          product_affectation: order.product_affectation,
-          product_igv: order.product_igv,
-          price_base: parseFloat(order.price).toFixed(2),
-          igv_tax: 0,
-          discount: parseFloat(0).toFixed(2),
-          price_sale: parseFloat(order.price).toFixed(2),
-          quantity: Number(order.quantity),
-          icbper: parseFloat(order.icbper_amount).toFixed(2),
-          customer: order.customer
-        };
-        this.updateDetail(detail);
-        return detail;
-      });
+      const payload = this.buildSalePayload();
+      state.sale_details = payload.sale_details; // cache for legacy consumers
+      state.sale_product_sets = payload.sale_product_sets; // cache menus as well
       return state.sale_details;
+    },
+    salePayload() {
+      return this.buildSalePayload();
+    },
+    grandTotal() {
+      const totals = this.computeTotals();
+      return totals.grandTotal;
     },
     saleTotal(state) {
       return state.sale_details.reduce((acc, curVal) => {
@@ -66,6 +61,22 @@ export const useSaleStore = defineStore("sale", {
     },
   },
   actions: {
+    buildSalePayload() {
+      const orderStore = useOrderStore();
+      const payload = buildSalePayload(orderStore.orderList);
+      
+      // Apply tax calculations to product lines
+      payload.sale_details.forEach(detail => {
+        this.updateDetail(detail);
+      });
+      
+      return payload;
+    },
+    
+    computeTotals() {
+      const payload = this.buildSalePayload();
+      return computePayloadTotals(payload);
+    },
     async initializeStore() {
       await getPaymentMethods()
         .then((response) => {
