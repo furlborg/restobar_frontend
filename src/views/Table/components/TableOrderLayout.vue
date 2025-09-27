@@ -186,15 +186,20 @@ export default defineComponent({
         }
 
         const handleRouteGuard = (to, isLeave = false) => {
-            if (["ProductCategories", "CategoriesItems"].includes(to.name)) return;
-            if (checkState.value) return;
+            if (["ProductCategories", "CategoriesItems", "TablePayment"].includes(to.name)) return;
+
+            if (checkState.value) {
+                cleanupOrderStore();
+                return;
+            }
+
             const config = {
                 title: "Cambios sin guardar",
                 content: "¿Salir de todos modos?",
                 positiveText: "Sí",
                 onPositiveClick: () => {
                     checkState.value = true;
-                    orderStore.orders = saleStore.order_initial;
+                    cleanupOrderStore();
                     router.push(to);
                 },
                 ...(isLeave ? {} : { negativeText: "No" }),
@@ -202,6 +207,12 @@ export default defineComponent({
             };
             dialog.error(config);
             return false;
+        };
+
+        const cleanupOrderStore = () => {
+            orderStore.orderId = null;
+            orderStore.orders = [];
+            saleStore.order_initial = [];
         };
 
         onBeforeRouteUpdate((to) => handleRouteGuard(to));
@@ -300,6 +311,7 @@ export default defineComponent({
             showPdf.value = true;
             setTimeout(() => ticketPreview.value.generate(), 250);
             checkState.value = true;
+            cleanupOrderStore();
         };
 
         const performCreateTableOrder = async () => {
@@ -352,6 +364,7 @@ export default defineComponent({
                 if (response.status === 202) {
                     message.success("Pedido anulado correctamente!");
                     checkState.value = true;
+                    cleanupOrderStore();
                     router.push({ name: "TableHome" });
                 }
             } catch (error) {
@@ -430,7 +443,10 @@ export default defineComponent({
         };
 
         const resetAnulateData = () => dataAnulate.value = { username: "", pass: "" };
-        const goHome = () => router.push({ name: "TableHome" });
+        const goHome = () => {
+            cleanupOrderStore();
+            router.push({ name: "TableHome" });
+        };
 
         onMounted(async () => {
             await performRetrieveTableOrder();

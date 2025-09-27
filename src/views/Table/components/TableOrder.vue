@@ -130,9 +130,10 @@
 
 <script>
 import OrderIndications from "./OrderIndications";
+import ProductSearchLabel from "@/views/Product/components/ProductSearchLabel.vue";
 import { defineComponent, ref, computed, h } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { NThing, NTag, NSpace, NText, useMessage, useDialog } from "naive-ui";
+import { useMessage, useDialog } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useUserStore, useActiveUsersStore } from "@/store/modules/user";
 import { useGenericsStore } from "@/store/modules/generics";
@@ -142,11 +143,10 @@ import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { useSaleTotals } from "@/composables/useSaleTotals";
 import { searchProductByName } from "@/api/modules/products";
-import { lighten } from "@/utils";
 
 export default defineComponent({
     name: "TableOrder",
-    components: { OrderIndications },
+    components: { OrderIndications, ProductSearchLabel },
     props: {
         ask_for: {
             type: String,
@@ -365,35 +365,7 @@ export default defineComponent({
         };
 
         const renderLabel = (option) => {
-            const t = option.label.split("-");
-            let color = "#3B689F", text = "MESA";
-            if (t.length > 1) {
-                if (t[1].includes("LL")) {
-                    color = "#926ED7";
-                    text = "PARA LLEVAR";
-                } else if (t[1].includes("D")) {
-                    color = "#995C4E";
-                    text = "DELIVERY";
-                }
-            }
-            return h(NThing, {}, {
-                default: () => "",
-                header: () => h(NSpace, { align: "center" }, {
-                    default: () => [
-                        h(NText, { depth: 2 }, { default: () => option.label }),
-                        h(NTag, {
-                            size: "small",
-                            color: { color: lighten(color, 48), textColor: color, borderColor: lighten(color, 24) }
-                        }, { default: () => text })
-                    ]
-                }),
-                description: () => h(NSpace, { size: "small" }, {
-                    default: () => [
-                        h(NText, { depth: 3 }, { default: () => option.category }),
-                        h(NText, { depth: 3 }, { default: () => `Stock: ${option.stock}` })
-                    ]
-                })
-            });
+            return h(ProductSearchLabel, { option });
         };
 
         const navigateToPayment = () => {

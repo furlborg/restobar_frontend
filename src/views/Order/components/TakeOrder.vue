@@ -103,41 +103,47 @@
                                         </n-gi>
                                     </n-grid>
                                 </n-form>
-                                <n-table class="m-auto text-center fs-6" :bordered="false">
-                                    <thead>
-                                    <tr>
-                                        <th v-if="settingsStore.businessSettings.sale.manage_affectations">#</th>
-                                        <th>Cantidad</th>
-                                        <th>Producto</th>
-                                        <th>Precio Unitario</th>
-                                        <th>Descuento</th>
-                                        <th>Precio Total</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    <tr v-for="(detail, index) in saleStore.toSale" :key="index">
-                                        <td v-if="settingsStore.businessSettings.sale.manage_affectations">
-                                            <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation" :options="productStore.affectationsOptions" @update:value="(v) => saleStore.updateDetail(detail)">
-                                                <n-tag size="small" :color="getAfcColor(detail.product_affectation)">{{ getAfcShort(detail.product_affectation) }}</n-tag>
-                                            </n-popselect>
-                                        </td>
-                                        <td>{{ detail.quantity }}</td>
-                                        <td>
-                                            <input class="custom-input" v-model="detail.product_name" v-autowidth
-                                                   @click="$event.target.select()"/>
-                                        </td>
-                                        <td>
-                                            S/.
-                                            <input class="custom-input" type="number" min="0" step=".5" v-model="detail.price_sale" @input="saleStore.updateDetail(detail), (detail.discount = parseFloat(0).toFixed(2))" v-autowidth @click="$event.target.select()"/>
-                                        </td>
-                                        <td>
-                                            S/.
-                                            <input class="custom-input" type="number" min="0" :max="!detail.price_sale ? 0 : detail.price_sale" :disabled="detail.product_affectation === 21 || !!Number(sale.discount)" step=".5" v-model="detail.discount" v-autowidth @click="$event.target.select()"/>
-                                        </td>
-                                        <td>{{ detail.product_affectation === 21 ? "0.00" : (detail.quantity * detail.price_sale - detail.discount).toFixed(2) }}</td>
-                                    </tr>
-                                    </tbody>
-                                </n-table>
+                                <div class="table-container">
+                                    <n-table class="order-details-table" :bordered="false">
+                                        <thead>
+                                        <tr>
+                                            <th v-if="settingsStore.businessSettings.sale.manage_affectations">#</th>
+                                            <th>Cantidad</th>
+                                            <th>Producto</th>
+                                            <th>Precio Unitario</th>
+                                            <th>Descuento</th>
+                                            <th>Precio Total</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr v-for="(detail, index) in saleStore.toSale" :key="index">
+                                            <td v-if="settingsStore.businessSettings.sale.manage_affectations">
+                                                <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation" :options="productStore.affectationsOptions" @update:value="(v) => saleStore.updateDetail(detail)">
+                                                    <n-tag size="small" :color="getAfcColor(detail.product_affectation)">{{ getAfcShort(detail.product_affectation) }}</n-tag>
+                                                </n-popselect>
+                                            </td>
+                                            <td>{{ detail.quantity }}</td>
+                                            <td>
+                                                <input class="custom-input product-name-input" v-model="detail.product_name" v-autowidth
+                                                       @click="$event.target.select()"/>
+                                            </td>
+                                            <td>
+                                                <div class="currency-input-wrapper">
+                                                    <span class="currency-symbol">S/.</span>
+                                                    <input class="custom-input price-input" type="number" min="0" step=".5" v-model="detail.price_sale" @input="saleStore.updateDetail(detail), (detail.discount = parseFloat(0).toFixed(2))" v-autowidth @click="$event.target.select()"/>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="currency-input-wrapper">
+                                                    <span class="currency-symbol">S/.</span>
+                                                    <input class="custom-input discount-input" type="number" min="0" :max="!detail.price_sale ? 0 : detail.price_sale" :disabled="detail.product_affectation === 21 || !!Number(sale.discount)" step=".5" v-model="detail.discount" v-autowidth @click="$event.target.select()"/>
+                                                </div>
+                                            </td>
+                                            <td class="total-cell">{{ detail.product_affectation === 21 ? "0.00" : (detail.quantity * detail.price_sale - detail.discount).toFixed(2) }}</td>
+                                        </tr>
+                                        </tbody>
+                                    </n-table>
+                                </div>
                                 <n-grid cols="3">
                                     <n-gi :span="2">
                                         <n-space class="h-100" align="center" justify="space-around">
@@ -1062,7 +1068,162 @@ input::-webkit-inner-spin-button {
 
 input[type="number"] {
   -moz-appearance: textfield;
+  appearance: textfield;
   /* Firefox */
+}
+
+/* Estilos para tabla responsiva */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  margin: 16px 0;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: white;
+}
+
+.order-details-table {
+  width: 100%;
+  min-width: 800px; /* Ancho mínimo para evitar que se comprima demasiado */
+  margin: 0;
+  text-align: center;
+  font-size: 14px;
+  border-collapse: collapse;
+
+  th {
+    background-color: #f8fafc;
+    border-bottom: 2px solid #e5e7eb;
+    padding: 12px 8px;
+    font-weight: 600;
+    color: #374151;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 8px;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: middle;
+  }
+
+  tr:hover {
+    background-color: #f9fafb;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+/* Estilos para inputs dentro de la tabla */
+.currency-input-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  white-space: nowrap;
+
+  .currency-symbol {
+    font-weight: 500;
+    color: #6b7280;
+    font-size: 14px;
+  }
+}
+
+.custom-input {
+  &.product-name-input {
+    min-width: 120px;
+    max-width: 200px;
+    text-align: left;
+  }
+
+  &.price-input,
+  &.discount-input {
+    min-width: 60px;
+    max-width: 80px;
+    text-align: right;
+  }
+}
+
+.total-cell {
+  font-weight: 600;
+  color: #059669;
+  white-space: nowrap;
+}
+
+/* Responsividad para la tabla */
+@media (max-width: 1024px) {
+  .order-details-table {
+    min-width: 700px;
+    font-size: 13px;
+
+    th, td {
+      padding: 6px 4px;
+    }
+  }
+
+  .custom-input {
+    &.product-name-input {
+      min-width: 100px;
+      max-width: 150px;
+    }
+
+    &.price-input,
+    &.discount-input {
+      min-width: 50px;
+      max-width: 70px;
+      font-size: 12px;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .order-details-table {
+    min-width: 600px;
+    font-size: 12px;
+
+    th, td {
+      padding: 4px 2px;
+    }
+  }
+
+  .custom-input {
+    &.product-name-input {
+      min-width: 80px;
+      max-width: 120px;
+      font-size: 11px;
+    }
+
+    &.price-input,
+    &.discount-input {
+      min-width: 45px;
+      max-width: 60px;
+      font-size: 11px;
+    }
+  }
+
+  .currency-input-wrapper .currency-symbol {
+    font-size: 12px;
+  }
+}
+
+/* Scrollbar personalizado para la tabla */
+.table-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .mode-fade-enter-active,

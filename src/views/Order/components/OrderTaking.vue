@@ -2,23 +2,12 @@
   <n-spin :show="loading">
     <n-card>
       <n-space class="mb-2" align="center" justify="space-between">
-        <div class="d-flex align-items-center">
-          <n-text class="fs-4">
-            {{ `${saleStore.getSerieDescription(sale.serie)}-${sale.number}` }}
-          </n-text>
-          <n-dropdown
-            trigger="click"
-            :options="saleStore.getDocumentSeriesOptions(sale.invoice_type)"
-            :show-arrow="true"
-            placement="bottom-end"
-            size="huge"
-            @select="$emit('selectSerie', $event)"
-          >
-            <n-button type="info" text>
-              <v-icon class="p-0" name="md-arrowdropdown-round" scale="1.75"/>
-            </n-button>
-          </n-dropdown>
-        </div>
+        <SaleSerieSelector
+          :sale="sale"
+          :invoice-type="sale.invoice_type"
+          @update:serie="handleSerieUpdate"
+          @serie-changed="handleSerieChanged"
+        />
 
         <n-radio-group
           v-model:value="localInvoiceType"
@@ -65,35 +54,14 @@
             label="Cliente"
             :path="formRules.customer?.required ? 'customer' : ''"
           >
-            <n-input-group>
-              <n-auto-complete
-                blur-after-select
-                :input-props="{ autocomplete: 'disabled' }"
-                v-model:value="localCustomerName"
-                :options="customerOptions"
-                :loading="searchingCustomer"
-                :get-show="showCustomerOptions"
-                @update:value="handleCustomerNameChange"
-                @select="handleCustomerSelect"
-                @keyup.enter="$emit('autoCreateCustomer')"
-                placeholder=""
-                clearable
-              />
-              <n-button
-                v-if="!sale.customer"
-                type="info"
-                @click="handleNewCustomer"
-              >
-                <v-icon name="md-add-round"/>
-              </n-button>
-              <n-button
-                v-else
-                type="warning"
-                @click="$emit('showCustomerModal')"
-              >
-                <v-icon name="ri-edit-fill"/>
-              </n-button>
-            </n-input-group>
+            <ClientSelectInput
+              v-model:customer-name="localCustomerName"
+              :customer-id="sale.customer"
+              :invoice-type="sale.invoice_type"
+              @update:customerName="handleCustomerNameInput"
+              @customer-selected="handleCustomerSelected"
+              @customer-cleared="handleCustomerCleared"
+            />
           </n-form-item-gi>
 
           <n-form-item-gi :span="3" label="Fecha">
@@ -235,8 +203,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed, watch, watchEffect } from "vue";
-import { useMessage } from "naive-ui";
+import { defineComponent, ref, computed, watch, watchEffect, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useSaleStore } from "@/store/modules/sale";
 import { useSettingsStore } from "@/store/modules/settings";
@@ -244,16 +211,16 @@ import { useUserStore } from "@/store/modules/user";
 import { useSaleTotals } from "@/composables/useSaleTotals";
 import ProductTable from "./ProductTable.vue";
 import PaymentTotals from "./PaymentTotals.vue";
-import {
-  searchCustomerByName,
-  searchRucCustomer
-} from "@/api/modules/customer";
+import ClientSelectInput from "@/views/Customer/components/ClientSelectInput.vue";
+import SaleSerieSelector from "./SaleSerieSelector.vue";
 
 export default defineComponent({
   name: "OrderTaking",
   components: {
     ProductTable,
-    PaymentTotals
+    PaymentTotals,
+    ClientSelectInput,
+    SaleSerieSelector
   },
   props: {
     loading: {
@@ -379,6 +346,32 @@ export default defineComponent({
     watch(() => props.isMultiple, (newVal) => { localIsMultiple.value = newVal; });
     watch(() => props.ticketPreview, (newVal) => { localTicketPreview.value = newVal; });
 
+    watch(() => saleStore.series, (newSeries) => {
+      if (newSeries.length > 0 && !props.sale.serie) {
+        const defaultInvoiceType = settingsStore.businessSettings.sale?.enable_invoices
+          ? settingsStore.businessSettings.sale.default_invoice : 80;
+        const newSerie = saleStore.getFirstOption(defaultInvoiceType);
+        if (newSerie) {
+          const updatedSale = { ...props.sale, serie: newSerie };
+          emit('update:sale', updatedSale);
+          emit('selectSerie', newSerie);
+        }
+      }
+    }, { immediate: true });
+
+    onMounted(() => {
+      if (!props.sale.serie && saleStore.series.length > 0) {
+        const defaultInvoiceType = settingsStore.businessSettings.sale?.enable_invoices
+          ? settingsStore.businessSettings.sale.default_invoice : 80;
+        const newSerie = saleStore.getFirstOption(defaultInvoiceType);
+        if (newSerie) {
+          const updatedSale = { ...props.sale, serie: newSerie };
+          emit('update:sale', updatedSale);
+          emit('selectSerie', newSerie);
+        }
+      }
+    });
+
     const formRules = computed(() => {
       const rules = {
         customer: {
@@ -405,47 +398,31 @@ export default defineComponent({
           !(props.sale.given_amount < props.sale.amount)
         );
     });
-    const searchingCustomer = ref(false);
-
-    const customerResults = ref([]);
-
-    const showCustomerOptions = async(value) => {
-      if (value.length >= 3 && value.length <= 11) {
-          searchingCustomer.value = true;
-          if (props.sale.invoice_type === 1) {
-              await searchRucCustomer(value).then((response) => {
-                  if (response.status === 200) {
-                      customerResults.value = response.data;
-                  }
-              }).catch((error) => {
-                  console.error(error);
-                  message.error("Algo salió mal...");
-              }).finally(() => {
-                  searchingCustomer.value = false;
-              });
-              return true;
-          } else {
-              await searchCustomerByName(value).then((response) => {
-                  if (response.status === 200) {
-                      customerResults.value = response.data;
-                  }
-              }).catch((error) => {
-                  console.error(error);
-                  message.error("Algo salió mal...");
-              }).finally(() => {
-                  searchingCustomer.value = false;
-              });
-              return true;
-          }
-      } else {
-          customerResults.value = [];
-          return false;
-      }
-  };
 
     const dateDisabled = (ts) => ts > new Date(Date.now());
 
-    const handleCustomerNameChange = (value) => {
+    // Handlers para el componente ClientSelectInput
+    const handleCustomerSelected = (customer) => {
+      localCustomerName.value = `${customer.doc_num} - ${customer.names}`;
+      const updatedSale = { ...props.sale };
+      updatedSale.customer = customer.id;
+      updatedSale.customer_name = localCustomerName.value;
+      updatedSale.address = null;
+      emit('update:sale', updatedSale);
+      emit('createAddressesOptions');
+    };
+
+    const handleCustomerCleared = () => {
+      localCustomerName.value = '';
+      const updatedSale = { ...props.sale };
+      updatedSale.customer = 0;
+      updatedSale.customer_name = '';
+      updatedSale.address = null;
+      emit('update:sale', updatedSale);
+    };
+
+    const handleCustomerNameInput = (value) => {
+      // Mantener sincronizado el nombre mientras escribe
       localCustomerName.value = value;
       const updatedSale = { ...props.sale, customer_name: value };
       if (!value) {
@@ -455,19 +432,18 @@ export default defineComponent({
       emit('update:sale', updatedSale);
     };
 
-    const handleCustomerSelect = (value) => {
-      const updatedSale = { ...props.sale };
-      updatedSale.customer = value;
-      updatedSale.address = null;
+    // Métodos para manejar los eventos del SaleSerieSelector
+    const handleSerieUpdate = (newSerie) => {
+      if (!newSerie) {
+        return;
+      }
+      const updatedSale = { ...props.sale, serie: newSerie };
       emit('update:sale', updatedSale);
-      emit('createAddressesOptions');
+      emit('selectSerie', newSerie);
     };
 
-    const handleNewCustomer = () => {
-      const updatedSale = { ...props.sale };
-      updatedSale.customer = 0;
-      emit('update:sale', updatedSale);
-      emit('showCustomerModal');
+    const handleSerieChanged = () => {
+      console.log('[OrderTaking] handleSerieChanged called');
     };
 
     const handleInvoiceTypeChange = (value) => {
@@ -563,7 +539,6 @@ export default defineComponent({
     const updateSale = (updates) => {
       emit('update:sale', updates);
     };
-    
     // Crear los items para PaymentTotals
     const paymentTotalsItems = computed(() => {
       return [
@@ -573,13 +548,13 @@ export default defineComponent({
         { label: "OP. GRATUITAS", value: props.totalGrt, editable: false, alwaysShow: false },
         { label: "IGV", value: props.totalIgv, editable: false },
         { label: "ICBPER", value: props.icbper, editable: false, alwaysShow: false },
-        { 
-          label: "DSCT", 
-          value: props.totalDsct, 
-          editable: true, 
-          field: "discount", 
-          step: 0.5, 
-          disabled: false 
+        {
+          label: "DSCT",
+          value: props.totalDsct,
+          editable: true,
+          field: "discount",
+          step: 0.5,
+          disabled: false
         },
         {
           label: "OTROS CARGOS",
@@ -591,12 +566,10 @@ export default defineComponent({
         }
       ];
     });
-    
-    // Computar el monto total usando el composable que incluye menús
+
     const totalAmount = computed(() => {
       return grandTotal.value || props.sale.amount || 0;
     });
-
     // Watcher para actualizar automáticamente el campo de pago y amount cuando cambie el total
     watch(totalAmount, (newTotal) => {
       if (newTotal > 0) {
@@ -612,6 +585,7 @@ export default defineComponent({
       }
     }, { immediate: true });
     
+
     // Manejar cambios en los valores editables
     const handleValueChange = ({ field, value }) => {
       if (field && value !== undefined) {
@@ -622,7 +596,7 @@ export default defineComponent({
         emit('update:sale', updates);
       }
     };
-    
+
     // Manejar cambios en el monto de pago
     const handlePaymentChange = (value) => {
       const updates = { ...props.sale, given_amount: value };
@@ -653,9 +627,11 @@ export default defineComponent({
       totalAmount,
       handleValueChange,
       handlePaymentChange,
-      handleCustomerNameChange,
-      handleCustomerSelect,
-      handleNewCustomer,
+      handleCustomerNameInput,
+      handleCustomerSelected,
+      handleCustomerCleared,
+      handleSerieUpdate,
+      handleSerieChanged,
       handleInvoiceTypeChange,
       handlePaymentConditionChange,
       handleAddressChange,
@@ -669,7 +645,6 @@ export default defineComponent({
       handleIsMultipleChange,
       handleTicketPreviewChange,
       handleMainAction,
-      showCustomerOptions,
       updateSale,
       ...props
     };

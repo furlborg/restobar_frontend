@@ -10,25 +10,21 @@
                         v-if="settingsStore.business_settings?.order?.divide_delivery_takeaway"
                 >
                     <n-button
-                            v-if="userStore.hasPermission('take_away_order')"
-                            type="info"
-                            secondary
-                            @click="
-              $router.push({ name: 'TakeOrder', query: { delivery: true } })
-            "
-                    >Delivery
-                    </n-button
+                        v-if="userStore.hasPermission('take_away_order')"
+                        type="info"
+                        secondary
+                        @click="$router.push({ name: 'TakeOrder', query: { delivery: true } })"
                     >
+                        Delivery
+                    </n-button>
                     <n-button
-                            v-if="userStore.hasPermission('take_away_order')"
-                            type="info"
-                            secondary
-                            @click="
-              $router.push({ name: 'TakeOrder', query: { delivery: false } })
-            "
-                    >Llevar
-                    </n-button
+                        v-if="userStore.hasPermission('take_away_order')"
+                        type="info"
+                        secondary
+                        @click="$router.push({ name: 'TakeOrder', query: { delivery: false } })"
                     >
+                        {{ settingsStore.business_settings.order?.fast_sale_format ? "Venta Rápida" : "Para llevar" }}
+                    </n-button>
                 </template>
                 <template v-else>
                     <n-button
@@ -36,9 +32,9 @@
                             type="info"
                             secondary
                             @click="$router.push({ name: 'TakeOrder' })"
-                    >Llevar / Delivery
-                    </n-button
                     >
+                        {{ settingsStore.business_settings.order?.fast_sale_format ? "Venta Rápida" : "Para llevar" }} / Delivery
+                    </n-button>
                 </template>
             </n-space>
         </template>
