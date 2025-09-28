@@ -104,17 +104,30 @@ export async function listOrderDetails(order) {
   return await http.get(`orders/${order}/details/`);
 }
 
-export async function takeAwayOrder(order_details, sale_product_sets, sale_data, user) {
+export async function takeAwayOrder(order_details, sale_data, user, salePayload = null) {
   const businessStore = useBusinessStore();
   const settingsStore = useSettingsStore();
   const tillStore = useTillStore();
   const userStore = useUserStore();
   
-  // Convert legacy parameters to unified order format
-  const unifiedOrders = [
-    ...order_details.map(detail => ({ ...detail, from_menu: false })),
-    ...sale_product_sets.map(set => ({ ...set, from_menu: true }))
-  ];
+  // Si no se pasa salePayload, obtenerlo del store
+  let actualSalePayload = salePayload;
+  if (!actualSalePayload) {
+    const { useSaleStore } = await import("@/store/modules/sale");
+    const saleStore = useSaleStore();
+    actualSalePayload = saleStore.salePayload;
+  }
+  
+  console.log("takeAwayOrder - sale_product_sets encontrados:", actualSalePayload?.sale_product_sets?.length || 0);
+  console.log("takeAwayOrder - order_details recibidos:", order_details.length);
+  
+  // Convert order_details to unified format, preserving from_menu flag
+  const unifiedOrders = order_details.map(detail => ({
+    ...detail,
+    from_menu: !!detail.from_menu
+  }));
+  
+  console.log("takeAwayOrder - unifiedOrders final:", unifiedOrders.length);
   
   // Use centralized assembler
   const { order, sale } = buildTakeawayOrderPayload(unifiedOrders, sale_data, {
@@ -143,6 +156,8 @@ export async function takeAwayOrder(order_details, sale_product_sets, sale_data,
     sale: formattedSale,
     total_igv: formattedSale.total_igv
   };
+  
+  console.log("takeAwayOrder - enviando payload con product_sets:", payload.sale.product_sets?.length || 0);
   
   return await http.post("orders/take_away/", payload);
 }

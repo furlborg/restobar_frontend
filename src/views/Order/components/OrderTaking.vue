@@ -209,6 +209,7 @@ import { useSaleStore } from "@/store/modules/sale";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useUserStore } from "@/store/modules/user";
 import { useSaleTotals } from "@/composables/useSaleTotals";
+import { useMessage } from "naive-ui";
 import ProductTable from "./ProductTable.vue";
 import PaymentTotals from "./PaymentTotals.vue";
 import ClientSelectInput from "@/views/Customer/components/ClientSelectInput.vue";

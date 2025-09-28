@@ -28,7 +28,7 @@
               style="font-weight: bold;"
             />
           </td>
-          <td>S/. {{ Number(menuSet.price || 0).toFixed(2) }}</td>
+          <td class="currency-input-wrapper">S/. {{ Number(menuSet.price || 0).toFixed(2) }}</td>
           <td>0.00</td>
           <td>{{ (menuSet.quantity * menuSet.price).toFixed(2) }}</td>
         </tr>
@@ -57,17 +57,11 @@
             :options="productStore.affectationsOptions" 
             @update:value="() => $emit('updateDetail', detail)"
           >
-            <n-tag 
-              size="small" 
+            <n-tag
+              size="small"
               :color="getAfcColor(detail.product_affectation)"
-
             >
-              <n-tag
-                size="small"
-                :color="getAfcColor(detail.product_affectation)"
-              >
-                {{ getAfcShort(detail.product_affectation) }}
-              </n-tag>
+              {{ getAfcShort(detail.product_affectation) }}
             </n-tag>
           </n-popselect>
           </td>

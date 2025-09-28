@@ -50,6 +50,9 @@ export function buildSalePayload(orders = [], options = {}) {
       const quantity = Number(order.quantity || 0);
       if (!includeZeroQty && quantity <= 0) return;
       
+      // Skip if no valid product ID (could be invalid menu items)
+      if (!order.product) return;
+      
       const detail = {
         product: order.product,
         product_name: order.product_name,
@@ -71,6 +74,11 @@ export function buildSalePayload(orders = [], options = {}) {
       
       sale_details.push(detail);
     }
+  });
+
+  console.log("buildSalePayload - final counts:", {
+    sale_details: sale_details.length,
+    sale_product_sets: sale_product_sets.length
   });
 
   return { sale_details, sale_product_sets };
@@ -145,14 +153,18 @@ export function buildTakeawayOrderPayload(orders = [], saleData = {}, context = 
   
   const { sale_details, sale_product_sets } = buildSalePayload(orders, { includeZeroQty: false });
   
-  // Build order_details for the order part
-  const order_details = sale_details.map(detail => ({
-    product: detail.product,
-    quantity: detail.quantity,
-    initial_quantity: detail.quantity,
-    indication: detail.indication || [],
-    quick_indications: detail.quick_indications || []
-  }));
+  // Build order_details for the order part - only include items with valid product IDs
+  const order_details = sale_details
+    .filter(detail => detail.product && detail.product !== null && detail.product !== undefined)
+    .map(detail => ({
+      product: detail.product,
+      quantity: detail.quantity,
+      initial_quantity: detail.quantity,
+      indication: detail.indication || [],
+      quick_indications: detail.quick_indications || []
+    }));
+
+  console.log("buildTakeawayOrderPayload - order_details:", order_details.length, "product_sets:", sale_product_sets.length);
 
   const order = {
     till: tillId,

@@ -464,7 +464,12 @@ export default defineComponent({
             const igvValue = parseFloat(sale.value.total_igv || sale.value.igv_amount || 0);
             sale.value.total_igv = igvValue.toFixed(2);
             const saleClone = JSON.parse(JSON.stringify(sale.value));
-            const response = await takeAwayOrder(orderStore.orderList, saleClone, userConfirm.value);
+            
+            // Obtener el payload completo que incluye sale_product_sets (menús)
+            const salePayload = saleStore.salePayload;
+            console.log("TakeOrderLayout - enviando orden con menús:", salePayload.sale_product_sets?.length || 0);
+            
+            const response = await takeAwayOrder(orderStore.orderList, saleClone, userConfirm.value, salePayload);
             if (response.status === 201) {
               checkState.value = true;
               cleanupOrderStore();
