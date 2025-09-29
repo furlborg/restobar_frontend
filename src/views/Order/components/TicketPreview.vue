@@ -79,7 +79,7 @@ export default defineComponent({
         const delivery = ref(null);
         let socket = null;
         const tableStore = useTableStore();
-        
+
         const places = computed(() => {
             return productStore.places.filter((place) =>
                 props.data.order_details.some(
@@ -89,7 +89,7 @@ export default defineComponent({
                 )
             );
         });
-        
+
         const handleSocketMessage = (event) => {
             const response = JSON.parse(event.data);
             if(response.id) {
@@ -110,21 +110,21 @@ export default defineComponent({
                 const apiUrl = import.meta.env.VITE_APP_URL.replace(/^https?:\/\//, "");
                 const socketUrl = `${window.location.protocol === "https:" ? "wss" : "ws"}://${apiUrl}/ws/print/`;
                 socket = new WebSocket(socketUrl);
-                
+
                 socket.onopen = (e) => {
                     console.log("WebSocket abierto", e);
                     if(callback) callback();
                 };
-                
+
                 socket.onmessage = handleSocketMessage;  // Manejamos el mensaje globalmente aquí
             } else if(socket.readyState === WebSocket.OPEN) {
                 if(callback) callback();
             }
         };
-        
+
         const printDelivery = async() => {
             return new Promise((resolve) => {
-                
+
                 const sendTicketData = () => {
                     const jsonTicket = {
                         "printer_name": settingsStore.businessSettings.sale.printer_name,
@@ -176,7 +176,7 @@ export default defineComponent({
                             "repartidor": props.data.delivery_info.deliveryman
                         }
                     };
-                    
+
                     socket.send(JSON.stringify(jsonTicket));
                     socket.onmessage = function(event) {
                         if(event.data.includes("id")) {
@@ -188,7 +188,7 @@ export default defineComponent({
                             } else {
                                 message.error("No se pudo establecer conexión con el servidor de impresiones");
                                 message.error("Iniciando impresión manual");
-                                
+
                                 startManualPrint();
                             }
                         }
@@ -202,14 +202,14 @@ export default defineComponent({
                 }
             });
         };
-        
+
         const printTicket = async(i, place) => {
             console.log(place);
             console.log(props.data);
             return new Promise((resolve) => {
                 const sendTicketData = () => {
                     let printerNameToPrint;
-                    
+
                     if(!props.data.table && props.data.delivery_info) {
                         printerNameToPrint = settingsStore.businessSettings.printer?.["print_name_delivery"] || place.printer_name;
                     } else if(!props.data.table && !props.data.delivery_info) {
@@ -250,10 +250,29 @@ export default defineComponent({
                             }).map(indicate => indicate.description) || ""
                         }))
                     };
-                    if(props.data.table !== null) jsonTicket.tittle.table = tableStore.getTableByID(props.data.table).description;
-                    if(props.data.delivery_info || props.data.table) delete jsonTicket.header.reference;
-                    if(!props.data.table) jsonTicket.tittle.table = !props.data.delivery_info ? "PARA LLEVAR" : "DELIVERY";
-                    
+                    // if(props.data.table !== null) jsonTicket.tittle.table = tableStore.getTableByID(props.data.table).description;
+                    // if(props.data.delivery_info || props.data.table) delete jsonTicket.header.reference;
+                    // if(!props.data.table) jsonTicket.tittle.table = !props.data.delivery_info ? "PARA LLEVAR" : "DELIVERY";
+
+                    // --- Ajustes especiales para el título ---
+                    if (props.data.table !== null) {
+                        // Caso mesa normal
+                        jsonTicket.tittle.table = tableStore.getTableByID(props.data.table).description;
+                    } else {
+                        console.log(settingsStore);
+                        // console.log(settingsStore.businessSettings.orders?.["fast_sale_format"]);
+                        // Caso sin mesa
+                        if (settingsStore.businessSettings.order?.["fast_sale_format"] === true) {
+                            jsonTicket.tittle.table = "VENTA RÁPIDA";
+                        } else {
+                            jsonTicket.tittle.table = props.data.delivery_info ? "DELIVERY" : "PARA LLEVAR";
+                        }
+                    }
+
+                    if (props.data.delivery_info || props.data.table) {
+                        delete jsonTicket.header.reference;
+                    }
+
                     socket.send(JSON.stringify(jsonTicket));
                     socket.onmessage = function(event) {
                         if(event.data.includes("id")) {
@@ -265,7 +284,7 @@ export default defineComponent({
                             } else {
                                 message.error("No se pudo establecer conexión con el servidor de impresiones");
                                 message.error("Iniciando impresión manual");
-                                
+
                                 const ticket = tickets.value[i];
                                 nextTick(() => {
                                     if(ticket && ticket.$el) {
@@ -300,7 +319,7 @@ export default defineComponent({
                 openWebSocket(sendTicketData);
             });
         };
-        
+
         function startManualPrint() {
             if(delivery.value && delivery.value.$el) {
                 const format = [delivery.value.$el.clientWidth, delivery.value.$el.clientHeight + 30];
@@ -326,14 +345,14 @@ export default defineComponent({
                 console.error("No se pudo encontrar el elemento del ticket.");
             }
         }
-        
+
         const printTicketsForAllPlaces = async() => {
             for(const [i, place] of places.value.entries()) {
                 console.log(place);
                 await printTicket(i, place);
             }
         };
-        
+
         const generate = async() => {
             console.log(props);
             if(props.data.order_type === "D" && settingsStore.business_settings.printer.print_html) {
@@ -345,7 +364,7 @@ export default defineComponent({
             emit("printed");
             emit("update:show", false);
         };
-        
+
         return {
             tickets,
             delivery,
