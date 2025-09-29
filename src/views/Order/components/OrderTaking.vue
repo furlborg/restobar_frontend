@@ -388,11 +388,17 @@ export default defineComponent({
     });
 
     const isPaymentDisabled = computed(() => {
-      return !saleStore.toSale.length ||
-        (props.sale.payment_condition === 1 ?
-          props.sale.given_amount < props.sale.amount :
-          !(props.sale.given_amount < props.sale.amount)
-        );
+      const hasToSaleItems = saleStore.toSale.length > 0;
+      const givenAmount = Number(props.sale.given_amount) || 0;
+      const totalAmountValue = Number(props.sale.amount) || 0;
+      const isCashPayment = props.sale.payment_condition === 1;
+      const disable =
+        !hasToSaleItems ||
+        (isCashPayment
+          ? givenAmount < totalAmountValue
+          : !(givenAmount < totalAmountValue));
+
+      return disable;
     });
 
     const dateDisabled = (ts) => ts > new Date(Date.now());

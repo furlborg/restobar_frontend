@@ -319,12 +319,19 @@
                     </n-space>
                 </template>
             </n-modal>
-            <n-modal :class="{
-      'w-100': genericsStore.device === 'mobile',
-      'w-50': genericsStore.device === 'tablet',
-      'w-25': genericsStore.device === 'desktop',
-    }" preset="card" v-model:show="showPayments" title="Realizar venta" :mask-closable="false" closable
-                     @close="sale.payments = null">
+            <n-modal
+                :class="{
+                    'w-100': genericsStore.device === 'mobile',
+                    'w-50': genericsStore.device === 'tablet',
+                    'w-25': genericsStore.device === 'desktop',
+                }"
+                preset="card"
+                v-model:show="showPayments"
+                title="Realizar venta"
+                :mask-closable="false"
+                closable
+                @close="sale.payments = null"
+            >
                 <n-space justify="space-between">
                     <n-tag type="info">Total: S/. {{ showPayments ? sale.amount : null }}</n-tag>
                     <n-tag :type="evalPayments ? 'error' : 'success'">Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}</n-tag>
@@ -335,8 +342,13 @@
                         <template #default="{ value }">
                             <div style="display: flex; align-items: center; width: 100%">
                                 <n-select v-model:value="value.payment_method" :disabled="loading" :options="filteredMethods"/>
-                                <n-input class="ms-2" v-model:value="value.amount" placeholder="" :disabled="loading"
-                                         @keypress="isDecimal($event)"/>
+                                <n-input
+                                    class="ms-2"
+                                    v-model:value="value.amount"
+                                    placeholder=""
+                                    :disabled="loading"
+                                    @keypress="isDecimal($event)"
+                                />
                             </div>
                         </template>
                     </n-dynamic-input>
