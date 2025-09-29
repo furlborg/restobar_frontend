@@ -45,7 +45,27 @@
               @perform-take-away="performTakeAway"
               @do-multiple-payment="doMultiplePayment"
             />
-            <CategoriesList v-else />
+            <div v-else>
+            <n-tabs type="line" animated>
+              <n-tab-pane name="categories" tab="Categorías">
+                <CategoriesList />
+              </n-tab-pane>
+              <n-tab-pane name="menu" tab="Menú">
+                <n-card title="Menú Programado" :bordered="false">
+                  <n-list>
+                    <n-list-item v-for="menu in scheduledMenus" :key="menu.id" @click="handleOpenMenuModal(menu)" style="cursor: pointer">
+                      <n-thing>
+                        <n-space vertical>
+                          <n-text class="fs-4">{{ menu.menu.name }}</n-text>
+                          <n-text class="fs-6" type="info">Price: {{ menu.menu.price}}</n-text>
+                        </n-space>
+                      </n-thing>
+                    </n-list-item>
+                  </n-list>
+                </n-card>
+              </n-tab-pane>
+            </n-tabs>
+          </div>
           </transition>
         </n-gi>
         <n-gi span="2">
@@ -106,6 +126,20 @@
           </transition>
         </n-card>
       </n-tab-pane>
+      <n-tab-pane name="menu" tab="Menú" v-if="!selectProducts">
+        <n-card title="Menú Programado" :bordered="false">
+          <n-list>
+            <n-list-item v-for="menu in scheduledMenus" :key="menu.id" @click="handleOpenMenuModal(menu)" style="cursor: pointer">
+              <n-thing>
+                <n-space vertical>
+                  <n-text class="fs-4">{{ menu.menu.name }}</n-text>
+                  <n-text class="fs-6" type="info">Price: {{ menu.menu.price}}</n-text>
+                </n-space>
+              </n-thing>
+            </n-list-item>
+          </n-list>
+        </n-card>
+      </n-tab-pane>
       <n-tab-pane name="payment" tab="Resumen">
         <PaymentSummary
           :select-products="selectProducts"
@@ -164,6 +198,7 @@
     <customer-modal v-model:show="showCustomerModal" :id-customer="sale.customer" :document="customerDocument" :doc_type="sale.invoice_type === 1 ? '6' : null" @update:show="onCloseModal" @on-success="onSuccess" />
     <ticket-preview ref="ticketPreviewRef" v-model:show="showPdf" :data="pdfData" :hidden="true" :isUpdate="false" />
     <preview-drawer ref="voucherDrawer" v-model:show="showVoucher" :data="voucherData" :previewOnly="!ticketPreview" @printed="() => $router.push({ name: 'TableHome' })" @canceled="() => $router.push({ name: 'TableHome' })" />
+    <MenuProductModal v-if="showMenuModal" :menu="selectedMenu" @close="showMenuModal = false" />
   </div>
 </template>
 
@@ -173,14 +208,14 @@ import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router";
 import { useMessage, useDialog } from "naive-ui";
 import { getSaleNumber } from "@/api/modules/sales";
 import { takeAwayOrder } from "@/api/modules/orders";
-import { searchCustomerByName, searchRucCustomer } from "@/api/modules/customer";
+import { getMenuToday } from '@/api/modules/products';
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useUserStore } from "@/store/modules/user";
-import { useBreakpoint } from "vooks";
-import { isDecimal } from "@/utils";
+import { useSaleTotals } from "@/composables/useSaleTotals";
+import { useBreakpoint } from 'vooks';
 import OrderTaking from "./OrderTaking.vue";
 import PaymentSummary from "./PaymentSummary.vue";
 import CategoriesList from "./CategoriesList.vue";
@@ -188,13 +223,20 @@ import OrderIndications from "./OrderIndications.vue";
 import CustomerModal from "@/views/Customer/components/CustomerModal.vue";
 import TicketPreview from "@/views/Order/components/TicketPreview.vue";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer.vue";
+import MenuProductModal from "@/views/Table/components/MenuProductModal.vue";
 import format from "date-fns/format";
 
 export default defineComponent({
   name: "TakeOrderLayout",
   components: {
-    OrderTaking, PaymentSummary, CategoriesList, OrderIndications,
-    CustomerModal, TicketPreview, PreviewDrawer,
+    OrderTaking,
+    PaymentSummary,
+    CategoriesList,
+    OrderIndications,
+    CustomerModal,
+    TicketPreview,
+    PreviewDrawer,
+    MenuProductModal,
   },
   setup() {
     const breakpointRef = useBreakpoint();
@@ -207,6 +249,7 @@ export default defineComponent({
     const userStore = useUserStore();
     const route = useRoute();
     const router = useRouter();
+    const { grandTotal, formattedTotals } = useSaleTotals();
 
     const loading = ref(false);
     const selectProducts = ref(false);
@@ -214,17 +257,30 @@ export default defineComponent({
     const isMultiple = ref(false);
     const ticketPreview = ref(settingsStore.businessSettings?.sale?.show_preview ?? true);
     const activeTab = ref("main");
+    const selectedMenu = ref(null);
     const showModal = ref(false);
     const showConfirm = ref(false);
     const showPayments = ref(false);
     const showCustomerModal = ref(false);
     const showPdf = ref(false);
     const showVoucher = ref(false);
+    const showMenuModal = ref(false);
+    const scheduledMenus = ref([]);
     const ticketPreviewRef = ref(null);
     const voucherDrawer = ref(null);
     const itemIndex = ref(null);
     const userConfirm = ref("");
     const productSearch = ref("");
+
+    // Usar el total del composable que incluye menús
+    const total = computed(() => {
+        let cal = grandTotal.value + parseFloat(sale.value.other_charges || 0);
+        if (sale.value.delivery_info && sale.value.delivery_info.amount) {
+            cal = cal + parseFloat(sale.value.delivery_info.amount);
+        }
+        return cal.toFixed(2);
+    });
+
     const pdfData = ref(null);
     const voucherData = ref(null);
     const addressesOptions = ref([]);
@@ -233,6 +289,40 @@ export default defineComponent({
     const searchingCustomer = ref(false);
     const whatsappNumber = ref("");
     const customerDocument = ref("");
+
+    // Computados necesarios para aria branch
+    const computeTaxTotals = (affectation) => saleStore.toSale.reduce((acc, curVal) => 
+      curVal.product_affectation === affectation ? acc + parseFloat(curVal.price_sale) * curVal.quantity : acc, 0);
+
+    const icbper = computed(() => orderStore.orderList.reduce((acc, curVal) => 
+      acc + (curVal.icbper ? curVal.icbper_amount : 0), 0));
+    
+    const totalGRV = computed(() => computeTaxTotals(10));
+    const totalEXN = computed(() => computeTaxTotals(20));
+    const totalGRT = computed(() => computeTaxTotals(21));
+    
+    const totalIGV = computed(() => {
+      const igvTotal = saleStore.toSale.reduce((acc, curVal) => 
+        acc + parseFloat(curVal.igv_tax || 0) * parseFloat(curVal.quantity || 0), 0);
+      return parseFloat(igvTotal.toFixed(2));
+    });
+
+    const totalDSCT = computed(() => 
+      saleStore.toSale.some(detail => Number(detail.discount) > 0)
+        ? saleStore.toSale.reduce((acc, curVal) => acc + Number(curVal.discount), 0)
+        : Number(sale.value.discount));
+
+    const subTotal = computed(() => saleStore.toSale.reduce((acc, curVal) => 
+      curVal.product_affectation === 21 ? acc : acc + curVal.price_sale * curVal.quantity, 0));
+
+    const changing = computed(() => 
+      sale.value.given_amount > total.value ? (sale.value.given_amount - total.value).toFixed(2) : 0.0);
+
+    const getModalClass = computed(() => ({
+      "w-100": genericsStore.device === "mobile",
+      "w-50": genericsStore.device === "tablet", 
+      "w-25": genericsStore.device === "desktop",
+    }));
 
     const defaultInvoiceType = settingsStore.businessSettings.sale?.enable_invoices
       ? settingsStore.businessSettings.sale?.default_invoice
@@ -272,48 +362,14 @@ export default defineComponent({
       total_igv: "0.00",
     });
 
-    const computeTaxTotals = (affectation) => saleStore.toSale.reduce((acc, curVal) => 
-      curVal.product_affectation === affectation ? acc + parseFloat(curVal.price_sale) * curVal.quantity : acc, 0);
-
-    const icbper = computed(() => orderStore.orderList.reduce((acc, curVal) => 
-      acc + (curVal.icbper ? curVal.icbper_amount : 0), 0));
-    
-    const totalGRV = computed(() => computeTaxTotals(10));
-    const totalEXN = computed(() => computeTaxTotals(20));
-    const totalGRT = computed(() => computeTaxTotals(21));
-    
-    const totalIGV = computed(() => {
-      const igvTotal = saleStore.toSale.reduce((acc, curVal) => 
-        acc + parseFloat(curVal.igv_tax || 0) * parseFloat(curVal.quantity || 0), 0);
-      return parseFloat(igvTotal.toFixed(2));
-    });
-
-    const totalDSCT = computed(() => 
-      saleStore.toSale.some(detail => Number(detail.discount) > 0)
-        ? saleStore.toSale.reduce((acc, curVal) => acc + Number(curVal.discount), 0)
-        : Number(sale.value.discount));
-
-    const subTotal = computed(() => saleStore.toSale.reduce((acc, curVal) => 
-      curVal.product_affectation === 21 ? acc : acc + curVal.price_sale * curVal.quantity, 0));
-
-    const total = computed(() => {
-      let cal = parseFloat(subTotal.value - parseFloat(totalDSCT.value) + icbper.value + parseFloat(sale.value.other_charges || 0));
-      if (sale.value.delivery_info?.amount) cal += parseFloat(sale.value.delivery_info.amount);
-      return cal.toFixed(2);
-    });
-
-    const changing = computed(() => 
-      sale.value.given_amount > total.value ? (sale.value.given_amount - total.value).toFixed(2) : 0.0);
-
-    const getModalClass = computed(() => ({
-      "w-100": genericsStore.device === "mobile",
-      "w-50": genericsStore.device === "tablet", 
-      "w-25": genericsStore.device === "desktop",
-    }));
-
-    watch([total, icbper, totalGRV, totalEXN, totalGRT, totalIGV, totalDSCT, () => saleStore.toSale], () => {
+    // Watcher combinado que usa useSaleTotals para menús y aria para productos regulares
+    watch([total, icbper, totalGRV, totalEXN, totalGRT, totalIGV, totalDSCT, () => saleStore.toSale, grandTotal, () => orderStore.orderList.length], () => {
+      // Calcular la cantidad de productos directamente (incluyendo menús)
+      const productCount = saleStore.toSale.reduce((acc, curVal) => acc + curVal.quantity, 0);
+      const menuCount = (saleStore.salePayload.sale_product_sets || []).reduce((acc, curVal) => acc + curVal.quantity, 0);
+      
       Object.assign(sale.value, {
-        count: saleStore.toSale.reduce((acc, curVal) => acc + curVal.quantity, 0),
+        count: productCount + menuCount,
         amount: total.value,
         icbper: icbper.value,
         taxed_amount: totalGRV.value,
@@ -322,8 +378,17 @@ export default defineComponent({
         igv_amount: totalIGV.value,
         total_igv: parseFloat(totalIGV.value || 0).toFixed(2),
       });
+      
+      console.log("TakeOrderLayout - total_igv actualizado:", sale.value.total_igv, "tipo:", typeof sale.value.total_igv);
+      console.log("TakeOrderLayout - Total con menús:", total.value, "Grand Total:", grandTotal.value);
+      
+      // Actualizar el monto dado cuando cambia el total (para contado)
       if (sale.value.payment_condition === 1) {
-        sale.value.given_amount = total.value > 0 ? total.value : parseFloat(0).toFixed(2);
+        const newGivenAmount = total.value > 0 ? total.value : parseFloat(0).toFixed(2);
+        if (sale.value.given_amount !== newGivenAmount) {
+          sale.value.given_amount = newGivenAmount;
+          console.log("TakeOrderLayout - Monto de pago actualizado a:", newGivenAmount);
+        }
       }
     });
 
@@ -348,7 +413,20 @@ export default defineComponent({
       if (newValue !== undefined && newValue !== null) await obtainSaleNumber();
     });
 
-    onMounted(() => obtainSaleNumber());
+    onMounted(async () => {
+      console.log('Componente montado, obteniendo número de venta inicial');
+      const menuData = await getMenuToday();
+      scheduledMenus.value = menuData.data;
+      await obtainSaleNumber();
+    });
+
+    const handleOpenMenuModal = async (menu) => {
+      const menuData = await getMenuToday(menu.id);
+      if (menuData?.data?.length) {
+        selectedMenu.value = menuData.data[0];
+        showMenuModal.value = true;
+      }
+    };
 
     const selectSerie = (serieId) => {
       if (serieId !== undefined && serieId !== null) sale.value.serie = serieId;
@@ -387,7 +465,12 @@ export default defineComponent({
             const igvValue = parseFloat(sale.value.total_igv || sale.value.igv_amount || 0);
             sale.value.total_igv = igvValue.toFixed(2);
             const saleClone = JSON.parse(JSON.stringify(sale.value));
-            const response = await takeAwayOrder(orderStore.orderList, saleClone, userConfirm.value);
+            
+            // Obtener el payload completo que incluye sale_product_sets (menús)
+            const salePayload = saleStore.salePayload;
+            console.log("TakeOrderLayout - enviando orden con menús:", salePayload.sale_product_sets?.length || 0);
+            
+            const response = await takeAwayOrder(orderStore.orderList, saleClone, userConfirm.value, salePayload);
             if (response.status === 201) {
               checkState.value = true;
               cleanupOrderStore();
@@ -602,14 +685,22 @@ export default defineComponent({
     onBeforeRouteLeave((to) => handleRouteGuard(to, true));
 
     return {
+      // Estados
       loading, selectProducts, showObservations, isMultiple, ticketPreview, activeTab,
       showModal, showConfirm, showPayments, showCustomerModal, showPdf, showVoucher,
+      showMenuModal, selectedMenu, scheduledMenus,
+      // Referencias
       ticketPreviewRef, voucherDrawer, itemIndex, userConfirm, productSearch,
-      sale, pdfData, voucherData, addressesOptions, customerOptions, customerResults,
+      // Datos
+      sale, pdfData, voucherData, addressesOptions, customerOptions,
       searchingCustomer, whatsappNumber, customerDocument,
+      // Computados
       changing, subTotal, totalGRV, totalEXN, totalGRT, totalIGV, totalDSCT, icbper,
       getModalClass, evalPayments, currentPaymentsAmount, filteredMethods,
-      orderStore, selectSerie, changeSerie, changeCondition, showCustomerOptions,
+      // Stores
+      orderStore,
+      // Métodos
+      handleOpenMenuModal, selectSerie, changeSerie, changeCondition, showCustomerOptions,
       autoCreateCustomer, createAddressesOptions, changeAddress, handleDelivery,
       performTakeAway, doMultiplePayment, performCreateOrder,
       createPayment, onCloseModal, onSuccess, isDecimal, goToFirstTab,

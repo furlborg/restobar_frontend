@@ -73,7 +73,7 @@
                 </n-scrollbar>
             </n-card>
         </n-tab-pane>
-        <n-tab-pane name="menu" tab="Menú">
+        <n-tab-pane v-if="!settingsStore.businessSettings.order.order_by_customer" name="menu" tab="Menú">
             <n-card
             title="Menú Programado"
             :bordered="false"
@@ -84,8 +84,8 @@
                     <n-list-item v-for="menu in scheduledMenus" :key="menu.id" @click="handleOpenMenuModal(menu)" style="cursor: pointer">
                         <n-thing>
                             <n-space vertical>
-                                <n-text class="fs-4">{{ menu.name }}</n-text>
-                                <n-text class="fs-6" type="info">Price: {{ menu.price.toFixed(2) }}</n-text>
+                                <n-text class="fs-4">{{ menu.menu.name }}</n-text>
+                                <n-text class="fs-6" type="info">Price: {{ menu.menu.price}}</n-text>
                             </n-space>
                         </n-thing>
                     </n-list-item>
@@ -99,6 +99,7 @@
 import { defineComponent, ref, onMounted } from "vue";
 import { renderIcon } from "@/utils";
 import { useProductStore } from "@/store/modules/product";
+import { useSettingsStore } from "@/store/modules/settings";
 import { getMenuToday } from "@/api/modules/products";
 import MenuProductModal from "./MenuProductModal.vue";
 
@@ -107,10 +108,11 @@ import MenuProductModal from "./MenuProductModal.vue";
 export default defineComponent({
     name: "CategoriesList",
     components: {
-        MenuProductModal, // <-- ¡registra aquí!
+        MenuProductModal,
     },
     setup() {
         const productStore = useProductStore();
+        const settingsStore = useSettingsStore();
         const listType = ref("grid");
         const scheduledMenus = ref([]);
         const showMenuModal = ref(false);
@@ -152,6 +154,7 @@ export default defineComponent({
             showMenuModal,
             selectedMenu,
             handleOpenMenuModal,
+            settingsStore,
         };
     }
 });

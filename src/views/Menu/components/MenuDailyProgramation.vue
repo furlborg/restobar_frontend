@@ -164,7 +164,7 @@ async function prefillSelectedProducts(date) {
       data.forEach(scheduled => {
         if (scheduled.items && Array.isArray(scheduled.items)) {
           items.push(...scheduled.items.map(item => ({
-            product_phase: item.product_phase,
+            product_phase: item.product_phase.id,
             available: item.available,
             stock_override: item.stock_override
           })))

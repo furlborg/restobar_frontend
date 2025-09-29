@@ -155,6 +155,7 @@
       <ProductTable
         :sale="sale"
         :sale-details="saleStore.toSale"
+        :sale-menu-sets="saleStore.salePayload.sale_product_sets"
         @update-detail="saleStore.updateDetail"
       />
 
@@ -207,6 +208,8 @@ import { useRoute } from "vue-router";
 import { useSaleStore } from "@/store/modules/sale";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useUserStore } from "@/store/modules/user";
+import { useSaleTotals } from "@/composables/useSaleTotals";
+import { useMessage } from "naive-ui";
 import ProductTable from "./ProductTable.vue";
 import PaymentTotals from "./PaymentTotals.vue";
 import ClientSelectInput from "@/views/Customer/components/ClientSelectInput.vue";
@@ -311,6 +314,8 @@ export default defineComponent({
     const saleStore = useSaleStore();
     const settingsStore = useSettingsStore();
     const userStore = useUserStore();
+    const message = useMessage();
+    const { grandTotal } = useSaleTotals();
 
     const saleForm = ref();
 
@@ -569,16 +574,32 @@ export default defineComponent({
       ];
     });
 
-    // Computar el monto total
     const totalAmount = computed(() => {
-      return props.sale.amount || 0;
+      return grandTotal.value || props.sale.amount || 0;
     });
+    // Watcher para actualizar automáticamente el campo de pago y amount cuando cambie el total
+    watch(totalAmount, (newTotal) => {
+      if (newTotal > 0) {
+        const updates = { ...props.sale };
+        updates.amount = newTotal;
+        
+        // Solo actualizar given_amount si está vacío o es 0
+        if (!props.sale.given_amount || props.sale.given_amount === 0) {
+          updates.given_amount = newTotal;
+        }
+        
+        emit('update:sale', updates);
+      }
+    }, { immediate: true });
+    
 
     // Manejar cambios en los valores editables
     const handleValueChange = ({ field, value }) => {
       if (field && value !== undefined) {
         const updates = { ...props.sale };
         updates[field] = value;
+        // Actualizar el amount con el total calculado
+        updates.amount = totalAmount.value;
         emit('update:sale', updates);
       }
     };

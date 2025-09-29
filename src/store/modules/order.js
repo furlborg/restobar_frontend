@@ -19,6 +19,14 @@ export const useOrderStore = defineStore("order", {
       });
       return state.orders;
     },
+    // Obtener solo los productos individuales (no menús)
+    productLines(state) {
+      return state.orders.filter(order => !order.from_menu);
+    },
+    // Obtener solo los menús
+    menuSets(state) {
+      return state.orders.filter(order => order.from_menu);
+    },
     orderTotal(state) {
       return state.orders.reduce((acc, curVal) => {
         return (acc += curVal.price * curVal.quantity);
@@ -39,6 +47,12 @@ export const useOrderStore = defineStore("order", {
   actions: {
     initializeStore() {
       return null;
+    },
+    addMenuOrder(menuOrder) {
+      this.orders.push({
+        ...menuOrder,
+        created_at: Date.now()
+      });
     },
     addOrder(product, customer) {
       const settingsStore = useSettingsStore();

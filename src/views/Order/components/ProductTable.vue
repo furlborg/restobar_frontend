@@ -1,33 +1,69 @@
 <template>
   <div class="table-container">
     <n-table class="product-details-table" :bordered="false">
-      <thead>
-        <tr>
-          <th v-if="settingsStore.businessSettings.sale.manage_affectations">#</th>
-          <th>Cantidad</th>
-          <th>Producto</th>
-          <th>Precio Unitario</th>
-          <th>Descuento</th>
-          <th>Precio Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(detail, index) in saleDetails" :key="index">
+    <thead>
+      <tr>
+        <th v-if="settingsStore.businessSettings.sale.manage_affectations">#</th>
+        <th>Cantidad</th>
+        <th>Producto</th>
+        <th>Precio Unitario</th>
+        <th>Descuento</th>
+        <th>Precio Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Menús -->
+      <template v-for="(menuSet, menuIndex) in saleMenuSets" :key="`menu-${menuIndex}`">
+        <tr style="background-color: #f8f8f8; font-weight: bold;">
           <td v-if="settingsStore.businessSettings.sale.manage_affectations">
-            <n-popselect
+            <n-tag size="small" type="warning">MENÚ</n-tag>
+          </td>
+          <td>{{ menuSet.quantity }}</td>
+          <td>
+            <input 
+              class="custom-input" 
+              v-model="menuSet.name" 
+              v-autowidth
+              readonly
+              style="font-weight: bold;"
+            />
+          </td>
+          <td class="currency-input-wrapper">S/. {{ Number(menuSet.price || 0).toFixed(2) }}</td>
+          <td>0.00</td>
+          <td>{{ (menuSet.quantity * menuSet.price).toFixed(2) }}</td>
+        </tr>
+        <!-- Items del menú -->
+<!--         <tr v-for="(item, itemIndex) in menuSet.items" :key="`menu-item-${menuIndex}-${itemIndex}`" 
+            style="background-color: #fafafa; font-size: 0.9em;">
+          <td v-if="settingsStore.businessSettings.sale.manage_affectations"></td>
+          <td>{{ item.quantity }}</td>
+          <td style="padding-left: 20px;">
+            • {{ item.product_name }}
+            <small v-if="item.phase_name" style="color: #666;">({{ item.phase_name }})</small>
+          </td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+        </tr> -->
+      </template>
+
+      <!-- Productos individuales -->
+      <tr v-for="(detail, index) in saleDetails" :key="`product-${index}`">
+        <td v-if="settingsStore.businessSettings.sale.manage_affectations">
+          <n-popselect 
+            size="small" 
+            placement="bottom-start" 
+            v-model:value="detail.product_affectation" 
+            :options="productStore.affectationsOptions" 
+            @update:value="() => $emit('updateDetail', detail)"
+          >
+            <n-tag
               size="small"
-              placement="bottom-start"
-              v-model:value="detail.product_affectation"
-              :options="productStore.affectationsOptions"
-              @update:value="() => $emit('updateDetail', detail)"
+              :color="getAfcColor(detail.product_affectation)"
             >
-              <n-tag
-                size="small"
-                :color="getAfcColor(detail.product_affectation)"
-              >
-                {{ getAfcShort(detail.product_affectation) }}
-              </n-tag>
-            </n-popselect>
+              {{ getAfcShort(detail.product_affectation) }}
+            </n-tag>
+          </n-popselect>
           </td>
           <td>{{ detail.quantity }}</td>
           <td>
@@ -102,6 +138,10 @@ export default defineComponent({
     saleDetails: {
       type: Array,
       required: true
+    },
+    saleMenuSets: {
+      type: Array,
+      default: () => []
     }
   },
   emits: ['updateDetail'],

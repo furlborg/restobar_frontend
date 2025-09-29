@@ -2,6 +2,7 @@ import { http } from "@/api";
 import { useBusinessStore } from "@/store/modules/business";
 import { useUserStore } from "@/store/modules/user";
 import { useTillStore } from "@/store/modules/till";
+import { buildTableOrderPayload } from "@/services/saleAssembler";
 
 export async function getAreas() {
     return await http.get("areas/");
@@ -73,20 +74,16 @@ export async function createTableOrder(
     ask_for = undefined
 ) {
     const tillStore = useTillStore();
-    let order_details = details.map(order => ({
-        product: order.product,
-        indication: order.indication || [],
-        quantity: order.quantity,
-        customer: order.customer || null
-    }));
-    const bodyRequest = {
-        till: tillStore.currentTillID,
-        order_type: "M",
-        order_details,
-        ask_for,
+    
+    // Use centralized assembler instead of inline logic
+    const payload = buildTableOrderPayload(details, {
+        tillId: tillStore.currentTillID,
+        orderType: "M",
+        askFor: ask_for,
         user
-    }
-    return await http.post(`tables/${idTable}/take_order/`, bodyRequest);
+    });
+    
+    return await http.post(`tables/${idTable}/take_order/`, payload);
 }
 
 export async function updateTableOrder(
@@ -97,22 +94,19 @@ export async function updateTableOrder(
     ask_for = undefined
 ) {
     const tillStore = useTillStore();
-    console.log('aumenten mi sueldo pe kousin');
-    let order_details = details.map((order) => ({
-        id: order.id,
-        product: order.product,
-        indication: order.indication || [],
-        quantity: order.quantity,
-        customer: order.customer || null
-    })).filter((detail) => detail.quantity > 0);
-    return await http.patch(`tables/${ idTable }/change_order/`, {
-        id: orderId,
-        till: tillStore.currentTillID,
-        order_type: "M",
-        order_details: order_details,
-        ask_for: ask_for,
+    
+    // Use centralized assembler for updates
+    const payload = buildTableOrderPayload(details, {
+        tillId: tillStore.currentTillID,
+        orderType: "M",
+        askFor: ask_for,
         user: user ?? null
     });
+    
+    // Add update-specific fields
+    payload.id = orderId;
+    
+    return await http.patch(`tables/${idTable}/change_order/`, payload);
 }
 
 export async function cancelTableOrder(idTable, dataAnulate) {

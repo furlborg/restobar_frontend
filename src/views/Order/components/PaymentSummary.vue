@@ -38,45 +38,79 @@
           </tr>
         </thead>
         <tbody>
-          <tr
-            v-for="(order, index) in orderStore.orderList"
-            :key="index"
-            style="cursor: pointer"
-            @click="handleRowClick(index)"
-          >
-            <td>
-              <n-button type="info" text>
-                <v-icon name="md-listalt-round"/>
-              </n-button>
-            </td>
-            <td>{{ order.product_name }}</td>
-            <td>
-              <n-input-number
-                class="border-top-0"
-                size="small"
-                :min="1"
-                v-model:value="order.quantity"
-                @update:value="updateOrderDetails"
-                @click.stop
-              />
-            </td>
-            <td>S/. {{ order.subTotal.toFixed(2) }}</td>
-            <td>
-              <n-button
-                type="error"
-                text
-                @click.stop="removeOrderItem(index)"
-              >
-                <v-icon name="md-disabledbydefault-round"/>
-              </n-button>
-            </td>
-          </tr>
+          <!-- Menús -->
+          <template v-for="(menu, menuIndex) in orderStore.menuSets" :key="`menu-${menuIndex}`">
+            <tr style="background-color: #f8f8f8">
+              <td>
+                <n-button type="warning" text>
+                  <v-icon name="md-restaurant-round"/>
+                </n-button>
+              </td>
+              <td><b>Menú: {{ menu.name }}</b></td>
+              <td></td>
+<!--               <td>
+                <n-input-number
+                  class="border-top-0"
+                  size="small"
+                  :min="1"
+                  v-model:value="menu.quantity"
+                  @update:value="updateOrderDetails"
+                  @click.stop
+                />
+              </td> -->
+              <td>S/. {{ formatPrice(menu.price * menu.quantity)}}</td>
+              <td>
+                <n-button type="error" text @click.stop="removeMenuSet(menuIndex)">
+                  <v-icon name="md-disabledbydefault-round" />
+                </n-button>
+              </td>
+            </tr>
+            <!-- Items del menú -->
+            <tr v-for="item in menu.items" :key="`menu-item-${item.product_id}`" style="background-color: #fafafa">
+              <td></td>
+              <td style="padding-left: 20px;">
+                {{ item.product_name }} 
+                <small v-if="item.phase_name">({{ item.phase_name }})</small>
+              </td>
+              <td>{{ item.quantity }}</td>
+              <td></td>
+              <td></td>
+            </tr>
+          </template>
+
+          <!-- Productos individuales -->
+          <template v-for="(product, productIndex) in orderStore.productLines" :key="`product-${productIndex}`">
+            <tr style="cursor: pointer" @click="handleRowClick(productIndex)">
+              <td>
+                <n-button type="info" text>
+                  <v-icon name="md-listalt-round"/>
+                </n-button>
+              </td>
+              <td>{{ product.product_name }}</td>
+              <td>
+                <n-input-number
+                  class="border-top-0"
+                  size="small"
+                  :min="1"
+                  v-model:value="product.quantity"
+                  @update:value="updateOrderDetails"
+                  @click.stop
+                />
+              </td>
+              <td>S/. {{ formatPrice(product.subTotal) }}</td>
+              <td>
+                <n-button type="error" text @click.stop="removeProductLine(productIndex)">
+                  <v-icon name="md-disabledbydefault-round" />
+                </n-button>
+              </td>
+            </tr>
+          </template>
         </tbody>
         <tfoot>
           <tr>
             <td colspan="3"></td>
             <td colspan="2" class="fs-6 fw-bold">
-              S/. {{ orderStore.orderTotal.toFixed(2) }}
+              S/. {{ formattedTotals.grandTotal }}
             </td>
           </tr>
         </tfoot>
@@ -86,10 +120,12 @@
 </template>
 
 <script>
+
 import { defineComponent, computed, ref, h } from "vue";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { useProductStore } from "@/store/modules/product";
+import { useSaleTotals } from "@/composables/useSaleTotals";
 import { useMessage } from "naive-ui";
 import { searchProductByName } from "@/api/modules/products";
 import ProductSearchLabel from "@/views/Product/components/ProductSearchLabel.vue";
@@ -135,7 +171,10 @@ export default defineComponent({
   setup(props, { emit }) {
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
+
     const productStore = useProductStore();
+    const formatPrice = (price) => isNaN(price) ? "0.00" : Number(price).toFixed(2);
+    const { formattedTotals } = useSaleTotals();
     const message = useMessage();
 
     const products = ref([]);
@@ -205,21 +244,50 @@ export default defineComponent({
       }
     };
 
-    const removeOrderItem = (index) => {
-      try {
-        orderStore.orderList.splice(index, 1);
-        updateOrderDetails();
-      } catch (error) {
-        console.error('Error en removeOrderItem:', error);
+    const removeMenuSet = (menuIndex) => {
+      // Encontrar el menú en orderList por índice
+      const menuItems = orderStore.orderList.filter(item => item.from_menu);
+      if (menuItems[menuIndex]) {
+        const menuToRemove = menuItems[menuIndex];
+        const orderIndex = orderStore.orderList.findIndex(item => 
+          item === menuToRemove
+        );
+        if (orderIndex !== -1) {
+          orderStore.orderList.splice(orderIndex, 1);
+          updateOrderDetails();
+        }
+      }
+    };
+
+    const removeProductLine = (productIndex) => {
+      // Encontrar el producto en orderList por índice
+      const productItems = orderStore.orderList.filter(item => !item.from_menu);
+      if (productItems[productIndex]) {
+        const productToRemove = productItems[productIndex];
+        const orderIndex = orderStore.orderList.findIndex(item => 
+          item === productToRemove
+        );
+        if (orderIndex !== -1) {
+          orderStore.orderList.splice(orderIndex, 1);
+          updateOrderDetails();
+        }
       }
     };
 
     const updateOrderDetails = () => {
-      try {
-        saleStore.sale_details = orderStore.orderList;
-      } catch (error) {
-        console.error('Error en updateOrderDetails:', error);
-      }
+      // Actualizar el store de sales con los datos actuales
+      saleStore.sale_details = orderStore.productLines;
+      saleStore.sale_product_sets = orderStore.menuSets;
+      
+      // Forzar la actualización del payload para disparar reactividad
+      saleStore.buildSalePayload();
+      
+      // Log para debug
+      console.log('PaymentSummary - Items actualizados:', {
+        products: orderStore.productLines.length,
+        menus: orderStore.menuSets.length,
+        totalOrders: orderStore.orderList.length
+      });
     };
 
     const selectProduct = (value) => {
@@ -242,17 +310,22 @@ export default defineComponent({
     return {
       orderStore,
       saleStore,
+
       localProductSearch,
+      formattedTotals,
       buttonText,
       productOptions,
       searching,
       showOptions,
       handleRowClick,
-      removeOrderItem,
+      removeMenuSet,
+      removeProductLine,
       updateOrderDetails,
       selectProduct,
       renderLabel,
-      handleButtonClick
+      formatPrice,
+      handleButtonClick,
+      ...props
     };
   }
 });

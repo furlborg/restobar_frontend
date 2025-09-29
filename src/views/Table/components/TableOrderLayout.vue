@@ -244,8 +244,37 @@ export default defineComponent({
                 const response = await retrieveTableOrder(table);
                 if (response.status === 200) {
                     const { order_details: orderDetails, user: userId, ask_for: askFor, id } = response.data;
-                    const detectedCustomers = extractCustomers(orderDetails);
-                    orderStore.orders = orderDetails;
+                    // Map orderDetails to match frontend handleAddMenu structure for menu orders
+                    const mappedOrderDetails = orderDetails.map(detail => {
+                        if (detail.product_set) {
+                            // This is a menu order
+                            // product_set should contain menu_id, name, price, quantity, items
+                            return {
+                                from_menu: true,
+                                product_set_id: detail.product_set.id,
+                                order_detail_id: detail.id,
+                                name: detail.product_set.menu_name,
+                                price: detail.product_set.price,
+                                quantity: detail.product_set.quantity,
+                                items: Array.isArray(detail.product_set.items)
+                                    ? detail.product_set.items.map(item => ({
+                                        id: item.id,
+                                        product_phase_id: item.product_phase.id,
+                                        product_id: item.product.id,
+                                        product_name: item.product.name,
+                                        phase_name: item.product_phase.phase_name,
+                                        quantity: item.quantity,
+                                    }))
+                                    : [],
+                                // Optionally, include other fields from detail if needed (like id, customer, etc)
+                                ...(detail.id ? { id: detail.id } : {}),
+                                ...(detail.customer ? { customer: detail.customer } : {}),
+                            }
+                        }
+                        return detail;
+                    });
+                    const detectedCustomers = extractCustomers(mappedOrderDetails);
+                    orderStore.orders = mappedOrderDetails;
                     customers.value = detectedCustomers;
                     selectedCustomerId.value = detectedCustomers[0]?.id || null;
                     ask_for.value = askFor;
@@ -288,6 +317,7 @@ export default defineComponent({
         const performCreateTableOrder = async () => {
             loading.value = true;
             try {
+                // Pass orderStore.orderList directly; createTableOrder will split into order_details and product_sets
                 const response = await createTableOrder(table, orderStore.orderList, orderUser.value, ask_for.value);
                 if (response.status === 201) handleOrderSuccess(response);
             } catch (error) {

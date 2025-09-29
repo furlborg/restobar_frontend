@@ -42,8 +42,44 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <template v-for="(order, index) in orderStore.orderList">
-                                <tr v-if="order.quantity > 0" :key="index" style="cursor: pointer" @click="openOrderModal(index)">
+                            <!-- Menús -->
+                            <template v-for="(menu, menuIndex) in orderStore.menuSets" :key="`menu-table-${menuIndex}`">
+                                <tr style="background-color: #f8f8f8">
+                                    <td>
+                                        <n-button type="warning" text>
+                                            <v-icon name="md-restaurant-round"/>
+                                        </n-button>
+                                    </td>
+                                    <td><b>Menú: {{ menu.name }}</b></td>
+                                    <td></td>
+<!--                                     <td>
+                                        <n-input-number v-if="!isPaymentRoute" size="small" :min="1"
+                                            v-model:value="menu.quantity" @click.stop />
+                                        <template v-else>{{ menu.quantity }}</template>
+                                    </td> -->
+                                    <td>S/. {{ formatPrice(menu.price * menu.quantity) }}</td>
+                                    <td>
+                                        <n-button v-if="!isPaymentRoute" type="error" text @click.stop="handleRemoveMenuSet(menuIndex)">
+                                            <v-icon name="md-disabledbydefault-round" />
+                                        </n-button>
+                                    </td>
+                                </tr>
+                                <!-- Items del menú -->
+                                <tr v-for="item in menu.items" :key="`menu-item-table-${item.product_id}`" style="background-color: #fafafa">
+                                    <td></td>
+                                    <td style="padding-left: 20px;">
+                                        {{ item.product_name }} 
+                                        <small v-if="item.phase_name">({{ item.phase_name }})</small>
+                                    </td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            </template>
+
+                            <!-- Productos individuales -->
+                            <template v-for="(order, index) in orderStore.productLines" :key="`product-table-${index}`">
+                                <tr v-if="order.quantity > 0" style="cursor: pointer" @click="openOrderModal(index)">
                                     <td>
                                         <n-button v-if="!isPaymentRoute" type="info" text><v-icon name="md-listalt-round" /></n-button>
                                     </td>
@@ -58,12 +94,13 @@
                                     </td>
                                     <td>S/. {{ formatPrice(order.subTotal) }}</td>
                                     <td>
-                                        <n-button v-if="!isPaymentRoute" type="error" text @click.stop="handleRemoveOrder(order, index)">
+                                        <n-button v-if="!isPaymentRoute" type="error" text @click.stop="handleRemoveProductLine(index)">
                                             <v-icon name="md-disabledbydefault-round" />
                                         </n-button>
                                     </td>
                                 </tr>
                             </template>
+                            
                             <tr v-if="orderStore.orderList.length === 0">
                                 <td colspan="5">
                                     <n-empty description="No hay productos agregados" size="small" class="my-4" />
@@ -79,7 +116,7 @@
                                         <span class="fs-4">{{ orderStore.orderId ? 'Actualizar' : 'Realizar' }} pedido</span>
                                     </n-button>
                                 </td>
-                                <td colspan="2" class="fs-6 fw-bold">S/. {{ formatPrice(orderStore.orderTotal) }}</td>
+                                <td colspan="2" class="fs-6 fw-bold">S/. {{ formattedTotals.grandTotal }}</td>
                             </tr>
                         </tfoot>
                     </n-table>
@@ -104,6 +141,7 @@ import { useProductStore } from "@/store/modules/product";
 import { useTableStore } from "@/store/modules/table";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
+import { useSaleTotals } from "@/composables/useSaleTotals";
 import { searchProductByName } from "@/api/modules/products";
 
 export default defineComponent({
@@ -150,6 +188,7 @@ export default defineComponent({
         const productStore = useProductStore();
         const orderStore = useOrderStore();
         const saleStore = useSaleStore();
+        const { formattedTotals } = useSaleTotals();
 
         const localAskFor = computed({
             get: () => props.ask_for,
@@ -226,12 +265,73 @@ export default defineComponent({
             }
         };
 
+        const handleRemoveMenuSet = (menuIndex) => {
+            // Encontrar el menú en orderList por índice
+            const menuItems = orderStore.orderList.filter(item => item.from_menu);
+            if (menuItems[menuIndex]) {
+                const menuToRemove = menuItems[menuIndex];
+                const orderIndex = orderStore.orderList.findIndex(item => 
+                    item === menuToRemove
+                );
+                if (orderIndex !== -1) {
+                    if (!menuToRemove.id) {
+                        orderStore.orderList.splice(orderIndex, 1);
+                        nullifyTableOrder(menuToRemove);
+                    } else {
+                        deleteOrderDetail(orderIndex, menuToRemove.id);
+                    }
+                    
+                    // Actualizar saleStore para forzar reactividad
+                    updateSaleStore();
+                }
+            }
+        };
+
+        const handleRemoveProductLine = (productIndex) => {
+            // Encontrar el producto en orderList por índice
+            const productItems = orderStore.orderList.filter(item => !item.from_menu);
+            if (productItems[productIndex]) {
+                const productToRemove = productItems[productIndex];
+                const orderIndex = orderStore.orderList.findIndex(item => 
+                    item === productToRemove
+                );
+                if (orderIndex !== -1) {
+                    if (!productToRemove.id) {
+                        orderStore.orderList.splice(orderIndex, 1);
+                        nullifyTableOrder(productToRemove);
+                    } else {
+                        deleteOrderDetail(orderIndex, productToRemove.id);
+                    }
+                    
+                    // Actualizar saleStore para forzar reactividad
+                    updateSaleStore();
+                }
+            }
+        };
+
         const removeOrderItem = (productId, customerId) => {
             const index = orderStore.orderList.findIndex(order => order.product === productId && (!order.customer || order.customer.id === customerId));
             if (index !== -1) {
                 const order = orderStore.orderList[index];
                 handleRemoveOrder(order, index);
             }
+        };
+
+        // Función para actualizar el saleStore y forzar reactividad
+        const updateSaleStore = () => {
+            // Actualizar el store de sales con los datos actuales
+            saleStore.sale_details = orderStore.productLines;
+            saleStore.sale_product_sets = orderStore.menuSets;
+            
+            // Forzar la actualización del payload para disparar reactividad
+            saleStore.buildSalePayload();
+            
+            // Log para debug
+            console.log('TableOrder - Items actualizados:', {
+                products: orderStore.productLines.length,
+                menus: orderStore.menuSets.length,
+                totalOrders: orderStore.orderList.length
+            });
         };
 
         const nullifyTableOrder = async (order) => {
@@ -289,7 +389,10 @@ export default defineComponent({
             // Methods
             showOptions, selectProduct, renderLabel, navigateToPayment, addCustomerLocal, confirmRemoveCustomer, navigateToTakeOrder,
             getCustomerOrders, getCustomerTotal, getTotalAmount, formatPrice, hasAnyOrders, getGlobalOrderIndex, removeOrderItem,
-            validateSend, deleteOrderDetail, nullifyTableOrder, openOrderModal, handleRemoveOrder,
+            validateSend, deleteOrderDetail, nullifyTableOrder, openOrderModal, handleRemoveOrder, handleRemoveMenuSet, handleRemoveProductLine,
+            updateSaleStore,
+            // Composables
+            formattedTotals,
             // Props (direct access for template)
             ...props
         };

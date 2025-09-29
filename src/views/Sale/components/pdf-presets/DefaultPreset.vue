@@ -115,14 +115,21 @@
                 </tr>
               </thead>
               <tbody v-if="!isCustomerMode">
-                <tr v-for="(item, index) in sale.items" :key="index">
-                  <td>{{ item.cantidad }}</td>
-                  <td align="left">{{ item.descripcion }}</td>
-                  <td align="right">{{ item.precio_unitario.toFixed(2) }}</td>
-                  <td v-if="hasDiscounts" align="right">
-                    {{ data.sale_details[index].discount }}
+                <tr v-for="(item, index) in sale.items" :key="index" 
+                    :class="{ 'menu-header': item.isMenuHeader, 'menu-product': item.isMenuProduct }">
+                  <td>{{ item.isMenuProduct ? '' : item.cantidad }}</td>
+                  <td align="left" :style="item.isMenuProduct ? 'font-size: 11px; color: #666;' : ''">
+                    {{ item.descripcion }}
                   </td>
-                  <td align="right">{{ item.total_item.toFixed(2) }}</td>
+                  <td align="right">
+                    {{ item.isMenuProduct ? '' : item.precio_unitario.toFixed(2) }}
+                  </td>
+                  <td v-if="hasDiscounts" align="right">
+                    {{ item.isMenuProduct ? '' : (data.sale_details[index]?.discount || '0.00') }}
+                  </td>
+                  <td align="right">
+                    {{ item.isMenuProduct ? '' : item.total_item.toFixed(2) }}
+                  </td>
                 </tr>
               </tbody>
               <tbody v-else v-for="customer in groupedByCustomer" :key="customer.customerName">
@@ -133,14 +140,21 @@
                   </td>
                 </tr>
                 <!-- Items del cliente -->
-                <tr v-for="(item, index) in customer.items" :key="`${customer.customerName}-${index}`">
-                  <td>{{ item.cantidad }}</td>
-                  <td align="left">{{ item.descripcion }}</td>
-                  <td align="right">{{ item.precio_unitario.toFixed(2) }}</td>
-                  <td v-if="hasDiscounts" align="right">
-                    {{ data.sale_details[sale.items.indexOf(item)]?.discount || '0.00' }}
+                <tr v-for="(item, index) in customer.items" :key="`${customer.customerName}-${index}`"
+                    :class="{ 'menu-header': item.isMenuHeader, 'menu-product': item.isMenuProduct }">
+                  <td>{{ item.isMenuProduct ? '' : item.cantidad }}</td>
+                  <td align="left" :style="item.isMenuProduct ? 'font-size: 11px; color: #666;' : ''">
+                    {{ item.descripcion }}
                   </td>
-                  <td align="right">{{ item.total_item.toFixed(2) }}</td>
+                  <td align="right">
+                    {{ item.isMenuProduct ? '' : item.precio_unitario.toFixed(2) }}
+                  </td>
+                  <td v-if="hasDiscounts" align="right">
+                    {{ item.isMenuProduct ? '' : (data.sale_details[sale.items.indexOf(item)]?.discount || '0.00') }}
+                  </td>
+                  <td align="right">
+                    {{ item.isMenuProduct ? '' : item.total_item.toFixed(2) }}
+                  </td>
                 </tr>
                 <!-- Subtotal del cliente -->
                 <tr style="font-weight: bold; font-style: italic;">
@@ -356,6 +370,7 @@ import { useBusinessStore } from "@/store/modules/business";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useTableStore } from "@/store/modules/table";
 import { numeroALetras } from "@/hooks/numberText.js";
+import { expandMenusInSaleData } from "@/utils/menuExpander.js";
 import qr from "qrcode";
 export default defineComponent({
   name: "DefaultPreset",
@@ -420,14 +435,58 @@ export default defineComponent({
 
     const parseSale = () => {
       let saleData = JSON.parse(props.data.json_sale);
-      // console.log(JSON.stringify(props.data, null, "  "));
-      // console.log(JSON.stringify(saleData, null, "  "));
+      debugger;
+      // Expandir menús para mostrar productos individuales
       if (settingsStore.business_settings.printer.detail_items) {
-          const orderDetails = props.data?.order_data?.order_details || props.data?.sale_details || [];
-          orderDetails.forEach((detail) => {
-              detail.indication = detail.indication ? detail.indication : []
+        const orderDetails = props.data?.order_data?.order_details || props.data?.order_details || [];
+        
+        // Crear items expandidos manualmente ya que el JSON de venta no los incluye
+        const expandedItems = [];
+        
+        saleData.items?.forEach((saleItem, saleIndex) => {
+          // Buscar si existe un menú correspondiente
+          const menuDetail = orderDetails.find(orderDetail => 
+            orderDetail.product_set && 
+            parseFloat(orderDetail.product_set.price) === saleItem.total_item
+          );
+          
+          if (menuDetail && menuDetail.product_set && menuDetail.product_set.items?.length > 0) {
+            // Es un menú, expandir
+            const menuName = menuDetail.product_set.menu_name || menuDetail.product_set.name || saleItem.descripcion;
+            
+            // Agregar encabezado del menú
+            expandedItems.push({
+              ...saleItem,
+              descripcion: `${menuName} (Menú)`,
+              isMenuHeader: true
+            });
+            
+            // Agregar productos del menú
+            menuDetail.product_set.items.forEach(menuItem => {
+              if (menuItem.product && menuItem.quantity > 0) {
+                expandedItems.push({
+                  cantidad: menuItem.quantity,
+                  descripcion: `  ↳ ${menuItem.product.name}`,
+                  precio_unitario: parseFloat(menuItem.product.prices) || 0,
+                  total_item: 0, // No mostrar total individual para productos de menú
+                  isMenuProduct: true,
+                  parentMenu: menuName
+                });
+              }
+            });
+          } else {
+            // Producto regular
+            expandedItems.push(saleItem);
+          }
+        });
+        
+        saleData.items = expandedItems;
+        
+        // Procesar indicaciones
+        orderDetails.forEach((detail) => {
+          detail.indication = detail.indication ? detail.indication : []
           const indication = detail?.indication.reduce((desc, indication) => {
-            if (indication.quick_indications.length) {
+            if (indication.quick_indications?.length) {
               indication.quick_indications.forEach((ind) => {
                 desc += `${ind}, `;
               });
@@ -437,12 +496,16 @@ export default defineComponent({
               : `${desc} [${indication.description}]`;
             return desc;
           }, "");
-          const item = saleData.items.find(
-            (i) => i.descripcion === detail.product_name
-          );
-          if (item) item.descripcion += indication;
+          
+          if (indication) {
+            const item = saleData.items.find(
+              (i) => i.descripcion === detail.product_name
+            );
+            if (item) item.descripcion += indication;
+          }
         });
       }
+      
       return saleData;
     };
 
@@ -549,6 +612,15 @@ export default defineComponent({
         }
         tfoot {
           font-weight: bold;
+        }
+        
+        .menu-header {
+          font-weight: bold;
+          border-top: 1px solid #ddd;
+        }
+        
+        .menu-product {
+          font-style: italic;
         }
       }
     }
