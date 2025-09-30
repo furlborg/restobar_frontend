@@ -249,7 +249,7 @@ export const generateVoucherPDF = async(data, infoHeader, dataOrder) => {
         rightY += 4;
     }
     if (data?.["serie_documento"].includes("FL") && data?.["serie_documento"].includes("BL")) { 
-        doc.text(`${ !orderData?.table ? !orderData.delivery_info ? "PARA LLEVARrr" : "DELIVERY"
+        doc.text(`${ !orderData?.table ? !orderData.delivery_info ? "PARA LLEVAR" : "DELIVERY"
                                        : tableStore.getTableByID(orderData.table).description }`, 30, rightY);
     }
         y = Math.max(y + 25, rightY + 6);
