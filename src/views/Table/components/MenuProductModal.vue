@@ -13,29 +13,29 @@
               v-for="product in products"
               :key="product.product_id"
               class="product-card"
-              :class="{ 'no-stock': !product.stock_override || product.stock_override === 0 }"
+              :class="{ 'no-stock': !availableStock[product.product_id]?.available || availableStock[product.product_id]?.available === 0 }"
             >
               <div class="product-name">{{ product.product_name }}</div>
               <n-text 
-                :type="product.stock_override > 0 ? 'success' : 'error'"
+                :type="availableStock[product.product_id]?.available > 0 ? 'success' : 'error'"
                 class="stock-info"
               >
-                Stock: {{ product.stock_override || 0 }}
-                <span v-if="!product.stock_override || product.stock_override === 0"> (Sin stock)</span>
-                <span v-else-if="quantities[product.product_id] > 0" class="stock-calculation">
-                  (Máx. {{ Math.floor((product.stock_override || 0) / quantities[product.product_id]) }} menús)
+                Stock: {{ availableStock[product.product_id]?.available || 0 }} de {{ availableStock[product.product_id]?.original || 0 }}
+                <span v-if="availableStock[product.product_id]?.used > 0" class="used-stock">
+                  (Usado: {{ availableStock[product.product_id]?.used }})
                 </span>
+                <span v-if="!availableStock[product.product_id]?.available || availableStock[product.product_id]?.available === 0"> (Sin stock)</span>
               </n-text>
               <n-input-number
                 v-model:value="quantities[product.product_id]"
                 :min="0"
-                :max="product.stock_override || 0"
-                :disabled="!product.stock_override || product.stock_override === 0"
-                :status="quantities[product.product_id] > (product.stock_override || 0) ? 'error' : 'default'"
+                :max="availableStock[product.product_id]?.available || 0"
+                :disabled="!availableStock[product.product_id]?.available || availableStock[product.product_id]?.available === 0"
+                :status="quantities[product.product_id] > (availableStock[product.product_id]?.available || 0) ? 'error' : 'default'"
                 size="small"
               />
               <n-text 
-                v-if="quantities[product.product_id] > (product.stock_override || 0)" 
+                v-if="quantities[product.product_id] > (availableStock[product.product_id]?.available || 0)" 
                 type="error" 
                 class="error-text"
               >
@@ -83,19 +83,51 @@ const groupedProducts = computed(() => {
   return groups;
 })
 
+// Computed para calcular el stock disponible considerando lo ya agregado en el frontend
+const availableStock = computed(() => {
+  const stockMap = {};
+  
+  // Obtener menús ya agregados en el store para este menú específico
+  const existingMenuOrders = orderStore.salePayload?.sale_product_sets || [];
+  const currentMenuOrders = existingMenuOrders.filter(ps => ps.menu_id === props.menu.menu.id);
+  
+  props.menu.items?.forEach((product) => {
+    let usedStock = 0;
+    
+    // Calcular stock ya usado para este producto en menús existentes
+    currentMenuOrders.forEach(menuOrder => {
+      const menuItem = menuOrder.items?.find(item => item.product_id === product.product_id);
+      if (menuItem) {
+        usedStock += menuItem.quantity * menuOrder.quantity; // cantidad del item * cantidad de menús
+      }
+    });
+    
+    // Stock disponible = stock original - stock ya usado
+    const available = Math.max(0, (product.stock_override || 0) - usedStock);
+    stockMap[product.product_id] = {
+      original: product.stock_override || 0,
+      used: usedStock,
+      available: available
+    };
+  });
+  
+  return stockMap;
+})
+
 const handleAddMenu = () => {
-  // Validar que las cantidades no excedan el stock disponible
+  // Validar que las cantidades no excedan el stock disponible (considerando lo ya agregado)
   for (const product of props.menu.items) {
     const selectedQuantity = quantities.value[product.product_id] || 0;
-    const availableStock = product.stock_override || 0;
+    const stockInfo = availableStock.value[product.product_id];
+    const availableStockAmount = stockInfo?.available || 0;
     
-    if (selectedQuantity > 0 && availableStock === 0) {
-      window.$message?.warning(`❌ Stock insuficiente: El producto "${product.product_name}" no tiene stock disponible`);
+    if (selectedQuantity > 0 && availableStockAmount === 0) {
+      window.$message?.warning(` Stock insuficiente: "${product.product_name}" - Ya no hay stock disponible (Usado: ${stockInfo?.used || 0}/${stockInfo?.original || 0})`);
       return;
     }
     
-    if (selectedQuantity > availableStock) {
-      window.$message?.warning(`❌ Stock insuficiente: "${product.product_name}" - Solicitado: ${selectedQuantity}, Disponible: ${availableStock}`);
+    if (selectedQuantity > availableStockAmount) {
+      window.$message?.warning(` Stock insuficiente: "${product.product_name}" - Solicitado: ${selectedQuantity}, Disponible: ${availableStockAmount} (Ya usado: ${stockInfo?.used || 0})`);
       return;
     }
   }
@@ -110,13 +142,14 @@ const handleAddMenu = () => {
       return;
     }
 
-    // Validar stock por fase completa
+    // Validar stock por fase completa considerando stock ya usado
     for (const product of products) {
       const selectedQuantity = quantities.value[product.product_id] || 0;
-      const availableStock = product.stock_override || 0;
+      const stockInfo = availableStock.value[product.product_id];
+      const availableStockAmount = stockInfo?.available || 0;
       
-      if (selectedQuantity > 0 && selectedQuantity > availableStock) {
-        window.$message?.warning(`❌ Stock insuficiente en fase "${phase}": "${product.product_name}" - Solicitado: ${selectedQuantity}, Disponible: ${availableStock}`);
+      if (selectedQuantity > 0 && selectedQuantity > availableStockAmount) {
+        window.$message?.warning(` Stock insuficiente en fase "${phase}": "${product.product_name}" - Solicitado: ${selectedQuantity}, Disponible: ${availableStockAmount} (Ya usado: ${stockInfo?.used || 0})`);
         return;
       }
     }
@@ -131,22 +164,6 @@ const handleAddMenu = () => {
   }
 
   const totalMenus = uniqueQuantities[0];
-
-  // Validación final: verificar si hay stock suficiente para la cantidad total de menús solicitados
-  for (const product of props.menu.items) {
-    const selectedQuantity = quantities.value[product.product_id] || 0;
-    const availableStock = product.stock_override || 0;
-    
-    if (selectedQuantity > 0) {
-      // Calcular cuántos menús se pueden hacer con este producto
-      const maxMenusFromThisProduct = Math.floor(availableStock / selectedQuantity);
-      
-      if (maxMenusFromThisProduct < totalMenus) {
-        window.$message?.warning(`❌ Stock insuficiente para ${totalMenus} menús: "${product.product_name}" permite máximo ${maxMenusFromThisProduct} menús (Stock: ${availableStock}, Necesario: ${selectedQuantity * totalMenus})`);
-        return;
-      }
-    }
-  }
 
   const selectedItems = props.menu.items
     .filter(item => quantities.value[item.product_id] > 0)
@@ -205,6 +222,10 @@ const handleAddMenu = () => {
   display: block;
   margin-bottom: 8px;
   font-size: 12px;
+}
+.used-stock {
+  color: #f0a020;
+  font-style: italic;
 }
 .stock-calculation {
   font-weight: 600;

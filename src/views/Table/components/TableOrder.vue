@@ -116,7 +116,7 @@
                                         <span class="fs-4">{{ orderStore.orderId ? 'Actualizar' : 'Realizar' }} pedido</span>
                                     </n-button>
                                 </td>
-                                <td colspan="2" class="fs-6 fw-bold">S/. {{ formattedTotals.grandTotal }}</td>
+                                <td colspan="2" class="fs-6 fw-bold">{{ formattedTotals.grandTotal }}</td>
                             </tr>
                         </tfoot>
                     </n-table>
