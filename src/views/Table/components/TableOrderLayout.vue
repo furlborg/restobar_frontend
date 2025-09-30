@@ -468,10 +468,6 @@ export default defineComponent({
         provide("shouldShowCustomerMode", shouldShowCustomerMode);
         provide("handleProductClick", handleProductClick);
 
-        watchEffect(() => {
-            console.log("Has Unsaved Changes?:", hasUnsavedChanges.value);
-        });
-
         return {
             isMobile, userStore, activeUsersStore, route, router, tableStore, table, settingsStore, genericsStore, productStore, orderStore, saleStore, shouldShowCustomerMode, showUserConfirm, userConfirm, loadingConfirm,
             loading, performCreateTableOrder, performUpdateTableOrder, showConfirm, dataAnulate, rules,

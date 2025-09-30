@@ -34,8 +34,14 @@
                   />
                 </n-form-item-gi>
                 <n-form-item-gi :span="3" label="Fecha">
-                  <n-date-picker class="w-100" type="datetime" :is-date-disabled="ts => ts > new Date()"
-                    disabled v-model:formatted-value="sale.date_sale" />
+                  <n-date-picker
+                    class="w-100"
+                    type="datetime"
+                    :is-date-disabled="disablePastDates"
+                    :is-time-disabled="disablePastTimes"
+                    :disabled="sale.payment_condition !== 2"
+                    v-model:formatted-value="sale.date_sale"
+                  />
                 </n-form-item-gi>
                 <n-form-item-gi :span="5" label="Dirección">
                   <n-select v-model:value="sale.address" :options="addressesOptions"
@@ -62,7 +68,7 @@
               </n-grid>
             </n-form>
             <n-scrollbar>
-              <n-table class="m-auto text-center fs-6 mb-3" :bordered="false">
+              <n-table v-if="!shouldShowCustomerMode" class="m-auto text-center fs-6 mb-3" :bordered="false">
                 <thead>
                   <tr>
                     <th v-if="settingsStore.businessSettings.sale?.manage_affectations">#</th>
@@ -101,6 +107,54 @@
                   </tr>
                 </tbody>
               </n-table>
+              <n-space v-else vertical>
+                <n-card v-for="customer in customers" :key="customer.id">
+                  <template #header>
+                    <n-text class="fs-5">{{ customer.name }}</n-text>
+                  </template>
+                    <n-scrollbar>
+                      <n-table :bordered="false">
+                          <thead>
+                            <tr>
+                              <th v-if="settingsStore.businessSettings.sale?.manage_affectations">#</th>
+                              <th>Cantidad</th>
+                              <th>Producto</th>
+                              <th>Precio Unitario</th>
+                              <th v-if="settingsStore.business_settings.sale?.show_discount_label">Descuento</th>
+                              <th>Precio Total</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr v-for="(detail, index) in saleStore.toSale.filter(d => d.quantity > 0 && d.customer.id === customer.id)" :key="index">
+                              <td v-if="settingsStore.businessSettings.sale?.manage_affectations">
+                                <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation"
+                                  :disabled="!userStore.hasPermission('change_product_affectation')"
+                                  :options="productStore.affectationsOptions" @update:value="saleStore.updateDetail(detail)">
+                                  <n-tag size="small" :color="getAfcColor(detail.product_affectation)">
+                                    {{ getAfcShort(detail.product_affectation) }}
+                                  </n-tag>
+                                </n-popselect>
+                              </td>
+                              <td>{{ detail.quantity }}</td>
+                              <td><input class="custom-input" v-model="detail.product_name" v-autowidth @click="$event.target.select()"/></td>
+                              <td>
+                                S/. <input class="custom-input" type="number" :min="detail.product_affectation === 20 ? 1 : 0"
+                                  step=".5" v-model="detail.price_sale" v-autowidth @click="$event.target.select()"
+                                  :disabled="!settingsStore.business_settings.sale?.show_discount_label"
+                                  @input="saleStore.updateDetail(detail), detail.discount = '0.00'"/>
+                              </td>
+                              <td v-if="settingsStore.business_settings.sale?.show_discount_label">
+                                S/. <input class="custom-input" type="number" min="0" :max="detail.price_sale || 0" step=".5"
+                                  :disabled="detail.product_affectation === 21 || !!Number(sale.discount)"
+                                  v-model="detail.discount" v-autowidth @click="$event.target.select()"/>
+                              </td>
+                              <td>{{ detail.product_affectation === 21 ? "0.00" : (detail.quantity * detail.price_sale - detail.discount).toFixed(2) }}</td>
+                            </tr>
+                          </tbody>
+                      </n-table>
+                    </n-scrollbar>
+                </n-card>
+              </n-space>
             </n-scrollbar>
             <PaymentTotals
               :items="paymentTotalsItems"
@@ -168,7 +222,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed, watch, onMounted } from "vue";
+import { defineComponent, ref, computed, watch, onMounted, inject } from "vue";
 import SeparatePaymentsModal from "./SeparatePaymentsModal";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 import ClientSelectInput from "@/views/Customer/components/ClientSelectInput.vue";
@@ -206,6 +260,9 @@ export default defineComponent({
     const businessStore = useBusinessStore();
     const message = useMessage();
     const dialog = useDialog();
+
+    const customers = inject('customers', ref([]));
+    const shouldShowCustomerMode = inject('shouldShowCustomerMode', ref(false));
 
     const loading = ref(false);
     const saleForm = ref();
@@ -292,7 +349,6 @@ export default defineComponent({
           value: totalDSCT.value,
           editable: !settingsStore.business_settings.sale?.show_discount_label,
           field: "discount",
-          step: 0.5,
           disabled: saleStore.toSale.some(d => Number(d.discount) > 0)
         },
         {
@@ -300,7 +356,6 @@ export default defineComponent({
           value: sale.value.other_charges || 0,
           editable: true,
           field: "other_charges",
-          step: 0.5,
           disabled: false
         }
       ];
@@ -545,6 +600,44 @@ export default defineComponent({
 
     const getAfcShort = (afc) => ({ 10: "GRV", 20: "EXN", 21: "GRT" }[afc] || "---");
 
+    const disablePastDates = (timestamp) => {
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      return timestamp < todayStart;
+    };
+
+    function disablePastTimes(ts) {
+      const now = new Date();
+      const selected = new Date(ts);
+
+      const isToday =
+        selected.getFullYear() === now.getFullYear() &&
+        selected.getMonth() === now.getMonth() &&
+        selected.getDate() === now.getDate();
+
+      if (!isToday) {
+        return {};
+      }
+
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      const currentSecond = now.getSeconds();
+
+      return {
+        isHourDisabled: (hour) => hour < currentHour,
+        isMinuteDisabled: (minute, hour) => {
+          if (hour === currentHour) return minute < currentMinute;
+          return false;
+        },
+        isSecondDisabled: (second, minute, hour) => {
+          if (hour === currentHour && minute === currentMinute) {
+            return second < currentSecond;
+          }
+          return false;
+        }
+      };
+    }
+
     watch(total, () => {
       sale.value.given_amount = total.value > 0 ? total.value : parseFloat("0").toFixed(2);
     });
@@ -576,9 +669,10 @@ export default defineComponent({
     });
 
     return {
+      customers, shouldShowCustomerMode,
       userStore, saleStore, orderStore, productStore, settingsStore, sale, isDecimal,
       loading, saleForm, formRules, handleCustomerSelected, handleCustomerCleared,
-      changing, subTotal, changeCondition, changeSerie, handleSerieUpdate, handleSerieChanged, 
+      changing, subTotal, changeCondition, changeSerie, handleSerieUpdate, handleSerieChanged,
       showObservations, performCreateSale,
       addressesOptions, createAddressesOptions, genericsStore,
       icbper, isMultiple, showPayments, createPayment, doMultiplePayment, filteredMethods,
@@ -586,7 +680,8 @@ export default defineComponent({
       closeSeparatePaymentsModal: () => {}, successSeparatePaymentsModal: obtainSaleNumber,
       separatePayments, showSeparateModal, getAfcShort, getAfcColor, totalIGV, totalGRV,
       totalEXN, totalGRT, totalDSCT, whatsappNumber, ticketPreview, previewDrawer, showPdf,
-      pdfData, paymentTotalsItems, handleValueChange, handlePaymentChange,
+      pdfData, paymentTotalsItems, handleValueChange, handlePaymentChange, disablePastDates,
+      disablePastTimes
     };
   },
 });
