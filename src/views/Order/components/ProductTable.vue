@@ -29,8 +29,8 @@
             />
           </td>
           <td class="currency-input-wrapper">S/. {{ Number(menuSet.price || 0).toFixed(2) }}</td>
-          <td>0.00</td>
-          <td>{{ (menuSet.quantity * menuSet.price).toFixed(2) }}</td>
+          <td>S/. 0.00</td>
+          <td>S/. {{ (menuSet.quantity * menuSet.price).toFixed(2) }}</td>
         </tr>
         <!-- Items del menú -->
 <!--         <tr v-for="(item, itemIndex) in menuSet.items" :key="`menu-item-${menuIndex}-${itemIndex}`" 

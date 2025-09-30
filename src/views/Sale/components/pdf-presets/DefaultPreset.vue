@@ -435,7 +435,6 @@ export default defineComponent({
 
     const parseSale = () => {
       let saleData = JSON.parse(props.data.json_sale);
-      debugger;
       // Expandir menús para mostrar productos individuales
       if (settingsStore.business_settings.printer.detail_items) {
         const orderDetails = props.data?.order_data?.order_details || props.data?.order_details || [];

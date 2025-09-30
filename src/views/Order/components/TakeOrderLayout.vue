@@ -249,7 +249,7 @@ export default defineComponent({
     const userStore = useUserStore();
     const route = useRoute();
     const router = useRouter();
-    const { grandTotal, formattedTotals } = useSaleTotals();
+    const { grandTotal, formattedTotals, taxBreakdown, summary, menuTotal } = useSaleTotals();
 
     const loading = ref(false);
     const selectProducts = ref(false);
@@ -289,30 +289,19 @@ export default defineComponent({
     const whatsappNumber = ref("");
     const customerDocument = ref("");
 
-    // Computados necesarios para aria branch
-    const computeTaxTotals = (affectation) => saleStore.toSale.reduce((acc, curVal) => 
-      curVal.product_affectation === affectation ? acc + parseFloat(curVal.price_sale) * curVal.quantity : acc, 0);
-
-    const icbper = computed(() => orderStore.orderList.reduce((acc, curVal) => 
-      acc + (curVal.icbper ? curVal.icbper_amount : 0), 0));
+    // Usar el composable para obtener los totales correctos incluyendo menús
     
-    const totalGRV = computed(() => computeTaxTotals(10));
-    const totalEXN = computed(() => computeTaxTotals(20));
-    const totalGRT = computed(() => computeTaxTotals(21));
-    
-    const totalIGV = computed(() => {
-      const igvTotal = saleStore.toSale.reduce((acc, curVal) => 
-        acc + parseFloat(curVal.igv_tax || 0) * parseFloat(curVal.quantity || 0), 0);
-      return parseFloat(igvTotal.toFixed(2));
-    });
+    const subTotal = computed(() => summary.value.subtotal);
+    const icbper = computed(() => taxBreakdown.value.icbper);
+    const totalGRV = computed(() => taxBreakdown.value.taxed);
+    const totalEXN = computed(() => taxBreakdown.value.exempt + menuTotal.value);
+    const totalGRT = computed(() => taxBreakdown.value.free);
+    const totalIGV = computed(() => taxBreakdown.value.igv);
 
     const totalDSCT = computed(() => 
       saleStore.toSale.some(detail => Number(detail.discount) > 0)
         ? saleStore.toSale.reduce((acc, curVal) => acc + Number(curVal.discount), 0)
         : Number(sale.value.discount));
-
-    const subTotal = computed(() => saleStore.toSale.reduce((acc, curVal) => 
-      curVal.product_affectation === 21 ? acc : acc + curVal.price_sale * curVal.quantity, 0));
 
     const changing = computed(() => 
       sale.value.given_amount > total.value ? (sale.value.given_amount - total.value).toFixed(2) : 0.0);

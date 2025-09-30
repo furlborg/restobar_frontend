@@ -115,7 +115,6 @@ export default defineComponent({
     const orderTotal = computed(() => {
       return calculateOrderTotal(props.data.order_details || []);
     });
-    debugger;
 
     return {
       tableStore,

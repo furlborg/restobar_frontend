@@ -393,11 +393,32 @@ export default defineComponent({
     });
 
     const isPaymentDisabled = computed(() => {
-      return !saleStore.toSale.length ||
-        (props.sale.payment_condition === 1 ?
-          props.sale.given_amount < props.sale.amount :
-          !(props.sale.given_amount < props.sale.amount)
-        );
+      // Verificar si hay productos regulares o menús
+      const hasRegularProducts = saleStore.toSale.length > 0;
+      const hasMenuSets = saleStore.salePayload.sale_product_sets && saleStore.salePayload.sale_product_sets.length > 0;
+      const hasAnyItems = hasRegularProducts || hasMenuSets;
+      
+      // Debug logging
+      console.log('🔍 Payment validation:', {
+        hasRegularProducts,
+        hasMenuSets,
+        hasAnyItems,
+        regularProductsCount: saleStore.toSale.length,
+        menuSetsCount: saleStore.salePayload.sale_product_sets?.length || 0,
+        paymentCondition: props.sale.payment_condition,
+        givenAmount: props.sale.given_amount,
+        totalAmount: props.sale.amount
+      });
+      
+      // Si no hay items, deshabilitar
+      if (!hasAnyItems) {
+        return true;
+      }
+      
+      // Validar condiciones de pago
+      return props.sale.payment_condition === 1 ?
+        props.sale.given_amount < props.sale.amount :
+        !(props.sale.given_amount < props.sale.amount);
     });
 
     const dateDisabled = (ts) => ts > new Date(Date.now());
@@ -543,11 +564,11 @@ export default defineComponent({
     // Crear los items para PaymentTotals
     const paymentTotalsItems = computed(() => {
       return [
-        { label: "SUBTOTAL", value: props.subTotal, editable: false },
-        { label: "OP. GRAVADAS", value: props.totalGrv, editable: false },
+        { label: "SUBTOTAL", value: props.subTotal, editable: false, alwaysShow: true },
+        { label: "OP. GRAVADAS", value: props.totalGrv, editable: false, alwaysShow: true },
         { label: "OP. EXONERADAS", value: props.totalExn, editable: false, alwaysShow: false },
         { label: "OP. GRATUITAS", value: props.totalGrt, editable: false, alwaysShow: false },
-        { label: "IGV", value: props.totalIgv, editable: false },
+        { label: "IGV", value: props.totalIgv, editable: false, alwaysShow: true },
         { label: "ICBPER", value: props.icbper, editable: false, alwaysShow: false },
         {
           label: "DSCT",

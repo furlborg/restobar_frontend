@@ -218,7 +218,7 @@ export function useSaleTotals() {
       opGratuita: round2(opGratuita),
       igvTotal: round2(igvTotal),
       icbperTotal: round2(icbperTotal),
-      subTotal: round2(opGravada + opExonerada) // Excludes free operations from subtotal
+      subTotal: round2(productTotal.value + menuTotal.value - igvTotal) // Include menus in subtotal
     };
   });
 
