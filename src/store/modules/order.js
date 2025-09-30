@@ -114,5 +114,8 @@ export const useOrderStore = defineStore("order", {
         this.orders.push(order);
       }
     },
+    removeOrderItem(id) {
+      this.orders = this.orders.filter(order => order.id !== id)
+    }
   },
 });

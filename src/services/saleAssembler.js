@@ -92,7 +92,7 @@ export function buildSalePayload(orders = [], options = {}) {
  */
 export function buildTableOrderPayload(orders = [], context = {}) {
   const { tillId, orderType = 'M', askFor, user } = context;
-  
+
   const order_details = [];
   const product_sets = [];
 
@@ -110,12 +110,12 @@ export function buildTableOrderPayload(orders = [], context = {}) {
           indication: item.indication || ""
         }))
       };
-      
+
       // Add IDs for updates
       if (order.id) productSet.order_detail_id = order.id;
       if (order.product_set_id) productSet.id = order.product_set_id;
       if (order.menu_id) productSet.menu_id = order.menu_id;
-      
+
       product_sets.push(productSet);
     } else {
       const detail = {
@@ -124,9 +124,9 @@ export function buildTableOrderPayload(orders = [], context = {}) {
         quantity: Number(order.quantity || 0),
         customer: order.customer || null
       };
-      
+
       if (order.id) detail.id = order.id;
-      
+
       order_details.push(detail);
     }
   });

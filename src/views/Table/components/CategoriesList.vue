@@ -73,7 +73,7 @@
                 </n-scrollbar>
             </n-card>
         </n-tab-pane>
-        <n-tab-pane v-if="!settingsStore.businessSettings.order.order_by_customer" name="menu" tab="Menú">
+        <n-tab-pane v-if="!settingsStore.businessSettings.order?.order_by_customer" name="menu" tab="Menú">
             <n-card
             title="Menú Programado"
             :bordered="false"
