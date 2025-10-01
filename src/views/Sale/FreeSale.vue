@@ -26,8 +26,7 @@
           <n-radio-button :value="1" :key="1">FACTURA</n-radio-button>
           <n-radio-button :value="3" :key="3">BOLETA</n-radio-button>
         </n-radio-group>
-        <n-radio-group v-model:value="sale.payment_condition" name="saleType" size="small"
-          @update:value="changeCondition" disabled>
+        <n-radio-group v-model:value="sale.payment_condition" name="saleType" size="small">
           <n-radio-button :value="1" :key="1">CONTADO</n-radio-button>
           <n-radio-button :value="2" :key="2">CRÉDITO</n-radio-button>
         </n-radio-group>
