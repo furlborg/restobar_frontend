@@ -184,8 +184,12 @@ export default defineComponent({
         const currentOrder = computed(() => orderStore.orderList[itemIndex.value]);
 
         const productOptions = computed(() => products.value.map((product) => ({
-            value: product.id, label: product.name, disabled: product.is_disabled,
-            category: productStore.getCategorieDescription(product.category), stock: product.stock
+            value: product.id,
+            label: product.name,
+            disabled: product.is_disabled,
+            category: productStore.getCategorieDescription(product.category),
+            stock: product.stock,
+            price: parseFloat(product.prices).toFixed(2),
         })));
 
         const openOrderModal = (index) => {

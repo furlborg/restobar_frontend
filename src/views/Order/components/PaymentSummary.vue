@@ -147,7 +147,8 @@ export default defineComponent({
       label: product.name,
       disabled: product.is_disabled,
       category: productStore.getCategorieDescription(product.category),
-      stock: product.stock
+      stock: product.stock,
+      price: parseFloat(product.prices).toFixed(2),
     })));
 
     // Función para mostrar opciones cuando se busca (igual que TableOrder)
