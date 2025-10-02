@@ -235,13 +235,6 @@
                     </n-form-item-gi>
                     <n-form-item-gi v-if="businessSettings.order" :span="4">
                         <n-checkbox
-                                v-model:checked="businessSettings.order.fast_sale_format"
-                        >Formato "Venta Rápida"
-                        </n-checkbox
-                        >
-                    </n-form-item-gi>
-                    <n-form-item-gi v-if="businessSettings.order" :span="4">
-                        <n-checkbox
                                 v-model:checked="businessSettings.order.divide_delivery_takeaway"
                         >Dividir delivery y para llevar
                         </n-checkbox
@@ -406,6 +399,12 @@
                         >Venta libre
                         </n-checkbox
                         >
+                    </n-form-item-gi>
+                    <n-form-item-gi v-if="businessSettings.order" :span="4">
+                        <n-checkbox
+                                v-model:checked="businessSettings.order.fast_sale_format"
+                        >Formato "Venta Rápida"
+                        </n-checkbox>
                     </n-form-item-gi>
                     <n-form-item-gi :span="4">
                         <n-checkbox

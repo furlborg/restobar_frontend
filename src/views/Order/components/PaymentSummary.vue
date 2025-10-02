@@ -108,14 +108,6 @@ export default defineComponent({
       type: String,
       required: true
     },
-    productOptions: {
-      type: Array,
-      required: true
-    },
-    searching: {
-      type: Boolean,
-      required: true
-    },
     showModal: {
       type: Boolean,
       required: true
@@ -180,18 +172,14 @@ export default defineComponent({
       return false;
     };
 
-    // Función para seleccionar producto (igual que TableOrder)
     const selectProductInternal = (id) => {
       const item = products.value.find(product => product.id === id);
       if (item && item.has_supplies && item.has_stock) {
         orderStore.addOrder(item);
-        console.log('Producto agregado a la orden');
-        // Limpiar búsqueda después de seleccionar
         emit('update:productSearch', '');
       }
     };
 
-    // Renderizar etiquetas de productos (usando componente compartido)
     const renderLabel = (option) => {
       return h(ProductSearchLabel, { option });
     };
@@ -232,7 +220,6 @@ export default defineComponent({
 
     const handleButtonClick = () => {
       try {
-        console.log('Botón clicked, selectProducts actual:', props.selectProducts, 'enviando:', !props.selectProducts);
         emit('update:selectProducts', !props.selectProducts);
       } catch (error) {
         console.error('Error en handleButtonClick:', error);

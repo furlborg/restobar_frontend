@@ -62,7 +62,13 @@
         </n-gi>
       </n-grid>
     </n-card>
-    <n-tabs class="d-lg-none" tab-style="background: #fff;" v-model:value="activeTab" type="segment" animated>
+    <n-tabs
+      class="d-lg-none"
+      tab-style="background: #fff;"
+      v-model:value="activeTab"
+      type="segment"
+      animated
+    >
       <n-tab-pane name="main" tab="Tomar pedido">
         <n-card>
           <transition name="mode-fade" mode="out-in">
@@ -112,7 +118,12 @@
           :product-search="productSearch"
           :show-modal="showModal"
           :item-index="itemIndex"
-          @update:select-products="(value) => { selectProducts = value; goToFirstTab(); }"
+          @update:select-products="
+            (value) => {
+              selectProducts = value;
+              goToFirstTab();
+            }
+          "
           @update:product-search="productSearch = $event"
           @update:show-modal="showModal = $event"
           @update:item-index="itemIndex = $event"
@@ -120,30 +131,70 @@
         />
       </n-tab-pane>
     </n-tabs>
-    <n-modal :class="getModalClass" preset="card" v-model:show="showConfirm" title="Registrar pedido" :mask-closable="false" closable>
+    <n-modal
+      :class="getModalClass"
+      preset="card"
+      v-model:show="showConfirm"
+      title="Registrar pedido"
+      :mask-closable="false"
+      closable
+    >
       <n-form-item label="Ingrese código de usuario">
         <n-input type="password" v-model:value="userConfirm" placeholder="" />
       </n-form-item>
       <template #action>
         <n-space justify="end">
-          <n-button type="success" :loading="loading" :disabled="!userConfirm || loading" secondary @click.prevent="performCreateOrder">
+          <n-button
+            type="success"
+            :loading="loading"
+            :disabled="!userConfirm || loading"
+            secondary
+            @click.prevent="performCreateOrder"
+          >
             Confirmar
           </n-button>
         </n-space>
       </template>
     </n-modal>
-    <n-modal :class="getModalClass" preset="card" v-model:show="showPayments" title="Realizar venta" :mask-closable="false" closable @close="sale.payments = null">
+    <n-modal
+      :class="getModalClass"
+      preset="card"
+      v-model:show="showPayments"
+      title="Realizar venta"
+      :mask-closable="false"
+      closable
+      @close="sale.payments = null"
+    >
       <n-space justify="space-between">
         <n-tag type="info">Total: S/. {{ showPayments ? sale.amount : null }}</n-tag>
-        <n-tag :type="evalPayments ? 'error' : 'success'">Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}</n-tag>
-        <n-tag :type="evalPayments ? 'error' : 'warning'">Faltante: S/. {{ showPayments ? (parseFloat(sale.amount) - currentPaymentsAmount).toFixed(2) : null }}</n-tag>
+        <n-tag :type="evalPayments ? 'error' : 'success'"
+          >Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}</n-tag
+        >
+        <n-tag :type="evalPayments ? 'error' : 'warning'"
+          >Faltante: S/.
+          {{
+            showPayments
+              ? (parseFloat(sale.amount) - currentPaymentsAmount).toFixed(2)
+              : null
+          }}</n-tag
+        >
       </n-space>
       <n-form-item class="mt-2" label="Pagos">
         <n-dynamic-input v-model:value="sale.payments" :min="1" @create="createPayment">
           <template #default="{ value }">
             <div style="display: flex; align-items: center; width: 100%">
-              <n-select v-model:value="value.payment_method" :disabled="loading" :options="filteredMethods" />
-              <n-input class="ms-2" v-model:value="value.amount" placeholder="" :disabled="loading" @keypress="isDecimal($event)" />
+              <n-select
+                v-model:value="value.payment_method"
+                :disabled="loading"
+                :options="filteredMethods"
+              />
+              <n-input
+                class="ms-2"
+                v-model:value="value.amount"
+                placeholder=""
+                :disabled="loading"
+                @keypress="isDecimal($event)"
+              />
             </div>
           </template>
         </n-dynamic-input>
@@ -151,7 +202,12 @@
       <n-space justify="end">
         <n-button
           type="success"
-          :disabled="evalPayments || sale.payments?.some(p => p.payment_method === null) || sale.payments?.some(p => Number(p.amount) <= 0) || loading"
+          :disabled="
+            evalPayments ||
+            sale.payments?.some((p) => p.payment_method === null) ||
+            sale.payments?.some((p) => Number(p.amount) <= 0) ||
+            loading
+          "
           :loading="loading"
           secondary
           @click="performTakeAway"
@@ -160,10 +216,36 @@
         </n-button>
       </n-space>
     </n-modal>
-    <OrderIndications v-model:show="showModal" preset="card" title="Indicaciones" :order="orderStore.orderList[itemIndex]" @success="showModal = false" />
-    <customer-modal v-model:show="showCustomerModal" :id-customer="sale.customer" :document="customerDocument" :doc_type="sale.invoice_type === 1 ? '6' : null" @update:show="onCloseModal" @on-success="onSuccess" />
-    <ticket-preview ref="ticketPreviewRef" v-model:show="showPdf" :data="pdfData" :hidden="true" :isUpdate="false" />
-    <preview-drawer ref="voucherDrawer" v-model:show="showVoucher" :data="voucherData" :previewOnly="!ticketPreview" @printed="() => $router.push({ name: 'TableHome' })" @canceled="() => $router.push({ name: 'TableHome' })" />
+    <OrderIndications
+      v-model:show="showModal"
+      preset="card"
+      title="Indicaciones"
+      :order="orderStore.orderList[itemIndex]"
+      @success="showModal = false"
+    />
+    <customer-modal
+      v-model:show="showCustomerModal"
+      :id-customer="sale.customer"
+      :document="customerDocument"
+      :doc_type="sale.invoice_type === 1 ? '6' : null"
+      @update:show="onCloseModal"
+      @on-success="onSuccess"
+    />
+    <ticket-preview
+      ref="ticketPreviewRef"
+      v-model:show="showPdf"
+      :data="pdfData"
+      :hidden="true"
+      :isUpdate="false"
+    />
+    <preview-drawer
+      ref="voucherDrawer"
+      v-model:show="showVoucher"
+      :data="voucherData"
+      :previewOnly="!ticketPreview"
+      @printed="() => $router.push({ name: 'TableHome' })"
+      @canceled="() => $router.push({ name: 'TableHome' })"
+    />
   </div>
 </template>
 
@@ -234,6 +316,83 @@ export default defineComponent({
     const whatsappNumber = ref("");
     const customerDocument = ref("");
 
+    const totals = computed(() => {
+      const toSale = saleStore.toSale;
+      console.log(toSale);
+      return {
+        GRV: toSale.reduce(
+          (acc, cur) =>
+            cur.product_affectation === 10
+              ? acc + parseFloat(cur.price_sale - cur.igv_tax) * cur.quantity
+              : acc,
+          0
+        ),
+        EXN: toSale.reduce(
+          (acc, cur) =>
+            cur.product_affectation === 20
+              ? acc + parseFloat(cur.price_sale) * cur.quantity
+              : acc,
+          0
+        ),
+        GRT: toSale.reduce(
+          (acc, cur) =>
+            cur.product_affectation === 21
+              ? acc + parseFloat(cur.price_sale) * cur.quantity
+              : acc,
+          0
+        ),
+        IGV: toSale.reduce((acc, cur) => acc + cur.igv_tax * cur.quantity, 0),
+        DSCT: toSale.some((d) => Number(d.discount) > 0)
+          ? toSale.reduce((acc, cur) => acc + Number(cur.discount), 0)
+          : parseFloat(sale.value.discount),
+      };
+    });
+
+    const totalGRV = computed(() => totals.value.GRV);
+    const totalEXN = computed(() => totals.value.EXN);
+    const totalGRT = computed(() => totals.value.GRT);
+    const totalIGV = computed(() => totals.value.IGV);
+    const totalDSCT = computed(() => totals.value.DSCT);
+
+    const subTotal = computed(() =>
+      saleStore.toSale.reduce(
+        (acc, cur) =>
+          cur.product_affectation === 21 ? acc : acc + cur.price_sale * cur.quantity,
+        0
+      )
+    );
+
+    const products_count = computed(() =>
+      saleStore.toSale.reduce((acc, cur) => acc + cur.quantity, 0)
+    );
+
+    const total = computed(() => {
+      let cal = parseFloat(subTotal.value - parseFloat(totalDSCT.value) + icbper.value + parseFloat(sale.value.other_charges));
+      if (sale.value.delivery_info) {
+        cal += parseFloat(sale.value.delivery_info.amount)
+      };
+      return cal.toFixed(2);
+    });
+
+    const icbper = computed(() =>
+      orderStore.orderList.reduce(
+        (acc, curVal) => acc + (curVal.icbper ? curVal.icbper_amount : 0),
+        0
+      )
+    );
+
+    const changing = computed(() =>
+      sale.value.given_amount > total.value
+        ? (sale.value.given_amount - total.value).toFixed(2)
+        : 0.0
+    );
+
+    const getModalClass = computed(() => ({
+      "w-100": genericsStore.device === "mobile",
+      "w-50": genericsStore.device === "tablet",
+      "w-25": genericsStore.device === "desktop",
+    }));
+
     const defaultInvoiceType = settingsStore.businessSettings.sale?.enable_invoices
       ? settingsStore.businessSettings.sale?.default_invoice
       : 80;
@@ -245,7 +404,7 @@ export default defineComponent({
       date_sale: format(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss"),
       count: 0,
       amount: "0.00",
-      given_amount: parseFloat(0).toFixed(2),
+      given_amount: Number(0).toFixed(2),
       invoice_type: defaultInvoiceType,
       payment_method: 1,
       payment_condition: 1,
@@ -272,60 +431,42 @@ export default defineComponent({
       total_igv: "0.00",
     });
 
-    const computeTaxTotals = (affectation) => saleStore.toSale.reduce((acc, curVal) => 
-      curVal.product_affectation === affectation ? acc + parseFloat(curVal.price_sale) * curVal.quantity : acc, 0);
+    watch(
+      [
+        total,
+        icbper,
+        totalGRV,
+        totalEXN,
+        totalGRT,
+        totalIGV,
+        totalDSCT,
+        () => saleStore.toSale,
+        () => orderStore.orderList.length,
+      ],
+      () => {
+        const productCount = saleStore.toSale.reduce(
+          (acc, curVal) => acc + curVal.quantity,
+          0
+        );
+        Object.assign(sale.value, {
+          count: productCount,
+          amount: total.value,
+          icbper: icbper.value,
+          taxed_amount: totalGRV.value,
+          exempt_amount: totalEXN.value,
+          free_amount: totalGRT.value,
+          igv_amount: totalIGV.value,
+          total_igv: parseFloat(totalIGV.value || 0).toFixed(2),
+        });
 
-    const icbper = computed(() => orderStore.orderList.reduce((acc, curVal) => 
-      acc + (curVal.icbper ? curVal.icbper_amount : 0), 0));
-    
-    const totalGRV = computed(() => computeTaxTotals(10));
-    const totalEXN = computed(() => computeTaxTotals(20));
-    const totalGRT = computed(() => computeTaxTotals(21));
-    
-    const totalIGV = computed(() => {
-      const igvTotal = saleStore.toSale.reduce((acc, curVal) => 
-        acc + parseFloat(curVal.igv_tax || 0) * parseFloat(curVal.quantity || 0), 0);
-      return parseFloat(igvTotal.toFixed(2));
-    });
-
-    const totalDSCT = computed(() => 
-      saleStore.toSale.some(detail => Number(detail.discount) > 0)
-        ? saleStore.toSale.reduce((acc, curVal) => acc + Number(curVal.discount), 0)
-        : Number(sale.value.discount));
-
-    const subTotal = computed(() => saleStore.toSale.reduce((acc, curVal) => 
-      curVal.product_affectation === 21 ? acc : acc + curVal.price_sale * curVal.quantity, 0));
-
-    const total = computed(() => {
-      let cal = parseFloat(subTotal.value - parseFloat(totalDSCT.value) + icbper.value + parseFloat(sale.value.other_charges || 0));
-      if (sale.value.delivery_info?.amount) cal += parseFloat(sale.value.delivery_info.amount);
-      return cal.toFixed(2);
-    });
-
-    const changing = computed(() => 
-      sale.value.given_amount > total.value ? (sale.value.given_amount - total.value).toFixed(2) : 0.0);
-
-    const getModalClass = computed(() => ({
-      "w-100": genericsStore.device === "mobile",
-      "w-50": genericsStore.device === "tablet", 
-      "w-25": genericsStore.device === "desktop",
-    }));
-
-    watch([total, icbper, totalGRV, totalEXN, totalGRT, totalIGV, totalDSCT, () => saleStore.toSale], () => {
-      Object.assign(sale.value, {
-        count: saleStore.toSale.reduce((acc, curVal) => acc + curVal.quantity, 0),
-        amount: total.value,
-        icbper: icbper.value,
-        taxed_amount: totalGRV.value,
-        exempt_amount: totalEXN.value,
-        free_amount: totalGRT.value,
-        igv_amount: totalIGV.value,
-        total_igv: parseFloat(totalIGV.value || 0).toFixed(2),
-      });
-      if (sale.value.payment_condition === 1) {
-        sale.value.given_amount = total.value > 0 ? total.value : parseFloat(0).toFixed(2);
+        if (sale.value.payment_condition === 1) {
+          const newGivenAmount = total.value > 0 ? total.value : parseFloat(0).toFixed(2);
+          if (sale.value.given_amount !== newGivenAmount) {
+            sale.value.given_amount = newGivenAmount;
+          }
+        }
       }
-    });
+    );
 
     const obtainSaleNumber = async () => {
       if (!sale.value.serie) return;
@@ -344,9 +485,12 @@ export default defineComponent({
       }
     };
 
-    watch(() => sale.value.serie, async (newValue) => {
-      if (newValue !== undefined && newValue !== null) await obtainSaleNumber();
-    });
+    watch(
+      () => sale.value.serie,
+      async (newValue) => {
+        if (newValue !== undefined && newValue !== null) await obtainSaleNumber();
+      }
+    );
 
     onMounted(() => obtainSaleNumber());
 
@@ -414,13 +558,18 @@ export default defineComponent({
     };
 
     const doMultiplePayment = () => {
-      sale.value.payments = [{ payment_method: sale.value.payment_method, amount: String(sale.value.amount) }];
+      sale.value.payments = [
+        { payment_method: sale.value.payment_method, amount: String(sale.value.amount) },
+      ];
       showPayments.value = true;
     };
 
     const evalPayments = computed(() => {
       if (sale.value.payments) {
-        const sum = sale.value.payments.reduce((acc, val) => acc + parseFloat(val.amount), 0);
+        const sum = sale.value.payments.reduce(
+          (acc, val) => acc + parseFloat(val.amount),
+          0
+        );
         return sum !== Number(sale.value.amount);
       }
       return true;
@@ -602,18 +751,68 @@ export default defineComponent({
     onBeforeRouteLeave((to) => handleRouteGuard(to, true));
 
     return {
-      loading, selectProducts, showObservations, isMultiple, ticketPreview, activeTab,
-      showModal, showConfirm, showPayments, showCustomerModal, showPdf, showVoucher,
-      ticketPreviewRef, voucherDrawer, itemIndex, userConfirm, productSearch,
-      sale, pdfData, voucherData, addressesOptions, customerOptions, customerResults,
-      searchingCustomer, whatsappNumber, customerDocument,
-      changing, subTotal, totalGRV, totalEXN, totalGRT, totalIGV, totalDSCT, icbper,
-      getModalClass, evalPayments, currentPaymentsAmount, filteredMethods,
-      orderStore, selectSerie, changeSerie, changeCondition, showCustomerOptions,
-      autoCreateCustomer, createAddressesOptions, changeAddress, handleDelivery,
-      performTakeAway, doMultiplePayment, performCreateOrder,
-      createPayment, onCloseModal, onSuccess, isDecimal, goToFirstTab,
-      checkState, hasUnsavedChanges,
+      // Estados
+      loading,
+      selectProducts,
+      showObservations,
+      isMultiple,
+      ticketPreview,
+      activeTab,
+      showModal,
+      showConfirm,
+      showPayments,
+      showCustomerModal,
+      showPdf,
+      showVoucher,
+      // Referencias
+      ticketPreviewRef,
+      voucherDrawer,
+      itemIndex,
+      userConfirm,
+      productSearch,
+      // Datos
+      sale,
+      pdfData,
+      voucherData,
+      addressesOptions,
+      customerOptions,
+      searchingCustomer,
+      whatsappNumber,
+      customerDocument,
+      // Computados
+      changing,
+      subTotal,
+      totalGRV,
+      totalEXN,
+      totalGRT,
+      totalIGV,
+      totalDSCT,
+      icbper,
+      getModalClass,
+      evalPayments,
+      currentPaymentsAmount,
+      filteredMethods,
+      // Stores
+      orderStore,
+      // Métodos
+      selectSerie,
+      changeSerie,
+      changeCondition,
+      showCustomerOptions,
+      autoCreateCustomer,
+      createAddressesOptions,
+      changeAddress,
+      handleDelivery,
+      performTakeAway,
+      doMultiplePayment,
+      performCreateOrder,
+      createPayment,
+      onCloseModal,
+      onSuccess,
+      isDecimal,
+      goToFirstTab,
+      checkState,
+      hasUnsavedChanges,
     };
   },
 });

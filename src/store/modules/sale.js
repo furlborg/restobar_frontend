@@ -4,6 +4,7 @@ import { getDocumentSeries } from "@/api/modules/business";
 import { useBusinessStore } from "@/store/modules/business";
 import { useUserStore } from "@/store/modules/user";
 import { useOrderStore } from "@/store/modules/order";
+import { useSettingsStore } from "./settings";
 const businessStore = useBusinessStore();
 const userStore = useUserStore();
 const orderStore = useOrderStore();
@@ -55,6 +56,7 @@ export const useSaleStore = defineStore("sale", {
         this.updateDetail(detail);
         return detail;
       });
+      console.log("Sale Details:", state.sale_details);
       return state.sale_details;
     },
     saleTotal(state) {
@@ -82,9 +84,7 @@ export const useSaleStore = defineStore("sale", {
     },
     getFreeSaleSerieByType(doc_type) {
       return this.series
-        .filter((s) => !s.is_disabled
-          && s.free_sale // IGNORE
-        )
+        .filter((s) => !s.is_disabled && s.free_sale)
         .find((serie) => serie.doc_type === doc_type);
     },
     async refreshPaymentMethods() {
@@ -173,15 +173,15 @@ export const useSaleStore = defineStore("sale", {
       return order ? order.quantity : null;
     },
     updateDetail(detail) {
-      // detail.product_igv = detail.product_igv + 1
+      const settingsStore = useSettingsStore();
+      detail.product_igv = !Number(detail.product_igv)
+            ? settingsStore.businessSettings.sale.igv_tax
+            : Number(detail.product_igv);
       switch (detail.product_affectation) {
         case 10:
-          detail.price_base = detail.price_sale
-              ? parseFloat(detail.product_igv + 1) * (Number(detail. price_sale))
-              : 0;
-          detail.igv_tax = detail.price_sale
-              ? parseFloat(detail.price_base) - parseFloat(detail.price_sale)
-              : 0;
+          detail.price_base = Math.round((Number(detail.price_sale) / parseFloat(detail.product_igv + 1)) * 100) / 100;
+          detail.igv_tax = Math.round((parseFloat(detail.price_sale) - parseFloat(detail.price_base)) * 100) / 100;
+          console.log('Updated detail:', detail);
           break;
         case 20:
           detail.price_base = detail.price_sale

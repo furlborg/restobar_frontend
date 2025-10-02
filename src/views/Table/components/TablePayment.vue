@@ -74,7 +74,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(detail, index) in saleStore.toSale.filter(d => d.quantity > 0)" :key="index">
+                  <tr v-for="(detail, index) in saleStore.toSale" :key="index">
                     <td v-if="settingsStore.businessSettings.sale?.manage_affectations">
                       <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation"
                         :disabled="!userStore.hasPermission('change_product_affectation')"
@@ -168,14 +168,14 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed, watch, onMounted } from "vue";
+import { defineComponent, ref, computed, watch, onMounted, watchEffect } from "vue";
 import SeparatePaymentsModal from "./SeparatePaymentsModal";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 import ClientSelectInput from "@/views/Customer/components/ClientSelectInput.vue";
 import SaleSerieSelector from "@/views/Order/components/SaleSerieSelector.vue";
 import PaymentTotals from "@/views/Order/components/PaymentTotals.vue";
 import { useSettingsStore } from "@/store/modules/settings";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useOrderStore } from "@/store/modules/order";
 import { useProductStore } from "@/store/modules/product";
 import { useSaleStore } from "@/store/modules/sale";
@@ -197,6 +197,7 @@ export default defineComponent({
   components: { SeparatePaymentsModal, PreviewDrawer, ClientSelectInput, SaleSerieSelector, PaymentTotals },
   setup() {
     const router = useRouter();
+    const route = useRoute();
     const productStore = useProductStore();
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
@@ -221,64 +222,112 @@ export default defineComponent({
     const previewDrawer = ref(null);
     const pdfData = ref(null);
 
-    const changing = computed(() => {
-      const payment = parseFloat(sale.value.given_amount) || 0;
-      const totalAmount = parseFloat(total.value) || 0;
-      // El vuelto es la diferencia entre lo pagado y el total, solo si el pago es mayor
-      return payment > totalAmount ? payment - totalAmount : 0;
+    const defaultInvoiceType = settingsStore.businessSettings.sale?.enable_invoices
+      ? settingsStore.businessSettings.sale.default_invoice : 80;
+
+    const defaultSerieId = saleStore.getFirstOption(defaultInvoiceType);
+
+    const sale = ref({
+      serie: defaultSerieId,
+      number: "",
+      date_sale: format(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss"),
+      count: 0,
+      amount: "0.00",
+      given_amount: Number(0).toFixed(2),
+      invoice_type: defaultInvoiceType,
+      payment_method: 1,
+      payment_condition: 1,
+      customer_name: "",
+      customer: null,
+      address: null,
+      discount: "0.00",
+      icbper: 0,
+      other_charges: "0.00",
+      observations: "",
+      by_consumption: false,
+      sale_details: [],
+      ask_for: "",
+      payments: null,
+      do_update: true,
+      is_change: true,
+      taxed_amount: 0,
+      exempt_amount: 0,
+      free_amount: 0,
+      igv_amount: 0,
+      total_igv: "0.00",
     });
 
-    const icbper = computed(() => orderStore.orderList.reduce((acc, curVal) =>
-      curVal.icbper ? acc + curVal.icbper_amount : acc, 0));
-
-    const precision = 10000;
-    const calculateTotal = (affectation) => {
-      const totalScaled = saleStore.toSale.reduce((acc, curVal) => {
-        if (curVal.product_affectation === affectation) {
-          const value = Math.round(parseFloat(curVal.price_sale) * curVal.quantity * precision);
-          return acc + value;
-        }
-        return acc;
-      }, 0);
-      return totalScaled / precision;
-    };
-
-    const totalGRV = computed(() => calculateTotal(10));
-    const totalEXN = computed(() => calculateTotal(20));
-    const totalGRT = computed(() => calculateTotal(21));
-
-    const totalIGV = computed(() => {
-      const totalScaled = saleStore.toSale.reduce((acc, curVal) => {
-        const value = Math.round(curVal.igv_tax * curVal.quantity * precision);
-        return acc + value;
-      }, 0);
-      return totalScaled / precision;
+    const totals = computed(() => {
+      const toSale = saleStore.toSale;
+      console.log(toSale);
+      return {
+        GRV: toSale.reduce(
+          (acc, cur) =>
+            cur.product_affectation === 10
+              ? acc + parseFloat(cur.price_sale - cur.igv_tax) * cur.quantity
+              : acc,
+          0
+        ),
+        EXN: toSale.reduce(
+          (acc, cur) =>
+            cur.product_affectation === 20
+              ? acc + parseFloat(cur.price_sale) * cur.quantity
+              : acc,
+          0
+        ),
+        GRT: toSale.reduce(
+          (acc, cur) =>
+            cur.product_affectation === 21
+              ? acc + parseFloat(cur.price_sale) * cur.quantity
+              : acc,
+          0
+        ),
+        IGV: toSale.reduce((acc, cur) => acc + cur.igv_tax * cur.quantity, 0),
+        DSCT: toSale.some((d) => Number(d.discount) > 0)
+          ? toSale.reduce((acc, cur) => acc + Number(cur.discount), 0)
+          : parseFloat(sale.value.discount),
+      };
     });
 
-    const totalDSCT = computed({
-      get: () => saleStore.toSale.some(detail => Number(detail.discount) > 0)
-        ? saleStore.toSale.reduce((acc, curVal) => acc + Number(curVal.discount), 0)
-        : sale.value.discount,
-      set: (v) => {
-        if (!saleStore.toSale.some(detail => Number(detail.discount) > 0)) {
-          sale.value.discount = v;
-        } else {
-          sale.value.discount = saleStore.toSale.reduce((acc, curVal) => acc + Number(curVal.discount), 0);
-        }
-      },
+    const totalGRV = computed(() => totals.value.GRV);
+    const totalEXN = computed(() => totals.value.EXN);
+    const totalGRT = computed(() => totals.value.GRT);
+    const totalIGV = computed(() => totals.value.IGV);
+    const totalDSCT = computed(() => totals.value.DSCT);
+
+    const subTotal = computed(() =>
+      saleStore.toSale.reduce(
+        (acc, cur) =>
+          cur.product_affectation === 21 ? acc : acc + cur.price_sale * cur.quantity,
+        0
+      )
+    );
+
+    const products_count = computed(() =>
+      saleStore.toSale.reduce((acc, cur) => acc + cur.quantity, 0)
+    );
+
+    const total = computed(() => {
+      let cal = parseFloat(subTotal.value - parseFloat(totalDSCT.value) + icbper.value + parseFloat(sale.value.other_charges));
+      if (sale.value.delivery_info) {
+        cal += parseFloat(sale.value.delivery_info.amount)
+      };
+      return cal.toFixed(2);
     });
 
-    const subTotal = computed(() => saleStore.toSale.reduce((acc, curVal) =>
-      curVal.product_affectation === 21 ? acc : acc + (curVal.price_sale * curVal.quantity), 0));
+    const icbper = computed(() =>
+      orderStore.orderList.reduce(
+        (acc, curVal) => acc + (curVal.icbper ? curVal.icbper_amount : 0),
+        0
+      )
+    );
 
-    const products_count = computed(() => saleStore.toSale.reduce((acc, curVal) => acc + curVal.quantity, 0));
+    const changing = computed(() =>
+      sale.value.given_amount > total.value
+        ? (sale.value.given_amount - total.value).toFixed(2)
+        : 0.0
+    );
 
-    const total = computed(() => parseFloat(
-      totalIGV.value + totalGRV.value + totalEXN.value - parseFloat(totalDSCT.value) +
-      icbper.value + parseFloat(sale.value.other_charges)
-    ).toFixed(2));
-
-    // Configurar items para PaymentTotals
     const paymentTotalsItems = computed(() => {
       return [
         { label: "SUBTOTAL", value: subTotal.value, editable: false },
@@ -306,39 +355,42 @@ export default defineComponent({
       ];
     });
 
-    const defaultInvoiceType = settingsStore.businessSettings.sale?.enable_invoices
-      ? settingsStore.businessSettings.sale.default_invoice : 80;
+    watch(
+      [
+        total,
+        icbper,
+        totalGRV,
+        totalEXN,
+        totalGRT,
+        totalIGV,
+        totalDSCT,
+        () => saleStore.toSale,
+        () => orderStore.orderList.length,
+      ],
+      () => {
+        const productCount = saleStore.toSale.reduce(
+          (acc, curVal) => acc + curVal.quantity,
+          0
+        );
+        Object.assign(sale.value, {
+          count: productCount,
+          amount: total.value,
+          icbper: icbper.value,
+          taxed_amount: totalGRV.value,
+          exempt_amount: totalEXN.value,
+          free_amount: totalGRT.value,
+          igv_amount: totalIGV.value,
+          total_igv: parseFloat(totalIGV.value || 0).toFixed(2),
+        });
 
-    const initialSerie = saleStore.series.length > 0 ? saleStore.getFirstOption(defaultInvoiceType) : null;
-
-    const sale = ref({
-      order: null,
-      serie: initialSerie,
-      number: "",
-      date_sale: format(new Date(), "dd/MM/yyyy HH:mm:ss"),
-      count: products_count,
-      amount: total,
-      given_amount: parseFloat(0).toFixed(2),
-      invoice_type: defaultInvoiceType,
-      payment_method: 1,
-      payment_condition: 1,
-      customer_name: "",
-      customer: null,
-      address: null,
-      discount: "0.00",
-      icbper: icbper,
-      other_charges: "0.00",
-      observations: "",
-      by_consumption: false,
-      sale_details: [],
-      payments: null,
-      do_update: true,
-      is_change: true,
-      taxed_amount: totalGRV,
-      exempt_amount: totalEXN,
-      free_amount: totalGRT,
-      igv_amount: totalIGV,
-    });
+        if (sale.value.payment_condition === 1) {
+          const newGivenAmount = total.value > 0 ? total.value : parseFloat(0).toFixed(2);
+          if (sale.value.given_amount !== newGivenAmount) {
+            sale.value.given_amount = newGivenAmount;
+          }
+        }
+      }
+    );
 
     const formRules = computed(() => {
       let rules = saleRules;

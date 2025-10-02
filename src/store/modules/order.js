@@ -44,6 +44,7 @@ export const useOrderStore = defineStore("order", {
       return null;
     },
     addOrder(product) {
+      console.log('Order Store - Adding product:', product);
       const settingsStore = useSettingsStore();
       const existence = this.orders.find(
         (order) => order.product === product.id

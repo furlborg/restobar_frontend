@@ -2,7 +2,7 @@
   <div class="payment-section d-block d-md-none my-3">
     <n-card class="mb-3" size="small">
       <template #header>
-        <span class="fw-bold">{{ title }}</span>
+        <span class="fw-bold">Resumen de Venta</span>
       </template>
       <div class="mobile-totals">
         <div v-for="(item, index) in itemsToShow" :key="index" class="total-row">
@@ -68,7 +68,7 @@
   <div class="payment-section d-none d-md-block my-3">
     <n-card class="mb-3 totals-card-desktop">
       <template #header>
-        <span class="totals-header">{{ title }}</span>
+        <span class="totals-header">Resumen de Venta</span>
       </template>
       <n-grid :cols="groupedItems.length" :x-gap="16">
         <n-gi v-for="(column, colIndex) in groupedItems" :key="colIndex">
@@ -141,11 +141,6 @@ import { defineComponent, computed } from "vue";
 export default defineComponent({
   name: "PaymentTotals",
   props: {
-    // Configuración general
-    title: {
-      type: String,
-      default: "Resumen de Venta"
-    },
     currencySymbol: {
       type: String,
       default: "S/."

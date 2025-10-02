@@ -73,7 +73,6 @@ export async function createTableOrder(
     ask_for = undefined
 ) {
     const tillStore = useTillStore();
-    console.log('aumenten mi sueldo pe kousin');
     let order_details = details.map((order) => ({
         product: order.product,
         indication: order.indication || [],
