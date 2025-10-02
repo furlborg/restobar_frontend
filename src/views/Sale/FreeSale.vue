@@ -397,7 +397,7 @@ export default defineComponent({
     const totalGRV = computed(() => {
       return saleStore.toSale.reduce((acc, curVal) => {
         return curVal.product_affectation === 10
-          ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
+          ? (acc += parseFloat(curVal.price_sale - curVal.igv_tax) * curVal.quantity)
           : acc;
       }, 0);
     });
@@ -461,14 +461,9 @@ export default defineComponent({
     });
 
     const total = computed(() => {
-      return parseFloat(
-        totalIGV.value +
-        totalGRV.value +
-        totalEXN.value -
-        parseFloat(totalDSCT.value) +
-        icbper.value +
-        parseFloat(sale.value.other_charges)
-      ).toFixed(2);
+      let cal = parseFloat(subTotal.value - parseFloat(totalDSCT.value) + icbper.value + parseFloat(sale.value.other_charges));
+      if (sale.value.delivery_info) cal += parseFloat(sale.value.delivery_info.amount);
+      return cal.toFixed(2);
     });
 
     const sale = ref({
