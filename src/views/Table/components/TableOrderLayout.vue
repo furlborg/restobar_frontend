@@ -16,6 +16,9 @@
                         :orderUser="orderUser"
                         :loading="loading"
                         :hasUnsavedChanges="hasUnsavedChanges"
+                        :customers="customers"
+                        :selectedCustomerId="selectedCustomerId"
+                        :shouldShowCustomerMode="shouldShowCustomerMode"
                         @validateSend="validateSend"
                         @addCustomer="addCustomer"
                         @removeCustomer="removeCustomer"
@@ -24,6 +27,7 @@
                         @update:selectedCustomerId="selectedCustomerId = $event"
                         @update:ask_for="ask_for = $event"
                         @update:orderUser="orderUser = $event"
+                        @productSelect="handleProductClick"
                     />
                 </n-gi>
             </n-grid>
@@ -38,6 +42,9 @@
                     :orderUser="orderUser"
                     :loading="loading"
                     :hasUnsavedChanges="hasUnsavedChanges"
+                    :customers="customers"
+                    :selectedCustomerId="selectedCustomerId"
+                    :shouldShowCustomerMode="shouldShowCustomerMode"
                     @validateSend="validateSend"
                     @addCustomer="addCustomer"
                     @removeCustomer="removeCustomer"
@@ -46,6 +53,7 @@
                     @update:selectedCustomerId="selectedCustomerId = $event"
                     @update:ask_for="ask_for = $event"
                     @update:orderUser="orderUser = $event"
+                    @productSelect="handleProductClick"
                 />
             </n-tab-pane>
         </n-tabs>
@@ -177,20 +185,16 @@ export default defineComponent({
             const ordersChanged = JSON.stringify(saleStore.order_initial) !== JSON.stringify(orderStore.orderList);
             const userChanged = orderUser_initial.value !== orderUser.value;
             const orderHasItems = orderStore.orderList.length > 0;
-            console.log({ ordersChanged, userChanged, orderHasItems, result: orderHasItems && (ordersChanged || userChanged) });
             return orderHasItems && (ordersChanged || userChanged);
         });
 
-        const goToFirstTab = () => {
-            activeTab.value = 'main'
-        }
+        const goToFirstTab = () => activeTab.value = 'main';
 
         const handleRouteGuard = (to, isLeave = false) => {
-            console.log(to.name);
             if (["ProductCategories", "CategoriesItems"].includes(to.name)) return;
 
             if (hasUnsavedChanges.value) {
-                const config = {
+                dialog.error({
                     title: "Cambios sin guardar",
                     content: "¿Salir de todos modos?",
                     positiveText: "Sí",
@@ -200,8 +204,7 @@ export default defineComponent({
                     },
                     ...(isLeave ? {} : { negativeText: "No" }),
                     closable: !isLeave
-                };
-                dialog.error(config);
+                });
                 return false;
             }
         };
@@ -238,11 +241,8 @@ export default defineComponent({
                 const response = await retrieveTableOrder(table);
                 if (response.status === 200) {
                     const { order_details: orderDetails, user: userId, ask_for: askFor, id } = response.data;
-                    // Map orderDetails to match frontend handleAddMenu structure for menu orders
                     const mappedOrderDetails = orderDetails.map(detail => {
                         if (detail.product_set) {
-                            // This is a menu order
-                            // product_set should contain menu_id, name, price, quantity, items
                             return {
                                 from_menu: true,
                                 product_set_id: detail.product_set.id,
@@ -260,7 +260,6 @@ export default defineComponent({
                                         quantity: item.quantity,
                                     }))
                                     : [],
-                                // Optionally, include other fields from detail if needed (like id, customer, etc)
                                 ...(detail.id ? { id: detail.id } : {}),
                                 ...(detail.customer ? { customer: detail.customer } : {}),
                             }
@@ -365,7 +364,9 @@ export default defineComponent({
         };
 
         const nullifyTableOrder = async () => {
-            if (!orderStore.orderList.length && orderStore.orderId) await performNullifyTableOrder();
+            if (!orderStore.orderList.length && orderStore.orderId) {
+                await performNullifyTableOrder();
+            }
         };
 
         const resetDeleteState = () => {
@@ -400,10 +401,8 @@ export default defineComponent({
         };
 
         const addCustomer = (name) => {
-            console.log(name);
             if (!name?.trim()) return;
             const newCustomer = { id: customerIdCounter.value++, name: name.trim() };
-            console.log(newCustomer);
             customers.value = [...customers.value, newCustomer];
             selectedCustomerId.value = newCustomer.id;
         };
@@ -419,11 +418,11 @@ export default defineComponent({
 
         const removeCustomer = (customerIndex) => {
             const customerId = customers.value[customerIndex].id;
-            const customerOrders = orderStore.orderList.filter(order => order.customer && order.customer.id === customerId);
-            customerOrders.forEach(order => {
-                orderStore.removeOrderItem(order.id)
-            })
+            
+            orderStore.orders = orderStore.orders.filter(order => !order.customer || order.customer.id !== customerId);
+            saleStore.order_initial = saleStore.order_initial.filter(order => !order.customer || order.customer.id !== customerId);
             customers.value.splice(customerIndex, 1);
+            
             if (selectedCustomerId.value === customerId) {
                 selectedCustomerId.value = customers.value[0]?.id || null;
             }
@@ -432,13 +431,12 @@ export default defineComponent({
         const handleProductClick = (product) => {
             if (!product.has_stock || !product.has_supplies) return;
 
-            if (settingsStore.businessSettings.order.order_by_customer) {
-                if (selectedCustomer.value) {
-                    orderStore.addOrder(product, selectedCustomer.value);
-                }
-            } else {
-                orderStore.addOrder(product);
+            if (shouldShowCustomerMode.value && !selectedCustomer.value) {
+                message.warning("Seleccione un cliente primero");
+                return;
             }
+
+            orderStore.addOrder(product, selectedCustomer.value);
         };
 
         const deleteOrderDetail = (detailIndex, detailId) => {
@@ -449,18 +447,18 @@ export default defineComponent({
             showConfirm.value = true;
         };
 
-        const resetAnulateData = () => dataAnulate.value = { username: "", pass: "" };
+        const resetAnulateData = () => {
+            dataAnulate.value = { username: "", pass: "" };
+        };
 
         const goHome = () => {
             cleanupOrderStore();
             router.push({ name: "TableHome" });
         };
 
-        onMounted(async () => {
-            await performRetrieveTableOrder();
-        });
+        onMounted(() => performRetrieveTableOrder());
 
-        onBeforeRouteUpdate((to) => handleRouteGuard(to));
+        onBeforeRouteUpdate(handleRouteGuard);
         onBeforeRouteLeave((to) => handleRouteGuard(to, true));
 
         provide("customers", customers);
@@ -469,11 +467,14 @@ export default defineComponent({
         provide("handleProductClick", handleProductClick);
 
         return {
-            isMobile, userStore, activeUsersStore, route, router, tableStore, table, settingsStore, genericsStore, productStore, orderStore, saleStore, shouldShowCustomerMode, showUserConfirm, userConfirm, loadingConfirm,
-            loading, performCreateTableOrder, performUpdateTableOrder, showConfirm, dataAnulate, rules,
-            performDeleteDetail, deleteQuantity, maxQuantity, showPdf, pdfData, ticketPreview, validateSend,
-            deleteOrderDetail, modalClass, requireUserPass, requireGeneralPass, showConfigMessage, resetAnulateData,
-            goHome, customers, selectedCustomerId, selectedCustomer, ask_for, orderUser, hasUnsavedChanges, addCustomer, removeCustomer, goToFirstTab, activeTab
+            isMobile, userStore, activeUsersStore, route, router, tableStore, table, settingsStore, 
+            genericsStore, productStore, orderStore, saleStore, shouldShowCustomerMode, 
+            showUserConfirm, userConfirm, loadingConfirm, loading, performCreateTableOrder, 
+            performUpdateTableOrder, showConfirm, dataAnulate, rules, performDeleteDetail, 
+            deleteQuantity, maxQuantity, showPdf, pdfData, ticketPreview, validateSend, deleteOrderDetail, 
+            modalClass, requireUserPass, requireGeneralPass, showConfigMessage, resetAnulateData, goHome, 
+            customers, selectedCustomerId, selectedCustomer, ask_for, orderUser, hasUnsavedChanges, 
+            addCustomer, removeCustomer, goToFirstTab, activeTab, handleProductClick
         };
     }
 });

@@ -115,7 +115,10 @@ export const useOrderStore = defineStore("order", {
       }
     },
     removeOrderItem(id) {
-      this.orders = this.orders.filter(order => order.id !== id)
+      const index = this.orders.findIndex(order => order.id === id);
+      if (index !== -1) {
+        this.orders.splice(index, 1);
+      }
     }
   },
 });

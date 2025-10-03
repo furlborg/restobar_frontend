@@ -48,12 +48,12 @@
                             >
                                 <n-select
                                     :options="customerOptions"
-                                    v-model:value="selectedCustomerId"
+                                    v-model:value="localSelectedCustomerId"
                                     placeholder="Seleccione un cliente"
                                     filterable
                                 />
                             </n-form-item-gi>
-                            <n-form-item-gi v-if="!shouldShowCustomerMode || selectedCustomerId" :span="2" label="Buscar producto">
+                            <n-form-item-gi v-if="!shouldShowCustomerMode || localSelectedCustomerId" :span="2" label="Buscar producto">
                                 <n-input-group>
                                     <n-auto-complete v-model:value="productSearch" :options="productOptions" :get-show="showOptions" :loading="searching"
                                         :render-label="renderLabel" :input-props="{ autocomplete: 'disabled' }" placeholder="Nombre del producto"
@@ -283,7 +283,7 @@
 <script>
 import OrderIndications from "./OrderIndications";
 import ProductSearchLabel from "@/views/Product/components/ProductSearchLabel.vue";
-import { defineComponent, ref, computed, h, inject, watchEffect } from "vue";
+import { defineComponent, ref, computed, h, watchEffect, provide } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useMessage, useDialog } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
@@ -315,6 +315,18 @@ export default defineComponent({
         hasUnsavedChanges: {
             type: Boolean,
             default: false
+        },
+        customers: {
+            type: Array,
+            default: () => []
+        },
+        selectedCustomerId: {
+            type: [Number, String],
+            default: null
+        },
+        shouldShowCustomerMode: {
+            type: Boolean,
+            default: false
         }
     },
     emits: [
@@ -324,7 +336,9 @@ export default defineComponent({
         'deleteOrderDetail',
         'goToFirstTab',
         'update:ask_for',
-        'update:orderUser'
+        'update:orderUser',
+        'update:selectedCustomerId',
+        'productSelect'
     ],
     setup(props, { emit }) {
 
@@ -343,14 +357,14 @@ export default defineComponent({
         const saleStore = useSaleStore();
         const { formattedTotals } = useSaleTotals();
 
-        const customers = inject('customers', ref([]));
-        const shouldShowCustomerMode = inject('shouldShowCustomerMode', ref(false));
-        const selectedCustomer = inject('selectedCustomer', ref(null));
+        const customerOptions = computed(() => props.customers.map(customer => ({ label: customer.name, value: customer.id })));
+        
+        const localSelectedCustomerId = computed({
+            get: () => props.selectedCustomerId,
+            set: (value) => emit('update:selectedCustomerId', value)
+        });
 
-        const selectProduct = inject('handleProductClick', () => null);
-
-        const customerOptions = computed(() => customers.value.map(customer => ({ label: customer.name, value: customer.id })));
-        const selectedCustomerId = computed(() => selectedCustomer.value ? selectedCustomer.value.id : null);
+        const selectProduct = (productId) => emit('productSelect', productId);
 
         const localAskFor = computed({
             get: () => props.ask_for,
@@ -366,7 +380,6 @@ export default defineComponent({
         const addCustomer = (name) => emit('addCustomer', name);
         const removeCustomer = (index) => emit('removeCustomer', index);
         const deleteOrderDetail = (index, id) => emit('deleteOrderDetail', index, id);
-        const goToFirstTab = () => emit('goToFirstTab');
 
         const newCustomerName = ref("");
         const showModal = ref(false);
@@ -381,8 +394,12 @@ export default defineComponent({
         const currentOrder = computed(() => orderStore.orderList[itemIndex.value]);
 
         const productOptions = computed(() => products.value.map((product) => ({
-            value: product, label: product.name, disabled: product.is_disabled,
-            category: productStore.getCategorieDescription(product.category), stock: product.stock
+            value: product.id,
+            label: product.name,
+            disabled: product.is_disabled,
+            category: productStore.getCategorieDescription(product.category),
+            stock: product.stock,
+            price: parseFloat(product.prices).toFixed(2),
         })));
 
         const openOrderModal = (index) => {
@@ -390,16 +407,10 @@ export default defineComponent({
             showModal.value = true;
         };
 
-        const addCustomerLocal = () => {
-            if (newCustomerName.value.trim()) {
-                addCustomer(newCustomerName.value.trim());
-                newCustomerName.value = "";
-            }
-        };
-
         const handleAddCustomer = () => {
-            addCustomer(newCustomerName.value);
-            newCustomerName.value = ""
+            if (!newCustomerName.value.trim()) return;
+            addCustomer(newCustomerName.value.trim());
+            newCustomerName.value = "";
         };
 
         const confirmRemoveCustomer = (customerIndex, customerName) => {
@@ -412,134 +423,111 @@ export default defineComponent({
             });
         };
 
-        const getCustomerOrders = (customerId) => orderStore.orderList.filter(order => order.customer && order.customer.id === customerId && order.quantity > 0);
-        const getCustomerTotal = (customerId) => getCustomerOrders(customerId).reduce((total, order) => total + order.subTotal, 0);
+        const getCustomerOrders = (customerId) => 
+            orderStore.orderList.filter(order => order.customer?.id === customerId && order.quantity > 0);
+        const getCustomerTotal = (customerId) => 
+            getCustomerOrders(customerId).reduce((total, order) => total + order.subTotal, 0);
         const getTotalAmount = () => orderStore.orderTotal;
-        const formatPrice = (price) => isNaN(price) ? "0.00" : Number(price).toFixed(2);
+        const formatPrice = (price) => (isNaN(price) ? 0 : Number(price)).toFixed(2);
         const hasAnyOrders = computed(() => orderStore.orderList.some(order => order.quantity > 0));
         const getGlobalOrderIndex = (orderId) => orderStore.orderList.findIndex(order => order.id === orderId);
 
         const handleRemoveOrder = (order, index) => {
-            if (!order.id) {
-                orderStore.orderList.splice(index, 1);
-                nullifyTableOrder(order);
-            } else {
-                deleteOrderDetail(index, order.id);
-            }
+            order.id ? deleteOrderDetail(index, order.id) : (orderStore.orderList.splice(index, 1), nullifyTableOrder());
         };
 
         const handleRemoveMenuSet = (menuIndex) => {
-            // Encontrar el menú en orderList por índice
             const menuItems = orderStore.orderList.filter(item => item.from_menu);
-            if (menuItems[menuIndex]) {
-                const menuToRemove = menuItems[menuIndex];
-                const orderIndex = orderStore.orderList.findIndex(item =>
-                    item === menuToRemove
-                );
-                if (orderIndex !== -1) {
-                    if (!menuToRemove.id) {
-                        orderStore.orderList.splice(orderIndex, 1);
-                        nullifyTableOrder(menuToRemove);
-                    } else {
-                        deleteOrderDetail(orderIndex, menuToRemove.id);
-                    }
-                    // Actualizar saleStore para forzar reactividad
-                    updateSaleStore();
-                }
+            const menuToRemove = menuItems[menuIndex];
+            if (!menuToRemove) return;
+
+            const orderIndex = orderStore.orderList.findIndex(item => item === menuToRemove);
+            if (orderIndex === -1) return;
+
+            if (!menuToRemove.id) {
+                orderStore.orderList.splice(orderIndex, 1);
+                nullifyTableOrder();
+            } else {
+                deleteOrderDetail(orderIndex, menuToRemove.id);
             }
+            updateSaleStore();
         };
 
         const handleRemoveProductLine = (productIndex) => {
-            // Encontrar el producto en orderList por índice
             const productItems = orderStore.orderList.filter(item => !item.from_menu);
-            if (productItems[productIndex]) {
-                const productToRemove = productItems[productIndex];
-                const orderIndex = orderStore.orderList.findIndex(item => 
-                    item === productToRemove
-                );
-                if (orderIndex !== -1) {
-                    if (!productToRemove.id) {
-                        orderStore.orderList.splice(orderIndex, 1);
-                        nullifyTableOrder(productToRemove);
-                    } else {
-                        deleteOrderDetail(orderIndex, productToRemove.id);
-                    }
-                    // Actualizar saleStore para forzar reactividad
-                    updateSaleStore();
-                }
-            }
-        };
+            const productToRemove = productItems[productIndex];
+            if (!productToRemove) return;
 
-        const removeOrderItem = (productId, customerId) => {
-            const index = orderStore.orderList.findIndex(order => order.product === productId && (!order.customer || order.customer.id === customerId));
-            if (index !== -1) {
-                const order = orderStore.orderList[index];
-                handleRemoveOrder(order, index);
+            const orderIndex = orderStore.orderList.findIndex(item => item === productToRemove);
+            if (orderIndex === -1) return;
+
+            if (!productToRemove.id) {
+                orderStore.orderList.splice(orderIndex, 1);
+                nullifyTableOrder();
+            } else {
+                deleteOrderDetail(orderIndex, productToRemove.id);
             }
+            updateSaleStore();
         };
 
         const updateSaleStore = () => {
-            saleStore.sale_details = orderStore.productLines;
-            saleStore.sale_product_sets = orderStore.menuSets;
+            Object.assign(saleStore, {
+                sale_details: orderStore.productLines,
+                sale_product_sets: orderStore.menuSets
+            });
             saleStore.buildSalePayload();
         };
 
-        const nullifyTableOrder = async (order) => {
+        const nullifyTableOrder = async () => {
             if (!orderStore.orderList.length && orderStore.orderId) {
-                console.log('Nullifying table order for:', order);
+                console.log('Nullifying table order');
             }
         };
 
         const showOptions = (value) => {
-            if (value.length >= 3) {
-                searching.value = true;
-                searchProductByName(value).then((response) => {
+            if (value.length < 3) return false;
+            
+            searching.value = true;
+            searchProductByName(value)
+                .then((response) => {
                     if (response.status === 200) products.value = response.data;
-                }).catch((error) => {
+                })
+                .catch((error) => {
                     console.error(error);
                     message.error("Algo salió mal...");
-                }).finally(() => {
-                    searching.value = false;
-                });
-                return true;
-            }
-            return false;
+                })
+                .finally(() => searching.value = false);
+            return true;
         };
 
-        const renderLabel = (option) => {
-            return h(ProductSearchLabel, { option });
-        };
+        const renderLabel = (option) => h(ProductSearchLabel, { option });
 
         const navigateToPayment = () => {
-            goToFirstTab();
+            emit('goToFirstTab');
             router.push({ name: 'TablePayment', params: { table: route.params.table } });
         };
 
         const navigateToTakeOrder = () => {
-            goToFirstTab();
+            emit('goToFirstTab');
             router.push({ name: 'ProductCategories', params: { table: route.params.table } });
         };
 
         const orderButtonDisabled = computed(() => !props.hasUnsavedChanges);
 
+        provide("handleProductClick", selectProduct);
+
         return {
-            // Stores and router
-            userStore, activeUsersStore, route, router, tableStore, settingsStore, genericsStore, productStore, orderStore, saleStore,
-            // Reactive state
-            customers, selectedCustomer, shouldShowCustomerMode, customerOptions, selectedCustomerId, addCustomer, removeCustomer, deleteOrderDetail, goToFirstTab,
+            userStore, activeUsersStore, route, router, tableStore, settingsStore, genericsStore, 
+            productStore, orderStore, saleStore,
+            customers: computed(() => props.customers),
+            shouldShowCustomerMode: computed(() => props.shouldShowCustomerMode),
+            customerOptions, localSelectedCustomerId, addCustomer, removeCustomer, deleteOrderDetail,
             newCustomerName, showModal, itemIndex, searching, productSearch, products,
-            // Computed properties
-            localAskFor, localOrderUser, shouldSelectOrderUser,
-            currentOrder, productOptions, isWaiter, isPaymentRoute,
-            // Methods
-            showOptions, selectProduct, renderLabel, navigateToPayment, addCustomerLocal, confirmRemoveCustomer, navigateToTakeOrder, handleAddCustomer,
-            getCustomerOrders, getCustomerTotal, getTotalAmount, formatPrice, hasAnyOrders, getGlobalOrderIndex, removeOrderItem,
-            validateSend, deleteOrderDetail, nullifyTableOrder, openOrderModal, handleRemoveOrder, handleRemoveMenuSet, handleRemoveProductLine,
-            updateSaleStore,
-            // Composables
-            formattedTotals, orderButtonDisabled,
-            // Props (direct access for template)
-            ...props
+            localAskFor, localOrderUser, shouldSelectOrderUser, currentOrder, productOptions, isWaiter, isPaymentRoute,
+            showOptions, selectProduct, renderLabel, navigateToPayment, confirmRemoveCustomer, navigateToTakeOrder, 
+            handleAddCustomer, getCustomerOrders, getCustomerTotal, getTotalAmount, formatPrice, hasAnyOrders, 
+            getGlobalOrderIndex, validateSend, deleteOrderDetail, nullifyTableOrder, openOrderModal, handleRemoveOrder, 
+            handleRemoveMenuSet, handleRemoveProductLine, updateSaleStore, formattedTotals, orderButtonDisabled
         };
   }
 });

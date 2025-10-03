@@ -445,8 +445,9 @@ export default defineComponent({
 
         const totals = computed(() => {
             const toSale = saleStore.toSale;
+            console.log(toSale);
             return {
-                GRV: toSale.reduce((acc, cur) => cur.product_affectation === 10 ? acc + parseFloat(cur.price_sale) * cur.quantity : acc, 0),
+                GRV: toSale.reduce((acc, cur) => cur.product_affectation === 10 ? acc + parseFloat(cur.price_sale - cur.igv_tax) * cur.quantity : acc, 0),
                 EXN: toSale.reduce((acc, cur) => cur.product_affectation === 20 ? acc + parseFloat(cur.price_sale) * cur.quantity : acc, 0),
                 GRT: toSale.reduce((acc, cur) => cur.product_affectation === 21 ? acc + parseFloat(cur.price_sale) * cur.quantity : acc, 0),
                 IGV: toSale.reduce((acc, cur) => acc + cur.igv_tax * cur.quantity, 0),

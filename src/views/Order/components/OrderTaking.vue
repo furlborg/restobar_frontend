@@ -319,10 +319,6 @@ export default defineComponent({
 
     const saleForm = ref();
 
-    watchEffect(() => {
-      console.log(props.sale)
-    })
-
     const localInvoiceType = ref(props.sale.invoice_type);
     const localPaymentCondition = ref(props.sale.payment_condition);
     const localCustomerName = ref(props.sale.customer_name);

@@ -108,7 +108,7 @@
                             <n-button
                                     v-if="
                   table.order_amount &&
-                  settingsStore.business_settings.order.table_order_total
+                  settingsStore.business_settings?.order?.table_order_total
                 "
                                     class="bottom-0 text-center position-absolute start-50 translate-middle-x fs-5 fw-bolder"
                                     color="#901E00"

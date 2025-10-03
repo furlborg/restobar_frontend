@@ -20,6 +20,7 @@
       <n-space size="small">
         <n-text :depth="3">{{ option.category }}</n-text>
         <n-text :depth="3">Stock: {{ option.stock }}</n-text>
+        <n-text :depth="3">Precio: {{ option.price }}</n-text>
       </n-space>
     </template>
   </n-thing>
