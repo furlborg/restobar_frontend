@@ -353,15 +353,6 @@ export default defineComponent({
     const userConfirm = ref("");
     const productSearch = ref("");
 
-    // Usar el total del composable que incluye menús
-    const total = computed(() => {
-        let cal = grandTotal.value + parseFloat(sale.value.other_charges || 0);
-        if (sale.value.delivery_info && sale.value.delivery_info.amount) {
-            cal = cal + parseFloat(sale.value.delivery_info.amount);
-        }
-        return cal.toFixed(2);
-    });
-
     const pdfData = ref(null);
     const voucherData = ref(null);
     const addressesOptions = ref([]);
