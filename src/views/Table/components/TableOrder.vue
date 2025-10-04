@@ -104,7 +104,7 @@ import { useProductStore } from "@/store/modules/product";
 import { useTableStore } from "@/store/modules/table";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
-import { searchProductByName } from "@/api/modules/products";
+import { searchProductByName, searchProductPrice } from "@/api/modules/products";
 
 export default defineComponent({
     name: "TableOrder",
@@ -245,6 +245,24 @@ export default defineComponent({
         };
 
         const showOptions = (value) => {
+            const priceRegex = /^\d+(\.\d{0,2})?$/;
+            if (priceRegex.test(value)) {
+                searching.value = true;
+                searchProductPrice(value)
+                .then((response) => {
+                    if (response.status === 200) {
+                    products.value = response.data;
+                    }
+                })
+                .catch((error) => {
+                    console.error(error);
+                    message.error("Algo salió mal...");
+                })
+                .finally(() => {
+                    searching.value = false;
+                });
+                return true;
+            }
             if (value.length >= 3) {
                 searching.value = true;
                 searchProductByName(value).then((response) => {

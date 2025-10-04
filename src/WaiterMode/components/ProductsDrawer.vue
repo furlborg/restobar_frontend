@@ -160,7 +160,7 @@ import TicketPreview from "@/views/Order/components/TicketPreview";
 import { h, defineComponent, ref, computed, nextTick } from "vue";
 import { NThing, NTag, NSpace, NText, useMessage, useDialog } from "naive-ui";
 import { createTableOrder, updateTableOrder } from "@/api/modules/tables";
-import { searchProductByName } from "@/api/modules/products";
+import { searchProductByName, searchProductPrice } from "@/api/modules/products";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useProductStore } from "@/store/modules/product";
 import { useWaiterStore } from "@/store/modules/waiter";
@@ -215,6 +215,24 @@ export default defineComponent({
         });
 
         const showOptions = (value) => {
+            const priceRegex = /^\d+(\.\d{0,2})?$/;
+                if (priceRegex.test(value)) {
+                    searching.value = true;
+                    searchProductPrice(value)
+                    .then((response) => {
+                        if (response.status === 200) {
+                        products.value = response.data;
+                        }
+                    })
+                    .catch((error) => {
+                        console.error(error);
+                        message.error("Algo salió mal...");
+                    })
+                    .finally(() => {
+                        searching.value = false;
+                    });
+                    return true;
+                }
             if (value.length >= 3) {
                 searchingProduct.value = true;
                 searchProductByName(value).then((response) => {

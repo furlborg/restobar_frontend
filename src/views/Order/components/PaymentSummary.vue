@@ -20,7 +20,7 @@
         :loading="searching"
         clear-after-select
         :render-label="renderLabel"
-        placeholder="Buscar producto"
+        placeholder="Buscar productow"
         @select="selectProduct"
       />
     </n-input-group>
@@ -91,7 +91,7 @@ import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { useProductStore } from "@/store/modules/product";
 import { useMessage } from "naive-ui";
-import { searchProductByName } from "@/api/modules/products";
+import { searchProductByName, searchProductPrice } from "@/api/modules/products";
 import ProductSearchLabel from "@/views/Product/components/ProductSearchLabel.vue";
 
 export default defineComponent({
@@ -153,6 +153,24 @@ export default defineComponent({
 
     // Función para mostrar opciones cuando se busca (igual que TableOrder)
     const showOptions = (value) => {
+      const priceRegex = /^\d+(\.\d{0,2})?$/;
+      if (priceRegex.test(value)) {
+        searching.value = true;
+        searchProductPrice(value)
+          .then((response) => {
+            if (response.status === 200) {
+              products.value = response.data;
+            }
+          })
+          .catch((error) => {
+            console.error(error);
+            message.error("Algo salió mal...");
+          })
+          .finally(() => {
+            searching.value = false;
+          });
+        return true;
+      }
       if (value.length >= 3) {
         searching.value = true;
         searchProductByName(value)
