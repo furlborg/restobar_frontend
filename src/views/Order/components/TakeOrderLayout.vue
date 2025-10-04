@@ -82,7 +82,13 @@
         </n-gi>
       </n-grid>
     </n-card>
-    <n-tabs class="d-lg-none" tab-style="background: #fff;" v-model:value="activeTab" type="segment" animated>
+    <n-tabs
+      class="d-lg-none"
+      tab-style="background: #fff;"
+      v-model:value="activeTab"
+      type="segment"
+      animated
+    >
       <n-tab-pane name="main" tab="Tomar pedido">
         <n-card>
           <transition name="mode-fade" mode="out-in">
@@ -146,7 +152,12 @@
           :product-search="productSearch"
           :show-modal="showModal"
           :item-index="itemIndex"
-          @update:select-products="(value) => { selectProducts = value; goToFirstTab(); }"
+          @update:select-products="
+            (value) => {
+              selectProducts = value;
+              goToFirstTab();
+            }
+          "
           @update:product-search="productSearch = $event"
           @update:show-modal="showModal = $event"
           @update:item-index="itemIndex = $event"
@@ -154,51 +165,127 @@
         />
       </n-tab-pane>
     </n-tabs>
-    <n-modal :class="getModalClass" preset="card" v-model:show="showConfirm" title="Registrar pedido" :mask-closable="false" closable>
+    <n-modal
+      :class="getModalClass"
+      preset="card"
+      v-model:show="showConfirm"
+      title="Registrar pedido"
+      :mask-closable="false"
+      closable
+    >
       <n-form-item label="Ingrese código de usuario">
         <n-input type="password" v-model:value="userConfirm" placeholder="" />
       </n-form-item>
       <template #action>
         <n-space justify="end">
-          <n-button type="success" :loading="loading" :disabled="!userConfirm || loading" secondary @click.prevent="performCreateOrder">
+          <n-button
+            type="success"
+            :loading="loading"
+            :disabled="!userConfirm || loading"
+            secondary
+            @click.prevent="performCreateOrder"
+          >
             Confirmar
           </n-button>
         </n-space>
       </template>
     </n-modal>
-    <n-modal :class="getModalClass" preset="card" v-model:show="showPayments" title="Realizar venta" :mask-closable="false" closable @close="sale.payments = null">
+    <n-modal
+      :class="getModalClass"
+      preset="card"
+      v-model:show="showPayments"
+      title="Realizar venta"
+      :mask-closable="false"
+      closable
+      @close="sale.payments = null"
+    >
       <n-space justify="space-between">
         <n-tag type="info">Total: S/. {{ showPayments ? sale.amount : null }}</n-tag>
-        <n-tag :type="evalPayments ? 'error' : 'success'">Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}</n-tag>
-        <n-tag :type="evalPayments ? 'error' : 'warning'">Faltante: S/. {{ showPayments ? (parseFloat(sale.amount) - currentPaymentsAmount).toFixed(2) : null }}</n-tag>
+        <n-tag :type="evalPayments ? 'error' : 'success'"
+          >Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}</n-tag
+        >
+        <n-tag :type="evalPayments ? 'error' : 'warning'"
+          >Faltante: S/.
+          {{
+            showPayments
+              ? (parseFloat(sale.amount) - currentPaymentsAmount).toFixed(2)
+              : null
+          }}</n-tag
+        >
       </n-space>
       <n-form-item class="mt-2" label="Pagos">
         <n-dynamic-input v-model:value="sale.payments" :min="1" @create="createPayment">
           <template #default="{ value }">
             <div style="display: flex; align-items: center; width: 100%">
-              <n-select v-model:value="value.payment_method" :disabled="loading" :options="filteredMethods" />
-              <n-input class="ms-2" v-model:value="value.amount" placeholder="" :disabled="loading" @keypress="isDecimal($event)" />
+              <n-select
+                v-model:value="value.payment_method"
+                :disabled="loading"
+                :options="filteredMethods"
+              />
+              <n-input
+                class="ms-2"
+                v-model:value="value.amount"
+                placeholder=""
+                :disabled="loading"
+                @keypress="isDecimal($event)"
+              />
             </div>
           </template>
         </n-dynamic-input>
       </n-form-item>
       <n-space justify="end">
-        <n-button 
-          type="success" 
-          :disabled="evalPayments || sale.payments?.some(p => p.payment_method === null) || sale.payments?.some(p => Number(p.amount) <= 0) || loading" 
-          :loading="loading" 
-          secondary 
+        <n-button
+          type="success"
+          :disabled="
+            evalPayments ||
+            sale.payments?.some((p) => p.payment_method === null) ||
+            sale.payments?.some((p) => Number(p.amount) <= 0) ||
+            loading
+          "
+          :loading="loading"
+          secondary
           @click="performTakeAway"
         >
           Confirmar
         </n-button>
       </n-space>
     </n-modal>
-    <OrderIndications v-model:show="showModal" preset="card" title="Indicaciones" :order="orderStore.orderList[itemIndex]" @success="showModal = false" />
-    <customer-modal v-model:show="showCustomerModal" :id-customer="sale.customer" :document="customerDocument" :doc_type="sale.invoice_type === 1 ? '6' : null" @update:show="onCloseModal" @on-success="onSuccess" />
-    <ticket-preview ref="ticketPreviewRef" v-model:show="showPdf" :data="pdfData" :hidden="true" :isUpdate="false" />
-    <preview-drawer ref="voucherDrawer" v-model:show="showVoucher" :data="voucherData" :previewOnly="!ticketPreview" @printed="() => $router.push({ name: 'TableHome' })" @canceled="() => $router.push({ name: 'TableHome' })" />
-    <MenuProductModal v-if="showMenuModal" :menu="selectedMenu" @close="showMenuModal = false" />
+
+    <OrderIndications
+      v-model:show="showModal"
+      preset="card"
+      title="Indicaciones"
+      :order="orderStore.orderList[itemIndex]"
+      @success="showModal = false"
+    />
+    <customer-modal
+      v-model:show="showCustomerModal"
+      :id-customer="sale.customer"
+      :document="customerDocument"
+      :doc_type="sale.invoice_type === 1 ? '6' : null"
+      @update:show="onCloseModal"
+      @on-success="onSuccess"
+    />
+    <ticket-preview
+      ref="ticketPreviewRef"
+      v-model:show="showPdf"
+      :data="pdfData"
+      :hidden="true"
+      :isUpdate="false"
+    />
+    <preview-drawer
+      ref="voucherDrawer"
+      v-model:show="showVoucher"
+      :data="voucherData"
+      :previewOnly="!ticketPreview"
+      @printed="() => $router.push({ name: 'TableHome' })"
+      @canceled="() => $router.push({ name: 'TableHome' })"
+    />
+    <MenuProductModal
+      v-if="showMenuModal"
+      :menu="selectedMenu"
+      @close="showMenuModal = false"
+    />
   </div>
 </template>
 
@@ -209,6 +296,7 @@ import { useMessage, useDialog } from "naive-ui";
 import { getSaleNumber } from "@/api/modules/sales";
 import { takeAwayOrder } from "@/api/modules/orders";
 import { getMenuToday } from '@/api/modules/products';
+import { searchCustomerByName, searchRucCustomer } from "@/api/modules/customer";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { useSettingsStore } from "@/store/modules/settings";
@@ -216,6 +304,7 @@ import { useGenericsStore } from "@/store/modules/generics";
 import { useUserStore } from "@/store/modules/user";
 import { useSaleTotals } from "@/composables/useSaleTotals";
 import { useBreakpoint } from 'vooks';
+import { isDecimal } from "@/utils";
 import OrderTaking from "./OrderTaking.vue";
 import PaymentSummary from "./PaymentSummary.vue";
 import CategoriesList from "./CategoriesList.vue";
@@ -285,12 +374,12 @@ export default defineComponent({
     const voucherData = ref(null);
     const addressesOptions = ref([]);
     const customerOptions = ref([]);
+    const customerResults = ref([]);
     const searchingCustomer = ref(false);
     const whatsappNumber = ref("");
     const customerDocument = ref("");
 
     // Usar el composable para obtener los totales correctos incluyendo menús
-    
     const subTotal = computed(() => summary.value.subtotal);
     const icbper = computed(() => taxBreakdown.value.icbper);
     const totalGRV = computed(() => taxBreakdown.value.taxed);
@@ -308,7 +397,7 @@ export default defineComponent({
 
     const getModalClass = computed(() => ({
       "w-100": genericsStore.device === "mobile",
-      "w-50": genericsStore.device === "tablet", 
+      "w-50": genericsStore.device === "tablet",
       "w-25": genericsStore.device === "desktop",
     }));
 
@@ -323,7 +412,7 @@ export default defineComponent({
       date_sale: format(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss"),
       count: 0,
       amount: "0.00",
-      given_amount: parseFloat(0).toFixed(2),
+      given_amount: Number(0).toFixed(2),
       invoice_type: defaultInvoiceType,
       payment_method: 1,
       payment_condition: 1,
@@ -350,7 +439,7 @@ export default defineComponent({
       total_igv: "0.00",
     });
 
-    // Watcher combinado que usa useSaleTotals para menús y aria para productos regulares
+    // Watcher combinado que usa useSaleTotals para menús y para productos regulares
     watch([total, icbper, totalGRV, totalEXN, totalGRT, totalIGV, totalDSCT, () => saleStore.toSale, grandTotal, () => orderStore.orderList.length], () => {
       // Calcular la cantidad de productos directamente (incluyendo menús)
       const productCount = saleStore.toSale.reduce((acc, curVal) => acc + curVal.quantity, 0);
@@ -397,9 +486,12 @@ export default defineComponent({
       }
     };
 
-    watch(() => sale.value.serie, async (newValue) => {
-      if (newValue !== undefined && newValue !== null) await obtainSaleNumber();
-    });
+    watch(
+      () => sale.value.serie,
+      async (newValue) => {
+        if (newValue !== undefined && newValue !== null) await obtainSaleNumber();
+      }
+    );
 
     onMounted(async () => {
       console.log('Componente montado, obteniendo número de venta inicial');
@@ -485,26 +577,164 @@ export default defineComponent({
     };
 
     const doMultiplePayment = () => {
-      sale.value.payments = [{ payment_method: sale.value.payment_method, amount: String(sale.value.amount) }];
+      sale.value.payments = [
+        { payment_method: sale.value.payment_method, amount: String(sale.value.amount) },
+      ];
       showPayments.value = true;
     };
 
-    const evalPayments = computed(() => false);
-    const currentPaymentsAmount = computed(() => "0.00");
-    const filteredMethods = computed(() => []);
+    const evalPayments = computed(() => {
+      if (sale.value.payments) {
+        const sum = sale.value.payments.reduce(
+          (acc, val) => acc + parseFloat(val.amount),
+          0
+        );
+        return sum !== Number(sale.value.amount);
+      }
+      return true;
+    });
 
-    const showCustomerOptions = () => {};
-    const autoCreateCustomer = () => {};
-    const createAddressesOptions = () => {};
-    const changeAddress = () => {};
-    const handleDelivery = () => {};
-    const performCreateOrder = () => {
-      performTakeAway();
+    const currentPaymentsAmount = computed(() => {
+      if (sale.value.payments) {
+        const sum = sale.value.payments.reduce((acc, val) => acc + parseFloat(val.amount), 0);
+        return isNaN(sum) ? "0.00" : sum.toFixed(2);
+      }
+      return "0.00";
+    });
+
+    const filteredMethods = computed(() => saleStore.getPaymentMethodsOptions.map(option => ({
+        ...option,
+        disabled: sale.value.payments?.some(pay => pay.payment_method === option.value)
+    })));
+
+    const showCustomerOptions = async (value) => {
+      if (value.length >= 3 && value.length <= 11) {
+        searchingCustomer.value = true;
+        try {
+          const searchFunc = sale.value.invoice_type === 1 ? searchRucCustomer : searchCustomerByName;
+          const response = await searchFunc(value);
+          if (response.status === 200) {
+            customerResults.value = response.data;
+            customerOptions.value = response.data.map(customer => ({
+              value: customer.id,
+              label: `${customer.doc_num} - ${customer.names}`,
+              disabled: customer.is_disabled
+            }));
+          }
+        } catch (error) {
+          console.error(error);
+          message.error("Algo salió mal...");
+        } finally {
+          searchingCustomer.value = false;
+        }
+        return true;
+      } else {
+        customerResults.value = [];
+        customerOptions.value = [];
+        return false;
+      }
     };
-    const createPayment = () => {};
-    const onCloseModal = () => {};
-    const onSuccess = () => {};
-    const isDecimal = () => {};
+
+    const autoCreateCustomer = () => {
+      if (!searchingCustomer.value && !customerResults.value.length) {
+        const name = sale.value.customer_name;
+        if (!isNaN(name) && ((name.length === 8 && sale.value.invoice_type !== 1) || name.length === 11)) {
+          showCustomerModal.value = true;
+          customerDocument.value = name;
+        }
+      }
+    };
+
+    const createAddressesOptions = () => {
+      const customer = customerResults.value.find(c => c.id === sale.value.customer);
+      whatsappNumber.value = customer?.phone || "";
+      if (customer) {
+        addressesOptions.value = customer.addresses.map(address => ({
+          value: address.id,
+          label: `${address.ubigeo} - ${address.description}`
+        }));
+        if (addressesOptions.value.length) {
+          sale.value.address = addressesOptions.value[0].value;
+        }
+        if (sale.value.delivery_info) {
+          sale.value.delivery_info.person = customer.names;
+          sale.value.delivery_info.phone = customer.phone;
+          sale.value.delivery_info.address = customer.addresses.length ? customer.addresses[0].description : "";
+        }
+      }
+    };
+
+    const changeAddress = (v, o) => {
+      if (sale.value.delivery_info && o?.label) {
+        sale.value.delivery_info.address = o.label.split(" - ")[1];
+      }
+    };
+
+    const handleDelivery = (v) => {
+      sale.value.delivery_info = v ? {
+        person: "",
+        address: "",
+        phone: "",
+        deliveryman: "",
+        amount: parseFloat(0).toFixed(2)
+      } : null;
+      if (v) sale.value.ask_for = "";
+    };
+
+    const performCreateOrder = async () => {
+      loading.value = true;
+      try {
+        sale.value.sale_details = saleStore.toSale.map(detail => ({
+          ...detail,
+          igv_tax: detail.igv_tax.toFixed(2),
+          price_base: detail.price_base.toFixed(2)
+        }));
+        sale.value.discount = totalDSCT.value;
+        
+        const response = await takeAwayOrder(orderStore.orderList, sale.value, userConfirm.value);
+        if (response.status === 201) {
+          message.success("Venta realizada correctamente!");
+          checkState.value = true;
+          cleanupOrderStore();
+          pdfData.value = response.data.order;
+          showPdf.value = true;
+          setTimeout(() => {
+            ticketPreviewRef.value.generate();
+            if (settingsStore.businessSettings.printer.print_html) {
+              voucherData.value = response.data.sale;
+              showVoucher.value = true;
+              if (!ticketPreview.value) {
+                setTimeout(() => voucherDrawer.value.generate(), 250);
+              }
+            }
+          }, 250);
+        }
+      } catch (error) {
+        console.error(error);
+        message.error("Algo salió mal...");
+      } finally {
+        loading.value = false;
+        showConfirm.value = false;
+        userConfirm.value = "";
+      }
+    };
+
+    const createPayment = () => ({ payment_method: null, amount: "0" });
+
+    const onCloseModal = () => {
+      showCustomerModal.value = false;
+    };
+
+    const onSuccess = (customer) => {
+      if ((sale.value.invoice_type === 1 && customer.doc_type === "6") || sale.value.invoice_type !== 1) {
+        customerResults.value.push(customer);
+        sale.value.customer_name = `${customer.doc_num} - ${customer.names}`;
+        sale.value.customer = customer.id;
+        createAddressesOptions();
+      }
+      showCustomerModal.value = false;
+      onCloseModal();
+    };
 
     const checkState = ref(false);
     const hasUnsavedChanges = computed(() => orderStore.orderList.length > 0 && !checkState.value);

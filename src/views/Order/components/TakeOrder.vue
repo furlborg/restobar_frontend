@@ -319,12 +319,19 @@
                     </n-space>
                 </template>
             </n-modal>
-            <n-modal :class="{
-      'w-100': genericsStore.device === 'mobile',
-      'w-50': genericsStore.device === 'tablet',
-      'w-25': genericsStore.device === 'desktop',
-    }" preset="card" v-model:show="showPayments" title="Realizar venta" :mask-closable="false" closable
-                     @close="sale.payments = null">
+            <n-modal
+                :class="{
+                    'w-100': genericsStore.device === 'mobile',
+                    'w-50': genericsStore.device === 'tablet',
+                    'w-25': genericsStore.device === 'desktop',
+                }"
+                preset="card"
+                v-model:show="showPayments"
+                title="Realizar venta"
+                :mask-closable="false"
+                closable
+                @close="sale.payments = null"
+            >
                 <n-space justify="space-between">
                     <n-tag type="info">Total: S/. {{ showPayments ? sale.amount : null }}</n-tag>
                     <n-tag :type="evalPayments ? 'error' : 'success'">Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}</n-tag>
@@ -335,8 +342,13 @@
                         <template #default="{ value }">
                             <div style="display: flex; align-items: center; width: 100%">
                                 <n-select v-model:value="value.payment_method" :disabled="loading" :options="filteredMethods"/>
-                                <n-input class="ms-2" v-model:value="value.amount" placeholder="" :disabled="loading"
-                                         @keypress="isDecimal($event)"/>
+                                <n-input
+                                    class="ms-2"
+                                    v-model:value="value.amount"
+                                    placeholder=""
+                                    :disabled="loading"
+                                    @keypress="isDecimal($event)"
+                                />
                             </div>
                         </template>
                     </n-dynamic-input>
@@ -433,8 +445,9 @@ export default defineComponent({
 
         const totals = computed(() => {
             const toSale = saleStore.toSale;
+            console.log(toSale);
             return {
-                GRV: toSale.reduce((acc, cur) => cur.product_affectation === 10 ? acc + parseFloat(cur.price_sale) * cur.quantity : acc, 0),
+                GRV: toSale.reduce((acc, cur) => cur.product_affectation === 10 ? acc + parseFloat(cur.price_sale - cur.igv_tax) * cur.quantity : acc, 0),
                 EXN: toSale.reduce((acc, cur) => cur.product_affectation === 20 ? acc + parseFloat(cur.price_sale) * cur.quantity : acc, 0),
                 GRT: toSale.reduce((acc, cur) => cur.product_affectation === 21 ? acc + parseFloat(cur.price_sale) * cur.quantity : acc, 0),
                 IGV: toSale.reduce((acc, cur) => acc + cur.igv_tax * cur.quantity, 0),

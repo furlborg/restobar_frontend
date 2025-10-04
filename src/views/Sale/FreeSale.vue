@@ -469,14 +469,9 @@ export default defineComponent({
     });
 
     const total = computed(() => {
-      return parseFloat(
-        totalIGV.value +
-        totalGRV.value +
-        totalEXN.value -
-        parseFloat(totalDSCT.value) +
-        icbper.value +
-        parseFloat(sale.value.other_charges)
-      ).toFixed(2);
+      let cal = parseFloat(subTotal.value - parseFloat(totalDSCT.value) + icbper.value + parseFloat(sale.value.other_charges));
+      if (sale.value.delivery_info) cal += parseFloat(sale.value.delivery_info.amount);
+      return cal.toFixed(2);
     });
 
     const sale = ref({
@@ -637,6 +632,7 @@ export default defineComponent({
                     }
 
                     if (
+                      settingsStore.businessSettings.sale.free_sale_send_doc &&
                       settingsStore.businessSettings.sale.auto_send &&
                       response.data.invoice_type !== "80"
                     ) {

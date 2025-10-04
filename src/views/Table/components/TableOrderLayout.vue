@@ -243,6 +243,7 @@ export default defineComponent({
             try {
                 const response = await retrieveTableOrder(table);
                 if (response.status === 200) {
+                    console.log(response.data);
                     const { order_details: orderDetails, user: userId, ask_for: askFor, id } = response.data;
                     // Map orderDetails to match frontend handleAddMenu structure for menu orders
                     const mappedOrderDetails = orderDetails.map(detail => {
