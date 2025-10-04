@@ -74,7 +74,7 @@ export async function createTableOrder(
     ask_for = undefined
 ) {
     const tillStore = useTillStore();
-    
+
     // Use centralized assembler instead of inline logic
     const payload = buildTableOrderPayload(details, {
         tillId: tillStore.currentTillID,
@@ -82,7 +82,9 @@ export async function createTableOrder(
         askFor: ask_for,
         user
     });
-    
+
+    console.log("createTableOrder - payload:", payload);
+
     return await http.post(`tables/${idTable}/take_order/`, payload);
 }
 

@@ -11,8 +11,7 @@
       <n-grid responsive="screen" cols="1 xs:1 s:1 m:5 l:5 xl:5 2xl:5" :x-gap="12">
         <n-gi :span="3">
           <transition name="mode-fade" mode="out-in">
-            <OrderTaking
-              v-if="selectProducts"
+            <OrderTaking v-if="selectProducts"
               :loading="loading"
               :sale="sale"
               :show-observations="showObservations"
@@ -46,26 +45,26 @@
               @do-multiple-payment="doMultiplePayment"
             />
             <div v-else>
-            <n-tabs type="line" animated>
-              <n-tab-pane name="categories" tab="Categorías">
-                <CategoriesList />
-              </n-tab-pane>
-              <n-tab-pane name="menu" tab="Menú">
-                <n-card title="Menú Programado" :bordered="false">
-                  <n-list>
-                    <n-list-item v-for="menu in scheduledMenus" :key="menu.id" @click="handleOpenMenuModal(menu)" style="cursor: pointer">
-                      <n-thing>
-                        <n-space vertical>
-                          <n-text class="fs-4">{{ menu.menu.name }}</n-text>
-                          <n-text class="fs-6" type="info">Price: {{ menu.menu.price}}</n-text>
-                        </n-space>
-                      </n-thing>
-                    </n-list-item>
-                  </n-list>
-                </n-card>
-              </n-tab-pane>
-            </n-tabs>
-          </div>
+              <n-tabs type="line" animated>
+                <n-tab-pane name="categories" tab="Categorías">
+                  <CategoriesList />
+                </n-tab-pane>
+                <n-tab-pane name="menu" tab="Menú">
+                  <n-card title="Menú Programado" :bordered="false">
+                    <n-list>
+                      <n-list-item v-for="menu in scheduledMenus" :key="menu.id" @click="handleOpenMenuModal(menu)" style="cursor: pointer">
+                        <n-thing>
+                          <n-space vertical>
+                            <n-text class="fs-4">{{ menu.menu.name }}</n-text>
+                            <n-text class="fs-6" type="info">Price: {{ menu.menu.price}}</n-text>
+                          </n-space>
+                        </n-thing>
+                      </n-list-item>
+                    </n-list>
+                  </n-card>
+                </n-tab-pane>
+              </n-tabs>
+            </div>
           </transition>
         </n-gi>
         <n-gi span="2">
@@ -286,6 +285,7 @@
       :menu="selectedMenu"
       @close="showMenuModal = false"
     />
+
   </div>
 </template>
 
@@ -305,6 +305,7 @@ import { useUserStore } from "@/store/modules/user";
 import { useSaleTotals } from "@/composables/useSaleTotals";
 import { useBreakpoint } from 'vooks';
 import { isDecimal } from "@/utils";
+
 import OrderTaking from "./OrderTaking.vue";
 import PaymentSummary from "./PaymentSummary.vue";
 import CategoriesList from "./CategoriesList.vue";
@@ -314,6 +315,7 @@ import TicketPreview from "@/views/Order/components/TicketPreview.vue";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer.vue";
 import MenuProductModal from "@/views/Table/components/MenuProductModal.vue";
 import format from "date-fns/format";
+import { isDecimal } from "@/utils";
 
 export default defineComponent({
   name: "TakeOrderLayout",
@@ -361,15 +363,6 @@ export default defineComponent({
     const userConfirm = ref("");
     const productSearch = ref("");
 
-    // Usar el total del composable que incluye menús
-    const total = computed(() => {
-        let cal = grandTotal.value + parseFloat(sale.value.other_charges || 0);
-        if (sale.value.delivery_info && sale.value.delivery_info.amount) {
-            cal = cal + parseFloat(sale.value.delivery_info.amount);
-        }
-        return cal.toFixed(2);
-    });
-
     const pdfData = ref(null);
     const voucherData = ref(null);
     const addressesOptions = ref([]);
@@ -394,6 +387,7 @@ export default defineComponent({
 
     const changing = computed(() => 
       sale.value.given_amount > total.value ? (sale.value.given_amount - total.value).toFixed(2) : 0.0);
+
 
     const getModalClass = computed(() => ({
       "w-100": genericsStore.device === "mobile",

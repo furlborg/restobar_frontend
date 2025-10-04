@@ -34,8 +34,14 @@
                   />
                 </n-form-item-gi>
                 <n-form-item-gi :span="3" label="Fecha">
-                  <n-date-picker class="w-100" type="datetime" :is-date-disabled="ts => ts > new Date()"
-                    disabled v-model:formatted-value="sale.date_sale" />
+                  <n-date-picker
+                    class="w-100"
+                    type="datetime"
+                    :is-date-disabled="disablePastDates"
+                    :is-time-disabled="disablePastTimes"
+                    :disabled="sale.payment_condition !== 2"
+                    v-model:formatted-value="sale.date_sale"
+                  />
                 </n-form-item-gi>
                 <n-form-item-gi :span="5" label="Dirección">
                   <n-select v-model:value="sale.address" :options="addressesOptions"
@@ -62,7 +68,7 @@
               </n-grid>
             </n-form>
             <n-scrollbar>
-              <n-table class="m-auto text-center fs-6 mb-3" :bordered="false">
+              <n-table v-if="!shouldShowCustomerMode" class="m-auto text-center fs-6 mb-3" :bordered="false">
                 <thead>
                   <tr>
                     <th v-if="settingsStore.businessSettings.sale?.manage_affectations">#</th>
@@ -74,7 +80,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(detail, index) in saleStore.toSale.filter(d => d.quantity > 0)" :key="index">
+                  <tr v-for="(detail, index) in saleStore.toSale" :key="index">
                     <td v-if="settingsStore.businessSettings.sale?.manage_affectations">
                       <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation"
                         :disabled="!userStore.hasPermission('change_product_affectation')"
@@ -101,180 +107,63 @@
                   </tr>
                 </tbody>
               </n-table>
+              <n-space v-else vertical>
+                <n-card v-for="customer in customers" :key="customer.id">
+                  <template #header>
+                    <n-text class="fs-5">{{ customer.name }}</n-text>
+                  </template>
+                    <n-scrollbar>
+                      <n-table :bordered="false">
+                          <thead>
+                            <tr>
+                              <th v-if="settingsStore.businessSettings.sale?.manage_affectations">#</th>
+                              <th>Cantidad</th>
+                              <th>Producto</th>
+                              <th>Precio Unitario</th>
+                              <th v-if="settingsStore.business_settings.sale?.show_discount_label">Descuento</th>
+                              <th>Precio Total</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr v-for="(detail, index) in saleStore.toSale.filter(d => d.quantity > 0 && d.customer.id === customer.id)" :key="index">
+                              <td v-if="settingsStore.businessSettings.sale?.manage_affectations">
+                                <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation"
+                                  :disabled="!userStore.hasPermission('change_product_affectation')"
+                                  :options="productStore.affectationsOptions" @update:value="saleStore.updateDetail(detail)">
+                                  <n-tag size="small" :color="getAfcColor(detail.product_affectation)">
+                                    {{ getAfcShort(detail.product_affectation) }}
+                                  </n-tag>
+                                </n-popselect>
+                              </td>
+                              <td>{{ detail.quantity }}</td>
+                              <td><input class="custom-input" v-model="detail.product_name" v-autowidth @click="$event.target.select()"/></td>
+                              <td>
+                                S/. <input class="custom-input" type="number" :min="detail.product_affectation === 20 ? 1 : 0"
+                                  step=".5" v-model="detail.price_sale" v-autowidth @click="$event.target.select()"
+                                  :disabled="!settingsStore.business_settings.sale?.show_discount_label"
+                                  @input="saleStore.updateDetail(detail), detail.discount = '0.00'"/>
+                              </td>
+                              <td v-if="settingsStore.business_settings.sale?.show_discount_label">
+                                S/. <input class="custom-input" type="number" min="0" :max="detail.price_sale || 0" step=".5"
+                                  :disabled="detail.product_affectation === 21 || !!Number(sale.discount)"
+                                  v-model="detail.discount" v-autowidth @click="$event.target.select()"/>
+                              </td>
+                              <td>{{ detail.product_affectation === 21 ? "0.00" : (detail.quantity * detail.price_sale - detail.discount).toFixed(2) }}</td>
+                            </tr>
+                          </tbody>
+                      </n-table>
+                    </n-scrollbar>
+                </n-card>
+              </n-space>
             </n-scrollbar>
-            <div class="payment-section d-block d-md-none mt-3">
-              <n-card class="mb-3" size="small">
-                <template #header>
-                  <span class="fw-bold">Resumen de Venta</span>
-                </template>
-                <div class="mobile-totals">
-                  <div v-if="subTotal" class="total-row">
-                    <span class="label">SUBTOTAL:</span>
-                    <span class="amount">S/. {{ subTotal.toFixed(2) }}</span>
-                  </div>
-                  <div v-if="totalGRV" class="total-row">
-                    <span class="label">OP. GRAVADAS:</span>
-                    <span class="amount">S/. {{ totalGRV.toFixed(2) }}</span>
-                  </div>
-                  <div v-if="totalEXN" class="total-row">
-                    <span class="label">OP. EXONERADAS:</span>
-                    <span class="amount">S/. {{ totalEXN.toFixed(2) }}</span>
-                  </div>
-                  <div v-if="totalGRT" class="total-row">
-                    <span class="label">OP. GRATUITAS:</span>
-                    <span class="amount">S/. {{ totalGRT.toFixed(2) }}</span>
-                  </div>
-                  <div v-if="totalIGV" class="total-row">
-                    <span class="label">IGV:</span>
-                    <span class="amount">S/. {{ totalIGV.toFixed(2) }}</span>
-                  </div>
-                  <div v-if="!settingsStore.business_settings.sale?.show_discount_label" class="total-row">
-                    <span class="label">DSCT:</span>
-                    <div class="input-group">
-                      <span>S/.</span>
-                      <input class="custom-input fw-bold discount-input" type="number" min="0" step=".5" 
-                        v-model="totalDSCT" :disabled="saleStore.toSale.some(d => Number(d.discount) > 0)"
-                        @click="$event.target.select()" />
-                    </div>
-                  </div>
-                  <div v-if="icbper" class="total-row">
-                    <span class="label">ICBPER:</span>
-                    <span class="amount">S/. {{ icbper.toFixed(2) }}</span>
-                  </div>
-                  <div class="total-row">
-                    <span class="label">OTROS:</span>
-                    <div class="input-group">
-                      <span>S/.</span>
-                      <input class="custom-input fw-bold others-input" type="number" min="0" step=".5"
-                        v-model="sale.other_charges" @click="$event.target.select()" />
-                    </div>
-                  </div>
-                </div>
-                <n-divider />
-                <div class="total-final">
-                  <span class="label-total">TOTAL:</span>
-                  <span class="amount-total">S/. {{ sale.amount }}</span>
-                </div>
-              </n-card>
-              <n-grid cols="2" :x-gap="12">
-                <n-gi>
-                  <n-card size="small" class="payment-card">
-                    <div class="payment-section-mobile">
-                      <span class="payment-label">Pago</span>
-                      <div class="payment-input-container">
-                        <span class="currency">S/.</span>
-                        <input class="payment-input" type="number" min="0" step=".01"
-                          v-model="sale.given_amount" @click="$event.target.select()" />
-                      </div>
-                    </div>
-                  </n-card>
-                </n-gi>
-                <n-gi>
-                  <n-card size="small" class="payment-card">
-                    <div class="payment-section-mobile">
-                      <span class="payment-label">Vuelto</span>
-                      <div class="payment-amount-display">
-                        <span class="currency">S/.</span>
-                        <span class="payment-amount">{{ changing.toFixed(2) }}</span>
-                      </div>
-                    </div>
-                  </n-card>
-                </n-gi>
-              </n-grid>
-            </div>
-
-            <div class="payment-section d-none d-md-block">
-              <n-card class="mb-3 totals-card-desktop">
-                <template #header>
-                  <span class="totals-header">Resumen de Venta</span>
-                </template>
-                <n-grid cols="3" :x-gap="16">
-                  <n-gi>
-                    <div class="desktop-totals-column">
-                      <div v-if="subTotal" class="total-row-desktop">
-                        <span class="label-desktop">SUBTOTAL:</span>
-                        <span class="amount-desktop">S/. {{ subTotal.toFixed(2) }}</span>
-                      </div>
-                      <div v-if="totalGRV" class="total-row-desktop">
-                        <span class="label-desktop">OP. GRAVADAS:</span>
-                        <span class="amount-desktop">S/. {{ totalGRV.toFixed(2) }}</span>
-                      </div>
-                      <div v-if="totalEXN" class="total-row-desktop">
-                        <span class="label-desktop">OP. EXONERADAS:</span>
-                        <span class="amount-desktop">S/. {{ totalEXN.toFixed(2) }}</span>
-                      </div>
-                    </div>
-                  </n-gi>
-                  <n-gi>
-                    <div class="desktop-totals-column">
-                      <div v-if="totalGRT" class="total-row-desktop">
-                        <span class="label-desktop">OP. GRATUITAS:</span>
-                        <span class="amount-desktop">S/. {{ totalGRT.toFixed(2) }}</span>
-                      </div>
-                      <div v-if="totalIGV" class="total-row-desktop">
-                        <span class="label-desktop">IGV:</span>
-                        <span class="amount-desktop">S/. {{ totalIGV.toFixed(2) }}</span>
-                      </div>
-                      <div v-if="icbper" class="total-row-desktop">
-                        <span class="label-desktop">ICBPER:</span>
-                        <span class="amount-desktop">S/. {{ icbper.toFixed(2) }}</span>
-                      </div>
-                    </div>
-                  </n-gi>
-                  <n-gi>
-                    <div class="desktop-totals-column">
-                      <div v-if="!settingsStore.business_settings.sale?.show_discount_label" class="total-row-desktop">
-                        <span class="label-desktop">DSCT:</span>
-                        <div class="input-group-desktop">
-                          <span>S/.</span>
-                          <input class="custom-input fw-bold discount-input-desktop" type="number" min="0" step=".5"
-                            v-model="totalDSCT" :disabled="saleStore.toSale.some(d => Number(d.discount) > 0)"
-                            @click="$event.target.select()" />
-                        </div>
-                      </div>
-                      <div class="total-row-desktop">
-                        <span class="label-desktop">OTROS:</span>
-                        <div class="input-group-desktop">
-                          <span>S/.</span>
-                          <input class="custom-input fw-bold others-input-desktop" type="number" min="0" step=".5"
-                            v-model="sale.other_charges" @click="$event.target.select()" />
-                        </div>
-                      </div>
-                    </div>
-                  </n-gi>
-                </n-grid>
-                <n-divider />
-                <div class="total-final-desktop">
-                  <span class="label-total-desktop">TOTAL:</span>
-                  <span class="amount-total-desktop">S/. {{ sale.amount }}</span>
-                </div>
-              </n-card>
-              <n-grid cols="2" :x-gap="16">
-                <n-gi>
-                  <n-card class="payment-card-desktop">
-                    <div class="payment-section-desktop">
-                      <span class="payment-label-desktop">Pago</span>
-                      <div class="payment-input-container-desktop">
-                        <span class="currency-desktop">S/.</span>
-                        <input class="payment-input-desktop" type="number" min="0" step=".01"
-                          v-model="sale.given_amount" @click="$event.target.select()" />
-                      </div>
-                    </div>
-                  </n-card>
-                </n-gi>
-                <n-gi>
-                  <n-card class="payment-card-desktop">
-                    <div class="payment-section-desktop">
-                      <span class="payment-label-desktop">Vuelto</span>
-                      <div class="payment-amount-display-desktop">
-                        <span class="currency-desktop">S/.</span>
-                        <span class="payment-amount-desktop">{{ changing.toFixed(2) }}</span>
-                      </div>
-                    </div>
-                  </n-card>
-                </n-gi>
-              </n-grid>
-            </div>
+            <PaymentTotals
+              :items="paymentTotalsItems"
+              :total-amount="sale.amount"
+              :payment-amount="sale.given_amount"
+              :change-amount="changing"
+              @value-changed="handleValueChange"
+              @payment-changed="handlePaymentChange"
+            />
             <n-space v-if="sale.payment_condition === 1" justify="space-between">
               <n-checkbox v-model:checked="isMultiple">Pago multiple</n-checkbox>
               <n-button type="info" text @click="openSeparatePaymentsModal">Nueva cuenta</n-button>
@@ -333,13 +222,14 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed, watch, onMounted } from "vue";
+import { defineComponent, ref, computed, watch, onMounted, inject } from "vue";
 import SeparatePaymentsModal from "./SeparatePaymentsModal";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 import ClientSelectInput from "@/views/Customer/components/ClientSelectInput.vue";
 import SaleSerieSelector from "@/views/Order/components/SaleSerieSelector.vue";
+import PaymentTotals from "@/views/Order/components/PaymentTotals.vue";
 import { useSettingsStore } from "@/store/modules/settings";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useOrderStore } from "@/store/modules/order";
 import { useProductStore } from "@/store/modules/product";
 import { useSaleStore } from "@/store/modules/sale";
@@ -358,9 +248,10 @@ import { createSale, getSaleNumber, retrieveSale, sendSale } from "@/api/modules
 export default defineComponent({
   name: "TablePayment",
   directives: { autowidth: VueInputAutowidth },
-  components: { SeparatePaymentsModal, PreviewDrawer, ClientSelectInput, SaleSerieSelector },
+  components: { SeparatePaymentsModal, PreviewDrawer, ClientSelectInput, SaleSerieSelector, PaymentTotals },
   setup() {
     const router = useRouter();
+    const route = useRoute();
     const productStore = useProductStore();
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
@@ -370,6 +261,9 @@ export default defineComponent({
     const businessStore = useBusinessStore();
     const message = useMessage();
     const dialog = useDialog();
+
+    const customers = inject('customers', ref([]));
+    const shouldShowCustomerMode = inject('shouldShowCustomerMode', ref(false));
 
     const loading = ref(false);
     const saleForm = ref();
@@ -385,71 +279,18 @@ export default defineComponent({
     const previewDrawer = ref(null);
     const pdfData = ref(null);
 
-    const changing = computed(() => sale.value.given_amount > total.value ? total.value - sale.value.given_amount : 0.0);
-
-    const icbper = computed(() => orderStore.orderList.reduce((acc, curVal) =>
-      curVal.icbper ? acc + curVal.icbper_amount : acc, 0));
-
-    const precision = 10000;
-    const calculateTotal = (affectation) => {
-      const totalScaled = saleStore.toSale.reduce((acc, curVal) => {
-        if (curVal.product_affectation === affectation) {
-          const value = Math.round(parseFloat(curVal.price_sale) * curVal.quantity * precision);
-          return acc + value;
-        }
-        return acc;
-      }, 0);
-      return totalScaled / precision;
-    };
-
-    const totalGRV = computed(() => calculateTotal(10));
-    const totalEXN = computed(() => calculateTotal(20));
-    const totalGRT = computed(() => calculateTotal(21));
-
-    const totalIGV = computed(() => {
-      const totalScaled = saleStore.toSale.reduce((acc, curVal) => {
-        const value = Math.round(curVal.igv_tax * curVal.quantity * precision);
-        return acc + value;
-      }, 0);
-      return totalScaled / precision;
-    });
-
-    const totalDSCT = computed({
-      get: () => saleStore.toSale.some(detail => Number(detail.discount) > 0)
-        ? saleStore.toSale.reduce((acc, curVal) => acc + Number(curVal.discount), 0)
-        : sale.value.discount,
-      set: (v) => {
-        if (!saleStore.toSale.some(detail => Number(detail.discount) > 0)) {
-          sale.value.discount = v;
-        } else {
-          sale.value.discount = saleStore.toSale.reduce((acc, curVal) => acc + Number(curVal.discount), 0);
-        }
-      },
-    });
-
-    const subTotal = computed(() => saleStore.toSale.reduce((acc, curVal) =>
-      curVal.product_affectation === 21 ? acc : acc + (curVal.price_sale * curVal.quantity), 0));
-
-    const products_count = computed(() => saleStore.toSale.reduce((acc, curVal) => acc + curVal.quantity, 0));
-
-    const total = computed(() => parseFloat(
-      totalIGV.value + totalGRV.value + totalEXN.value - parseFloat(totalDSCT.value) +
-      icbper.value + parseFloat(sale.value.other_charges)
-    ).toFixed(2));
-
     const defaultInvoiceType = settingsStore.businessSettings.sale?.enable_invoices
       ? settingsStore.businessSettings.sale.default_invoice : 80;
 
-    const initialSerie = saleStore.series.length > 0 ? saleStore.getFirstOption(defaultInvoiceType) : null;
+    const defaultSerieId = saleStore.getFirstOption(defaultInvoiceType);
 
     const sale = ref({
-      order: null,
-      serie: initialSerie,
+      serie: defaultSerieId,
       number: "",
-      date_sale: format(new Date(), "dd/MM/yyyy HH:mm:ss"),
-      count: products_count,
-      amount: total,
-      given_amount: parseFloat(0).toFixed(2),
+      date_sale: format(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss"),
+      count: 0,
+      amount: "0.00",
+      given_amount: Number(0).toFixed(2),
       invoice_type: defaultInvoiceType,
       payment_method: 1,
       payment_condition: 1,
@@ -457,19 +298,154 @@ export default defineComponent({
       customer: null,
       address: null,
       discount: "0.00",
-      icbper: icbper,
+      icbper: 0,
       other_charges: "0.00",
       observations: "",
       by_consumption: false,
       sale_details: [],
+      ask_for: "",
       payments: null,
       do_update: true,
       is_change: true,
-      taxed_amount: totalGRV,
-      exempt_amount: totalEXN,
-      free_amount: totalGRT,
-      igv_amount: totalIGV,
+      taxed_amount: 0,
+      exempt_amount: 0,
+      free_amount: 0,
+      igv_amount: 0,
+      total_igv: "0.00",
     });
+
+    const totals = computed(() => {
+      const toSale = saleStore.toSale;
+      console.log(toSale);
+      return {
+        GRV: toSale.reduce(
+          (acc, cur) =>
+            cur.product_affectation === 10
+              ? acc + parseFloat(cur.price_sale - cur.igv_tax) * cur.quantity
+              : acc,
+          0
+        ),
+        EXN: toSale.reduce(
+          (acc, cur) =>
+            cur.product_affectation === 20
+              ? acc + parseFloat(cur.price_sale) * cur.quantity
+              : acc,
+          0
+        ),
+        GRT: toSale.reduce(
+          (acc, cur) =>
+            cur.product_affectation === 21
+              ? acc + parseFloat(cur.price_sale) * cur.quantity
+              : acc,
+          0
+        ),
+        IGV: toSale.reduce((acc, cur) => acc + cur.igv_tax * cur.quantity, 0),
+        DSCT: toSale.some((d) => Number(d.discount) > 0)
+          ? toSale.reduce((acc, cur) => acc + Number(cur.discount), 0)
+          : parseFloat(sale.value.discount),
+      };
+    });
+
+    const totalGRV = computed(() => totals.value.GRV);
+    const totalEXN = computed(() => totals.value.EXN);
+    const totalGRT = computed(() => totals.value.GRT);
+    const totalIGV = computed(() => totals.value.IGV);
+    const totalDSCT = computed(() => totals.value.DSCT);
+
+    const subTotal = computed(() =>
+      saleStore.toSale.reduce(
+        (acc, cur) =>
+          cur.product_affectation === 21 ? acc : acc + cur.price_sale * cur.quantity,
+        0
+      )
+    );
+
+    const products_count = computed(() =>
+      saleStore.toSale.reduce((acc, cur) => acc + cur.quantity, 0)
+    );
+
+    const total = computed(() => {
+      let cal = parseFloat(subTotal.value - parseFloat(totalDSCT.value) + icbper.value + parseFloat(sale.value.other_charges));
+      if (sale.value.delivery_info) {
+        cal += parseFloat(sale.value.delivery_info.amount)
+      };
+      return cal.toFixed(2);
+    });
+
+    const icbper = computed(() =>
+      orderStore.orderList.reduce(
+        (acc, curVal) => acc + (curVal.icbper ? curVal.icbper_amount : 0),
+        0
+      )
+    );
+
+    const changing = computed(() =>
+      sale.value.given_amount > total.value
+        ? (sale.value.given_amount - total.value).toFixed(2)
+        : 0.0
+    );
+
+    const paymentTotalsItems = computed(() => {
+      return [
+        { label: "SUBTOTAL", value: subTotal.value, editable: false },
+        { label: "OP. GRAVADAS", value: totalGRV.value, editable: false },
+        { label: "OP. EXONERADAS", value: totalEXN.value, editable: false, alwaysShow: false },
+        { label: "OP. GRATUITAS", value: totalGRT.value, editable: false, alwaysShow: false },
+        { label: "IGV", value: totalIGV.value, editable: false },
+        { label: "ICBPER", value: icbper.value, editable: false, alwaysShow: false },
+        {
+          label: "DSCT",
+          value: totalDSCT.value,
+          editable: !settingsStore.business_settings.sale?.show_discount_label,
+          field: "discount",
+          disabled: saleStore.toSale.some(d => Number(d.discount) > 0)
+        },
+        {
+          label: "OTROS",
+          value: sale.value.other_charges || 0,
+          editable: true,
+          field: "other_charges",
+          disabled: false
+        }
+      ];
+    });
+
+    watch(
+      [
+        total,
+        icbper,
+        totalGRV,
+        totalEXN,
+        totalGRT,
+        totalIGV,
+        totalDSCT,
+        () => saleStore.toSale,
+        () => orderStore.orderList.length,
+      ],
+      () => {
+        const productCount = saleStore.toSale.reduce(
+          (acc, curVal) => acc + curVal.quantity,
+          0
+        );
+        Object.assign(sale.value, {
+          count: productCount,
+          amount: total.value,
+          icbper: icbper.value,
+          taxed_amount: totalGRV.value,
+          exempt_amount: totalEXN.value,
+          free_amount: totalGRT.value,
+          igv_amount: totalIGV.value,
+          total_igv: parseFloat(totalIGV.value || 0).toFixed(2),
+        });
+
+        if (sale.value.payment_condition === 1) {
+          const newGivenAmount = total.value > 0 ? total.value : parseFloat(0).toFixed(2);
+          if (sale.value.given_amount !== newGivenAmount) {
+            sale.value.given_amount = newGivenAmount;
+          }
+        }
+      }
+    );
 
     const formRules = computed(() => {
       let rules = saleRules;
@@ -500,6 +476,19 @@ export default defineComponent({
 
     const handleSerieChanged = () => {
       obtainSaleNumber();
+    };
+
+    // Handlers para PaymentTotals
+    const handleValueChange = ({ field, value }) => {
+      if (field === 'discount') {
+        sale.value.discount = parseFloat(value) || 0;
+      } else if (field === 'other_charges') {
+        sale.value.other_charges = parseFloat(value) || 0;
+      }
+    };
+
+    const handlePaymentChange = (value) => {
+      sale.value.given_amount = parseFloat(value) || 0;
     };
 
     const performCreateSale = () => {
@@ -663,6 +652,44 @@ export default defineComponent({
 
     const getAfcShort = (afc) => ({ 10: "GRV", 20: "EXN", 21: "GRT" }[afc] || "---");
 
+    const disablePastDates = (timestamp) => {
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      return timestamp < todayStart;
+    };
+
+    function disablePastTimes(ts) {
+      const now = new Date();
+      const selected = new Date(ts);
+
+      const isToday =
+        selected.getFullYear() === now.getFullYear() &&
+        selected.getMonth() === now.getMonth() &&
+        selected.getDate() === now.getDate();
+
+      if (!isToday) {
+        return {};
+      }
+
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      const currentSecond = now.getSeconds();
+
+      return {
+        isHourDisabled: (hour) => hour < currentHour,
+        isMinuteDisabled: (minute, hour) => {
+          if (hour === currentHour) return minute < currentMinute;
+          return false;
+        },
+        isSecondDisabled: (second, minute, hour) => {
+          if (hour === currentHour && minute === currentMinute) {
+            return second < currentSecond;
+          }
+          return false;
+        }
+      };
+    }
+
     watch(total, () => {
       sale.value.given_amount = total.value > 0 ? total.value : parseFloat("0").toFixed(2);
     });
@@ -694,16 +721,19 @@ export default defineComponent({
     });
 
     return {
+      customers, shouldShowCustomerMode,
       userStore, saleStore, orderStore, productStore, settingsStore, sale, isDecimal,
       loading, saleForm, formRules, handleCustomerSelected, handleCustomerCleared,
-      changing, subTotal, changeCondition, changeSerie, handleSerieUpdate, handleSerieChanged, 
+      changing, subTotal, changeCondition, changeSerie, handleSerieUpdate, handleSerieChanged,
       showObservations, performCreateSale,
       addressesOptions, createAddressesOptions, genericsStore,
       icbper, isMultiple, showPayments, createPayment, doMultiplePayment, filteredMethods,
       evalPayments, currentPaymentsAmount, openSeparatePaymentsModal,
       closeSeparatePaymentsModal: () => {}, successSeparatePaymentsModal: obtainSaleNumber,
       separatePayments, showSeparateModal, getAfcShort, getAfcColor, totalIGV, totalGRV,
-      totalEXN, totalGRT, totalDSCT, whatsappNumber, ticketPreview, previewDrawer, showPdf, pdfData
+      totalEXN, totalGRT, totalDSCT, whatsappNumber, ticketPreview, previewDrawer, showPdf,
+      pdfData, paymentTotalsItems, handleValueChange, handlePaymentChange, disablePastDates,
+      disablePastTimes
     };
   },
 });
@@ -733,254 +763,6 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
-.mobile-totals {
-  .total-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 6px 0;
-    font-size: 14px;
-    .label {
-      font-weight: 500;
-      color: #666;
-      white-space: nowrap;
-      min-width: 100px;
-    }
-    .amount {
-      font-weight: 600;
-      color: #333;
-      white-space: nowrap;
-      text-align: right;
-    }
-    .input-group {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      span {
-        font-weight: 600;
-        color: #333;
-      }
-      .discount-input, .others-input {
-        width: 50px;
-        padding: 2px 4px;
-        text-align: right;
-        font-size: 13px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        &:focus {
-          border-color: #409eff;
-          outline: none;
-        }
-      }
-    }
-  }
-}
-
-.total-final {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-  .label-total {
-    font-size: 16px;
-    font-weight: 700;
-    color: #333;
-  }
-  .amount-total {
-    font-size: 18px;
-    font-weight: 700;
-    color: #52c41a;
-  }
-}
-
-.payment-card {
-  min-width: 0;
-  flex: 1;
-  .payment-section-mobile {
-    text-align: center;
-    padding: 8px;
-    .payment-label {
-      display: block;
-      font-size: 14px;
-      font-weight: 600;
-      color: #666;
-      margin-bottom: 8px;
-    }
-    .payment-input-container {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      white-space: nowrap;
-      min-width: fit-content;
-      .currency {
-        font-size: 16px;
-        font-weight: 600;
-        color: #333;
-        flex-shrink: 0;
-      }
-      .payment-input {
-        width: 80px;
-        min-width: 80px;
-        padding: 4px 8px;
-        font-size: 16px;
-        font-weight: 600;
-        text-align: center;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        flex-shrink: 0;
-        &:focus {
-          border-color: #409eff;
-          outline: none;
-        }
-      }
-    }
-    .payment-amount-display {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      white-space: nowrap;
-      min-width: fit-content;
-      .currency {
-        font-size: 16px;
-        font-weight: 600;
-        color: #333;
-        flex-shrink: 0;
-      }
-      .payment-amount {
-        font-size: 16px;
-        font-weight: 700;
-        color: #409eff;
-        flex-shrink: 0;
-      }
-    }
-  }
-}
-
-.payment-card-desktop {
-  .payment-section-desktop {
-    text-align: center;
-    padding: 20px 16px;
-    .payment-label-desktop {
-      display: block;
-      font-size: 26px;
-      font-weight: 600;
-      margin-bottom: 12px;
-    }
-    .payment-input-container-desktop {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      .currency-desktop {
-        font-size: 20px;
-        font-weight: 600;
-        color: #333;
-      }
-      .payment-input-desktop {
-        width: 120px;
-        padding: 8px 12px;
-        font-size: 18px;
-        font-weight: 600;
-        text-align: center;
-        border: 2px solid #ddd;
-        border-radius: 6px;
-        &:focus {
-          border-color: #409eff;
-          outline: none;
-          box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
-        }
-      }
-    }
-    .payment-amount-display-desktop {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      .currency-desktop {
-        font-size: 20px;
-        font-weight: 600;
-        color: #333;
-      }
-      .payment-amount-desktop {
-        font-size: 20px;
-        font-weight: 700;
-        color: #409eff;
-      }
-    }
-  }
-}
-
-.totals-card-desktop {
-  .totals-header {
-    font-size: 16px;
-    font-weight: 600;
-    color: #333;
-  }
-}
-
-.desktop-totals-column {
-  .total-row-desktop {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 6px 0;
-    font-size: 14px;
-    .label-desktop {
-      font-weight: 500;
-      color: #666;
-      white-space: nowrap;
-      min-width: 100px;
-    }
-    .amount-desktop {
-      font-weight: 600;
-      color: #333;
-      white-space: nowrap;
-      text-align: right;
-    }
-    .input-group-desktop {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      span {
-        font-weight: 600;
-        color: #333;
-      }
-      .discount-input-desktop, .others-input-desktop {
-        width: 60px;
-        padding: 4px 6px;
-        text-align: right;
-        font-size: 13px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        &:focus {
-          border-color: #409eff;
-          outline: none;
-          box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
-        }
-      }
-    }
-  }
-}
-
-.total-final-desktop {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 0;
-  .label-total-desktop {
-    font-size: 18px;
-    font-weight: 700;
-    color: #333;
-  }
-  .amount-total-desktop {
-    font-size: 22px;
-    font-weight: 700;
-    color: #52c41a;
-  }
-}
-
 @media (max-width: 768px) {
   .payment-section .payment-inputs {
     justify-content: flex-start !important;
@@ -990,4 +772,5 @@ input[type="number"] {
     align-items: flex-start !important;
   }
 }
+
 </style>

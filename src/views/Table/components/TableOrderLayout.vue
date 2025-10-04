@@ -15,7 +15,10 @@
                         :ask_for="ask_for"
                         :orderUser="orderUser"
                         :loading="loading"
-                        :checkState="checkState"
+                        :hasUnsavedChanges="hasUnsavedChanges"
+                        :customers="customers"
+                        :selectedCustomerId="selectedCustomerId"
+                        :shouldShowCustomerMode="shouldShowCustomerMode"
                         @validateSend="validateSend"
                         @addCustomer="addCustomer"
                         @removeCustomer="removeCustomer"
@@ -24,6 +27,7 @@
                         @update:selectedCustomerId="selectedCustomerId = $event"
                         @update:ask_for="ask_for = $event"
                         @update:orderUser="orderUser = $event"
+                        @productSelect="handleProductClick"
                     />
                 </n-gi>
             </n-grid>
@@ -37,7 +41,10 @@
                     :ask_for="ask_for"
                     :orderUser="orderUser"
                     :loading="loading"
-                    :checkState="checkState"
+                    :hasUnsavedChanges="hasUnsavedChanges"
+                    :customers="customers"
+                    :selectedCustomerId="selectedCustomerId"
+                    :shouldShowCustomerMode="shouldShowCustomerMode"
                     @validateSend="validateSend"
                     @addCustomer="addCustomer"
                     @removeCustomer="removeCustomer"
@@ -46,6 +53,7 @@
                     @update:selectedCustomerId="selectedCustomerId = $event"
                     @update:ask_for="ask_for = $event"
                     @update:orderUser="orderUser = $event"
+                    @productSelect="handleProductClick"
                 />
             </n-tab-pane>
         </n-tabs>
@@ -102,7 +110,7 @@
                 </n-space>
             </template>
         </n-modal>
-        
+
         <ticket-preview ref="ticketPreview" v-model:show="showPdf" :data="pdfData" :hidden="true" :isUpdate="!!orderStore.orderId" @printed="goHome" @canceled="goHome" />
     </div>
 </template>
@@ -147,7 +155,6 @@ export default defineComponent({
         const rules = { username: { required: true, trigger: ["blur", "input"], message: "" }, pass: { required: true, trigger: ["blur", "input"], message: "" } };
 
         const dataAnulate = ref({ username: "", pass: "" });
-        const checkState = ref(false);
         const loading = ref(false);
         const ask_for = ref(undefined);
         const orderUser = ref(null);
@@ -166,7 +173,6 @@ export default defineComponent({
         const pdfData = ref(null);
         const ticketPreview = ref(null);
         const activeTab = ref('main')
-
         const isMobile = computed(() => ['xs', 's'].includes(breakpointRef.value));
         const shouldShowCustomerMode = computed(() => orderStore.orderId ? orderStore.orderList.some(order => order.customer) : settingsStore.businessSettings?.order?.order_by_customer);
         const selectedCustomer = computed(() => customers.value.find(c => c.id === selectedCustomerId.value) || null);
@@ -175,38 +181,32 @@ export default defineComponent({
         const requireGeneralPass = computed(() => settingsStore.businessSettings.sale.require_general_pass_to_null);
         const showConfigMessage = computed(() => userStore.hasPermission('cancel_orderdetail') && !requireUserPass.value && !requireGeneralPass.value);
 
-        watchEffect(() => {
+        const hasUnsavedChanges = computed(() => {
             const ordersChanged = JSON.stringify(saleStore.order_initial) !== JSON.stringify(orderStore.orderList);
             const userChanged = orderUser_initial.value !== orderUser.value;
-            checkState.value = !ordersChanged && !userChanged;
+            const orderHasItems = orderStore.orderList.length > 0;
+            return orderHasItems && (ordersChanged || userChanged);
         });
 
-        const goToFirstTab = () => {
-            activeTab.value = 'main'
-        }
+        const goToFirstTab = () => activeTab.value = 'main';
 
         const handleRouteGuard = (to, isLeave = false) => {
-            if (["ProductCategories", "CategoriesItems", "TablePayment"].includes(to.name)) return;
+            if (["ProductCategories", "CategoriesItems"].includes(to.name)) return;
 
-            if (checkState.value) {
-                cleanupOrderStore();
-                return;
+            if (hasUnsavedChanges.value) {
+                dialog.error({
+                    title: "Cambios sin guardar",
+                    content: "¿Salir de todos modos?",
+                    positiveText: "Sí",
+                    onPositiveClick: () => {
+                        cleanupOrderStore();
+                        router.push(to);
+                    },
+                    ...(isLeave ? {} : { negativeText: "No" }),
+                    closable: !isLeave
+                });
+                return false;
             }
-
-            const config = {
-                title: "Cambios sin guardar",
-                content: "¿Salir de todos modos?",
-                positiveText: "Sí",
-                onPositiveClick: () => {
-                    checkState.value = true;
-                    cleanupOrderStore();
-                    router.push(to);
-                },
-                ...(isLeave ? {} : { negativeText: "No" }),
-                closable: !isLeave
-            };
-            dialog.error(config);
-            return false;
         };
 
         const cleanupOrderStore = () => {
@@ -214,9 +214,6 @@ export default defineComponent({
             orderStore.orders = [];
             saleStore.order_initial = [];
         };
-
-        onBeforeRouteUpdate((to) => handleRouteGuard(to));
-        onBeforeRouteLeave((to) => handleRouteGuard(to, true));
 
         const resetStores = () => {
             orderStore.orderId = null;
@@ -243,13 +240,9 @@ export default defineComponent({
             try {
                 const response = await retrieveTableOrder(table);
                 if (response.status === 200) {
-                    console.log(response.data);
                     const { order_details: orderDetails, user: userId, ask_for: askFor, id } = response.data;
-                    // Map orderDetails to match frontend handleAddMenu structure for menu orders
                     const mappedOrderDetails = orderDetails.map(detail => {
                         if (detail.product_set) {
-                            // This is a menu order
-                            // product_set should contain menu_id, name, price, quantity, items
                             return {
                                 from_menu: true,
                                 product_set_id: detail.product_set.id,
@@ -267,7 +260,6 @@ export default defineComponent({
                                         quantity: item.quantity,
                                     }))
                                     : [],
-                                // Optionally, include other fields from detail if needed (like id, customer, etc)
                                 ...(detail.id ? { id: detail.id } : {}),
                                 ...(detail.customer ? { customer: detail.customer } : {}),
                             }
@@ -311,14 +303,12 @@ export default defineComponent({
             pdfData.value = response.data;
             showPdf.value = true;
             setTimeout(() => ticketPreview.value.generate(), 250);
-            checkState.value = true;
             cleanupOrderStore();
         };
 
         const performCreateTableOrder = async () => {
             loading.value = true;
             try {
-                // Pass orderStore.orderList directly; createTableOrder will split into order_details and product_sets
                 const response = await createTableOrder(table, orderStore.orderList, orderUser.value, ask_for.value);
                 if (response.status === 201) handleOrderSuccess(response);
             } catch (error) {
@@ -364,7 +354,6 @@ export default defineComponent({
                 const response = await cancelTableOrder(table, dataAnulate.value);
                 if (response.status === 202) {
                     message.success("Pedido anulado correctamente!");
-                    checkState.value = true;
                     cleanupOrderStore();
                     router.push({ name: "TableHome" });
                 }
@@ -375,7 +364,9 @@ export default defineComponent({
         };
 
         const nullifyTableOrder = async () => {
-            if (!orderStore.orderList.length && orderStore.orderId) await performNullifyTableOrder();
+            if (!orderStore.orderList.length && orderStore.orderId) {
+                await performNullifyTableOrder();
+            }
         };
 
         const resetDeleteState = () => {
@@ -412,9 +403,8 @@ export default defineComponent({
         const addCustomer = (name) => {
             if (!name?.trim()) return;
             const newCustomer = { id: customerIdCounter.value++, name: name.trim() };
-            customers.value.push(newCustomer);
+            customers.value = [...customers.value, newCustomer];
             selectedCustomerId.value = newCustomer.id;
-            return newCustomer;
         };
 
         const validateSend = () => {
@@ -428,11 +418,25 @@ export default defineComponent({
 
         const removeCustomer = (customerIndex) => {
             const customerId = customers.value[customerIndex].id;
-            orderStore.orderList = orderStore.orderList.filter(order => !order.customer || order.customer.id !== customerId);
+            
+            orderStore.orders = orderStore.orders.filter(order => !order.customer || order.customer.id !== customerId);
+            saleStore.order_initial = saleStore.order_initial.filter(order => !order.customer || order.customer.id !== customerId);
             customers.value.splice(customerIndex, 1);
+            
             if (selectedCustomerId.value === customerId) {
                 selectedCustomerId.value = customers.value[0]?.id || null;
             }
+        };
+
+        const handleProductClick = (product) => {
+            if (!product.has_stock || !product.has_supplies) return;
+
+            if (shouldShowCustomerMode.value && !selectedCustomer.value) {
+                message.warning("Seleccione un cliente primero");
+                return;
+            }
+
+            orderStore.addOrder(product, selectedCustomer.value);
         };
 
         const deleteOrderDetail = (detailIndex, detailId) => {
@@ -443,25 +447,34 @@ export default defineComponent({
             showConfirm.value = true;
         };
 
-        const resetAnulateData = () => dataAnulate.value = { username: "", pass: "" };
+        const resetAnulateData = () => {
+            dataAnulate.value = { username: "", pass: "" };
+        };
+
         const goHome = () => {
             cleanupOrderStore();
             router.push({ name: "TableHome" });
         };
 
-        onMounted(async () => {
-            await performRetrieveTableOrder();
-        });
+        onMounted(() => performRetrieveTableOrder());
 
+        onBeforeRouteUpdate(handleRouteGuard);
+        onBeforeRouteLeave((to) => handleRouteGuard(to, true));
+
+        provide("customers", customers);
         provide("selectedCustomer", selectedCustomer);
         provide("shouldShowCustomerMode", shouldShowCustomerMode);
+        provide("handleProductClick", handleProductClick);
 
         return {
-            isMobile, userStore, activeUsersStore, route, router, tableStore, table, settingsStore, genericsStore, productStore, orderStore, saleStore, shouldShowCustomerMode, showUserConfirm, userConfirm, loadingConfirm,
-            loading, performCreateTableOrder, performUpdateTableOrder, showConfirm, dataAnulate, rules,
-            performDeleteDetail, deleteQuantity, maxQuantity, showPdf, pdfData, ticketPreview, validateSend,
-            deleteOrderDetail, modalClass, requireUserPass, requireGeneralPass, showConfigMessage, resetAnulateData,
-            goHome, customers, selectedCustomerId, selectedCustomer, ask_for, orderUser, checkState, addCustomer, removeCustomer, goToFirstTab, activeTab
+            isMobile, userStore, activeUsersStore, route, router, tableStore, table, settingsStore, 
+            genericsStore, productStore, orderStore, saleStore, shouldShowCustomerMode, 
+            showUserConfirm, userConfirm, loadingConfirm, loading, performCreateTableOrder, 
+            performUpdateTableOrder, showConfirm, dataAnulate, rules, performDeleteDetail, 
+            deleteQuantity, maxQuantity, showPdf, pdfData, ticketPreview, validateSend, deleteOrderDetail, 
+            modalClass, requireUserPass, requireGeneralPass, showConfigMessage, resetAnulateData, goHome, 
+            customers, selectedCustomerId, selectedCustomer, ask_for, orderUser, hasUnsavedChanges, 
+            addCustomer, removeCustomer, goToFirstTab, activeTab, handleProductClick
         };
     }
 });

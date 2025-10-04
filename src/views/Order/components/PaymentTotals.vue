@@ -10,16 +10,17 @@
           <span v-if="!item.editable" class="amount">{{ currencySymbol }} {{ formatNumber(item.value) }}</span>
           <div v-else class="input-group">
             <span>{{ currencySymbol }}</span>
-            <input
+            <n-input-number
               class="custom-input fw-bold"
               :class="item.field === 'discount' ? 'discount-input' : 'others-input'"
-              type="number"
+              size="small"
+              :value="toNumber(item.value)"
               :min="item.min || 0"
               :step="item.step || 0.5"
-              :value="item.value"
               :disabled="item.disabled"
-              @input="$emit('valueChanged', { field: item.field, value: $event.target.value })"
-              @click="$event.target.select()"
+              :precision="2"
+              @update:value="(value) => $emit('valueChanged', { field: item.field, value: value ?? 0 })"
+              @focus="handleFocus"
             />
           </div>
         </div>
@@ -37,14 +38,16 @@
             <span class="payment-label">Pago</span>
             <div class="payment-input-container">
               <span class="currency">{{ currencySymbol }}</span>
-              <input
+              <n-input-number
                 class="payment-input"
-                type="number"
+                size="small"
+                :value="toNumber(paymentAmount)"
                 :min="paymentMin"
-                step="0.1"
-                :value="paymentAmount"
-                @input="$emit('paymentChanged', $event.target.value)"
-                @click="$event.target.select()"
+                :step="0.1"
+                :precision="2"
+                :show-button="false"
+                @update:value="(value) => $emit('paymentChanged', value ?? 0)"
+                @focus="handleFocus"
               />
             </div>
           </div>
@@ -78,16 +81,17 @@
               <span v-if="!item.editable" class="amount-desktop">{{ currencySymbol }} {{ formatNumber(item.value) }}</span>
               <div v-else class="input-group-desktop">
                 <span>{{ currencySymbol }}</span>
-                <input
+                <n-input-number
                   class="custom-input fw-bold"
                   :class="item.field === 'discount' ? 'discount-input-desktop' : 'others-input-desktop'"
-                  type="number"
+                  size="small"
+                  :value="toNumber(item.value)"
                   :min="item.min || 0"
-                  :step="item.step || 0.1"
-                  :value="item.value"
+                  :step="0.1"
                   :disabled="item.disabled"
-                  @input="$emit('valueChanged', { field: item.field, value: $event.target.value })"
-                  @click="$event.target.select()"
+                  :precision="2"
+                  @update:value="(value) => $emit('valueChanged', { field: item.field, value: value ?? 0 })"
+                  @focus="handleFocus"
                 />
               </div>
             </div>
@@ -107,14 +111,15 @@
             <n-text class="fs-4">PAGO</n-text>
             <div class="payment-input-container-desktop">
               <span class="currency-desktop">{{ currencySymbol }}</span>
-              <input
+              <n-input-number
                 class="payment-input-desktop"
-                type="number"
+                size="small"
+                :value="toNumber(paymentAmount)"
                 :min="paymentMin"
-                step="0.1"
-                :value="paymentAmount"
-                @input="$emit('paymentChanged', $event.target.value)"
-                @click="$event.target.select()"
+                :step="0.1"
+                :precision="2"
+                @update:value="(value) => $emit('paymentChanged', value ?? 0)"
+                @focus="handleFocus"
               />
             </div>
           </div>
@@ -137,9 +142,13 @@
 
 <script>
 import { defineComponent, computed } from "vue";
+import { NInputNumber } from "naive-ui";
 
 export default defineComponent({
   name: "PaymentTotals",
+  components: {
+    NInputNumber
+  },
   props: {
     currencySymbol: {
       type: String,
@@ -214,12 +223,29 @@ export default defineComponent({
       }
       return Number(value).toFixed(2);
     };
+
+    const toNumber = (value) => {
+      if (value === undefined || value === null || value === "") {
+        return 0;
+      }
+      const numeric = Number(value);
+      return Number.isNaN(numeric) ? 0 : numeric;
+    };
+
+    const handleFocus = (event) => {
+      const target = event?.target;
+      if (target && typeof target.select === "function") {
+        requestAnimationFrame(() => target.select());
+      }
+    };
     
     return {
       itemsToShow,
       groupedItems,
       calculatedChange,
-      formatNumber
+      formatNumber,
+      toNumber,
+      handleFocus
     };
   }
 });
@@ -232,7 +258,6 @@ $border-color: #e5e7eb;
 $text-color: #374151;
 $text-muted: #6b7280;
 $background-light: #f9fafb;
-$shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
 
 // Mixins para texto responsivo
 @mixin text-ellipsis($lines: 1) {
@@ -266,8 +291,7 @@ $shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
       align-items: center;
       padding: 8px 0;
       border-bottom: 1px solid $border-color;
-      min-height: 40px; // Altura mínima para evitar colapso
-      
+      min-height: 40px; 
       &:last-child {
         border-bottom: none;
       }
@@ -305,29 +329,16 @@ $shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         .custom-input {
-          width: 80px;
-          padding: 4px 8px;
+          max-width: 90px;
           border: 1px solid $border-color;
           border-radius: 4px;
-          font-size: 14px;
-          text-align: right;
-          background: white;
-          flex-shrink: 0;
 
           &.discount-input {
             border-color: #f59e0b;
-            &:focus {
-              border-color: #f59e0b;
-              box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.1);
-            }
           }
 
           &.others-input {
             border-color: #6366f1;
-            &:focus {
-              border-color: #6366f1;
-              box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
-            }
           }
         }
       }
@@ -483,29 +494,16 @@ $shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
       }
 
       .custom-input {
-        width: 70px;
-        padding: 3px 6px;
-        border: 1px solid $border-color;
+        max-width: 90px;
         border-radius: 4px;
-        font-size: 13px;
-        text-align: right;
-        background: white;
-        flex-shrink: 0;
+        border: 1px solid $border-color;
 
         &.discount-input-desktop {
           border-color: #f59e0b;
-          &:focus {
-            border-color: #f59e0b;
-            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.1);
-          }
         }
 
         &.others-input-desktop {
           border-color: #6366f1;
-          &:focus {
-            border-color: #6366f1;
-            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
-          }
         }
       }
     }
@@ -563,13 +561,9 @@ $shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
 
       .payment-input-desktop {
         width: 120px;
-        padding: 10px 12px;
         border: 2px solid $primary-color;
-        border-radius: 6px;
-        font-size: 18px;
-        font-weight: 600;
+        border-radius: 4px;
         text-align: center;
-        background: white;
       }
     }
 
@@ -591,159 +585,5 @@ $shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
       }
     }
   }
-}
-
-// Efectos hover para inputs
-.custom-input,
-.payment-input,
-.payment-input-desktop {
-  transition: all 0.2s ease-in-out;
-
-  &:hover {
-    border-color: $primary-color;
-  }
-}
-
-// Responsividad adicional
-@media (max-width: 768px) {
-  .payment-section {
-    .mobile-totals {
-      .total-row {
-        padding: 10px 0;
-        min-height: 36px;
-
-        .label {
-          font-size: 13px;
-          line-height: 1.3;
-        }
-
-        .amount {
-          font-size: 13px;
-        }
-
-        .input-group {
-          gap: 1px; // Reducido aún más para pantallas pequeñas
-          
-          .custom-input {
-            width: 65px; // Más pequeño en pantallas muy pequeñas
-            font-size: 13px;
-            padding: 3px 6px;
-          }
-        }
-      }
-    }
-
-    .total-final {
-      min-height: 44px;
-      
-      .label-total {
-        font-size: 15px;
-      }
-
-      .amount-total {
-        font-size: 18px;
-      }
-    }
-
-    .payment-card .payment-section-mobile {
-      padding: 12px 6px; // Reducido en pantallas pequeñas
-
-      .payment-label {
-        font-size: 11px;
-        line-height: 1.2;
-        min-height: 20px;
-      }
-
-      .payment-input-container {
-        gap: 1px;
-        
-        .payment-input {
-          width: 85px; // Más pequeño
-          font-size: 15px;
-          padding: 6px;
-        }
-      }
-
-      .payment-amount-display {
-        gap: 1px;
-        
-        .payment-amount {
-          font-size: 15px;
-        }
-      }
-    }
-  }
-}
-
-// Pantallas muy pequeñas (móviles en orientación vertical)
-@media (max-width: 480px) {
-  .payment-section {
-    .mobile-totals {
-      .total-row {
-        .input-group .custom-input {
-          width: 60px;
-          font-size: 12px;
-        }
-      }
-    }
-
-    .payment-card .payment-section-mobile {
-      .payment-input-container .payment-input {
-        width: 80px;
-        font-size: 14px;
-      }
-
-      .payment-label {
-        font-size: 10px;
-      }
-    }
-  }
-}
-
-// Pantallas medianas (tablets)
-@media (min-width: 769px) and (max-width: 1024px) {
-  .desktop-totals-column {
-    .total-row-desktop {
-      gap: 6px;
-
-      .input-group-desktop {
-        gap: 1px;
-        
-        .custom-input {
-          width: 65px;
-        }
-      }
-    }
-  }
-
-  .payment-card-desktop {
-    .payment-section-desktop {
-      .payment-input-container-desktop {
-        gap: 2px;
-        
-        .payment-input-desktop {
-          width: 110px;
-          font-size: 16px;
-        }
-      }
-    }
-  }
-}
-
-// Animaciones suaves
-.payment-section {
-  transition: all 0.3s ease-in-out;
-}
-
-:deep(.n-card) {
-  transition: all 0.2s ease-in-out;
-
-  &:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-}
-
-:deep(.n-divider) {
-  margin: 12px 0;
 }
 </style>

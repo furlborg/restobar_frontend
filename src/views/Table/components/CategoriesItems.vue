@@ -19,7 +19,7 @@
           class="w-100 p-0"
           v-for="(product, index) in itemsList"
           :key="index"
-          @click="handleProductClick(product)"
+          @click="addOrderToCustomer(product)"
           style="cursor: pointer"
         >
           <template #prefix>
@@ -93,23 +93,7 @@ export default defineComponent({
     const products = ref([]);
     const search = ref("");
 
-    // Inyectar funciones del componente padre para el flujo de clientes
-    const addOrderToCustomer = inject('addOrderToCustomer', null);
-    const selectedCustomerId = inject('selectedCustomerId', ref(null));
-
-    const handleProductClick = (product) => {
-      if (!product.has_stock || !product.has_supplies) return;
-      
-      if (settingsStore.businessSettings.order.order_by_customer) {
-        // Nuevo flujo por cliente
-        if (selectedCustomerId.value && addOrderToCustomer) {
-          addOrderToCustomer(product, selectedCustomerId.value);
-        }
-      } else {
-        // Flujo tradicional
-        orderStore.addOrder(product);
-      }
-    };
+    const addOrderToCustomer = inject('handleProductClick', () => null);
 
     const itemsList = computed(() => {
       const list = products.value.filter((product) => {
@@ -169,7 +153,7 @@ export default defineComponent({
 
     return {
       handleBack,
-      handleProductClick,
+      addOrderToCustomer,
       listType,
       genericsStore,
       productOptions,
