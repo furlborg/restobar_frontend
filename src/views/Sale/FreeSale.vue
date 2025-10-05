@@ -284,9 +284,7 @@
         </n-gi>
       </n-grid>
       <n-button class="fs-1 py-5 mt-2" type="success" :disabled="!saleStore.toSale.filter((detail) => !!detail.quantity).length ||
-      sale.payment_condition === 1
-      ? sale.given_amount < sale.amount
-      : !(sale.given_amount < sale.amount)
+      (sale.payment_condition === 1 && sale.given_amount < sale.amount)
       " secondary block @click.prevent="isMultiple ? doMultiplePayment() : performCreateSale()">
         <v-icon class="me-2" name="fa-coins" scale="2" />Cobrar
       </n-button>
