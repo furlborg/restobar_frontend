@@ -20,7 +20,7 @@
         :loading="searching"
         clear-after-select
         :render-label="renderLabel"
-        placeholder="Buscar productow"
+        placeholder="Buscar producto"
         @select="selectProduct"
       />
     </n-input-group>
