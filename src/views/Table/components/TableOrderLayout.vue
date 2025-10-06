@@ -178,6 +178,11 @@ export default defineComponent({
         watchEffect(() => {
             const ordersChanged = JSON.stringify(saleStore.order_initial) !== JSON.stringify(orderStore.orderList);
             const userChanged = orderUser_initial.value !== orderUser.value;
+            // Si no hay pedido aún y solo cambió el usuario → no lo consideres un cambio importante
+            if (!orderStore.orderId && userChanged && !ordersChanged) {
+                checkState.value = true;
+                return;
+            }
             checkState.value = !ordersChanged && !userChanged;
         });
 
