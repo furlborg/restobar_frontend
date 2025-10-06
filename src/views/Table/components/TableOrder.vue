@@ -240,7 +240,7 @@ export default defineComponent({
 
         const nullifyTableOrder = async (order) => {
             if (!orderStore.orderList.length && orderStore.orderId) {
-                console.log('Nullifying table order for:', order);
+                // console.log('Nullifying table order for:', order);
             }
         };
 
@@ -296,7 +296,7 @@ export default defineComponent({
             const item = products.value.find(product => product.id === id);
             if (item.has_supplies && item.has_stock) {
                 orderStore.addOrder(item);
-                console.log('Producto agregado a la orden');
+                // console.log('Producto agregado a la orden');
             }
         };
 
