@@ -315,7 +315,6 @@ import TicketPreview from "@/views/Order/components/TicketPreview.vue";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer.vue";
 import MenuProductModal from "@/views/Table/components/MenuProductModal.vue";
 import format from "date-fns/format";
-import { isDecimal } from "@/utils";
 
 export default defineComponent({
   name: "TakeOrderLayout",
@@ -386,7 +385,7 @@ export default defineComponent({
         : Number(sale.value.discount));
 
     const changing = computed(() => 
-      sale.value.given_amount > total.value ? (sale.value.given_amount - total.value).toFixed(2) : 0.0);
+      sale.value.given_amount > grandTotal.value ? (sale.value.given_amount - grandTotal.value).toFixed(2) : 0.0);
 
 
     const getModalClass = computed(() => ({
@@ -434,14 +433,14 @@ export default defineComponent({
     });
 
     // Watcher combinado que usa useSaleTotals para menús y para productos regulares
-    watch([total, icbper, totalGRV, totalEXN, totalGRT, totalIGV, totalDSCT, () => saleStore.toSale, grandTotal, () => orderStore.orderList.length], () => {
+    watch([grandTotal, icbper, totalGRV, totalEXN, totalGRT, totalIGV, totalDSCT, () => saleStore.toSale, () => orderStore.orderList.length], () => {
       // Calcular la cantidad de productos directamente (incluyendo menús)
       const productCount = saleStore.toSale.reduce((acc, curVal) => acc + curVal.quantity, 0);
       const menuCount = (saleStore.salePayload.sale_product_sets || []).reduce((acc, curVal) => acc + curVal.quantity, 0);
       
       Object.assign(sale.value, {
         count: productCount + menuCount,
-        amount: total.value,
+        amount: grandTotal.value,
         icbper: icbper.value,
         taxed_amount: totalGRV.value,
         exempt_amount: totalEXN.value,
@@ -450,12 +449,10 @@ export default defineComponent({
         total_igv: parseFloat(totalIGV.value || 0).toFixed(2),
       });
       
-      console.log("TakeOrderLayout - total_igv actualizado:", sale.value.total_igv, "tipo:", typeof sale.value.total_igv);
-      console.log("TakeOrderLayout - Total con menús:", total.value, "Grand Total:", grandTotal.value);
       
       // Actualizar el monto dado cuando cambia el total (para contado)
       if (sale.value.payment_condition === 1) {
-        const newGivenAmount = total.value > 0 ? total.value : parseFloat(0).toFixed(2);
+        const newGivenAmount = grandTotal.value > 0 ? grandTotal.value : parseFloat(0).toFixed(2);
         if (sale.value.given_amount !== newGivenAmount) {
           sale.value.given_amount = newGivenAmount;
           console.log("TakeOrderLayout - Monto de pago actualizado a:", newGivenAmount);

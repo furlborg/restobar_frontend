@@ -209,16 +209,60 @@ export default defineComponent({
             orderStore.orderId ? 'Orden actualizada correctamente' : 'Orden creada correctamente'
           )
           
-          // Limpiar solo productos del carrito que no son menús
-          orderStore.orders = orderStore.orders.filter(order => order.from_menu)
+          // Limpiar completamente el carrito después de enviar
+          orderStore.clearNewOrders()
           tableStore.refreshData()
+          
+          // Recargar los pedidos guardados desde el backend para actualizar la pestaña
+          try {
+            const { retrieveTableOrder } = await import('@/api/modules/tables')
+            const orderResponse = await retrieveTableOrder(route.params.table)
+            if (orderResponse.status === 200) {
+              // Transformar order_details igual que en Order.vue
+              const transformedOrders = orderResponse.data.order_details.map(detail => {
+                if (detail.product_set) {
+                  return {
+                    id: detail.id,
+                    from_menu: true,
+                    name: detail.product_set.menu_name || detail.product_set.name,
+                    price: parseFloat(detail.product_set.price),
+                    quantity: detail.quantity,
+                    product_set: detail.product_set,
+                    items: detail.product_set.items?.map(item => ({
+                      quantity: item.quantity,
+                      product_name: item.product?.name || item.product_phase?.product?.name,
+                      phase_name: item.product_phase?.phase_name
+                    })) || []
+                  }
+                } else if (detail.product) {
+                  return {
+                    id: detail.id,
+                    product: detail.product,
+                    product_name: detail.product_name,
+                    price: parseFloat(detail.price),
+                    quantity: detail.quantity,
+                    indication: detail.indication || [],
+                    icbper: detail.icbper,
+                    product_affectation: detail.product_affectation,
+                    product_igv: detail.product_igv
+                  }
+                }
+                return null
+              }).filter(Boolean)
+              
+              orderStore.setSavedOrders(transformedOrders)
+              // Actualizar orderId para habilitar la pestaña de pedidos
+              orderStore.orderId = orderResponse.data.id
+            }
+          } catch (error) {
+            // Error recargando pedido, continuar sin fallar
+          }
           
           // Limpiar modal
           showAskFor.value = false
           ask_for.value = ''
         }
       } catch (error) {
-        console.error('Error al procesar orden:', error)
         message.error('Error al procesar la orden')
       } finally {
         loading.value = false
