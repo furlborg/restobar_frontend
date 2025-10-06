@@ -74,7 +74,7 @@
       v-model:show="showModal"
       preset="card"
       title="Indicaciones"
-      :product="waiterStore.preOrderList[orderItemIndex]"
+      :product="orderStore.orderList[orderItemIndex]"
       @success="showModal = false"
     ></ProductIndications>
     <teleport to="body">
@@ -88,148 +88,56 @@
             v-if="filteredProducts.some((product) => product.quantity > 0)"
             type="success"
             round
-            @click="addToPreList"
+            @click="addToOrderStore"
             ><v-icon class="me-1" name="md-add-round" /> Agregar</n-button
           >
         </transition>
-        <n-button
-          type="info"
-          :disabled="!(waiterStore.preOrderList.length > 0)"
-          round
-          @click="activeDrawer = true"
-          ><v-icon class="me-1" name="md-shoppingcart-round" />Ver
-          pedido</n-button
-        >
-      </n-space>
-    </teleport>
-    <n-drawer height="50%" v-model:show="activeDrawer" placement="bottom">
-      <n-drawer-content
-        title="Pedidos"
-        footer-style="padding: 0; height: 50px"
-        body-style="padding: 0"
-        body-content-style="padding: 6px"
-        closable
-      >
-        <n-list>
-          <n-list-item
-            class="py-1"
-            v-for="(orderItem, index) in waiterStore.preOrderList"
-            :key="index"
-          >
-            <n-thing>
-              <template #header>
-                <n-button
-                  class="fs-5"
-                  type="info"
-                  text
-                  @click="
-                    orderItemIndex = index;
-                    showModal = true;
-                  "
-                  >{{ orderItem.product_name }}</n-button
-                >
-              </template>
-              <n-space align="center" justify="space-between">
-                <n-input-group>
-                  <n-button
-                    type="warning"
-                    size="small"
-                    primary
-                    :disabled="orderItem.quantity <= 1"
-                    @click.stop="orderItem.quantity--"
-                  >
-                    <v-icon name="md-remove-round" />
-                  </n-button>
-                  <n-input-number
-                    v-model:value="orderItem.quantity"
-                    style="width: 50px"
-                    placeholder=""
-                    :min="1"
-                    :show-button="false"
-                    size="small"
-                    readonly
-                    @click.stop
-                  />
-                  <n-button
-                    type="warning"
-                    size="small"
-                    primary
-                    @click.stop="orderItem.quantity++"
-                  >
-                    <v-icon name="md-add-round" />
-                  </n-button>
-                </n-input-group>
-                <n-tag>{{
-                  `S/. ${
-                    Number(orderItem.quantity) *
-                    parseFloat(orderItem.price).toFixed(2)
-                  }`
-                }}</n-tag>
-                <!-- <n-text class="fs-6">
-                {{
-                  `S/. ${
-                    Number(orderItem.quantity) *
-                    parseFloat(orderItem.price).toFixed(2)
-                  }`
-                }}
-              </n-text> -->
-              </n-space>
-            </n-thing>
-            <template #suffix>
-              <n-button
-                type="error"
-                text
-                @click.stop="waiterStore.preOrderList.splice(index, 1)"
-              >
-                <v-icon name="md-disabledbydefault-round" scale="1.25" />
-              </n-button>
-            </template>
-          </n-list-item>
-        </n-list>
-        <n-modal
-          preset="card"
-          title="Nombre de Cliente"
-          v-model:show="showAskFor"
-          :segmented="{ content: 'hard' }"
-        >
-          <n-input placeholder="" v-model:value="ask_for" />
-          <template #action>
-            <n-space justify="end">
-              <n-button
-                type="info"
-                :disabled="!showAskFor || loading"
-                :loading="loading"
-                secondary
-                @click="
-                  orderStore.orderId
-                    ? performUpdateTableOrder()
-                    : performCreateTableOrder()
-                "
-                >Guardar</n-button
-              >
-            </n-space>
-          </template>
-        </n-modal>
-        <template #footer>
+        <!-- Botón para realizar pedido solo si hay productos no menús -->
+        <transition name="slide-fade">
           <n-button
-            class="h-100"
+            v-if="orderStore.orderList.filter(order => !order.from_menu).length > 0"
+            type="warning"
+            round
+            @click="
+              settingsStore.business_settings.order.order_customer_name
+                ? (showAskFor = true)
+                : orderStore.orderId
+                ? performUpdateTableOrder()
+                : performCreateTableOrder()
+            "
             :disabled="loading"
             :loading="loading"
+            ><v-icon class="me-1" name="md-fastfood-round" />{{ orderStore.orderId ? "Añadir" : "Realizar" }} pedido</n-button
+          >
+        </transition>
+      </n-space>
+    </teleport>
+    
+    <!-- Modal para nombre de cliente -->
+    <n-modal
+      preset="card"
+      title="Nombre de Cliente"
+      v-model:show="showAskFor"
+      :segmented="{ content: 'hard' }"
+    >
+      <n-input placeholder="" v-model:value="ask_for" />
+      <template #action>
+        <n-space justify="end">
+          <n-button
             type="info"
+            :disabled="!showAskFor || loading"
+            :loading="loading"
             secondary
-            block
             @click="
               orderStore.orderId
                 ? performUpdateTableOrder()
-                : settingsStore.business_settings.order.order_customer_name
-                ? (showAskFor = true)
                 : performCreateTableOrder()
             "
-            >{{ orderStore.orderId ? "Añadir" : "Realizar" }} pedido</n-button
+            >Guardar</n-button
           >
-        </template>
-      </n-drawer-content>
-    </n-drawer>
+        </n-space>
+      </template>
+    </n-modal>
     <ticket-preview
       ref="ticketPreview"
       v-model:show="showPdf"
@@ -239,6 +147,9 @@
       @printed="() => $router.push({ name: 'WHome' })"
       @canceled="() => $router.push({ name: 'WHome' })"
     />
+    
+    <!-- Botón flotante de pedido unificado -->
+    <FloatingOrderButton />
   </div>
 </template>
 
@@ -249,6 +160,7 @@ import { useRoute } from "vue-router";
 import { useMessage } from "naive-ui";
 import ProductIndications from "./ProductIndications";
 import TicketPreview from "@/views/Order/components/TicketPreview";
+import FloatingOrderButton from "@/WaiterMode/components/FloatingOrderButton.vue";
 import { useProductStore } from "@/store/modules/product";
 import { useTableStore } from "@/store/modules/table";
 import { useOrderStore } from "@/store/modules/order";
@@ -264,6 +176,7 @@ export default defineComponent({
   components: {
     ProductIndications,
     TicketPreview,
+    FloatingOrderButton,
   },
   setup() {
     const message = useMessage();
@@ -274,7 +187,6 @@ export default defineComponent({
     const tableStore = useTableStore();
     const saleStore = useSaleStore();
     const waiterStore = useWaiterStore();
-    const activeDrawer = ref(false);
     const showModal = ref(false);
     const loading = ref(false);
     const orderItemIndex = ref(null);
@@ -288,7 +200,6 @@ export default defineComponent({
     });
 
     const performCreateTableOrder = () => {
-      addToList();
       loading.value = true;
       createTableOrder(
         route.params.table,
@@ -304,9 +215,9 @@ export default defineComponent({
             showPdf.value = true;
             setTimeout(() => ticketPreview.value.generate(), 250);
 
-            activeDrawer.value = false;
             tableStore.refreshData();
-            waiterStore.preOrderList = [];
+            // Limpiar solo productos del carrito que no son menús
+            orderStore.orders = orderStore.orders.filter(order => order.from_menu);
             // router.push({ name: "WHome" });
           }
         })
@@ -342,7 +253,6 @@ export default defineComponent({
     };
 
     const performUpdateTableOrder = async () => {
-      addToList();
       loading.value = true;
       await updateTableOrder(
         route.params.table,
@@ -362,9 +272,9 @@ export default defineComponent({
             showPdf.value = true;
             setTimeout(() => ticketPreview.value.generate(), 250);
 
-            activeDrawer.value = false;
             tableStore.refreshData();
-            waiterStore.preOrderList = [];
+            // Limpiar solo productos del carrito que no son menús
+            orderStore.orders = orderStore.orders.filter(order => order.from_menu);
             // router.push({ name: "WHome" });
           }
         })
@@ -404,34 +314,33 @@ export default defineComponent({
       dateNow.value = `${dd}/${mm + 1}/${yy} ${hh}:${msms}`;
     });
 
-    const addToPreList = () => {
+    const addToOrderStore = () => {
       filteredProducts.value.forEach((product) => {
         if (product.quantity > 0) {
-          const existence = waiterStore.preOrderList.find(
-            (order) => order.id === product.id
+          // Verificar si el producto ya existe en el carrito
+          const existence = orderStore.orders.find(
+            (order) => order.product === product.id && !order.from_menu
           );
           if (typeof existence !== "undefined") {
             existence.quantity += product.quantity;
           } else {
-            let order = {
+            // Crear nueva orden usando addOrderItem del orderStore
+            let productOrder = {
               id: product.id,
-              product_name: product.name,
-              price: product.prices,
+              name: product.name,
+              prices: product.prices,
               quantity: Number(product.quantity),
               indication: [],
               quick_indications: product.quick_indications,
+              icbper: product.icbper || false,
+              affectation: product.affectation || '10',
+              igv_tax: product.igv_tax || 0
             };
-            waiterStore.preOrderList.push(order);
+            orderStore.addOrderItem(productOrder);
           }
         }
         product.quantity = 0;
         product.indications = [];
-      });
-    };
-
-    const addToList = () => {
-      waiterStore.preOrderList.forEach((product) => {
-        orderStore.addOrderItem(product);
       });
     };
 
@@ -448,13 +357,13 @@ export default defineComponent({
     return {
       loading,
       search,
-      activeDrawer,
+      //activeDrawer,
       showModal,
       productStore,
       waiterStore,
       orderItemIndex,
       filteredProducts,
-      addToPreList,
+      addToOrderStore,
       orderStore,
       performCreateTableOrder,
       performUpdateTableOrder,

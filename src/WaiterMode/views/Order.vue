@@ -1,5 +1,5 @@
 <template>
-    <n-tabs type="line" justify-content="space-around">
+    <n-tabs v-model:value="activeTab" type="line" justify-content="space-around">
         <template #prefix>
             <n-button
                     class="ms-2"
@@ -13,6 +13,9 @@
         </template>
         <n-tab-pane class="p-0" name="menu" tab="Carta">
             <router-view></router-view>
+        </n-tab-pane>
+        <n-tab-pane class="p-0" name="menus" tab="Menús">
+            <WMenus />
         </n-tab-pane>
         <n-tab-pane
                 id="OrderPane"
@@ -92,8 +95,9 @@
 </template>
 
 <script>
-import { defineComponent, ref, onUpdated, onMounted } from "vue";
+import { defineComponent, ref, onUpdated, onMounted, provide } from "vue";
 import ProductsDrawer from "../components/ProductsDrawer";
+import WMenus from "./Menus.vue";
 import { useMessage, useDialog } from "naive-ui";
 import {
     useRoute,
@@ -118,7 +122,8 @@ export default defineComponent({
     components: {
         ProductIndications,
         ProductsDrawer,
-        PreviewDrawer
+        PreviewDrawer,
+        WMenus
     },
     setup() {
         const settingsStore = useSettingsStore();
@@ -135,6 +140,14 @@ export default defineComponent({
         const showModal = ref(false);
         const itemIndex = ref(null);
         const orderDetails = ref([]);
+        const activeTab = ref("menu"); // Controlar pestaña activa
+        
+        // Provide function para que WMenus pueda cambiar la pestaña
+        const switchToOrderTab = () => {
+            activeTab.value = "order";
+        };
+        
+        provide('switchToOrderTab', switchToOrderTab);
 
         orderStore.orders = [];
         saleStore.order_initial = [];
@@ -247,6 +260,7 @@ export default defineComponent({
             itemIndex,
             orderDetails,
             showDrawer,
+            activeTab,
             printOrderPrebill,
             userStore,
             previewDrawer,
