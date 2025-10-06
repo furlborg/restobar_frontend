@@ -94,7 +94,7 @@
 <script>
 import OrderIndications from "./OrderIndications";
 import ProductSearchLabel from "@/views/Product/components/ProductSearchLabel.vue";
-import { defineComponent, ref, computed, h } from "vue";
+import { defineComponent, ref, computed, h, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useMessage, useDialog } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
@@ -244,39 +244,53 @@ export default defineComponent({
             }
         };
 
-        const showOptions = (value) => {
-            const priceRegex = /^\d+(\.\d{0,2})?$/;
+        const debounce = (fn, delay = 500) => {
+            let timeout
+            return (...args) => {
+                clearTimeout(timeout)
+                timeout = setTimeout(() => fn(...args), delay)
+            }
+        }
+
+        const fetchProducts = debounce((value) => {
+            const priceRegex = /^\d+(\.\d{0,2})?$/
+
+            // Si es un precio, buscar por precio
             if (priceRegex.test(value)) {
-                searching.value = true;
+                searching.value = true
                 searchProductPrice(value)
-                .then((response) => {
-                    if (response.status === 200) {
-                    products.value = response.data;
-                    }
+                .then(res => {
+                    if (res.status === 200) products.value = res.data
                 })
-                .catch((error) => {
-                    console.error(error);
-                    message.error("Algo salió mal...");
-                })
-                .finally(() => {
-                    searching.value = false;
-                });
-                return true;
+                .catch(() => message.error('Algo salió mal...'))
+                .finally(() => (searching.value = false))
+                return
             }
+
+            // Si es texto con al menos 3 caracteres, buscar por nombre
             if (value.length >= 3) {
-                searching.value = true;
-                searchProductByName(value).then((response) => {
-                    if (response.status === 200) products.value = response.data;
-                }).catch((error) => {
-                    console.error(error);
-                    message.error("Algo salió mal...");
-                }).finally(() => {
-                    searching.value = false;
-                });
-                return true;
+                searching.value = true
+                searchProductByName(value)
+                .then(res => {
+                    if (res.status === 200) products.value = res.data
+                })
+                .catch(() => message.error('Algo salió mal...'))
+                .finally(() => (searching.value = false))
+            } else {
+                products.value = []
             }
-            return false;
-        };
+            }, 500)
+
+        // --- get-show solo controla visibilidad del dropdown ---
+        const showOptions = (value) => {
+            if (!value) return false
+            // cuando hay algo escrito, deja mostrar las opciones
+            return value.length >= 3 || /^\d+(\.\d{0,2})?$/.test(value)
+        }
+
+        watch(productSearch, (value) => {
+            fetchProducts(value)
+        })
 
         const selectProduct = id => {
             const item = products.value.find(product => product.id === id);
