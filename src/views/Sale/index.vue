@@ -124,7 +124,7 @@
                 @update:sale="onCloseUpdate"
                 @on-success="updateSuccess"
         />
-        <sale-report-modal v-model:show="showReport"/>
+                <sale-report-modal v-model:show="showReport"/>
         <preview-drawer v-model:show="showPdf" :data="saleData"/>
         <modal-anulate-sale :data-modal="showConfirm"/>
     </div>
@@ -139,7 +139,9 @@ import {
     listSalesByPage,
     searchSales,
     retrieveSale,
-    sendSale, nullSale
+    sendSale, 
+    nullSale,
+    changeSaleStatus
 } from "@/api/modules/sales";
 import { useSaleStore } from "@/store/modules/sale";
 import { useGenericsStore } from "@/store/modules/generics";
@@ -319,6 +321,10 @@ export default defineComponent({
                 label: "ENVIADO"
             },
             {
+                value: "X",
+                label: "ERROR"
+            },
+            {
                 value: "A",
                 label: "ANULADO"
             }
@@ -393,6 +399,41 @@ export default defineComponent({
 
         const saleData = ref(null);
 
+        // Variables para cambio de estado (simplificado - solo ERROR → NUEVO)
+        const isChangingStatus = ref(false);
+
+        const changeStatus = (row) => {
+            // ÚNICA transición válida: ERROR → NUEVO
+            if(row.status !== 'X') {
+                message.warning("Solo se puede cambiar el estado de ventas en ERROR.");
+                return;
+            }
+            
+            // Cambiar automáticamente de ERROR a NUEVO
+            performStatusChange(row);
+        };
+
+        const performStatusChange = async(row) => {
+            isChangingStatus.value = true;
+            
+            try {
+                const response = await changeSaleStatus(row.id, 'N');
+                if(response.status === 200) {
+                    message.success('Estado cambiado de ERROR a NUEVO. La venta será reenviada automáticamente.');
+                    await pagination.value.onChange(pagination.value.page);
+                }
+            } catch(error) {
+                console.error(error);
+                if(error.response?.data?.error) {
+                    message.error(error.response.data.error);
+                } else {
+                    message.error("Error al cambiar el estado");
+                }
+            } finally {
+                isChangingStatus.value = false;
+            }
+        };
+
         return {
             showPdf,
             saleData,
@@ -424,6 +465,7 @@ export default defineComponent({
             genericsStore,
             settingsStore,
             performNullifySale,
+            isChangingStatus,
             tableColumns: createSaleColumns({
                 updateSale(row) {
                     showModal.value = true;
@@ -474,7 +516,8 @@ export default defineComponent({
                 nullifySale(row) {
                     // deleteId.value = row.id;
                     showConfirm.value = { show: true, saleId: row.id, permission: "cancel_sale", loadSales, performNullifySale };
-                }
+                },
+                changeStatus
             })
         };
     }

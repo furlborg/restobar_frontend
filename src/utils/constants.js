@@ -1356,6 +1356,7 @@ export const createSaleColumns = ({
   updateSale,
   sendSale,
   nullifySale,
+  changeStatus,
 }) => {
   return [
     {
@@ -1399,32 +1400,41 @@ export const createSaleColumns = ({
       key: "status",
       width: 30,
       render(row) {
-        let type, text;
+        let type, text, tooltip, isClickable;
         if (row.status === "N") {
           type = "info";
           text = "NUEVO";
+          tooltip = "Pendiente de envío a SUNAT";
+          isClickable = false;
         } else if (row.status === "E") {
           type = "success";
           text = "ENVIADO";
+          tooltip = "Documento enviado correctamente a SUNAT";
+          isClickable = false;
         } else if (row.status === "A") {
           type = "error";
           text = "ANULADO";
+          tooltip = row?.['null_reason'] || "Documento anulado";
+          isClickable = false;
         } else if (row.status === "X") {
           type = "warning";
           text = "¡ERROR!";
+          tooltip = "Click para marcar como NUEVO y reintentar envío";
+          isClickable = true;
         } else {
           type = "warning";
           text = "-";
+          tooltip = "";
+          isClickable = false;
         }
 
         return h(
           NPopover,
           {
             trigger: "hover",
-            disabled: !row?.['null_reason'],
           },
           {
-            default: () => row?.['null_reason'],
+            default: () => tooltip,
             trigger: () =>
               h(
                 NTag,
@@ -1432,6 +1442,12 @@ export const createSaleColumns = ({
                   size: "small",
                   type: type,
                   round: true,
+                  style: isClickable ? { cursor: 'pointer' } : {},
+                  onClick: () => {
+                    if (isClickable && changeStatus) {
+                      changeStatus(row);
+                    }
+                  }
                 },
                 {
                   default: () => text,
