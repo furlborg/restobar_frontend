@@ -283,7 +283,7 @@
 <script>
 import OrderIndications from "./OrderIndications";
 import ProductSearchLabel from "@/views/Product/components/ProductSearchLabel.vue";
-import { defineComponent, ref, computed, h, watchEffect, provide } from "vue";
+import { defineComponent, ref, computed, h, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useMessage, useDialog } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
@@ -294,7 +294,7 @@ import { useTableStore } from "@/store/modules/table";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { useSaleTotals } from "@/composables/useSaleTotals";
-import { searchProductByName } from "@/api/modules/products";
+import { searchProductByName, searchProductPrice } from "@/api/modules/products";
 
 export default defineComponent({
     name: "TableOrder",
@@ -358,7 +358,7 @@ export default defineComponent({
         const { formattedTotals } = useSaleTotals();
 
         const customerOptions = computed(() => props.customers.map(customer => ({ label: customer.name, value: customer.id })));
-        
+
         const localSelectedCustomerId = computed({
             get: () => props.selectedCustomerId,
             set: (value) => emit('update:selectedCustomerId', value)
@@ -480,27 +480,61 @@ export default defineComponent({
 
         const nullifyTableOrder = async () => {
             if (!orderStore.orderList.length && orderStore.orderId) {
-                console.log('Nullifying table order');
+                // console.log('Nullifying table order for:', order);
             }
         };
 
-        const showOptions = (value) => {
-            if (value.length < 3) return false;
-            
-            searching.value = true;
-            searchProductByName(value)
-                .then((response) => {
-                    if (response.status === 200) products.value = response.data;
-                })
-                .catch((error) => {
-                    console.error(error);
-                    message.error("Algo salió mal...");
-                })
-                .finally(() => searching.value = false);
-            return true;
-        };
+        const debounce = (fn, delay = 500) => {
+            let timeout
+            return (...args) => {
+                clearTimeout(timeout)
+                timeout = setTimeout(() => fn(...args), delay)
+            }
+        }
 
-        const renderLabel = (option) => h(ProductSearchLabel, { option });
+        const fetchProducts = debounce((value) => {
+            const priceRegex = /^\d+(\.\d{0,2})?$/
+
+            // Si es un precio, buscar por precio
+            if (priceRegex.test(value)) {
+                searching.value = true
+                searchProductPrice(value)
+                .then(res => {
+                    if (res.status === 200) products.value = res.data
+                })
+                .catch(() => message.error('Algo salió mal...'))
+                .finally(() => (searching.value = false))
+                return
+            }
+
+            // Si es texto con al menos 3 caracteres, buscar por nombre
+            if (value.length >= 3) {
+                searching.value = true
+                searchProductByName(value)
+                .then(res => {
+                    if (res.status === 200) products.value = res.data
+                })
+                .catch(() => message.error('Algo salió mal...'))
+                .finally(() => (searching.value = false))
+            } else {
+                products.value = []
+            }
+            }, 500)
+
+        // --- get-show solo controla visibilidad del dropdown ---
+        const showOptions = (value) => {
+            if (!value) return false
+            // cuando hay algo escrito, deja mostrar las opciones
+            return value.length >= 3 || /^\d+(\.\d{0,2})?$/.test(value)
+        }
+
+        watch(productSearch, (value) => {
+            fetchProducts(value)
+        })
+
+        const renderLabel = (option) => {
+            return h(ProductSearchLabel, { option });
+        };
 
         const navigateToPayment = () => {
             emit('goToFirstTab');
