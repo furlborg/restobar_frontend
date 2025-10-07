@@ -54,7 +54,10 @@ export const useTableStore = defineStore("table", {
     async refreshData() {
       return await getAreasTables()
         .then((response) => {
-          this.areas = response.data;
+          this.areas = response.data.filter(area => !area.is_disabled).map(area => {
+            area.tables = area.tables.filter(table => !table.is_disabled)
+            return area
+          });
         })
         .catch((error) => {
           console.error(error);

@@ -20,6 +20,10 @@ export async function updatePaymentMethod(idPayment, payment_method) {
     });
 }
 
+export async function deletePaymentMethod(idPayment) {
+    return await http.delete(`payment_methods/${idPayment}/`);
+}
+
 export async function createPaymentMethodDesc(description) {
     return await http.post("payment_methods/", {
         description: description

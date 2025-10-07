@@ -68,6 +68,13 @@
                     <n-form-item-gi v-if="userStore.hasPermission('add_area') || !!area.id" :span="4" >
                       <n-space>
                         <n-button
+                          type="error"
+                          :disabled="!currentArea"
+                          ghost
+                          @click="performDeleteArea"
+                          >Eliminar</n-button
+                        >
+                        <n-button
                           :type="!area.id ? 'info' : 'warning'"
                           :disabled="!area.description"
                           secondary
@@ -112,6 +119,15 @@
                     </n-form-item-gi>
                     <n-form-item-gi :span="4">
                       <n-space>
+                        <n-button
+                          type="error"
+                          :disabled="
+                            !(selectedTable.code && selectedTable.description)
+                          "
+                          ghost
+                          @click="performDeleteTable"
+                          >Eliminar</n-button
+                        >
                         <n-button
                           :type="selectedTable.id ? 'warning' : 'info'"
                           :disabled="
@@ -198,11 +214,11 @@
                         selectPlace(place)
                     "
                   >
-                    <!-- <template #suffix v-if="selectedPlace === place.id">
-                      <n-button type="error" text>
+                    <template #suffix v-if="selectedPlace === place.id && userStore.hasPermission('change_preparationplace')">
+                      <n-button type="error" text @click.stop="performDeletePreparationPlace">
                         <v-icon name="md-disabledbydefault-round" />
                       </n-button>
-                    </template> -->
+                    </template>
                     {{ place.description }}
                   </n-list-item>
                 </n-list>
@@ -297,11 +313,6 @@
                         selectCategory(category)
                     "
                   >
-                    <!-- <template #suffix v-if="selectedCategory === category.id">
-                      <n-button type="error" text>
-                        <v-icon name="md-disabledbydefault-round" />
-                      </n-button>
-                    </template> -->
                     {{ category.description }}
                   </n-list-item>
                 </n-list>
@@ -385,12 +396,12 @@
                         selectPaymentMethod(payment)
                     "
                   >
-                    <!-- <template #suffix v-if="selectedCategory === category.id">
-                      <n-button type="error" text>
+                    <n-space justify="space-between">
+                      {{ payment.description }}
+                      <n-button v-if="userStore.hasPermission('change_paymentmethodtype') && selectedPayment === payment.id" type="error" text @click.stop="performDeletePaymentMethod">
                         <v-icon name="md-disabledbydefault-round" />
                       </n-button>
-                    </template> -->
-                    {{ payment.description }}
+                    </n-space>
                   </n-list-item>
                 </n-list>
               </n-gi>
@@ -456,9 +467,9 @@
             <n-grid responsive="screen" cols="3 xs:3 s:12" :x-gap="12">
               <n-gi :span="3">
                 <n-list class="bg-white m-0" bordered>
-                  <template #header
-                    ><n-text class="fs-5">Lista de Conceptos</n-text></template
-                  >
+                  <template #header>
+                    <n-text class="fs-5">Lista de Conceptos</n-text>
+                  </template>
                   <n-list-item
                     v-for="single_concept in concepts"
                     :class="{
@@ -470,14 +481,9 @@
                         selectConcept(single_concept)
                     "
                   >
-                    <!-- <template #suffix v-if="selectedCategory === category.id">
-                      <n-button type="error" text>
-                        <v-icon name="md-disabledbydefault-round" />
-                      </n-button>
-                    </template> -->
                     <n-space justify="space-between">
                       {{ single_concept.description }}
-                      <n-tag
+                      <n-tag v-if="single_concept.id !== selectedConcept"
                         :type="
                           single_concept.concept_type === '0'
                             ? 'success'
@@ -491,6 +497,9 @@
                             : "Egreso"
                         }}</n-tag
                       >
+                      <n-button v-else type="error" text @click.stop="performDeleteConcept">
+                        <v-icon name="md-disabledbydefault-round" />
+                      </n-button>
                     </n-space>
                   </n-list-item>
                 </n-list>
@@ -570,42 +579,40 @@
             <n-grid responsive="screen" cols="3 xs:3 s:12" :x-gap="12">
               <n-gi :span="3">
                 <n-list class="bg-white m-0" bordered>
-                  <template #header
-                    ><n-text class="fs-5">Lista de Conceptos</n-text></template
-                  >
+                  <template #header>
+                    <n-text class="fs-5">Lista de Conceptos</n-text>
+                  </template>
                   <n-list-item
-                    v-for="inventory_concept in inventory_concepts"
+                    v-for="concept in inventory_concepts"
                     :class="{
                       'bg-selected':
-                        selectedInventoryConcept === inventory_concept.id,
+                        selectedInventoryConcept === concept.id,
                     }"
-                    :key="inventory_concept.id"
+                    :key="concept.id"
                     @click="
                       userStore.hasPermission('change_inventoryconcept') &&
-                        selectInventoryConcept(inventory_concept)
+                        selectInventoryConcept(concept)
                     "
                   >
-                    <!-- <template #suffix v-if="selectedCategory === category.id">
-                      <n-button type="error" text>
-                        <v-icon name="md-disabledbydefault-round" />
-                      </n-button>
-                    </template> -->
                     <n-space justify="space-between">
-                      {{ inventory_concept.concept }}
-                      <n-tag
+                      {{ concept.concept }}
+                      <n-tag v-if="concept.id !== selectedInventoryConcept"
                         :type="
-                          inventory_concept.concept_type === '0'
+                          concept.concept_type === '0'
                             ? 'success'
                             : 'error'
                         "
                         size="small"
                         round
                         >{{
-                          inventory_concept.concept_type === "0"
+                          concept.concept_type === "0"
                             ? "Ingreso"
                             : "Egreso"
                         }}</n-tag
                       >
+                      <n-button v-else type="error" text @click.stop="performDeleteInventoryConcept">
+                        <v-icon name="md-disabledbydefault-round" />
+                      </n-button>
                     </n-space>
                   </n-list-item>
                 </n-list>
@@ -685,11 +692,14 @@
                               <template #header>
                                   <n-text class="fs-5">Lista de Guarniciones</n-text>
                               </template>
-                              <n-list-item v-for="guarnition in guarnitionOptions"
+                              <n-list-item v-for="(guarnition, index) in guarnitionOptions"
                                            :class="{'bg-selected': selectedGuarnition === guarnition.id }"
                                       :key="guarnition.id" @click="selectGuarnition(guarnition)">
                                   <n-space justify="space-between">
                                       {{ guarnition.name }}
+                                      <n-button v-if="guarnition.id === selectedGuarnition" type="error" text @click.stop="performDeleteGuarnition">
+                                        <v-icon name="md-disabledbydefault-round" />
+                                      </n-button>
                                   </n-space>
                               </n-list-item>
                           </n-list>
@@ -715,9 +725,6 @@
                                           preparation_place_id: null};">
                                           Cancelar
                                       </n-button>
-                                      <n-button v-if="selectedGuarnition" type="error" tertiary @click="performDeleteGuarnition()">
-                                        Eliminar
-                                      </n-button>
                                     </n-space>
                                   </n-form-item-gi>
                               </n-grid>
@@ -734,7 +741,7 @@
 <script>
 import { defineComponent, computed, ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { useMessage } from "naive-ui";
+import { useMessage, useDialog } from "naive-ui";
 import { cloneDeep } from "@/utils";
 import { useTableStore } from "@/store/modules/table";
 import { useUserStore } from "@/store/modules/user";
@@ -743,11 +750,14 @@ import { useProductStore } from "@/store/modules/product";
 import {
   createArea,
   updateArea,
+  disableArea,
   createTable,
   updateTable,
+  disableTable,
 } from "@/api/modules/tables";
 import {
   getPaymentMethods,
+  deletePaymentMethod,
   createPaymentMethodDesc,
   updatePaymentMethodDesc,
 } from "@/api/modules/sales";
@@ -755,23 +765,26 @@ import {
     getProductPlaces,
     createProductPlace,
     updateProductPlace,
+    disableProductPlace,
     getProductCategories,
     createProductCategory,
     updateProductCategory,
     getInventoryConcepts,
     createInventoryConcept,
     updateInventoryConcept,
-    updateGuarnition, 
-    createGuarnition, 
-    getProductFittings,
-    deleteGuarnition
+    deleteInventoryConcept,
+    createGuarnition,
+    updateGuarnition,
+    deleteGuarnition,
+    getProductFittings
 } from "@/api/modules/products";
-import { getConcepts, createConcept, updateConcept } from "@/api/modules/tills";
+import { getConcepts, createConcept, updateConcept, deleteConcept } from "@/api/modules/tills";
 
 export default defineComponent({
   name: "GeneralSettings",
   setup() {
     const message = useMessage();
+    const dialog = useDialog();
     const router = useRouter();
     const tableStore = useTableStore();
       // const settingsStore = useSettingsStore();
@@ -893,8 +906,34 @@ export default defineComponent({
           message.error("Algo salió mal...");
         })
         .finally(() => {
+          currentArea.value = null;
           isLoadingData.value = false;
         });
+    };
+
+    const performDeleteTable = () => {
+      if (!selectedTable.value.id) return;
+      dialog.error({
+        title: "Eliminando mesa",
+        content: "¿Está seguro?",
+        positiveText: "Sí",
+        onPositiveClick: async () => {
+          try {
+            isLoadingData.value = true;
+            const response = await disableTable(selectedTable.value.id);
+            if (response.status === 202) {
+              tableStore.refreshData().then(() => {
+                cleanTable();
+              });
+            }
+          } catch (error) {
+            console.error(error);
+            message.error("Algo salió mal...");
+          } finally {
+            isLoadingData.value = false;
+          }
+        }
+      });
     };
 
     const performCreateArea = async (e) => {
@@ -947,6 +986,37 @@ export default defineComponent({
         .finally(() => {
           isLoadingData.value = false;
         });
+    };
+
+    const performDeleteArea = () => {
+      if (!currentArea.value) return;
+      dialog.error({
+        title: "Eliminando área",
+        content: "¿Está seguro?",
+        positiveText: "Sí",
+        onPositiveClick: async () => {
+          try {
+            isLoadingData.value = true;
+            const response = await disableArea(currentArea.value);
+            if (response.status === 202) {
+              tableStore
+                .refreshData()
+                .then(() => {
+                  cleanArea();
+                })
+                .catch((error) => {
+                  console.error(error);
+                  message.error("Algo salió mal...");
+                });
+            }
+          } catch (error) {
+            console.error(error);
+            message.error("Algo salió mal...");
+          } finally {
+            isLoadingData.value = false;
+          }
+        }
+      });
     };
 
     const editArea = () => {
@@ -1004,7 +1074,7 @@ export default defineComponent({
       await getProductPlaces()
         .then((response) => {
           if (response.status === 200) {
-            preparationPlaces.value = response.data;
+            preparationPlaces.value = response.data.filter(place => !place.is_disabled);
             productStore.initializeStore();
           }
         })
@@ -1059,6 +1129,31 @@ export default defineComponent({
           printerName.value = null;
           printerFormat.value = null;
         });
+    };
+
+    const performDeletePreparationPlace = async () => {
+      if (!selectedPlace.value) return;
+      dialog.error({
+        title: "Eliminando lugar de preparación",
+        content: "¿Está seguro?",
+        positiveText: "Sí",
+        onPositiveClick: async () => {
+          try {
+            const response = await disableProductPlace(selectedPlace.value);
+            if (response.status === 202) {
+              loadPreparationPlaces();
+            }
+          } catch (error) {
+            console.error(error);
+            message.error("Algo salió mal...");
+          } finally {
+            selectedPlace.value = null;
+            preparationPlace.value = null;
+            printerName.value = null;
+            printerFormat.value = null;
+          }
+        }
+      });
     };
 
     const selectCategory = (category) => {
@@ -1189,6 +1284,31 @@ export default defineComponent({
         });
     };
 
+    const performDeletePaymentMethod = () => {
+      if (!selectedPayment.value) return;
+      dialog.error({
+        title: "Eliminando método de pago",
+        content: "¿Está seguro?",
+        positiveText: "Sí",
+        onPositiveClick: async () => {
+          await deletePaymentMethod(selectedPayment.value)
+            .then((response) => {
+              if (response.status === 202) {
+                loadPaymentMethods();
+              }
+            })
+            .catch((error) => {
+              console.error(error);
+              message.error("Algo salió mal...");
+            })
+            .finally(() => {
+              paymentMethod.value = null;
+              selectedPayment.value = null;
+            });
+        }
+      })
+    };
+
     const concepts = ref([]);
     const concept = ref({
       description: "",
@@ -1271,6 +1391,31 @@ export default defineComponent({
         });
     };
 
+    const performDeleteConcept = () => {
+      if (!selectedConcept.value) return;
+      dialog.error({
+          title: "Eliminando concepto",
+          content: "¿Está seguro?",
+          positiveText: "Sí",
+          onPositiveClick: async () => {
+            await deleteConcept(selectedConcept.value)
+              .then((response) => {
+                if (response.status === 202) {
+                    loadConcepts();
+                }
+              })
+              .catch((error) => {
+                console.error(error);
+                message.error("Algo salió mal...");
+              })
+              .finally(() => {
+                concept.value = { description: "", concept_type: null };
+                selectedConcept.value = null;
+              });
+          }
+      })
+    };
+
     const inventory_concepts = ref([]);
     const inventory_concept = ref({
       description: "",
@@ -1299,7 +1444,7 @@ export default defineComponent({
           inventory_concept.value.description = null;
           inventory_concept.value.concept_type = null;
         } else {
-          selectedConcept.value = single_concept.id;
+          selectedInventoryConcept.value = single_concept.id;
           inventory_concept.value.description = cloneDeep(
             single_concept.concept
           );
@@ -1310,24 +1455,23 @@ export default defineComponent({
       }
     };
 
-      const selectGuarnition = (boobs) => {
-          console.log(boobs);
+      const selectGuarnition = (guarnition) => {
           if(!selectedGuarnition.value) {
-              selectedGuarnition.value = boobs.id;
-              guarnition.value.name = cloneDeep(boobs.name);
-              guarnition.value.preparation_place_id = cloneDeep(boobs.preparation_place_id);
-              guarnition.value.preparation_place = cloneDeep(boobs.preparation_place);
+              selectedGuarnition.value = guarnition.id;
+              guarnition.value.name = cloneDeep(guarnition.name);
+              guarnition.value.preparation_place_id = cloneDeep(guarnition.preparation_place_id);
+              guarnition.value.preparation_place = cloneDeep(guarnition.preparation_place);
           } else {
-              if(selectedGuarnition.value === boobs.id) {
+              if(selectedGuarnition.value === guarnition.id) {
                   selectedGuarnition.value = null;
                   guarnition.value.name = null;
                   guarnition.value.preparation_place_id = null;
                   guarnition.value.preparation_place = null;
               } else {
-                  selectedGuarnition.value = boobs.id;
-                  guarnition.value.name = cloneDeep(boobs.name);
-                  guarnition.value.preparation_place = cloneDeep(boobs.preparation_place);
-                  guarnition.value.preparation_place_id = cloneDeep(boobs.preparation_place_id);
+                  selectedGuarnition.value = guarnition.id;
+                  guarnition.value.name = cloneDeep(guarnition.name);
+                  guarnition.value.preparation_place = cloneDeep(guarnition.preparation_place);
+                  guarnition.value.preparation_place_id = cloneDeep(guarnition.preparation_place_id);
               }
           }
       };
@@ -1395,6 +1539,31 @@ export default defineComponent({
         });
     };
 
+    const performDeleteInventoryConcept = () => {
+      if (!selectedInventoryConcept.value) return;
+      dialog.error({
+          title: "Eliminando concepto de inventario",
+          content: "¿Está seguro?",
+          positiveText: "Sí",
+          onPositiveClick: async () => {
+            await deleteInventoryConcept(selectedInventoryConcept.value)
+              .then((response) => {
+                if (response.status === 202) {
+                    loadInventoryConcepts();
+                }
+              })
+              .catch((error) => {
+                console.error(error);
+                message.error("Algo salió mal...");
+              })
+              .finally(() => {
+                inventory_concept.value = { description: "", concept_type: null };
+                selectedInventoryConcept.value = null;
+              });
+          }
+      })
+    };
+
     const performCreateGuarnition = async () => {
       await createGuarnition(guarnition.value)
         .then((response) => {
@@ -1409,25 +1578,6 @@ export default defineComponent({
         .finally(() => {
           guarnition.value.name = "";
           guarnition.value.preparation_place_id = null;
-        });
-    };
-
-    const performDeleteGuarnition = async () => {
-      if (!selectedGuarnition.value) return;
-      await deleteGuarnition(selectedGuarnition.value)
-        .then((response) => {
-          if (response.status === 204) {
-              loadGuarnition();
-          }
-        })
-        .catch((error) => {
-          console.error(error);
-          message.error("Algo salió mal...");
-        })
-        .finally(() => {
-          guarnition.value.name = "";
-          guarnition.value.preparation_place_id = null;
-          selectedGuarnition.value = false;
         });
     };
 
@@ -1450,6 +1600,32 @@ export default defineComponent({
           guarnition.value.preparation_place_id = null;
           selectedGuarnition.value = false;
         });
+    };
+
+    const performDeleteGuarnition = () => {
+      if (!selectedGuarnition.value) return;
+      dialog.error({
+          title: "Eliminando guarnición",
+          content: "¿Está seguro?",
+          positiveText: "Sí",
+          onPositiveClick: async () => {
+            await deleteGuarnition(selectedGuarnition.value)
+              .then((response) => {
+                if (response.status === 204) {
+                    loadGuarnition();
+                }
+              })
+              .catch((error) => {
+                console.error(error);
+                message.error("Algo salió mal...");
+              })
+              .finally(() => {
+                guarnition.value.name = "";
+                guarnition.value.preparation_place_id = null;
+                selectedGuarnition.value = false;
+              });
+          }
+      })
     };
 
     onMounted(() => {
@@ -1476,12 +1652,14 @@ export default defineComponent({
       editArea,
       performCreateArea,
       performUpdateArea,
+      performDeleteArea,
       selectTable,
       cleanTable,
       selectedTable,
       tables,
       performCreateTable,
       performUpdateTable,
+      performDeleteTable,
       preparationPlaces,
       preparationPlace,
       printerStore,
@@ -1494,6 +1672,7 @@ export default defineComponent({
       selectPlace,
       performCreatePreparationPlace,
       performUpdatePreparationPlace,
+      performDeletePreparationPlace,
       productCategories,
       guarnition,
       productCategory,
@@ -1508,6 +1687,7 @@ export default defineComponent({
       selectPaymentMethod,
       performCreatePaymentMethod,
       performUpdatePaymentMethod,
+      performDeletePaymentMethod,
       conceptTypeOptions,
       concepts,
       concept,
@@ -1516,6 +1696,7 @@ export default defineComponent({
       selectConcept,
       performCreateConcept,
       performUpdateConcept,
+      performDeleteConcept,
       inventory_concepts,
       inventory_concept,
       selectedGuarnition,
@@ -1524,6 +1705,7 @@ export default defineComponent({
       selectGuarnition,
       performCreateInventoryConcept,
       performUpdateInventoryConcept,
+      performDeleteInventoryConcept,
       performCreateGuarnition,
       performUpdateGuarnition,
       performDeleteGuarnition

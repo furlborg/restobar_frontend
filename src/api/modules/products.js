@@ -196,6 +196,10 @@ export async function updateInventoryConcept(idConcept, concept) {
   });
 }
 
+export async function deleteInventoryConcept(id) {
+  return await http.delete(`inventoryconcept/${id}/`);
+}
+
 export async function createGuarnition(concept) {
   return await http.post("product-fitting/", {
     ...concept,
@@ -208,6 +212,10 @@ export async function updateGuarnition(idConcept, concept) {
     ...concept,
     preparation_place: concept.preparation_place_id
   });
+}
+
+export async function deleteGuarnition(id) {
+  return await http.delete(`product-fitting/${id}/`);
 }
 
 export async function disableInventoryConcepts(id) {
@@ -259,10 +267,6 @@ export async function getProductAffectations() {
 
 export async function getProductFittings() {
   return await http.get("product-fitting/");
-}
-
-export async function deleteGuarnition(id) {
-  return await http.delete(`product-fitting/${id}/`);
 }
 
 export async function downloadProductsSoldReport({

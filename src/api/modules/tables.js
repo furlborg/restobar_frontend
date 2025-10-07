@@ -28,6 +28,10 @@ export async function updateArea(idArea, area) {
     });
 }
 
+export async function disableArea(id) {
+    return await http.delete(`areas/${ id }/`);
+}
+
 export async function getTables() {
     return await http.get("tables/");
 }
