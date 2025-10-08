@@ -1401,11 +1401,18 @@ export const createSaleColumns = ({
       width: 30,
       render(row) {
         let type, text, tooltip, isClickable;
+        
+        // Determinar si el documento puede cambiar de estado
+        // Solo documentos electrónicos (invoice_type != '80') pueden ser clickeables
+        const isElectronicDocument = row.invoice_type !== "80";
+        
         if (row.status === "N") {
           type = "info";
           text = "NUEVO";
-          tooltip = "Pendiente de envío a SUNAT";
-          isClickable = false;
+          tooltip = isElectronicDocument 
+            ? "Click para enviar a SUNAT" 
+            : "Documento sin envío electrónico";
+          isClickable = isElectronicDocument;
         } else if (row.status === "E") {
           type = "success";
           text = "ENVIADO";
@@ -1419,8 +1426,10 @@ export const createSaleColumns = ({
         } else if (row.status === "X") {
           type = "warning";
           text = "¡ERROR!";
-          tooltip = "Click para marcar como NUEVO y reintentar envío";
-          isClickable = true;
+          tooltip = isElectronicDocument
+            ? "Click para marcar como NUEVO y reintentar envío"
+            : "Documento sin envío electrónico";
+          isClickable = isElectronicDocument;
         } else {
           type = "warning";
           text = "-";

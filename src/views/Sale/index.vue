@@ -399,38 +399,70 @@ export default defineComponent({
 
         const saleData = ref(null);
 
-        // Variables para cambio de estado (simplificado - solo ERROR → NUEVO)
+        // Variables para cambio de estado
         const isChangingStatus = ref(false);
 
         const changeStatus = (row) => {
-            // ÚNICA transición válida: ERROR → NUEVO
-            if(row.status !== 'X') {
-                message.warning("Solo se puede cambiar el estado de ventas en ERROR.");
+            // Transición 1: ERROR → NUEVO (cambio de estado simple)
+            if(row.status === 'X') {
+                performStatusChange(row, 'N', 'ERROR', 'NUEVO');
+            }
+            // Transición 2: NUEVO → ENVIADO (intenta enviar)
+            else if(row.status === 'N') {
+                performStatusChange(row, 'E', 'NUEVO', 'ENVIADO', true); // true = maneja error
+            }
+            else {
+                message.warning("No se puede cambiar el estado de esta venta.");
+            }
+        };
+
+        const performStatusChange = async(row, newStatus, fromLabel, toLabel, handleError = false) => {
+            if(isChangingStatus.value) {
+                message.warning("Hay un cambio de estado en progreso...");
                 return;
             }
             
-            // Cambiar automáticamente de ERROR a NUEVO
-            performStatusChange(row);
-        };
-
-        const performStatusChange = async(row) => {
             isChangingStatus.value = true;
+            isTableLoading.value = true;
             
             try {
-                const response = await changeSaleStatus(row.id, 'N');
+                const response = await changeSaleStatus(row.id, newStatus);
                 if(response.status === 200) {
-                    message.success('Estado cambiado de ERROR a NUEVO. La venta será reenviada automáticamente.');
+                    message.success(response.data.message || `Estado cambiado de ${fromLabel} a ${toLabel}`);
                     await pagination.value.onChange(pagination.value.page);
                 }
             } catch(error) {
                 console.error(error);
-                if(error.response?.data?.error) {
-                    message.error(error.response.data.error);
-                } else {
-                    message.error("Error al cambiar el estado");
+                
+                // Extraer SOLO el mensaje de error principal, ignorando otros campos
+                let errorMessage = "Error al cambiar el estado";
+                
+                if(error.response?.data) {
+                    // Si hay un campo 'error' específico, usarlo
+                    if(typeof error.response.data.error === 'string') {
+                        errorMessage = error.response.data.error;
+                    }
+                    // Si no hay campo 'error', pero hay status 400, mensaje genérico
+                    else if(error.response.status === 400) {
+                        errorMessage = "Error al enviar la venta. El documento ha sido marcado como ERROR.";
+                    }
+                } else if(error.response?.status === 500) {
+                    errorMessage = "Error interno del servidor. Intente nuevamente.";
+                } else if(error.message) {
+                    errorMessage = error.message;
                 }
+                
+                // Mostrar SOLO un mensaje
+                message.error(errorMessage, {
+                    duration: 5000,
+                    closable: true
+                });
+                
+                // Refrescar tabla para mostrar el estado actualizado
+                await pagination.value.onChange(pagination.value.page);
             } finally {
                 isChangingStatus.value = false;
+                isTableLoading.value = false;
             }
         };
 
