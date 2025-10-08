@@ -184,8 +184,12 @@ export default defineComponent({
         const hasUnsavedChanges = computed(() => {
             const ordersChanged = JSON.stringify(saleStore.order_initial) !== JSON.stringify(orderStore.orderList);
             const userChanged = orderUser_initial.value !== orderUser.value;
-            const orderHasItems = orderStore.orderList.length > 0;
-            return orderHasItems && (ordersChanged || userChanged);
+            // Si no hay pedido aún y solo cambió el usuario → no lo consideres un cambio importante
+            if (!orderStore.orderId && userChanged && !ordersChanged) {
+                checkState.value = true;
+                return;
+            }
+            checkState.value = !ordersChanged && !userChanged;
         });
 
         const goToFirstTab = () => activeTab.value = 'main';
@@ -280,9 +284,28 @@ export default defineComponent({
             } catch (error) {
                 if (error.response?.status === 404) {
                     resetStores();
-                    const initialUser = activeUsersStore.usersOptions[0]?.value;
-                    orderUser_initial.value = initialUser;
-                    orderUser.value = userStore.user.role === 'MOZO' ? userStore.user.id : initialUser;
+                    // const initialUser = activeUsersStore.usersOptions[0]?.value;
+                    // orderUser_initial.value = initialUser;
+                    // orderUser.value = userStore.user.role === 'MOZO' ? userStore.user.id : initialUser;
+
+                    // Aseguramos que la lista de usuarios activos esté cargada
+                    if (!activeUsersStore.users.length) {
+                        await activeUsersStore.initializeStore();
+                    }
+
+                    const currentUserId = userStore.user?.id ?? null;
+                    const users = activeUsersStore.usersOptions;
+
+                    const firstUser = users[0]?.value ?? null;
+                    const userInList = activeUsersStore.users.some(u => u.id === currentUserId);
+
+                    // 👇 Si el usuario logueado está en la lista, lo usamos.
+                    // Si no, usamos el primer usuario disponible.
+                    const defaultUserId = userInList ? currentUserId : firstUser;
+
+                    orderUser_initial.value = defaultUserId;
+                    orderUser.value = defaultUserId;
+
                 } else {
                     console.error(error);
                     message.error("Algo salió mal...");

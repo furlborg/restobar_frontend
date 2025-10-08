@@ -202,6 +202,12 @@ export async function sendSale(id) {
     return await http.get(`sales/${id}/send_sale/`);
 }
 
+export async function changeSaleStatus(id, status) {
+    return await http.post(`sales/${id}/change-status/`, {
+        status: status
+    });
+}
+
 export async function nullSale(id, anulate) {
     return await http.post(`sales/${id}/secure_delete/`, {
         ...anulate
