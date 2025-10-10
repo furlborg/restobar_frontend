@@ -24,18 +24,20 @@ export function buildSalePayload(orders = [], options = {}) {
   const sale_product_sets = [];
 
   orders.forEach(order => {
-    if (order.from_menu) {
-      // Menu set
+    if (order.from_menu || order.from_combo) {
+      // Menu set or Combo
       const productSet = {
-        name: order.name || 'Menu',
+        name: order.name || (order.from_combo ? 'Combo' : 'Menu'),
         price: Number(order.price || 0),
         quantity: Number(order.quantity || 1),
         items: (order.items || []).map(item => ({
           product_id: item.product_id,
           product_phase_id: item.product_phase_id,
+          combo_product_id: item.combo_product_id,
           product_name: item.product_name,
           phase_name: item.phase_name,
-          quantity: Number(item.quantity || 1)
+          quantity: Number(item.quantity || 1),
+          kardex_map: item.kardex_map
         }))
       };
       
@@ -43,6 +45,10 @@ export function buildSalePayload(orders = [], options = {}) {
       if (order.id) productSet.id = order.id;
       if (order.product_set_id) productSet.product_set_id = order.product_set_id;
       if (order.menu_id) productSet.menu_id = order.menu_id;
+      if (order.combo_id) productSet.combo_id = order.combo_id;
+      if (order.set_type) productSet.set_type = order.set_type;
+      if (order.pricing_mode) productSet.pricing_mode = order.pricing_mode;
+      if (order.fixed_price) productSet.fixed_price = order.fixed_price;
       
       sale_product_sets.push(productSet);
     } else {
@@ -98,6 +104,7 @@ export function buildTableOrderPayload(orders = [], context = {}) {
 
   orders.forEach(order => {
     if (order.from_menu) {
+      // Existing menu logic
       const productSet = {
         name: 'MENU', // Fixed name for compatibility
         menu_name: order.name,
@@ -117,7 +124,30 @@ export function buildTableOrderPayload(orders = [], context = {}) {
       if (order.menu_id) productSet.menu_id = order.menu_id;
 
       product_sets.push(productSet);
+    } else if (order.from_combo) {
+      // Handle COMBO orders - ACTUALIZADO para usar combo_id y combo_product_id
+      const comboSet = {
+        combo_id: order.combo_id, // Referencia al Combo (plantilla)
+        name: order.name,
+        set_type: 'COMBO',
+        price: Number(order.price || 0),
+        quantity: Number(order.quantity || 1),
+        // Include items array con combo_product_id
+        items: (order.items || []).map(item => ({
+          combo_product_id: item.combo_product_id, // FK a ComboProduct
+          product_id: item.product_id,
+          quantity: Number(item.quantity || 1),
+          kardex_map: item.kardex_map || null,
+          indication: item.indication || ""
+        }))
+      };
+      
+      // Para updates
+      if (order.product_set_id) comboSet.id = order.product_set_id;
+      
+      product_sets.push(comboSet);
     } else {
+      // Regular product
       const detail = {
         product: order.product,
         indication: order.indication || [],

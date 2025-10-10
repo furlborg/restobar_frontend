@@ -8,14 +8,86 @@
       </template>
     </n-page-header>
     <div class="m-2">
-      <n-input placeholder="Buscar" v-model:value="search" />
+      <n-input placeholder="Buscar producto o combo..." v-model:value="search">
+        <template #prefix>
+          <v-icon name="md-search-round" />
+        </template>
+      </n-input>
     </div>
 
-    <n-list class="m-0 px-2">
-      <n-list-item
-        v-for="(product) in filteredProducts"
-        :key="product.id"
-      >
+    <!-- Sección de Combos (si existen en esta categoría) -->
+    <div v-if="filteredCombos.length > 0" class="px-2 mb-3">
+      <n-divider title-placement="left">
+        <n-space align="center">
+          <v-icon name="md-localoffertwotone" style="color: #f0a020;" />
+          <n-text strong>Combos Disponibles</n-text>
+        </n-space>
+      </n-divider>
+      <n-list class="m-0">
+        <n-list-item v-for="combo in filteredCombos" :key="`combo-${combo.id}`">
+          <n-space vertical style="width: 100%;">
+            <n-space
+              justify="space-between"
+              @click="combo.quantity ? null : (combo.quantity = 1)"
+              style="cursor: pointer;"
+            >
+              <n-space vertical size="small">
+                <n-space align="center" size="small">
+                  <n-tag size="small" type="warning">COMBO</n-tag>
+                  <n-text strong>{{ combo.name }}</n-text>
+                </n-space>
+                <n-text depth="3" style="font-size: 12px;">
+                  {{ combo.items_count }} productos • 
+                  {{ combo.pricing_mode === 'FIXED' ? 'Precio Fijo' : 'Precio Variable' }}
+                </n-text>
+              </n-space>
+              <n-text class="fs-5" type="warning" strong>
+                S/. {{ parseFloat(combo.computed_price || combo.fixed_price || 0).toFixed(2) }}
+              </n-text>
+            </n-space>
+            
+            <n-collapse-transition :show="combo.quantity > 0">
+              <n-space justify="space-between" align="center">
+                <n-input-group>
+                  <n-button type="warning" size="small" @click="combo.quantity--">
+                    <v-icon name="md-remove-round" />
+                  </n-button>
+                  <n-input
+                    :value="combo.quantity.toString()"
+                    style="width: 50px"
+                    size="small"
+                    readonly
+                  />
+                  <n-button type="warning" size="small" @click="combo.quantity++">
+                    <v-icon name="md-add-round" />
+                  </n-button>
+                </n-input-group>
+                <n-button
+                  v-if="combo.extras && combo.extras.length > 0"
+                  type="info"
+                  size="small"
+                  @click.stop="openComboExtrasModal(combo)"
+                >
+                  <v-icon name="md-tuneround" class="me-1" />
+                  Adicionales
+                </n-button>
+              </n-space>
+            </n-collapse-transition>
+          </n-space>
+        </n-list-item>
+      </n-list>
+    </div>
+
+    <!-- Sección de Productos -->
+    <div v-if="filteredProducts.length > 0" class="px-2">
+      <n-divider v-if="filteredCombos.length > 0" title-placement="left">
+        <n-text strong>Productos</n-text>
+      </n-divider>
+      <n-list class="m-0">
+        <n-list-item
+          v-for="(product) in filteredProducts"
+          :key="product.id"
+        >
         <n-space vertical>
           <n-space
             justify="space-between"
@@ -69,7 +141,16 @@
           </n-collapse-transition>
         </n-space>
       </n-list-item>
-    </n-list>
+      </n-list>
+    </div>
+    
+    <!-- Modal para adicionales de combos -->
+    <ComboExtrasModal
+      v-model:show="showComboExtrasModal"
+      :combo="selectedCombo"
+      @success="handleComboExtrasSelected"
+    />
+    
     <ProductIndications
       v-model:show="showModal"
       preset="card"
@@ -85,7 +166,7 @@
       >
         <transition name="slide-fade">
           <n-button
-            v-if="filteredProducts.some((product) => product.quantity > 0)"
+            v-if="filteredProducts.some((product) => product.quantity > 0) || filteredCombos.some((combo) => combo.quantity > 0)"
             type="success"
             round
             @click="addToOrderStore"
@@ -161,12 +242,13 @@ import { useMessage } from "naive-ui";
 import ProductIndications from "./ProductIndications";
 import TicketPreview from "@/views/Order/components/TicketPreview";
 import FloatingOrderButton from "@/WaiterMode/components/FloatingOrderButton.vue";
+import ComboExtrasModal from "@/WaiterMode/components/ComboExtrasModal.vue";
 import { useProductStore } from "@/store/modules/product";
 import { useTableStore } from "@/store/modules/table";
 import { useOrderStore } from "@/store/modules/order";
 import { useWaiterStore } from "@/store/modules/waiter";
 import { useSaleStore } from "@/store/modules/sale";
-import { getProductsByCategory } from "@/api/modules/products";
+import { getProductsByCategory, getCombos } from "@/api/modules/products";
 import { createTableOrder, updateTableOrder } from "@/api/modules/tables";
 
 import { cloneDeep } from "@/utils";
@@ -177,6 +259,7 @@ export default defineComponent({
     ProductIndications,
     TicketPreview,
     FloatingOrderButton,
+    ComboExtrasModal,
   },
   setup() {
     const message = useMessage();
@@ -192,10 +275,19 @@ export default defineComponent({
     const orderItemIndex = ref(null);
     const search = ref("");
     const products = ref([]);
+    const combos = ref([]);
+    const showComboExtrasModal = ref(false);
+    const selectedCombo = ref(null);
 
     const filteredProducts = computed(() => {
       return products.value.filter((product) =>
         product.name.toLowerCase().includes(search.value.toLowerCase())
+      );
+    });
+
+    const filteredCombos = computed(() => {
+      return combos.value.filter((combo) =>
+        combo.name.toLowerCase().includes(search.value.toLowerCase())
       );
     });
 
@@ -300,10 +392,45 @@ export default defineComponent({
         });
     };
 
+    const loadCombos = async () => {
+      try {
+        const categoryId = route.params.category;
+        const response = await getCombos({
+          is_active: true,
+          category_id: categoryId,
+        });
+        if (response.status === 200) {
+          combos.value = response.data.results.map((combo) => ({
+            ...combo,
+            quantity: 0,
+            selected_extras: [],
+            indication: "",
+          }));
+        }
+      } catch (error) {
+        console.error("Error loading combos:", error);
+        // No mostramos error porque es opcional
+      }
+    };
+
+    const openComboExtrasModal = (combo) => {
+      selectedCombo.value = combo;
+      showComboExtrasModal.value = true;
+    };
+
+    const handleComboExtrasSelected = ({ selected_extras, indication }) => {
+      if (selectedCombo.value) {
+        selectedCombo.value.selected_extras = selected_extras;
+        selectedCombo.value.indication = indication;
+      }
+      showComboExtrasModal.value = false;
+    };
+
     const dateNow = ref(null);
 
     onMounted(async () => {
       loadProducts();
+      loadCombos();
 
       const fetch = new Date();
       const dd = fetch.getDate();
@@ -315,6 +442,7 @@ export default defineComponent({
     });
 
     const addToOrderStore = () => {
+      // Agregar productos normales
       filteredProducts.value.forEach((product) => {
         if (product.quantity > 0) {
           // Verificar si el producto ya existe en el carrito
@@ -342,6 +470,37 @@ export default defineComponent({
         product.quantity = 0;
         product.indications = [];
       });
+
+      // Agregar combos
+      const combosToAdd = filteredCombos.value.filter((combo) => combo.quantity > 0);
+      combosToAdd.forEach((combo) => {
+        for (let i = 0; i < combo.quantity; i++) {
+          orderStore.addComboOrder({
+            product_set_id: combo.id,
+            combo_name: combo.name,
+            price: combo.computed_price || combo.fixed_price || 0,
+            quantity: 1,
+            selected_extras: combo.selected_extras || [],
+            indication: combo.indication || "",
+            pricing_mode: combo.pricing_mode,
+            category: combo.category,
+            items: combo.items || [],
+            from_combo: true,
+            quick_indications: combo.extras || [],
+            product_affectation: combo.affectation || 20,
+            product_igv: combo.igv_tax || settingsStore.businessSettings.sale.igv_tax,
+            icbper: false,
+          });
+        }
+        // Reset combo
+        combo.quantity = 0;
+        combo.selected_extras = [];
+        combo.indication = "";
+      });
+
+      if (combosToAdd.length > 0 || filteredProducts.value.some(p => p.quantity > 0)) {
+        message.success("Productos y combos agregados al pedido");
+      }
     };
 
     const showAskFor = ref(false);
@@ -363,6 +522,7 @@ export default defineComponent({
       waiterStore,
       orderItemIndex,
       filteredProducts,
+      filteredCombos,
       addToOrderStore,
       orderStore,
       performCreateTableOrder,
@@ -373,6 +533,10 @@ export default defineComponent({
       ticketPreview,
       showPdf,
       pdfData,
+      showComboExtrasModal,
+      selectedCombo,
+      openComboExtrasModal,
+      handleComboExtrasSelected,
     };
   },
 });

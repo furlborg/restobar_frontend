@@ -17,6 +17,9 @@
         <n-tab-pane class="p-0" name="menus" tab="Menús">
             <WMenus />
         </n-tab-pane>
+        <n-tab-pane class="p-0" name="combos" tab="Combos">
+            <WCombos />
+        </n-tab-pane>
         <n-tab-pane
                 id="OrderPane"
                 name="order"
@@ -53,6 +56,13 @@
                                 </n-icon>
                                 {{ order.name }}
                             </n-text>
+                            <!-- Caso combo -->
+                            <n-text v-else-if="order.from_combo" class="ms-2">
+                                <n-icon color="#f0a020" class="me-1">
+                                    <v-icon name="gi-hot-meal" />
+                                </n-icon>
+                                {{ order.name }}
+                            </n-text>
                             </template>
 
                             <template #header-extra>
@@ -69,6 +79,18 @@
                                     <li v-for="(item, idx) in order.items" :key="idx" class="fs-7">
                                     {{ item.quantity }} x {{ item.product_name }}
                                     <n-tag size="tiny" class="ms-1">{{ item.phase_name }}</n-tag>
+                                    </li>
+                                </ul>
+                            </div>
+                            </template>
+                            
+                            <!-- Listar los items si es un combo -->
+                            <template v-if="order.from_combo && order.items">
+                            <div class="ms-4 mt-2">
+                                <n-text class="fs-7" type="warning">Productos del combo:</n-text>
+                                <ul class="ms-3 mt-1">
+                                    <li v-for="(item, idx) in order.items" :key="idx" class="fs-7">
+                                    {{ item.quantity }} x {{ item.product_name }}
                                     </li>
                                 </ul>
                             </div>
@@ -100,6 +122,7 @@
 import { defineComponent, ref, onUpdated, onMounted, provide, computed } from "vue";
 import ProductsDrawer from "../components/ProductsDrawer";
 import WMenus from "./Menus.vue";
+import WCombos from "./Combos.vue";
 import { useMessage, useDialog } from "naive-ui";
 import {
     useRoute,
@@ -125,7 +148,8 @@ export default defineComponent({
         ProductIndications,
         ProductsDrawer,
         PreviewDrawer,
-        WMenus
+        WMenus,
+        WCombos
     },
     setup() {
         const settingsStore = useSettingsStore();
@@ -202,17 +226,19 @@ export default defineComponent({
                     // Transformar order_details del backend al formato que espera el frontend
                     const transformedOrders = response.data.order_details.map(detail => {
                         if (detail.product_set) {
-                            // Es un menú
+                            // Determinar si es MENU o COMBO
+                            const isCombo = detail.product_set.set_type === 'COMBO';
                             return {
                                 id: detail.id,
-                                from_menu: true,
+                                from_menu: detail.product_set.set_type === 'MENU',
+                                from_combo: isCombo,
                                 name: detail.product_set.menu_name || detail.product_set.name,
-                                price: parseFloat(detail.product_set.price),
+                                price: parseFloat(detail.product_set.price || detail.product_set.fixed_price || detail.product_set.computed_price || 0),
                                 quantity: detail.quantity,
                                 product_set: detail.product_set,
                                 items: detail.product_set.items?.map(item => ({
                                     quantity: item.quantity,
-                                    product_name: item.product?.name || item.product_phase?.product?.name,
+                                    product_name: item.product_name,
                                     phase_name: item.product_phase?.phase_name
                                 })) || []
                             };

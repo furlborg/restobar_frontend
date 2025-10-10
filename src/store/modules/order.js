@@ -35,13 +35,21 @@ export const useOrderStore = defineStore("order", {
       });
       return allOrders;
     },
-    // Obtener solo los productos individuales (no menús)
+    // Obtener solo los productos individuales (no menús ni combos)
     productLines(state) {
-      return state.orders.filter(order => !order.from_menu);
+      return state.orders.filter(order => !order.from_menu && !order.from_combo);
     },
-    // Obtener solo los menús
+    // Obtener solo los menús y combos (ProductSets)
     menuSets(state) {
+      return state.orders.filter(order => order.from_menu || order.from_combo);
+    },
+    // Obtener solo menús
+    onlyMenus(state) {
       return state.orders.filter(order => order.from_menu);
+    },
+    // Obtener solo combos
+    onlyCombos(state) {
+      return state.orders.filter(order => order.from_combo);
     },
     // Para acceso reactivo a savedOrders
     savedOrderList(state) {
@@ -71,6 +79,13 @@ export const useOrderStore = defineStore("order", {
     addMenuOrder(menuOrder) {
       this.orders.push({
         ...menuOrder,
+        created_at: Date.now()
+      });
+    },
+    addComboOrder(comboOrder) {
+      // Agregar combo al carrito
+      this.orders.push({
+        ...comboOrder,
         created_at: Date.now()
       });
     },

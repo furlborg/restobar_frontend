@@ -62,14 +62,15 @@
                                 <tr v-for="detail in group.items" :key="detail.id">
                                     <td align="center">{{ !!isUpdate ? detail.quantity : detail.initial_quantity }}</td>
                                     <td>
-                                    {{ getPrefix(detail.product_category) }}
+                                    {{ getPrefix(detail.product_category, detail.product_set) }}
                                     {{ detail.product_name || detail.product_set?.name }}
                                     {{ generateIndication(detail.indication) }}
                                     
-                                    <!-- Mostrar productos del menú si existe product_set -->
-                                    <div v-if="detail.product_set" class="menu-items-table">
+                                    <!-- Mostrar productos del menú/combo si existe product_set -->
+                                    <div v-if="detail.product_set && detail.product_set.items" class="menu-items-table">
                                         <div v-for="item in detail.product_set.items" :key="item.id" class="menu-item-table">
-                                            • {{ item.quantity }}x {{ item.product_phase?.product_name || item.product.name }}
+                                            • {{ item.quantity }}x 
+                                            {{ item.product_phase?.product_name || item.product?.name || 'Producto' }}
                                             <span v-if="item.product_phase?.phase_name">({{ item.product_phase.phase_name }})</span>
                                         </div>
                                     </div>
@@ -86,18 +87,19 @@
                             <template v-for="detail in group.items" :key="detail.id">
                                 <div class="ticket-body-item">
                                 <div>
-                                    {{ getPrefix(detail.product_category) }}
+                                    {{ getPrefix(detail.product_category, detail.product_set) }}
                                     {{ settingsStore.business_settings.printer.kitchen_ticket_format !== 1 ? `${!!isUpdate ? detail.quantity : detail.initial_quantity} x ` : '' }}{{ detail.product_name || detail.product_set?.name }}
                                 </div>
                                 <div v-if="settingsStore.business_settings.printer.kitchen_ticket_format === 1">
                                     CANT: {{ !!isUpdate ? detail.quantity : detail.initial_quantity }}
                                 </div>
                                 
-                                <!-- Mostrar productos del menú si existe product_set -->
-                                <div v-if="detail.product_set" class="menu-items" :style="{ fontSize: `${settingsStore.business_settings.printer.body_font_size - 1}px` }">
+                                <!-- Mostrar productos del menú/combo si existe product_set -->
+                                <div v-if="detail.product_set && detail.product_set.items" class="menu-items" :style="{ fontSize: `${settingsStore.business_settings.printer.body_font_size - 1}px` }">
                                     <template v-for="item in detail.product_set.items" :key="item.id">
                                         <div class="menu-item">
-                                            • {{ item.quantity }}x {{ item.product_phase?.product_name || item.product.name }}
+                                            • {{ item.quantity }}x 
+                                            {{ item.product_phase?.product_name || item.product?.name || 'Producto' }}
                                             <span v-if="item.product_phase?.phase_name" class="phase-name">({{ item.product_phase.phase_name }})</span>
                                         </div>
                                     </template>
@@ -380,10 +382,22 @@ export default defineComponent({
             }, 0);
         };
 
-        const getPrefix = (cat) => {
+        const getPrefix = (cat, productSet) => {
             let prefix = "";
             if (settingsStore.business_settings.printer.show_cat) {
-                if (cat && cat.toLowerCase().includes("menu")) {
+                // Si hay product_set, determinar si es MENU o COMBO
+                if (productSet) {
+                    if (productSet.set_type === 'COMBO') {
+                        prefix = "[COMBO] >> ";
+                    } else if (productSet.set_type === 'MENU') {
+                        prefix = "[MENU] ";
+                    } else {
+                        // Fallback: intentar determinar por categoría
+                        prefix = "[MENU] ";
+                    }
+                }
+                // Si no hay product_set, usar la lógica de categoría original
+                else if (cat && cat.toLowerCase().includes("menu")) {
                     prefix = "[MENU] ";
                 } else if (cat && cat.toLowerCase().includes("combo")) {
                     prefix = "[COMBO] >> ";
@@ -391,9 +405,6 @@ export default defineComponent({
                     prefix = "[PORCION] >> ";
                 } else if (cat) {
                     prefix = "[CARTA] >> ";
-                } else {
-                    // Si no hay categoría (probablemente un menú)
-                    prefix = "[MENU] ";
                 }
             }
             return prefix;

@@ -159,6 +159,7 @@ export default defineComponent({
         const ask_for = ref(undefined);
         const orderUser = ref(null);
         const orderUser_initial = ref(null);
+        const checkState = ref(false);
         const customerIdCounter = ref(1);
         const customers = ref([]);
         const selectedCustomerId = ref(null);
@@ -184,12 +185,18 @@ export default defineComponent({
         const hasUnsavedChanges = computed(() => {
             const ordersChanged = JSON.stringify(saleStore.order_initial) !== JSON.stringify(orderStore.orderList);
             const userChanged = orderUser_initial.value !== orderUser.value;
+            
             // Si no hay pedido aún y solo cambió el usuario → no lo consideres un cambio importante
             if (!orderStore.orderId && userChanged && !ordersChanged) {
-                checkState.value = true;
-                return;
+                checkState.value = false; // No hay cambios importantes
+                return false;
             }
-            checkState.value = !ordersChanged && !userChanged;
+            
+            // Hay cambios si las órdenes cambiaron O el usuario cambió
+            const hasChanges = ordersChanged || userChanged;
+            checkState.value = !hasChanges; // checkState es true cuando NO hay cambios
+            
+            return hasChanges; // Retornar true si hay cambios
         });
 
         const goToFirstTab = () => activeTab.value = 'main';
@@ -247,21 +254,32 @@ export default defineComponent({
                     const { order_details: orderDetails, user: userId, ask_for: askFor, id } = response.data;
                     const mappedOrderDetails = orderDetails.map(detail => {
                         if (detail.product_set) {
+                            // Determinar si es un MENU o un COMBO
+                            const isCombo = detail.product_set.set_type === 'COMBO';
+                            const isMenu = detail.product_set.set_type === 'MENU';
+                            
                             return {
-                                from_menu: true,
+                                from_menu: isMenu,
+                                from_combo: isCombo,
                                 product_set_id: detail.product_set.id,
                                 order_detail_id: detail.id,
-                                name: detail.product_set.menu_name,
-                                price: detail.product_set.price,
+                                combo_id: detail.product_set.combo?.id || detail.product_set.combo_id || null,
+                                name: detail.product_set.menu_name || detail.product_set.name,
+                                set_type: detail.product_set.set_type,
+                                price: parseFloat(detail.product_set.price || detail.product_set.fixed_price || detail.product_set.computed_price || 0),
+                                fixed_price: detail.product_set.fixed_price,
+                                pricing_mode: detail.product_set.pricing_mode,
                                 quantity: detail.product_set.quantity,
                                 items: Array.isArray(detail.product_set.items)
                                     ? detail.product_set.items.map(item => ({
                                         id: item.id,
-                                        product_phase_id: item.product_phase.id,
-                                        product_id: item.product.id,
-                                        product_name: item.product.name,
-                                        phase_name: item.product_phase.phase_name,
+                                        combo_product_id: item.combo_product?.id || item.combo_product_id,
+                                        product_phase_id: item.product_phase?.id,
+                                        product_id: item.product?.id,
+                                        product_name: item.product_name,
+                                        phase_name: item.product_phase?.phase_name,
                                         quantity: item.quantity,
+                                        kardex_map: item.kardex_map,
                                     }))
                                     : [],
                                 ...(detail.id ? { id: detail.id } : {}),

@@ -67,6 +67,14 @@ export const routes = [
         component: () => import(/* webpackChunkName: "menu" */ "@/views/Menu/index.vue")
       },
       {
+        path: "/combos",
+        name: "Combo",
+        meta: {
+          requiredPerm: "view_sale"
+        },
+        component: () => import(/* webpackChunkName: "combo" */ "@/views/Combo/index.vue")
+      },
+      {
         path: "/reports",
         name: "Reports",
         meta: {
@@ -425,6 +433,14 @@ export const routes = [
             component: () =>
                 import(
                     /* webpackChunkName: "w-categories" */ "@/WaiterMode/views/Categories.vue"
+                    )
+          },
+          {
+            name: "WCombos",
+            path: "combos",
+            component: () =>
+                import(
+                    /* webpackChunkName: "w-combos" */ "@/WaiterMode/views/Combos.vue"
                     )
           },
           {

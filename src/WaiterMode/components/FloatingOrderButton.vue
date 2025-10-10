@@ -52,6 +52,13 @@
                     </n-icon>
                     {{ order.name }}
                   </n-text>
+                  <!-- Caso combo -->
+                  <n-text v-else-if="order.from_combo" class="ms-2">
+                    <n-icon color="#f0a020" class="me-1">
+                      <v-icon name="gi-hot-meal" />
+                    </n-icon>
+                    {{ order.name }}
+                  </n-text>
                 </n-space>
               </template>
               
@@ -59,7 +66,7 @@
                 <n-space align="center">
                   <n-text>
                     S/. {{ 
-                      order.from_menu 
+                      order.from_menu || order.from_combo
                         ? (order.quantity * order.price).toFixed(2)
                         : (order.quantity * order.price).toFixed(2)
                     }}
@@ -83,6 +90,18 @@
                     <li v-for="(item, idx) in order.items" :key="idx" class="fs-7">
                       {{ item.quantity }} x {{ item.product_name }}
                       <n-tag size="tiny" class="ms-1">{{ item.phase_name }}</n-tag>
+                    </li>
+                  </ul>
+                </div>
+              </template>
+              
+              <!-- Listar los items si es un combo -->
+              <template v-if="order.from_combo && order.items">
+                <div class="ms-4 mt-2">
+                  <n-text class="fs-7" type="warning">Productos del combo:</n-text>
+                  <ul class="ms-3 mt-1">
+                    <li v-for="(item, idx) in order.items" :key="idx" class="fs-7">
+                      {{ item.quantity }} x {{ item.product_name }}
                     </li>
                   </ul>
                 </div>
@@ -221,16 +240,18 @@ export default defineComponent({
               // Transformar order_details igual que en Order.vue
               const transformedOrders = orderResponse.data.order_details.map(detail => {
                 if (detail.product_set) {
+                  const isCombo = detail.product_set.set_type === 'COMBO';
                   return {
                     id: detail.id,
-                    from_menu: true,
+                    from_menu: detail.product_set.set_type === 'MENU',
+                    from_combo: isCombo,
                     name: detail.product_set.menu_name || detail.product_set.name,
-                    price: parseFloat(detail.product_set.price),
+                    price: parseFloat(detail.product_set.price || detail.product_set.fixed_price || detail.product_set.computed_price || 0),
                     quantity: detail.quantity,
                     product_set: detail.product_set,
                     items: detail.product_set.items?.map(item => ({
                       quantity: item.quantity,
-                      product_name: item.product?.name || item.product_phase?.product?.name,
+                      product_name: item.product?.name || item.product_phase?.product?.name || item.product_phase?.product_name,
                       phase_name: item.product_phase?.phase_name
                     })) || []
                   }

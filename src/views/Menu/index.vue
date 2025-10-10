@@ -214,11 +214,31 @@ const tableColumns = [
   },
   { title: 'Estado', key: 'active', render: (row) => (row.active ? 'Activo' : 'Inactivo') },
   {
-    title: 'Opciones', key: 'actions', render: (row) => h('div', { style: 'display:flex; gap:8px;' }, [
-      //h(NButton, { size: 'small', text: true, onClick: () => onView(row) }, { default: () => 'Ver' }),
-      h(NButton, { size: 'small', text: true, onClick: () => onEdit(row) }, { default: () => 'Editar' }),
-      h(NButton, { size: 'small', text: true, onClick: () => onDetail(row) }, { default: () => 'Detalle' }),
-      h(NButton, { size: 'small', text: true, onClick: () => onSchedule(row) }, { default: () => 'Programar' })
+    title: 'Opciones', key: 'actions',render: (row) => h('div', { style: 'display:flex; gap:8px;' }, [
+      h(NButton, { 
+        size: 'small', 
+        text: true, 
+        type: 'primary',
+        onClick: () => onEdit(row) 
+      }, { 
+        default: () => 'Editar' 
+      }),
+      h(NButton, { 
+        size: 'small', 
+        text: true, 
+        type: 'info',
+        onClick: () => onDetail(row) 
+      }, { 
+        default: () => 'Detalle' 
+      }),
+      h(NButton, { 
+        size: 'small', 
+        text: true, 
+        type: 'warning',
+        onClick: () => onSchedule(row) 
+      }, { 
+        default: () => 'Programar' 
+      })
     ])
   }
 ]
