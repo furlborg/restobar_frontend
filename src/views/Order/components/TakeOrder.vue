@@ -795,7 +795,7 @@ export default defineComponent({
                             showVoucher.value = true;
                             if (!ticketPreview.value) setTimeout(() => voucherDrawer.value.generate(), 250);
                         } else {
-                            PrintsAfterTakeOrder(response.data);
+                            // PrintsAfterTakeOrder(response.data);
                         }
                     }, 250);
                 }
@@ -848,7 +848,7 @@ export default defineComponent({
                                                     );
                                                 }
                                             } else {
-                                                PrintsAfterTakeOrder(response.data);
+                                                // PrintsAfterTakeOrder(response.data);
                                             }
                                         }, 250);
                                         if (

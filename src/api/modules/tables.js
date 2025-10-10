@@ -95,7 +95,7 @@ export async function updateTableOrder(
     ask_for = undefined
 ) {
     const tillStore = useTillStore();
-    console.log('aumenten mi sueldo pe kousin');
+    // console.log('aumenten mi sueldo pe kousin');
     let order_details = details.map((order) => ({
         id: order.id,
         product: order.product,

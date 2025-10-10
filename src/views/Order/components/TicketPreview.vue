@@ -16,7 +16,7 @@
                         :isUpdate="isUpdate"
                 />
 
-                <n-button type="info" secondary block @click="printTicket(i, place)">
+                <n-button type="info" secondary block @click="printTicket(i, place, true)">
                     <template #icon>
                         <v-icon name="md-print-round"/>
                     </template>
@@ -26,7 +26,7 @@
 
             <template v-if="data.order_type === 'D'">
                 <ticket-delivery ref="delivery" :data="data"/>
-                <n-button type="info" secondary block @click="printDelivery">
+                <n-button type="info" secondary block @click="printDelivery(true)">
                     <template #icon>
                         <v-icon name="md-print-round"/>
                     </template>
@@ -103,7 +103,7 @@ export default defineComponent({
             }
         };
 
-// Inicializar el WebSocket y asignar la función de mensaje globalmente
+        // Inicializar el WebSocket y asignar la función de mensaje globalmente
         const openWebSocket = (callback) => {
             if(!socket || socket.readyState === WebSocket.CLOSED) {
                 // eslint-disable-next-line no-undef
@@ -122,7 +122,7 @@ export default defineComponent({
             }
         };
 
-        const printDelivery = async() => {
+        const printDelivery = async(send) => {
             return new Promise((resolve) => {
 
                 const sendTicketData = () => {
@@ -177,7 +177,11 @@ export default defineComponent({
                         }
                     };
 
-                    socket.send(JSON.stringify(jsonTicket));
+                    if (send===true) {
+                        socket.send(JSON.stringify(jsonTicket));
+                    }
+
+                    // socket.send(JSON.stringify(jsonTicket));
                     socket.onmessage = function(event) {
                         if(event.data.includes("id")) {
                             if(JSON.parse(event.data).id !== "") {
@@ -203,9 +207,9 @@ export default defineComponent({
             });
         };
 
-        const printTicket = async(i, place) => {
-            console.log(place);
-            console.log(props.data);
+        const printTicket = async(i, place, send) => {
+            // console.log(place);
+            // console.log(props.data);
             return new Promise((resolve) => {
                 const sendTicketData = () => {
                     let printerNameToPrint;
@@ -250,10 +254,6 @@ export default defineComponent({
                             }).map(indicate => indicate.description) || ""
                         }))
                     };
-                    // if(props.data.table !== null) jsonTicket.tittle.table = tableStore.getTableByID(props.data.table).description;
-                    // if(props.data.delivery_info || props.data.table) delete jsonTicket.header.reference;
-                    // if(!props.data.table) jsonTicket.tittle.table = !props.data.delivery_info ? "PARA LLEVAR" : "DELIVERY";
-
                     // --- Ajustes especiales para el título ---
                     if (props.data.table !== null) {
                         // Caso mesa normal
@@ -273,7 +273,11 @@ export default defineComponent({
                         delete jsonTicket.header.reference;
                     }
 
-                    socket.send(JSON.stringify(jsonTicket));
+                    if (send===true) {
+                        socket?.send(JSON.stringify(jsonTicket));
+                    }
+
+                    // socket.send(JSON.stringify(jsonTicket));
                     socket.onmessage = function(event) {
                         if(event.data.includes("id")) {
                             if(JSON.parse(event.data).id !== "") {
