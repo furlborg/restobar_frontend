@@ -13,3 +13,61 @@ export async function getCashFlowReport({
 
   return await http.get("cashflow/", { params });
 }
+
+/**
+ * Obtener reporte de ventas por fecha (JSON)
+ * @param {Object} params - Parámetros de consulta
+ * @param {string} params.start_date - Fecha inicial YYYY-MM-DD
+ * @param {string} params.end_date - Fecha final YYYY-MM-DD
+ * @param {number} [params.branch_office] - ID de sucursal (opcional)
+ * @param {boolean} [params.include_cancelled] - Incluir ventas anuladas (default: true)
+ */
+export async function getSalesByDate(params) {
+  return await http.get("sales-by-date/", { params });
+}
+
+/**
+ * Descargar reporte de ventas por fecha en Excel
+ * @param {Object} params - Parámetros de consulta
+ * @param {string} params.start_date - Fecha inicial YYYY-MM-DD
+ * @param {string} params.end_date - Fecha final YYYY-MM-DD
+ * @param {number} [params.branch_office] - ID de sucursal (opcional)
+ * @param {boolean} [params.include_cancelled] - Incluir ventas anuladas (default: true)
+ */
+export async function downloadSalesByDateReport(params) {
+  const queryParams = { ...params, format: 'xlsx' };
+  return await http.get("sales-by-date/", {
+    params: queryParams,
+    responseType: "blob",
+  });
+}
+
+/**
+ * Obtener reporte de ventas detalladas (JSON)
+ * @param {Object} params - Parámetros de consulta
+ * @param {string} [params.start_date] - Fecha inicial YYYY-MM-DD
+ * @param {string} [params.end_date] - Fecha final YYYY-MM-DD
+ * @param {number} [params.sale_id] - ID de venta específica
+ * @param {number} [params.branch_office] - ID de sucursal (opcional)
+ * @param {boolean} [params.include_cancelled] - Incluir ventas anuladas (default: false)
+ */
+export async function getSalesDetailed(params) {
+  return await http.get("sales-detailed/", { params });
+}
+
+/**
+ * Descargar reporte de ventas detalladas en Excel
+ * @param {Object} params - Parámetros de consulta
+ * @param {string} [params.start_date] - Fecha inicial YYYY-MM-DD
+ * @param {string} [params.end_date] - Fecha final YYYY-MM-DD
+ * @param {number} [params.sale_id] - ID de venta específica
+ * @param {number} [params.branch_office] - ID de sucursal (opcional)
+ * @param {boolean} [params.include_cancelled] - Incluir ventas anuladas (default: false)
+ */
+export async function downloadSalesDetailedReport(params) {
+  const queryParams = { ...params, format: 'xlsx' };
+  return await http.get("sales-detailed/", {
+    params: queryParams,
+    responseType: "blob",
+  });
+}

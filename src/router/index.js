@@ -91,6 +91,16 @@ export const routes = [
             path: "cash-flow",
             name: "CashFlowReport",
             component: () => import("@/views/Reports/components/CashReport.vue")
+          },
+          {
+            path: "sales-by-date",
+            name: "SalesByDateReport",
+            component: () => import(/* webpackChunkName: "reports-sales-by-date" */ "@/views/Reports/components/SalesByDate.vue")
+          },
+          {
+            path: "sales-detailed",
+            name: "SalesDetailedReport",
+            component: () => import(/* webpackChunkName: "reports-sales-detailed" */ "@/views/Reports/components/SalesDetailed.vue")
           }
         ]
       },
