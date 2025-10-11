@@ -259,7 +259,6 @@ export default defineComponent({
 
     const totals = computed(() => {
       const toSale = saleStore.toSale;
-      console.log(toSale);
       return {
         GRV: toSale.reduce(
           (acc, cur) =>
@@ -389,7 +388,8 @@ export default defineComponent({
             sale.value.given_amount = newGivenAmount;
           }
         }
-      }
+      },
+      { immediate: true, deep: true }
     );
 
     const formRules = computed(() => {
@@ -597,11 +597,6 @@ export default defineComponent({
 
     const getAfcShort = (afc) => ({ 10: "GRV", 20: "EXN", 21: "GRT" }[afc] || "---");
 
-    watch(total, () => {
-      sale.value.given_amount = total.value > 0 ? total.value : parseFloat("0").toFixed(2);
-    });
-
-    // Watcher específico para sale.serie solamente
     watch(() => sale.value.serie, (newSerie, oldSerie) => {
       if (newSerie && newSerie !== oldSerie) {
         obtainSaleNumber();
@@ -621,7 +616,6 @@ export default defineComponent({
     }, { immediate: true });
 
     onMounted(async () => {
-      sale.value.given_amount = total.value;
       if (sale.value.serie) {
         await obtainSaleNumber();
       }
