@@ -25,8 +25,17 @@
                             @click="showReport = true"
                     >
                         Reporte
-                    </n-button
+                    </n-button>
+                    <n-button
+                            v-if="settingsStore.businessSettings.sale?.enable_invoices"
+                            type="warning"
+                            tertiary
+                            :loading="resendingVouchers"
+                            @click="handleResendPendingVouchers"
                     >
+                        <v-icon name="md-send-round" class="me-1"/>
+                        Reenviar Pendientes
+                    </n-button>
                 </n-space>
             </template>
             <n-space justify="space-between">
@@ -141,7 +150,8 @@ import {
     retrieveSale,
     sendSale, 
     nullSale,
-    changeSaleStatus
+    changeSaleStatus,
+    resendPendingVouchers
 } from "@/api/modules/sales";
 import { useSaleStore } from "@/store/modules/sale";
 import { useGenericsStore } from "@/store/modules/generics";
@@ -174,6 +184,7 @@ export default defineComponent({
         const isTableLoading = ref(false);
         const sales = ref([]);
         const showFilters = ref(false);
+        const resendingVouchers = ref(false);
         const filterParams = ref({
             branch: !userStore.user.branchoffice
                 ? businessStore.currentBranch
@@ -309,6 +320,31 @@ export default defineComponent({
             pagination.value.pageSearchParams = null;
             pagination.value.page = 1;
             await loadSales();
+        };
+
+        const handleResendPendingVouchers = async() => {
+            resendingVouchers.value = true;
+            try {
+                const { data } = await resendPendingVouchers();
+                
+                // Mostrar mensaje detallado
+                if (data.sent_successfully > 0 || data.failed > 0) {
+                    message.success(
+                        `Proceso completado: ${data.sent_successfully} enviados, ` +
+                        `${data.failed} fallidos, ${data.skipped} omitidos`
+                    );
+                } else {
+                    message.info(data.message || 'No hay comprobantes pendientes');
+                }
+                
+                // Refrescar tabla para mostrar estados actualizados
+                await refreshTable();
+            } catch (error) {
+                console.error('Error resending vouchers:', error);
+                message.error(error.response?.data?.error || 'Error al reenviar comprobantes');
+            } finally {
+                resendingVouchers.value = false;
+            }
         };
 
         const statusOptions = [
@@ -498,6 +534,8 @@ export default defineComponent({
             settingsStore,
             performNullifySale,
             isChangingStatus,
+            resendingVouchers,
+            handleResendPendingVouchers,
             tableColumns: createSaleColumns({
                 updateSale(row) {
                     showModal.value = true;

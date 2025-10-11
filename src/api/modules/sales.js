@@ -326,3 +326,13 @@ export async function getSalesReportByProduct(productId, dateFrom = null, dateTo
     responseType: "arraybuffer"
   });
 }
+
+/**
+ * Reenviar todos los comprobantes pendientes (estado NUEVO)
+ * que NO sean nota de venta (invoice_type != '80')
+ * 
+ * @returns {Promise} Respuesta con estadísticas del proceso de reenvío
+ */
+export async function resendPendingVouchers() {
+  return await http.post("sales/resend-pending/");
+}
