@@ -71,3 +71,15 @@ export async function downloadSalesDetailedReport(params) {
     responseType: "blob",
   });
 }
+
+/**
+ * Obtener reporte de récord de ventas con productos más vendidos
+ * @param {Object} params - Parámetros de consulta
+ * @param {string} params.start_date - Fecha inicial YYYY-MM-DD (requerido)
+ * @param {string} params.end_date - Fecha final YYYY-MM-DD (requerido)
+ * @param {number} [params.branch_office] - ID de sucursal (opcional)
+ * @param {number} [params.top_limit] - Número de productos top (default: 10)
+ */
+export async function getSalesRecord(params) {
+  return await http.get("sales-record/", { params });
+}

@@ -101,6 +101,11 @@ export const routes = [
             path: "sales-detailed",
             name: "SalesDetailedReport",
             component: () => import(/* webpackChunkName: "reports-sales-detailed" */ "@/views/Reports/components/SalesDetailed.vue")
+          },
+          {
+            path: "sales-record",
+            name: "SalesRecordReport",
+            component: () => import(/* webpackChunkName: "reports-sales-record" */ "@/views/Reports/components/SalesRecord.vue")
           }
         ]
       },
