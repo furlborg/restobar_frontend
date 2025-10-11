@@ -360,6 +360,7 @@ export async function updateProductCategory(id, description, is_disabled) {
  * Get combo categories
  * @param {Object} params - Query parameters
  * @param {boolean} params.active_only - Only active categories
+ * @param {boolean} params.only_with_combos - Only categories with active combos (for orders)
  * @returns {Promise}
  */
 export async function getComboCategories(params = {}) {

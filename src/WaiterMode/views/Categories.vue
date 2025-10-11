@@ -1,18 +1,5 @@
 <template>
   <n-list class="m-0">
-    <!-- Botón especial para ver solo combos -->
-    <n-list-item
-      class="box small back-combos"
-      @click="$router.push({ name: 'WCombos' })"
-    >
-      <template #prefix>
-        <n-avatar color="#f0a020" style="background-color: rgba(240, 160, 32, 0.1);">
-          <v-icon name="md-localoffertwotone" style="color: #f0a020;" />
-        </n-avatar>
-      </template>
-      <span style="color: #f0a020;">Solo Combos</span>
-    </n-list-item>
-    
     <n-list-item
       v-for="category in productStore.categories"
       :key="category.id"

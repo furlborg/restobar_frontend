@@ -10,7 +10,7 @@
     </n-page-header>
     
     <div class="m-2">
-      <n-input placeholder="Buscar combo..." v-model:value="search">
+      <n-input placeholder="Buscar por nombre o precio (ej: 15 o 15.50)..." v-model:value="search">
         <template #prefix>
           <v-icon name="md-search-round" />
         </template>
@@ -268,9 +268,23 @@ export default defineComponent({
     const ticketPreview = ref(null);
 
     const filteredCombos = computed(() => {
-      return combos.value.filter((combo) =>
-        combo.name.toLowerCase().includes(search.value.toLowerCase())
-      );
+      const searchTerm = search.value.toLowerCase().trim();
+      if (!searchTerm) return combos.value;
+      
+      // Detectar si es búsqueda por precio (formato numérico)
+      const priceRegex = /^\d+(\.\d{0,2})?$/;
+      const isPrice = priceRegex.test(searchTerm);
+      
+      return combos.value.filter((combo) => {
+        if (isPrice) {
+          // Búsqueda por precio: usar computed_price o fixed_price
+          const comboPrice = parseFloat(combo.computed_price || combo.fixed_price || 0).toFixed(2);
+          return comboPrice.includes(searchTerm) || comboPrice.startsWith(searchTerm);
+        } else {
+          // Búsqueda por nombre (comportamiento original)
+          return combo.name.toLowerCase().includes(searchTerm);
+        }
+      });
     });
 
     const loadCombos = async () => {

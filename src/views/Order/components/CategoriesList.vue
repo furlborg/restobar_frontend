@@ -285,7 +285,7 @@ export default defineComponent({
       loadingCombos.value = true;
       try {
         // Cargar categorías de combos
-        const categoriesResponse = await getComboCategories({ is_disabled: false });
+        const categoriesResponse = await getComboCategories({ is_disabled: false, only_with_combos: true });
         comboCategories.value = categoriesResponse.data.results || categoriesResponse.data || [];
         
         // Cargar todos los combos activos

@@ -8,7 +8,7 @@
       </template>
     </n-page-header>
     <div class="m-2">
-      <n-input placeholder="Buscar producto o combo..." v-model:value="search">
+      <n-input placeholder="Buscar por nombre o precio (ej: 15 o 15.50)..." v-model:value="search">
         <template #prefix>
           <v-icon name="md-search-round" />
         </template>
@@ -280,15 +280,43 @@ export default defineComponent({
     const selectedCombo = ref(null);
 
     const filteredProducts = computed(() => {
-      return products.value.filter((product) =>
-        product.name.toLowerCase().includes(search.value.toLowerCase())
-      );
+      const searchTerm = search.value.toLowerCase().trim();
+      if (!searchTerm) return products.value;
+      
+      // Detectar si es búsqueda por precio (formato numérico)
+      const priceRegex = /^\d+(\.\d{0,2})?$/;
+      const isPrice = priceRegex.test(searchTerm);
+      
+      return products.value.filter((product) => {
+        if (isPrice) {
+          // Búsqueda por precio: comparar precio exacto o parcial
+          const productPrice = parseFloat(product.prices).toFixed(2);
+          return productPrice.includes(searchTerm) || productPrice.startsWith(searchTerm);
+        } else {
+          // Búsqueda por nombre (comportamiento original)
+          return product.name.toLowerCase().includes(searchTerm);
+        }
+      });
     });
 
     const filteredCombos = computed(() => {
-      return combos.value.filter((combo) =>
-        combo.name.toLowerCase().includes(search.value.toLowerCase())
-      );
+      const searchTerm = search.value.toLowerCase().trim();
+      if (!searchTerm) return combos.value;
+      
+      // Detectar si es búsqueda por precio
+      const priceRegex = /^\d+(\.\d{0,2})?$/;
+      const isPrice = priceRegex.test(searchTerm);
+      
+      return combos.value.filter((combo) => {
+        if (isPrice) {
+          // Búsqueda por precio: usar computed_price o fixed_price
+          const comboPrice = parseFloat(combo.computed_price || combo.fixed_price || 0).toFixed(2);
+          return comboPrice.includes(searchTerm) || comboPrice.startsWith(searchTerm);
+        } else {
+          // Búsqueda por nombre (comportamiento original)
+          return combo.name.toLowerCase().includes(searchTerm);
+        }
+      });
     });
 
     const performCreateTableOrder = () => {
