@@ -283,7 +283,7 @@
 <script>
 import OrderIndications from "./OrderIndications";
 import ProductSearchLabel from "@/views/Product/components/ProductSearchLabel.vue";
-import { defineComponent, ref, computed, h, watch } from "vue";
+import { defineComponent, ref, computed, h, watch, provide } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useMessage, useDialog } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
