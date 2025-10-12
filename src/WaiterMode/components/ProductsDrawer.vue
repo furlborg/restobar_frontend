@@ -217,7 +217,7 @@ export default defineComponent({
         const showOptions = (value) => {
             const priceRegex = /^\d+(\.\d{0,2})?$/;
                 if (priceRegex.test(value)) {
-                    searching.value = true;
+                    searchingProduct.value = true;
                     searchProductPrice(value)
                     .then((response) => {
                         if (response.status === 200) {
@@ -229,7 +229,7 @@ export default defineComponent({
                         message.error("Algo salió mal...");
                     })
                     .finally(() => {
-                        searching.value = false;
+                        searchingProduct.value = false;
                     });
                     return true;
                 }
@@ -360,10 +360,16 @@ export default defineComponent({
             } else {
                 let order = {
                     id: product.id,
+                    name: product.name,
                     product_name: product.name,
+                    prices: product.prices,
                     price: product.prices,
                     quantity: 1,
-                    indication: []
+                    indication: [],
+                    icbper: product.icbper,
+                    affectation: product.affectation,
+                    igv_tax: product.igv_tax,
+                    quick_indications: product.quick_indications
                 };
                 waiterStore.preOrderList.push(order);
             }

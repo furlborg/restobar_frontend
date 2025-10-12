@@ -415,10 +415,15 @@ export default defineComponent({
           } else {
             let order = {
               id: product.id,
+              name: product.name,
               product_name: product.name,
+              prices: product.prices,
               price: product.prices,
               quantity: Number(product.quantity),
               indication: [],
+              icbper: product.icbper,
+              affectation: product.affectation,
+              igv_tax: product.igv_tax,
               quick_indications: product.quick_indications,
             };
             waiterStore.preOrderList.push(order);
