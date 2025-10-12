@@ -28,7 +28,9 @@ export function useSaleTotals() {
   // Tax breakdown for product lines only (menus don't have individual tax breakdown)
   const taxBreakdown = computed(() => {
     const details = salePayload.value.sale_details || [];
+    const menuSets = salePayload.value.sale_product_sets || [];
     
+    // Calcular totales de productos regulares por afectación
     const taxed = details.filter(d => d.product_affectation === 10)
       .reduce((acc, d) => acc + (Number(d.price_sale || 0) * Number(d.quantity || 0)), 0);
     
@@ -44,9 +46,14 @@ export function useSaleTotals() {
     const icbper = details.reduce((acc, d) => 
       acc + (Number(d.icbper || 0) * Number(d.quantity || 0)), 0);
     
+    // AGREGADO: Sumar el total de combos/menús a OP. EXONERADAS
+    // Los combos/menús no tienen afectación individual, se consideran exonerados por defecto
+    const menuTotal = menuSets.reduce((acc, menu) => 
+      acc + (Number(menu.price || 0) * Number(menu.quantity || 0)), 0);
+    
     return {
       taxed: round2(taxed),
-      exempt: round2(exempt), 
+      exempt: round2(exempt + menuTotal), // ✅ Incluir combos/menús en exoneradas
       free: round2(free),
       igv: round2(igv),
       icbper: round2(icbper)

@@ -80,7 +80,8 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(detail, index) in saleStore.toSale" :key="index">
+                  <!-- Productos regulares -->
+                  <tr v-for="(detail, index) in saleStore.toSale" :key="'product-' + index">
                     <td v-if="settingsStore.businessSettings.sale?.manage_affectations">
                       <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation"
                         :disabled="!userStore.hasPermission('change_product_affectation')"
@@ -105,6 +106,25 @@
                     </td>
                     <td>{{ detail.product_affectation === 21 ? "0.00" : (detail.quantity * detail.price_sale - detail.discount).toFixed(2) }}</td>
                   </tr>
+                  <!-- Combos y Menús -->
+                  <tr v-for="(menuSet, index) in saleStore.salePayload.sale_product_sets" :key="'menu-' + index" style="background-color: #f0f9ff;">
+                    <td v-if="settingsStore.businessSettings.sale?.manage_affectations">
+                      <n-tag size="small" type="info">
+                        {{ menuSet.from_combo ? 'COMBO' : 'MENÚ' }}
+                      </n-tag>
+                    </td>
+                    <td>{{ menuSet.quantity }}</td>
+                    <td>
+                      <input class="custom-input" :value="menuSet.name" readonly style="color: #0369a1; font-weight: 500;" v-autowidth />
+                    </td>
+                    <td>
+                      S/. {{ Number(menuSet.price || 0).toFixed(2) }}
+                    </td>
+                    <td v-if="settingsStore.business_settings.sale?.show_discount_label">
+                      S/. 0.00
+                    </td>
+                    <td>{{ (Number(menuSet.price || 0) * Number(menuSet.quantity || 0)).toFixed(2) }}</td>
+                  </tr>
                 </tbody>
               </n-table>
               <n-space v-else vertical>
@@ -125,7 +145,8 @@
                             </tr>
                           </thead>
                           <tbody>
-                            <tr v-for="(detail, index) in saleStore.toSale.filter(d => d.quantity > 0 && d.customer.id === customer.id)" :key="index">
+                            <!-- Productos regulares del cliente -->
+                            <tr v-for="(detail, index) in saleStore.toSale.filter(d => d.quantity > 0 && d.customer.id === customer.id)" :key="'product-' + index">
                               <td v-if="settingsStore.businessSettings.sale?.manage_affectations">
                                 <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation"
                                   :disabled="!userStore.hasPermission('change_product_affectation')"
@@ -150,6 +171,25 @@
                               </td>
                               <td>{{ detail.product_affectation === 21 ? "0.00" : (detail.quantity * detail.price_sale - detail.discount).toFixed(2) }}</td>
                             </tr>
+                            <!-- Combos y Menús del cliente -->
+                            <tr v-for="(menuSet, index) in saleStore.salePayload.sale_product_sets.filter(m => m.customer && m.customer.id === customer.id)" :key="'menu-' + index" style="background-color: #f0f9ff;">
+                              <td v-if="settingsStore.businessSettings.sale?.manage_affectations">
+                                <n-tag size="small" type="info">
+                                  {{ menuSet.from_combo ? 'COMBO' : 'MENÚ' }}
+                                </n-tag>
+                              </td>
+                              <td>{{ menuSet.quantity }}</td>
+                              <td>
+                                <input class="custom-input" :value="menuSet.name" readonly style="color: #0369a1; font-weight: 500;" v-autowidth />
+                              </td>
+                              <td>
+                                S/. {{ Number(menuSet.price || 0).toFixed(2) }}
+                              </td>
+                              <td v-if="settingsStore.business_settings.sale?.show_discount_label">
+                                S/. 0.00
+                              </td>
+                              <td>{{ (Number(menuSet.price || 0) * Number(menuSet.quantity || 0)).toFixed(2) }}</td>
+                            </tr>
                           </tbody>
                       </n-table>
                     </n-scrollbar>
@@ -158,7 +198,7 @@
             </n-scrollbar>
             <PaymentTotals
               :items="paymentTotalsItems"
-              :total-amount="sale.amount"
+              :total-amount="total"
               :payment-amount="sale.given_amount"
               :change-amount="changing"
               @value-changed="handleValueChange"
@@ -175,7 +215,7 @@
               </n-gi>
             </n-grid>
             <n-button class="fs-1 py-5 mt-2" type="success"
-              :disabled="!saleStore.toSale.filter(d => !!d.quantity).length ||
+              :disabled="(!saleStore.toSale.filter(d => !!d.quantity).length && !saleStore.salePayload.sale_product_sets.length) ||
                 (sale.payment_condition === 1 ? sale.given_amount < sale.amount : !(sale.given_amount < sale.amount))"
               secondary block @click.prevent="isMultiple ? doMultiplePayment() : performCreateSale()">
               <v-icon class="me-2" name="fa-coins" scale="2" />Cobrar
@@ -235,6 +275,7 @@ import { useProductStore } from "@/store/modules/product";
 import { useSaleStore } from "@/store/modules/sale";
 import { useUserStore } from "@/store/modules/user";
 import { useGenericsStore } from "@/store/modules/generics";
+import { useSaleTotals } from "@/composables/useSaleTotals";
 import { saleRules } from "@/utils/constants";
 import { cloneDeep, isDecimal } from "@/utils";
 import { useDialog, useMessage } from "naive-ui";
@@ -261,6 +302,9 @@ export default defineComponent({
     const businessStore = useBusinessStore();
     const message = useMessage();
     const dialog = useDialog();
+    
+    // Usar el composable de totales que incluye combos
+    const { grandTotal, summary, taxBreakdown } = useSaleTotals();
 
     const customers = inject('customers', ref([]));
     const shouldShowCustomerMode = inject('shouldShowCustomerMode', ref(false));
@@ -316,7 +360,12 @@ export default defineComponent({
 
     const totals = computed(() => {
       const toSale = saleStore.toSale;
-      console.log(toSale);
+      // Log para debugging - ahora también mostrar combos
+      console.log('[TablePayment] toSale (solo productos):', toSale);
+      console.log('[TablePayment] sale_product_sets (combos/menús):', saleStore.salePayload.sale_product_sets);
+      console.log('[TablePayment] grandTotal del composable:', grandTotal.value);
+      console.log('[TablePayment] taxBreakdown:', taxBreakdown.value);
+      
       return {
         GRV: toSale.reduce(
           (acc, cur) =>
@@ -352,23 +401,53 @@ export default defineComponent({
     const totalIGV = computed(() => totals.value.IGV);
     const totalDSCT = computed(() => totals.value.DSCT);
 
-    const subTotal = computed(() =>
-      saleStore.toSale.reduce(
-        (acc, cur) =>
-          cur.product_affectation === 21 ? acc : acc + cur.price_sale * cur.quantity,
+    const subTotal = computed(() => {
+      // Calcular subtotal: suma de productos + combos/menús
+      const productsTotal = saleStore.toSale.reduce(
+        (acc, cur) => acc + (cur.price_sale * cur.quantity - (cur.discount || 0)), 
         0
-      )
-    );
+      );
+      
+      const menusTotal = (saleStore.salePayload.sale_product_sets || []).reduce(
+        (acc, menu) => acc + (Number(menu.price || 0) * Number(menu.quantity || 0)),
+        0
+      );
+      
+      const result = productsTotal + menusTotal;
+      console.log('[TablePayment] subTotal calculado:', {
+        productsTotal,
+        menusTotal,
+        total: result
+      });
+      
+      return result;
+    });
 
     const products_count = computed(() =>
       saleStore.toSale.reduce((acc, cur) => acc + cur.quantity, 0)
     );
 
     const total = computed(() => {
-      let cal = parseFloat(subTotal.value - parseFloat(totalDSCT.value) + icbper.value + parseFloat(sale.value.other_charges));
+      console.log('[TablePayment] Calculando total:', {
+        subTotal: subTotal.value,
+        totalDSCT: totalDSCT.value,
+        icbper: icbper.value,
+        other_charges: sale.value.other_charges
+      });
+      
+      // Total = Subtotal - Descuentos Globales + ICBPER + Otros Cargos
+      let cal = parseFloat(
+        subTotal.value - 
+        parseFloat(totalDSCT.value || 0) + 
+        icbper.value + 
+        parseFloat(sale.value.other_charges || 0)
+      );
+      
       if (sale.value.delivery_info) {
-        cal += parseFloat(sale.value.delivery_info.amount)
-      };
+        cal += parseFloat(sale.value.delivery_info.amount || 0);
+      }
+      
+      console.log('[TablePayment] Total calculado:', cal);
       return cal.toFixed(2);
     });
 
@@ -512,12 +591,26 @@ export default defineComponent({
           onPositiveClick: async () => {
             loading.value = true;
             sale.value.order = orderStore.orderId;
-            sale.value.sale_details = saleStore.toSale.map(detail => ({
+            
+            // Obtener el payload completo con productos Y combos
+            const payload = saleStore.salePayload;
+            
+            sale.value.sale_details = payload.sale_details.map(detail => ({
               ...detail,
               igv_tax: detail.igv_tax.toFixed(2),
               price_base: detail.price_base.toFixed(2)
             }));
+            
+            // IMPORTANTE: Agregar los combos/menús al payload de venta
+            sale.value.sale_product_sets = payload.sale_product_sets;
+            
             sale.value.discount = totalDSCT.value;
+
+            console.log('[TablePayment] Enviando venta con:', {
+              sale_details: sale.value.sale_details.length,
+              sale_product_sets: sale.value.sale_product_sets?.length || 0,
+              total: sale.value.amount
+            });
 
             try {
               const response = await createSale(sale.value);
@@ -721,7 +814,7 @@ export default defineComponent({
     });
 
     return {
-      customers, shouldShowCustomerMode,
+      customers, shouldShowCustomerMode, total,
       userStore, saleStore, orderStore, productStore, settingsStore, sale, isDecimal,
       loading, saleForm, formRules, handleCustomerSelected, handleCustomerCleared,
       changing, subTotal, changeCondition, changeSerie, handleSerieUpdate, handleSerieChanged,

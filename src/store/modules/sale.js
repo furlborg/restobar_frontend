@@ -47,7 +47,7 @@ export const useSaleStore = defineStore("sale", {
       const payload = this.buildSalePayload();
       state.sale_details = payload.sale_details; // cache for legacy consumers
       state.sale_product_sets = payload.sale_product_sets; // cache menus as well
-      return state.sale_details;
+      return state.sale_details
     },
     salePayload() {
       return this.buildSalePayload();

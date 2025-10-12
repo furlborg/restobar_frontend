@@ -30,6 +30,7 @@ export function buildSalePayload(orders = [], options = {}) {
         name: order.name || (order.from_combo ? 'Combo' : 'Menu'),
         price: Number(order.price || 0),
         quantity: Number(order.quantity || 1),
+        customer: order.customer || null, // Agregar campo customer para modo por cliente
         items: (order.items || []).map(item => ({
           product_id: item.product_id,
           product_phase_id: item.product_phase_id,
@@ -49,6 +50,8 @@ export function buildSalePayload(orders = [], options = {}) {
       if (order.set_type) productSet.set_type = order.set_type;
       if (order.pricing_mode) productSet.pricing_mode = order.pricing_mode;
       if (order.fixed_price) productSet.fixed_price = order.fixed_price;
+      if (order.from_combo) productSet.from_combo = true;
+      if (order.from_menu) productSet.from_menu = true;
       
       sale_product_sets.push(productSet);
     } else {
@@ -73,8 +76,8 @@ export function buildSalePayload(orders = [], options = {}) {
         customer: order.customer || null
       };
       
-      // Add optional fields
-      if (order.id) detail.id = order.id;
+      // Add optional fields (NO incluir 'id' porque es un OrderDetail ID, no SaleDetail ID)
+      // El backend creará un nuevo SaleDetail con su propio ID
       if (order.indication) detail.indication = order.indication;
       if (order.quick_indications) detail.quick_indications = order.quick_indications;
       

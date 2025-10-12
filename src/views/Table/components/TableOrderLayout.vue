@@ -263,7 +263,7 @@ export default defineComponent({
                                 from_combo: isCombo,
                                 product_set_id: detail.product_set.id,
                                 order_detail_id: detail.id,
-                                combo_id: detail.product_set.combo?.id || detail.product_set.combo_id || null,
+                                combo_id: detail.product_set?.combo || null,
                                 name: detail.product_set.menu_name || detail.product_set.name,
                                 set_type: detail.product_set.set_type,
                                 price: parseFloat(detail.product_set.price || detail.product_set.fixed_price || detail.product_set.computed_price || 0),

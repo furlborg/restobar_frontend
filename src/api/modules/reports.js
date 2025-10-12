@@ -83,3 +83,15 @@ export async function downloadSalesDetailedReport(params) {
 export async function getSalesRecord(params) {
   return await http.get("sales-record/", { params });
 }
+
+/**
+ * Obtener estadísticas para el dashboard
+ * @param {Object} params - Parámetros de consulta
+ * @param {string} [params.start_date] - Fecha inicial YYYY-MM-DD (opcional, default: inicio del mes)
+ * @param {string} [params.end_date] - Fecha final YYYY-MM-DD (opcional, default: hoy)
+ * @param {number} [params.branch_office] - ID de sucursal (opcional)
+ * @returns {Promise} Estadísticas completas del dashboard
+ */
+export async function getDashboardStats(params) {
+  return await http.get("/sales-record/dashboard-stats/", { params });
+}

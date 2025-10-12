@@ -431,7 +431,7 @@ export default defineComponent({
         const getCustomerOrders = (customerId) => 
             orderStore.orderList.filter(order => order.customer?.id === customerId && order.quantity > 0);
         const getCustomerTotal = (customerId) => 
-            getCustomerOrders(customerId).reduce((total, order) => total + order.subTotal, 0);
+            getCustomerOrders(customerId).reduce((total, order) => total + Number(order.subTotal || 0), 0);
         const getTotalAmount = () => orderStore.orderTotal;
         const formatPrice = (price) => (isNaN(price) ? 0 : Number(price)).toFixed(2);
         const hasAnyOrders = computed(() => orderStore.orderList.some(order => order.quantity > 0));
@@ -460,8 +460,7 @@ export default defineComponent({
         };
 
         const handleRemoveProductLine = (productIndex) => {
-            // Obtener solo productos individuales (no menús ni combos)
-            const productItems = orderStore.orderList.filter(item => !item.from_menu && !item.from_combo);
+            const productItems = orderStore.orderList.filter(item => !item.from_menu);
             const productToRemove = productItems[productIndex];
             if (!productToRemove) return;
 

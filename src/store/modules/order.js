@@ -12,7 +12,8 @@ export const useOrderStore = defineStore("order", {
     orderList(state) {
       const settingsStore = useSettingsStore();
       state.orders.forEach((order) => {
-        order.subTotal = Number(order.quantity) * parseFloat(order.price).toFixed(2);
+        // Corregir: convertir a número después de toFixed()
+        order.subTotal = Number((Number(order.quantity) * parseFloat(order.price)).toFixed(2));
         if (order.icbper) {
           order.icbper_amount = Number(order.quantity) * parseFloat(settingsStore.businessSettings.sale.icbper_tax);
         } else {
@@ -26,7 +27,8 @@ export const useOrderStore = defineStore("order", {
       const settingsStore = useSettingsStore();
       const allOrders = [...state.savedOrders, ...state.orders];
       allOrders.forEach((order) => {
-        order.subTotal = Number(order.quantity) * parseFloat(order.price).toFixed(2);
+        // Corregir: convertir a número después de toFixed()
+        order.subTotal = Number((Number(order.quantity) * parseFloat(order.price)).toFixed(2));
         if (order.icbper) {
           order.icbper_amount = Number(order.quantity) * parseFloat(settingsStore.businessSettings.sale.icbper_tax);
         } else {

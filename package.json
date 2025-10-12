@@ -11,6 +11,7 @@
     "@vitejs/plugin-vue": "^5.2.1",
     "axios": "^1.12.2",
     "clone-deep": "^4.0.1",
+    "echarts": "^6.0.0",
     "exceljs": "^4.3.0",
     "file-saver": "^2.0.5",
     "jspdf": "^3.0.0",
@@ -25,6 +26,7 @@
     "qz-tray": "^2.2.1",
     "vue": "^3.2.45",
     "vue-cookies": "^1.8.2",
+    "vue-echarts": "^8.0.1",
     "vue-input-autowidth": "^2.2.0",
     "vue-router": "^4.1.6",
     "vue-simple-calendar": "^7.2.1"

@@ -156,7 +156,8 @@ const handleAddCombo = () => {
     product_set_id: null, // Se genera al crear la orden
     name: props.combo.name,
     set_type: 'COMBO',
-    price: parseFloat(props.combo.computed_price || props.combo.fixed_price || 0),
+    // CORREGIDO: Usar computed_price primero, luego fixed_price, con conversión a número
+    price: Number(props.combo.computed_price || props.combo.fixed_price || 0),
     quantity: quantity.value,
     pricing_mode: props.combo.pricing_mode || 'FIXED',
     fixed_price: props.combo.fixed_price || null,
@@ -170,6 +171,14 @@ const handleAddCombo = () => {
       indication: ''
     }))
   };
+
+  console.log('[ComboProductModal] comboOrder created:', {
+    name: comboOrder.name,
+    price: comboOrder.price,
+    quantity: comboOrder.quantity,
+    total: comboOrder.price * comboOrder.quantity,
+    combo_source: props.combo
+  });
 
   // Si está en modo cliente y hay un cliente seleccionado
   if (shouldShowCustomerSelector.value && selectedCustomerId.value && addOrderToCustomer) {
