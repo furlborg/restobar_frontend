@@ -229,7 +229,9 @@ export const routes = [
           {
             name: "TableOrder",
             path: ":table",
-            meta: { requiredPerm: "view_order" },
+            meta: { 
+              requiredPerm: "view_order"
+            },
             redirect: { name: "ProductCategories" },
             component: () => import("@/views/Table/components/TableOrderLayout.vue" ),
             children: [
@@ -504,6 +506,19 @@ router.beforeEach(async(to, from, next) => {
   const genericsStore = useGenericsStore();
   genericsStore.updateDevice();
   await userStore.checkAuthentication();
+  
+  // Helper function to extract table ID from route
+  const extractTableId = (route) => {
+    // Try direct param
+    if (route.params.table) {
+      return parseInt(route.params.table, 10);
+    }
+    // Try path regex match for /table/:id or /waiter-mode/:id
+    const match = route.path.match(/\/(table|waiter-mode)\/(\d+)/);
+    return match ? parseInt(match[2], 10) : null;
+  };
+
+  // Original authentication logic
   if(to.matched.some((record) => record.meta.requiresAuth)) {
     if(userStore.isAuthenticated) {
       if(to.matched.some((record) => record.meta.requiredPerm)) {

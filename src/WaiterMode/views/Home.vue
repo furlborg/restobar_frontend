@@ -26,19 +26,13 @@
     >
       <n-gi v-for="table in tables" :key="table.id">
         <n-card
-          @click="
-            waiterStore.groupMode
-              ? currentTableGrouping === table.id ||
-                tableGroups.some((g) => g.some((t) => t.id === table.id))
-                ? null
-                : !currentGroup.some((t) => t.id == table.id)
-                ? addToGroup(table)
-                : removeFromGroup(table)
-              : ($router.push({ name: 'WOrder', params: { table: table.id } }),
-                cleanParams())
-          "
+          @click="handleTableClick(table)"
           class="position-relative"
-          :class="{ 'bg-occuped': table.status === '3' }"
+          :class="getTableBackgroundClass(table)"
+          :style="{
+            borderLeft: `4px solid ${getTableColor(table)}`,
+            borderRight: `4px solid ${getTableColor(table)}`
+          }"
           style="cursor: pointer"
         >
           <n-checkbox
@@ -176,10 +170,13 @@ import { usePrinterStore } from "@/store/modules/printer";
 import { changeOrderTable } from "@/api/modules/tables";
 import { useMessage } from "naive-ui";
 import { cloneDeep } from "@/utils";
+import { useTableLock } from "@/composables/useTableLock";
+import { useRouter } from 'vue-router';
 
 export default defineComponent({
   name: "WHome",
   setup() {
+    const router = useRouter();
     const settingsStore = useSettingsStore();
     const printerStore = usePrinterStore();
     const waiterStore = useWaiterStore();
@@ -191,6 +188,47 @@ export default defineComponent({
     const currentTableGrouping = ref(null);
     const currentGroup = ref([]);
     const tableGroups = ref([]);
+    
+    // Composable de table lock
+    const { isTableLockedByOther, getLockInfo } = useTableLock();
+
+    /**
+     * Maneja el click en una mesa
+     * Valida el lock_info antes de navegar
+     */
+    const handleTableClick = (table) => {
+      if (waiterStore.groupMode) {
+        // Modo de agrupación
+        if (currentTableGrouping.value === table.id ||
+            tableGroups.value.some((g) => g.some((t) => t.id === table.id))) {
+          return;
+        }
+        
+        if (!currentGroup.value.some((t) => t.id === table.id)) {
+          addToGroup(table);
+        } else {
+          removeFromGroup(table);
+        }
+      } else {
+        // Validar si la mesa está bloqueada por otro usuario
+        if (table.lock_info && table.lock_info.is_locked && !table.lock_info.locked_by_me) {
+          const remainingMinutes = table.lock_info.remaining_minutes;
+          const lockedBy = table.lock_info.locked_by_username;
+          
+          message.warning(
+            `Mesa bloqueada por ${lockedBy}. Disponible en ${remainingMinutes} minutos.`,
+            { duration: 4000 }
+          );
+          return;
+        }
+        
+        // Modo normal - navegar directamente
+        // El backend validará el lock en el endpoint /tables/{id}/order/
+        router.push({ name: 'WOrder', params: { table: table.id } });
+        cleanParams();
+      }
+    };
+
     const tables = computed(() => {
       let a = tableStore.areas.find((a) => a.id == area.value);
       if (a) {
@@ -275,6 +313,45 @@ export default defineComponent({
         });
     };
 
+    /**
+     * Obtener color de la mesa según su estado
+     * Verde: Libre
+     * Rojo: Con orden activa
+     * Amarillo: Bloqueada por otro usuario
+     */
+    const getTableColor = (table) => {
+      // Mesa bloqueada por otro usuario -> Amarillo
+      if (table.lock_info && table.lock_info.is_locked && !table.lock_info.locked_by_me) {
+        return '#ffc107'; // Amarillo
+      }
+      
+      // Mesa con orden -> Rojo
+      if (table.status === '3') {
+        return '#f44336'; // Rojo
+      }
+      
+      // Mesa libre -> Verde
+      return '#4caf50'; // Verde
+    };
+    
+    /**
+     * Obtener clase de fondo de la mesa según su estado
+     */
+    const getTableBackgroundClass = (table) => {
+      // Mesa bloqueada por otro usuario -> Fondo amarillo
+      if (table.lock_info && table.lock_info.is_locked && !table.lock_info.locked_by_me) {
+        return 'bg-locked';
+      }
+      
+      // Mesa con orden -> Fondo rojo
+      if (table.status === '3') {
+        return 'bg-occuped';
+      }
+      
+      // Mesa libre -> Fondo verde
+      return 'bg-free';
+    };
+
     return {
       settingsStore,
       printerStore,
@@ -295,6 +372,9 @@ export default defineComponent({
       currentArea,
       toTable,
       performChangeTable,
+      getTableColor,
+      getTableBackgroundClass,
+      handleTableClick
     };
   },
 });
@@ -302,7 +382,15 @@ export default defineComponent({
 
 <style lang="scss">
 .bg-occuped {
-  background-color: rgb(255, 128, 128);
+  background-color: rgb(255, 162, 162); // Rojo suave
+}
+
+.bg-locked {
+  background-color: rgb(255, 243, 176); // Amarillo suave
+}
+
+.bg-free {
+  background-color: rgb(200, 230, 201); // Verde suave
 }
 
 .black-outline {

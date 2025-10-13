@@ -224,7 +224,7 @@ export default defineComponent({
             retrieveTableOrder(route.params.table).then((response) => {
                 if (response.status === 200) {
                     // Transformar order_details del backend al formato que espera el frontend
-                    const transformedOrders = response.data.order_details.map(detail => {
+                    const transformedOrders = response.data.order.order_details.map(detail => {
                         if (detail.product_set) {
                             // Determinar si es MENU o COMBO
                             const isCombo = detail.product_set.set_type === 'COMBO';
@@ -264,7 +264,19 @@ export default defineComponent({
                     orderStore.orderId = response.data.id;
                 }
             }).catch((error) => {
-                if (error.response.status === 404) {
+                if (error.response && error.response.status === 423) {
+                    // Mesa bloqueada por otro usuario
+                    const lockData = error.response.data.lock_data || error.response.data;
+                    const lockedBy = lockData?.locked_by_username || 'otro usuario';
+                    const remainingMinutes = lockData?.remaining_minutes || 
+                        Math.ceil((lockData?.remaining_seconds || 0) / 60);
+                    
+                    message.error(
+                        `Mesa bloqueada por ${lockedBy}. Disponible en ${remainingMinutes} minutos.`,
+                        { duration: 5000 }
+                    );
+                    router.push({ name: 'WHome' });
+                } else if (error.response && error.response.status === 404) {
                     orderStore.setSavedOrders([]);
                     saleStore.order_initial = [];
                     orderStore.orderId = null;

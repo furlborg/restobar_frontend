@@ -251,7 +251,7 @@ export default defineComponent({
             try {
                 const response = await retrieveTableOrder(table);
                 if (response.status === 200) {
-                    const { order_details: orderDetails, user: userId, ask_for: askFor, id } = response.data;
+                    const { order_details: orderDetails, user: userId, ask_for: askFor, id } = response.data.order;
                     const mappedOrderDetails = orderDetails.map(detail => {
                         if (detail.product_set) {
                             // Determinar si es un MENU o un COMBO
@@ -300,6 +300,22 @@ export default defineComponent({
                     orderUser.value = userId;
                 }
             } catch (error) {
+                if (error.response?.status === 423) {
+                    // Mesa bloqueada por otro usuario
+                    const lockData = error.response.data.lock_data || error.response.data;
+                    const lockedBy = lockData.locked_by_username || 'otro usuario';
+                    const remainingMinutes = lockData.remaining_minutes || Math.ceil((lockData.remaining_seconds || 0) / 60);
+                    
+                    message.error(
+                        `Mesa bloqueada por ${lockedBy}. Disponible en ${remainingMinutes} minutos.`,
+                        { duration: 5000 }
+                    );
+                    
+                    // Redirigir al listado de mesas
+                    router.push({ name: 'TableHome' });
+                    return;
+                }
+                
                 if (error.response?.status === 404) {
                     resetStores();
                     // const initialUser = activeUsersStore.usersOptions[0]?.value;

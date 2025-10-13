@@ -397,24 +397,6 @@
             </n-space>
           </n-card>
         </n-gi>
-        <n-gi>
-          <n-card :bordered="false" class="channel-card">
-            <n-space vertical align="center" :size="8">
-              <n-icon size="32" color="#ee6666">
-                <v-icon name="md-eventavailable-round" />
-              </n-icon>
-              <n-text strong style="color: #ee6666; font-size: 16px;">Reservación</n-text>
-              <n-space vertical :size="0" align="center">
-                <n-text depth="3" style="font-size: 12px;">Total</n-text>
-                <n-text strong style="font-size: 20px;">S/ {{ formatMoney(dashboardData.canal_venta?.reservacion?.total || 0) }}</n-text>
-              </n-space>
-              <n-space vertical :size="0" align="center">
-                <n-text depth="3" style="font-size: 12px;">N° de venta</n-text>
-                <n-text strong style="font-size: 18px;">{{ dashboardData.canal_venta?.reservacion?.cantidad || 0 }}</n-text>
-              </n-space>
-            </n-space>
-          </n-card>
-        </n-gi>
       </n-grid>
     </n-card>
 
