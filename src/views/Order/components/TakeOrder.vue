@@ -333,9 +333,9 @@
                 @close="sale.payments = null"
             >
                 <n-space justify="space-between">
-                    <n-tag type="info">Total: S/. {{ showPayments ? sale.amount : null }}</n-tag>
+                    <n-tag type="info">Total: S/. {{ showPayments ? total : null }}</n-tag>
                     <n-tag :type="evalPayments ? 'error' : 'success'">Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}</n-tag>
-                    <n-tag :type="evalPayments ? 'error' : 'warning'">Faltante: S/. {{ showPayments ? (parseFloat(sale.amount) - currentPaymentsAmount).toFixed(2) : null }}</n-tag>
+                    <n-tag :type="evalPayments ? 'error' : 'warning'">Faltante: S/. {{ showPayments ? (parseFloat(total) - currentPaymentsAmount).toFixed(2) : null }}</n-tag>
                 </n-space>
                 <n-form-item class="mt-2" label="Pagos">
                     <n-dynamic-input v-model:value="sale.payments" :min="1" @create="createPayment">
@@ -926,7 +926,7 @@ export default defineComponent({
         const createPayment = () => ({ payment_method: null, amount: "0" });
 
         const doMultiplePayment = () => {
-            sale.value.payments = [{ payment_method: sale.value.payment_method, amount: String(sale.value.amount) }];
+            sale.value.payments = [{ payment_method: sale.value.payment_method, amount: String(total.value) }];
             showPayments.value = true;
         };
 
@@ -938,7 +938,7 @@ export default defineComponent({
         const evalPayments = computed(() => {
             if (sale.value.payments) {
                 const sum = sale.value.payments.reduce((acc, val) => acc + parseFloat(val.amount), 0);
-                return sum !== Number(sale.value.amount);
+                return sum !== Number(total.value);
             }
             return true;
         });

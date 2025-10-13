@@ -229,10 +229,10 @@
         }" preset="card" v-model:show="showPayments" title="Realizar venta" :mask-closable="false"
           closable @close="sale.payments = null">
           <n-space justify="space-between">
-            <n-tag type="info">Total: S/. {{ showPayments ? sale.amount : null }}</n-tag>
+            <n-tag type="info">Total: S/. {{ showPayments ? total : null }}</n-tag>
             <n-tag :type="evalPayments ? 'error' : 'success'">Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}</n-tag>
             <n-tag :type="evalPayments ? 'error' : 'warning'">
-              Faltante: S/. {{ showPayments ? parseFloat(sale.amount - currentPaymentsAmount).toFixed(2) : null }}
+              Faltante: S/. {{ showPayments ? parseFloat(total - currentPaymentsAmount).toFixed(2) : null }}
             </n-tag>
           </n-space>
           <n-form-item class="mt-2" label="Pagos">
@@ -701,7 +701,7 @@ export default defineComponent({
     const createPayment = () => ({ payment_method: null, amount: "0" });
 
     const doMultiplePayment = () => {
-      sale.value.payments = [{ payment_method: sale.value.payment_method, amount: String(sale.value.amount) }];
+      sale.value.payments = [{ payment_method: sale.value.payment_method, amount: String(total.value) }];
       showPayments.value = true;
     };
 
@@ -712,7 +712,7 @@ export default defineComponent({
 
     const evalPayments = computed(() => {
       if (!sale.value.payments?.length) return true;
-      const totalAmount = Number(sale.value.amount);
+      const totalAmount = Number(total.value);
       const totalPayments = sale.value.payments.reduce((acc, payment) => {
         const amount = parseFloat(payment.amount || '0');
         return Math.round((acc + amount) * 100) / 100;

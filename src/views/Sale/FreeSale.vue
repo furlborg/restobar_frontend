@@ -296,13 +296,13 @@
     }" preset="card" v-model:show="showPayments" title="Realizar venta" :mask-closable="false" closable
       @close="sale.payments = null">
       <n-space justify="space-between">
-        <n-tag type="info">Total: S/. {{ showPayments ? sale.amount : null }}</n-tag>
+        <n-tag type="info">Total: S/. {{ showPayments ? total : null }}</n-tag>
         <n-tag :type="evalPayments ? 'error' : 'success'">Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}
         </n-tag>
         <n-tag :type="evalPayments ? 'error' : 'warning'">Faltante: S/.
           {{
       showPayments
-        ? parseFloat(sale.amount - currentPaymentsAmount).toFixed(2)
+        ? parseFloat(total - currentPaymentsAmount).toFixed(2)
         : null
     }}</n-tag>
       </n-space>
@@ -843,7 +843,7 @@ export default defineComponent({
       sale.value.payments = [
         {
           payment_method: sale.value.payment_method,
-          amount: String(sale.value.amount),
+          amount: String(total.value),
         },
       ];
       showPayments.value = true;
@@ -864,7 +864,7 @@ export default defineComponent({
         return (
           sale.value.payments.reduce((acc, val) => {
             return (acc += parseFloat(val.amount));
-          }, 0) !== Number(sale.value.amount)
+          }, 0) !== Number(total.value)
         );
       } else {
         return true;
