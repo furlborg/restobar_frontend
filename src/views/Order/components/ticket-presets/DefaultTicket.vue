@@ -115,7 +115,7 @@
                                     </div>
                                     </template>
                                     <div v-if="info.order_type === 'M' && detail.indication.some((ind) => ind.takeAway)" class="indication-extra">
-                                    PARA LLEVAR: {{ indicationTakeAways(detail.indication) }}
+                                    PARA LLEVARrr: {{ indicationTakeAways(detail.indication) }}
                                     </div>
                                 </div>
                                 </div>

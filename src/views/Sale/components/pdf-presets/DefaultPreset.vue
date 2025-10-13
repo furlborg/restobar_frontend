@@ -269,7 +269,7 @@
             </div>
             <div class="extra-info">
               <div class="extra-info-label">MÉTODO DE PAGO:</div>
-              <div class="extra-info-value">{{ info[2] }}</div>
+              <div class="extra-info-value">{{ paymentMethods }}</div>
               <div class="extra-info-label">CONDICIÓN DE PAGO:</div>
               <div class="extra-info-value">{{ info[1] }}</div>
               <div class="extra-info-label">USUARIO:</div>
@@ -317,7 +317,7 @@
             <tbody>
               <tr>
                 <td>MÉTODO DE PAGO:</td>
-                <td>{{ info[2] }}</td>
+                <td>{{ paymentMethods }}</td>
               </tr>
               <tr>
                 <td>CONDICIÓN DE PAGO:</td>
@@ -526,6 +526,17 @@ export default defineComponent({
 
     const info = sale.informacion_adicional.split("|");
 
+    // Computed para métodos de pago
+    const paymentMethods = computed(() => {
+      if (sale.payments && Array.isArray(sale.payments) && sale.payments.length > 0) {
+        // Si hay pagos múltiples, construir cadena con todos los métodos
+        return sale.payments.map(p => `${p.payment_method}`).join(' | ');
+      } else {
+        // Pago único desde info[2]
+        return info[2];
+      }
+    });
+
     const amountText = numeroALetras(
       sale.totales.total_venta.toFixed("2"),
       "SOLES"
@@ -550,6 +561,7 @@ export default defineComponent({
       sale,
       title,
       info,
+      paymentMethods,
       generateQR,
       amountText,
       hasDiscounts,

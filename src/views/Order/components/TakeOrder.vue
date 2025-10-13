@@ -777,6 +777,10 @@ export default defineComponent({
 
         const PrintsAfterTakeOrder = (val) => {
             const values = { ...val.order, ...val.sale };
+            // Si hay pagos múltiples en json_sale, agregarlos al objeto values
+            if (val.sale.json_sale && val.sale.json_sale.payments) {
+                values.payments = val.sale.json_sale.payments;
+            }
             VoucherPrint({ data: values, businessStore, saleStore, changing: changing.value, show: true });
             if (values.delivery_info && settingsStore.business_settings.printer.print_delivery_ticket) {
                 printDeliveryInfo({ data: values, changing: changing.value });
@@ -801,6 +805,10 @@ export default defineComponent({
                         ticketPreviewRef.value.generate();
                         if (settingsStore.business_settings.printer.print_html) {
                             voucherData.value = response.data.sale;
+                            // Si hay pagos múltiples en json_sale, agregarlos a voucherData
+                            if (response.data.sale.json_sale && response.data.sale.json_sale.payments) {
+                                voucherData.value.payments = response.data.sale.json_sale.payments;
+                            }
                             showVoucher.value = true;
                             if (!ticketPreview.value) setTimeout(() => voucherDrawer.value.generate(), 250);
                         } else {
@@ -849,6 +857,10 @@ export default defineComponent({
                                                 settingsStore.business_settings.printer.print_html
                                             ) {
                                                 voucherData.value = response.data.sale;
+                                                // Si hay pagos múltiples en json_sale, agregarlos a voucherData
+                                                if (response.data.sale.json_sale && response.data.sale.json_sale.payments) {
+                                                    voucherData.value.payments = response.data.sale.json_sale.payments;
+                                                }
                                                 showVoucher.value = true;
                                                 if (!ticketPreview.value) {
                                                     setTimeout(
