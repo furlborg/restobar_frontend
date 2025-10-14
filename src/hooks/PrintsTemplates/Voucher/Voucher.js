@@ -523,27 +523,53 @@ const VoucherPrint = (props) => {
     );
   } else {
     lengthData += 20;
+    
+    // Preparar información de método de pago
+    const paymentInfo = [];
+    
+    paymentInfo.push({
+      tittle: "USUARIO",
+      twoPoints: ":",
+      cont: props.data.username,
+    });
+    
+    // Si hay pagos múltiples, mostrarlos todos
+    if (props.data.payments && Array.isArray(props.data.payments) && props.data.payments.length > 0) {
+      paymentInfo.push({
+        tittle: "TIPO DE PAGO",
+        twoPoints: ":",
+        cont: "MÚLTIPLE",
+      });
+      
+      // Agregar cada método de pago con su monto
+      props.data.payments.forEach((payment, index) => {
+        // payment_method puede venir como string directo o dentro de payment_method_name
+        const methodName = payment.payment_method || payment.payment_method_name || 'N/A';
+        paymentInfo.push({
+          tittle: `  ${methodName}`,
+          twoPoints: ":",
+          cont: `S/. ${Number(payment.amount).toFixed(2)}`,
+        });
+      });
+    } else {
+      // Pago único
+      paymentInfo.push({
+        tittle: "TIPO DE PAGO",
+        twoPoints: ":",
+        cont:
+          typeof props.data.payment_method === "string"
+            ? props.data.payment_method
+            : saleStore.getPaymentMethodDescription(
+                props.data.payment_method
+              ),
+      });
+    }
+    
     structure.push({
       line: true,
       fontSize:
         settingsStore.business_settings.printer.pre_account_ticket_font_size,
-      dat: [
-        {
-          tittle: "USUARIO",
-          twoPoints: ":",
-          cont: props.data.username,
-        },
-        {
-          tittle: "TIPO DE PAGO",
-          twoPoints: ":",
-          cont:
-            typeof props.data.payment_method === "string"
-              ? props.data.payment_method
-              : saleStore.getPaymentMethodDescription(
-                  props.data.payment_method
-                ),
-        },
-      ],
+      dat: paymentInfo,
     });
 
     lengthData += 10;

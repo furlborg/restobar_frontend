@@ -134,8 +134,21 @@ export default defineComponent({
             () => h('span', 'Menu')
           ),
           key: 'Menu',
-          icon: renderIcon('md-insertchart-outlined'),
+          icon: renderIcon('md-fastfood-twotone'),
           disabled: !userStore.hasPermission('view_sale'),
+        },
+        {
+          label: () =>
+            h(
+              RouterLink,
+              {
+                to: { name: "Combo" },
+              },
+              () => h("span", "Combos")
+            ),
+          key: "Combo",
+          icon: renderIcon("md-fastfood-twotone"),
+          disabled: !userStore.hasPermission("view_product"),
         },
         /* {
           label: () =>

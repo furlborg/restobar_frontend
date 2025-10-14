@@ -45,25 +45,7 @@
               @do-multiple-payment="doMultiplePayment"
             />
             <div v-else>
-              <n-tabs type="line" animated>
-                <n-tab-pane name="categories" tab="Categorías">
-                  <CategoriesList />
-                </n-tab-pane>
-                <n-tab-pane name="menu" tab="Menú">
-                  <n-card title="Menú Programado" :bordered="false">
-                    <n-list>
-                      <n-list-item v-for="menu in scheduledMenus" :key="menu.id" @click="handleOpenMenuModal(menu)" style="cursor: pointer">
-                        <n-thing>
-                          <n-space vertical>
-                            <n-text class="fs-4">{{ menu.menu.name }}</n-text>
-                            <n-text class="fs-6" type="info">Price: {{ menu.menu.price}}</n-text>
-                          </n-space>
-                        </n-thing>
-                      </n-list-item>
-                    </n-list>
-                  </n-card>
-                </n-tab-pane>
-              </n-tabs>
+              <CategoriesList />
             </div>
           </transition>
         </n-gi>
@@ -129,20 +111,6 @@
             />
             <CategoriesList v-else />
           </transition>
-        </n-card>
-      </n-tab-pane>
-      <n-tab-pane name="menu" tab="Menú" v-if="!selectProducts">
-        <n-card title="Menú Programado" :bordered="false">
-          <n-list>
-            <n-list-item v-for="menu in scheduledMenus" :key="menu.id" @click="handleOpenMenuModal(menu)" style="cursor: pointer">
-              <n-thing>
-                <n-space vertical>
-                  <n-text class="fs-4">{{ menu.menu.name }}</n-text>
-                  <n-text class="fs-6" type="info">Price: {{ menu.menu.price}}</n-text>
-                </n-space>
-              </n-thing>
-            </n-list-item>
-          </n-list>
         </n-card>
       </n-tab-pane>
       <n-tab-pane name="payment" tab="Resumen">
@@ -249,6 +217,7 @@
         </n-button>
       </n-space>
     </n-modal>
+
     <OrderIndications
       v-model:show="showModal"
       preset="card"
@@ -279,6 +248,7 @@
       @printed="() => $router.push({ name: 'TableHome' })"
       @canceled="() => $router.push({ name: 'TableHome' })"
     />
+
   </div>
 </template>
 
@@ -288,7 +258,7 @@ import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router";
 import { useMessage, useDialog } from "naive-ui";
 import { getSaleNumber } from "@/api/modules/sales";
 import { takeAwayOrder } from "@/api/modules/orders";
-import { getMenuToday } from '@/api/modules/products';
+import { searchCustomerByName, searchRucCustomer } from "@/api/modules/customer";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { useSettingsStore } from "@/store/modules/settings";
@@ -296,6 +266,8 @@ import { useGenericsStore } from "@/store/modules/generics";
 import { useUserStore } from "@/store/modules/user";
 import { useSaleTotals } from "@/composables/useSaleTotals";
 import { useBreakpoint } from 'vooks';
+import { isDecimal } from "@/utils";
+
 import OrderTaking from "./OrderTaking.vue";
 import PaymentSummary from "./PaymentSummary.vue";
 import CategoriesList from "./CategoriesList.vue";
@@ -303,9 +275,7 @@ import OrderIndications from "./OrderIndications.vue";
 import CustomerModal from "@/views/Customer/components/CustomerModal.vue";
 import TicketPreview from "@/views/Order/components/TicketPreview.vue";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer.vue";
-import MenuProductModal from "@/views/Table/components/MenuProductModal.vue";
 import format from "date-fns/format";
-import { isDecimal } from "@/utils";
 
 export default defineComponent({
   name: "TakeOrderLayout",
@@ -317,7 +287,6 @@ export default defineComponent({
     CustomerModal,
     TicketPreview,
     PreviewDrawer,
-    MenuProductModal,
   },
   setup() {
     const breakpointRef = useBreakpoint();
@@ -330,7 +299,7 @@ export default defineComponent({
     const userStore = useUserStore();
     const route = useRoute();
     const router = useRouter();
-    const { grandTotal, formattedTotals } = useSaleTotals();
+    const { grandTotal, formattedTotals, taxBreakdown, summary, menuTotal } = useSaleTotals();
 
     const loading = ref(false);
     const selectProducts = ref(false);
@@ -338,15 +307,12 @@ export default defineComponent({
     const isMultiple = ref(false);
     const ticketPreview = ref(settingsStore.businessSettings?.sale?.show_preview ?? true);
     const activeTab = ref("main");
-    const selectedMenu = ref(null);
     const showModal = ref(false);
     const showConfirm = ref(false);
     const showPayments = ref(false);
     const showCustomerModal = ref(false);
     const showPdf = ref(false);
     const showVoucher = ref(false);
-    const showMenuModal = ref(false);
-    const scheduledMenus = ref([]);
     const ticketPreviewRef = ref(null);
     const voucherDrawer = ref(null);
     const itemIndex = ref(null);
@@ -362,76 +328,22 @@ export default defineComponent({
     const whatsappNumber = ref("");
     const customerDocument = ref("");
 
-    const totals = computed(() => {
-      const toSale = saleStore.toSale;
-      console.log(toSale);
-      return {
-        GRV: toSale.reduce(
-          (acc, cur) =>
-            cur.product_affectation === 10
-              ? acc + parseFloat(cur.price_sale - cur.igv_tax) * cur.quantity
-              : acc,
-          0
-        ),
-        EXN: toSale.reduce(
-          (acc, cur) =>
-            cur.product_affectation === 20
-              ? acc + parseFloat(cur.price_sale) * cur.quantity
-              : acc,
-          0
-        ),
-        GRT: toSale.reduce(
-          (acc, cur) =>
-            cur.product_affectation === 21
-              ? acc + parseFloat(cur.price_sale) * cur.quantity
-              : acc,
-          0
-        ),
-        IGV: toSale.reduce((acc, cur) => acc + cur.igv_tax * cur.quantity, 0),
-        DSCT: toSale.some((d) => Number(d.discount) > 0)
-          ? toSale.reduce((acc, cur) => acc + Number(cur.discount), 0)
-          : parseFloat(sale.value.discount),
-      };
-    });
+    // Usar el composable para obtener los totales correctos incluyendo menús
+    const subTotal = computed(() => summary.value.subtotal);
+    const icbper = computed(() => taxBreakdown.value.icbper);
+    const totalGRV = computed(() => taxBreakdown.value.taxed);
+    const totalEXN = computed(() => taxBreakdown.value.exempt + menuTotal.value);
+    const totalGRT = computed(() => taxBreakdown.value.free);
+    const totalIGV = computed(() => taxBreakdown.value.igv);
 
-    const totalGRV = computed(() => totals.value.GRV);
-    const totalEXN = computed(() => totals.value.EXN);
-    const totalGRT = computed(() => totals.value.GRT);
-    const totalIGV = computed(() => totals.value.IGV);
-    const totalDSCT = computed(() => totals.value.DSCT);
+    const totalDSCT = computed(() => 
+      saleStore.toSale.some(detail => Number(detail.discount) > 0)
+        ? saleStore.toSale.reduce((acc, curVal) => acc + Number(curVal.discount), 0)
+        : Number(sale.value.discount));
 
-    const subTotal = computed(() =>
-      saleStore.toSale.reduce(
-        (acc, cur) =>
-          cur.product_affectation === 21 ? acc : acc + cur.price_sale * cur.quantity,
-        0
-      )
-    );
+    const changing = computed(() => 
+      sale.value.given_amount > grandTotal.value ? (sale.value.given_amount - grandTotal.value).toFixed(2) : 0.0);
 
-    const products_count = computed(() =>
-      saleStore.toSale.reduce((acc, cur) => acc + cur.quantity, 0)
-    );
-
-    const total = computed(() => {
-      let cal = parseFloat(subTotal.value - parseFloat(totalDSCT.value) + icbper.value + parseFloat(sale.value.other_charges));
-      if (sale.value.delivery_info) {
-        cal += parseFloat(sale.value.delivery_info.amount)
-      };
-      return cal.toFixed(2);
-    });
-
-    const icbper = computed(() =>
-      orderStore.orderList.reduce(
-        (acc, curVal) => acc + (curVal.icbper ? curVal.icbper_amount : 0),
-        0
-      )
-    );
-
-    const changing = computed(() =>
-      sale.value.given_amount > total.value
-        ? (sale.value.given_amount - total.value).toFixed(2)
-        : 0.0
-    );
 
     const getModalClass = computed(() => ({
       "w-100": genericsStore.device === "mobile",
@@ -477,42 +389,33 @@ export default defineComponent({
       total_igv: "0.00",
     });
 
-    watch(
-      [
-        total,
-        icbper,
-        totalGRV,
-        totalEXN,
-        totalGRT,
-        totalIGV,
-        totalDSCT,
-        () => saleStore.toSale,
-        () => orderStore.orderList.length,
-      ],
-      () => {
-        const productCount = saleStore.toSale.reduce(
-          (acc, curVal) => acc + curVal.quantity,
-          0
-        );
-        Object.assign(sale.value, {
-          count: productCount,
-          amount: total.value,
-          icbper: icbper.value,
-          taxed_amount: totalGRV.value,
-          exempt_amount: totalEXN.value,
-          free_amount: totalGRT.value,
-          igv_amount: totalIGV.value,
-          total_igv: parseFloat(totalIGV.value || 0).toFixed(2),
-        });
-
-        if (sale.value.payment_condition === 1) {
-          const newGivenAmount = total.value > 0 ? total.value : parseFloat(0).toFixed(2);
-          if (sale.value.given_amount !== newGivenAmount) {
-            sale.value.given_amount = newGivenAmount;
-          }
+    // Watcher combinado que usa useSaleTotals para menús y para productos regulares
+    watch([grandTotal, icbper, totalGRV, totalEXN, totalGRT, totalIGV, totalDSCT, () => saleStore.toSale, () => orderStore.orderList.length], () => {
+      // Calcular la cantidad de productos directamente (incluyendo menús)
+      const productCount = saleStore.toSale.reduce((acc, curVal) => acc + curVal.quantity, 0);
+      const menuCount = (saleStore.salePayload.sale_product_sets || []).reduce((acc, curVal) => acc + curVal.quantity, 0);
+      
+      Object.assign(sale.value, {
+        count: productCount + menuCount,
+        amount: grandTotal.value,
+        icbper: icbper.value,
+        taxed_amount: totalGRV.value,
+        exempt_amount: totalEXN.value,
+        free_amount: totalGRT.value,
+        igv_amount: totalIGV.value,
+        total_igv: parseFloat(totalIGV.value || 0).toFixed(2),
+      });
+      
+      
+      // Actualizar el monto dado cuando cambia el total (para contado)
+      if (sale.value.payment_condition === 1) {
+        const newGivenAmount = grandTotal.value > 0 ? grandTotal.value : parseFloat(0).toFixed(2);
+        if (sale.value.given_amount !== newGivenAmount) {
+          sale.value.given_amount = newGivenAmount;
+          console.log("TakeOrderLayout - Monto de pago actualizado a:", newGivenAmount);
         }
       }
-    );
+    });
 
     const obtainSaleNumber = async () => {
       if (!sale.value.serie) return;
@@ -540,18 +443,8 @@ export default defineComponent({
 
     onMounted(async () => {
       console.log('Componente montado, obteniendo número de venta inicial');
-      const menuData = await getMenuToday();
-      scheduledMenus.value = menuData.data;
       await obtainSaleNumber();
     });
-
-    const handleOpenMenuModal = async (menu) => {
-      const menuData = await getMenuToday(menu.id);
-      if (menuData?.data?.length) {
-        selectedMenu.value = menuData.data[0];
-        showMenuModal.value = true;
-      }
-    };
 
     const selectSerie = (serieId) => {
       if (serieId !== undefined && serieId !== null) sale.value.serie = serieId;
@@ -816,67 +709,24 @@ export default defineComponent({
 
     return {
       // Estados
-      loading,
-      selectProducts,
-      showObservations,
-      isMultiple,
-      ticketPreview,
-      activeTab,
-      showModal,
-      showConfirm,
-      showPayments,
-      showCustomerModal,
-      showPdf,
-      showVoucher,
+      loading, selectProducts, showObservations, isMultiple, ticketPreview, activeTab,
+      showModal, showConfirm, showPayments, showCustomerModal, showPdf, showVoucher,
       // Referencias
-      ticketPreviewRef,
-      voucherDrawer,
-      itemIndex,
-      userConfirm,
-      productSearch,
+      ticketPreviewRef, voucherDrawer, itemIndex, userConfirm, productSearch,
       // Datos
-      sale,
-      pdfData,
-      voucherData,
-      addressesOptions,
-      customerOptions,
-      searchingCustomer,
-      whatsappNumber,
-      customerDocument,
+      sale, pdfData, voucherData, addressesOptions, customerOptions,
+      searchingCustomer, whatsappNumber, customerDocument,
       // Computados
-      changing,
-      subTotal,
-      totalGRV,
-      totalEXN,
-      totalGRT,
-      totalIGV,
-      totalDSCT,
-      icbper,
-      getModalClass,
-      evalPayments,
-      currentPaymentsAmount,
-      filteredMethods,
+      changing, subTotal, totalGRV, totalEXN, totalGRT, totalIGV, totalDSCT, icbper,
+      getModalClass, evalPayments, currentPaymentsAmount, filteredMethods,
       // Stores
       orderStore,
       // Métodos
-      selectSerie,
-      changeSerie,
-      changeCondition,
-      showCustomerOptions,
-      autoCreateCustomer,
-      createAddressesOptions,
-      changeAddress,
-      handleDelivery,
-      performTakeAway,
-      doMultiplePayment,
-      performCreateOrder,
-      createPayment,
-      onCloseModal,
-      onSuccess,
-      isDecimal,
-      goToFirstTab,
-      checkState,
-      hasUnsavedChanges,
+      selectSerie, changeSerie, changeCondition, showCustomerOptions,
+      autoCreateCustomer, createAddressesOptions, changeAddress, handleDelivery,
+      performTakeAway, doMultiplePayment, performCreateOrder,
+      createPayment, onCloseModal, onSuccess, isDecimal, goToFirstTab,
+      checkState, hasUnsavedChanges,
     };
   },
 });

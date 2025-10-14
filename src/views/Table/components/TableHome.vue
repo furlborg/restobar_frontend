@@ -56,21 +56,13 @@
                         <n-card
                                 :id="`table-${table.id}`"
                                 class="overflow-hidden position-relative rounded-3"
-                                :class="{ 'bg-occuped': table.status === '3' }"
+                                :class="getTableBackgroundClass(table)"
+                                :style="{
+                                  borderLeft: `6px solid ${getTableColor(table)}`,
+                                  borderRight: `6px solid ${getTableColor(table)}`
+                                }"
                                 size="small"
-                                @click="
-                groupMode
-                  ? currentTableGrouping === table.id ||
-                    tableGroups.some((g) => g.some((t) => t.id === table.id))
-                    ? null
-                    : !currentGroup.some((t) => t.id === table.id)
-                    ? addToGroup(table)
-                    : removeFromGroup(table)
-                  : $router.push({
-                      name: 'TableOrder',
-                      params: { table: table.id },
-                    })
-              "
+                                @click="handleTableClick(table)"
                                 style="cursor: pointer"
                         >
                             <n-checkbox
@@ -330,8 +322,10 @@ import {
 import { cloneDeep } from "@/utils";
 import { useBusinessStore } from "@/store/modules/business";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
-import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
+import VuoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 import ModalAnulateSale from "@/views/Sale/modalAnulateSale.vue";
+import { useTableLock } from "@/composables/useTableLock";
+import { useRouter } from 'vue-router';
 
 export default defineComponent({
     name: "Tables",
@@ -343,6 +337,7 @@ export default defineComponent({
         const groupMode = ref(false);
         const isLoading = ref(false);
         const message = useMessage();
+        const router = useRouter();
         const openOptions = ref([]);
         const tableGroups = ref([]);
         const currentTableGrouping = ref(null);
@@ -353,6 +348,64 @@ export default defineComponent({
         const tableStore = useTableStore();
         const userStore = useUserStore();
         const businessStore = useBusinessStore();
+
+        // Composable de table lock
+        const {
+            isTableLockedByOther,
+            getLockInfo
+        } = useTableLock();
+
+        // Estado del modal de mesa bloqueada
+        const showLockedModal = ref(false);
+        const lockedTableData = ref(null);
+        const lockedTableDescription = ref('');
+
+        /**
+         * Maneja el click en una mesa
+         * Valida el lock_info antes de navegar
+         */
+        const handleTableClick = (table) => {
+            if (groupMode.value) {
+                // Modo de agrupación
+                if (currentTableGrouping.value === table.id ||
+                    tableGroups.value.some((g) => g.some((t) => t.id === table.id))) {
+                    return;
+                }
+                
+                if (!currentGroup.value.some((t) => t.id === table.id)) {
+                    addToGroup(table);
+                } else {
+                    removeFromGroup(table);
+                }
+            } else {
+                // Debug: verificar lock_info
+                console.log('🔍 handleTableClick - Mesa:', table.description);
+                console.log('   lock_info:', table.lock_info);
+                
+                // Validar si la mesa está bloqueada por otro usuario
+                if (table.lock_info && table.lock_info.is_locked && !table.lock_info.locked_by_me) {
+                    const remainingMinutes = table.lock_info.remaining_minutes;
+                    const lockedBy = table.lock_info.locked_by_username;
+                    
+                    console.log('❌ Mesa bloqueada por otro usuario:', lockedBy);
+                    
+                    message.warning(
+                        `Mesa bloqueada por ${lockedBy}. Disponible en ${remainingMinutes} minutos.`,
+                        { duration: 4000 }
+                    );
+                    return;
+                }
+                
+                console.log('✅ Permitiendo navegación a la mesa');
+                
+                // Modo normal - navegar directamente
+                // El backend validará el lock en el endpoint /tables/{id}/order/
+                router.push({
+                    name: 'TableOrder',
+                    params: { table: table.id }
+                });
+            }
+        };
 
         const dateNow = ref(null);
 
@@ -369,12 +422,12 @@ export default defineComponent({
                         console.log(settingsStore.business_settings.printer.print_html);
                 if(response.status === 200) {
                     if(settingsStore.business_settings.printer.print_html) {
-                        previewData.value = response.data;
+                        previewData.value = response.data.order;
                         showPreview.value = true;
                         setTimeout(() => previewDrawer.value.generate(), 250);
                     } else {
                         VoucherPrint({
-                            data: response.data,
+                            data: response.data.order,
                             businessStore,
                             prePayment: true,
                             auto: true,
@@ -542,15 +595,70 @@ export default defineComponent({
             settingsStore,
             previewDrawer,
             showPreview,
-            previewData
+            previewData,
+            // Table lock
+            isTableLockedByOther,
+            getLockInfo,
+            handleTableClick
         };
+    },
+    methods: {
+        /**
+         * Obtener color de la mesa según su estado
+         * Verde: Libre
+         * Rojo: Con orden activa
+         * Amarillo: Bloqueada por otro usuario
+         */
+        getTableColor(table) {
+            // Mesa bloqueada por otro usuario -> Amarillo
+            if (table.lock_info && table.lock_info.is_locked && !table.lock_info.locked_by_me) {
+                return '#ffc107'; // Amarillo
+            }
+            
+            // Mesa con orden -> Rojo
+            if (table.status === '3') {
+                return '#f44336'; // Rojo
+            }
+            
+            // Mesa libre -> Verde
+            return '#4caf50'; // Verde
+        },
+
+        /**
+         * Obtener clase de fondo según el estado de la mesa
+         * bg-locked: Bloqueada por otro usuario (amarillo claro)
+         * bg-occuped: Con orden activa (rojo claro)
+         * bg-free: Libre (sin color especial)
+         */
+        getTableBackgroundClass(table) {
+            // Mesa bloqueada por otro usuario -> Fondo amarillo
+            if (table.lock_info && table.lock_info.is_locked && !table.lock_info.locked_by_me) {
+                return 'bg-locked';
+            }
+            
+            // Mesa con orden -> Fondo rojo
+            if (table.status === '3') {
+                return 'bg-occuped';
+            }
+            
+            // Mesa libre -> Fondo verde
+            return 'bg-free';
+        }
     }
 });
 </script>
 
 <style lang="scss" scoped>
+.bg-free {
+  background-color: rgba(76, 175, 80, 0.1); // Verde claro
+}
+
+.bg-locked {
+  background-color: rgba(255, 193, 7, 0.15); // Amarillo claro
+}
+
 .bg-occuped {
-  background-color: rgb(255, 162, 162);
+  background-color: rgb(255, 162, 162); // Rojo claro
 }
 
 .fs-alt {

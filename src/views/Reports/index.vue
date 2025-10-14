@@ -11,6 +11,18 @@
           <div class="ico"><span>💵</span></div>
           <div class="name">Caja</div>
         </div>
+        <div class="tile" @click="go('SalesByDateReport')">
+          <div class="ico"><span>📅</span></div>
+          <div class="name">Ventas por Fechas</div>
+        </div>
+        <div class="tile" @click="go('SalesDetailedReport')">
+          <div class="ico"><span>📋</span></div>
+          <div class="name">Ventas Detalladas</div>
+        </div>
+        <div class="tile" @click="go('SalesRecordReport')">
+          <div class="ico"><span>🏆</span></div>
+          <div class="name">Récord de Ventas</div>
+        </div>
       </div>
     </div>
   </template>

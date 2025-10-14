@@ -1,16 +1,41 @@
 <template>
   <n-modal v-model:show="localShow" title="Programación diaria del menú" preset="dialog" style="width: 90%;">
     <div v-if="selectedDate && currentStep === 1" class="selected-date-display">
-      Fecha seleccionada: <strong>{{ new Date(selectedDate).toLocaleDateString() }}</strong>
+      <n-alert type="info" :show-icon="false" class="selected-date-alert">
+        <template #header>
+          📅 Fecha seleccionada
+        </template>
+        <strong>{{ new Date(selectedDate).toLocaleDateString('es-ES', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }) }}</strong>
+      </n-alert>
     </div>
     <div v-if="currentStep === 1" class="step1">
+      <!-- Controles de navegación del calendario -->
+      <div class="calendar-navigation">
+        <n-button @click="goToPreviousMonth" ghost>
+          ‹
+        </n-button>
+        <span class="current-month">
+          {{ currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }) }}
+        </span>
+        <n-button @click="goToNextMonth" ghost>
+          ›
+        </n-button>
+        <n-button @click="goToToday" size="small" type="primary" ghost>Hoy</n-button>
+      </div>
+      
       <calendar-view 
         :show-date="currentMonth"
         @click-date="onDateSelected"
+        @show-date-change="onShowDateChange"
         :enable-date-selection="true"
         :items="scheduledDaysForCalendar"
-        :attributes="[{ dates: [selectedDate], class: 'selected' }]"
-        class="theme-default holiday-us"
+        :date-classes="getDateClasses"
+        class="theme-default holiday-us custom-calendar"
         style="height: 600px;"
         >
         <template #header="{ headerProps }">
@@ -116,22 +141,29 @@ const currentMonth = ref(new Date())
 const scheduledDaysForCalendar = ref([])
 
 async function loadScheduledDays() {
-  const year = currentMonth.value.getFullYear()
-  const month = currentMonth.value.getMonth() + 1
-  const { data } = await getScheduledDaysForMonth(year, month)
+  try {
+    const year = currentMonth.value.getFullYear()
+    const month = currentMonth.value.getMonth() + 1
+    console.log(`Cargando días programados para ${month}/${year}`)
+    
+    const { data } = await getScheduledDaysForMonth(year, month)
 
-  scheduledDaysForCalendar.value = data.flatMap(d => {
-    const [day, monthStr, yearStr] = d.date.split('/')
-    const dateObj = new Date(parseInt(yearStr), parseInt(monthStr) - 1, parseInt(day))
+    scheduledDaysForCalendar.value = data.flatMap(d => {
+      const [day, monthStr, yearStr] = d.date.split('/')
+      const dateObj = new Date(parseInt(yearStr), parseInt(monthStr) - 1, parseInt(day))
 
-    // Si un día tiene varios menús, retornamos múltiples items para el mismo startDate
-    return (d.menus || [d]).map(menu => ({
-      id: menu.id,
-      startDate: dateObj,
-      title: menu.menu_name || d.menu_name || 'Menú programado'
-    }))
-  })
-  console.log("data", scheduledDaysForCalendar.value)
+      // Si un día tiene varios menús, retornamos múltiples items para el mismo startDate
+      return (d.menus || [d]).map(menu => ({
+        id: menu.id,
+        startDate: dateObj,
+        title: menu.menu_name || d.menu_name || 'Menú programado'
+      }))
+    })
+    console.log("Días programados cargados:", scheduledDaysForCalendar.value)
+  } catch (error) {
+    console.error("Error cargando días programados:", error)
+    scheduledDaysForCalendar.value = []
+  }
 }
 
 watch(localShow, (val) => {
@@ -146,8 +178,23 @@ watch(currentStep, (val) => {
   }
 })
 
+// Watcher para detectar cambios de mes y recargar los datos
+watch(currentMonth, () => {
+  if (localShow.value && currentStep.value === 1) {
+    loadScheduledDays()
+  }
+})
+
 function onDateSelected(date) {
   selectedDate.value = date
+  // Forzar la actualización del calendario para que aplique las nuevas clases
+  scheduledDaysForCalendar.value = [...scheduledDaysForCalendar.value]
+}
+
+function onShowDateChange(date) {
+  if (date && date !== currentMonth.value) {
+    currentMonth.value = new Date(date)
+  }
 }
 
 async function fetchMenus() {
@@ -325,13 +372,73 @@ function getProductStock(productId) {
   const product = selectedProducts.value.find(p => p.product_phase === productId)
   return product?.stock_override ?? 0
 }
+
+// Métodos para navegación del calendario
+function goToPreviousMonth() {
+  const newMonth = new Date(currentMonth.value)
+  newMonth.setMonth(newMonth.getMonth() - 1)
+  currentMonth.value = newMonth
+}
+
+function goToNextMonth() {
+  const newMonth = new Date(currentMonth.value)
+  newMonth.setMonth(newMonth.getMonth() + 1)
+  currentMonth.value = newMonth
+}
+
+function goToToday() {
+  currentMonth.value = new Date()
+}
+
+// Función para aplicar clases CSS a los días del calendario
+function getDateClasses(date) {
+  const classes = []
+  
+  // Si es el día seleccionado, agregar clase especial
+  if (selectedDate.value && 
+      date.toDateString() === new Date(selectedDate.value).toDateString()) {
+    classes.push('selected-day')
+  }
+  
+  // Si es el día actual, agregar clase para destacarlo
+  const today = new Date()
+  if (date.toDateString() === today.toDateString()) {
+    classes.push('today')
+  }
+  
+  return classes
+}
 </script>
 
 <style scoped>
 .step1 {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   padding: 16px;
+}
+
+.calendar-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 8px;
+}
+
+.calendar-navigation .n-button {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.current-month {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  text-transform: capitalize;
+  min-width: 200px;
+  text-align: center;
 }
 
 .step2 {
@@ -366,7 +473,7 @@ function getProductStock(productId) {
 
 .calendar-wrapper {
   width: 100%;
-  height: 800px; /* ajusta según tu modal */
+  height: 800rgb(12, 187, 210)ajusta según tu modal */
 }
 
 .stock-label {
@@ -376,7 +483,7 @@ function getProductStock(productId) {
 }
 
 .menu-day-active .cv-item {
-  background: #36ad6a; /* verde */
+  background: #068d9c; /* verde */
   color: white;
   border-radius: 4px;
   padding: 2px 4px;
@@ -392,17 +499,52 @@ function getProductStock(productId) {
 }
 
 .selected-date-display {
-  margin-bottom: 12px;
-  font-size: 14px;
-  color: #333;
-  padding: 6px 0;
+  margin-bottom: 16px;
 }
 
-/* Highlight selected day in calendar */
-.cv-day.selected {
-  outline: 2px solid #1890ff;
-  outline-offset: -2px;
-  border-radius: 4px;
+.selected-date-alert {
+  border-radius: 8px;
+  border: 2px solid #1890ff;
+  background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
 }
+
+.selected-date-alert .n-alert__body {
+  text-align: center;
+  padding: 12px;
+}
+
+/* Estilos para el calendario personalizado */
+:deep(.custom-calendar .cv-day.selected-day) {
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%) !important;
+  color: white !important;
+  border-radius: 8px !important;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.4) !important;
+  border: 2px solid #ffffff !important;
+  font-weight: bold !important;
+  transition: all 0.3s ease;
+}
+
+:deep(.custom-calendar .cv-day.today) {
+  border: 2px solid #1890ff !important;
+  border-radius: 6px;
+  font-weight: bold;
+}
+
+:deep(.custom-calendar .cv-day:hover) {
+  background-color: #f0f0f0 !important;
+  cursor: pointer;
+  transform: scale(1.02);
+  transition: all 0.2s ease;
+}
+
+/* Mejorar la visibilidad de días con eventos */
+:deep(.custom-calendar .cv-day.hasItems) {
+  background-color: #fff7e6 !important;
+  border-left: 4px solid #fa8c16 !important;
+}
+
+/* Highlight selected day in calendar - ya no necesario */
 
 </style>

@@ -8,14 +8,86 @@
       </template>
     </n-page-header>
     <div class="m-2">
-      <n-input placeholder="Buscar" v-model:value="search" />
+      <n-input placeholder="Buscar por nombre o precio (ej: 15 o 15.50)..." v-model:value="search">
+        <template #prefix>
+          <v-icon name="md-search-round" />
+        </template>
+      </n-input>
     </div>
 
-    <n-list class="m-0 px-2">
-      <n-list-item
-        v-for="(product) in filteredProducts"
-        :key="product.id"
-      >
+    <!-- Sección de Combos (si existen en esta categoría) -->
+    <div v-if="filteredCombos.length > 0" class="px-2 mb-3">
+      <n-divider title-placement="left">
+        <n-space align="center">
+          <v-icon name="md-localoffertwotone" style="color: #f0a020;" />
+          <n-text strong>Combos Disponibles</n-text>
+        </n-space>
+      </n-divider>
+      <n-list class="m-0">
+        <n-list-item v-for="combo in filteredCombos" :key="`combo-${combo.id}`">
+          <n-space vertical style="width: 100%;">
+            <n-space
+              justify="space-between"
+              @click="combo.quantity ? null : (combo.quantity = 1)"
+              style="cursor: pointer;"
+            >
+              <n-space vertical size="small">
+                <n-space align="center" size="small">
+                  <n-tag size="small" type="warning">COMBO</n-tag>
+                  <n-text strong>{{ combo.name }}</n-text>
+                </n-space>
+                <n-text depth="3" style="font-size: 12px;">
+                  {{ combo.items_count }} productos • 
+                  {{ combo.pricing_mode === 'FIXED' ? 'Precio Fijo' : 'Precio Variable' }}
+                </n-text>
+              </n-space>
+              <n-text class="fs-5" type="warning" strong>
+                S/. {{ parseFloat(combo.computed_price || combo.fixed_price || 0).toFixed(2) }}
+              </n-text>
+            </n-space>
+            
+            <n-collapse-transition :show="combo.quantity > 0">
+              <n-space justify="space-between" align="center">
+                <n-input-group>
+                  <n-button type="warning" size="small" @click="combo.quantity--">
+                    <v-icon name="md-remove-round" />
+                  </n-button>
+                  <n-input
+                    :value="combo.quantity.toString()"
+                    style="width: 50px"
+                    size="small"
+                    readonly
+                  />
+                  <n-button type="warning" size="small" @click="combo.quantity++">
+                    <v-icon name="md-add-round" />
+                  </n-button>
+                </n-input-group>
+                <n-button
+                  v-if="combo.extras && combo.extras.length > 0"
+                  type="info"
+                  size="small"
+                  @click.stop="openComboExtrasModal(combo)"
+                >
+                  <v-icon name="md-tuneround" class="me-1" />
+                  Adicionales
+                </n-button>
+              </n-space>
+            </n-collapse-transition>
+          </n-space>
+        </n-list-item>
+      </n-list>
+    </div>
+
+    <!-- Sección de Productos -->
+    <div v-if="filteredProducts.length > 0" class="px-2">
+      <n-divider v-if="filteredCombos.length > 0" title-placement="left">
+        <n-text strong>Productos</n-text>
+      </n-divider>
+      <n-list class="m-0">
+        <n-list-item
+          v-for="(product) in filteredProducts"
+          :key="product.id"
+        >
         <n-space vertical>
           <n-space
             justify="space-between"
@@ -69,12 +141,21 @@
           </n-collapse-transition>
         </n-space>
       </n-list-item>
-    </n-list>
+      </n-list>
+    </div>
+    
+    <!-- Modal para adicionales de combos -->
+    <ComboExtrasModal
+      v-model:show="showComboExtrasModal"
+      :combo="selectedCombo"
+      @success="handleComboExtrasSelected"
+    />
+    
     <ProductIndications
       v-model:show="showModal"
       preset="card"
       title="Indicaciones"
-      :product="waiterStore.preOrderList[orderItemIndex]"
+      :product="orderStore.orderList[orderItemIndex]"
       @success="showModal = false"
     ></ProductIndications>
     <teleport to="body">
@@ -85,151 +166,59 @@
       >
         <transition name="slide-fade">
           <n-button
-            v-if="filteredProducts.some((product) => product.quantity > 0)"
+            v-if="filteredProducts.some((product) => product.quantity > 0) || filteredCombos.some((combo) => combo.quantity > 0)"
             type="success"
             round
-            @click="addToPreList"
+            @click="addToOrderStore"
             ><v-icon class="me-1" name="md-add-round" /> Agregar</n-button
           >
         </transition>
-        <n-button
-          type="info"
-          :disabled="!(waiterStore.preOrderList.length > 0)"
-          round
-          @click="activeDrawer = true"
-          ><v-icon class="me-1" name="md-shoppingcart-round" />Ver
-          pedido</n-button
-        >
-      </n-space>
-    </teleport>
-    <n-drawer height="50%" v-model:show="activeDrawer" placement="bottom">
-      <n-drawer-content
-        title="Pedidos"
-        footer-style="padding: 0; height: 50px"
-        body-style="padding: 0"
-        body-content-style="padding: 6px"
-        closable
-      >
-        <n-list>
-          <n-list-item
-            class="py-1"
-            v-for="(orderItem, index) in waiterStore.preOrderList"
-            :key="index"
-          >
-            <n-thing>
-              <template #header>
-                <n-button
-                  class="fs-5"
-                  type="info"
-                  text
-                  @click="
-                    orderItemIndex = index;
-                    showModal = true;
-                  "
-                  >{{ orderItem.product_name }}</n-button
-                >
-              </template>
-              <n-space align="center" justify="space-between">
-                <n-input-group>
-                  <n-button
-                    type="warning"
-                    size="small"
-                    primary
-                    :disabled="orderItem.quantity <= 1"
-                    @click.stop="orderItem.quantity--"
-                  >
-                    <v-icon name="md-remove-round" />
-                  </n-button>
-                  <n-input-number
-                    v-model:value="orderItem.quantity"
-                    style="width: 50px"
-                    placeholder=""
-                    :min="1"
-                    :show-button="false"
-                    size="small"
-                    readonly
-                    @click.stop
-                  />
-                  <n-button
-                    type="warning"
-                    size="small"
-                    primary
-                    @click.stop="orderItem.quantity++"
-                  >
-                    <v-icon name="md-add-round" />
-                  </n-button>
-                </n-input-group>
-                <n-tag>{{
-                  `S/. ${
-                    Number(orderItem.quantity) *
-                    parseFloat(orderItem.price).toFixed(2)
-                  }`
-                }}</n-tag>
-                <!-- <n-text class="fs-6">
-                {{
-                  `S/. ${
-                    Number(orderItem.quantity) *
-                    parseFloat(orderItem.price).toFixed(2)
-                  }`
-                }}
-              </n-text> -->
-              </n-space>
-            </n-thing>
-            <template #suffix>
-              <n-button
-                type="error"
-                text
-                @click.stop="waiterStore.preOrderList.splice(index, 1)"
-              >
-                <v-icon name="md-disabledbydefault-round" scale="1.25" />
-              </n-button>
-            </template>
-          </n-list-item>
-        </n-list>
-        <n-modal
-          preset="card"
-          title="Nombre de Cliente"
-          v-model:show="showAskFor"
-          :segmented="{ content: 'hard' }"
-        >
-          <n-input placeholder="" v-model:value="ask_for" />
-          <template #action>
-            <n-space justify="end">
-              <n-button
-                type="info"
-                :disabled="!showAskFor || loading"
-                :loading="loading"
-                secondary
-                @click="
-                  orderStore.orderId
-                    ? performUpdateTableOrder()
-                    : performCreateTableOrder()
-                "
-                >Guardar</n-button
-              >
-            </n-space>
-          </template>
-        </n-modal>
-        <template #footer>
+        <!-- Botón para realizar pedido solo si hay productos no menús -->
+        <transition name="slide-fade">
           <n-button
-            class="h-100"
+            v-if="orderStore.orderList.filter(order => !order.from_menu).length > 0"
+            type="warning"
+            round
+            @click="
+              settingsStore.business_settings.order.order_customer_name
+                ? (showAskFor = true)
+                : orderStore.orderId
+                ? performUpdateTableOrder()
+                : performCreateTableOrder()
+            "
             :disabled="loading"
             :loading="loading"
+            ><v-icon class="me-1" name="md-fastfood-round" />{{ orderStore.orderId ? "Añadir" : "Realizar" }} pedido</n-button
+          >
+        </transition>
+      </n-space>
+    </teleport>
+    
+    <!-- Modal para nombre de cliente -->
+    <n-modal
+      preset="card"
+      title="Nombre de Cliente"
+      v-model:show="showAskFor"
+      :segmented="{ content: 'hard' }"
+    >
+      <n-input placeholder="" v-model:value="ask_for" />
+      <template #action>
+        <n-space justify="end">
+          <n-button
             type="info"
+            :disabled="!showAskFor || loading"
+            :loading="loading"
             secondary
-            block
             @click="
               orderStore.orderId
                 ? performUpdateTableOrder()
-                : settingsStore.business_settings.order.order_customer_name
-                ? (showAskFor = true)
                 : performCreateTableOrder()
             "
-            >{{ orderStore.orderId ? "Añadir" : "Realizar" }} pedido</n-button
+            >Guardar</n-button
           >
-        </template>
-      </n-drawer-content>
-    </n-drawer>
+        </n-space>
+      </template>
+    </n-modal>
     <ticket-preview
       ref="ticketPreview"
       v-model:show="showPdf"
@@ -239,6 +228,9 @@
       @printed="() => $router.push({ name: 'WHome' })"
       @canceled="() => $router.push({ name: 'WHome' })"
     />
+    
+    <!-- Botón flotante de pedido unificado -->
+    <FloatingOrderButton />
   </div>
 </template>
 
@@ -249,12 +241,14 @@ import { useRoute } from "vue-router";
 import { useMessage } from "naive-ui";
 import ProductIndications from "./ProductIndications";
 import TicketPreview from "@/views/Order/components/TicketPreview";
+import FloatingOrderButton from "@/WaiterMode/components/FloatingOrderButton.vue";
+import ComboExtrasModal from "@/WaiterMode/components/ComboExtrasModal.vue";
 import { useProductStore } from "@/store/modules/product";
 import { useTableStore } from "@/store/modules/table";
 import { useOrderStore } from "@/store/modules/order";
 import { useWaiterStore } from "@/store/modules/waiter";
 import { useSaleStore } from "@/store/modules/sale";
-import { getProductsByCategory } from "@/api/modules/products";
+import { getProductsByCategory, getCombos } from "@/api/modules/products";
 import { createTableOrder, updateTableOrder } from "@/api/modules/tables";
 
 import { cloneDeep } from "@/utils";
@@ -264,6 +258,8 @@ export default defineComponent({
   components: {
     ProductIndications,
     TicketPreview,
+    FloatingOrderButton,
+    ComboExtrasModal,
   },
   setup() {
     const message = useMessage();
@@ -274,21 +270,56 @@ export default defineComponent({
     const tableStore = useTableStore();
     const saleStore = useSaleStore();
     const waiterStore = useWaiterStore();
-    const activeDrawer = ref(false);
     const showModal = ref(false);
     const loading = ref(false);
     const orderItemIndex = ref(null);
     const search = ref("");
     const products = ref([]);
+    const combos = ref([]);
+    const showComboExtrasModal = ref(false);
+    const selectedCombo = ref(null);
 
     const filteredProducts = computed(() => {
-      return products.value.filter((product) =>
-        product.name.toLowerCase().includes(search.value.toLowerCase())
-      );
+      const searchTerm = search.value.toLowerCase().trim();
+      if (!searchTerm) return products.value;
+      
+      // Detectar si es búsqueda por precio (formato numérico)
+      const priceRegex = /^\d+(\.\d{0,2})?$/;
+      const isPrice = priceRegex.test(searchTerm);
+      
+      return products.value.filter((product) => {
+        if (isPrice) {
+          // Búsqueda por precio: comparar precio exacto o parcial
+          const productPrice = parseFloat(product.prices).toFixed(2);
+          return productPrice.includes(searchTerm) || productPrice.startsWith(searchTerm);
+        } else {
+          // Búsqueda por nombre (comportamiento original)
+          return product.name.toLowerCase().includes(searchTerm);
+        }
+      });
+    });
+
+    const filteredCombos = computed(() => {
+      const searchTerm = search.value.toLowerCase().trim();
+      if (!searchTerm) return combos.value;
+      
+      // Detectar si es búsqueda por precio
+      const priceRegex = /^\d+(\.\d{0,2})?$/;
+      const isPrice = priceRegex.test(searchTerm);
+      
+      return combos.value.filter((combo) => {
+        if (isPrice) {
+          // Búsqueda por precio: usar computed_price o fixed_price
+          const comboPrice = parseFloat(combo.computed_price || combo.fixed_price || 0).toFixed(2);
+          return comboPrice.includes(searchTerm) || comboPrice.startsWith(searchTerm);
+        } else {
+          // Búsqueda por nombre (comportamiento original)
+          return combo.name.toLowerCase().includes(searchTerm);
+        }
+      });
     });
 
     const performCreateTableOrder = () => {
-      addToList();
       loading.value = true;
       createTableOrder(
         route.params.table,
@@ -304,9 +335,9 @@ export default defineComponent({
             showPdf.value = true;
             setTimeout(() => ticketPreview.value.generate(), 250);
 
-            activeDrawer.value = false;
             tableStore.refreshData();
-            waiterStore.preOrderList = [];
+            // Limpiar solo productos del carrito que no son menús
+            orderStore.orders = orderStore.orders.filter(order => order.from_menu);
             // router.push({ name: "WHome" });
           }
         })
@@ -342,7 +373,6 @@ export default defineComponent({
     };
 
     const performUpdateTableOrder = async () => {
-      addToList();
       loading.value = true;
       await updateTableOrder(
         route.params.table,
@@ -362,9 +392,9 @@ export default defineComponent({
             showPdf.value = true;
             setTimeout(() => ticketPreview.value.generate(), 250);
 
-            activeDrawer.value = false;
             tableStore.refreshData();
-            waiterStore.preOrderList = [];
+            // Limpiar solo productos del carrito que no son menús
+            orderStore.orders = orderStore.orders.filter(order => order.from_menu);
             // router.push({ name: "WHome" });
           }
         })
@@ -390,10 +420,45 @@ export default defineComponent({
         });
     };
 
+    const loadCombos = async () => {
+      try {
+        const categoryId = route.params.category;
+        const response = await getCombos({
+          is_active: true,
+          category_id: categoryId,
+        });
+        if (response.status === 200) {
+          combos.value = response.data.results.map((combo) => ({
+            ...combo,
+            quantity: 0,
+            selected_extras: [],
+            indication: "",
+          }));
+        }
+      } catch (error) {
+        console.error("Error loading combos:", error);
+        // No mostramos error porque es opcional
+      }
+    };
+
+    const openComboExtrasModal = (combo) => {
+      selectedCombo.value = combo;
+      showComboExtrasModal.value = true;
+    };
+
+    const handleComboExtrasSelected = ({ selected_extras, indication }) => {
+      if (selectedCombo.value) {
+        selectedCombo.value.selected_extras = selected_extras;
+        selectedCombo.value.indication = indication;
+      }
+      showComboExtrasModal.value = false;
+    };
+
     const dateNow = ref(null);
 
     onMounted(async () => {
       loadProducts();
+      loadCombos();
 
       const fetch = new Date();
       const dd = fetch.getDate();
@@ -404,35 +469,66 @@ export default defineComponent({
       dateNow.value = `${dd}/${mm + 1}/${yy} ${hh}:${msms}`;
     });
 
-    const addToPreList = () => {
+    const addToOrderStore = () => {
+      // Agregar productos normales
       filteredProducts.value.forEach((product) => {
         if (product.quantity > 0) {
-          const existence = waiterStore.preOrderList.find(
-            (order) => order.id === product.id
+          // Verificar si el producto ya existe en el carrito
+          const existence = orderStore.orders.find(
+            (order) => order.product === product.id && !order.from_menu
           );
           if (typeof existence !== "undefined") {
             existence.quantity += product.quantity;
           } else {
-            let order = {
+            // Crear nueva orden usando addOrderItem del orderStore
+            let productOrder = {
               id: product.id,
-              product_name: product.name,
-              price: product.prices,
+              name: product.name,
+              prices: product.prices,
               quantity: Number(product.quantity),
               indication: [],
               quick_indications: product.quick_indications,
+              icbper: product.icbper || false,
+              affectation: product.affectation || '10',
+              igv_tax: product.igv_tax || 0
             };
-            waiterStore.preOrderList.push(order);
+            orderStore.addOrderItem(productOrder);
           }
         }
         product.quantity = 0;
         product.indications = [];
       });
-    };
 
-    const addToList = () => {
-      waiterStore.preOrderList.forEach((product) => {
-        orderStore.addOrderItem(product);
+      // Agregar combos
+      const combosToAdd = filteredCombos.value.filter((combo) => combo.quantity > 0);
+      combosToAdd.forEach((combo) => {
+        for (let i = 0; i < combo.quantity; i++) {
+          orderStore.addComboOrder({
+            product_set_id: combo.id,
+            combo_name: combo.name,
+            price: combo.computed_price || combo.fixed_price || 0,
+            quantity: 1,
+            selected_extras: combo.selected_extras || [],
+            indication: combo.indication || "",
+            pricing_mode: combo.pricing_mode,
+            category: combo.category,
+            items: combo.items || [],
+            from_combo: true,
+            quick_indications: combo.extras || [],
+            product_affectation: combo.affectation || 20,
+            product_igv: combo.igv_tax || settingsStore.businessSettings.sale.igv_tax,
+            icbper: false,
+          });
+        }
+        // Reset combo
+        combo.quantity = 0;
+        combo.selected_extras = [];
+        combo.indication = "";
       });
+
+      if (combosToAdd.length > 0 || filteredProducts.value.some(p => p.quantity > 0)) {
+        message.success("Productos y combos agregados al pedido");
+      }
     };
 
     const showAskFor = ref(false);
@@ -448,13 +544,14 @@ export default defineComponent({
     return {
       loading,
       search,
-      activeDrawer,
+      //activeDrawer,
       showModal,
       productStore,
       waiterStore,
       orderItemIndex,
       filteredProducts,
-      addToPreList,
+      filteredCombos,
+      addToOrderStore,
       orderStore,
       performCreateTableOrder,
       performUpdateTableOrder,
@@ -464,6 +561,10 @@ export default defineComponent({
       ticketPreview,
       showPdf,
       pdfData,
+      showComboExtrasModal,
+      selectedCombo,
+      openComboExtrasModal,
+      handleComboExtrasSelected,
     };
   },
 });

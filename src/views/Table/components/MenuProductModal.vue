@@ -13,14 +13,34 @@
               v-for="product in products"
               :key="product.product_id"
               class="product-card"
+              :class="{ 'no-stock': !availableStock[product.product_id]?.available || availableStock[product.product_id]?.available === 0 }"
             >
-              <div>{{ product.product_name }}</div>
-              <n-text type="success">Stock: {{ product.stock_override }}</n-text>
+              <div class="product-name">{{ product.product_name }}</div>
+              <n-text 
+                :type="availableStock[product.product_id]?.available > 0 ? 'success' : 'error'"
+                class="stock-info"
+              >
+                Stock: {{ availableStock[product.product_id]?.available || 0 }} de {{ availableStock[product.product_id]?.original || 0 }}
+                <span v-if="availableStock[product.product_id]?.used > 0" class="used-stock">
+                  (Usado: {{ availableStock[product.product_id]?.used }})
+                </span>
+                <span v-if="!availableStock[product.product_id]?.available || availableStock[product.product_id]?.available === 0"> (Sin stock)</span>
+              </n-text>
               <n-input-number
                 v-model:value="quantities[product.product_id]"
                 :min="0"
-                :max="product.stock"
+                :max="availableStock[product.product_id]?.available || 0"
+                :disabled="!availableStock[product.product_id]?.available || availableStock[product.product_id]?.available === 0"
+                :status="quantities[product.product_id] > (availableStock[product.product_id]?.available || 0) ? 'error' : 'default'"
+                size="small"
               />
+              <n-text 
+                v-if="quantities[product.product_id] > (availableStock[product.product_id]?.available || 0)" 
+                type="error" 
+                class="error-text"
+              >
+                ⚠️ Excede stock disponible
+              </n-text>
             </div>
           </n-space>
         </n-card>
@@ -63,7 +83,55 @@ const groupedProducts = computed(() => {
   return groups;
 })
 
+// Computed para calcular el stock disponible considerando lo ya agregado en el frontend
+const availableStock = computed(() => {
+  const stockMap = {};
+  
+  // Obtener menús ya agregados en el store para este menú específico
+  const existingMenuOrders = orderStore.salePayload?.sale_product_sets || [];
+  const currentMenuOrders = existingMenuOrders.filter(ps => ps.menu_id === props.menu.menu.id);
+  
+  props.menu.items?.forEach((product) => {
+    let usedStock = 0;
+    
+    // Calcular stock ya usado para este producto en menús existentes
+    currentMenuOrders.forEach(menuOrder => {
+      const menuItem = menuOrder.items?.find(item => item.product_id === product.product_id);
+      if (menuItem) {
+        usedStock += menuItem.quantity * menuOrder.quantity; // cantidad del item * cantidad de menús
+      }
+    });
+    
+    // Stock disponible = stock original - stock ya usado
+    const available = Math.max(0, (product.stock_override || 0) - usedStock);
+    stockMap[product.product_id] = {
+      original: product.stock_override || 0,
+      used: usedStock,
+      available: available
+    };
+  });
+  
+  return stockMap;
+})
+
 const handleAddMenu = () => {
+  // Validar que las cantidades no excedan el stock disponible (considerando lo ya agregado)
+  for (const product of props.menu.items) {
+    const selectedQuantity = quantities.value[product.product_id] || 0;
+    const stockInfo = availableStock.value[product.product_id];
+    const availableStockAmount = stockInfo?.available || 0;
+    
+    if (selectedQuantity > 0 && availableStockAmount === 0) {
+      window.$message?.warning(` Stock insuficiente: "${product.product_name}" - Ya no hay stock disponible (Usado: ${stockInfo?.used || 0}/${stockInfo?.original || 0})`);
+      return;
+    }
+    
+    if (selectedQuantity > availableStockAmount) {
+      window.$message?.warning(` Stock insuficiente: "${product.product_name}" - Solicitado: ${selectedQuantity}, Disponible: ${availableStockAmount} (Ya usado: ${stockInfo?.used || 0})`);
+      return;
+    }
+  }
+
   const quantitiesByPhase = {};
 
   for (const [phase, products] of Object.entries(groupedProducts.value)) {
@@ -72,6 +140,18 @@ const handleAddMenu = () => {
     if (totalPhaseQuantity === 0) {
       window.$message?.error(`Selecciona al menos un producto en la fase "${phase}"`);
       return;
+    }
+
+    // Validar stock por fase completa considerando stock ya usado
+    for (const product of products) {
+      const selectedQuantity = quantities.value[product.product_id] || 0;
+      const stockInfo = availableStock.value[product.product_id];
+      const availableStockAmount = stockInfo?.available || 0;
+      
+      if (selectedQuantity > 0 && selectedQuantity > availableStockAmount) {
+        window.$message?.warning(` Stock insuficiente en fase "${phase}": "${product.product_name}" - Solicitado: ${selectedQuantity}, Disponible: ${availableStockAmount} (Ya usado: ${stockInfo?.used || 0})`);
+        return;
+      }
     }
 
     quantitiesByPhase[phase] = totalPhaseQuantity;
@@ -122,10 +202,39 @@ const handleAddMenu = () => {
 
 <style scoped>
 .product-card {
-  padding: 10px 0;
+  padding: 12px 0;
   border-bottom: 1px solid #f0f0f0;
 }
 .product-card:last-child {
   border-bottom: none;
+}
+.product-card.no-stock {
+  opacity: 0.6;
+  background-color: #fafafa;
+  border-radius: 4px;
+  padding: 12px 8px;
+}
+.product-name {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.stock-info {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+.used-stock {
+  color: #f0a020;
+  font-style: italic;
+}
+.stock-calculation {
+  font-weight: 600;
+  color: #18a058;
+}
+.error-text {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 500;
 }
 </style>

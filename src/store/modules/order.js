@@ -4,13 +4,16 @@ import { useSettingsStore } from "@/store/modules/settings";
 export const useOrderStore = defineStore("order", {
   state: () => ({
     orderId: null,
-    orders: [],
+    orders: [], // Solo items nuevos (carrito)
+    savedOrders: [], // Items ya guardados en el backend
   }),
   getters: {
+    // Para el carrito (FloatingOrderButton) - solo items nuevos
     orderList(state) {
       const settingsStore = useSettingsStore();
       state.orders.forEach((order) => {
-        order.subTotal = Number(order.quantity) * parseFloat(order.price).toFixed(2);
+        // Corregir: convertir a número después de toFixed()
+        order.subTotal = Number((Number(order.quantity) * parseFloat(order.price)).toFixed(2));
         if (order.icbper) {
           order.icbper_amount = Number(order.quantity) * parseFloat(settingsStore.businessSettings.sale.icbper_tax);
         } else {
@@ -19,13 +22,40 @@ export const useOrderStore = defineStore("order", {
       });
       return state.orders;
     },
-    // Obtener solo los productos individuales (no menús)
-    productLines(state) {
-      return state.orders.filter(order => !order.from_menu);
+    // Para la pestaña "Pedido" - combinar items guardados + nuevos
+    fullOrderList(state) {
+      const settingsStore = useSettingsStore();
+      const allOrders = [...state.savedOrders, ...state.orders];
+      allOrders.forEach((order) => {
+        // Corregir: convertir a número después de toFixed()
+        order.subTotal = Number((Number(order.quantity) * parseFloat(order.price)).toFixed(2));
+        if (order.icbper) {
+          order.icbper_amount = Number(order.quantity) * parseFloat(settingsStore.businessSettings.sale.icbper_tax);
+        } else {
+          order.icbper_amount = 0;
+        }
+      });
+      return allOrders;
     },
-    // Obtener solo los menús
+    // Obtener solo los productos individuales (no menús ni combos)
+    productLines(state) {
+      return state.orders.filter(order => !order.from_menu && !order.from_combo);
+    },
+    // Obtener solo los menús y combos (ProductSets)
     menuSets(state) {
+      return state.orders.filter(order => order.from_menu || order.from_combo);
+    },
+    // Obtener solo menús
+    onlyMenus(state) {
       return state.orders.filter(order => order.from_menu);
+    },
+    // Obtener solo combos
+    onlyCombos(state) {
+      return state.orders.filter(order => order.from_combo);
+    },
+    // Para acceso reactivo a savedOrders
+    savedOrderList(state) {
+      return state.savedOrders;
     },
     orderTotal(state) {
       return state.orders.reduce((acc, curVal) => {
@@ -51,6 +81,13 @@ export const useOrderStore = defineStore("order", {
     addMenuOrder(menuOrder) {
       this.orders.push({
         ...menuOrder,
+        created_at: Date.now()
+      });
+    },
+    addComboOrder(comboOrder) {
+      // Agregar combo al carrito
+      this.orders.push({
+        ...comboOrder,
         created_at: Date.now()
       });
     },
@@ -119,6 +156,12 @@ export const useOrderStore = defineStore("order", {
       if (index !== -1) {
         this.orders.splice(index, 1);
       }
+    },
+    setSavedOrders(savedOrders) {
+      this.savedOrders = savedOrders;
+    },
+    clearNewOrders() {
+      this.orders = [];
     }
   },
 });

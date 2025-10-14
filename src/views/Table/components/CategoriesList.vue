@@ -92,16 +92,84 @@
                 </n-list>
             </n-card>
         </n-tab-pane>
+        <n-tab-pane v-if="!settingsStore.businessSettings.order?.order_by_customer" name="combos" tab="Combos">
+            <n-card
+                title="Combos Disponibles"
+                :bordered="false"
+                class="h-100"
+                content-class="overflow-auto"
+            >
+                <n-spin :show="loadingCombos">
+                    <!-- Categorías de Combos -->
+                    <n-space vertical size="large">
+                        <div v-for="category in comboCategories" :key="category.id">
+                            <n-divider title-placement="left">
+                                <n-text class="fs-5 fw-bold">{{ category.description }}</n-text>
+                            </n-divider>
+                            <n-list>
+                                <n-list-item 
+                                    v-for="combo in getCombosForCategory(category.id)" 
+                                    :key="combo.id" 
+                                    @click="handleOpenComboModal(combo)" 
+                                    style="cursor: pointer"
+                                >
+                                    <template #prefix>
+                                        <n-avatar v-if="combo.image" :src="combo.image" :size="60" />
+                                        <n-avatar v-else :size="60" style="background-color: #18a058;">
+                                            <v-icon name="gi-hot-meal" scale="1.5" />
+                                        </n-avatar>
+                                    </template>
+                                    <n-thing>
+                                        <template #header>
+                                            <n-text class="fs-4">{{ combo.name }}</n-text>
+                                        </template>
+                                        <template #description>
+                                            <n-space vertical size="small">
+                                                <n-text type="success" class="fs-6">
+                                                    S/. {{ parseFloat(combo.computed_price || combo.fixed_price || 0).toFixed(2) }}
+                                                </n-text>
+                                                <n-text depth="3" style="font-size: 12px;">
+                                                    {{ combo.combo_products?.length || 0 }} productos incluidos
+                                                </n-text>
+                                            </n-space>
+                                        </template>
+                                    </n-thing>
+                                    <template #suffix>
+                                        <n-button type="primary" circle>
+                                            <template #icon>
+                                                <v-icon name="md-add-round" />
+                                            </template>
+                                        </n-button>
+                                    </template>
+                                </n-list-item>
+                            </n-list>
+                            <n-empty 
+                                v-if="getCombosForCategory(category.id).length === 0" 
+                                description="No hay combos disponibles en esta categoría"
+                                size="small"
+                            />
+                        </div>
+                    </n-space>
+                    <n-empty 
+                        v-if="comboCategories.length === 0 && !loadingCombos" 
+                        description="No hay categorías de combos disponibles"
+                    />
+                </n-spin>
+            </n-card>
+        </n-tab-pane>
     </n-tabs>
-    <MenuProductModal v-if="showMenuModal" :menu="selectedMenu" @close="showMenuModal = false" /></template>
+    <MenuProductModal v-if="showMenuModal" :menu="selectedMenu" @close="showMenuModal = false" />
+    <ComboProductModal v-if="showComboModal" :combo="selectedCombo" @close="showComboModal = false" />
+</template>
 
 <script>
-import { defineComponent, ref, onMounted } from "vue";
+import { defineComponent, ref, onMounted, computed } from "vue";
 import { renderIcon } from "@/utils";
 import { useProductStore } from "@/store/modules/product";
 import { useSettingsStore } from "@/store/modules/settings";
-import { getMenuToday } from "@/api/modules/products";
+import { getMenuToday, getComboCategories, getCombos } from "@/api/modules/products";
 import MenuProductModal from "./MenuProductModal.vue";
+import ComboProductModal from "./ComboProductModal.vue";
 
 
 
@@ -109,6 +177,7 @@ export default defineComponent({
     name: "CategoriesList",
     components: {
         MenuProductModal,
+        ComboProductModal,
     },
     setup() {
         const productStore = useProductStore();
@@ -117,6 +186,13 @@ export default defineComponent({
         const scheduledMenus = ref([]);
         const showMenuModal = ref(false);
         const selectedMenu = ref(null);
+        
+        // Combos state
+        const comboCategories = ref([]);
+        const combos = ref([]);
+        const loadingCombos = ref(false);
+        const showComboModal = ref(false);
+        const selectedCombo = ref(null);
 
         const handleOpenMenuModal = async (menu) => {
             const menuData = await getMenuToday(menu.id);
@@ -125,12 +201,52 @@ export default defineComponent({
                 showMenuModal.value = true;
             }
         };
+        
+        const handleOpenComboModal = (combo) => {
+            selectedCombo.value = combo;
+            showComboModal.value = true;
+        };
+        
+        const getCombosForCategory = (categoryId) => {
+            return combos.value.filter(combo => {
+                // Usar combo_category del serializer
+                const comboCategoryId = combo.combo_category;
+                return comboCategoryId === categoryId;
+            });
+        };
+        
+        const loadCombos = async () => {
+            loadingCombos.value = true;
+            try {
+                // Cargar categorías de combos
+                // Solo cargar categorías que tienen combos activos (para órdenes/pedidos)
+                const categoriesResponse = await getComboCategories({ 
+                    is_disabled: false,
+                    only_with_combos: true
+                });
+                comboCategories.value = categoriesResponse.data.results || categoriesResponse.data || [];
+                
+                // Cargar todos los combos activos
+                const combosResponse = await getCombos({ 
+                    is_active: true,
+                    page: 1,
+                    page_size: 100
+                });
+                combos.value = (combosResponse.data.results || combosResponse.data || []);
+                    
+            } catch (error) {
+                console.error('Error loading combos:', error);
+                window.$message?.error('Error al cargar los combos');
+            } finally {
+                loadingCombos.value = false;
+            }
+        };
 
         onMounted(async() => {
             await productStore.refreshCategories();
-            const today = new Date().toISOString().slice(0, 10);
             const menuData = await getMenuToday();
-            scheduledMenus.value = menuData.data
+            scheduledMenus.value = menuData.data;
+            await loadCombos();
         });
 
         const productOptions = [
@@ -155,6 +271,14 @@ export default defineComponent({
             selectedMenu,
             handleOpenMenuModal,
             settingsStore,
+            // Combos
+            comboCategories,
+            combos,
+            loadingCombos,
+            showComboModal,
+            selectedCombo,
+            handleOpenComboModal,
+            getCombosForCategory,
         };
     }
 });

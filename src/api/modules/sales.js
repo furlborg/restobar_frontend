@@ -146,7 +146,7 @@ export async function createSale(sale, pass = null) {
             by_consumption: sale.by_consumption,
             observations: sale.observations,
             sale_details: sale.sale_details.filter((detail) => detail.quantity > 0),
-            sale_product_sets: sale.sale_product_sets || [], // Support for menu sets
+            product_sets: sale.sale_product_sets || [], // Support for menu sets
             payments: sale.payments,
             till: tillStore.currentTillID,
             do_update: sale.do_update,
@@ -182,7 +182,7 @@ export async function createSale(sale, pass = null) {
             by_consumption: sale.by_consumption,
             observations: sale.observations,
             sale_details: sale.sale_details.filter((detail) => detail.quantity > 0),
-            sale_product_sets: sale.sale_product_sets || [], // Support for menu sets
+            product_sets: sale.sale_product_sets || [], // Support for menu sets
             payments: sale.payments,
             till: tillStore.currentTillID,
             do_update: sale.do_update,
@@ -204,6 +204,12 @@ export async function getSaleNumber(serie) {
 
 export async function sendSale(id) {
     return await http.get(`sales/${id}/send_sale/`);
+}
+
+export async function changeSaleStatus(id, status) {
+    return await http.post(`sales/${id}/change-status/`, {
+        status: status
+    });
 }
 
 export async function nullSale(id, anulate) {
@@ -323,4 +329,14 @@ export async function getSalesReportByProduct(productId, dateFrom = null, dateTo
     params,
     responseType: "arraybuffer"
   });
+}
+
+/**
+ * Reenviar todos los comprobantes pendientes (estado NUEVO)
+ * que NO sean nota de venta (invoice_type != '80')
+ * 
+ * @returns {Promise} Respuesta con estadísticas del proceso de reenvío
+ */
+export async function resendPendingVouchers() {
+  return await http.post("sales/resend-pending/");
 }

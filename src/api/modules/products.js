@@ -164,20 +164,6 @@ export async function getProductsByCategory(categoryId) {
   return await http.get(`product-categories/${categoryId}/products/`);
 }
 
-export async function createProductCategory(categorie, is_disabled) {
-  return await http.post("product-categories/", {
-    description: categorie.toUpperCase(),
-    is_disabled
-  });
-}
-
-export async function updateProductCategory(idCategorie, description, is_disabled) {
-  return await http.put(`product-categories/${idCategorie}/`, {
-    description: description.toUpperCase(),
-    is_disabled
-  });
-}
-
 export async function disableProductCategory(id) {
   return await http.delete(`product-categories/${id}/`);
 }
@@ -319,4 +305,225 @@ export async function getProductsSold({
   return await http.get('products-sold/', {
     params,
   });
+}
+
+// -----------------------------
+// CATEGORIES
+// -----------------------------
+
+/**
+ * Get list of categories
+ * @param {Object} params - Query parameters
+ * @returns {Promise}
+ */
+export async function getCategories(params = {}) {
+  return await http.get("product-categories/", { params });
+}
+
+/**
+ * Get category by ID
+ * @param {number} id - Category ID
+ * @returns {Promise}
+ */
+export async function getCategoryById(id) {
+  return await http.get(`product-categories/${id}/`);
+}
+
+/**
+ * Create a new product category
+ * @param {string} description - Category description
+ * @param {boolean} is_disabled - Is disabled flag
+ * @returns {Promise}
+ */
+export async function createProductCategory(description, is_disabled = false) {
+  return await http.post("product-categories/", {
+    description,
+    is_disabled
+  });
+}
+
+/**
+ * Update product category
+ * @param {number} id - Category ID
+ * @param {string} description - Category description
+ * @param {boolean} is_disabled - Is disabled flag
+ * @returns {Promise}
+ */
+export async function updateProductCategory(id, description, is_disabled) {
+  return await http.put(`product-categories/${id}/`, {
+    description,
+    is_disabled
+  });
+}
+
+// -----------------------------
+// COMBO CATEGORIES
+// -----------------------------
+
+/**
+ * Get combo categories
+ * @param {Object} params - Query parameters
+ * @param {boolean} params.active_only - Only active categories
+ * @param {boolean} params.only_with_combos - Only categories with active combos (for orders)
+ * @returns {Promise}
+ */
+export async function getComboCategories(params = {}) {
+  return await http.get("combo-categories/", { params });
+}
+
+/**
+ * Get combo category by ID
+ * @param {number} id - Category ID
+ * @returns {Promise}
+ */
+export async function getComboCategoryById(id) {
+  return await http.get(`combo-categories/${id}/`);
+}
+
+/**
+ * Create combo category
+ * @param {string} description - Category description
+ * @param {boolean} is_disabled - Is disabled flag
+ * @returns {Promise}
+ */
+export async function createComboCategory(description, is_disabled = false) {
+  return await http.post("combo-categories/", {
+    description,
+    is_disabled
+  });
+}
+
+/**
+ * Update combo category
+ * @param {number} id - Category ID
+ * @param {string} description - Category description
+ * @param {boolean} is_disabled - Is disabled flag
+ * @returns {Promise}
+ */
+export async function updateComboCategory(id, description, is_disabled) {
+  return await http.put(`combo-categories/${id}/`, {
+    description,
+    is_disabled
+  });
+}
+
+/**
+ * Delete combo category (soft delete)
+ * @param {number} id - Category ID
+ * @returns {Promise}
+ */
+export async function deleteComboCategory(id) {
+  return await http.delete(`combo-categories/${id}/`);
+}
+
+// -----------------------------
+// COMBOS (CRUD)
+// -----------------------------
+
+/**
+ * Get all combos
+ * @param {Object} params - Query parameters (combo_category_id, is_active, search, etc.)
+ * @returns {Promise}
+ */
+export async function getCombos(params = {}) {
+  return await http.get("combos/", { params });
+}
+
+/**
+ * Get combo by ID
+ * @param {number} id - Combo ID
+ * @returns {Promise}
+ */
+export async function getCombo(id) {
+  return await http.get(`combos/${id}/`);
+}
+
+/**
+ * Create new combo
+ * @param {Object} combo - Combo data
+ * @returns {Promise}
+ */
+export async function createCombo(combo) {
+  const form = new FormData();
+  form.append("name", combo.name || "");
+  form.append("description", combo.description || "");
+  form.append("combo_category", combo.combo_category_id || combo.combo_category);
+  form.append("pricing_mode", combo.pricing_mode || "FIXED");
+  if (combo.fixed_price) {
+    form.append("fixed_price", combo.fixed_price);
+  }
+  form.append("is_active", combo.is_active !== false);
+  
+  if (combo.image && combo.image instanceof File) {
+    form.append("image", combo.image);
+  }
+  
+  if (combo.items && Array.isArray(combo.items)) {
+    form.append("items", JSON.stringify(combo.items));
+  }
+  
+  return await http.post("combos/", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+}
+
+/**
+ * Update existing combo
+ * @param {number} id - Combo ID
+ * @param {Object} combo - Combo data
+ * @returns {Promise}
+ */
+export async function updateCombo(id, combo) {
+  const form = new FormData();
+  form.append("name", combo.name || "");
+  form.append("description", combo.description || "");
+  form.append("combo_category", combo.combo_category_id || combo.combo_category);
+  form.append("pricing_mode", combo.pricing_mode || "FIXED");
+  if (combo.fixed_price) {
+    form.append("fixed_price", combo.fixed_price);
+  }
+  form.append("is_active", combo.is_active !== false);
+  
+  if (combo.image && combo.image instanceof File) {
+    form.append("image", combo.image);
+  }
+  
+  if (combo.items && Array.isArray(combo.items)) {
+    form.append("items", JSON.stringify(combo.items));
+  }
+  
+  return await http.patch(`combos/${id}/`, form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+}
+
+/**
+ * Delete combo
+ * @param {number} id - Combo ID
+ * @returns {Promise}
+ */
+export async function deleteCombo(id) {
+  return await http.delete(`combos/${id}/`);
+}
+
+// -----------------------------
+// PRODUCT SEARCH
+// -----------------------------
+
+/**
+ * Search products with filters
+ * @param {Object} params - Query parameters (search, product_type, limit, etc.)
+ * @returns {Promise}
+ */
+export async function searchProducts(params = {}) {
+  return await http.get("products/", { params });
+}
+
+/**
+ * Get product by ID (alias for retrieveProduct with same structure)
+ * @param {number} id - Product ID
+ * @returns {Promise}
+ */
+export async function getProductById(id) {
+  return await retrieveProduct(id);
 }

@@ -67,6 +67,14 @@ export const routes = [
         component: () => import(/* webpackChunkName: "menu" */ "@/views/Menu/index.vue")
       },
       {
+        path: "/combos",
+        name: "Combo",
+        meta: {
+          requiredPerm: "view_sale"
+        },
+        component: () => import(/* webpackChunkName: "combo" */ "@/views/Combo/index.vue")
+      },
+      {
         path: "/reports",
         name: "Reports",
         meta: {
@@ -83,6 +91,21 @@ export const routes = [
             path: "cash-flow",
             name: "CashFlowReport",
             component: () => import("@/views/Reports/components/CashReport.vue")
+          },
+          {
+            path: "sales-by-date",
+            name: "SalesByDateReport",
+            component: () => import(/* webpackChunkName: "reports-sales-by-date" */ "@/views/Reports/components/SalesByDate.vue")
+          },
+          {
+            path: "sales-detailed",
+            name: "SalesDetailedReport",
+            component: () => import(/* webpackChunkName: "reports-sales-detailed" */ "@/views/Reports/components/SalesDetailed.vue")
+          },
+          {
+            path: "sales-record",
+            name: "SalesRecordReport",
+            component: () => import(/* webpackChunkName: "reports-sales-record" */ "@/views/Reports/components/SalesRecord.vue")
           }
         ]
       },
@@ -206,7 +229,9 @@ export const routes = [
           {
             name: "TableOrder",
             path: ":table",
-            meta: { requiredPerm: "view_order" },
+            meta: { 
+              requiredPerm: "view_order"
+            },
             redirect: { name: "ProductCategories" },
             component: () => import("@/views/Table/components/TableOrderLayout.vue" ),
             children: [
@@ -428,6 +453,14 @@ export const routes = [
                     )
           },
           {
+            name: "WCombos",
+            path: "combos",
+            component: () =>
+                import(
+                    /* webpackChunkName: "w-combos" */ "@/WaiterMode/views/Combos.vue"
+                    )
+          },
+          {
             name: "WProducts",
             path: ":category",
             component: () =>
@@ -473,6 +506,19 @@ router.beforeEach(async(to, from, next) => {
   const genericsStore = useGenericsStore();
   genericsStore.updateDevice();
   await userStore.checkAuthentication();
+  
+  // Helper function to extract table ID from route
+  const extractTableId = (route) => {
+    // Try direct param
+    if (route.params.table) {
+      return parseInt(route.params.table, 10);
+    }
+    // Try path regex match for /table/:id or /waiter-mode/:id
+    const match = route.path.match(/\/(table|waiter-mode)\/(\d+)/);
+    return match ? parseInt(match[2], 10) : null;
+  };
+
+  // Original authentication logic
   if(to.matched.some((record) => record.meta.requiresAuth)) {
     if(userStore.isAuthenticated) {
       if(to.matched.some((record) => record.meta.requiredPerm)) {

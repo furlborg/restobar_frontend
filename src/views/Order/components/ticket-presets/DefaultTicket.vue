@@ -62,12 +62,21 @@
                                 <tr v-for="detail in group.items" :key="detail.id">
                                     <td align="center">{{ !!isUpdate ? detail.quantity : detail.initial_quantity }}</td>
                                     <td>
-                                    {{ getPrefix(detail.product_category) }}
-                                    {{ detail.product_name }}
+                                    {{ getPrefix(detail.product_category, detail.product_set) }}
+                                    {{ detail.product_name || detail.product_set?.name }}
                                     {{ generateIndication(detail.indication) }}
+                                    
+                                    <!-- Mostrar productos del menú/combo si existe product_set -->
+                                    <div v-if="detail.product_set && detail.product_set.items" class="menu-items-table">
+                                        <div v-for="item in detail.product_set.items" :key="item.id" class="menu-item-table">
+                                            • {{ item.quantity }}x 
+                                            {{ item.product_phase?.product_name || item.product?.name || 'Producto' }}
+                                            <span v-if="item.product_phase?.phase_name">({{ item.product_phase.phase_name }})</span>
+                                        </div>
+                                    </div>
                                     </td>
                                     <td v-if="settingsStore.business_settings.printer.show_product_price">
-                                    {{ detail.price.toFixed(2) }}
+                                    {{ (detail.price || detail.product_set?.price || 0).toFixed(2) }}
                                     </td>
                                 </tr>
                                 </tbody>
@@ -78,12 +87,24 @@
                             <template v-for="detail in group.items" :key="detail.id">
                                 <div class="ticket-body-item">
                                 <div>
-                                    {{ getPrefix(detail.product_category) }}
-                                    {{ settingsStore.business_settings.printer.kitchen_ticket_format !== 1 ? `${!!isUpdate ? detail.quantity : detail.initial_quantity} x ` : '' }}{{ detail.product_name }}
+                                    {{ getPrefix(detail.product_category, detail.product_set) }}
+                                    {{ settingsStore.business_settings.printer.kitchen_ticket_format !== 1 ? `${!!isUpdate ? detail.quantity : detail.initial_quantity} x ` : '' }}{{ detail.product_name || detail.product_set?.name }}
                                 </div>
                                 <div v-if="settingsStore.business_settings.printer.kitchen_ticket_format === 1">
                                     CANT: {{ !!isUpdate ? detail.quantity : detail.initial_quantity }}
                                 </div>
+                                
+                                <!-- Mostrar productos del menú/combo si existe product_set -->
+                                <div v-if="detail.product_set && detail.product_set.items" class="menu-items" :style="{ fontSize: `${settingsStore.business_settings.printer.body_font_size - 1}px` }">
+                                    <template v-for="item in detail.product_set.items" :key="item.id">
+                                        <div class="menu-item">
+                                            • {{ item.quantity }}x 
+                                            {{ item.product_phase?.product_name || item.product?.name || 'Producto' }}
+                                            <span v-if="item.product_phase?.phase_name" class="phase-name">({{ item.product_phase.phase_name }})</span>
+                                        </div>
+                                    </template>
+                                </div>
+                                
                                 <div class="indication" :style="{ fontSize: `${settingsStore.business_settings.printer.body_font_size - 1}px` }">
                                     <template v-if="!!detail.product_description && settingsStore.business_settings.printer.kitchen_ticket_format !== 3">
                                     <div v-for="desc in detail.product_description.split(',')" :key="desc">*{{ desc }}</div>
@@ -94,7 +115,7 @@
                                     </div>
                                     </template>
                                     <div v-if="info.order_type === 'M' && detail.indication.some((ind) => ind.takeAway)" class="indication-extra">
-                                    PARA LLEVAR: {{ indicationTakeAways(detail.indication) }}
+                                    PARA LLEVARrr: {{ indicationTakeAways(detail.indication) }}
                                     </div>
                                 </div>
                                 </div>
@@ -230,12 +251,31 @@ export default defineComponent({
                 ...props.data,
                 order_details: !props.place
                     ? props.data.order_details
-                    : props.data.order_details.filter((detail) =>
-                        settingsStore.business_settings.printer.subticket_mode &&
+                    : props.data.order_details.filter((detail) => {
+                        // Debug: verificar el filtrado para menús
+                        console.log('Filtering detail:', {
+                            id: detail.id,
+                            product_name: detail.product_name,
+                            product_set: !!detail.product_set,
+                            preparation_place: detail.preparation_place,
+                            place_description: props.place.description,
+                            will_include: settingsStore.business_settings.printer.subticket_mode &&
+                                props.place.is_main
+                                ? !!detail.preparation_place
+                                : detail.preparation_place === props.place.description
+                        });
+                        
+                        // Si es un menú (product_set existe), siempre incluirlo
+                        if (detail.product_set) {
+                            return true;
+                        }
+                        
+                        // Para productos normales, aplicar la lógica original
+                        return settingsStore.business_settings.printer.subticket_mode &&
                             props.place.is_main
                             ? !!detail.preparation_place
-                            : detail.preparation_place === props.place.description
-                    ),
+                            : detail.preparation_place === props.place.description;
+                    }),
                 table: !props.data.table
                     ? ""
                     : tableStore.getTableByID(props.data.table).description,
@@ -244,18 +284,24 @@ export default defineComponent({
                     : JSON.parse(props.data.json_sale)
             };
             data.order_details.forEach((detail) => {
-                detail.indication = detail.indication.map((indication) => {
-                    let desc = "";
-                    if (indication.quick_indications.length) {
-                        indication.quick_indications.forEach((ind) => {
-                            desc += `${ind}, `;
-                        });
-                    }
-                    indication.description = !indication.description
-                        ? desc.slice(0, -2)
-                        : desc + indication.description;
-                    return indication;
-                });
+                // Verificar si indication existe y es un array antes de usar map
+                if (detail.indication && Array.isArray(detail.indication)) {
+                    detail.indication = detail.indication.map((indication) => {
+                        let desc = "";
+                        if (indication.quick_indications && indication.quick_indications.length) {
+                            indication.quick_indications.forEach((ind) => {
+                                desc += `${ind}, `;
+                            });
+                        }
+                        indication.description = !indication.description
+                            ? desc.slice(0, -2)
+                            : desc + indication.description;
+                        return indication;
+                    });
+                } else {
+                    // Si indication no es un array, inicializar como array vacío
+                    detail.indication = [];
+                }
                 // if (
                 //     detail.product_category.toLowerCase().includes("combo") &&
                 //     settingsStore.business_settings.printer.kitchen_ticket_format === 3
@@ -336,16 +382,28 @@ export default defineComponent({
             }, 0);
         };
 
-        const getPrefix = (cat) => {
+        const getPrefix = (cat, productSet) => {
             let prefix = "";
             if (settingsStore.business_settings.printer.show_cat) {
-                if (cat.toLowerCase().includes("menu")) {
+                // Si hay product_set, determinar si es MENU o COMBO
+                if (productSet) {
+                    if (productSet.set_type === 'COMBO') {
+                        prefix = "[COMBO] >> ";
+                    } else if (productSet.set_type === 'MENU') {
+                        prefix = "[MENU] ";
+                    } else {
+                        // Fallback: intentar determinar por categoría
+                        prefix = "[MENU] ";
+                    }
+                }
+                // Si no hay product_set, usar la lógica de categoría original
+                else if (cat && cat.toLowerCase().includes("menu")) {
                     prefix = "[MENU] ";
-                } else if (cat.toLowerCase().includes("combo")) {
+                } else if (cat && cat.toLowerCase().includes("combo")) {
                     prefix = "[COMBO] >> ";
-                } else if (cat.toLowerCase().includes("porcion")) {
+                } else if (cat && cat.toLowerCase().includes("porcion")) {
                     prefix = "[PORCION] >> ";
-                } else {
+                } else if (cat) {
                     prefix = "[CARTA] >> ";
                 }
             }
@@ -431,6 +489,33 @@ export default defineComponent({
 
             &-extra {
                 margin-top: 5px;
+            }
+        }
+        
+        .menu-items {
+            margin-top: 5px;
+            margin-left: 10px;
+            
+            .menu-item {
+                font-size: smaller;
+                color: #666;
+                line-height: 1.2;
+                
+                .phase-name {
+                    font-style: italic;
+                    font-size: smaller;
+                }
+            }
+        }
+        
+        .menu-items-table {
+            margin-top: 3px;
+            font-size: smaller;
+            
+            .menu-item-table {
+                color: #666;
+                line-height: 1.1;
+                margin-bottom: 1px;
             }
         }
     }

@@ -75,30 +75,34 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Menús -->
-                            <template v-for="(menu, menuIndex) in orderStore.menuSets" :key="`menu-table-${menuIndex}`">
-                                <tr style="background-color: #f8f8f8">
+                            <!-- Menús y Combos -->
+                            <template v-for="(menuSet, menuIndex) in orderStore.menuSets" :key="`menu-set-table-${menuIndex}`">
+                                <!-- Fila principal del Menú o Combo -->
+                                <tr :style="{ backgroundColor: menuSet.from_combo ? '#f0f9ff' : '#f8f8f8' }">
                                     <td>
-                                        <n-button type="warning" text>
-                                            <v-icon name="md-restaurant-round"/>
+                                        <n-button :type="menuSet.from_combo ? 'success' : 'warning'" text>
+                                            <v-icon :name="menuSet.from_combo ? 'gi-hot-meal' : 'md-restaurant-round'"/>
                                         </n-button>
                                     </td>
-                                    <td><b>Menú: {{ menu.name }}</b></td>
-                                    <td></td>
-<!--                                     <td>
-                                        <n-input-number v-if="!isPaymentRoute" size="small" :min="1"
-                                            v-model:value="menu.quantity" @click.stop />
-                                        <template v-else>{{ menu.quantity }}</template>
-                                    </td> -->
-                                    <td>S/. {{ formatPrice(menu.price * menu.quantity) }}</td>
+                                    <td>
+                                        <b>{{ menuSet.from_combo ? 'Combo' : 'Menú' }}: {{ menuSet.name }}</b>
+                                        <br>
+                                        <n-tag v-if="menuSet.from_combo" size="small" type="success" style="margin-top: 4px;">
+                                            {{ menuSet.items?.length || 0 }} productos incluidos
+                                        </n-tag>
+                                    </td>
+                                    <td>
+                                        <n-tag size="small" type="info">{{ menuSet.quantity }}x</n-tag>
+                                    </td>
+                                    <td>S/. {{ formatPrice(menuSet.price * menuSet.quantity) }}</td>
                                     <td>
                                         <n-button v-if="!isPaymentRoute" type="error" text @click.stop="handleRemoveMenuSet(menuIndex)">
                                             <v-icon name="md-disabledbydefault-round" />
                                         </n-button>
                                     </td>
                                 </tr>
-                                <!-- Items del menú -->
-                                <tr v-for="item in menu.items" :key="`menu-item-table-${item.product_id}`" style="background-color: #fafafa">
+                                <!-- Items del menú o combo -->
+                                <tr v-for="item in menuSet.items" :key="`menu-set-item-table-${item.product_id || item.id}`" :style="{ backgroundColor: menuSet.from_combo ? '#fafeff' : '#fafafa' }">
                                     <td></td>
                                     <td style="padding-left: 20px;">
                                         {{ item.product_name }}
@@ -149,7 +153,7 @@
                                         <span class="fs-4">{{ orderStore.orderId ? 'Actualizar' : 'Realizar' }} pedido</span>
                                     </n-button>
                                 </td>
-                                <td colspan="2" class="fs-6 fw-bold">S/. {{ formattedTotals.grandTotal }}</td>
+                                <td colspan="2" class="fs-6 fw-bold">{{ formattedTotals.grandTotal }}</td>
                             </tr>
                         </tfoot>
                     </n-table>
@@ -283,7 +287,8 @@
 <script>
 import OrderIndications from "./OrderIndications";
 import ProductSearchLabel from "@/views/Product/components/ProductSearchLabel.vue";
-import { defineComponent, ref, computed, h, watch, provide } from "vue";
+import { defineComponent, ref, computed, h, watchEffect, provide, watch } from "vue";
+
 import { useRoute, useRouter } from "vue-router";
 import { useMessage, useDialog } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
@@ -364,7 +369,7 @@ export default defineComponent({
             set: (value) => emit('update:selectedCustomerId', value)
         });
 
-        const selectProduct = (productId) => emit('productSelect', productId);
+        //const selectProduct = (productId) => emit('productSelect', productId);
 
         const localAskFor = computed({
             get: () => props.ask_for,
@@ -426,7 +431,7 @@ export default defineComponent({
         const getCustomerOrders = (customerId) => 
             orderStore.orderList.filter(order => order.customer?.id === customerId && order.quantity > 0);
         const getCustomerTotal = (customerId) => 
-            getCustomerOrders(customerId).reduce((total, order) => total + order.subTotal, 0);
+            getCustomerOrders(customerId).reduce((total, order) => total + Number(order.subTotal || 0), 0);
         const getTotalAmount = () => orderStore.orderTotal;
         const formatPrice = (price) => (isNaN(price) ? 0 : Number(price)).toFixed(2);
         const hasAnyOrders = computed(() => orderStore.orderList.some(order => order.quantity > 0));
@@ -437,18 +442,19 @@ export default defineComponent({
         };
 
         const handleRemoveMenuSet = (menuIndex) => {
-            const menuItems = orderStore.orderList.filter(item => item.from_menu);
-            const menuToRemove = menuItems[menuIndex];
-            if (!menuToRemove) return;
+            // Obtener menús Y combos (ProductSets)
+            const menuSetItems = orderStore.orderList.filter(item => item.from_menu || item.from_combo);
+            const menuSetToRemove = menuSetItems[menuIndex];
+            if (!menuSetToRemove) return;
 
-            const orderIndex = orderStore.orderList.findIndex(item => item === menuToRemove);
+            const orderIndex = orderStore.orderList.findIndex(item => item === menuSetToRemove);
             if (orderIndex === -1) return;
 
-            if (!menuToRemove.id) {
+            if (!menuSetToRemove.id) {
                 orderStore.orderList.splice(orderIndex, 1);
                 nullifyTableOrder();
             } else {
-                deleteOrderDetail(orderIndex, menuToRemove.id);
+                deleteOrderDetail(orderIndex, menuSetToRemove.id);
             }
             updateSaleStore();
         };

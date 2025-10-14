@@ -389,12 +389,16 @@ export default defineComponent({
     });
 
     const isPaymentDisabled = computed(() => {
-      const hasToSaleItems = saleStore.toSale.length > 0;
+      // Verificar si hay productos regulares o menús
+      const hasRegularProducts = saleStore.toSale.length > 0;
+      const hasMenuSets = saleStore.salePayload.sale_product_sets && saleStore.salePayload.sale_product_sets.length > 0;
+      const hasAnyItems = hasRegularProducts || hasMenuSets;
+      
       const givenAmount = Number(props.sale.given_amount) || 0;
       const totalAmountValue = Number(props.sale.amount) || 0;
       const isCashPayment = props.sale.payment_condition === 1;
       const disable =
-        !hasToSaleItems ||
+        !hasAnyItems ||
         (isCashPayment
           ? givenAmount < totalAmountValue
           : !(givenAmount < totalAmountValue));
@@ -545,11 +549,11 @@ export default defineComponent({
     // Crear los items para PaymentTotals
     const paymentTotalsItems = computed(() => {
       return [
-        { label: "SUBTOTAL", value: props.subTotal, editable: false },
-        { label: "OP. GRAVADAS", value: props.totalGrv, editable: false },
+        { label: "SUBTOTAL", value: props.subTotal, editable: false, alwaysShow: true },
+        { label: "OP. GRAVADAS", value: props.totalGrv, editable: false, alwaysShow: true },
         { label: "OP. EXONERADAS", value: props.totalExn, editable: false, alwaysShow: false },
         { label: "OP. GRATUITAS", value: props.totalGrt, editable: false, alwaysShow: false },
-        { label: "IGV", value: props.totalIgv, editable: false },
+        { label: "IGV", value: props.totalIgv, editable: false, alwaysShow: true },
         { label: "ICBPER", value: props.icbper, editable: false, alwaysShow: false },
         {
           label: "DSCT",

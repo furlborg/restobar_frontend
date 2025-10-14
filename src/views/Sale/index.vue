@@ -25,8 +25,17 @@
                             @click="showReport = true"
                     >
                         Reporte
-                    </n-button
+                    </n-button>
+                    <n-button
+                            v-if="settingsStore.businessSettings.sale?.enable_invoices"
+                            type="warning"
+                            tertiary
+                            :loading="resendingVouchers"
+                            @click="handleResendPendingVouchers"
                     >
+                        <v-icon name="md-send-round" class="me-1"/>
+                        Reenviar Pendientes
+                    </n-button>
                 </n-space>
             </template>
             <n-space justify="space-between">
@@ -124,7 +133,7 @@
                 @update:sale="onCloseUpdate"
                 @on-success="updateSuccess"
         />
-        <sale-report-modal v-model:show="showReport"/>
+                <sale-report-modal v-model:show="showReport"/>
         <preview-drawer v-model:show="showPdf" :data="saleData"/>
         <modal-anulate-sale :data-modal="showConfirm"/>
     </div>
@@ -139,7 +148,10 @@ import {
     listSalesByPage,
     searchSales,
     retrieveSale,
-    sendSale, nullSale
+    sendSale, 
+    nullSale,
+    changeSaleStatus,
+    resendPendingVouchers
 } from "@/api/modules/sales";
 import { useSaleStore } from "@/store/modules/sale";
 import { useGenericsStore } from "@/store/modules/generics";
@@ -172,6 +184,7 @@ export default defineComponent({
         const isTableLoading = ref(false);
         const sales = ref([]);
         const showFilters = ref(false);
+        const resendingVouchers = ref(false);
         const filterParams = ref({
             branch: !userStore.user.branchoffice
                 ? businessStore.currentBranch
@@ -309,6 +322,31 @@ export default defineComponent({
             await loadSales();
         };
 
+        const handleResendPendingVouchers = async() => {
+            resendingVouchers.value = true;
+            try {
+                const { data } = await resendPendingVouchers();
+                
+                // Mostrar mensaje detallado
+                if (data.sent_successfully > 0 || data.failed > 0) {
+                    message.success(
+                        `Proceso completado: ${data.sent_successfully} enviados, ` +
+                        `${data.failed} fallidos, ${data.skipped} omitidos`
+                    );
+                } else {
+                    message.info(data.message || 'No hay comprobantes pendientes');
+                }
+                
+                // Refrescar tabla para mostrar estados actualizados
+                await refreshTable();
+            } catch (error) {
+                console.error('Error resending vouchers:', error);
+                message.error(error.response?.data?.error || 'Error al reenviar comprobantes');
+            } finally {
+                resendingVouchers.value = false;
+            }
+        };
+
         const statusOptions = [
             {
                 value: "N",
@@ -317,6 +355,10 @@ export default defineComponent({
             {
                 value: "E",
                 label: "ENVIADO"
+            },
+            {
+                value: "X",
+                label: "ERROR"
             },
             {
                 value: "A",
@@ -393,6 +435,73 @@ export default defineComponent({
 
         const saleData = ref(null);
 
+        // Variables para cambio de estado
+        const isChangingStatus = ref(false);
+
+        const changeStatus = (row) => {
+            // Transición 1: ERROR → NUEVO (cambio de estado simple)
+            if(row.status === 'X') {
+                performStatusChange(row, 'N', 'ERROR', 'NUEVO');
+            }
+            // Transición 2: NUEVO → ENVIADO (intenta enviar)
+            else if(row.status === 'N') {
+                performStatusChange(row, 'E', 'NUEVO', 'ENVIADO', true); // true = maneja error
+            }
+            else {
+                message.warning("No se puede cambiar el estado de esta venta.");
+            }
+        };
+
+        const performStatusChange = async(row, newStatus, fromLabel, toLabel, handleError = false) => {
+            if(isChangingStatus.value) {
+                message.warning("Hay un cambio de estado en progreso...");
+                return;
+            }
+            
+            isChangingStatus.value = true;
+            isTableLoading.value = true;
+            
+            try {
+                const response = await changeSaleStatus(row.id, newStatus);
+                if(response.status === 200) {
+                    message.success(response.data.message || `Estado cambiado de ${fromLabel} a ${toLabel}`);
+                    await pagination.value.onChange(pagination.value.page);
+                }
+            } catch(error) {
+                console.error(error);
+                
+                // Extraer SOLO el mensaje de error principal, ignorando otros campos
+                let errorMessage = "Error al cambiar el estado";
+                
+                if(error.response?.data) {
+                    // Si hay un campo 'error' específico, usarlo
+                    if(typeof error.response.data.error === 'string') {
+                        errorMessage = error.response.data.error;
+                    }
+                    // Si no hay campo 'error', pero hay status 400, mensaje genérico
+                    else if(error.response.status === 400) {
+                        errorMessage = "Error al enviar la venta. El documento ha sido marcado como ERROR.";
+                    }
+                } else if(error.response?.status === 500) {
+                    errorMessage = "Error interno del servidor. Intente nuevamente.";
+                } else if(error.message) {
+                    errorMessage = error.message;
+                }
+                
+                // Mostrar SOLO un mensaje
+                message.error(errorMessage, {
+                    duration: 5000,
+                    closable: true
+                });
+                
+                // Refrescar tabla para mostrar el estado actualizado
+                await pagination.value.onChange(pagination.value.page);
+            } finally {
+                isChangingStatus.value = false;
+                isTableLoading.value = false;
+            }
+        };
+
         return {
             showPdf,
             saleData,
@@ -424,6 +533,9 @@ export default defineComponent({
             genericsStore,
             settingsStore,
             performNullifySale,
+            isChangingStatus,
+            resendingVouchers,
+            handleResendPendingVouchers,
             tableColumns: createSaleColumns({
                 updateSale(row) {
                     showModal.value = true;
@@ -474,7 +586,8 @@ export default defineComponent({
                 nullifySale(row) {
                     // deleteId.value = row.id;
                     showConfirm.value = { show: true, saleId: row.id, permission: "cancel_sale", loadSales, performNullifySale };
-                }
+                },
+                changeStatus
             })
         };
     }
