@@ -523,7 +523,8 @@ export default defineComponent({
             sale.value.given_amount = newGivenAmount;
           }
         }
-      }
+      },
+      { immediate: true, deep: true }
     );
 
     const formRules = computed(() => {
@@ -807,7 +808,6 @@ export default defineComponent({
     }, { immediate: true });
 
     onMounted(async () => {
-      sale.value.given_amount = total.value;
       if (sale.value.serie) {
         await obtainSaleNumber();
       }
