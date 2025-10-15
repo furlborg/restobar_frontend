@@ -369,7 +369,7 @@ export default defineComponent({
             set: (value) => emit('update:selectedCustomerId', value)
         });
 
-        //const selectProduct = (productId) => emit('productSelect', productId);
+        const selectProduct = (productId) => emit('productSelect', productId);
 
         const localAskFor = computed({
             get: () => props.ask_for,
@@ -553,8 +553,6 @@ export default defineComponent({
         };
 
         const orderButtonDisabled = computed(() => !props.hasUnsavedChanges);
-
-        provide("handleProductClick", selectProduct);
 
         return {
             userStore, activeUsersStore, route, router, tableStore, settingsStore, genericsStore, 
