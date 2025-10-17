@@ -144,7 +144,7 @@
                       detail.product_affectation === 21 ||
                       !!Number(sale.discount)
                     "
-                    step=".5"
+                    step="0.1"
                     v-model="detail.discount"
                     v-autowidth
                     @click="$event.target.select()"
@@ -466,6 +466,16 @@ export default defineComponent({
       return cal.toFixed(2);
     });
 
+    const otherCharges = computed(() => {
+      const parsed = parseFloat(sale.value.other_charges);
+      return Number.isFinite(parsed) ? parsed : 0;
+    });
+
+    const discountValidationThreshold = computed(() => {
+      const baseAmount = subTotal.value + icbper.value + otherCharges.value;
+      return Math.round(baseAmount * 100) / 100;
+    });
+
     const sale = ref({
       order: null,
       serie: saleStore.getFreeSaleSerieByType("3")?.id,
@@ -549,6 +559,12 @@ export default defineComponent({
     const performCreateSale = () => {
       saleForm.value.validate((errors) => {
         if (!errors) {
+          const currentDiscount = Math.round((parseFloat(totalDSCT.value) || 0) * 100) / 100;
+          const maxAllowedDiscount = discountValidationThreshold.value;
+          if (maxAllowedDiscount > 0 && currentDiscount >= maxAllowedDiscount) {
+            message.warning("El descuento no puede ser 100%. Debe cambiar a operacion gratuita.");
+            return;
+          }
           dialog.success({
             closable: false,
             title: "Venta",

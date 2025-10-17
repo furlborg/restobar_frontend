@@ -537,6 +537,25 @@ export default defineComponent({
     const updateSale = (updates) => {
       emit('update:sale', updates);
     };
+    const parsedOtherCharges = computed(() => {
+      const parsed = parseFloat(props.sale.other_charges);
+      return Number.isFinite(parsed) ? parsed : 0;
+    });
+
+    const discountBaseAmount = computed(() => {
+      const subTotalNumber = Number(props.subTotal) || 0;
+      const icbperNumber = Number(props.icbper) || 0;
+      return subTotalNumber + icbperNumber + parsedOtherCharges.value;
+    });
+
+    const discountInputLimit = computed(() => {
+      if (discountBaseAmount.value <= 0) {
+        return 0;
+      }
+      const capped = discountBaseAmount.value - 0.01;
+      return Math.max(Math.round(capped * 100) / 100, 0);
+    });
+
     // Crear los items para PaymentTotals
     const paymentTotalsItems = computed(() => {
       return [
@@ -552,7 +571,8 @@ export default defineComponent({
           editable: true,
           field: "discount",
           step: 0.5,
-          disabled: false
+          disabled: false,
+          max: discountInputLimit.value
         },
         {
           label: "OTROS CARGOS",

@@ -41,14 +41,14 @@
           <td>
             <div class="currency-input-wrapper">
               <span class="currency-symbol">S/.</span>
-              <input 
+              <input
                 class="custom-input price-input" 
-                type="number" 
-                min="0" 
-                step=".5" 
-                v-model="detail.price_sale" 
-                @input="handlePriceChange(detail)" 
-                v-autowidth 
+                type="number"
+                min="0"
+                step="0.1"
+                v-model="detail.price_sale"
+                @input="handlePriceChange(detail)"
+                v-autowidth
                 @click="$event.target.select()"
               />
             </div>
@@ -56,15 +56,15 @@
           <td>
             <div class="currency-input-wrapper">
               <span class="currency-symbol">S/.</span>
-              <input 
-                class="custom-input discount-input" 
-                type="number" 
-                min="0" 
+              <input
+                class="custom-input discount-input"
+                type="number"
+                min="0"
                 :max="!detail.price_sale ? 0 : detail.price_sale" 
                 :disabled="detail.product_affectation === 21 || !!Number(sale.discount)" 
-                step=".5" 
-                v-model="detail.discount" 
-                v-autowidth 
+                step="0.1"
+                v-model="detail.discount"
+                v-autowidth
                 @click="$event.target.select()"
               />
             </div>

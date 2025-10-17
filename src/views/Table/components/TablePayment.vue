@@ -307,10 +307,12 @@ export default defineComponent({
     );
 
     const total = computed(() => {
-      let cal = parseFloat(subTotal.value - parseFloat(totalDSCT.value) + icbper.value + parseFloat(sale.value.other_charges));
+      let cal = parseFloat(
+        subTotal.value - parseFloat(totalDSCT.value) + icbper.value + parseFloat(sale.value.other_charges)
+      );
       if (sale.value.delivery_info) {
-        cal += parseFloat(sale.value.delivery_info.amount)
-      };
+        cal += parseFloat(sale.value.delivery_info.amount);
+      }
       return cal.toFixed(2);
     });
 
@@ -319,6 +321,27 @@ export default defineComponent({
         (acc, curVal) => acc + (curVal.icbper ? curVal.icbper_amount : 0),
         0
       )
+    );
+
+    const otherCharges = computed(() => {
+      const parsed = parseFloat(sale.value.other_charges);
+      return Number.isFinite(parsed) ? parsed : 0;
+    });
+
+    const discountBaseAmount = computed(
+      () => subTotal.value + icbper.value + otherCharges.value
+    );
+
+    const discountInputMax = computed(() => {
+      if (discountBaseAmount.value <= 0) {
+        return 0;
+      }
+      const capped = discountBaseAmount.value - 0.01;
+      return Math.max(Math.round(capped * 100) / 100, 0);
+    });
+
+    const discountValidationThreshold = computed(
+      () => Math.round(discountBaseAmount.value * 100) / 100
     );
 
     const changing = computed(() =>
@@ -341,7 +364,8 @@ export default defineComponent({
           editable: !settingsStore.business_settings.sale?.show_discount_label,
           field: "discount",
           step: 0.5,
-          disabled: saleStore.toSale.some(d => Number(d.discount) > 0)
+          disabled: saleStore.toSale.some(d => Number(d.discount) > 0),
+          max: discountInputMax.value
         },
         {
           label: "OTROS",
@@ -446,6 +470,13 @@ export default defineComponent({
             message.warning(msg);
           }
           message.error("Datos Incorrectos");
+          return;
+        }
+
+        const currentDiscount = Math.round((parseFloat(totalDSCT.value) || 0) * 100) / 100;
+        const maxAllowedDiscount = discountValidationThreshold.value;
+        if (maxAllowedDiscount > 0 && currentDiscount >= maxAllowedDiscount) {
+          message.warning("El descuento no puede ser 100%. Debe cambiar a operacion gratuita.");
           return;
         }
 
