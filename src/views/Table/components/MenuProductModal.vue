@@ -4,6 +4,7 @@
     preset="card"
     :title="menu.name"
     style="width: 90vw; max-width: 1200px;"
+    @close="$emit('close')"
   >
     <n-grid :cols="4" :x-gap="12">
       <n-gi v-for="(products, type) in groupedProducts" :key="type">
