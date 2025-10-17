@@ -196,7 +196,17 @@
                                             <div>
                                                 DSCT:
                                                 <span>S/.</span>
-                                                <input class="custom-input fw-bold" type="number" min="0" step=".5" v-model="totalDSCT" v-autowidth :disabled="saleStore.toSale.some(d => Number(d.discount) > 0)" @click="$event.target.select()"/>
+                                                <input
+                                                    class="custom-input fw-bold"
+                                                    type="number"
+                                                    min="0"
+                                                    step=".5"
+                                                    :max="discountInputLimit"
+                                                    v-model="totalDSCT"
+                                                    v-autowidth
+                                                    :disabled="saleStore.toSale.some(d => Number(d.discount) > 0)"
+                                                    @click="$event.target.select()"
+                                                />
                                             </div>
                                             <div>
                                                 OTROS:
@@ -472,6 +482,23 @@ export default defineComponent({
             if (sale.value.delivery_info) cal += parseFloat(sale.value.delivery_info.amount);
             return cal.toFixed(2);
         });
+
+        const otherCharges = computed(() => {
+            const parsed = parseFloat(sale.value.other_charges);
+            return Number.isFinite(parsed) ? parsed : 0;
+        });
+
+        const discountBaseAmount = computed(() => subTotal.value + icbper.value + otherCharges.value);
+
+        const discountInputLimit = computed(() => {
+            if (discountBaseAmount.value <= 0) {
+                return 0;
+            }
+            const capped = discountBaseAmount.value - 0.01;
+            return Math.max(Math.round(capped * 100) / 100, 0);
+        });
+
+        const discountValidationThreshold = computed(() => Math.round(discountBaseAmount.value * 100) / 100);
 
         const saleForm = ref();
         const sale = ref({
@@ -789,6 +816,12 @@ export default defineComponent({
         };
 
         const performCreateOrder = async() => {
+            const currentDiscount = Math.round((parseFloat(totalDSCT.value) || 0) * 100) / 100;
+            const maxAllowedDiscount = discountValidationThreshold.value;
+            if (maxAllowedDiscount > 0 && currentDiscount >= maxAllowedDiscount) {
+                message.warning("El descuento no puede ser 100%. Debe cambiar a operacion gratuita.");
+                return;
+            }
             loading.value = true;
             sale.value.sale_details = saleStore.toSale.map(detail => ({
                 ...detail,
@@ -827,6 +860,12 @@ export default defineComponent({
             formRules.effect;
             saleForm.value.validate((errors) => {
                 if (!errors) {
+                    const currentDiscount = Math.round((parseFloat(totalDSCT.value) || 0) * 100) / 100;
+                    const maxAllowedDiscount = discountValidationThreshold.value;
+                    if (maxAllowedDiscount > 0 && currentDiscount >= maxAllowedDiscount) {
+                        message.warning("El descuento no puede ser 100%. Debe cambiar a operacion gratuita.");
+                        return;
+                    }
                     if (userStore.user.role === "MOZO") {
                         showConfirm.value = true;
                     } else {
@@ -1059,6 +1098,7 @@ export default defineComponent({
             totalEXN,
             totalGRT,
             totalDSCT,
+            discountInputLimit,
             whatsappNumber,
             ticketPreview,
             ticketPreviewRef,

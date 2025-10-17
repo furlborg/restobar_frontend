@@ -129,7 +129,7 @@
                     <input class="custom-input" type="number" min="0" :max="!detail.price_sale ? 0 : detail.price_sale"
                       :disabled="detail.product_affectation === 21 ||
       !!Number(sale.discount)
-      " step=".5" v-model="detail.discount" v-autowidth @click="$event.target.select()" />
+      " step="0.1" v-model="detail.discount" v-autowidth @click="$event.target.select()" />
                   </td>
                   <td>
                     {{
@@ -193,7 +193,7 @@
               <div>
                 DSCT:
                 <span>S/.</span>
-                <input class="custom-input fw-bold" type="number" min="0" :max="subTotal" step=".5" v-model="totalDSCT"
+                <input class="custom-input fw-bold" type="number" min="0" :max="discountInputLimit" step=".5" v-model="totalDSCT"
                   v-autowidth :disabled="sale.sale_details.some(
       (detail) => Number(detail.discount) > 0
     )
@@ -465,6 +465,23 @@ export default defineComponent({
       ).toFixed(2);
     });
 
+    const otherCharges = computed(() => {
+      const parsed = parseFloat(sale.value.other_charges);
+      return Number.isFinite(parsed) ? parsed : 0;
+    });
+
+    const discountBaseAmount = computed(() => subTotal.value + icbper.value + otherCharges.value);
+
+    const discountInputLimit = computed(() => {
+      if (discountBaseAmount.value <= 0) {
+        return 0;
+      }
+      const capped = discountBaseAmount.value - 0.01;
+      return Math.max(Math.round(capped * 100) / 100, 0);
+    });
+
+    const discountValidationThreshold = computed(() => Math.round(discountBaseAmount.value * 100) / 100);
+
     watch(total, () => {
       sale.value.amount =
         total.value > 0 ? total.value : parseFloat(0).toFixed(2);
@@ -511,6 +528,12 @@ export default defineComponent({
     const performCreateSale = () => {
       saleForm.value.validate((errors) => {
         if (!errors) {
+          const currentDiscount = Math.round((parseFloat(totalDSCT.value) || 0) * 100) / 100;
+          const maxAllowedDiscount = discountValidationThreshold.value;
+          if (maxAllowedDiscount > 0 && currentDiscount >= maxAllowedDiscount) {
+            message.warning("El descuento no puede ser 100%. Debe cambiar a operacion gratuita.");
+            return;
+          }
           dialog.success({
             closable: false,
             title: "Venta",
@@ -920,6 +943,7 @@ export default defineComponent({
       totalEXN,
       totalGRT,
       totalDSCT,
+      discountInputLimit,
       whatsappNumber,
       ticketPreview,
       showPdf,
