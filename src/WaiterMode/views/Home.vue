@@ -167,7 +167,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { defineComponent, ref, computed, onMounted } from "vue";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useTableStore } from "@/store/modules/table";
 import { useWaiterStore } from "@/store/modules/waiter";
@@ -191,8 +191,6 @@ export default defineComponent({
     const currentTableGrouping = ref(null);
     const currentGroup = ref([]);
     const tableGroups = ref([]);
-    const socket = ref(null);
-    const wsConnected = ref(false);
     const tables = computed(() => {
       let a = tableStore.areas.find((a) => a.id == area.value);
       if (a) {
@@ -228,12 +226,13 @@ export default defineComponent({
     };
 
     onMounted(() => {
+      console.log('🔵 WaiterMode Home.vue montado');
       if (tableStore.getAreasOptions.length && tillStore.currentTillID) {
         area.value = tableStore.getAreasOptions[0].id;
       }
       
-      // Conectar WebSocket para escuchar cambios de estado de mesas
-      connectWebSocket();
+      // Conectar WebSocket único desde el store
+      tableStore.connectWebSocket();
     });
 
     const fromTable = ref(null);
@@ -280,71 +279,6 @@ export default defineComponent({
         });
     };
 
-    const connectWebSocket = () => {
-      try {
-        const apiUrl = import.meta.env.VITE_APP_URL.replace(/^https?:\/\//, '');
-        const socketUrl = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${apiUrl}/ws/print/`;
-        
-        socket.value = new WebSocket(socketUrl);
-        
-        socket.value.onopen = () => {
-          console.log('🟢 WebSocket conectado (WaiterMode)');
-          wsConnected.value = true;
-        };
-        
-        socket.value.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            
-            // Escuchar notificaciones de cambio de estado de mesa
-            if (data.type === 'table_status_changed') {
-              console.log('📢 Notificación de mesa:', data);
-              
-              // Actualizar el estado de las mesas
-              tableStore.refreshData().then(() => {
-                message.info(`Mesa ${data.table_id}: ${data.status_text}`);
-              });
-            }
-          } catch (error) {
-            console.error('Error al procesar mensaje WebSocket:', error);
-          }
-        };
-        
-        socket.value.onerror = (error) => {
-          console.error('❌ Error en WebSocket:', error);
-          wsConnected.value = false;
-        };
-        
-        socket.value.onclose = () => {
-          console.log('🔴 WebSocket desconectado');
-          wsConnected.value = false;
-          
-          // Reconectar después de 3 segundos
-          setTimeout(() => {
-            if (tillStore.currentTillID) {
-              console.log('🔄 Intentando reconectar WebSocket...');
-              connectWebSocket();
-            }
-          }, 3000);
-        };
-      } catch (error) {
-        console.error('Error al conectar WebSocket:', error);
-        wsConnected.value = false;
-      }
-    };
-
-    const disconnectWebSocket = () => {
-      if (socket.value) {
-        socket.value.close();
-        socket.value = null;
-        wsConnected.value = false;
-      }
-    };
-
-    onBeforeUnmount(() => {
-      disconnectWebSocket();
-    });
-
     return {
       settingsStore,
       printerStore,
@@ -365,7 +299,6 @@ export default defineComponent({
       currentArea,
       toTable,
       performChangeTable,
-      wsConnected,
     };
   },
 });

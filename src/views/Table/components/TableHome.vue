@@ -7,11 +7,11 @@
                         <v-icon 
                             name="fa-circle" 
                             scale="0.75" 
-                            :color="wsConnected ? 'green' : 'red'"
-                            :animation="wsConnected ? undefined : 'flash'"
+                            :color="tableStore.wsConnected ? 'green' : 'red'"
+                            :animation="tableStore.wsConnected ? undefined : 'flash'"
                         />
                     </template>
-                    {{ wsConnected ? 'WebSocket conectado' : 'WebSocket desconectado' }}
+                    {{ tableStore.wsConnected ? 'WebSocket conectado' : 'WebSocket desconectado' }}
                 </n-tooltip>
                 <n-button type="info" text @click="refreshData">
                     <v-icon name="hi-solid-refresh"/>
@@ -326,7 +326,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, onMounted, onBeforeUnmount } from "vue";
+import { defineComponent, ref, onMounted } from "vue";
 import { useMessage } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useGenericsStore } from "@/store/modules/generics";
@@ -366,8 +366,6 @@ export default defineComponent({
         const businessStore = useBusinessStore();
 
         const dateNow = ref(null);
-        const socket = ref(null);
-        const wsConnected = ref(false);
 
         const loadTablesData = async() => {
             isLoading.value = true;
@@ -473,8 +471,8 @@ export default defineComponent({
 
             dateNow.value = `${dd}/${mm + 1}/${yy} ${hh}:${msms}`;
 
-            // Conectar WebSocket para escuchar cambios de estado de mesas
-            connectWebSocket();
+            // Conectar WebSocket único desde el store
+            tableStore.connectWebSocket();
         });
 
         const changeTable = ref(false);
@@ -527,71 +525,6 @@ export default defineComponent({
 
         const previewData = ref(null);
 
-        const connectWebSocket = () => {
-            try {
-                const apiUrl = import.meta.env.VITE_APP_URL.replace(/^https?:\/\//, '');
-                const socketUrl = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${apiUrl}/ws/print/`;
-                
-                socket.value = new WebSocket(socketUrl);
-                
-                socket.value.onopen = () => {
-                    console.log('🟢 WebSocket conectado - Escuchando cambios de mesas');
-                    wsConnected.value = true;
-                };
-                
-                socket.value.onmessage = (event) => {
-                    try {
-                        const data = JSON.parse(event.data);
-                        
-                        // Escuchar notificaciones de cambio de estado de mesa
-                        if (data.type === 'table_status_changed') {
-                            console.log('📢 Notificación de mesa:', data);
-                            
-                            // Actualizar el estado de las mesas
-                            tableStore.refreshData().then(() => {
-                                message.info(`Mesa ${data.table_id}: ${data.status_text}`);
-                            });
-                        }
-                    } catch (error) {
-                        console.error('Error al procesar mensaje WebSocket:', error);
-                    }
-                };
-                
-                socket.value.onerror = (error) => {
-                    console.error('❌ Error en WebSocket:', error);
-                    wsConnected.value = false;
-                };
-                
-                socket.value.onclose = () => {
-                    console.log('🔴 WebSocket desconectado');
-                    wsConnected.value = false;
-                    
-                    // Reconectar después de 3 segundos
-                    setTimeout(() => {
-                        if (tillStore.currentTillID) {
-                            console.log('🔄 Intentando reconectar WebSocket...');
-                            connectWebSocket();
-                        }
-                    }, 3000);
-                };
-            } catch (error) {
-                console.error('Error al conectar WebSocket:', error);
-                wsConnected.value = false;
-            }
-        };
-
-        const disconnectWebSocket = () => {
-            if (socket.value) {
-                socket.value.close();
-                socket.value = null;
-                wsConnected.value = false;
-            }
-        };
-
-        onBeforeUnmount(() => {
-            disconnectWebSocket();
-        });
-
         return {
             isLoading,
             groupMode,
@@ -623,8 +556,7 @@ export default defineComponent({
             settingsStore,
             previewDrawer,
             showPreview,
-            previewData,
-            wsConnected
+            previewData
         };
     }
 });
