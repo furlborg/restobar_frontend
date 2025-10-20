@@ -113,15 +113,10 @@ export const useTableStore = defineStore("table", {
         
         this.socket.onmessage = (event) => {
           try {
-            console.log('🔍 [DEBUG] Mensaje WebSocket RAW recibido:', event.data);
-            
             const data = JSON.parse(event.data);
-            console.log('🔍 [DEBUG] Mensaje parseado:', data);
-            console.log('🔍 [DEBUG] Tipo de mensaje:', data.type);
             
             if (data.type === 'table_status_changed') {
-              console.log('✅ [DEBUG] Es notificación de mesa!');
-              console.log('📢 Notificación completa:', JSON.stringify(data, null, 2));
+              console.log('📢 Notificación recibida:', data);
               
               // Filtrar duplicados por ID
               if (data.id && this.processedMessages.has(data.id)) {
@@ -137,19 +132,37 @@ export const useTableStore = defineStore("table", {
                 }, 10000);
               }
               
-              console.log('🔄 [DEBUG] Actualizando datos de mesas...');
-              
               // Actualizar datos
               this.refreshData().then(() => {
-                console.log('✅ [DEBUG] Datos actualizados, mostrando notificación');
                 message.info(`Mesa ${data.table_id}: ${data.status_text}`);
               });
-            } else {
-              console.log(`ℹ️ [DEBUG] Mensaje de otro tipo: ${data.type}`);
+            }
+            
+            // Manejar actualización de orden
+            if (data.type === 'order_updated') {
+              console.log('💰 Orden actualizada:', data);
+              
+              // Filtrar duplicados por ID
+              if (data.id && this.processedMessages.has(data.id)) {
+                console.log('⏭️ Mensaje duplicado ignorado:', data.id);
+                return;
+              }
+              
+              // Marcar como procesado
+              if (data.id) {
+                this.processedMessages.add(data.id);
+                setTimeout(() => {
+                  this.processedMessages.delete(data.id);
+                }, 10000);
+              }
+              
+              // Si tiene mesa asociada, actualizar datos
+              if (data.table_id) {
+                this.refreshData();
+              }
             }
           } catch (error) {
-            console.error('❌ [DEBUG] Error al procesar mensaje:', error);
-            console.error('❌ [DEBUG] Event data:', event.data);
+            console.error('Error al procesar mensaje WebSocket:', error);
           }
         };
         
