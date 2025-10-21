@@ -255,7 +255,7 @@ import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router";
 import { useMessage, useDialog } from "naive-ui";
 import { getSaleNumber } from "@/api/modules/sales";
 import { takeAwayOrder } from "@/api/modules/orders";
-import { searchCustomerByName, searchRucCustomer } from "@/api/modules/customer";
+import { searchCustomerByName, searchRucCustomer, retrieveCustomerAddresses } from "@/api/modules/customer";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { useSettingsStore } from "@/store/modules/settings";
@@ -318,7 +318,6 @@ export default defineComponent({
 
     const totals = computed(() => {
       const toSale = saleStore.toSale;
-      console.log(toSale);
       return {
         GRV: toSale.reduce(
           (acc, cur) =>
@@ -626,28 +625,97 @@ export default defineComponent({
       }
     };
 
-    const createAddressesOptions = () => {
-      const customer = customerResults.value.find(c => c.id === sale.value.customer);
-      whatsappNumber.value = customer?.phone || "";
-      if (customer) {
-        addressesOptions.value = customer.addresses.map(address => ({
-          value: address.id,
-          label: `${address.ubigeo} - ${address.description}`
-        }));
-        if (addressesOptions.value.length) {
-          sale.value.address = addressesOptions.value[0].value;
-        }
-        if (sale.value.delivery_info) {
-          sale.value.delivery_info.person = customer.names;
-          sale.value.delivery_info.phone = customer.phone;
-          sale.value.delivery_info.address = customer.addresses.length ? customer.addresses[0].description : "";
-        }
+    const formatAddressLabel = (address) => {
+      const ubigeo = address?.ubigeo ?? "";
+      const description = address?.description ?? address?.address ?? "";
+      const parts = [ubigeo, description].filter(Boolean);
+      if (parts.length === 0 && address?.id) return String(address.id);
+      return parts.join(" - ");
+    };
+
+    const populateAddressOptions = (addresses, customer) => {
+      addressesOptions.value = addresses.map(address => ({
+        value: address.id,
+        label: formatAddressLabel(address)
+      }));
+
+      const existing = addressesOptions.value.find(option => option.value === sale.value.address);
+      sale.value.address = existing ? existing.value : (addressesOptions.value[0]?.value ?? null);
+
+      if (sale.value.delivery_info) {
+        sale.value.delivery_info.person = customer?.names || "";
+        sale.value.delivery_info.phone = customer?.phone || "";
+        const selectedOption = addressesOptions.value.find(option => option.value === sale.value.address);
+        const label = selectedOption?.label ?? "";
+        const parts = label.split(" - ");
+        sale.value.delivery_info.address = parts.length > 1 ? parts.slice(-1)[0] : parts[0] ?? "";
       }
     };
 
-    const changeAddress = (v, o) => {
-      if (sale.value.delivery_info && o?.label) {
-        sale.value.delivery_info.address = o.label.split(" - ")[1];
+    const resetAddressData = () => {
+      addressesOptions.value = [];
+      sale.value.address = null;
+      whatsappNumber.value = "";
+      if (sale.value.delivery_info) {
+        sale.value.delivery_info.person = "";
+        sale.value.delivery_info.phone = "";
+        sale.value.delivery_info.address = "";
+      }
+    };
+
+    const createAddressesOptions = async (selectedCustomer = null) => {
+      if (selectedCustomer && !customerResults.value.some(c => c.id === selectedCustomer.id)) {
+        customerResults.value.push(selectedCustomer);
+      }
+
+      const customer = selectedCustomer ?? customerResults.value.find(c => c.id === sale.value.customer);
+      whatsappNumber.value = customer?.phone || "";
+
+      if (!customer) {
+        resetAddressData();
+        return;
+      }
+
+      let addresses = Array.isArray(customer.addresses) ? customer.addresses : [];
+
+      if ((!addresses || !addresses.length) && customer.id) {
+        try {
+          const response = await retrieveCustomerAddresses(customer.id);
+          if (response.status === 200) {
+            addresses = response.data || [];
+            customer.addresses = addresses;
+          }
+        } catch (error) {
+          console.error(error);
+          message.error("No se pudieron cargar las direcciones del cliente");
+        }
+      }
+
+      if (addresses && addresses.length) {
+        populateAddressOptions(addresses, customer);
+      } else {
+        resetAddressData();
+      }
+    };
+
+    watch(() => sale.value.customer, async (customerId) => {
+      if (customerId) {
+        await createAddressesOptions();
+      } else {
+        resetAddressData();
+      }
+    }, { immediate: true });
+
+    const changeAddress = (value, option) => {
+      if (!sale.value.delivery_info) return;
+      if (!value) {
+        sale.value.delivery_info.address = "";
+        return;
+      }
+      const label = option?.label || addressesOptions.value.find(address => address.value === value)?.label;
+      if (label) {
+        const parts = label.split(" - ");
+        sale.value.delivery_info.address = parts.length > 1 ? parts[1] : parts[0];
       }
     };
 
@@ -706,12 +774,11 @@ export default defineComponent({
       showCustomerModal.value = false;
     };
 
-    const onSuccess = (customer) => {
+    const onSuccess = async (customer) => {
       if ((sale.value.invoice_type === 1 && customer.doc_type === "6") || sale.value.invoice_type !== 1) {
-        customerResults.value.push(customer);
         sale.value.customer_name = `${customer.doc_num} - ${customer.names}`;
         sale.value.customer = customer.id;
-        createAddressesOptions();
+        await createAddressesOptions(customer);
       }
       showCustomerModal.value = false;
       onCloseModal();

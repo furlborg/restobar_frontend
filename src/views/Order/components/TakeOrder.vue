@@ -228,7 +228,16 @@
                                         <n-checkbox v-model:checked="ticketPreview">Previsualizar ticket</n-checkbox>
                                     </n-gi>
                                 </n-grid>
-                                <n-button class="mt-2 py-5 fs-1" type="success" :disabled="!saleStore.toSale.length || (sale.payment_condition === 1 ? sale.given_amount < sale.amount : !(sale.given_amount < sale.amount))" secondary block @click="userStore.user.role !== 'MOZO' ? (isMultiple ? doMultiplePayment() : performTakeAway()) : performTakeAway()">
+                                <n-button class="mt-2 py-5 fs-1" type="success" :disabled="!saleStore.toSale.length || sale.payment_condition === 1
+                                    ? sale.given_amount < sale.amount
+                                    : !(sale.given_amount < sale.amount)
+                                    " secondary block @click="
+                                    userStore.user.role !== 'MOZO'
+                                        ? isMultiple
+                                        ? doMultiplePayment()
+                                        : performTakeAway()
+                                        : performTakeAway()
+                                    ">
                                     <v-icon class="me-2" name="fa-coins" scale="2"/>
                                     {{ userStore.user.role !== "MOZO" ? "Cobrar" : "Realizar pedido" }}
                                 </n-button>
@@ -334,9 +343,9 @@
                 @close="sale.payments = null"
             >
                 <n-space justify="space-between">
-                    <n-tag type="info">Total: S/. {{ showPayments ? sale.amount : null }}</n-tag>
+                    <n-tag type="info">Total: S/. {{ showPayments ? total : null }}</n-tag>
                     <n-tag :type="evalPayments ? 'error' : 'success'">Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}</n-tag>
-                    <n-tag :type="evalPayments ? 'error' : 'warning'">Faltante: S/. {{ showPayments ? (parseFloat(sale.amount) - currentPaymentsAmount).toFixed(2) : null }}</n-tag>
+                    <n-tag :type="evalPayments ? 'error' : 'warning'">Faltante: S/. {{ showPayments ? (parseFloat(total) - currentPaymentsAmount).toFixed(2) : null }}</n-tag>
                 </n-space>
                 <n-form-item class="mt-2" label="Pagos">
                     <n-dynamic-input v-model:value="sale.payments" :min="1" @create="createPayment">
@@ -795,6 +804,10 @@ export default defineComponent({
 
         const PrintsAfterTakeOrder = (val) => {
             const values = { ...val.order, ...val.sale };
+            // Si hay pagos múltiples en json_sale, agregarlos al objeto values
+            if (val.sale.json_sale && val.sale.json_sale.payments) {
+                values.payments = val.sale.json_sale.payments;
+            }
             VoucherPrint({ data: values, businessStore, saleStore, changing: changing.value, show: true });
             if (values.delivery_info && settingsStore.business_settings.printer.print_delivery_ticket) {
                 printDeliveryInfo({ data: values, changing: changing.value });
@@ -825,6 +838,10 @@ export default defineComponent({
                         ticketPreviewRef.value.generate();
                         if (settingsStore.business_settings.printer.print_html) {
                             voucherData.value = response.data.sale;
+                            // Si hay pagos múltiples en json_sale, agregarlos a voucherData
+                            if (response.data.sale.json_sale && response.data.sale.json_sale.payments) {
+                                voucherData.value.payments = response.data.sale.json_sale.payments;
+                            }
                             showVoucher.value = true;
                             if (!ticketPreview.value) setTimeout(() => voucherDrawer.value.generate(), 250);
                         } else {
@@ -879,6 +896,10 @@ export default defineComponent({
                                                 settingsStore.business_settings.printer.print_html
                                             ) {
                                                 voucherData.value = response.data.sale;
+                                                // Si hay pagos múltiples en json_sale, agregarlos a voucherData
+                                                if (response.data.sale.json_sale && response.data.sale.json_sale.payments) {
+                                                    voucherData.value.payments = response.data.sale.json_sale.payments;
+                                                }
                                                 showVoucher.value = true;
                                                 if (!ticketPreview.value) {
                                                     setTimeout(
@@ -956,7 +977,7 @@ export default defineComponent({
         const createPayment = () => ({ payment_method: null, amount: "0" });
 
         const doMultiplePayment = () => {
-            sale.value.payments = [{ payment_method: sale.value.payment_method, amount: String(sale.value.amount) }];
+            sale.value.payments = [{ payment_method: sale.value.payment_method, amount: String(total.value) }];
             showPayments.value = true;
         };
 
@@ -968,7 +989,7 @@ export default defineComponent({
         const evalPayments = computed(() => {
             if (sale.value.payments) {
                 const sum = sale.value.payments.reduce((acc, val) => acc + parseFloat(val.amount), 0);
-                return sum !== Number(sale.value.amount);
+                return sum !== Number(total.value);
             }
             return true;
         });
