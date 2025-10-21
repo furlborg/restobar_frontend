@@ -95,13 +95,23 @@ export async function updateTableOrder(
     ask_for = undefined
 ) {
     const tillStore = useTillStore();
-    // console.log('aumenten mi sueldo pe kousin');
-    let order_details = details.map((order) => ({
-        id: order.id,
-        product: order.product,
-        indication: order.indication || [],
-        quantity: order.quantity
-    })).filter((detail) => detail.quantity > 0);
+    let order_details = details.map((order) => {
+        const detail = {
+            id: order.id,
+            product: order.product,
+            indication: order.indication || [],
+            quantity: order.quantity
+        };
+        
+        // Si el order_detail no tiene id (es nuevo), agregar el user
+        // para los order_details existentes su user es null ya que se usará el user del creador del pedido
+        if (!order.id) {
+            detail.user = user;
+        }
+        
+        return detail;
+    }).filter((detail) => detail.quantity > 0);
+    
     return await http.patch(`tables/${ idTable }/change_order/`, {
         id: orderId,
         till: tillStore.currentTillID,
