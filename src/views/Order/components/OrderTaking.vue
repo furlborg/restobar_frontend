@@ -401,6 +401,7 @@ export default defineComponent({
 
     // Handlers para el componente ClientSelectInput
     const handleCustomerSelected = (customer) => {
+      console.log('CUSTOMER SELECCIONADO: ', customer)
       localCustomerName.value = `${customer.doc_num} - ${customer.names}`;
       const updatedSale = { ...props.sale };
       updatedSale.customer = customer.id;

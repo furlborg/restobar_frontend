@@ -633,6 +633,17 @@ export default defineComponent({
       return parts.join(" - ");
     };
 
+    const setDeliveryInfoFromCustomer = (customer, addressLabel) => {
+      if (!sale.value.delivery_info) return;
+      sale.value.delivery_info.person = customer?.names || "";
+      sale.value.delivery_info.phone = customer?.phone || "";
+      if (addressLabel !== undefined) {
+        sale.value.delivery_info.address = addressLabel ?? "";
+      } else if (!addressesOptions.value.length) {
+        sale.value.delivery_info.address = "";
+      }
+    };
+
     const populateAddressOptions = (addresses, customer) => {
       addressesOptions.value = addresses.map(address => ({
         value: address.id,
@@ -642,14 +653,12 @@ export default defineComponent({
       const existing = addressesOptions.value.find(option => option.value === sale.value.address);
       sale.value.address = existing ? existing.value : (addressesOptions.value[0]?.value ?? null);
 
-      if (sale.value.delivery_info) {
-        sale.value.delivery_info.person = customer?.names || "";
-        sale.value.delivery_info.phone = customer?.phone || "";
-        const selectedOption = addressesOptions.value.find(option => option.value === sale.value.address);
-        const label = selectedOption?.label ?? "";
-        const parts = label.split(" - ");
-        sale.value.delivery_info.address = parts.length > 1 ? parts.slice(-1)[0] : parts[0] ?? "";
-      }
+      if (!sale.value.delivery_info) return;
+      const selectedOption = addressesOptions.value.find(option => option.value === sale.value.address);
+      const label = selectedOption?.label ?? "";
+      const parts = label.split(" - ");
+      const formattedAddress = parts.length > 1 ? parts.slice(-1)[0] : parts[0] ?? "";
+      setDeliveryInfoFromCustomer(customer, formattedAddress);
     };
 
     const resetAddressData = () => {
@@ -694,7 +703,9 @@ export default defineComponent({
       if (addresses && addresses.length) {
         populateAddressOptions(addresses, customer);
       } else {
-        resetAddressData();
+        addressesOptions.value = [];
+        sale.value.address = null;
+        setDeliveryInfoFromCustomer(customer);
       }
     };
 
