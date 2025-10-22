@@ -179,7 +179,7 @@
               </tr>
               <tr>
                 <td align="right" :colspan="!!hasDiscounts ? 4 : 3">
-                  EFECTIVO :
+                  EFECTIVO:
                 </td>
                 <td align="right">
                   {{
@@ -319,7 +319,7 @@
 </template>
 
 <script>
-import { defineComponent } from "vue";
+import { defineComponent, watchEffect } from 'vue';
 import { useBusinessStore } from "@/store/modules/business";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useTableStore } from "@/store/modules/table";
@@ -340,6 +340,10 @@ export default defineComponent({
     const hasDiscounts = props.data.sale_details.some(
       (detail) => !!Number(detail.discount)
     );
+
+    watchEffect(() => {
+      console.log("props data changed:", props.data);
+    });
 
     const parseSale = () => {
       let saleData = JSON.parse(props.data.json_sale);
