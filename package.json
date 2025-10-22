@@ -11,6 +11,7 @@
     "@vitejs/plugin-vue": "^5.2.1",
     "axios": "^1.12.2",
     "clone-deep": "^4.0.1",
+    "echarts": "^6.0.0",
     "exceljs": "^4.3.0",
     "file-saver": "^2.0.5",
     "jspdf": "^3.0.0",
@@ -22,8 +23,10 @@
     "pinia": "^2.0.29",
     "qrcode": "^1.5.1",
     "qz-tray": "^2.2.1",
+    "vooks": "^0.2.12",
     "vue": "^3.2.45",
     "vue-cookies": "^1.8.2",
+    "vue-echarts": "^8.0.1",
     "vue-input-autowidth": "^2.2.0",
     "vue-router": "^4.1.6"
   },
