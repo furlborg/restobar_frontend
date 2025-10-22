@@ -7,22 +7,65 @@ export const useOrderStore = defineStore("order", {
     orders: [],
   }),
   getters: {
-    orderList(state) {
-      const settingsStore = useSettingsStore();
-      state.orders.forEach((order) => {
-        order.subTotal =
-          Number(order.quantity) * parseFloat(order.price).toFixed(2);
-        if (order.icbper) {
-          order.icbper_amount =
-            Number(order.quantity) *
-            parseFloat(settingsStore.businessSettings.sale.icbper_tax);
-        } else {
-          order.icbper_amount = 0;
-        }
-      });
-      return state.orders;
-    },
-    orderTotal(state) {
+      orderList(state) {
+          const settingsStore = useSettingsStore();
+          const icbperTax = parseFloat(settingsStore.businessSettings.sale?.icbper_tax || 0);
+
+          const snapshot = state.orders.slice();
+          const map = new Map();
+
+          for (const item of snapshot) {
+              const productId = item.product;
+              const price = parseFloat(item.price || 0);
+              const qty = Number(item.quantity || 0);
+              const icbperAmount = item.icbper ? qty * icbperTax : 0;
+
+              const indications = Array.isArray(item.indication) && item.indication.length
+                                  ? item.indication
+                                  : [{ description: "" }];
+
+              const baseQty = indications.length > 1 ? qty / indications.length : qty;
+
+              for (const ind of indications) {
+                  const desc = (ind.description || "").trim().toLowerCase();
+                  const key = `${productId}__${desc}`;
+
+                  if (!map.has(key)) {
+                      map.set(key, {
+                          ...item,
+                          quantity: baseQty,
+                          subTotal: baseQty * price,
+                          sub_total: baseQty * price,
+                          sale_detail_total: baseQty * price,
+                          icbper_amount: item.icbper ? baseQty * icbperTax : 0,
+                          indication: desc ? [ind] : [],
+                      });
+                  } else {
+                      const existing = map.get(key);
+
+                      existing.quantity += baseQty;
+                      existing.subTotal += baseQty * price;
+                      existing.sub_total = existing.subTotal;
+                      existing.sale_detail_total = existing.subTotal;
+                      existing.icbper_amount += item.icbper ? baseQty * icbperTax : 0;
+
+                      if (desc && !existing.indication.some(i => i.description?.trim()?.toLowerCase() === desc)) {
+                          existing.indication.push(ind);
+                      }
+                  }
+              }
+          }
+
+          const merged = Array.from(map.values());
+
+          // 🔄 Evitamos recursión infinita al comparar antes de reemplazar
+          if (JSON.stringify(state.orders) !== JSON.stringify(merged)) {
+              state.orders.splice(0, state.orders.length, ...merged);
+          }
+
+          return state.orders;
+      },
+      orderTotal(state) {
       return state.orders.reduce((acc, curVal) => {
         return (acc += curVal.price * curVal.quantity);
       }, 0);
@@ -44,7 +87,6 @@ export const useOrderStore = defineStore("order", {
       return null;
     },
     addOrder(product) {
-      console.log('Order Store - Adding product:', product);
       const settingsStore = useSettingsStore();
       const existence = this.orders.find(
         (order) => order.product === product.id

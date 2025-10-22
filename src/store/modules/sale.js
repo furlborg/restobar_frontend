@@ -39,27 +39,48 @@ export const useSaleStore = defineStore("sale", {
         value: serie.id,
       }));
     },
-    toSale(state) {
-      state.sale_details = orderStore.orderList.map((order) => {
-        let detail = {
-          product: order.product,
-          product_name: order.product_name,
-          product_affectation: order.product_affectation,
-          product_igv: order.product_igv,
-          price_base: parseFloat(order.price).toFixed(2),
-          igv_tax: 0,
-          discount: parseFloat(0).toFixed(2),
-          price_sale: parseFloat(order.price).toFixed(2),
-          quantity: Number(order.quantity),
-          icbper: parseFloat(order.icbper_amount).toFixed(2),
-        };
-        this.updateDetail(detail);
-        return detail;
-      });
-      console.log("Sale Details:", state.sale_details);
-      return state.sale_details;
-    },
-    saleTotal(state) {
+      toSale(state) {
+          // 1️⃣ Mapea orderList a detalles de venta
+          const saleDetails = orderStore.orderList.map((order) => {
+              const detail = {
+                  product: order.product,
+                  product_name: order.product_name,
+                  product_affectation: order.product_affectation,
+                  product_igv: order.product_igv,
+                  price_base: parseFloat(order.price).toFixed(2),
+                  igv_tax: 0,
+                  discount: parseFloat(0).toFixed(2),
+                  price_sale: parseFloat(order.price).toFixed(2),
+                  quantity: Number(order.quantity),
+                  icbper: parseFloat(order.icbper_amount || 0).toFixed(2),
+              };
+              this.updateDetail(detail);
+              return detail;
+          });
+
+          const map = new Map();
+
+          for (const item of saleDetails) {
+              const key = item.product;
+
+              if (!map.has(key)) {
+                  // clonamos para no mutar el original
+                  map.set(key, { ...item });
+              } else {
+                  const existing = map.get(key);
+                  existing.quantity += item.quantity;
+                  existing.price_sale = (parseFloat(existing.price_sale) + parseFloat(item.price_sale)).toFixed(2);
+                  existing.icbper = (parseFloat(existing.icbper) + parseFloat(item.icbper)).toFixed(2);
+              }
+          }
+
+          // 3️⃣ Convertimos a array
+          state.sale_details = Array.from(map.values());
+
+          console.log("Sale Details:", state.sale_details);
+          return state.sale_details;
+      },
+      saleTotal(state) {
       return state.sale_details.reduce((acc, curVal) => {
         return (acc += curVal.price * curVal.quantity - curVal.discount);
       }, 0);
