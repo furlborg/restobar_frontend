@@ -63,7 +63,7 @@
                         :x-gap="12"
                         :y-gap="12"
                 >
-                    <n-gi v-for="table in area.tables" :key="table.id" :span="3">
+                    <n-gi v-for="table in area.tables.filter(dt => !dt?.is_disabled)" :key="table.id" :span="3">
                         <n-card
                                 :id="`table-${table.id}`"
                                 class="overflow-hidden position-relative rounded-3"

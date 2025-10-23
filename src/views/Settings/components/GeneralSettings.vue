@@ -159,10 +159,8 @@
                         selectTable(table)
                     "
                   >
+                    <n-checkbox v-model:checked="table.is_disabled" @update:checked="onUpdateTableState(table.id)" :label="table.is_disabled ? 'Inactivo' : 'Activo'"/>
                     <n-space align="center" vertical>
-                      <!-- <n-button class="position-absolute top-0 end-0 m-1" text>
-                        <v-icon name="bi-three-dots" scale="1.25" />
-                      </n-button> -->
                       <v-icon name="gi-table" scale="3" />
                       <n-text>{{ table.code }}</n-text>
                     </n-space>
@@ -677,7 +675,7 @@
             </n-grid>
           </n-card>
         </n-tab-pane>
-          <n-tab-pane name="Guarniciones" tab="Guarniciones">
+        <n-tab-pane name="Guarniciones" tab="Guarniciones">
               <n-card title="Editar Guarniciones" :bordered="false" embedded>
                   <n-grid responsive="screen" cols="3 xs:3 s:12" :x-gap="12">
                       <n-gi :span="3">
@@ -736,10 +734,11 @@ import { useUserStore } from "@/store/modules/user";
 import { usePrinterStore } from "@/store/modules/printer";
 import { useProductStore } from "@/store/modules/product";
 import {
-  createArea,
-  updateArea,
-  createTable,
-  updateTable,
+    createArea,
+    updateArea,
+    createTable,
+    updateTable,
+    disableTable, getAreasTables
 } from "@/api/modules/tables";
 import {
   getPaymentMethods,
@@ -793,6 +792,16 @@ export default defineComponent({
       }
       return [];
     });
+    
+    const onUpdateTableState = (table) => {
+        disableTable(table).then((res) => {
+            message.success(res?.message || "Estado actualizado");
+            getAreasTables()
+        }).catch((err) => {
+            getAreasTables()
+            message.error(err.error || "Error al actualizar estado");
+        })
+    }
 
       // const getPrinters = async () => {
       //     try {
@@ -840,6 +849,7 @@ export default defineComponent({
         id: null,
         code: "",
         description: "",
+        is_disabled: false,  
       };
     };
 
@@ -1496,6 +1506,7 @@ export default defineComponent({
       performUpdateInventoryConcept,
       performCreateGuarnition,
       performUpdateGuarnition,
+      onUpdateTableState
     };
   },
 });
