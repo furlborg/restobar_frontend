@@ -264,9 +264,13 @@ export default defineComponent({
     };
 
     onMounted(() => {
+      console.log('🔵 WaiterMode Home.vue montado');
       if (tableStore.getAreasOptions.length && tillStore.currentTillID) {
         area.value = tableStore.getAreasOptions[0].id;
       }
+      
+      // Conectar WebSocket único desde el store
+      tableStore.connectWebSocket();
     });
 
     const fromTable = ref(null);

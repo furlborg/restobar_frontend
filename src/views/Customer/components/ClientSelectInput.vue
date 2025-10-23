@@ -35,7 +35,7 @@
 import { ref, computed, watch } from 'vue';
 import { useMessage } from 'naive-ui';
 import CustomerModal from "@/views/Customer/components/CustomerModal.vue";
-import { searchCustomerByName, searchRucCustomer } from "@/api/modules/customer";
+import { searchCustomerByName, searchRucCustomer, searchCustomerByDocument, retrieveCustomer } from "@/api/modules/customer";
 
 // Props
 const props = defineProps({
@@ -87,25 +87,48 @@ const showOptions = async (value) => {
     return false;
   }
 
+  const normalizeResponse = (data) => {
+    if (Array.isArray(data)) return data;
+    if (data?.results && Array.isArray(data.results)) return data.results;
+    return [];
+  };
+
   searching.value = true;
   try {
-    const response = props.invoiceType === 1
-      ? await searchRucCustomer(value)
-      : await searchCustomerByName(value);
+    let fetchedCustomers = [];
 
-    if (response.status === 200) {
-      customerResults.value = response.data;
+    if (props.invoiceType === 1) {
+      const response = await searchRucCustomer(value);
+      if (response.status === 200) fetchedCustomers = normalizeResponse(response.data);
+    } else {
+      const numericQuery = /^\d+$/.test(value);
+      const looksLikeDocument = numericQuery && (value.length === 8 || value.length === 11);
+
+      if (looksLikeDocument) {
+        const response = await searchCustomerByDocument(value);
+        if (response.status === 200) fetchedCustomers = normalizeResponse(response.data);
+
+        if (!fetchedCustomers.length) {
+          const fallbackResponse = await searchCustomerByName(value);
+          if (fallbackResponse.status === 200) fetchedCustomers = normalizeResponse(fallbackResponse.data);
+        }
+      } else {
+        const response = await searchCustomerByName(value);
+        if (response.status === 200) fetchedCustomers = normalizeResponse(response.data);
+      }
     }
-    return true;
+
+    customerResults.value = fetchedCustomers;
+    return !!customerResults.value.length;
   } catch (error) {
     console.error(error);
-    message.error("Algo salió mal...");
+    message.error("Algo salio mal...");
+    customerResults.value = [];
     return false;
   } finally {
     searching.value = false;
   }
 };
-
 const handleCustomerNameChange = (value) => {
   localCustomerName.value = value;
 
@@ -119,17 +142,36 @@ const handleCustomerNameChange = (value) => {
   }
 };
 
-const handleCustomerSelect = (customerId) => {
-  const selectedCustomer = customerResults.value.find(c => c.id === customerId);
+const handleCustomerSelect = async (customerId) => {
+  let selectedCustomer = customerResults.value.find(c => c.id === customerId);
 
-  if (selectedCustomer) {
-    localCustomerId.value = customerId;
-    localCustomerName.value = `${selectedCustomer.doc_num} - ${selectedCustomer.names}`;
+  if (!selectedCustomer) return;
 
-    emit('update:customerId', customerId);
-    emit('update:customerName', localCustomerName.value);
-    emit('customer-selected', selectedCustomer);
+  const needsDetailFetch =
+    !Array.isArray(selectedCustomer.addresses) ||
+    selectedCustomer.addresses === null ||
+    selectedCustomer.phone === undefined;
+
+  if (needsDetailFetch) {
+    try {
+      const response = await retrieveCustomer(customerId);
+      if (response.status === 200) {
+        selectedCustomer = response.data;
+        const idx = customerResults.value.findIndex(c => c.id === customerId);
+        if (idx !== -1) customerResults.value[idx] = selectedCustomer;
+      }
+    } catch (error) {
+      console.error(error);
+      message.error("No se pudo obtener la informacion completa del cliente");
+    }
   }
+
+  localCustomerId.value = customerId;
+  localCustomerName.value = `${selectedCustomer.doc_num} - ${selectedCustomer.names}`;
+
+  emit('update:customerId', customerId);
+  emit('update:customerName', localCustomerName.value);
+  emit('customer-selected', selectedCustomer);
 };
 
 const autoCreateCustomer = () => {
@@ -185,3 +227,4 @@ watch(() => props.customerId, (newVal) => {
 
 <style scoped>
 </style>
+

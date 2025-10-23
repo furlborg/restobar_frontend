@@ -7,7 +7,7 @@
             <v-icon name="md-arrowback-round" />
           </n-button>
           <div class="ms-2">
-            {{ tableStore.getTableByID($route.params.table).description }}
+            {{ tableStore.getTableByID($route.params.table)?.description }}
           </div>
         </div>
         <div

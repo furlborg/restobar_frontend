@@ -2,6 +2,17 @@
     <n-card title="Mesas" :bordered="false" :segmented="{ content: 'hard' }">
         <template #header-extra>
             <n-space v-if="tillStore.currentTillID" align="end">
+                <n-tooltip>
+                    <template #trigger>
+                        <v-icon 
+                            name="fa-circle" 
+                            scale="0.75" 
+                            :color="tableStore.wsConnected ? 'green' : 'red'"
+                            :animation="tableStore.wsConnected ? undefined : 'flash'"
+                        />
+                    </template>
+                    {{ tableStore.wsConnected ? 'WebSocket conectado' : 'WebSocket desconectado' }}
+                </n-tooltip>
                 <n-button type="info" text @click="refreshData">
                     <v-icon name="hi-solid-refresh"/>
                     Recargar
@@ -512,6 +523,9 @@ export default defineComponent({
             const msms = fetch.getMinutes();
 
             dateNow.value = `${dd}/${mm + 1}/${yy} ${hh}:${msms}`;
+
+            // Conectar WebSocket único desde el store
+            tableStore.connectWebSocket();
         });
 
         const changeTable = ref(false);

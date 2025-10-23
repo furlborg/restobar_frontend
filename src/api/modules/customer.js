@@ -116,6 +116,15 @@ export async function searchRucCustomer(names) {
   });
 }
 
+export async function searchCustomerByDocument(document) {
+  return await http.get("customers/", {
+    params: {
+      doc_num__icontains: document,
+      limit: 10
+    }
+  });
+}
+
 export async function requestCustomerData(document) {
   return await http.post(
     "customers/request_data/",

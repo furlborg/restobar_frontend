@@ -236,7 +236,7 @@
 
 <script>
 import { useSettingsStore } from "@/store/modules/settings";
-import { defineComponent, ref, computed, onMounted } from "vue";
+import { computed, defineComponent, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import { useMessage } from "naive-ui";
 import ProductIndications from "./ProductIndications";
@@ -318,15 +318,82 @@ export default defineComponent({
         }
       });
     });
+    
+      const expandOrderList = (orderList) => {
+          const expanded = [];
+
+          for (const item of orderList) {
+              const indications = item.indication || [];
+              const totalQty = item.quantity || 1;
+              const indicatedQty = indications.length;
+              const remainingQty = totalQty - indicatedQty;
+
+              if (indicatedQty > 0) {
+                  for (const ind of indications) {
+                      expanded.push({
+                          ...item,
+                          indication: [ ind ],
+                          quantity: 1,
+                          subTotal: parseFloat(item.price || 0)
+                      });
+                  }
+              }
+
+              if (remainingQty > 0) {
+                  expanded.push({
+                      ...item,
+                      indication: [],
+                      quantity: remainingQty,
+                      subTotal: parseFloat(item.price || 0) * remainingQty
+                  });
+              }
+          }
+
+          const grouped = [];
+
+          for (const product of expanded) {
+              const indicationIsEmpty =
+                  !product.indication ||
+                  product.indication.length === 0 ||
+                  product.indication.every(
+                      (ind) =>
+                          !ind.description?.trim() &&
+                          ( !ind.quick_indications || ind.quick_indications.length === 0)
+                  );
+
+              if ( !indicationIsEmpty) {
+                  grouped.push(product);
+                  continue;
+              }
+
+              const existing = grouped.find(
+                  (p) =>
+                      ( !p.indication?.length ||
+                        p.indication.every(
+                            (ind) =>
+                                !ind.description?.trim() &&
+                                ( !ind.quick_indications ||
+                                  ind.quick_indications.length === 0)
+                        )) &&
+                      p.product === product.product
+              );
+
+              if (existing) {
+                  existing.quantity += product.quantity;
+                  existing.subTotal =
+                      parseFloat(existing.price || 0) * existing.quantity;
+              } else {
+                  grouped.push({ ...product, indication: [] });
+              }
+          }
+
+          return grouped;
+      };
 
     const performCreateTableOrder = () => {
       loading.value = true;
-      createTableOrder(
-        route.params.table,
-        orderStore.orderList,
-        undefined,
-        !ask_for.value ? undefined : ask_for.value
-      )
+        const createNewOrder = expandOrderList(orderStore.orderList);
+        createTableOrder(route.params.table, createNewOrder, undefined, !ask_for.value ? undefined : ask_for.value)
         .then((response) => {
           if (response.status === 201) {
             message.success("Orden creada correctamente");
@@ -374,13 +441,10 @@ export default defineComponent({
 
     const performUpdateTableOrder = async () => {
       loading.value = true;
-      await updateTableOrder(
-        route.params.table,
-        orderStore.orderId,
-        orderStore.orderList,
-        undefined,
-        !ask_for.value ? undefined : ask_for.value
-      )
+        
+        const createNewOrder = expandOrderList(orderStore.orderList);
+
+        await updateTableOrder(route.params.table, orderStore.orderId, createNewOrder, undefined, !ask_for.value ? undefined : ask_for.value)
         .then((response) => {
           if (response.status === 202) {
             message.success("Orden actualizada correctamente");

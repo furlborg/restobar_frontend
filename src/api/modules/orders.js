@@ -109,55 +109,89 @@ export async function takeAwayOrder(order_details, sale_data, user, salePayload 
   const settingsStore = useSettingsStore();
   const tillStore = useTillStore();
   const userStore = useUserStore();
-  
-  // Si no se pasa salePayload, obtenerlo del store
-  let actualSalePayload = salePayload;
-  if (!actualSalePayload) {
-    const { useSaleStore } = await import("@/store/modules/sale");
-    const saleStore = useSaleStore();
-    actualSalePayload = saleStore.salePayload;
-  }
-  
-  console.log("takeAwayOrder - sale_product_sets encontrados:", actualSalePayload?.sale_product_sets?.length || 0);
-  console.log("takeAwayOrder - order_details recibidos:", order_details.length);
-  
-  // Convert order_details to unified format, preserving from_menu flag
-  const unifiedOrders = order_details.map(detail => ({
-    ...detail,
-    from_menu: !!detail.from_menu
+  let details = order_details.map((order) => ({
+    product: order.product,
+    quantity: order.quantity,
+    initial_quantity: order.quantity,
+    indication: order.indication || [],
+    quick_indications: order.quick_indications || [],
   }));
+  let order = {
+    till: tillStore.currentTillID,
+    order_details: details,
+    order_type: sale_data.delivery_info ? "D" : "P",
+    delivery_info: sale_data.delivery_info,
+    ask_for: sale_data.ask_for,
+    user: !user ? null : user,
+    status:
+      sale_data.delivery_info || userStore.user.role === "MOZO"
+        ? "1"
+        : settingsStore.business_settings.order.pending_takeaway
+        ? "1"
+        : "2",
+  };
+  // Verificar y formatear el total_igv para asegurar que es un string con dos decimales
+  const safeIgvValue = parseFloat(sale_data.total_igv || sale_data.igv_amount || 0).toFixed(2);
   
-  console.log("takeAwayOrder - unifiedOrders final:", unifiedOrders.length);
+  console.log("API - total_igv recibido:", sale_data.total_igv, 
+              "- igv_amount recibido:", sale_data.igv_amount,
+              "- valor formateado:", safeIgvValue);
   
-  // Use centralized assembler
-  const { order, sale } = buildTakeawayOrderPayload(unifiedOrders, sale_data, {
-    tillId: tillStore.currentTillID,
-    user,
-    userRole: userStore.user.role,
-    businessSettings: settingsStore.business_settings
-  });
+  let sale = {
+    order: sale_data.order,
+    serie: sale_data.serie,
+    number: sale_data.number,
+    date_sale: sale_data.date_sale,
+    count: sale_data.count,
+    amount: sale_data.amount,
+    given_amount: sale_data.given_amount,
+    invoice_type: sale_data.invoice_type,
+    payment_method: sale_data.payment_method,
+    payment_condition: sale_data.payment_condition,
+    customer: sale_data.customer === 0 ? null : sale_data.customer,
+    address: sale_data.address,
+    branch_office: !userStore.user.branchoffice
+      ? businessStore.currentBranch
+      : null,
+    discount: sale_data.discount,
+    icbper: parseFloat(sale_data.icbper).toFixed(2),
+    other_charges: parseFloat(sale_data.other_charges).toFixed(2),
+    observations: sale_data.observations,
+    sale_details: sale_data.sale_details,
+    till: tillStore.currentTillID,
+    payments: sale_data.payments,
+    do_update: sale_data.do_update,
+    is_change: sale_data.is_change,
+    taxed_amount: sale_data.taxed_amount.toFixed(2),
+    exempt_amount: sale_data.exempt_amount.toFixed(2),
+    free_amount: sale_data.free_amount.toFixed(2),
+    igv_amount: sale_data.igv_amount.toFixed(2),
+    total_igv: safeIgvValue,
+  };
+  // Asegurar que total_igv esté presente y formateado correctamente
+  const total_igv = typeof sale.total_igv === 'number' ? sale.total_igv.toFixed(2) : sale.total_igv || "0.00";
   
   // Format monetary values consistently
   const formattedSale = {
     ...sale,
-    icbper: round2(sale.icbper || 0).toFixed(2),
-    other_charges: round2(sale.other_charges || 0).toFixed(2),
-    taxed_amount: round2(sale.taxed_amount || 0).toFixed(2),
-    exempt_amount: round2(sale.exempt_amount || 0).toFixed(2),
-    free_amount: round2(sale.free_amount || 0).toFixed(2),
-    igv_amount: round2(sale.igv_amount || 0).toFixed(2),
-    total_igv: round2(sale.total_igv || sale.igv_amount || 0).toFixed(2),
-    branch_office: !userStore.user.branchoffice ? businessStore.currentBranch : null,
-    till: tillStore.currentTillID
+    total_igv: total_igv
   };
   
+  // Log completo de la estructura que se está enviando
+  console.log("Enviando orden al backend:", {
+    order: order,
+    sale: formattedSale,
+    total_igv: total_igv
+  });
+  
+  // Enviar tanto en el objeto sale como en el nivel principal para asegurar que el backend lo reciba
   const payload = {
     order,
     sale: formattedSale,
     total_igv: formattedSale.total_igv
   };
   
-  console.log("takeAwayOrder - enviando payload con product_sets:", payload.sale.product_sets?.length || 0);
+  console.log("Payload final enviado a API:", payload);
   
   return await http.post("orders/take_away/", payload);
 }

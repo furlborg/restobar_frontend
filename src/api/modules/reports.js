@@ -1,17 +1,17 @@
 import { http } from "@/api";
 
 export async function getCashFlowReport({
-  date_from,
-  date_to,
-  branch_office
-} = {}) {
-  const params = {};
-  if (date_from) params.date_from = date_from;
-  if (date_to) params.date_to = date_to;
-  if (branch_office) params.branch_office = branch_office;
-  params.format = "json";
+                                            date_from,
+                                            date_to,
+                                            branch_office
+                                        } = {}) {
+    const params = {};
+    if (date_from) params.date_from = date_from;
+    if (date_to) params.date_to = date_to;
+    if (branch_office) params.branch_office = branch_office;
+    params.format = "json";
 
-  return await http.get("cashflow/", { params });
+    return await http.get("cashflow/", { params });
 }
 
 /**
@@ -23,7 +23,7 @@ export async function getCashFlowReport({
  * @param {boolean} [params.include_cancelled] - Incluir ventas anuladas (default: true)
  */
 export async function getSalesByDate(params) {
-  return await http.get("sales-by-date/", { params });
+    return await http.get("sales-by-date/", { params });
 }
 
 /**
@@ -35,11 +35,11 @@ export async function getSalesByDate(params) {
  * @param {boolean} [params.include_cancelled] - Incluir ventas anuladas (default: true)
  */
 export async function downloadSalesByDateReport(params) {
-  const queryParams = { ...params, format: 'xlsx' };
-  return await http.get("sales-by-date/", {
-    params: queryParams,
-    responseType: "blob",
-  });
+    const queryParams = { ...params, format: 'xlsx' };
+    return await http.get("sales-by-date/", {
+        params: queryParams,
+        responseType: "blob",
+    });
 }
 
 /**
@@ -52,7 +52,7 @@ export async function downloadSalesByDateReport(params) {
  * @param {boolean} [params.include_cancelled] - Incluir ventas anuladas (default: false)
  */
 export async function getSalesDetailed(params) {
-  return await http.get("sales-detailed/", { params });
+    return await http.get("sales-detailed/", { params });
 }
 
 /**
@@ -65,11 +65,11 @@ export async function getSalesDetailed(params) {
  * @param {boolean} [params.include_cancelled] - Incluir ventas anuladas (default: false)
  */
 export async function downloadSalesDetailedReport(params) {
-  const queryParams = { ...params, format: 'xlsx' };
-  return await http.get("sales-detailed/", {
-    params: queryParams,
-    responseType: "blob",
-  });
+    const queryParams = { ...params, format: 'xlsx' };
+    return await http.get("sales-detailed/", {
+        params: queryParams,
+        responseType: "blob",
+    });
 }
 
 /**
@@ -81,7 +81,7 @@ export async function downloadSalesDetailedReport(params) {
  * @param {number} [params.top_limit] - Número de productos top (default: 10)
  */
 export async function getSalesRecord(params) {
-  return await http.get("sales-record/", { params });
+    return await http.get("sales-record/", { params });
 }
 
 /**
@@ -93,5 +93,5 @@ export async function getSalesRecord(params) {
  * @returns {Promise} Estadísticas completas del dashboard
  */
 export async function getDashboardStats(params) {
-  return await http.get("/sales-record/dashboard-stats/", { params });
+    return await http.get("/sales-record/dashboard-stats/", { params });
 }

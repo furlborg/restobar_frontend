@@ -173,6 +173,7 @@
         v-model:checked="localIsMultiple"
         :disabled="settingsStore.businessSettings.order.pending_takeaway"
         @update:checked="handleIsMultipleChange"
+        class="mt-2"
       >
         Pago multiple
       </n-checkbox>
@@ -203,7 +204,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed, watch, watchEffect, onMounted } from "vue";
+import { defineComponent, ref, computed, watch, watchEffect, onMounted, toRefs } from "vue";
 import { useRoute } from "vue-router";
 import { useSaleStore } from "@/store/modules/sale";
 import { useSettingsStore } from "@/store/modules/settings";
@@ -410,13 +411,14 @@ export default defineComponent({
 
     // Handlers para el componente ClientSelectInput
     const handleCustomerSelected = (customer) => {
+      console.log('CUSTOMER SELECCIONADO: ', customer)
       localCustomerName.value = `${customer.doc_num} - ${customer.names}`;
       const updatedSale = { ...props.sale };
       updatedSale.customer = customer.id;
       updatedSale.customer_name = localCustomerName.value;
       updatedSale.address = null;
       emit('update:sale', updatedSale);
-      emit('createAddressesOptions');
+      emit('createAddressesOptions', customer);
     };
 
     const handleCustomerCleared = () => {
@@ -426,6 +428,7 @@ export default defineComponent({
       updatedSale.customer_name = '';
       updatedSale.address = null;
       emit('update:sale', updatedSale);
+      emit('createAddressesOptions', null);
     };
 
     const handleCustomerNameInput = (value) => {
@@ -449,9 +452,7 @@ export default defineComponent({
       emit('selectSerie', newSerie);
     };
 
-    const handleSerieChanged = () => {
-      console.log('[OrderTaking] handleSerieChanged called');
-    };
+    const handleSerieChanged = () => {};
 
     const handleInvoiceTypeChange = (value) => {
       localInvoiceType.value = value;
@@ -467,11 +468,11 @@ export default defineComponent({
       emit('changeCondition', value);
     };
 
-    const handleAddressChange = (value) => {
+    const handleAddressChange = (value, option) => {
       localAddress.value = value;
       const updatedSale = { ...props.sale, address: value };
       emit('update:sale', updatedSale);
-      emit('changeAddress', value);
+      emit('changeAddress', value, option);
     };
 
     const handlePaymentMethodChange = (value) => {
@@ -630,6 +631,8 @@ export default defineComponent({
       emit('update:sale', updates);
     };
 
+    const propsRefs = toRefs(props);
+
     return {
       route,
       saleStore,
@@ -673,7 +676,7 @@ export default defineComponent({
       handleTicketPreviewChange,
       handleMainAction,
       updateSale,
-      ...props
+      ...propsRefs
     };
   }
 });
