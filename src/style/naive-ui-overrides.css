@@ -1,0 +1,11 @@
+/* Overrides para Naive UI */
+
+/* Hacer que n-text con prop strong realmente aparezca en negrita */
+.n-text.n-text--strong {
+  font-weight: 700 !important;
+}
+
+/* También puedes usar esta alternativa más específica */
+.n-text[data-strong="true"] {
+  font-weight: 700 !important;
+}

@@ -5,6 +5,7 @@ import { store } from "./store";
 import { naive } from "./plugins/naive";
 import { OhVueIcon } from "@/plugins/icon";
 import "@/style/bootstrap-utilities";
+import "@/style/naive-ui-overrides.css";
 import "vfonts/Lato.css";
 import VueCookies from "vue-cookies";
 
