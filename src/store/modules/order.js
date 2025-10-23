@@ -16,19 +16,26 @@ export const useOrderStore = defineStore("order", {
 
           for (const item of snapshot) {
               const productId = item.product;
-              const price = parseFloat(item.price || 0);
+              const price = parseFloat(item.price || "0");
               const qty = Number(item.quantity || 0);
-              const icbperAmount = item.icbper ? qty * icbperTax : 0;
-
               const indications = Array.isArray(item.indication) && item.indication.length
                                   ? item.indication
-                                  : [{ description: "" }];
+                                  : [{ description: "", quick_indications: [] }];
 
+              // Si hay más indicaciones que cantidad, ajustamos proporcionalmente
               const baseQty = indications.length > 1 ? qty / indications.length : qty;
 
               for (const ind of indications) {
                   const desc = (ind.description || "").trim().toLowerCase();
-                  const key = `${productId}__${desc}`;
+                  const quick = Array.isArray(ind.quick_indications)
+                                ? ind.quick_indications
+                      .map((q) => q.trim().toLowerCase())
+                      .sort() // asegura que ["picante", "cremosa"] == ["cremosa", "picante"]
+                                .join(",")
+                                : "";
+
+                  // 🔑 Clave compuesta por producto + descripción + quick_indications
+                  const key = `${productId}__${desc || "no-desc"}__${quick || "no-quick"}`;
 
                   if (!map.has(key)) {
                       map.set(key, {
@@ -38,7 +45,7 @@ export const useOrderStore = defineStore("order", {
                           sub_total: baseQty * price,
                           sale_detail_total: baseQty * price,
                           icbper_amount: item.icbper ? baseQty * icbperTax : 0,
-                          indication: desc ? [ind] : [],
+                          indication: desc || quick ? [ind] : [],
                       });
                   } else {
                       const existing = map.get(key);
@@ -49,7 +56,16 @@ export const useOrderStore = defineStore("order", {
                       existing.sale_detail_total = existing.subTotal;
                       existing.icbper_amount += item.icbper ? baseQty * icbperTax : 0;
 
-                      if (desc && !existing.indication.some(i => i.description?.trim()?.toLowerCase() === desc)) {
+                      // Evita duplicar indicaciones idénticas
+                      const exists = existing.indication.some((i) => {
+                          const iDesc = (i.description || "").trim().toLowerCase();
+                          const iQuick = Array.isArray(i.quick_indications)
+                                         ? i.quick_indications.map((q) => q.trim().toLowerCase()).sort().join(",")
+                                         : "";
+                          return iDesc === desc && iQuick === quick;
+                      });
+
+                      if (!exists) {
                           existing.indication.push(ind);
                       }
                   }
@@ -58,7 +74,7 @@ export const useOrderStore = defineStore("order", {
 
           const merged = Array.from(map.values());
 
-          // 🔄 Evitamos recursión infinita al comparar antes de reemplazar
+          // 🔄 Evita recursión infinita comparando antes de mutar el array
           if (JSON.stringify(state.orders) !== JSON.stringify(merged)) {
               state.orders.splice(0, state.orders.length, ...merged);
           }

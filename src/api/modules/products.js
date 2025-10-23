@@ -35,74 +35,52 @@ export async function retrieveProduct(id) {
 }
 
 export async function createProduct(product) {
-    const form = new FormData();
-    form.append("code", product.code ?? "");
-    form.append("name", (product.name || "").toUpperCase());
-    form.append("description", product.description ?? "");
-    form.append("prices", product.prices ?? "");
-    form.append("purchase_price", product.purchase_price ?? 0);
-    form.append("measure_unit", product.measure_unit ?? 1);
-    form.append("control_stock", !!product.control_stock);
-    form.append("control_supplie", !!product.control_supplie);
-    form.append("stock", product.stock ?? "");
-    form.append("icbper", !!product.icbper);
-    form.append("number_points", product.number_points ?? "");
-    form.append("redeem_points", product.redeem_points ?? "");
-    form.append("category", product.category ?? "");
-    form.append("preparation_place", product.preparation_place ?? "");
-    form.append("branchoffice", product.branchoffice ?? "");
-    form.append("quick_indications", product.quick_indications ?? "");
-    form.append("affectation", product.affectation ?? "");
-    form.append("igv_tax", product.igv_tax ?? 0);
-    form.append("fitting", product.fitting ?? "");
-
-    // supplies: enviar como JSON string si es un array
-    if (Array.isArray(product.supplies)) {
-        form.append("supplies", JSON.stringify(product.supplies));
-    }
-
-    // Imagen opcional
-    if (product.image instanceof File || product.image instanceof Blob) {
-        form.append("image", product.image);
-    }
-
-    return await http.post("products/", form, {
-        headers: { "Content-Type": "multipart/form-data" },
+    return await http.post("products/", {
+        code: product.code,
+        name: product.name.toUpperCase(),
+        description: product.description,
+        prices: product.prices,
+        purchase_price: product.purchase_price,
+        measure_unit: product.measure_unit,
+        control_stock: product.control_stock,
+        control_supplie: product.control_supplie,
+        stock: product.stock,
+        icbper: product.icbper,
+        number_points: product.number_points,
+        redeem_points: product.redeem_points,
+        category: product.category,
+        preparation_place: product.preparation_place,
+        branchoffice: product.branchoffice,
+        supplies: product.supplies,
+        quick_indications: product.quick_indications,
+        affectation: product.affectation,
+        igv_tax: product.igv_tax,
+        fitting: product.fitting,
     });
 }
 
 export async function updateProduct(idProduct, product) {
-    const form = new FormData();
-    form.append("code", product.code ?? "");
-    form.append("name", (product.name || "").toUpperCase());
-    form.append("description", product.description ?? "");
-    form.append("prices", product.prices ?? "");
-    form.append("purchase_price", product.purchase_price ?? 0);
-    form.append("measure_unit", product.measure_unit ?? 1);
-    form.append("control_stock", !!product.control_stock);
-    form.append("control_supplie", !!product.control_supplie);
-    form.append("stock", product.stock ?? "");
-    form.append("icbper", !!product.icbper);
-    form.append("number_points", product.number_points ?? "");
-    form.append("redeem_points", product.redeem_points ?? "");
-    form.append("category", product.category ?? "");
-    form.append("preparation_place", product.preparation_place ?? "");
-    form.append("branchoffice", product.branchoffice ?? "");
-    form.append("quick_indications", product.quick_indications ?? "");
-    form.append("affectation", product.affectation ?? "");
-    form.append("igv_tax", product.igv_tax ?? 0);
-    form.append("fitting", product.fitting ?? "");
-
-    if (Array.isArray(product.supplies)) {
-        form.append("supplies", JSON.stringify(product.supplies));
-    }
-
-    if (product.image instanceof File || product.image instanceof Blob) {
-        form.append("image", product.image);
-    }
-
-    return await http.put(`products/${idProduct}/`, form, {
-        headers: { "Content-Type": "multipart/form-data" },
+    return await http.put(`products/${idProduct}/`, {
+        code: product.code,
+        name: product.name.toUpperCase(),
+        description: product.description,
+        prices: product.prices,
+        purchase_price: product.purchase_price,
+        measure_unit: product.measure_unit,
+        control_stock: product.control_stock,
+        control_supplie: product.control_supplie,
+        stock: product.stock,
+        icbper: product.icbper,
+        number_points: product.number_points,
+        redeem_points: product.redeem_points,
+        category: product.category,
+        preparation_place: product.preparation_place,
+        branchoffice: product.branchoffice,
+        supplies: product.supplies,
+        quick_indications: product.quick_indications,
+        affectation: product.affectation,
+        igv_tax: product.igv_tax,
+        fitting: product.fitting,
     });
 }
 
