@@ -8,10 +8,10 @@
       <n-grid responsive="screen" cols="1 xs:1 s:2 m:3 l:4" :x-gap="12" :y-gap="12">
         <n-gi v-for="(item, index) in itemsToShow" :key="index">
           <n-space vertical size="small">
-            <n-text type="secondary" strong>{{ item.label }}</n-text>
+            <n-text type="secondary" strong class="fs-6" >{{ item.label }}</n-text>
 
             <template v-if="!item.editable">
-              <n-text  strong>{{ currencySymbol }} {{ formatNumber(item.value) }}</n-text>
+              <n-text>{{ currencySymbol }} {{ formatNumber(item.value) }}</n-text>
             </template>
 
             <template v-else>
@@ -41,14 +41,16 @@
 
     <n-grid responsive="screen" cols="1 xs:1 s:2" :x-gap="12" :y-gap="12">
       <n-gi>
-        <n-card size="small">
-          <n-space justify="space-between" align="center">
-            <n-text strong>Pago</n-text>
+        <n-card size="small" align="center">
+          <n-space vertical align="center">
+            <n-text strong class="fs-5">PAGO</n-text>
             <n-input-number
               :value="getNumericValue(paymentAmount)"
               :min="paymentMin"
               step="0.1"
               @update:value="handlePaymentInput"
+              size="large"
+              style="max-width: 12rem;"
             >
               <template #prefix>{{ currencySymbol }}</template>
             </n-input-number>
@@ -56,10 +58,10 @@
         </n-card>
       </n-gi>
       <n-gi>
-        <n-card size="small">
-          <n-space justify="space-between" align="center">
-            <n-text strong>Vuelto</n-text>
-            <n-text strong>{{ currencySymbol }} {{ formatNumber(calculatedChange) }}</n-text>
+        <n-card size="small" style="height: 100%;">
+          <n-space vertical align="center">
+            <n-text strong class="fs-5">VUELTO</n-text>
+            <n-text class="fs-6">{{ currencySymbol }} {{ formatNumber(calculatedChange) }}</n-text>
           </n-space>
         </n-card>
       </n-gi>
