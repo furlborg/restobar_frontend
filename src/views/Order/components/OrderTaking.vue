@@ -172,6 +172,7 @@
         v-model:checked="localIsMultiple"
         :disabled="settingsStore.businessSettings.order.pending_takeaway"
         @update:checked="handleIsMultipleChange"
+        class="mt-2"
       >
         Pago multiple
       </n-checkbox>

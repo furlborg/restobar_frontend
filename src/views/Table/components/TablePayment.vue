@@ -110,7 +110,7 @@
               @value-changed="handleValueChange"
               @payment-changed="handlePaymentChange"
             />
-            <n-space v-if="sale.payment_condition === 1" justify="space-between">
+            <n-space v-if="sale.payment_condition === 1" justify="space-between" class="mt-2">
               <n-checkbox v-model:checked="isMultiple">Pago multiple</n-checkbox>
               <n-button type="info" text @click="openSeparatePaymentsModal">Nueva cuenta</n-button>
             </n-space>

@@ -177,7 +177,15 @@
                   {{ sale.totales.total_venta.toFixed(2) }}
                 </td>
               </tr>
-              <tr>
+              <tr v-if="data.payments" v-for="(payment, index) in data.payments" :key="'payment-' + index">
+                <td align="right" :colspan="!!hasDiscounts ? 4 : 3">
+                  {{ payment.description.toUpperCase() }}:
+                </td>
+                <td align="right">
+                  {{ parseFloat(payment.amount).toFixed(2) }}
+                </td>
+              </tr>
+              <tr v-else>
                 <td align="right" :colspan="!!hasDiscounts ? 4 : 3">
                   EFECTIVO:
                 </td>
