@@ -48,6 +48,8 @@
             <n-input-number
               :value="getNumericValue(paymentAmount)"
               :min="paymentMin"
+              :precision="2"
+              :show-button="false"
               step="0.1"
               @update:value="handlePaymentInput"
               size="large"
@@ -63,7 +65,7 @@
         <n-card size="small" style="height: 100%;">
           <n-space vertical align="center">
             <n-text strong class="fs-5">VUELTO</n-text>
-            <n-text strong class="fs-3 change-amount">{{ currencySymbol }} {{ formatNumber(calculatedChange) }}</n-text>
+            <n-text strong class="change-amount">{{ currencySymbol }} {{ formatNumber(calculatedChange) }}</n-text>
           </n-space>
         </n-card>
       </n-gi>
@@ -217,7 +219,7 @@ export default defineComponent({
 
 .change-amount {
   color: #1d4ed8;
-  font-size: 24px !important;
+  font-size: 28px !important;
 }
 
 /* Input de PAGO - Solo borde verde */
@@ -236,10 +238,21 @@ export default defineComponent({
   box-shadow: 0 0 0 3px rgba(24, 160, 88, 0.2) !important;
 }
 
-:deep(.payment-input .n-input-number__input) {
-  font-size: 20px;
+:deep(.payment-input .n-input__input-el) {
+  font-size: 28px !important;
   font-weight: 700;
   color: #059669;
+  text-align: center;
+}
+
+:deep(.payment-input .n-input__prefix) {
+  font-size: 28px !important;
+  font-weight: 700;
+  color: #059669;
+}
+
+:deep(.payment-input .n-input-wrapper) {
+  padding: 8px 12px;
 }
 
 /* Input de DESCUENTO - Solo borde amarillo/naranja */
