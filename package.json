@@ -28,7 +28,8 @@
     "vue-cookies": "^1.8.2",
     "vue-echarts": "^8.0.1",
     "vue-input-autowidth": "^2.2.0",
-    "vue-router": "^4.1.6"
+    "vue-router": "^4.1.6",
+    "vue-simple-calendar": "^7.2.1"
   },
   "devDependencies": {
     "eslint": "^8.32.0",
