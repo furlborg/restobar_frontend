@@ -127,6 +127,29 @@ export default defineComponent({
           icon: renderIcon("md-fastfood-twotone"),
           disabled: !userStore.hasPermission("view_product"),
         },
+        {
+          label: () => h(
+            RouterLink,
+            { to: { name: 'Menu' } },
+            () => h('span', 'Menu')
+          ),
+          key: 'Menu',
+          icon: renderIcon('md-fastfood-twotone'),
+          disabled: !userStore.hasPermission('view_sale'),
+        },
+        {
+          label: () =>
+            h(
+              RouterLink,
+              {
+                to: { name: "Combo" },
+              },
+              () => h("span", "Combos")
+            ),
+          key: "Combo",
+          icon: renderIcon("md-fastfood-twotone"),
+          disabled: !userStore.hasPermission("view_product"),
+        },
         /* {
           label: () =>
             h(
@@ -203,6 +226,16 @@ export default defineComponent({
           key: "Cums",
           icon: renderIcon('co-birthday-cake'),
           // disabled: !userStore.hasPermission("view_customer"),
+        },
+        {
+          label: () => h(
+            RouterLink,
+            { to: { name: 'Reports' } },
+            () => h('span', 'Reportes')
+          ),
+          key: 'Reports',
+          icon: renderIcon('md-insertchart-outlined'),
+          disabled: !userStore.hasPermission('view_sale'),
         },
         {
           label: () =>

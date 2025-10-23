@@ -58,22 +58,22 @@ export const routes = [
                 },
                 component: () => import(/* webpackChunkName: "sale" */ "@/views/Sale/index.vue")
             },
-            // {
-            //     path: "/menus",
-            //     name: "Menu",
-            //     meta: {
-            //         requiredPerm: "view_sale"
-            //     },
-            //     component: () => import(/* webpackChunkName: "menu" */ "@/views/Menu/index.vue")
-            // },
-            // {
-            //     path: "/combos",
-            //     name: "Combo",
-            //     meta: {
-            //         requiredPerm: "view_sale"
-            //     },
-            //     component: () => import(/* webpackChunkName: "combo" */ "@/views/Combo/index.vue")
-            // },
+            {
+                path: "/menus",
+                name: "Menu",
+                meta: {
+                    requiredPerm: "view_sale"
+                },
+                component: () => import(/* webpackChunkName: "menu" */ "@/views/Menu/index.vue")
+            },
+            {
+                path: "/combos",
+                name: "Combo",
+                meta: {
+                    requiredPerm: "view_sale"
+                },
+                component: () => import(/* webpackChunkName: "combo" */ "@/views/Combo/index.vue")
+            },
             {
                 path: "/reports",
                 name: "Reports",
@@ -82,16 +82,16 @@ export const routes = [
                 },
                 component: () => import(/* webpackChunkName: "reports" */ "@/views/Reports/index.vue"),
                 children: [
-                    // {
-                    //     path: "products-sold",
-                    //     name: "ProductsSoldReport",
-                    //     component: () => import(/* webpackChunkName: "reports-products-sold" */ "@/views/Reports/components/ProductsSold.vue")
-                    // },
-                    // {
-                    //     path: "cash-flow",
-                    //     name: "CashFlowReport",
-                    //     component: () => import("@/views/Reports/components/CashReport.vue")
-                    // },
+                    {
+                        path: "products-sold",
+                        name: "ProductsSoldReport",
+                        component: () => import(/* webpackChunkName: "reports-products-sold" */ "@/views/Reports/components/ProductsSold.vue")
+                    },
+                    {
+                        path: "cash-flow",
+                        name: "CashFlowReport",
+                        component: () => import("@/views/Reports/components/CashReport.vue")
+                    },
                     {
                         path: "sales-by-date",
                         name: "SalesByDateReport",
@@ -229,7 +229,9 @@ export const routes = [
                     {
                         name: "TableOrder",
                         path: ":table",
-                        meta: { requiredPerm: "view_order" },
+                        meta: {
+                            requiredPerm: "view_order"
+                        },
                         redirect: { name: "ProductCategories" },
                         component: () => import("@/views/Table/components/TableOrderLayout.vue" ),
                         children: [
@@ -450,14 +452,14 @@ export const routes = [
                                 /* webpackChunkName: "w-categories" */ "@/WaiterMode/views/Categories.vue"
                                 )
                     },
-                    // {
-                    //     name: "WCombos",
-                    //     path: "combos",
-                    //     component: () =>
-                    //         import(
-                    //             /* webpackChunkName: "w-combos" */ "@/WaiterMode/views/Combos.vue"
-                    //             )
-                    // },
+                    {
+                        name: "WCombos",
+                        path: "combos",
+                        component: () =>
+                            import(
+                                /* webpackChunkName: "w-combos" */ "@/WaiterMode/views/Combos.vue"
+                                )
+                    },
                     {
                         name: "WProducts",
                         path: ":category",
@@ -504,6 +506,19 @@ router.beforeEach(async(to, from, next) => {
     const genericsStore = useGenericsStore();
     genericsStore.updateDevice();
     await userStore.checkAuthentication();
+
+    // Helper function to extract table ID from route
+    const extractTableId = (route) => {
+        // Try direct param
+        if (route.params.table) {
+            return parseInt(route.params.table, 10);
+        }
+        // Try path regex match for /table/:id or /waiter-mode/:id
+        const match = route.path.match(/\/(table|waiter-mode)\/(\d+)/);
+        return match ? parseInt(match[2], 10) : null;
+    };
+
+    // Original authentication logic
     if(to.matched.some((record) => record.meta.requiresAuth)) {
         if(userStore.isAuthenticated) {
             if(to.matched.some((record) => record.meta.requiredPerm)) {
