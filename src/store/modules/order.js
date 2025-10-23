@@ -79,7 +79,7 @@ export const useOrderStore = defineStore("order", {
               state.orders.splice(0, state.orders.length, ...merged);
           }
 
-          return state.orders;
+          return state.orders.filter(detail => detail.quantity > 0);
       },
       orderTotal(state) {
       return state.orders.reduce((acc, curVal) => {
