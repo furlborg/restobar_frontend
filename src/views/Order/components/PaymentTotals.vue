@@ -77,9 +77,6 @@ import { useMessage } from "naive-ui";
 
 export default defineComponent({
   name: "PaymentTotals",
-  components: {
-    NInputNumber
-  },
   props: {
     currencySymbol: {
       type: String,
