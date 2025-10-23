@@ -156,7 +156,7 @@
 
 <script>
 import ProductIndications from "../views/ProductIndications";
-import TicketPreview from "@/views/Order/components/TicketPreview";
+import TicketPreview from "@/views/Order/components/TicketPreview.vue";
 import { h, defineComponent, ref, computed, nextTick } from "vue";
 import { NThing, NTag, NSpace, NText, useMessage, useDialog } from "naive-ui";
 import { createTableOrder, updateTableOrder } from "@/api/modules/tables";
@@ -217,7 +217,7 @@ export default defineComponent({
         const showOptions = (value) => {
             const priceRegex = /^\d+(\.\d{0,2})?$/;
                 if (priceRegex.test(value)) {
-                    searchingProduct.value = true;
+                    searching.value = true;
                     searchProductPrice(value)
                     .then((response) => {
                         if (response.status === 200) {
@@ -229,7 +229,7 @@ export default defineComponent({
                         message.error("Algo salió mal...");
                     })
                     .finally(() => {
-                        searchingProduct.value = false;
+                        searching.value = false;
                     });
                     return true;
                 }
@@ -360,16 +360,10 @@ export default defineComponent({
             } else {
                 let order = {
                     id: product.id,
-                    name: product.name,
                     product_name: product.name,
-                    prices: product.prices,
                     price: product.prices,
                     quantity: 1,
-                    indication: [],
-                    icbper: product.icbper,
-                    affectation: product.affectation,
-                    igv_tax: product.igv_tax,
-                    quick_indications: product.quick_indications
+                    indication: []
                 };
                 waiterStore.preOrderList.push(order);
             }
