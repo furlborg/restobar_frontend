@@ -40,7 +40,6 @@ export const useSaleStore = defineStore("sale", {
       }));
     },
       toSale(state) {
-          // 1️⃣ Mapea orderList a detalles de venta
           const saleDetails = orderStore.orderList.map((order) => {
               const detail = {
                   product: order.product,
@@ -64,17 +63,15 @@ export const useSaleStore = defineStore("sale", {
               const key = item.product;
 
               if (!map.has(key)) {
-                  // clonamos para no mutar el original
                   map.set(key, { ...item });
               } else {
                   const existing = map.get(key);
                   existing.quantity += item.quantity;
-                  existing.price_sale = (parseFloat(existing.price_sale) + parseFloat(item.price_sale)).toFixed(2);
-                  existing.icbper = (parseFloat(existing.icbper) + parseFloat(item.icbper)).toFixed(2);
+                  existing.price_sale = parseFloat(item.price_sale).toFixed(2);
+                  existing.icbper = parseFloat(item.icbper).toFixed(2);
               }
           }
 
-          // 3️⃣ Convertimos a array
           state.sale_details = Array.from(map.values());
 
           console.log("Sale Details:", state.sale_details);
