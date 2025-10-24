@@ -125,7 +125,7 @@
                                     color="#901E00"
                                     text
                             >
-                                S/. {{ table.order_amount.toFixed(2) }}
+                                S/. {{ (table?.order_amount || 0).toFixed(2) }}
                             </n-button>
                             <n-button
                                     @click.stop="openOptions.push(table.id)"

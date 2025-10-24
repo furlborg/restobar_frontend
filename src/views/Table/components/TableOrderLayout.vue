@@ -264,7 +264,6 @@ export default defineComponent({
                 const response = await retrieveTableOrder(table);
                 dataItems.value = response.data.order_details;
                 if (response.status === 200) {
-                    console.log(response.data);
                     const { order_details: orderDetails, user: userId, ask_for: askFor, id } = response.data;
                     const detectedCustomers = extractCustomers(orderDetails);
                     orderStore.orders = orderDetails;

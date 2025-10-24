@@ -286,83 +286,12 @@ export default defineComponent({
         product.name.toLowerCase().includes(search.value.toLowerCase())
       );
     });
-    
-      const expandOrderList = (orderList) => {
-          const expanded = [];
-
-          for (const item of orderList) {
-              const indications = item.indication || [];
-              const totalQty = item.quantity || 1;
-              const indicatedQty = indications.length;
-              const remainingQty = totalQty - indicatedQty;
-
-              if (indicatedQty > 0) {
-                  for (const ind of indications) {
-                      expanded.push({
-                          ...item,
-                          indication: [ ind ],
-                          quantity: 1,
-                          subTotal: parseFloat(item.price || 0)
-                      });
-                  }
-              }
-
-              if (remainingQty > 0) {
-                  expanded.push({
-                      ...item,
-                      indication: [],
-                      quantity: remainingQty,
-                      subTotal: parseFloat(item.price || 0) * remainingQty
-                  });
-              }
-          }
-
-          const grouped = [];
-
-          for (const product of expanded) {
-              const indicationIsEmpty =
-                  !product.indication ||
-                  product.indication.length === 0 ||
-                  product.indication.every(
-                      (ind) =>
-                          !ind.description?.trim() &&
-                          ( !ind.quick_indications || ind.quick_indications.length === 0)
-                  );
-
-              if ( !indicationIsEmpty) {
-                  grouped.push(product);
-                  continue;
-              }
-
-              const existing = grouped.find(
-                  (p) =>
-                      ( !p.indication?.length ||
-                        p.indication.every(
-                            (ind) =>
-                                !ind.description?.trim() &&
-                                ( !ind.quick_indications ||
-                                  ind.quick_indications.length === 0)
-                        )) &&
-                      p.product === product.product
-              );
-
-              if (existing) {
-                  existing.quantity += product.quantity;
-                  existing.subTotal =
-                      parseFloat(existing.price || 0) * existing.quantity;
-              } else {
-                  grouped.push({ ...product, indication: [] });
-              }
-          }
-
-          return grouped;
-      };
 
     const performCreateTableOrder = () => {
       addToList();
       loading.value = true;
-        const createNewOrder = expandOrderList(orderStore.orderList);
-        createTableOrder(route.params.table, createNewOrder, undefined, !ask_for.value ? undefined : ask_for.value)
+        // const createNewOrder = expandOrderList(orderStore.orderList);
+        createTableOrder(route.params.table, orderStore.orderList, undefined, !ask_for.value ? undefined : ask_for.value)
         .then((response) => {
           if (response.status === 201) {
             message.success("Orden creada correctamente");
@@ -412,9 +341,9 @@ export default defineComponent({
       addToList();
       loading.value = true;
         
-        const createNewOrder = expandOrderList(orderStore.orderList);
+        // const createNewOrder = expandOrderList(orderStore.orderList);
 
-        await updateTableOrder(route.params.table, orderStore.orderId, createNewOrder, undefined, !ask_for.value ? undefined : ask_for.value)
+        await updateTableOrder(route.params.table, orderStore.orderId, orderStore.orderList, undefined, !ask_for.value ? undefined : ask_for.value)
         .then((response) => {
           if (response.status === 202) {
             message.success("Orden actualizada correctamente");
@@ -468,41 +397,100 @@ export default defineComponent({
       dateNow.value = `${dd}/${mm + 1}/${yy} ${hh}:${msms}`;
     });
 
-    const addToPreList = () => {
-      filteredProducts.value.forEach((product) => {
-        if (product.quantity > 0) {
-          const existence = waiterStore.preOrderList.find(
-            (order) => order.id === product.id
-          );
-          if (typeof existence !== "undefined") {
-            existence.quantity += product.quantity;
-          } else {
-            let order = {
-              id: product.id,
-              name: product.name,
-              product_name: product.name,
-              prices: product.prices,
-              price: product.prices,
-              quantity: Number(product.quantity),
-              indication: [],
-              icbper: product.icbper,
-              affectation: product.affectation,
-              igv_tax: product.igv_tax,
-              quick_indications: product.quick_indications,
-            };
-            waiterStore.preOrderList.push(order);
-          }
-        }
-        product.quantity = 0;
-        product.indications = [];
-      });
-    };
+      const addToPreList = () => {
+          filteredProducts.value.forEach((product) => {
+              if (product.quantity > 0) {
+                  // Normalizamos quick_indications como array
+                  const quicks = typeof product.quick_indications === 'string'
+                                 ? product.quick_indications.split(',').map(q => q.trim()).filter(Boolean)
+                                 : Array.isArray(product.quick_indications)
+                                   ? [...product.quick_indications]
+                                   : [];
 
-    const addToList = () => {
-      waiterStore.preOrderList.forEach((product) => {
-        orderStore.addOrderItem(product);
-      });
-    };
+                  // Normalizamos indicaciones
+                  const indications = Array.isArray(product.indication) ? product.indication.map(i => ({
+                      ...i,
+                      quick_indications: typeof i.quick_indications === 'string'
+                                         ? i.quick_indications.split(',').map(q => q.trim()).filter(Boolean)
+                                         : Array.isArray(i.quick_indications)
+                                           ? [...i.quick_indications]
+                                           : []
+                  })) : [];
+
+                  // Creamos un key único que refleje exactamente la combinación de indicaciones
+                  const key = product.id + '__' + indications.map(i => i.description).join('|') + '__' + quicks.join('|');
+
+                  // Verificamos si ya existe exactamente la misma combinación
+                  const existence = waiterStore.preOrderList.find(order => order._key === key);
+
+                  if (existence) {
+                      // Si es exactamente igual, acumulamos la cantidad
+                      existence.quantity += product.quantity;
+                  } else {
+                      // Si no existe, creamos un nuevo objeto independiente
+                      waiterStore.preOrderList.push({
+                          _key: key,
+                          id: product.id,
+                          name: product.name,
+                          product_name: product.name,
+                          prices: product.prices,
+                          price: product.prices,
+                          quantity: product.quantity,
+                          indication: indications,
+                          icbper: product.icbper,
+                          affectation: product.affectation,
+                          igv_tax: product.igv_tax,
+                          quick_indications: quicks
+                      });
+                  }
+              }
+
+              // Reset
+              product.quantity = 0;
+              product.indication = [];
+              product.quick_indications = [];
+          });
+      };
+
+      const addToList = () => {
+          waiterStore.preOrderList.forEach((product) => {
+              const indications = Array.isArray(product.indication) ? product.indication : [];
+              const quicks = Array.isArray(product.quick_indications) ? product.quick_indications : [];
+
+              // Si no hay indicaciones, se envía tal cual
+              if (indications.length === 0) {
+                  const safeItem = {
+                      ...product,
+                      product: product.id,
+                      id: null,
+                      fromBackend: false,
+                      indication: [],
+                      quick_indications: [...quicks],
+                      quantity: product.quantity
+                  };
+                  orderStore.addOrderItem(safeItem);
+              } else {
+                  // Por cada indicación, enviamos un objeto separado
+                  indications.forEach((ind) => {
+                      const indQuicks = Array.isArray(ind.quick_indications) ? [...ind.quick_indications] : [];
+                      const safeItem = {
+                          ...product,
+                          product: product.id,
+                          id: null,
+                          fromBackend: false,
+                          indication: [{
+                              ...ind,
+                              quick_indications: indQuicks
+                          }],
+                          quick_indications: [...quicks],
+                          quantity: 1 // cada indicación es un item separado
+                      };
+                      orderStore.addOrderItem(safeItem);
+                  });
+              }
+          });
+      };
+
 
     const showAskFor = ref(false);
 

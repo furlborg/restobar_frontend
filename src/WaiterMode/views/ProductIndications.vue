@@ -54,9 +54,8 @@ export default defineComponent({
         const indications = ref([]);
 
         const quickIndications = computed(() => {
-            console.log(product.value);
             if (product.value.quick_indications) {
-                return product.value.quick_indications.trim().split(",");
+                return product.value?.quick_indications
             }
             return [];
         });

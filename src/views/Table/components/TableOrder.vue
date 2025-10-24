@@ -2,12 +2,13 @@
     <n-card title="Pedidos" :bordered="false" class="h-100" content-class="overflow-auto">
         <template #header-extra>
             <div v-if="userStore.hasPermission('charge_order')">
-                <n-button v-if="!($route.name === 'TablePayment')" type="success" :disabled="!orderStore.orderId" text @click="navigateToPayment">
-                    <v-icon class="me-1" name="fa-coins" />
+                <n-button v-if="!($route.name === 'TablePayment')" type="success" :disabled="!orderStore.orderId" text
+                          @click="navigateToPayment">
+                    <v-icon class="me-1" name="fa-coins"/>
                     <span class="fs-6">Cobrar</span>
                 </n-button>
                 <n-button v-else type="info" text @click="navigateToTakeOrder">
-                    <v-icon class="me-1" name="md-add-round" />
+                    <v-icon class="me-1" name="md-add-round"/>
                     <span class="fs-6">Añadir pedido</span>
                 </n-button>
             </div>
@@ -19,13 +20,16 @@
                     <n-form v-if="!($route.name === 'TablePayment')">
                         <n-grid cols="2" x-gap="12">
                             <n-form-item-gi v-if="shouldSelectOrderUser" :span="2" label="Mozo">
-                                <n-select :options="activeUsersStore.usersOptions" v-model:value="localOrderUser" placeholder="Seleccione un mozo" filterable />
+                                <n-select :options="activeUsersStore.usersOptions" v-model:value="localOrderUser"
+                                          placeholder="Seleccione un mozo" filterable/>
                             </n-form-item-gi>
                             <n-form-item-gi :span="2" label="Buscar producto">
                                 <n-input-group>
-                                    <n-auto-complete v-model:value="productSearch" :options="productOptions" :get-show="showOptions" :loading="searching"
-                                        :render-label="renderLabel" :input-props="{ autocomplete: 'disabled' }" placeholder="Nombre del producto"
-                                        clear-after-select @select="selectProduct" />
+                                    <n-auto-complete v-model:value="productSearch" :options="productOptions" :get-show="showOptions"
+                                                     :loading="searching"
+                                                     :render-label="renderLabel" :input-props="{ autocomplete: 'disabled' }"
+                                                     placeholder="Nombre del producto"
+                                                     clear-after-select @select="selectProduct"/>
                                 </n-input-group>
                             </n-form-item-gi>
                         </n-grid>
@@ -33,54 +37,60 @@
 
                     <n-table size="small">
                         <thead>
-                            <tr>
-                                <th style="width: 10%"></th>
-                                <th style="width: 40%">Producto</th>
-                                <th style="width: 25%">Cantidad</th>
-                                <th style="width: 15%">SubTotal</th>
-                                <th style="width: 10%"></th>
-                            </tr>
+                        <tr>
+                            <th style="width: 10%"></th>
+                            <th style="width: 40%">Producto</th>
+                            <th style="width: 25%">Cantidad</th>
+                            <th style="width: 15%">SubTotal</th>
+                            <th style="width: 10%"></th>
+                        </tr>
                         </thead>
                         <tbody>
-                            <template v-for="(order, index) in orderStore.orderList">
-                                <tr v-if="order.quantity > 0" :key="index" style="cursor: pointer" @click="openOrderModal(index)">
-                                    <td>
-                                        <n-button v-if="!isPaymentRoute" type="info" text><v-icon name="md-listalt-round" /></n-button>
-                                    </td>
-                                    <td>
-                                        <span>{{ order.product_name }}</span><br>
-                                        <span style="color: #15151c; font-size: 12px;">{{ order.modified }}</span>
-                                    </td>
-                                    <td>
-                                        <n-input-number v-if="!isPaymentRoute" size="small" :min="order.id ? saleStore.getOrderQuantity(order.id) : 1"
-                                            v-model:value="order.quantity" @click.stop />
-                                        <template v-else>{{ order.quantity }}</template>
-                                    </td>
-                                    <td>S/. {{ formatPrice(order.subTotal) }}</td>
-                                    <td>
-                                        <n-button v-if="!isPaymentRoute" type="error" text @click.stop="handleRemoveOrder(order, index)">
-                                            <v-icon name="md-disabledbydefault-round" />
-                                        </n-button>
-                                    </td>
-                                </tr>
-                            </template>
-                            <tr v-if="orderStore.orderList.length === 0">
-                                <td colspan="5">
-                                    <n-empty description="No hay productos agregados" size="small" class="my-4" />
-                                </td>
-                            </tr>
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <td colspan="3">
-                                    <n-button v-if="!isPaymentRoute" :type="orderStore.orderId ? 'info' : 'primary'" :loading="loading"
-                                        :disabled="orderChanged" @click="validateSend()" text block>
-                                        <v-icon class="me-2" name="md-notealt-twotone" scale="1.5" />
-                                        <span class="fs-4">{{ orderStore.orderId ? 'Actualizar' : 'Realizar' }} pedido</span>
+                        <template v-for="(order, index) in orderStore.orderList">
+                            <tr v-if="order.quantity > 0" :key="index" style="cursor: pointer" @click="openOrderModal(index)">
+                                <td>
+                                    <n-button v-if="!isPaymentRoute" type="info" text>
+                                        <v-icon name="md-listalt-round"/>
                                     </n-button>
                                 </td>
-                                <td colspan="2" class="fs-6 fw-bold">S/. {{ formatPrice(orderStore.orderTotal) }}</td>
+                                <td>
+                                    <span>{{ order.product_name }}</span><br>
+                                    <span v-if="order?.indication.length > 0">
+                                                {{ order.indication.map(dt => dt?.description.split(", ")).flat().join(", ") }}
+                                        </span> <br v-if="order?.indication.length > 0">
+                                    <span style="color: #15151c; font-size: 12px;">{{ order.modified }}</span>
+                                </td>
+                                <td>
+                                    <n-input-number v-if="!isPaymentRoute" size="small" :min="order.id ? saleStore.getOrderQuantity(order.id) : 1"
+                                                    v-model:value="order.quantity" @click.stop />
+
+                                    <template v-else>{{ order.quantity }}</template>
+                                </td>
+                                <td>S/. {{ formatPrice(order.subTotal) }}</td>
+                                <td>
+                                    <n-button v-if="!isPaymentRoute" type="error" text @click.stop="handleRemoveOrder(order, index)">
+                                        <v-icon name="md-disabledbydefault-round"/>
+                                    </n-button>
+                                </td>
                             </tr>
+                        </template>
+                        <tr v-if="orderStore.orderList.length === 0">
+                            <td colspan="5">
+                                <n-empty description="No hay productos agregados" size="small" class="my-4"/>
+                            </td>
+                        </tr>
+                        </tbody>
+                        <tfoot>
+                        <tr>
+                            <td colspan="3">
+                                <n-button v-if="!isPaymentRoute" :type="orderStore.orderId ? 'info' : 'primary'" :loading="loading"
+                                          :disabled="orderChanged" @click="validateSend()" text block>
+                                    <v-icon class="me-2" name="md-notealt-twotone" scale="1.5"/>
+                                    <span class="fs-4">{{ orderStore.orderId ? "Actualizar" : "Realizar" }} pedido</span>
+                                </n-button>
+                            </td>
+                            <td colspan="2" class="fs-6 fw-bold">S/. {{ formatPrice(orderStore.orderTotal) }}</td>
+                        </tr>
                         </tfoot>
                     </n-table>
                 </div>
@@ -88,7 +98,7 @@
         </template>
     </n-card>
 
-    <OrderIndications v-model:show="showModal" preset="card" title="Indicaciones" :order="currentOrder" @success="showModal = false" />
+    <OrderIndications v-model:show="showModal" preset="card" title="Indicaciones" :order="currentOrder" @success="showModal = false"/>
 </template>
 
 <script>
@@ -112,10 +122,10 @@ export default defineComponent({
     props: {
         ask_for: {
             type: String,
-            default: ''
+            default: ""
         },
         orderUser: {
-            type: [Number, String],
+            type: [ Number, String ],
             default: null
         },
         loading: {
@@ -128,13 +138,13 @@ export default defineComponent({
         }
     },
     emits: [
-        'validateSend',
-        'addCustomer',
-        'removeCustomer',
-        'deleteOrderDetail',
-        'goToFirstTab',
-        'update:ask_for',
-        'update:orderUser'
+        "validateSend",
+        "addCustomer",
+        "removeCustomer",
+        "deleteOrderDetail",
+        "goToFirstTab",
+        "update:ask_for",
+        "update:orderUser"
     ],
     setup(props, { emit }) {
         const route = useRoute();
@@ -153,23 +163,23 @@ export default defineComponent({
 
         const localAskFor = computed({
             get: () => props.ask_for,
-            set: (value) => emit('update:ask_for', value)
+            set: (value) => emit("update:ask_for", value)
         });
 
         const localOrderUser = computed({
             get: () => props.orderUser,
-            set: (value) => emit('update:orderUser', value)
+            set: (value) => emit("update:orderUser", value)
         });
 
         const orderChanged = computed(() => {
             return !orderStore.orderList.length || props.checkState || props.loading;
         });
 
-        const validateSend = () => emit('validateSend');
-        const addCustomer = (name) => emit('addCustomer', name);
-        const removeCustomer = (index) => emit('removeCustomer', index);
-        const deleteOrderDetail = (index, id) => emit('deleteOrderDetail', index, id);
-        const goToFirstTab = () => emit('goToFirstTab');
+        const validateSend = () => emit("validateSend");
+        const addCustomer = (name) => emit("addCustomer", name);
+        const removeCustomer = (index) => emit("removeCustomer", index);
+        const deleteOrderDetail = (index, id) => emit("deleteOrderDetail", index, id);
+        const goToFirstTab = () => emit("goToFirstTab");
 
         const newCustomerName = ref("");
         const showModal = ref(false);
@@ -178,8 +188,8 @@ export default defineComponent({
         const productSearch = ref("");
         const products = ref([]);
 
-        const isWaiter = computed(() => userStore.user.role === 'MOZO');
-        const isPaymentRoute = computed(() => route.name === 'TablePayment');
+        const isWaiter = computed(() => userStore.user.role === "MOZO");
+        const isPaymentRoute = computed(() => route.name === "TablePayment");
         const shouldSelectOrderUser = computed(() => settingsStore.businessSettings?.order?.select_order_user && !isWaiter.value);
         const currentOrder = computed(() => orderStore.orderList[itemIndex.value]);
 
@@ -189,7 +199,7 @@ export default defineComponent({
             disabled: product.is_disabled,
             category: productStore.getCategorieDescription(product.category),
             stock: product.stock,
-            price: parseFloat(product.prices).toFixed(2),
+            price: parseFloat(product.prices).toFixed(2)
         })));
 
         const openOrderModal = (index) => {
@@ -206,10 +216,10 @@ export default defineComponent({
 
         const confirmRemoveCustomer = (customerIndex, customerName) => {
             dialog.warning({
-                title: 'Confirmar eliminación',
-                content: `¿Estás seguro de que quieres eliminar al cliente "${customerName}"? Esto también eliminará todos sus pedidos.`,
-                positiveText: 'Sí, eliminar',
-                negativeText: 'Cancelar',
+                title: "Confirmar eliminación",
+                content: `¿Estás seguro de que quieres eliminar al cliente "${ customerName }"? Esto también eliminará todos sus pedidos.`,
+                positiveText: "Sí, eliminar",
+                negativeText: "Cancelar",
                 onPositiveClick: () => removeCustomer(customerIndex)
             });
         };
@@ -222,7 +232,7 @@ export default defineComponent({
         const getGlobalOrderIndex = (orderId) => orderStore.orderList.findIndex(order => order.id === orderId);
 
         const handleRemoveOrder = (order, index) => {
-            if (!order.id) {
+            if ( !order.id) {
                 orderStore.orderList.splice(index, 1);
                 nullifyTableOrder(order);
             } else {
@@ -231,66 +241,60 @@ export default defineComponent({
         };
 
         const removeOrderItem = (productId, customerId) => {
-            const index = orderStore.orderList.findIndex(order => order.product === productId && (!order.customer || order.customer.id === customerId));
+            const index = orderStore.orderList.findIndex(order => order.product === productId && ( !order.customer || order.customer.id === customerId));
             if (index !== -1) {
                 const order = orderStore.orderList[index];
                 handleRemoveOrder(order, index);
             }
         };
 
-        const nullifyTableOrder = async (order) => {
-            if (!orderStore.orderList.length && orderStore.orderId) {
+        const nullifyTableOrder = async(order) => {
+            if ( !orderStore.orderList.length && orderStore.orderId) {
                 // console.log('Nullifying table order for:', order);
             }
         };
 
         const debounce = (fn, delay = 500) => {
-            let timeout
+            let timeout;
             return (...args) => {
-                clearTimeout(timeout)
-                timeout = setTimeout(() => fn(...args), delay)
-            }
-        }
+                clearTimeout(timeout);
+                timeout = setTimeout(() => fn(...args), delay);
+            };
+        };
 
         const fetchProducts = debounce((value) => {
-            const priceRegex = /^\d+(\.\d{0,2})?$/
+            const priceRegex = /^\d+(\.\d{0,2})?$/;
 
             // Si es un precio, buscar por precio
             if (priceRegex.test(value)) {
-                searching.value = true
-                searchProductPrice(value)
-                .then(res => {
-                    if (res.status === 200) products.value = res.data
-                })
-                .catch(() => message.error('Algo salió mal...'))
-                .finally(() => (searching.value = false))
-                return
+                searching.value = true;
+                searchProductPrice(value).then(res => {
+                    if (res.status === 200) products.value = res.data;
+                }).catch(() => message.error("Algo salió mal...")).finally(() => (searching.value = false));
+                return;
             }
 
             // Si es texto con al menos 3 caracteres, buscar por nombre
             if (value.length >= 3) {
-                searching.value = true
-                searchProductByName(value)
-                .then(res => {
-                    if (res.status === 200) products.value = res.data
-                })
-                .catch(() => message.error('Algo salió mal...'))
-                .finally(() => (searching.value = false))
+                searching.value = true;
+                searchProductByName(value).then(res => {
+                    if (res.status === 200) products.value = res.data;
+                }).catch(() => message.error("Algo salió mal...")).finally(() => (searching.value = false));
             } else {
-                products.value = []
+                products.value = [];
             }
-            }, 500)
+        }, 500);
 
         // --- get-show solo controla visibilidad del dropdown ---
         const showOptions = (value) => {
-            if (!value) return false
+            if ( !value) return false;
             // cuando hay algo escrito, deja mostrar las opciones
-            return value.length >= 3 || /^\d+(\.\d{0,2})?$/.test(value)
-        }
+            return value.length >= 3 || /^\d+(\.\d{0,2})?$/.test(value);
+        };
 
         watch(productSearch, (value) => {
-            fetchProducts(value)
-        })
+            fetchProducts(value);
+        });
 
         const selectProduct = id => {
             const item = products.value.find(product => product.id === id);
@@ -306,12 +310,12 @@ export default defineComponent({
 
         const navigateToPayment = () => {
             goToFirstTab();
-            router.push({ name: 'TablePayment', params: { table: route.params.table } });
+            router.push({ name: "TablePayment", params: { table: route.params.table } });
         };
 
         const navigateToTakeOrder = () => {
             goToFirstTab();
-            router.push({ name: 'ProductCategories', params: { table: route.params.table } });
+            router.push({ name: "ProductCategories", params: { table: route.params.table } });
         };
 
         return {

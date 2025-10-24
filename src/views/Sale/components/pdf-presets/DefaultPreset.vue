@@ -36,10 +36,6 @@
       <div class="ticket-body">
         <div class="ticket-body-info">
           <table>
-            <thead>
-              <th></th>
-              <th></th>
-            </thead>
             <tbody>
               <tr>
                 <td>F. EMISIÓN</td>
@@ -272,10 +268,6 @@
         </div>
         <div v-else class="ticket-footer">
           <table>
-            <thead>
-              <th></th>
-              <th></th>
-            </thead>
             <tbody>
               <tr>
                 <td>MÉTODO DE PAGO:</td>

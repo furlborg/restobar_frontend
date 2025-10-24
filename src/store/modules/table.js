@@ -95,7 +95,6 @@ export const useTableStore = defineStore("table", {
     connectWebSocket() {
       // Solo crear una conexión si no existe
       if (this.socket && this.socket.readyState !== WebSocket.CLOSED) {
-        console.log('⚠️ WebSocket ya está conectado');
         return;
       }
 
@@ -103,11 +102,9 @@ export const useTableStore = defineStore("table", {
         const apiUrl = import.meta.env.VITE_APP_URL.replace(/^https?:\/\//, '');
         const socketUrl = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${apiUrl}/ws/print/`;
         
-        console.log('🔌 Conectando WebSocket único...');
         this.socket = new WebSocket(socketUrl);
         
         this.socket.onopen = () => {
-          console.log('🟢 WebSocket único conectado');
           this.wsConnected = true;
         };
         
@@ -116,11 +113,9 @@ export const useTableStore = defineStore("table", {
             const data = JSON.parse(event.data);
             
             if (data.type === 'table_status_changed') {
-              console.log('📢 Notificación recibida:', data);
               
               // Filtrar duplicados por ID
               if (data.id && this.processedMessages.has(data.id)) {
-                console.log('⏭️ Mensaje duplicado ignorado:', data.id);
                 return;
               }
               
@@ -140,11 +135,9 @@ export const useTableStore = defineStore("table", {
             
             // Manejar actualización de orden
             if (data.type === 'order_updated') {
-              console.log('💰 Orden actualizada:', data);
               
               // Filtrar duplicados por ID
               if (data.id && this.processedMessages.has(data.id)) {
-                console.log('⏭️ Mensaje duplicado ignorado:', data.id);
                 return;
               }
               
@@ -172,7 +165,6 @@ export const useTableStore = defineStore("table", {
         };
         
         this.socket.onclose = () => {
-          console.log('🔴 WebSocket cerrado');
           this.wsConnected = false;
         };
       } catch (error) {
@@ -182,7 +174,6 @@ export const useTableStore = defineStore("table", {
     },
     disconnectWebSocket() {
       if (this.socket) {
-        console.log('🔌 Desconectando WebSocket...');
         this.socket.close();
         this.socket = null;
         this.wsConnected = false;
