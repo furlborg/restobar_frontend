@@ -822,6 +822,7 @@ export default defineComponent({
     };
 
     const cleanupOrderStore = () => {
+      orderStore.orders = [];
       orderStore.orderList.splice(0);
       saleStore.toSale.splice(0);
     };
