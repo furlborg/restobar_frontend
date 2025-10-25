@@ -233,7 +233,7 @@ export default defineComponent({
 
         const handleRemoveOrder = (order, index) => {
             if ( !order.id) {
-                orderStore.orderList.splice(index, 1);
+                orderStore.removeOrder(index);
                 nullifyTableOrder(order);
             } else {
                 deleteOrderDetail(index, order.id);
@@ -250,7 +250,7 @@ export default defineComponent({
 
         const nullifyTableOrder = async(order) => {
             if ( !orderStore.orderList.length && orderStore.orderId) {
-                // console.log('Nullifying table order for:', order);
+                console.log('Nullifying table order for:', order);
             }
         };
 

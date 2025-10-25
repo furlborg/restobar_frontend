@@ -184,6 +184,13 @@ export const useOrderStore = defineStore("order", {
             };
 
             this.orders.push(newItem);
-        }
+        },
+        removeOrder(index) {
+            if (this.orders && this.orders.length > index) {
+                this.orders.splice(index, 1);
+            } else {
+                console.warn("⚠️ removeOrder: índice inválido o lista vacía", index, this.orders);
+            }
+        },
     }
 });

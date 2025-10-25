@@ -325,59 +325,9 @@ export default defineComponent({
             cleanupOrderStore();
         };
 
-        const expandOrderList = (orderList) => {
-            const map = new Map();
-
-            for (const item of orderList) {
-                const qty = Number(item.quantity || 1);
-                const price = parseFloat(item.price || 0);
-                const indications = Array.isArray(item.indication) ? item.indication : [];
-
-                // Si tiene indicaciones, agrupar por description
-                if (indications.length > 0) {
-                    for (const ind of indications) {
-                        const desc = ind.description?.trim()?.toLowerCase() || "__empty__";
-                        const key = `${item.product}__${desc}`;
-
-                        if (!map.has(key)) {
-                            map.set(key, {
-                                ...item,
-                                indication: desc === "__empty__" ? [] : [ { ...ind } ],
-                                quantity: 1,
-                                subTotal: price,
-                            });
-                        } else {
-                            const existing = map.get(key);
-                            existing.quantity += 1;
-                            existing.subTotal = price * existing.quantity;
-                        }
-                    }
-                } else {
-                    // Unidades sin indicación
-                    const key = `${item.product}__empty__`;
-                    if (!map.has(key)) {
-                        map.set(key, {
-                            ...item,
-                            indication: [],
-                            quantity: qty,
-                            subTotal: price * qty,
-                        });
-                    } else {
-                        const existing = map.get(key);
-                        existing.quantity += qty;
-                        existing.subTotal = price * existing.quantity;
-                    }
-                }
-            }
-
-            return Array.from(map.values());
-        };
-
         const performCreateTableOrder = async() => {
             loading.value = true;
             try {
-                const createNewOrder = expandOrderList(orderStore.orderList);
-                console.log(createNewOrder);
                 const response = await createTableOrder(table, orderStore.orderList, orderUser.value, ask_for.value);
                 if (response.status === 201) handleOrderSuccess(response);
             } catch (error) {
