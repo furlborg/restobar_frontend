@@ -49,7 +49,11 @@
                 <v-icon name="md-listalt-round"/>
               </n-button>
             </td>
-            <td>{{ order.product_name }}</td>
+              <td>{{ order.product_name }}
+                  <span v-if="order?.indication.length > 0">
+                   {{ order.indication.map(dt => dt?.description.split(", ")).flat().join(", ") }}
+                   </span> <br v-if="order?.indication.length > 0">
+              </td>
             <td>
               <n-input-number
                 class="border-top-0"
@@ -214,8 +218,8 @@ export default defineComponent({
 
     const removeOrderItem = (index) => {
       try {
-        orderStore.orderList.splice(index, 1);
-        updateOrderDetails();
+          orderStore.removeOrder(index);
+          updateOrderDetails();
       } catch (error) {
         console.error('Error en removeOrderItem:', error);
       }

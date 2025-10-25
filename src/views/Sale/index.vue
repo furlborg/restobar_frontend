@@ -215,7 +215,7 @@ export default defineComponent({
                     sales.value = response.data.results;
                 }).catch((error) => {
                     console.error(error);
-                    message.error("Algo salió mal...");
+                    
                 }).finally(() => {
                     isTableLoading.value = false;
                 });
@@ -241,7 +241,7 @@ export default defineComponent({
                     sales.value = response.data.results;
                 }).catch((error) => {
                     console.error(error);
-                    message.error("Algo salió mal...");
+                    
                 }).finally(() => {
                     isTableLoading.value = false;
                 });
@@ -265,7 +265,7 @@ export default defineComponent({
                 sales.value = response.data.results;
             }).catch((error) => {
                 console.error(error);
-                message.error("Algo salió mal...");
+                
             }).finally(() => {
                 isTableLoading.value = false;
             });
@@ -293,7 +293,7 @@ export default defineComponent({
                 sales.value = response.data.results;
             }).catch((error) => {
                 console.error(error);
-                message.error("Algo salió mal...");
+                
             }).finally(() => {
                 isTableLoading.value = false;
             });
@@ -525,7 +525,7 @@ export default defineComponent({
                         }
                     }).catch((error) => {
                         console.error(error);
-                        message.error("Algo salió mal...");
+                        
                     });
                 },
                 async sendSale(row) {
@@ -539,7 +539,7 @@ export default defineComponent({
                             message.error(error.response.data.error);
                         } else {
                             console.error(error);
-                            message.error("Algo salió mal...");
+                            
                         }
                     }).finally(() => {
                         pagination.value.onChange(pagination.value.page);

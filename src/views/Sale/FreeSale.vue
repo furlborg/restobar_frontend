@@ -688,7 +688,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          message.error("Algo salió mal...");
+          
         })
         .finally(() => {
           loading.value = false;
@@ -737,7 +737,7 @@ export default defineComponent({
             })
             .catch((error) => {
               console.error(error);
-              message.error("Algo salió mal...");
+              
             })
             .finally(() => {
               searching.value = false;
@@ -752,7 +752,7 @@ export default defineComponent({
             })
             .catch((error) => {
               console.error(error);
-              message.error("Algo salió mal...");
+              
             })
             .finally(() => {
               searching.value = false;

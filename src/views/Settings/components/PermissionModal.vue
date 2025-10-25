@@ -65,7 +65,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          message.error("Algo salió mal...");
+          
         });
     };
 

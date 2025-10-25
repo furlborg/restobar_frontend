@@ -141,7 +141,6 @@ export default defineComponent({
               pagination.value.pageCount = Math.ceil(response.data.count / pagination.value.pageSize); // Calcular total de páginas
           }).catch((error) => {
               console.error(error);
-              message.error("Algo salió mal...");
           }).finally(() => {
               isLoadingData.value = false;
           });
@@ -170,7 +169,6 @@ export default defineComponent({
             })
             .catch((error) => {
               console.log(error);
-                message.error("Algo salió mal...");
             });
         },
       });

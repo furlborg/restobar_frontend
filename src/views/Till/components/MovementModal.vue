@@ -227,7 +227,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          message.error("Algo salió mal...");
+          
         })
         .finally(() => {
           conceptForm.value = false;
@@ -243,7 +243,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          message.error("Algo salió mal...");
+          
         })
         .finally(() => {
           conceptForm.value = false;
@@ -270,7 +270,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          message.error("Algo salió mal...");
+          
         })
         .finally(() => {
           paymentForm.value = false;
@@ -286,7 +286,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          message.error("Algo salió mal...");
+          
         })
         .finally(() => {
           paymentForm.value = false;

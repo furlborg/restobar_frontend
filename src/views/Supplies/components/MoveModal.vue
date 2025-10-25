@@ -103,7 +103,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          message.error("Algo salió mal...");
+          
         });
     };
 
@@ -117,7 +117,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          message.error("Algo salió mal...");
+          
         });
     };
     supplieSearch("");
@@ -132,7 +132,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          message.error("Algo salió mal...");
+          
         });
     };
     getEstablishment();
@@ -167,7 +167,7 @@ export default defineComponent({
                 } else if ("error" in error.response.data) {
                   message.warning(error.response.data.error);
                 } else {
-                  message.error("Algo salió mal...");
+                  
                 }
               });
           }

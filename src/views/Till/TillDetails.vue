@@ -324,8 +324,7 @@ export default defineComponent({
           }
         })
         .catch((error) => {
-          console.error(error);
-          message.error("Algo salió mal...");
+          console.error(error);          
         })
         .finally(() => {
           isLoading.value = false;
@@ -340,8 +339,7 @@ export default defineComponent({
           movements.value = response.data;
         })
         .catch((error) => {
-          console.error(error);
-          message.error("Algo salió mal...");
+          console.error(error);          
         })
         .finally(() => {
           isLoading.value = false;
@@ -533,7 +531,6 @@ export default defineComponent({
           }
         })
         .catch((error) => {
-          message.error("Algo salío mal...");
           console.error(error);
         });
     };
@@ -686,7 +683,6 @@ export default defineComponent({
           sendReportMail();
           break;
         default:
-          console.error("Algo salió mal...");
           break;
       }
     };
@@ -720,7 +716,6 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          message.error("Algo salió mal");
         });
     };
 

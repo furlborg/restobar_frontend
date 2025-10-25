@@ -464,7 +464,7 @@ export default defineComponent({
           }));
         })
         .catch(() => {
-          message.error("Algo salió mal...");
+          
         });
     };
     supplieSearch("");
@@ -493,7 +493,7 @@ export default defineComponent({
           });
         })
         .catch(() => {
-          message.error("Algo salió mal...");
+          
         });
     };
     getEstablishment();
@@ -507,7 +507,7 @@ export default defineComponent({
           }));
         })
         .catch(() => {
-          message.error("Algo salió mal...");
+          
         });
     };
     getUND();
@@ -523,7 +523,6 @@ export default defineComponent({
           })
           .catch((error) => {
             console.error(error);
-            message.error("Algo salio mal...");
           })
           .finally(() => {
             isLoadingData.value = false;
@@ -579,7 +578,7 @@ export default defineComponent({
               })
               .catch((error) => {
                 console.error(error.response.data);
-                message.error("Algo salió mal...");
+                
               })
               .finally(() => {
                 isLoadingData.value = false;
@@ -612,7 +611,7 @@ export default defineComponent({
               })
               .catch((error) => {
                 console.error(error.response.data);
-                message.error("Algo salió mal...");
+                
               })
               .finally(() => {
                 isLoadingData.value = false;
@@ -644,7 +643,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          message.error("Algo salió mal...");
+          
         })
         .finally(() => {
           categoryForm.value = false;
@@ -660,7 +659,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          message.error("Algo salió mal...");
+          
         })
         .finally(() => {
           categoryForm.value = false;

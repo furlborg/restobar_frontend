@@ -172,7 +172,6 @@ export default defineComponent({
                     orderStore.orderId = null;
                 } else {
                     console.error(error);
-                    message.error("Algo salió mal...");
                 }
             });
         };

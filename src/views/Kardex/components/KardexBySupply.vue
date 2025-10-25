@@ -188,7 +188,7 @@ export default defineComponent({
           dataList.value = response.data.results;
         })
         .catch((error) => {
-          message.error("Algo salió mal...");
+          
         })
         .finally(() => {
           loadingList.value = false;
@@ -206,7 +206,7 @@ export default defineComponent({
           dataList.value = response.data.results;
         })
         .catch((error) => {
-          message.error("Algo salió mal...");
+          
         })
         .finally(() => {
           loadingList.value = false;

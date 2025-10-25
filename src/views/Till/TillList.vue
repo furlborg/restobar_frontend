@@ -226,8 +226,7 @@ export default defineComponent({
             tills.value = response.data.results;
           })
           .catch((error) => {
-            console.error(error);
-            message.error("Algo salió mal...");
+            console.error(error);            
           })
           .finally(() => {
             isTableLoading.value = false;
@@ -255,8 +254,7 @@ export default defineComponent({
           }
         })
         .catch((error) => {
-          console.error(error);
-          message.error("Algo salió mal...");
+          console.error(error);          
         })
         .finally(() => {
           isTableLoading.value = false;
@@ -282,8 +280,7 @@ export default defineComponent({
           tills.value = response.data.results;
         })
         .catch((error) => {
-          console.error(error);
-          message.error("Algo salió mal...");
+          console.error(error);          
         })
         .finally(() => {
           isTableLoading.value = false;
@@ -503,7 +500,6 @@ export default defineComponent({
             })
             .catch((error) => {
               console.error(error);
-              message.error("Algo salió mal");
             });
         },
         sendReportMail(row) {
@@ -514,7 +510,6 @@ export default defineComponent({
               }
             })
             .catch((error) => {
-              message.error("Algo salío mal...");
               console.error(error);
             });
         },

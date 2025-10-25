@@ -72,7 +72,6 @@ const pagination = ref({
             sales.value = response.data.results;
         }).catch((error) => {
             console.error(error);
-            message.error("Algo salió mal...");
         }).finally(() => {
             isTableLoading.value = false;
         });
@@ -98,7 +97,7 @@ const pagination = ref({
             sales.value = response.data.results;
         }).catch((error) => {
             console.error(error);
-            message.error("Algo salió mal...");
+            
         }).finally(() => {
             isTableLoading.value = false;
         });
@@ -127,7 +126,7 @@ const performFilter = async() => {
         sales.value = response.data.results;
     }).catch((error) => {
         console.error(error);
-        message.error("Algo salió mal...");
+        
     }).finally(() => {
         isTableLoading.value = false;
     });
@@ -218,7 +217,7 @@ const getDataForReport = async() => {
         }
     }).catch((error) => {
         console.error(error);
-        message.error("Algo salió mal...");
+        
     }).finally(() => {
         isTableLoading.value = false;
     });

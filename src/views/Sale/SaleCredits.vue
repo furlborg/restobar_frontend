@@ -253,7 +253,7 @@ export default defineComponent({
           });
         }
       } catch (e) {
-        message.error("Algo salió mal...");
+        
         console.error(e);
       } finally {
         loading.value = false;

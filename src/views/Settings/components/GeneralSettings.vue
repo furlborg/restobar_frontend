@@ -872,7 +872,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          message.error("Algo salió mal...");
+          
         })
         .finally(() => {
           isLoadingData.value = false;
@@ -891,7 +891,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          message.error("Algo salió mal...");
+          
         })
         .finally(() => {
           isLoadingData.value = false;
@@ -911,13 +911,13 @@ export default defineComponent({
               })
               .catch((error) => {
                 console.error(error);
-                message.error("Algo salió mal...");
+                
               });
           }
         })
         .catch((error) => {
           console.error(error);
-          message.error("Algo salió mal...");
+          
         })
         .finally(() => {
           isLoadingData.value = false;
@@ -937,13 +937,13 @@ export default defineComponent({
               })
               .catch((error) => {
                 console.error(error);
-                message.error("Algo salió mal...");
+                
               });
           }
         })
         .catch((error) => {
           console.error(error);
-          message.error("Algo salió mal...");
+          
         })
         .finally(() => {
           isLoadingData.value = false;
@@ -1011,7 +1011,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          message.error("Algo salió mal...");
+          
         });
     };
 
@@ -1029,7 +1029,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          message.error("Algo salió mal...");
+          
         })
         .finally(() => {
           preparationPlace.value = null;
@@ -1052,7 +1052,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          message.error("Algo salió mal...");
+          
         })
         .finally(() => {
           selectedPlace.value = null;
@@ -1088,7 +1088,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          message.error("Algo salió mal...");
+          
         });
     };
 

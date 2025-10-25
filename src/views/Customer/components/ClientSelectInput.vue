@@ -122,7 +122,6 @@ const showOptions = async (value) => {
     return !!customerResults.value.length;
   } catch (error) {
     console.error(error);
-    message.error("Algo salio mal...");
     customerResults.value = [];
     return false;
   } finally {

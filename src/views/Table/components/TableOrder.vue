@@ -270,7 +270,9 @@ export default defineComponent({
                 searching.value = true;
                 searchProductPrice(value).then(res => {
                     if (res.status === 200) products.value = res.data;
-                }).catch(() => message.error("Algo salió mal...")).finally(() => (searching.value = false));
+                }).catch((e) => {
+                    console.log(e);
+                }).finally(() => (searching.value = false));
                 return;
             }
 
@@ -279,7 +281,9 @@ export default defineComponent({
                 searching.value = true;
                 searchProductByName(value).then(res => {
                     if (res.status === 200) products.value = res.data;
-                }).catch(() => message.error("Algo salió mal...")).finally(() => (searching.value = false));
+                }).catch((e) => {
+                    console.log(e);
+                }).finally(() => (searching.value = false));
             } else {
                 products.value = [];
             }

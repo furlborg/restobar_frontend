@@ -71,7 +71,7 @@ const pagination = ref({
             orders.value = response.data.results;
         }).catch((error) => {
             console.error(error);
-            message.error("Algo salió mal...");
+            
         }).finally(() => {
             isTableLoading.value = false;
         });
@@ -100,7 +100,7 @@ const performFilter = async() => {
         orders.value = response.data.results;
     }).catch((error) => {
         console.error(error);
-        message.error("Algo salió mal...");
+        
     }).finally(() => {
         isTableLoading.value = false;
     });

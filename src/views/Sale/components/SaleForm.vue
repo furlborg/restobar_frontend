@@ -243,7 +243,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          message.error("Algo salió mal...");
+          
         });
     };
 
@@ -279,7 +279,7 @@ export default defineComponent({
             })
             .catch((error) => {
               console.error(error);
-              message.error("Algo salió mal...");
+              
             })
             .finally(() => {
               searchingCustomer.value = false;
@@ -294,7 +294,7 @@ export default defineComponent({
             })
             .catch((error) => {
               console.error(error);
-              message.error("Algo salió mal...");
+              
             })
             .finally(() => {
               searchingCustomer.value = false;
@@ -336,7 +336,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          message.error("Algo salió mal...");
+          
         })
         .finally(() => {
           loading.value = false;
@@ -373,7 +373,7 @@ export default defineComponent({
           showConfirm.value = true;
         } else {
           console.error(errors);
-          message.error("Algo salió mal...");
+          
         }
       });
     };
@@ -404,7 +404,7 @@ export default defineComponent({
                     message.error(error.response.data);
                   } else {
                     console.error(error);
-                    message.error("Algo salió mal...");
+                    
                   }
                 });
             }
@@ -412,7 +412,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          message.error("Algo salió mal...");
+          
           userConfirm.value = "";
           loading.value = false;
         });

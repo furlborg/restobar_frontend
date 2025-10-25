@@ -94,8 +94,7 @@ export default defineComponent({
                     message.success("Envío exitoso!");
                   }
                 })
-                .catch((error) => {
-                  message.error("Algo salió mal...");
+                .catch((error) => {                  
                   console.error(error);
                 });
             }
@@ -111,8 +110,7 @@ export default defineComponent({
               );
             }
           } else {
-            console.error(error);
-            message.error("Algo salió mal...");
+            console.error(error);            
           }
         })
         .finally(() => {

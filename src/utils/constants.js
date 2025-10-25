@@ -755,7 +755,6 @@ export const createTillColumns = ({
                       sendReportMail(row);
                       break;
                     default:
-                      console.error("Algo salió mal...");
                       break;
                   }
                 },

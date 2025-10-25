@@ -105,9 +105,8 @@
 
 <script>
 import { defineComponent, ref, onMounted } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { useMessage, useDialog } from "naive-ui";
-import { set, format } from "date-fns";
+import { useRoute } from "vue-router";
+import { useMessage } from "naive-ui";
 import DetailsModal from "@/views/Order/components/DetailsModal";
 import DeliveryModal from "@/views/Order/components/DeliveryModal";
 import { createTillOrderColumns } from "@/utils/constants";
@@ -131,11 +130,9 @@ export default defineComponent({
   setup() {
     const route = useRoute();
     const till = route.params.till;
-    const message = useMessage();
     const businessStore = useBusinessStore();
     const genericsStore = useGenericsStore();
     const userStore = useUserStore();
-    const tillStore = useTillStore();
     const isLoading = ref(false);
     const isTableLoading = ref(false);
     const showDetailsModal = ref(false);
@@ -189,8 +186,7 @@ export default defineComponent({
             orders.value = response.data.results;
           })
           .catch((error) => {
-            console.error(error);
-            message.error("Algo salió mal...");
+            console.error(error);            
           })
           .finally(() => {
             isTableLoading.value = false;
@@ -218,8 +214,7 @@ export default defineComponent({
             orders.value = response.data.results;
           })
           .catch((error) => {
-            console.error(error);
-            message.error("Algo salió mal...");
+            console.error(error);            
           })
           .finally(() => {
             isTableLoading.value = false;
@@ -260,8 +255,7 @@ export default defineComponent({
           orders.value = response.data.results;
         })
         .catch((error) => {
-          console.error(error);
-          message.error("Algo salió mal...");
+          console.error(error);          
         })
         .finally(() => {
           isTableLoading.value = false;
@@ -291,8 +285,7 @@ export default defineComponent({
           orders.value = response.data.results;
         })
         .catch((error) => {
-          console.error(error);
-          message.error("Algo salió mal...");
+          console.error(error);          
         })
         .finally(() => {
           isTableLoading.value = false;

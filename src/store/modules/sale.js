@@ -5,6 +5,7 @@ import { useBusinessStore } from "@/store/modules/business";
 import { useUserStore } from "@/store/modules/user";
 import { useOrderStore } from "@/store/modules/order";
 import { useSettingsStore } from "./settings";
+
 const businessStore = useBusinessStore();
 const userStore = useUserStore();
 const orderStore = useOrderStore();
@@ -74,7 +75,6 @@ export const useSaleStore = defineStore("sale", {
 
           state.sale_details = Array.from(map.values());
 
-          console.log("Sale Details:", state.sale_details);
           return state.sale_details;
       },
       saleTotal(state) {
@@ -182,8 +182,7 @@ export const useSaleStore = defineStore("sale", {
       if (!series.length) {
         return null;
       } else {
-        const firstOption = series[0].id;
-        return firstOption;
+          return series[0].id;
       }
     },
     getOrderQuantity(id) {

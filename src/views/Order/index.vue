@@ -383,7 +383,7 @@ export default defineComponent({
                     orders.value = response.data.results;
                 }).catch((error) => {
                     console.error(error);
-                    message.error("Algo salió mal...");
+                    
                 }).finally(() => {
                     isTableLoading.value = false;
                 });
@@ -409,7 +409,7 @@ export default defineComponent({
                     orders.value = response.data.results;
                 }).catch((error) => {
                     console.error(error);
-                    message.error("Algo salió mal...");
+                    
                 }).finally(() => {
                     isTableLoading.value = false;
                 });
@@ -433,7 +433,7 @@ export default defineComponent({
                 orders.value = response.data.results;
             }).catch((error) => {
                 console.error(error);
-                message.error("Algo salió mal...");
+                
             }).finally(() => {
                 isTableLoading.value = false;
             });
@@ -461,7 +461,7 @@ export default defineComponent({
                 orders.value = response.data.results;
             }).catch((error) => {
                 console.error(error);
-                message.error("Algo salió mal...");
+                
             }).finally(() => {
                 isTableLoading.value = false;
             });
@@ -553,7 +553,7 @@ export default defineComponent({
                         message.error("Envio manual necesario");
                     } else {
                         console.error(error);
-                        message.error("Algo salió mal...");
+                        
                     }
                     passConfirm.value = "";
                     isLoading.value = false;
@@ -659,14 +659,14 @@ export default defineComponent({
                                 message.error(error.response.data.error);
                             } else {
                                 console.error(error);
-                                message.error("Algo salió mal...");
+                                
                             }
                         });
                     }
                 }
             }).catch((error) => {
                 console.error(error);
-                message.error("Algo salió mal...");
+                
             }).finally(() => {
                 pagination.value.onChange(pagination.value.page);
                 // loadOrders();
@@ -763,7 +763,7 @@ export default defineComponent({
                         showPreview.value = true;
                     }).catch((error) => {
                         console.error(error);
-                        message.error("Algo salió mal...");
+                        
                     });
                 },
                 nullifyOrder(row) {

@@ -324,7 +324,7 @@ export default defineComponent({
           })
           .catch((error) => {
             console.error(error);
-            message.error("Algo salió mal...");
+            
           })
           .finally(() => {
             isLoadingData.value = false;
@@ -357,7 +357,7 @@ export default defineComponent({
           })
           .catch((error) => {
             console.error(error);
-            message.error("Algo salió mal...");
+            
           })
           .finally(() => {
             isLoadingData.value = false;
@@ -386,7 +386,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          message.error("Algo salió mal...");
+          
         })
         .finally(() => {
           isLoadingData.value = false;
@@ -427,7 +427,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          message.error("Algo salió mal...");
+          
         })
         .finally(() => {
           isLoadingData.value = false;
@@ -454,7 +454,7 @@ export default defineComponent({
             })
             .catch((error) => {
               console.error(error);
-              message.error("Algo salió mal...");
+              
             });
         },
         onNegativeClick: () => {},

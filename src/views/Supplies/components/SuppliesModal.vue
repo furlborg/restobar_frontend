@@ -111,7 +111,7 @@ export default defineComponent({
           });
         })
         .catch((error) => {
-          message.error("Algo salió mal...");
+          console.log(error);
         });
     };
     getEstablishment();
@@ -147,8 +147,6 @@ export default defineComponent({
                     message.warning(
                       "Asegúrese de que no haya más de 12 digitos en Precio."
                     );
-                  } else {
-                    message.error("Algo salió mal...");
                   }
                 });
             } else {
@@ -165,8 +163,6 @@ export default defineComponent({
                     message.warning(
                       "Asegúrese de que no haya más de 12 digitos en Precio."
                     );
-                  } else {
-                    message.error("Algo salió mal...");
                   }
                 });
             }

@@ -287,13 +287,16 @@
                                     </td>
                                     <td>
                                         {{ order.product_name }}
+                                        <span v-if="order?.indication.length > 0">
+                                                {{ order.indication.map(dt => dt?.description.split(", ")).flat().join(", ") }}
+                                        </span> <br v-if="order?.indication.length > 0">
                                     </td>
                                     <td>
                                         <n-input-number class="border-top-0" size="small" :min="1" v-model:value="order.quantity" @update:value="saleStore.sale_details = orderStore.orderList" @click.stop/>
                                     </td>
                                     <td>S/. {{ order.subTotal.toFixed(2) }}</td>
                                     <td>
-                                        <n-button type="error" text @click.stop="orderStore.orderList.splice(index, 1)">
+                                        <n-button type="error" text @click.stop="orderStore.removeOrder(index);">
                                             <v-icon name="md-disabledbydefault-round"/>
                                         </n-button>
                                     </td>

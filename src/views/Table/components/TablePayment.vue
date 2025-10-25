@@ -523,15 +523,13 @@ export default defineComponent({
                     const sendResponse = await sendSale(response.data.id);
                     if (sendResponse.status === 200) message.success("Enviado!");
                   } catch (error) {
-                    console.error(error);
-                    message.error("Algo salió mal...");
+                    console.error(error);                    
                   }
                 }
                 message.success("Venta realizada correctamente!");
               }
             } catch (error) {
-              console.error(error);
-              message.error("Algo salió mal...");
+              console.error(error);              
             } finally {
               loading.value = false;
             }
@@ -552,7 +550,7 @@ export default defineComponent({
           sale.value.number = newNumber;
         }
       } catch (error) {
-        message.error("Algo salió mal...");
+          console.log(error);
       } finally {
         loading.value = false;
       }

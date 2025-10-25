@@ -513,7 +513,6 @@ export default defineComponent({
                     }
                 } else {
                     console.error(error);
-                    message.error("Algo salió mal...");
                 }
                 isLoading.value = false;
             });

@@ -379,7 +379,7 @@ export default defineComponent({
                     window.open(response.data.data.url, "_blank");
             }).catch((error) => {
                 console.error(error);
-                message.error("Algo salió mal...");
+                
             }).finally(() => {
                 phoneNumber.value = "";
                 loading.value = false;
