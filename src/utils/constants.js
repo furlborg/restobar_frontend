@@ -367,6 +367,10 @@ export const createUserColumns = ({
       },
     },
     {
+      title: "Cod de usuario",
+      key: "id",
+    },
+    {
       title: "DNI",
       key: "dni",
     },

@@ -51,6 +51,7 @@
               :precision="2"
               :show-button="false"
               step="0.1"
+              @click="$event.target.select()"
               @update:value="handlePaymentInput"
               size="large"
               class="payment-input"
