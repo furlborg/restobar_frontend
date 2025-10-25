@@ -98,6 +98,7 @@
                 title="Anular pedido"
                 :mask-closable="false"
                 closable
+                @after-hide="closeNullModal"
                 @close="closeNullModal"
         >
             <!--      <n-form-item label="Ingrese clave de seguridad" required v-if="settingsStore.business_settings.order.required_null_reason">-->
@@ -527,6 +528,7 @@ export default defineComponent({
         const nullReason = ref(undefined);
 
         const closeNullModal = () => {
+            console.log('wea');
             addReason.value = false;
             passConfirm.value = "";
             nullReason.value = undefined;
