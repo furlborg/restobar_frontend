@@ -106,7 +106,8 @@ export default defineComponent({
         {
           type: "selection",
           disabled(row) {
-            return row.paid_amount > 0;
+            // console.log(row.pending_amount);
+            return row.pending_amount === 0;
           },
         },
         {
