@@ -23,7 +23,10 @@
         <tbody>
           <tr v-for="(detail, index) in details" :key="index">
             <td>
-              {{ detail.product_name }}
+                <span>{{ detail.product_name }}</span><br>
+                <span v-if="order?.indication.length > 0">
+                      {{ order.indication.map(dt => dt?.description.split(", ")).flat().join(", ") }}
+                </span> <br v-if="order?.indication.length > 0">
             </td>
             <td>
               {{ detail.initial_quantity }}

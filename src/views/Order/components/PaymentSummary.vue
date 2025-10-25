@@ -49,7 +49,8 @@
                 <v-icon name="md-listalt-round"/>
               </n-button>
             </td>
-              <td>{{ order.product_name }}
+              <td>
+                  <span>{{ order.product_name }}</span><br>
                   <span v-if="order?.indication.length > 0">
                    {{ order.indication.map(dt => dt?.description.split(", ")).flat().join(", ") }}
                    </span> <br v-if="order?.indication.length > 0">
