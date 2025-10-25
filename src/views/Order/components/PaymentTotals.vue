@@ -45,20 +45,22 @@
         <n-card size="small">
           <n-space vertical align="center">
             <n-text strong class="fs-5">PAGO</n-text>
-            <n-input-number
-              :value="getNumericValue(paymentAmount)"
-              :min="paymentMin"
-              :precision="2"
-              :show-button="false"
-              step="0.1"
-              @click="$event.target.select()"
-              @update:value="handlePaymentInput"
-              size="large"
-              class="payment-input"
-              style="max-width: 12rem;"
-            >
-              <template #prefix>{{ currencySymbol }}</template>
-            </n-input-number>
+              <n-input-number
+                      ref="paymentInput"
+                      :value="localPayment"
+                      :min="paymentMin"
+                      :precision="2"
+                      :show-button="false"
+                      step="0.1"
+                      size="large"
+                      class="payment-input"
+                      style="max-width: 12rem;"
+                      @click="$event.target.select()"
+                      @input="onLocalPaymentInput"
+                      @blur="onPaymentBlur"
+              >
+                  <template #prefix>{{ currencySymbol }}</template>
+              </n-input-number>
           </n-space>
         </n-card>
       </n-gi>
@@ -75,7 +77,7 @@
 </template>
 
 <script>
-import { defineComponent, computed, toRefs } from "vue";
+import { computed, defineComponent, nextTick, ref, toRefs, watch } from "vue";
 import { useMessage } from "naive-ui";
 
 export default defineComponent({
@@ -120,7 +122,7 @@ export default defineComponent({
       paymentAmount,
       paymentMin
     } = toRefs(props);
-
+      const paymentInput = ref(null);
     const itemsToShow = computed(() =>
       props.items.filter(
         (item) =>
@@ -130,12 +132,45 @@ export default defineComponent({
       )
     );
 
-    const calculatedChange = computed(() => {
-      const payment = parseFloat(props.paymentAmount) || 0;
-      const total = parseFloat(props.totalAmount) || 0;
-      return payment > total ? payment - total : 0;
-    });
+      const localPayment = ref(Number(props.paymentAmount) || 0);
 
+      watch(() => props.paymentAmount, (val) => {
+          localPayment.value = Number(val) || 0;
+      });
+      watch(() => props.paymentAmount, (val) => {
+          if (document.activeElement !== paymentInput.value?.inputElRef) {
+              localPayment.value = Number(val) || 0;
+          }
+      });
+      const onLocalPaymentInput = (e) => {
+          const el = e.target;
+          const start = el.selectionStart;
+          const end = el.selectionEnd;
+          localPayment.value = Number(e.target.value || 0);
+          nextTick(() => {
+              el.setSelectionRange(start, end);
+          });
+      };
+      
+      const emitPaymentChange = () => {
+          emit('paymentChanged', Number(localPayment.value) || 0);
+      };
+      
+      const calculatedChange = computed(() => {
+          const payment = parseFloat(localPayment.value) || 0;
+          const total = parseFloat(props.totalAmount) || 0;
+          return payment > total ? payment - total : 0;
+      });
+
+      const onPaymentBlur = () => {
+          const numericValue = parseFloat(localPayment.value);
+          emit("paymentChanged", Number.isFinite(numericValue) ? numericValue : 0);
+      };
+      
+      const onPaymentInput = (e) => {
+          emit('paymentChanged', Number(e.target.value || 0));
+      };
+      
     const formatNumber = (value) => {
       if (value === undefined || value === null || isNaN(Number(value))) {
         return "0.00";
@@ -193,6 +228,11 @@ export default defineComponent({
       handleNumberChange,
       handlePaymentInput,
       getInputClass,
+      onPaymentInput,
+        onLocalPaymentInput,
+      onPaymentBlur,
+      emitPaymentChange,
+      localPayment,
       currencySymbol,
       totalLabel,
       totalAmount,
