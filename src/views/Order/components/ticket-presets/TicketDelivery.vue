@@ -55,7 +55,7 @@
             </tr>
             <tr>
               <td align="right">MÉTODO PAGO :</td>
-              <td>{{ info.informacion_adicional[2] }}</td>
+              <td>{{ info.codigo_condicion_de_pago === "01" ? "CONTADO" : "CREDITO" }}</td>
             </tr>
             <tr>
               <td align="right">PAGO :</td>
