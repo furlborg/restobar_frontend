@@ -201,10 +201,7 @@
                                             <tr
                                                 v-if="order.quantity > 0"
                                                 style="cursor: pointer"
-                                                @click="
-                                                    itemIndex = getGlobalOrderIndex(order.id);
-                                                    showModal = true;
-                                                "
+                                                @click="openOrderModal(order)"
                                             >
                                                 <td>
                                                     <n-button v-if="!($route.name === 'TablePayment')"
@@ -396,7 +393,10 @@ export default defineComponent({
         const isWaiter = computed(() => userStore.user.role === 'MOZO');
         const isPaymentRoute = computed(() => route.name === 'TablePayment');
         const shouldSelectOrderUser = computed(() => settingsStore.businessSettings?.order?.select_order_user && !isWaiter.value);
-        const currentOrder = computed(() => orderStore.orderList[itemIndex.value]);
+        const currentOrder = computed(() => {
+            const index = itemIndex.value;
+            return typeof index === 'number' && index >= 0 ? orderStore.orderList[index] : null;
+        });
 
         const productOptions = computed(() => products.value.map((product) => ({
             value: product.id,
@@ -407,9 +407,39 @@ export default defineComponent({
             price: parseFloat(product.prices).toFixed(2),
         })));
 
-        const openOrderModal = (index) => {
-            itemIndex.value = index;
-            showModal.value = true;
+        const getGlobalOrderIndex = (targetOrder) => {
+            if (targetOrder == null) return -1;
+
+            if (typeof targetOrder === 'number') {
+                if (targetOrder >= 0 && targetOrder < orderStore.orderList.length) {
+                    return targetOrder;
+                }
+                return orderStore.orderList.findIndex(order => order.id === targetOrder);
+            }
+
+            if (typeof targetOrder === 'string') {
+                return orderStore.orderList.findIndex(order => String(order.id) === targetOrder);
+            }
+
+            const byId = targetOrder.id != null
+                ? orderStore.orderList.findIndex(order => order.id === targetOrder.id)
+                : -1;
+            if (byId !== -1) return byId;
+
+            if (targetOrder.created_at) {
+                const byCreated = orderStore.orderList.findIndex(order => order.created_at === targetOrder.created_at);
+                if (byCreated !== -1) return byCreated;
+            }
+
+            return orderStore.orderList.findIndex(order => order === targetOrder);
+        };
+
+        const openOrderModal = (order) => {
+            const index = getGlobalOrderIndex(order);
+            itemIndex.value = index !== -1 ? index : null;
+            if (index !== -1) {
+                showModal.value = true;
+            }
         };
 
         const handleAddCustomer = () => {
@@ -435,7 +465,6 @@ export default defineComponent({
         const getTotalAmount = () => orderStore.orderTotal;
         const formatPrice = (price) => (isNaN(price) ? 0 : Number(price)).toFixed(2);
         const hasAnyOrders = computed(() => orderStore.orderList.some(order => order.quantity > 0));
-        const getGlobalOrderIndex = (orderId) => orderStore.orderList.findIndex(order => order.id === orderId);
 
         const handleRemoveOrder = (order, index) => {
             order.id ? deleteOrderDetail(index, order.id) : (orderStore.orderList.splice(index, 1), nullifyTableOrder());
