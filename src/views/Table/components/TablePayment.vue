@@ -107,6 +107,7 @@
               :total-amount="sale.amount"
               :payment-amount="sale.given_amount"
               :change-amount="changing"
+              :payment-max="sale.payment_condition === 2 ? sale.amount - 0.1 : null"
               @value-changed="handleValueChange"
               @payment-changed="handlePaymentChange"
             />

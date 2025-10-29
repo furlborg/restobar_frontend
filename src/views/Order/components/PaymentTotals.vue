@@ -49,14 +49,12 @@
                       ref="paymentInput"
                       :value="localPayment"
                       :min="paymentMin"
+                      :max="typeof paymentMax === 'number' ? paymentMax : undefined"
                       :precision="2"
-                      :show-button="false"
                       step="0.1"
                       size="large"
                       class="payment-input"
-                      style="max-width: 12rem;"
-                      @click="$event.target.select()"
-                      @input="onLocalPaymentInput"
+                      @update:value="(value) => localPayment = value"
                       @blur="onPaymentBlur"
               >
                   <template #prefix>{{ currencySymbol }}</template>
@@ -107,6 +105,10 @@ export default defineComponent({
       type: Number,
       default: 0
     },
+    paymentMax: {
+      type: Number,
+      default: undefined
+    },
     changeAmount: {
       type: [Number, String],
       default: 0
@@ -120,7 +122,8 @@ export default defineComponent({
       totalLabel,
       totalAmount,
       paymentAmount,
-      paymentMin
+      paymentMin,
+      paymentMax
     } = toRefs(props);
       const paymentInput = ref(null);
     const itemsToShow = computed(() =>
@@ -237,7 +240,8 @@ export default defineComponent({
       totalLabel,
       totalAmount,
       paymentAmount,
-      paymentMin
+      paymentMin,
+      paymentMax
     };
   }
 });

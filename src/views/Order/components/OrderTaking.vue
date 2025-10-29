@@ -162,6 +162,7 @@
         :items="paymentTotalsItems"
         :total-amount="totalAmount"
         :payment-amount="sale.given_amount"
+        :payment-max="sale.payment_condition === 2 ? sale.amount - 0.1 : null"
         :change-amount="changing"
         @value-changed="handleValueChange"
         @payment-changed="handlePaymentChange"
