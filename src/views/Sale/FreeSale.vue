@@ -26,7 +26,7 @@
           <n-radio-button :value="1" :key="1">FACTURA</n-radio-button>
           <n-radio-button :value="3" :key="3">BOLETA</n-radio-button>
         </n-radio-group>
-        <n-radio-group v-model:value="sale.payment_condition" name="saleType" size="small">
+        <n-radio-group v-model:value="sale.payment_condition" name="saleType" size="small" @update:value="changeCondition">
           <n-radio-button :value="1" :key="1">CONTADO</n-radio-button>
           <n-radio-button :value="2" :key="2">CRÉDITO</n-radio-button>
         </n-radio-group>
@@ -169,91 +169,17 @@
           </tbody>
         </n-table>
       </n-scrollbar>
-      <n-grid cols="3">
-        <n-gi :span="2">
-          <n-space class="h-100" align="center" justify="space-around">
-            <n-space align="center" vertical>
-              <span class="fs-4">Pago</span>
-              <div class="fs-5">
-                S/.
-                <input class="fs-1 custom-input" type="number" min="0" step=".01" v-model="sale.given_amount"
-                  v-autowidth @click="$event.target.select()" />
-              </div>
-            </n-space>
-            <n-space align="center" vertical>
-              <span class="fs-4">Vuelto</span>
-              <div class="fs-5">
-                S/. <span class="fs-1">{{ changing.toFixed(2) }}</span>
-              </div>
-            </n-space>
-          </n-space>
-        </n-gi>
-        <n-gi>
-          <n-space class="mt-2 fs-6 fw-bold" align="end" vertical>
-            <div v-if="subTotal">
-              SUBTOTAL: <span>S/. {{ subTotal.toFixed(2) }}</span>
-            </div>
-            <div v-if="totalGRV">
-              OP. GRAVADAS: <span>S/. {{ totalGRV.toFixed(2) }}</span>
-            </div>
-            <div v-if="totalEXN">
-              OP. EXONERADAS: <span>S/. {{ totalEXN.toFixed(2) }}</span>
-            </div>
-            <div v-if="totalGRT">
-              OP. GRATUITAS: <span>S/. {{ totalGRT.toFixed(2) }}</span>
-            </div>
-            <div v-if="totalIGV">
-              IGV: <span>S/. {{ totalIGV.toFixed(2) }}</span>
-            </div>
-            <!-- <div>
-              DSCT:
-              <span>S/.</span>
-              <input
-                class="custom-input fw-bold"
-                type="number"
-                min="0"
-                step=".5"
-                v-model="totalDSCT"
-                v-autowidth
-                :disabled="
-                  saleStore.toSale.some((detail) => Number(detail.discount) > 0)
-                "
-                @click="$event.target.select()"
-              />
-            </div>
-            <div v-if="icbper">
-              ICBPER: <span>S/. {{ icbper.toFixed(2) }}</span>
-            </div>
-            <div>
-              OTROS:
-              <span>S/.</span>
-              <input
-                class="custom-input fw-bold"
-                type="number"
-                min="0"
-                step=".5"
-                v-model="sale.other_charges"
-                v-autowidth
-                @click="$event.target.select()"
-              />
-            </div> -->
-            <div>
-              TOTAL: <span>S/. {{ sale.amount }}</span>
-            </div>
-          </n-space>
-        </n-gi>
-      </n-grid>
-      <!-- <n-button
-        class="fs-1 py-5 mt-2"
-        type="success"
-        :disabled="
-          !saleStore.toSale.length || sale.given_amount < sale.amount
-        "
-        secondary
-        block
-        @click.prevent="performCreateSale"
-        ><v-icon class="me-2" name="fa-coins" scale="2" />Cobrar</n-button
-      > -->
+
+      <PaymentTotals
+        :items="paymentTotalsItems"
+        :total-amount="sale.amount"
+        :payment-amount="sale.given_amount"
+        :payment-max="sale.payment_condition === 2 ? sale.amount - 0.1 : null"
+        :change-amount="changing"
+        @value-changed="handleValueChange"
+        @payment-changed="handlePaymentChange"
+      />
+
       <n-space v-if="sale.payment_condition === 1" justify="space-between">
         <n-checkbox v-model:checked="isMultiple">Pago multiple</n-checkbox>
       </n-space>
@@ -354,6 +280,7 @@ import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 import { useBusinessStore } from "@/store/modules/business";
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 import FreeSaleProductModal from "./components/FreeSaleProductModal.vue";
+import PaymentTotals from "@/views/Order/components/PaymentTotals.vue";
 
 export default defineComponent({
   name: "FreeSale",
@@ -362,6 +289,7 @@ export default defineComponent({
     CustomerModal,
     PreviewDrawer,
     FreeSaleProductModal,
+    PaymentTotals,
   },
   setup() {
     const dateNow = ref(null);
@@ -476,6 +404,18 @@ export default defineComponent({
       return Math.round(baseAmount * 100) / 100;
     });
 
+    const discountBaseAmount = computed(() => {
+      return subTotal.value + icbper.value + otherCharges.value;
+    });
+
+    const discountInputMax = computed(() => {
+      if (discountBaseAmount.value <= 0) {
+        return 0;
+      }
+      const capped = discountBaseAmount.value - 0.01;
+      return Math.max(Math.round(capped * 100) / 100, 0);
+    });
+
     const sale = ref({
       order: null,
       serie: saleStore.getFreeSaleSerieByType("3")?.id,
@@ -506,16 +446,89 @@ export default defineComponent({
       igv_amount: totalIGV,
     });
 
-    watch(total, () => {
-      sale.value.given_amount =
-        total.value > 0 ? total.value : parseFloat(0).toFixed(2);
-    });
+    watch(
+      [
+        total,
+        icbper,
+        totalGRV,
+        totalEXN,
+        totalGRT,
+        totalIGV,
+        totalDSCT,
+        () => saleStore.toSale,
+      ],
+      () => {
+        const productCount = saleStore.toSale.reduce(
+          (acc, curVal) => acc + curVal.quantity,
+          0
+        );
+        Object.assign(sale.value, {
+          count: productCount,
+          amount: total.value,
+          icbper: icbper.value,
+          taxed_amount: totalGRV.value,
+          exempt_amount: totalEXN.value,
+          free_amount: totalGRT.value,
+          igv_amount: totalIGV.value,
+        });
+
+        if (sale.value.payment_condition === 1) {
+          const newGivenAmount = total.value > 0 ? total.value : parseFloat(0).toFixed(2);
+          if (sale.value.given_amount !== newGivenAmount) {
+            sale.value.given_amount = newGivenAmount;
+          }
+        }
+      },
+      { immediate: true, deep: true }
+    );
 
     const formRules = computed(() => {
       let rules = saleRules;
       rules.customer.required = !(sale.value.invoice_type !== 1 && sale.value.payment_condition === 1 && sale.value.given_amount <= 699);
       return rules;
     });
+
+    // Crear los items para PaymentTotals
+    const paymentTotalsItems = computed(() => {
+      return [
+        { label: "SUBTOTAL", value: subTotal.value, editable: false },
+        { label: "OP. GRAVADAS", value: totalGRV.value, editable: false },
+        { label: "OP. EXONERADAS", value: totalEXN.value, editable: false, alwaysShow: false },
+        { label: "OP. GRATUITAS", value: totalGRT.value, editable: false, alwaysShow: false },
+        { label: "IGV", value: totalIGV.value, editable: false },
+        { label: "ICBPER", value: icbper.value, editable: false, alwaysShow: false },
+        {
+          label: "DSCT",
+          value: totalDSCT.value,
+          editable: !settingsStore.businessSettings.sale?.show_discount_label,
+          field: "discount",
+          step: 0.5,
+          disabled: saleStore.toSale.some(d => Number(d.discount) > 0),
+          max: discountInputMax.value
+        },
+        {
+          label: "OTROS",
+          value: sale.value.other_charges,
+          editable: true,
+          field: "other_charges",
+          step: 0.5
+        }
+      ];
+    });
+
+    // Manejar cambios en los valores editables
+    const handleValueChange = ({ field, value }) => {
+      if (field === 'discount') {
+        sale.value.discount = parseFloat(value) || 0;
+      } else if (field === 'other_charges') {
+        sale.value.other_charges = parseFloat(value) || 0;
+      }
+    };
+
+    // Manejar cambios en el monto de pago
+    const handlePaymentChange = (value) => {
+      sale.value.given_amount = parseFloat(value) || 0;
+    };
 
     const selectSerie = (v) => {
       sale.value.serie = v;
@@ -998,6 +1011,9 @@ export default defineComponent({
       pdfData,
       showProductModal,
       addProduct,
+      paymentTotalsItems,
+      handleValueChange,
+      handlePaymentChange,
     };
   },
 });
@@ -1023,6 +1039,7 @@ input::-webkit-inner-spin-button {
 }
 
 input[type="number"] {
+  appearance: textfield;
   -moz-appearance: textfield;
   /* Firefox */
 }
