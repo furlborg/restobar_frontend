@@ -70,6 +70,10 @@
             <n-date-picker class="w-100" type="datetime" :is-date-disabled="dateDisabled"
               v-model:formatted-value="sale.date_sale" />
           </n-form-item-gi>
+          <n-form-item-gi v-if="sale.payment_condition === 2" :span="2" label="Fecha vencimiento">
+            <n-date-picker class="w-100" type="datetime" format="dd/MM/yyyy HH:mm:ss" value-format="dd/MM/yyyy HH:mm:ss"
+              v-model:formatted-value="sale.expiration_sale" />
+          </n-form-item-gi>
           <n-form-item-gi label="Método Pago">
             <n-select v-model:value="sale.payment_method" :options="saleStore.getPaymentMethodsOptions" filterable />
           </n-form-item-gi>
@@ -275,6 +279,9 @@ import { createSale, getSaleNumber, retrieveSale, sendSale } from "@/api/modules
 import { useDialog, useMessage } from "naive-ui";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
 import format from "date-fns/format";
+import addMonths from "date-fns/addMonths";
+import parse from "date-fns/parse";
+import isValid from "date-fns/isValid";
 import { lighten } from "@/utils";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 import { useBusinessStore } from "@/store/modules/business";
@@ -421,6 +428,7 @@ export default defineComponent({
       serie: saleStore.getFreeSaleSerieByType("3")?.id,
       number: "",
       date_sale: format(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss"),
+      expiration_sale: null,
       count: products_count,
       amount: total,
       given_amount: parseFloat(0).toFixed(2),
@@ -445,6 +453,31 @@ export default defineComponent({
       free_amount: totalGRT,
       igv_amount: totalIGV,
     });
+
+    const computeDefaultExpirationDate = () => {
+      const baseDateString = sale.value.date_sale;
+      if (baseDateString) {
+        const parsed = parse(baseDateString, "dd/MM/yyyy HH:mm:ss", new Date());
+        if (isValid(parsed)) {
+          return format(addMonths(parsed, 1), "dd/MM/yyyy HH:mm:ss");
+        }
+      }
+      return format(addMonths(new Date(), 1), "dd/MM/yyyy HH:mm:ss");
+    };
+
+    watch(
+      () => sale.value.payment_condition,
+      (condition) => {
+        if (condition === 2) {
+          if (!sale.value.expiration_sale) {
+            sale.value.expiration_sale = computeDefaultExpirationDate();
+          }
+        } else {
+          sale.value.expiration_sale = null;
+        }
+      },
+      { immediate: true }
+    );
 
     watch(
       [
@@ -538,9 +571,13 @@ export default defineComponent({
       switch (v) {
         case 1:
           sale.value.given_amount = total.value;
+          sale.value.expiration_sale = null;
           break;
         case 2:
           sale.value.given_amount = parseFloat(0).toFixed(2);
+          if (!sale.value.expiration_sale) {
+            sale.value.expiration_sale = computeDefaultExpirationDate();
+          }
           break;
         default:
           console.error(`${v} invalido`);
@@ -585,6 +622,11 @@ export default defineComponent({
             positiveText: "Sí",
             onPositiveClick: async () => {
               loading.value = true;
+              if (sale.value.payment_condition === 2) {
+                sale.value.expiration_sale = sale.value.expiration_sale || computeDefaultExpirationDate();
+              } else {
+                sale.value.expiration_sale = null;
+              }
               sale.value.order = orderStore.orderId;
               sale.value.sale_details = saleStore.toSale.map((detail) => ({
                 ...detail,

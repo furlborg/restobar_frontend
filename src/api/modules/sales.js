@@ -4,6 +4,32 @@ import { useUserStore } from "@/store/modules/user";
 import { useTillStore } from "@/store/modules/till";
 import { useSaleStore } from "@/store/modules/sale";
 
+function normalizeExpirationSale(expiration, paymentCondition) {
+    if (paymentCondition !== 2) {
+        return null;
+    }
+    if (!expiration) {
+        return null;
+    }
+    if (typeof expiration === "string") {
+        const separatorIndex = expiration.indexOf("T") !== -1
+            ? expiration.indexOf("T")
+            : expiration.indexOf(" ");
+        if (separatorIndex !== -1) {
+            return expiration.slice(0, separatorIndex);
+        }
+        return expiration;
+    }
+    const date = expiration instanceof Date ? expiration : new Date(expiration);
+    if (!isNaN(date.getTime())) {
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    }
+    return expiration;
+}
+
 export async function getPaymentMethods() {
     return await http.get("payment_methods/");
 }
@@ -118,12 +144,14 @@ export async function createSale(sale, pass = null) {
     const businessStore = useBusinessStore();
     const userStore = useUserStore();
     const tillStore = useTillStore();
+    const expirationSale = normalizeExpirationSale(sale.expiration_sale, sale.payment_condition);
     if(!pass) {
         return await http.post("sales/", {
             order: sale.order,
             serie: sale.serie,
             number: sale.number,
             date_sale: sale.date_sale,
+            expiration_sale: expirationSale,
             count: sale.count,
             amount: sale.amount,
             given_amount: sale.given_amount,
@@ -158,6 +186,7 @@ export async function createSale(sale, pass = null) {
             serie: sale.serie,
             number: sale.number,
             date_sale: sale.date_sale,
+            expiration_sale: expirationSale,
             count: sale.count,
             amount: sale.amount,
             given_amount: sale.given_amount,
@@ -213,12 +242,15 @@ export async function nullSale(id, anulate) {
 export async function recoverySale(id, sale, pass) {
     const businessStore = useBusinessStore();
     const userStore = useUserStore();
+    const expirationSale = normalizeExpirationSale(sale.expiration_sale, sale.payment_condition);
     return await http.post(`sales/${id}/recovery/`, {
         pass: pass,
         order: sale.order,
         serie: sale.serie,
         number: sale.number,
         date_sale: sale.date_sale,
+        expiration_sale: expirationSale,
+        expiration_sale: sale.expiration_sale,
         count: sale.count,
         amount: sale.amount,
         given_amount: sale.given_amount,
