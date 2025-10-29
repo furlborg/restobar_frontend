@@ -249,6 +249,7 @@ export default defineComponent({
                     indication: []
                 };
                 waiterStore.preOrderList.push(order);
+                console.log(waiterStore.preOrderList);
             }
             product.indications = [];
         };
@@ -262,6 +263,7 @@ export default defineComponent({
                 onPositiveClick: async() => {
                     addToList();
                     loading.value = true;
+                    console.log(orderStore.orderList);
                     const response = await createTableOrder(route.params.table, orderStore.orderList, undefined, !ask_for.value ? undefined : ask_for.value);
                     if (response.status === 201) {
                         message.success("Orden creada correctamente");
@@ -340,7 +342,38 @@ export default defineComponent({
 
         const addToList = () => {
             waiterStore.preOrderList.forEach((product) => {
-                orderStore.addOrderItem(product);
+                const indications = Array.isArray(product.indication) ? product.indication : [];
+                const quicks = Array.isArray(product.quick_indications) ? product.quick_indications : [];
+
+                if (indications.length === 0) {
+                    const safeItem = {
+                        ...product,
+                        product: product.id,
+                        id: null,
+                        fromBackend: false,
+                        indication: [],
+                        quick_indications: [...quicks],
+                        quantity: product.quantity
+                    };
+                    orderStore.addOrderItem(safeItem);
+                } else {
+                    indications.forEach((ind) => {
+                        const indQuicks = Array.isArray(ind.quick_indications) ? [...ind.quick_indications] : [];
+                        const safeItem = {
+                            ...product,
+                            product: product.id,
+                            id: null,
+                            fromBackend: false,
+                            indication: [{
+                                ...ind,
+                                quick_indications: indQuicks
+                            }],
+                            quick_indications: [...quicks],
+                            quantity: 1
+                        };
+                        orderStore.addOrderItem(safeItem);
+                    });
+                }
             });
         };
 
