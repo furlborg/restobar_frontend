@@ -165,12 +165,28 @@
                   {{ sale.totales.total_igv.toFixed(2) }}
                 </td>
               </tr>
-              <tr>
+              <tr v-if="!isCreditSale">
                 <td align="right" :colspan="!!hasDiscounts ? 4 : 3">
                   IMPORTE TOTAL:
                 </td>
                 <td align="right">
                   {{ sale.totales.total_venta.toFixed(2) }}
+                </td>
+              </tr>
+              <tr v-else>
+                <td align="right" :colspan="!!hasDiscounts ? 4 : 3">
+                  TOTAL DEL CREDITO:
+                </td>
+                <td align="right">
+                  {{ formatAmount(sale.amount) }}
+                </td>
+              </tr>
+              <tr v-if="isCreditSale">
+                <td align="right" :colspan="!!hasDiscounts ? 4 : 3">
+                  ANTICIPO:
+                </td>
+                <td align="right">
+                  {{ formatAmount(sale.given_amount) }}
                 </td>
               </tr>
               <tr v-if="data.payments" v-for="(payment, index) in data.payments" :key="'payment-' + index">
@@ -319,7 +335,7 @@
 </template>
 
 <script>
-import { defineComponent, watchEffect } from 'vue';
+import { defineComponent, watchEffect, computed } from 'vue';
 import { useBusinessStore } from "@/store/modules/business";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useTableStore } from "@/store/modules/table";
@@ -341,17 +357,11 @@ export default defineComponent({
       (detail) => !!Number(detail.discount)
     );
 
-    watchEffect(() => {
-      console.log("props data changed:", props.data);
-    });
-
     const parseSale = () => {
       let saleData = JSON.parse(props.data.json_sale);
-      // console.log(JSON.stringify(props.data, null, "  "));
-      // console.log(JSON.stringify(saleData, null, "  "));
       if (settingsStore.business_settings.printer.detail_items) {
-          const gordoPendejoOjalaTeDeCancerAnal = !!props.data?.['order_data']?.order_details ? props.data?.['order_data'].order_details : props.data?.sale_details
-          gordoPendejoOjalaTeDeCancerAnal.forEach((detail) => {
+          const details = !!props.data?.['order_data']?.order_details ? props.data?.['order_data'].order_details : props.data?.sale_details
+          details.forEach((detail) => {
               detail.indication = detail.indication ? detail.indication : []
           const indication = detail?.indication.reduce((desc, indication) => {
             if (indication.quick_indications.length) {
@@ -370,10 +380,25 @@ export default defineComponent({
           if (item) item.descripcion += indication;
         });
       }
+      saleData.amount = props.data?.amount ?? saleData.amount ?? saleData?.totales?.total_venta ?? 0;
+      saleData.given_amount = props.data?.given_amount ?? saleData.given_amount ?? 0;
+      saleData.payment_condition = props.data?.payment_condition ?? saleData.payment_condition ?? saleData?.codigo_condicion_de_pago ?? null;
       return saleData;
     };
 
     const sale = parseSale();
+    console.log(JSON.stringify(sale, null, 2))
+
+    const isCreditSale = computed(() => {
+      const paymentCondition = Number(props.data?.payment_condition);
+      const salePaymentCondition = Number(sale?.payment_condition);
+      return paymentCondition === 2 || salePaymentCondition === 2;
+    });
+
+    const formatAmount = (value) => {
+      const numericValue = Number(value);
+      return Number.isFinite(numericValue) ? numericValue.toFixed(2) : "0.00";
+    };
 
     const title = () => {
       switch (sale.codigo_tipo_documento) {
@@ -417,6 +442,8 @@ export default defineComponent({
       info,
       generateQR,
       amountText,
+      isCreditSale,
+      formatAmount,
       hasDiscounts,
     };
   },
