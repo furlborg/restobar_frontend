@@ -108,8 +108,12 @@ payment.description = saleStore.getPaymentMethodDescription(
           <n-input v-model:value="detail.description" @keypress="isLetter($event)" />
         </n-form-item>
         <n-form-item label="Monto" path="amount">
-          <n-input-number class="w-100" v-model:value="detail.amount" :min="0" @keypress="isDecimal($event)"
-            :show-button="false" />
+          <n-input-number
+            class="w-100"
+            v-model:value="detail.amount"
+            :min="0"
+            :show-button="false"
+          />
         </n-form-item>
       </n-form>
     </n-spin>
@@ -127,7 +131,7 @@ import { useUserStore } from "@/store/modules/user";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useTillStore } from "@/store/modules/till";
 import { useSaleStore } from "@/store/modules/sale";
-import { isDecimal, isLetter, isNumber } from "@/utils";
+import { isLetter, isNumber } from "@/utils";
 import {
   createTillDetails,
   createConcept,
@@ -295,7 +299,6 @@ export default defineComponent({
 
     return {
       userStore,
-      isDecimal,
       isNumber,
       isLetter,
       genericsStore,

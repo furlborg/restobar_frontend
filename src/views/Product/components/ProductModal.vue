@@ -373,7 +373,7 @@ import { useSettingsStore } from "@/store/modules/settings";
 import { useUserStore } from "@/store/modules/user";
 import { NButton, useMessage } from "naive-ui";
 import { productRules } from "@/utils/constants";
-import { isNumber, isDecimal } from "@/utils";
+import { isNumber } from "@/utils";
 import { getBranchs } from "@/api/modules/business";
 import SuppliesModal from "../../Supplies/components/SuppliesModal.vue";
 
@@ -777,7 +777,7 @@ export default defineComponent({
       performUpdateProductCategory,
       performCreateProductCategory,
       isNumber,
-      isDecimal,
+
       optionsSupplie,
       supplieSearch,
       addSupplie,

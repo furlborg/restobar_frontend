@@ -106,6 +106,7 @@
                   <!-- Cantidad a descontar -->
                   <n-form-item label="Cantidad a descontar del inventario">
                     <n-input-number
+                      :data-numeric-decimals="4"
                       v-model:value="kardexQuantity"
                       :min="0.01"
                       :precision="4"

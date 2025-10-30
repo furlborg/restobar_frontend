@@ -16,6 +16,7 @@
 
             <template v-else>
               <n-input-number
+                :data-numeric-decimals="item.precision ?? 2"
                 :value="getNumericValue(item.value)"
                 :min="item.min ?? 0"
                 :max="typeof item.max === 'number' ? item.max : undefined"
@@ -47,6 +48,7 @@
             <n-text strong class="fs-5">PAGO</n-text>
               <n-input-number
                       ref="paymentInput"
+                      data-numeric-decimals="2"
                       :value="localPayment"
                       :min="paymentMin"
                       :max="typeof paymentMax === 'number' ? paymentMax : undefined"

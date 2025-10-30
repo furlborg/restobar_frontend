@@ -234,7 +234,7 @@
                                     v-model:value="value.amount"
                                     placeholder=""
                                     :disabled="isTableLoading"
-                                    @keypress="isDecimal($event)"
+                                    v-numeric-only
                             />
                         </div>
                     </template>
@@ -274,7 +274,7 @@ import { useSettingsStore } from "@/store/modules/settings";
 import { useGenericsStore } from "@/store/modules/generics";
 import { sendSale } from "@/api/modules/sales";
 import { useUserStore } from "@/store/modules/user";
-import { isNumber, isLetter, isDecimal } from "@/utils";
+import { isNumber, isLetter } from "@/utils";
 import {
     listOrders,
     listOrdersByPage,
@@ -694,7 +694,6 @@ export default defineComponent({
             settingsStore,
             isLetter,
             isNumber,
-            isDecimal,
             isTableLoading,
             statusOptions,
             pagination,

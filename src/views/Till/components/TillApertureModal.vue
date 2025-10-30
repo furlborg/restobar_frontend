@@ -15,7 +15,7 @@
         <n-form-item label="Monto Inicial">
           <n-input
             v-model:value="till.opening_amount"
-            @keypress="isDecimal($event)"
+            v-numeric-only
           />
         </n-form-item>
         <n-form-item label="Observaciones">
@@ -48,7 +48,7 @@ import { useGenericsStore } from "@/store/modules/generics";
 import { useTillStore } from "@/store/modules/till";
 import { useUserStore } from "@/store/modules/user";
 import { createTill } from "@/api/modules/tills";
-import { isDecimal, isLetterOrNumber, isNumber } from "@/utils";
+import { isLetterOrNumber, isNumber } from "@/utils";
 
 export default defineComponent({
   name: "TillApertureModal",
@@ -90,7 +90,6 @@ export default defineComponent({
     };
 
     return {
-      isDecimal,
       isNumber,
       isLetterOrNumber,
       genericsStore,

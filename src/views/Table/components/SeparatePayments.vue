@@ -276,7 +276,7 @@
             <div style="display: flex; align-items: center; width: 100%">
               <n-select v-model:value="value.payment_method" :options="filteredMethods" :disabled="loading" />
               <n-input class="ms-2" v-model:value="value.amount" placeholder="" :disabled="loading"
-                @keypress="isDecimal($event)" />
+                v-numeric-only />
             </div>
           </template>
         </n-dynamic-input>
@@ -315,7 +315,7 @@ import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { useGenericsStore } from "@/store/modules/generics";
 import { saleRules } from "@/utils/constants";
-import { cloneDeep, isDecimal } from "@/utils";
+import { cloneDeep } from "@/utils";
 import { retrieveOrder } from "@/api/modules/orders";
 import {
   searchCustomerByName,
@@ -903,7 +903,6 @@ export default defineComponent({
       orderStore,
       saleStore,
       sale,
-      isDecimal,
       loading,
       saleForm,
       formRules,

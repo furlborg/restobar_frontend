@@ -6,9 +6,16 @@
   }" preset="card" title="Cierre de Caja" :show="show" :on-close="() => $emit('update:show')">
     <n-spin :show="isLoading">
       <n-form ref="formRef" :model="till" :rules="rules">
-        <n-form-item v-if="settingsStore.business_settings.till.closure_cash_total" path="closure_cash_total"
-          label="Monto">
-          <n-input v-model:value="till.closure_cash_total" @keypress="isDecimal($event)" placeholder="" />
+        <n-form-item
+          v-if="settingsStore.business_settings.till.closure_cash_total"
+          path="closure_cash_total"
+          label="Monto"
+        >
+          <n-input
+            v-model:value="till.closure_cash_total"
+            placeholder=""
+            v-numeric-only
+          />
         </n-form-item>
         <n-form-item label="Observaciones">
           <n-input v-model:value="till.closing_observations" type="textarea" @keypress="isLetterOrNumber($event)"
@@ -31,7 +38,7 @@ import { useGenericsStore } from "@/store/modules/generics";
 import { useTillStore } from "@/store/modules/till";
 import { useUserStore } from "@/store/modules/user";
 import { updateTill, sendTillReport } from "@/api/modules/tills";
-import { isDecimal, isLetterOrNumber, isNumber } from "@/utils";
+import { isLetterOrNumber, isNumber } from "@/utils";
 
 export default defineComponent({
   name: "TillClosureModal",
@@ -119,7 +126,6 @@ export default defineComponent({
     };
 
     return {
-      isDecimal,
       isNumber,
       isLetterOrNumber,
       genericsStore,

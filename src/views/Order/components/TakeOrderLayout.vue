@@ -193,7 +193,7 @@
                 v-model:value="value.amount"
                 placeholder=""
                 :disabled="loading"
-                @keypress="isDecimal($event)"
+                v-numeric-only
               />
             </div>
           </template>
@@ -262,7 +262,6 @@ import { useSettingsStore } from "@/store/modules/settings";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useUserStore } from "@/store/modules/user";
 import { useBreakpoint } from "vooks";
-import { isDecimal } from "@/utils";
 import OrderTaking from "./OrderTaking.vue";
 import PaymentSummary from "./PaymentSummary.vue";
 import CategoriesList from "./CategoriesList.vue";
@@ -888,7 +887,6 @@ export default defineComponent({
       createPayment,
       onCloseModal,
       onSuccess,
-      isDecimal,
       goToFirstTab,
       checkState,
       hasUnsavedChanges,

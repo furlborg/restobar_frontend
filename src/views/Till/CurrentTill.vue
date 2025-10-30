@@ -138,7 +138,7 @@
               <n-input
                 v-model:value="filterParams.amount"
                 placeholder=""
-                @keypress="isDecimal($event)"
+                v-numeric-only
               />
             </n-form-item-gi>
             <n-form-item-gi label="Tipo Concepto" :span="3">
@@ -199,7 +199,7 @@ import { CreatePdfFile } from "@/hooks/CreatePdfFile";
 import { defineComponent, ref, onMounted, computed } from "vue";
 import { useMessage, useDialog } from "naive-ui";
 import MovementModal from "./components/MovementModal";
-import { isDecimal, isLetter, isNumber, isLetterOrNumber } from "@/utils";
+import { isLetter, isNumber, isLetterOrNumber } from "@/utils";
 import { createMovementsColumns } from "@/utils/constants";
 import { useTillStore } from "@/store/modules/till";
 import { useSaleStore } from "@/store/modules/sale";
@@ -365,7 +365,6 @@ export default defineComponent({
     };
 
     return {
-      isDecimal,
       isNumber,
       isLetter,
       isLetterOrNumber,

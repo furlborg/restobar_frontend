@@ -83,14 +83,14 @@
               <n-input
                 v-model:value="filterParams.opening_amount"
                 placeholder=""
-                @keyup="isDecimal($event)"
+                v-numeric-only
               />
             </n-form-item-gi>
             <n-form-item-gi label="Saldo final" :span="3">
               <n-input
                 v-model:value="filterParams.closing_amount"
                 placeholder=""
-                @keyup="isDecimal($event)"
+                v-numeric-only
               />
             </n-form-item-gi>
             <n-form-item-gi label="Apertura" :span="6">
@@ -151,7 +151,7 @@ import { jsPDF } from "jspdf";
 import TillApertureModal from "./components/TillApertureModal";
 import TillClosureModal from "./components/TillClosureModal";
 import { createTillColumns } from "@/utils/constants";
-import { isDecimal, isLetter, isNumber } from "@/utils";
+import { isLetter, isNumber } from "@/utils";
 import {
     getTills,
     getTillsByPageNumber,
@@ -329,7 +329,6 @@ export default defineComponent({
     };
 
     return {
-      isDecimal,
       isNumber,
       isLetter,
       onCloseModal,

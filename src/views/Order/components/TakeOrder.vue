@@ -360,7 +360,7 @@
                                     v-model:value="value.amount"
                                     placeholder=""
                                     :disabled="loading"
-                                    @keypress="isDecimal($event)"
+                                    v-numeric-only
                                 />
                             </div>
                         </template>
@@ -402,7 +402,7 @@ import { searchProductByName } from "@/api/modules/products";
 import { takeAwayOrder } from "@/api/modules/orders";
 import { sendSale, getSaleNumber } from "@/api/modules/sales";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
-import { isDecimal, lighten } from "@/utils";
+import { lighten } from "@/utils";
 import { saleRules } from "@/utils/constants";
 import {
     searchCustomerByName,
@@ -1042,7 +1042,6 @@ export default defineComponent({
         const voucherData = ref(null);
 
         return {
-            isDecimal,
             loading,
             saleStore,
             orderStore,
