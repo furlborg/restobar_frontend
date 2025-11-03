@@ -24,7 +24,10 @@
                 :precision="item.precision ?? 2"
                 :disabled="item.disabled"
                 :class="getInputClass(item)"
+                @click="$event.target.select()"
                 @update:value="(value) => handleNumberChange(item, value)"
+                @input="onLocalPaymentInput"
+                @blur="onPaymentBlur"
               >
                 <template #prefix>{{ currencySymbol }}</template>
               </n-input-number>
@@ -47,17 +50,19 @@
           <n-space vertical align="center">
             <n-text strong class="fs-5">PAGO</n-text>
               <n-input-number
-                      ref="paymentInput"
-                      data-numeric-decimals="2"
-                      :value="localPayment"
-                      :min="paymentMin"
-                      :max="typeof paymentMax === 'number' ? paymentMax : undefined"
-                      :precision="2"
-                      step="0.1"
-                      size="large"
-                      class="payment-input"
-                      @update:value="(value) => localPayment = value"
-                      @blur="onPaymentBlur"
+                ref="paymentInput"
+                data-numeric-decimals="2"
+                :value="localPayment"
+                :min="paymentMin"
+                :max="typeof paymentMax === 'number' ? paymentMax : undefined"
+                :precision="2"
+                step="0.1"
+                size="large"
+                class="payment-input"
+                @update:value="(value) => localPayment = value"
+                @click="$event.target.select()"
+                @input="onLocalPaymentInput"
+                @blur="onPaymentBlur"
               >
                   <template #prefix>{{ currencySymbol }}</template>
               </n-input-number>
