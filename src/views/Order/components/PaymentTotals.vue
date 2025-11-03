@@ -26,8 +26,8 @@
                 :class="getInputClass(item)"
                 @click="$event.target.select()"
                 @update:value="(value) => handleNumberChange(item, value)"
-                @input="onLocalPaymentInput"
-                @blur="onPaymentBlur"
+                @input="(event) => onItemInput(item, event)"
+                @blur="(event) => onItemBlur(item, event)"
               >
                 <template #prefix>{{ currencySymbol }}</template>
               </n-input-number>
@@ -215,6 +215,38 @@ export default defineComponent({
       emit("valueChanged", { field: item.field, value: finalValue });
     };
 
+    const onItemInput = (item, event) => {
+      if (!item?.field || item.disabled) {
+        return;
+      }
+
+      const inputEl = event?.target;
+      if (!inputEl) {
+        return;
+      }
+
+      const start = typeof inputEl.selectionStart === "number" ? inputEl.selectionStart : null;
+      const end = typeof inputEl.selectionEnd === "number" ? inputEl.selectionEnd : null;
+      const numericValue = Number(inputEl.value || 0);
+
+      emit("valueChanged", { field: item.field, value: Number.isFinite(numericValue) ? numericValue : 0 });
+
+      nextTick(() => {
+        if (start !== null && end !== null && typeof inputEl.setSelectionRange === "function") {
+          inputEl.setSelectionRange(start, end);
+        }
+      });
+    };
+
+    const onItemBlur = (item, event) => {
+      if (!item?.field || item.disabled) {
+        return;
+      }
+
+      const numericValue = Number(event?.target?.value);
+      handleNumberChange(item, Number.isFinite(numericValue) ? numericValue : 0);
+    };
+
     const handlePaymentInput = (value) => {
       const numericValue = Number(value);
       emit("paymentChanged", Number.isFinite(numericValue) ? numericValue : 0);
@@ -241,6 +273,8 @@ export default defineComponent({
       onPaymentInput,
         onLocalPaymentInput,
       onPaymentBlur,
+      onItemInput,
+      onItemBlur,
       emitPaymentChange,
       localPayment,
       currencySymbol,
