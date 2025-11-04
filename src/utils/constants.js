@@ -1381,6 +1381,78 @@ export const createSaleColumns = ({
       },
     },
     {
+      title: "Canje",
+      key: "recovery_reference",
+      width: 110,
+      render(row) {
+        const reference = row.recovery_of
+          ? `ID original: #${row.recovery_of}`
+          : null;
+        if (row.is_recovery) {
+          const target =
+            row.recovery_of_document ||
+            (row.recovery_of ? `Venta #${row.recovery_of}` : "venta original");
+          const tag = h(
+            NTag,
+            {
+              size: "small",
+              type: "info",
+              round: true,
+            },
+            {
+              default: () => `Reemplaza ${target}`,
+            }
+          );
+          return reference
+            ? h(
+                NPopover,
+                {
+                  trigger: "hover",
+                },
+                {
+                  default: () => reference,
+                  trigger: () => tag,
+                }
+              )
+            : tag;
+        }
+        if (row.recovery_of_document) {
+          const tag = h(
+            NTag,
+            {
+              size: "small",
+              type: "warning",
+              round: true,
+            },
+            {
+              default: () => `Reemplazado por ${row.recovery_of_document}`,
+            }
+          );
+          return reference
+            ? h(
+                NPopover,
+                {
+                  trigger: "hover",
+                },
+                {
+                  default: () => reference,
+                  trigger: () => tag,
+                }
+              )
+            : tag;
+        }
+        return h(
+          NText,
+          {
+            depth: 3,
+          },
+          {
+            default: () => "-",
+          }
+        );
+      },
+    },
+    {
       title: "Método Pago",
       key: "payment_method",
       width: 60,

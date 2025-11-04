@@ -6,6 +6,25 @@
     :rules="rules"
     :disabled="loading"
   >
+    <n-alert
+      v-if="recoveryInfo"
+      type="info"
+      class="mb-3"
+      title="Canje registrado"
+    >
+      <n-space vertical size="4">
+        <n-text>
+          {{
+            recoveryInfo.isRecovery
+              ? `Este comprobante reemplaza ${recoveryInfo.document}`
+              : `Este comprobante fue reemplazado por ${recoveryInfo.document}`
+          }}
+        </n-text>
+        <n-text v-if="recoveryInfo.reference" depth="3">
+          {{ recoveryInfo.reference }}
+        </n-text>
+      </n-space>
+    </n-alert>
     <n-grid responsive="screen" cols="6 s:6 m:24 l:24 xl:24 2xl:24" :x-gap="12">
       <n-form-item-gi :span="3" label="Serie">
         <n-select
@@ -38,6 +57,13 @@
           v-model:value="sale.payment_method"
         />
       </n-form-item-gi>
+      <n-form-item-gi :span="4" label="Condición de pago">
+        <n-select
+          placeholder=""
+          :options="paymentConditionOptions"
+          v-model:value="sale.payment_condition"
+        />
+      </n-form-item-gi>
       <n-form-item-gi :span="6" label="Fecha">
         <n-date-picker
           class="w-100"
@@ -45,8 +71,25 @@
           type="datetime"
         />
       </n-form-item-gi>
+      <n-form-item-gi
+        v-if="isCredit"
+        :span="4"
+        label="Fecha de vencimiento"
+        path="expiration_sale"
+      >
+        <n-date-picker
+          class="w-100"
+          v-model:formatted-value="sale.expiration_sale"
+          type="date"
+          format="dd/MM/yyyy"
+          value-format="dd/MM/yyyy"
+        />
+      </n-form-item-gi>
       <n-form-item-gi :span="4">
-        <n-checkbox placeholder="" v-model:checked="sale.by_consumption"
+        <n-checkbox
+          placeholder=""
+          v-model:checked="sale.by_consumption"
+          :disabled="isCredit"
           >Por consumo</n-checkbox
         >
       </n-form-item-gi>
@@ -129,10 +172,7 @@
       :mask-closable="false"
       closable
     >
-      <n-form-item label="Ingrese contraseña de seguridad" v-if="settingsStore.businessSettings.sale?.require_pass_recovery">
-        <n-input type="password" v-model:value="userConfirm" placeholder="" />
-      </n-form-item>
-      <template #action>
+            <template #action>
         <n-space justify="end">
           <n-button
             type="success"
@@ -190,6 +230,11 @@ export default defineComponent({
     const settingsStore = useSettingsStore();
     const saleStore = useSaleStore();
     const message = useMessage();
+    const normalizePaymentCondition = (value) => {
+      const parsed = Number(value);
+      return parsed === 2 ? 2 : 1;
+    };
+
     const sale = reactive({
       ...props.data,
       number: null,
@@ -197,6 +242,17 @@ export default defineComponent({
       is_change: false,
       date_sale: format(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss"),
     });
+
+    sale.payment_condition =
+      typeof sale.payment_condition === "undefined" ||
+      sale.payment_condition === null
+        ? 1
+        : normalizePaymentCondition(sale.payment_condition);
+    if (sale.payment_condition === 2) {
+      sale.expiration_sale = sale.expiration_sale ?? null;
+    } else {
+      sale.expiration_sale = null;
+    }
 
     const invoiceOptions = [
       {
@@ -213,11 +269,23 @@ export default defineComponent({
       },
     ];
 
+    const paymentConditionOptions = [
+      {
+        value: 1,
+        label: "CONTADO",
+      },
+      {
+        value: 2,
+        label: "CRÉDITO",
+      },
+    ];
+
     const loading = ref(false);
 
     const saleForm = ref(null);
     const showCustomerModal = ref(false);
     const searchingCustomer = ref(false);
+    const showConfirm = ref(false);
 
     const customerResults = ref([]);
 
@@ -230,6 +298,24 @@ export default defineComponent({
     });
 
     const addressesOptions = ref([]);
+
+    const isCredit = computed(() => Number(sale.payment_condition) === 2);
+
+    const recoveryInfo = computed(() => {
+      const document =
+        sale.recovery_of_document ??
+        (sale.recovery_of ? `Venta #${sale.recovery_of}` : null);
+      if (!document) {
+        return null;
+      }
+      return {
+        isRecovery: Boolean(sale.is_recovery),
+        document,
+        reference: sale.recovery_of
+          ? `ID original: #${sale.recovery_of}`
+          : null,
+      };
+    });
 
     const loadCustomerAddresses = async () => {
       await retrieveCustomerAddresses(sale.customer)
@@ -266,6 +352,22 @@ export default defineComponent({
       saleRules.customer.required = sale.invoice_type === "1";
       return saleRules;
     });
+
+    watch(
+      () => sale.payment_condition,
+      (value) => {
+        const normalized = normalizePaymentCondition(value);
+        if (normalized !== value) {
+          sale.payment_condition = normalized;
+          return;
+        }
+        if (normalized !== 2) {
+          sale.expiration_sale = null;
+        } else if (!sale.expiration_sale) {
+          sale.expiration_sale = null;
+        }
+      }
+    );
 
     const showCustomerOptions = async (value) => {
       if (value.length >= 3 && value.length <= 11) {
@@ -367,9 +469,20 @@ export default defineComponent({
       onCloseModal();
     };
 
+    const ensureCreditExpiration = () => {
+      if (isCredit.value && !sale.expiration_sale) {
+        message.error("Debe ingresar la fecha de vencimiento para ventas al crédito.");
+        return false;
+      }
+      return true;
+    };
+
     const validateSale = () => {
       saleForm.value.validate((errors) => {
         if (!errors) {
+          if (!ensureCreditExpiration()) {
+            return;
+          }
           showConfirm.value = true;
         } else {
           console.error(errors);
@@ -379,15 +492,22 @@ export default defineComponent({
     };
 
     const peformCreateSale = async () => {
+      if (!ensureCreditExpiration()) {
+        showConfirm.value = false;
+        return;
+      }
       loading.value = true;
-      sale.sale_details.forEach((detail) => {
-        delete detail.id;
-      });
-      await recoverySale(props.id, sale, userConfirm.value)
+      if (Array.isArray(sale.sale_details)) {
+        sale.sale_details.forEach((detail) => {
+          delete detail.id;
+        });
+      }
+      await recoverySale(props.id, sale)
         .then((response) => {
           if (response.status === 201) {
             message.success("Se ha generado la venta...");
             emit("on-success");
+            showConfirm.value = false;
             const json = JSON.parse(response.data.json_sale);
             if (
               settingsStore.businessSettings.sale.auto_send &&
@@ -413,14 +533,11 @@ export default defineComponent({
         .catch((error) => {
           console.error(error);
           
-          userConfirm.value = "";
+        })
+        .finally(() => {
           loading.value = false;
         });
     };
-
-    const showConfirm = ref(false);
-
-    const userConfirm = ref("");
 
     onMounted(async () => {
       await loadCustomerAddresses();
@@ -435,12 +552,15 @@ export default defineComponent({
       saleForm,
       saleStore,
       invoiceOptions,
+      paymentConditionOptions,
       showCustomerModal,
       customerOptions,
       showCustomerOptions,
       searchingCustomer,
       createAddressesOptions,
       addressesOptions,
+      isCredit,
+      recoveryInfo,
       settingsStore,
       onCloseModal,
       onSuccess,
@@ -448,7 +568,7 @@ export default defineComponent({
       peformCreateSale,
       validateSale,
       showConfirm,
-      userConfirm,
+
     };
   },
 });

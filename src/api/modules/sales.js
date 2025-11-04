@@ -239,18 +239,18 @@ export async function nullSale(id, anulate) {
     });
 }
 
-export async function recoverySale(id, sale, pass) {
+export async function recoverySale(id, sale, pass = null) {
     const businessStore = useBusinessStore();
     const userStore = useUserStore();
     const expirationSale = normalizeExpirationSale(sale.expiration_sale, sale.payment_condition);
-    return await http.post(`sales/${id}/recovery/`, {
-        pass: pass,
+    const branchOffice =
+        userStore.user.branchoffice || businessStore.currentBranch || null;
+    const payload = {
         order: sale.order,
         serie: sale.serie,
         number: sale.number,
         date_sale: sale.date_sale,
         expiration_sale: expirationSale,
-        expiration_sale: sale.expiration_sale,
         count: sale.count,
         amount: sale.amount,
         given_amount: sale.given_amount,
@@ -259,9 +259,7 @@ export async function recoverySale(id, sale, pass) {
         payment_condition: sale.payment_condition,
         customer: sale.customer === 0 ? null : sale.customer,
         address: sale.address,
-        branch_office: !userStore.user.branchoffice
-            ? businessStore.currentBranch
-            : null,
+        branch_office: branchOffice,
         discount: sale.discount,
         icbper: parseFloat(sale.icbper).toFixed(2),
         other_charges: parseFloat(sale.other_charges).toFixed(2),
@@ -276,7 +274,11 @@ export async function recoverySale(id, sale, pass) {
         exempt_amount: parseFloat(sale.exempt_amount).toFixed(2),
         free_amount: parseFloat(sale.free_amount).toFixed(2),
         igv_amount: parseFloat(sale.igv_amount).toFixed(2)
-    });
+    };
+    if (pass) {
+        payload.pass = pass;
+    }
+    return await http.post(`sales/${id}/recovery/`, payload);
 }
 
 export async function sendWhatsapp(id, [serie, number], phone) {
