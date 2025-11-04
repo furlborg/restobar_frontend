@@ -592,11 +592,16 @@ export default defineComponent({
       disabled: sale.value.payments?.some(pay => pay.payment_method === option.value) || false,
     })));
 
+    const normalizePaymentAmount = (value) => {
+      const amount = parseFloat(value);
+      return Number.isFinite(amount) ? amount : 0;
+    };
+
     const evalPayments = computed(() => {
       if (!sale.value.payments?.length) return true;
       const totalAmount = Number(sale.value.amount);
       const totalPayments = sale.value.payments.reduce((acc, payment) => {
-        const amount = parseFloat(payment.amount || '0');
+        const amount = normalizePaymentAmount(payment.amount);
         return Math.round((acc + amount) * 100) / 100;
       }, 0);
       return totalPayments !== totalAmount;
@@ -604,8 +609,8 @@ export default defineComponent({
 
     const currentPaymentsAmount = computed(() => {
       if (!sale.value.payments) return "0.00";
-      const sum = sale.value.payments.reduce((acc, val) => acc + parseFloat(val.amount), 0);
-      return isNaN(sum) ? "0.00" : sum.toFixed(2);
+      const sum = sale.value.payments.reduce((acc, val) => acc + normalizePaymentAmount(val.amount), 0);
+      return Number.isFinite(sum) ? sum.toFixed(2) : "0.00";
     });
 
     const openSeparatePaymentsModal = () => {

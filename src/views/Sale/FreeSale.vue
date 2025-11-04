@@ -894,13 +894,17 @@ export default defineComponent({
       }));
     });
 
+    const normalizePaymentAmount = (value) => {
+      const amount = parseFloat(value);
+      return Number.isFinite(amount) ? amount : 0;
+    };
+
     const evalPayments = computed(() => {
       if (sale.value.payments) {
-        return (
-          sale.value.payments.reduce((acc, val) => {
-            return (acc += parseFloat(val.amount));
-          }, 0) !== Number(sale.value.amount)
-        );
+        const normalizedSum = sale.value.payments.reduce((acc, val) => {
+          return acc + normalizePaymentAmount(val.amount);
+        }, 0);
+        return normalizedSum !== Number(sale.value.amount);
       } else {
         return true;
       }
@@ -908,10 +912,10 @@ export default defineComponent({
 
     const currentPaymentsAmount = computed(() => {
       if (sale.value.payments) {
-        let sum = sale.value.payments.reduce((acc, val) => {
-          return (acc += parseFloat(val.amount));
+        const sum = sale.value.payments.reduce((acc, val) => {
+          return acc + normalizePaymentAmount(val.amount);
         }, 0);
-        return isNaN(sum) ? "0.00" : sum.toFixed(2);
+        return Number.isFinite(sum) ? sum.toFixed(2) : "0.00";
       } else {
         return "0.00";
       }

@@ -562,10 +562,15 @@ export default defineComponent({
       showPayments.value = true;
     };
 
+    const normalizePaymentAmount = (value) => {
+      const amount = parseFloat(value);
+      return Number.isFinite(amount) ? amount : 0;
+    };
+
     const evalPayments = computed(() => {
       if (sale.value.payments) {
         const sum = sale.value.payments.reduce(
-          (acc, val) => acc + parseFloat(val.amount),
+          (acc, val) => acc + normalizePaymentAmount(val.amount),
           0
         );
         return sum !== Number(sale.value.amount);
@@ -575,8 +580,8 @@ export default defineComponent({
 
     const currentPaymentsAmount = computed(() => {
       if (sale.value.payments) {
-        const sum = sale.value.payments.reduce((acc, val) => acc + parseFloat(val.amount), 0);
-        return isNaN(sum) ? "0.00" : sum.toFixed(2);
+        const sum = sale.value.payments.reduce((acc, val) => acc + normalizePaymentAmount(val.amount), 0);
+        return Number.isFinite(sum) ? sum.toFixed(2) : "0.00";
       }
       return "0.00";
     });
