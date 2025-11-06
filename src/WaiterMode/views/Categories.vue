@@ -174,7 +174,8 @@ export default defineComponent({
     const counter = ref(0);
 
     onMounted(() => {
-      productStore.refreshCategories();
+      // console.log("waiter categories");
+      productStore.tableCategories();
     });
 
     return {
