@@ -467,6 +467,7 @@ export default defineComponent({
     };
 
     onMounted(async () => {
+      await productStore.refreshCategories(); // 🔁 Actualiza categorías
       await loadProductsData();
     });
 
