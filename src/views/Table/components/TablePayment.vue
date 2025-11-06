@@ -37,6 +37,16 @@
                   <n-date-picker class="w-100" type="datetime" :is-date-disabled="ts => ts > new Date()"
                     disabled v-model:formatted-value="sale.date_sale" />
                 </n-form-item-gi>
+                <n-form-item-gi v-if="isCredit" :span="3" label="Fecha de vencimiento" path="expiration_sale">
+                  <n-date-picker
+                    class="w-100"
+                    type="date"
+                    format="dd/MM/yyyy"
+                    value-format="dd/MM/yyyy"
+                    :is-date-disabled="isExpirationDateDisabled"
+                    v-model:formatted-value="sale.expiration_sale"
+                  />
+                </n-form-item-gi>
                 <n-form-item-gi :span="5" label="Dirección">
                   <n-select v-model:value="sale.address" :options="addressesOptions"
                     :disabled="!sale.customer" placeholder="" />
@@ -187,6 +197,8 @@ import { cloneDeep } from "@/utils";
 import { useDialog, useMessage } from "naive-ui";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
 import format from "date-fns/format";
+import parse from "date-fns/parse";
+import startOfDay from "date-fns/startOfDay";
 import { lighten } from "@/utils";
 import { useBusinessStore } from "@/store/modules/business";
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
@@ -238,6 +250,7 @@ export default defineComponent({
       invoice_type: defaultInvoiceType,
       payment_method: 1,
       payment_condition: 1,
+      expiration_sale: null,
       customer_name: "",
       customer: null,
       address: null,
@@ -417,14 +430,68 @@ export default defineComponent({
       { immediate: true, deep: true }
     );
 
+    watch(
+      () => sale.value.payment_condition,
+      (condition) => {
+        if (Number(condition) !== 2) {
+          sale.value.expiration_sale = null;
+        }
+      }
+    );
+
+    const expirationMinDate = computed(() => {
+      const saleDate = sale.value.date_sale;
+      if (!saleDate) {
+        return null;
+      }
+      try {
+        const parsedDate = parse(saleDate, "dd/MM/yyyy HH:mm:ss", new Date());
+        return startOfDay(parsedDate).getTime();
+      } catch {
+        return null;
+      }
+    });
+
+    const isExpirationDateDisabled = (ts) => {
+      const limit = expirationMinDate.value;
+      if (limit === null) {
+        return false;
+      }
+      return ts <= limit;
+    };
+
+    const isCredit = computed(() => Number(sale.value.payment_condition) === 2);
+
     const formRules = computed(() => {
-      let rules = saleRules;
-      rules.customer.required = !(sale.value.invoice_type !== 1 && sale.value.payment_condition === 1 && sale.value.given_amount <= 699);
+      const rules = {
+        customer: {
+          ...saleRules.customer,
+          required: !(
+            sale.value.invoice_type !== 1 &&
+            sale.value.payment_condition === 1 &&
+            sale.value.given_amount <= 699
+          ),
+        },
+      };
+      if (isCredit.value) {
+        rules.expiration_sale = {
+          validator(rule, value) {
+            if (!value) {
+              return new Error("Debe ingresar la fecha de vencimiento para ventas al credito.");
+            }
+            return true;
+          },
+          trigger: ["blur", "change"],
+        };
+      }
       return rules;
     });
 
     const changeCondition = (v) => {
-      sale.value.given_amount = v === 1 ? total.value : parseFloat('0').toFixed(2);
+      sale.value.given_amount = v === 1 ? total.value : parseFloat("0").toFixed(2);
+      if (v !== 2) {
+        sale.value.expiration_sale = null;
+      }
     };
 
     const changeSerie = (v) => {
@@ -667,7 +734,7 @@ export default defineComponent({
       closeSeparatePaymentsModal: () => {}, successSeparatePaymentsModal: obtainSaleNumber,
       separatePayments, showSeparateModal, getAfcShort, getAfcColor, totalIGV, totalGRV,
       totalEXN, totalGRT, totalDSCT, whatsappNumber, ticketPreview, previewDrawer, showPdf,
-      pdfData, paymentTotalsItems, handleValueChange, handlePaymentChange,
+      pdfData, paymentTotalsItems, handleValueChange, handlePaymentChange, isCredit, isExpirationDateDisabled,
     };
   },
 });

@@ -83,6 +83,7 @@
           type="date"
           format="dd/MM/yyyy"
           value-format="dd/MM/yyyy"
+          :is-date-disabled="disableExpirationDate"
         />
       </n-form-item-gi>
       <n-form-item-gi :span="4">
@@ -211,6 +212,8 @@ import {
   searchRucCustomer,
 } from "@/api/modules/customer";
 import format from "date-fns/format";
+import parse from "date-fns/parse";
+import startOfDay from "date-fns/startOfDay";
 export default defineComponent({
   name: "SaleForm",
   components: {
@@ -300,6 +303,28 @@ export default defineComponent({
     const addressesOptions = ref([]);
 
     const isCredit = computed(() => Number(sale.payment_condition) === 2);
+
+    const expirationMinDate = computed(() => {
+      const saleDate = sale.date_sale;
+      if (!saleDate) {
+        return null;
+      }
+      try {
+        const pattern = saleDate.includes(" ") ? "dd/MM/yyyy HH:mm:ss" : "dd/MM/yyyy";
+        const parsedDate = parse(saleDate, pattern, new Date());
+        return startOfDay(parsedDate).getTime();
+      } catch {
+        return null;
+      }
+    });
+
+    const disableExpirationDate = (ts) => {
+      const limit = expirationMinDate.value;
+      if (limit === null) {
+        return false;
+      }
+      return ts <= limit;
+    };
 
     const recoveryInfo = computed(() => {
       const document =
@@ -568,6 +593,7 @@ export default defineComponent({
       peformCreateSale,
       validateSale,
       showConfirm,
+      disableExpirationDate,
 
     };
   },
