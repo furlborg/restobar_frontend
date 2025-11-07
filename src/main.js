@@ -15,12 +15,18 @@ import VueCookies from "vue-cookies";
 
 const app = createApp(App);
 
-setupNumericOnlyGuards();
 
 app.use(store);
 app.use(router);
 app.use(naive);
-app.use(VueCookies, { expireTimes: "1d" });
+
+// Configurar cookies
+app.config.globalProperties.$cookies = VueCookies;
+VueCookies.config("1d");
+
+setupNumericOnlyGuards();
+
 app.component("v-icon", OhVueIcon);
 app.directive("numeric-only", numericOnlyDirective);
+
 app.mount("#app");

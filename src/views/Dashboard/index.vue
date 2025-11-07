@@ -8,21 +8,25 @@
                     <n-text strong style="font-size: 16px; margin-bottom: 4px;">Gráfico por cantidad de ventas</n-text>
                     <n-space align="center" :size="16" style="margin-top: 8px;">
                         <n-space align="center" :size="4">
-                            <span style="width: 12px; height: 12px; background: #5470c6; border-radius: 50%; display: inline-block;"></span>
+                            <span
+                                style="width: 12px; height: 12px; background: #5470c6; border-radius: 50%; display: inline-block;"></span>
                             <n-text>
                                 Esta semana:
-                                <span :style="{ color: dashboardData.comparativa_semanal?.crecimiento_porcentaje >= 0 ? '#18a058' : '#d03050', fontWeight: 'bold' }">
-                  {{ dashboardData.comparativa_semanal?.crecimiento_porcentaje >= 0 ? '+' : '' }}{{ dashboardData.comparativa_semanal?.crecimiento_porcentaje || 0 }}%
-                </span>
+                                <span
+                                    :style="{ color: dashboardData.comparativa_semanal?.crecimiento_porcentaje >= 0 ? '#18a058' : '#d03050', fontWeight: 'bold' }">
+                                    {{ dashboardData.comparativa_semanal?.crecimiento_porcentaje >= 0 ? '+' : '' }}{{
+                                        dashboardData.comparativa_semanal?.crecimiento_porcentaje || 0 }}%
+                                </span>
                             </n-text>
                         </n-space>
                         <n-space align="center" :size="4">
-                            <span style="width: 12px; height: 12px; background: #91cc75; border-radius: 50%; display: inline-block;"></span>
+                            <span
+                                style="width: 12px; height: 12px; background: #91cc75; border-radius: 50%; display: inline-block;"></span>
                             <n-text>
                                 Semana pasada:
                                 <span style="color: #d03050; font-weight: bold;">
-                  1%
-                </span>
+                                    1%
+                                </span>
                             </n-text>
                         </n-space>
                     </n-space>
@@ -39,14 +43,8 @@
                         </n-space>
                     </div>
 
-                    <n-date-picker
-                            v-model:value="dateRange"
-                            type="daterange"
-                            :shortcuts="dateShortcuts"
-                            clearable
-                            @update:value="loadDashboardData"
-                            style="min-width: 280px;"
-                    />
+                    <n-date-picker v-model:value="dateRange" type="daterange" :shortcuts="dateShortcuts" clearable
+                        @update:value="loadDashboardData" style="min-width: 280px;" />
                 </n-space>
             </n-space>
         </n-card>
@@ -71,21 +69,13 @@
                                 </n-text>
                             </n-space>
                             <div class="mini-chart">
-                                <v-chart
-                                        :option="getMiniChartOption(dashboardData.ventas_por_dia || [])"
-                                        style="height: 60px; width: 120px;"
-                                        autoresize
-                                />
+                                <v-chart :option="getMiniChartOption(dashboardData.ventas_por_dia || [])"
+                                    style="height: 60px; width: 120px;" autoresize />
                             </div>
                         </n-space>
-                        <n-progress
-                                type="line"
-                                :percentage="calculatePercentage(dashboardData.graficos?.ventas_efectivo, dashboardData.graficos?.total_ventas)"
-                                :show-indicator="false"
-                                color="#5470c6"
-                                rail-color="#f0f0f0"
-                                style="margin-top: 8px;"
-                        />
+                        <n-progress type="line"
+                            :percentage="Number(calculatePercentage(dashboardData.graficos?.ventas_efectivo, dashboardData.graficos?.total_ventas))"
+                            :show-indicator="false" color="#5470c6" rail-color="#f0f0f0" style="margin-top: 8px;" />
                         <n-text depth="3" style="font-size: 11px; margin-top: 4px;">
                             Redondeado: S/ {{ Math.round(dashboardData.graficos?.ventas_efectivo || 0) }}
                         </n-text>
@@ -106,11 +96,8 @@
                                 </n-text>
                             </n-space>
                             <div class="mini-chart">
-                                <v-chart
-                                        :option="getMiniChartOption(dashboardData.ventas_por_dia || [])"
-                                        style="height: 60px; width: 120px;"
-                                        autoresize
-                                />
+                                <v-chart :option="getMiniChartOption(dashboardData.ventas_por_dia || [])"
+                                    style="height: 60px; width: 120px;" autoresize />
                             </div>
                         </n-space>
                     </n-card>
@@ -130,11 +117,8 @@
                                 </n-text>
                             </n-space>
                             <div class="mini-chart">
-                                <v-chart
-                                        :option="getMiniChartOption(dashboardData.ventas_por_dia || [])"
-                                        style="height: 60px; width: 120px;"
-                                        autoresize
-                                />
+                                <v-chart :option="getMiniChartOption(dashboardData.ventas_por_dia || [])"
+                                    style="height: 60px; width: 120px;" autoresize />
                             </div>
                         </n-space>
                     </n-card>
@@ -159,11 +143,8 @@
                                 </n-text>
                             </n-space>
                             <div class="mini-chart">
-                                <v-chart
-                                        :option="getMiniChartOption(dashboardData.ventas_por_dia || [], true)"
-                                        style="height: 60px; width: 120px;"
-                                        autoresize
-                                />
+                                <v-chart :option="getMiniChartOption(dashboardData.ventas_por_dia || [], true)"
+                                    style="height: 60px; width: 120px;" autoresize />
                             </div>
                         </n-space>
                     </n-card>
@@ -183,11 +164,8 @@
                                 </n-text>
                             </n-space>
                             <div class="mini-chart">
-                                <v-chart
-                                        :option="getMiniChartOption(dashboardData.ventas_por_dia || [])"
-                                        style="height: 60px; width: 120px;"
-                                        autoresize
-                                />
+                                <v-chart :option="getMiniChartOption(dashboardData.ventas_por_dia || [])"
+                                    style="height: 60px; width: 120px;" autoresize />
                             </div>
                         </n-space>
                     </n-card>
@@ -257,14 +235,12 @@
                                 S/ {{ formatMoney(dashboardData.tipo_pago?.efectivo || 0) }}
                             </n-text>
                             <n-text depth="3" style="font-size: 11px;">
-                                {{ calculatePercentage(dashboardData.tipo_pago?.efectivo, dashboardData.graficos?.total_ventas) }}%
+                                {{ calculatePercentage(dashboardData.tipo_pago?.efectivo,
+                                    dashboardData.graficos?.total_ventas) }}%
                             </n-text>
-                            <n-progress
-                                    type="line"
-                                    :percentage="calculatePercentage(dashboardData.tipo_pago?.efectivo, dashboardData.graficos?.total_ventas)"
-                                    :show-indicator="false"
-                                    color="#5470c6"
-                            />
+                            <n-progress type="line"
+                                :percentage="Number(calculatePercentage(dashboardData.tipo_pago?.efectivo, dashboardData.graficos?.total_ventas))"
+                                :show-indicator="false" color="#5470c6" />
                         </n-space>
                     </n-card>
                 </n-gi>
@@ -282,7 +258,8 @@
                                 S/ {{ formatMoney(dashboardData.tipo_pago?.deposito || 0) }}
                             </n-text>
                             <n-text depth="3" style="font-size: 11px;">
-                                {{ calculatePercentage(dashboardData.tipo_pago?.deposito, dashboardData.graficos?.total_ventas) }}%
+                                {{ calculatePercentage(dashboardData.tipo_pago?.deposito,
+                                    dashboardData.graficos?.total_ventas) }}%
                             </n-text>
                         </n-space>
                     </n-card>
@@ -298,12 +275,15 @@
                             </n-space>
                             <div style="max-height: 120px; overflow-y: auto;">
                                 <n-space vertical :size="4" v-if="dashboardData.tipo_pago?.tarjetas?.length > 0">
-                                    <div v-for="tarjeta in dashboardData.tipo_pago.tarjetas" :key="tarjeta.metodo" style="display: flex; justify-content: space-between;">
+                                    <div v-for="tarjeta in dashboardData.tipo_pago.tarjetas" :key="tarjeta.metodo"
+                                        style="display: flex; justify-content: space-between;">
                                         <n-text depth="3" style="font-size: 12px;">{{ tarjeta.metodo }}</n-text>
                                         <n-space align="center" :size="8">
-                                            <n-text strong style="font-size: 14px;">S/ {{ formatMoney(tarjeta.total) }}</n-text>
+                                            <n-text strong style="font-size: 14px;">S/ {{ formatMoney(tarjeta.total)
+                                            }}</n-text>
                                             <n-text depth="3" style="font-size: 11px;">
-                                                {{ calculatePercentage(tarjeta.total, dashboardData.graficos?.total_ventas) }}%
+                                                {{ calculatePercentage(tarjeta.total,
+                                                    dashboardData.graficos?.total_ventas) }}%
                                             </n-text>
                                         </n-space>
                                     </div>
@@ -347,16 +327,19 @@
                     <n-card :bordered="false" class="channel-card">
                         <n-space vertical align="center" :size="8">
                             <n-icon size="32" color="#5470c6">
-                                <v-icon name="md-tableroundedcorner" />
+                                <v-icon name="md-tablechart"  />
                             </n-icon>
                             <n-text strong style="color: #5470c6; font-size: 16px;">Salones</n-text>
                             <n-space vertical :size="0" align="center">
                                 <n-text depth="3" style="font-size: 12px;">Total</n-text>
-                                <n-text strong style="font-size: 20px;">S/ {{ formatMoney(dashboardData.canal_venta?.salones?.total || 0) }}</n-text>
+                                <n-text strong style="font-size: 20px;">S/ {{
+                                    formatMoney(dashboardData.canal_venta?.salones?.total || 0) }}</n-text>
                             </n-space>
                             <n-space vertical :size="0" align="center">
                                 <n-text depth="3" style="font-size: 12px;">N° de venta</n-text>
-                                <n-text strong style="font-size: 18px;">{{ dashboardData.canal_venta?.salones?.cantidad || 0 }}</n-text>
+                                <n-text strong style="font-size: 18px;">{{ dashboardData.canal_venta?.salones?.cantidad
+                                    || 0
+                                }}</n-text>
                             </n-space>
                         </n-space>
                     </n-card>
@@ -370,11 +353,14 @@
                             <n-text strong style="color: #91cc75; font-size: 16px;">V. rápidas</n-text>
                             <n-space vertical :size="0" align="center">
                                 <n-text depth="3" style="font-size: 12px;">Total</n-text>
-                                <n-text strong style="font-size: 20px;">S/ {{ formatMoney(dashboardData.canal_venta?.llevar?.total || 0) }}</n-text>
+                                <n-text strong style="font-size: 20px;">S/ {{
+                                    formatMoney(dashboardData.canal_venta?.llevar?.total || 0) }}</n-text>
                             </n-space>
                             <n-space vertical :size="0" align="center">
                                 <n-text depth="3" style="font-size: 12px;">N° de venta</n-text>
-                                <n-text strong style="font-size: 18px;">{{ dashboardData.canal_venta?.llevar?.cantidad || 0 }}</n-text>
+                                <n-text strong style="font-size: 18px;">{{ dashboardData.canal_venta?.llevar?.cantidad
+                                    || 0
+                                }}</n-text>
                             </n-space>
                         </n-space>
                     </n-card>
@@ -388,11 +374,14 @@
                             <n-text strong style="color: #fac858; font-size: 16px;">Delivery</n-text>
                             <n-space vertical :size="0" align="center">
                                 <n-text depth="3" style="font-size: 12px;">Total</n-text>
-                                <n-text strong style="font-size: 20px;">S/ {{ formatMoney(dashboardData.canal_venta?.delivery?.total || 0) }}</n-text>
+                                <n-text strong style="font-size: 20px;">S/ {{
+                                    formatMoney(dashboardData.canal_venta?.delivery?.total || 0) }}</n-text>
                             </n-space>
                             <n-space vertical :size="0" align="center">
                                 <n-text depth="3" style="font-size: 12px;">N° de venta</n-text>
-                                <n-text strong style="font-size: 18px;">{{ dashboardData.canal_venta?.delivery?.cantidad || 0 }}</n-text>
+                                <n-text strong style="font-size: 18px;">{{ dashboardData.canal_venta?.delivery?.cantidad
+                                    || 0
+                                }}</n-text>
                             </n-space>
                         </n-space>
                     </n-card>
@@ -406,11 +395,14 @@
                             <n-text strong style="color: #ee6666; font-size: 16px;">Reservación</n-text>
                             <n-space vertical :size="0" align="center">
                                 <n-text depth="3" style="font-size: 12px;">Total</n-text>
-                                <n-text strong style="font-size: 20px;">S/ {{ formatMoney(dashboardData.canal_venta?.reservacion?.total || 0) }}</n-text>
+                                <n-text strong style="font-size: 20px;">S/ {{
+                                    formatMoney(dashboardData.canal_venta?.reservacion?.total || 0) }}</n-text>
                             </n-space>
                             <n-space vertical :size="0" align="center">
                                 <n-text depth="3" style="font-size: 12px;">N° de venta</n-text>
-                                <n-text strong style="font-size: 18px;">{{ dashboardData.canal_venta?.reservacion?.cantidad || 0 }}</n-text>
+                                <n-text strong style="font-size: 18px;">{{
+                                    dashboardData.canal_venta?.reservacion?.cantidad || 0
+                                }}</n-text>
                             </n-space>
                         </n-space>
                     </n-card>
@@ -423,39 +415,34 @@
             <template #header>
                 <n-text strong>Top productos</n-text>
             </template>
-            <n-table
-                    v-if="dashboardData.top_productos?.length > 0"
-                    :bordered="false"
-                    :single-line="false"
-                    size="small"
-                    striped
-            >
+            <n-table v-if="dashboardData.top_productos?.length > 0" :bordered="false" :single-line="false" size="small"
+                striped>
                 <thead>
-                <tr>
-                    <th style="text-align: center;">#</th>
-                    <th>Código</th>
-                    <th>Producto</th>
-                    <th style="text-align: center;">Cantidad</th>
-                    <th style="text-align: right;">Monto Total</th>
-                </tr>
+                    <tr>
+                        <th style="text-align: center;">#</th>
+                        <th>Código</th>
+                        <th>Producto</th>
+                        <th style="text-align: center;">Cantidad</th>
+                        <th style="text-align: right;">Monto Total</th>
+                    </tr>
                 </thead>
                 <tbody>
-                <tr v-for="(producto, index) in dashboardData.top_productos" :key="producto.producto_id">
-                    <td style="text-align: center;">
-                        <n-tag v-if="index < 3" :type="['success', 'warning', 'info'][index]" size="small">
-                            {{ index + 1 }}
-                        </n-tag>
-                        <span v-else>{{ index + 1 }}</span>
-                    </td>
-                    <td>{{ producto.codigo }}</td>
-                    <td>{{ producto.nombre }}</td>
-                    <td style="text-align: center;">
-                        <n-tag type="info" size="small">{{ producto.cantidad_vendida }}</n-tag>
-                    </td>
-                    <td style="text-align: right;">
-                        <n-text strong>S/ {{ formatMoney(producto.monto_total) }}</n-text>
-                    </td>
-                </tr>
+                    <tr v-for="(producto, index) in dashboardData.top_productos" :key="producto.producto_id">
+                        <td style="text-align: center;">
+                            <n-tag v-if="index < 3" :type="['success', 'warning', 'info'][index]" size="small">
+                                {{ index + 1 }}
+                            </n-tag>
+                            <span v-else>{{ index + 1 }}</span>
+                        </td>
+                        <td>{{ producto.codigo }}</td>
+                        <td>{{ producto.nombre }}</td>
+                        <td style="text-align: center;">
+                            <n-tag type="info" size="small">{{ producto.cantidad_vendida }}</n-tag>
+                        </td>
+                        <td style="text-align: right;">
+                            <n-text strong>S/ {{ formatMoney(producto.monto_total) }}</n-text>
+                        </td>
+                    </tr>
                 </tbody>
             </n-table>
             <n-empty v-else description="Sin productos vendidos" />
@@ -492,7 +479,7 @@ use([
 ]);
 
 export default defineComponent({
-    name: "Dashboard",
+    name: "TsiDashboard",
     components: {
         VChart
     },
@@ -884,49 +871,49 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 #Dashboard {
-  padding: 16px;
-  background: #f5f7fa;
+    padding: 16px;
+    background: #f5f7fa;
 }
 
 .mb-3 {
-  margin-bottom: 16px;
+    margin-bottom: 16px;
 }
 
 .dashboard-header {
-  background: white;
+    background: white;
 }
 
 .stat-card {
-  background: white;
-  transition: all 0.3s ease;
+    background: white;
+    transition: all 0.3s ease;
 
-  &:hover {
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  }
+    &:hover {
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    }
 }
 
 .payment-card {
-  background: #f8f9fa;
-  min-height: 180px;
+    background: #f8f9fa;
+    min-height: 180px;
 }
 
 .channel-card {
-  background: white;
-  border: 1px solid #e4e7ed;
-  transition: all 0.3s ease;
+    background: white;
+    border: 1px solid #e4e7ed;
+    transition: all 0.3s ease;
 
-  &:hover {
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
-  }
+    &:hover {
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
 }
 
 .order-stat {
-  padding: 16px;
-  text-align: center;
+    padding: 16px;
+    text-align: center;
 }
 
 .mini-chart {
-  flex-shrink: 0;
+    flex-shrink: 0;
 }
 </style>

@@ -226,7 +226,7 @@
 import { defineComponent, ref, onMounted, reactive, computed } from "vue";
 import { useMessage, useDialog } from "naive-ui";
 import { renderIcon } from "@/utils";
-import ProductModal from "./components/ProductModal";
+import ProductModal from "@/views/Product/components/ProductModal.vue";
 import { useProductStore } from "@/store/modules/product";
 import { useUserStore } from "@/store/modules/user";
 import {
@@ -237,7 +237,7 @@ import {
 import MoveModal from "./components/MoveModal.vue";
 
 export default defineComponent({
-  name: "Product",
+  name: "TsiProduct",
   components: {
     ProductModal,
     MoveModal,

@@ -33,25 +33,12 @@
           userStore.user.branchoffice_des
         }}</n-text>
       </n-space>
-      <!-- <div
-        class="layout-header-trigger layout-header-trigger-min"
-        @click="openSetting"
-      >
-        <n-tooltip>
-          <template #trigger>
-            <n-icon size="18">
-              <v-icon name="gi-settings-knobs" />
-            </n-icon>
-          </template>
-          <span>Tema</span>
-        </n-tooltip>
-      </div> -->
       <div class="layout-header-trigger layout-header-trigger-min">
         <n-dropdown
           trigger="hover"
           placement="bottom-end"
-          @select="avatarSelect"
           :options="avatarOptions"
+          @select="avatarSelect"
         >
           <div class="avatar">
             <n-avatar>
@@ -67,7 +54,7 @@
 
 <script>
 import { defineComponent, reactive, ref, computed, toRefs } from "vue";
-import { useDialog, useMessage } from "naive-ui";
+import { useDialog } from "naive-ui";
 import { useRouter } from "vue-router";
 import { useUserStore } from "@/store/modules/user";
 import { retrieveCurrentTill } from "@/api/modules/tills";
@@ -89,7 +76,6 @@ export default defineComponent({
   },
   setup() {
     const router = useRouter();
-    const message = useMessage();
     const dialog = useDialog();
     const drawerSetting = ref();
     const userStore = useUserStore();
@@ -230,11 +216,6 @@ export default defineComponent({
   transition: all 0.2s ease-in-out;
   width: 100%;
   z-index: 11;
-  //color: #fff;
-
-  //.n-icon {
-  //  color: #fff
-  //}
 
   &-left {
     display: flex;
@@ -319,11 +300,4 @@ export default defineComponent({
   z-index: 11;
 }
 
-//::v-deep(.menu-router-link) {
-//  color: #515a6e;
-//
-//  &:hover {
-//    color: #1890ff;
-//  }
-//}
 </style>
