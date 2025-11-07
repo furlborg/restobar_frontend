@@ -219,7 +219,6 @@ export default defineComponent({
   },
   setup() {
     const dateNow = ref(null);
-    const urlImg = ref(null);
     const businnessStore = useBusinessStore();
     const settingsStore = useSettingsStore();
     const userStore = useUserStore();
@@ -361,7 +360,6 @@ export default defineComponent({
       showModal.value = false;
       await loadMovements();
       onCloseModal();
-      // loadProductsData()
     };
 
     return {
@@ -434,7 +432,7 @@ export default defineComponent({
                 ],
                 [
                   {
-                    content: !!rowData.document ? rowData.document : "",
+                    content: !rowData.document ? rowData.document : "",
                     styles: {
                       fontStyle: "bold",
                       halign: "center",

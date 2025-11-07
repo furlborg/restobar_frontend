@@ -1,12 +1,5 @@
 import { h } from "vue";
-import {
-  NButton,
-  NTag,
-  NPopover,
-  NDropdown,
-  NText,
-  NSpace,
-} from "naive-ui";
+import { NButton, NTag, NPopover, NDropdown, NText, NSpace } from "naive-ui";
 import { renderIcon, lighten } from "@/utils";
 import { useUserStore } from "@/store/modules/user";
 import { useSaleStore } from "@/store/modules/sale";
@@ -276,7 +269,7 @@ export const createCustomerColumns = ({
             },
             renderIcon("la-user-edit-solid")
           ),
-          settingsStore.business_settings?.['sale']?.['customer_credits'] &&
+          settingsStore.business_settings?.["sale"]?.["customer_credits"] &&
             h(
               NButton,
               {
@@ -711,10 +704,12 @@ export const createTillColumns = ({
                     case 11:
                       makeTillReport(row);
                       break;
-                      case 17:
-                          // eslint-disable-next-line no-case-declarations
-                        const response = await http.get("till-payment-totals", { params: { till: row?.id } });
-                        await generateDynamicCajaReport(response.data);
+                    case 17:
+                      // eslint-disable-next-line no-case-declarations
+                      const response = await http.get("till-payment-totals", {
+                        params: { till: row?.id },
+                      });
+                      await generateDynamicCajaReport(response.data);
                       break;
                     case 12:
                       makeSimpleTillReport(row);
@@ -838,29 +833,29 @@ export const createMovementsColumns = ({
       key: "document",
       align: "center",
       width: 100,
+      render(rowData) {
+        return rowData?.document || 'N/A';
+      },
     },
-    /* {
-            title: 'Usuario',
-            key: 'user'
-        },
-        {
-            title: 'Sucursal',
-            key: 'sucursal'
-        }, */
     {
       title: "Descripción",
       key: "description",
       align: "center",
       width: 200,
+      render(rowData) {
+        return rowData?.description || 'N/A';
+      },
     },
     {
       title: "Ingreso",
       key: "income",
       align: "center",
       width: 100,
-      render(row) {
-        let concept_type = tillStore.getConceptType(row.concept);
-        return concept_type === "0" ? row.amount : "----";
+      render(rowData) {
+        if (!rowData) return "----";
+        
+        let concept_type = tillStore.getConceptType(rowData.concept);
+        return concept_type === "0" ? rowData.amount : "----";
       },
     },
     {
@@ -868,9 +863,11 @@ export const createMovementsColumns = ({
       key: "outcome",
       align: "center",
       width: 100,
-      render(row) {
-        let concept_type = tillStore.getConceptType(row.concept);
-        return concept_type === "1" ? row.amount : "----";
+      render(rowData) {
+        if (!rowData) return "----";
+        
+        let concept_type = tillStore.getConceptType(rowData.concept);
+        return concept_type === "1" ? rowData.amount : "----";
       },
     },
     {
@@ -878,8 +875,10 @@ export const createMovementsColumns = ({
       key: "concept",
       align: "center",
       width: 225,
-      render(row) {
-        return tillStore.getConceptDescription(row.concept);
+      render(rowData) {
+        if (!rowData) return 'N/A';
+        
+        return tillStore.getConceptDescription(rowData.concept);
       },
     },
     {
@@ -887,8 +886,22 @@ export const createMovementsColumns = ({
       key: "concept_type",
       align: "center",
       width: 100,
-      render(row) {
-        let concept_type = tillStore.getConceptType(row.concept);
+      render(rowData) {
+        if (!rowData) {
+          return h(
+            NTag,
+            {
+              size: "small",
+              type: "default",
+              round: true,
+            },
+            {
+              default: () => "N/A",
+            }
+          );
+        }
+        
+        let concept_type = tillStore.getConceptType(rowData.concept);
 
         return h(
           NTag,
@@ -908,13 +921,28 @@ export const createMovementsColumns = ({
       key: "created",
       align: "center",
       width: 200,
+      render(rowData) {
+        return rowData?.created || 'N/A';
+      },
     },
     {
       title: "Acciones",
       key: "actions",
       align: "center",
       width: 125,
-      render(row) {
+      render(rowData) {
+        if (!rowData) {
+          return h(NSpace, {}, {
+            default: () => [
+              h(NButton, {
+                size: "small",
+                type: "default",
+                disabled: true,
+              }, { default: () => "N/A" })
+            ]
+          });
+        }
+
         return [
           h(
             NButton,
@@ -923,15 +951,15 @@ export const createMovementsColumns = ({
               size: "small",
               type: "info",
               secondary: true,
-              onClick: () => editMovement(row),
+              onClick: () => editMovement(rowData),
             },
             renderIcon("md-print-round")
           ),
           userStore.hasPermission("null_tilldetails")
             ? !(
-                String(row.document).startsWith("B") ||
-                String(row.document).startsWith("F") ||
-                String(row.document).startsWith("N")
+                String(rowData.document).startsWith("B") ||
+                String(rowData.document).startsWith("F") ||
+                String(rowData.document).startsWith("N")
               )
               ? h(
                   NButton,
@@ -940,14 +968,14 @@ export const createMovementsColumns = ({
                     type: "error",
                     secondary: true,
                     disabled:
-                      row.status ||
-                      row.concept === 4 ||
-                      row.concept === 5 ||
-                      row.concept === 6 ||
-                      row.concept === 7
+                      rowData.status ||
+                      rowData.concept === 4 ||
+                      rowData.concept === 5 ||
+                      rowData.concept === 6 ||
+                      rowData.concept === 7
                         ? true
-                        : row.concept === 1 && hasSells(),
-                    onClick: () => deleteMovement(row),
+                        : rowData.concept === 1 && hasSells(),
+                    onClick: () => deleteMovement(rowData),
                   },
                   renderIcon("md-notinterested-round")
                 )
@@ -957,14 +985,19 @@ export const createMovementsColumns = ({
       },
     },
   ];
-  if (!settingsStore.business_settings?.['till'].closure_cash_total) {
+  
+  const hasClosureCashTotal = settingsStore.business_settings?.['till']?.closure_cash_total;
+  
+  if (!hasClosureCashTotal) {
     cols.splice(2, 0, {
       title: "Método Pago",
       key: "payment_method",
       align: "center",
       width: 200,
-      render(row) {
-        return saleStore.getPaymentMethodDescription(row.payment_method);
+      render(rowData) {
+        if (!rowData) return 'N/A';
+        
+        return saleStore.getPaymentMethodDescription(rowData.payment_method);
       },
     });
   }
@@ -1476,16 +1509,16 @@ export const createSaleColumns = ({
       width: 30,
       render(row) {
         let type, text, tooltip, isClickable;
-        
+
         // Determinar si el documento puede cambiar de estado
         // Solo documentos electrónicos (invoice_type != '80') pueden ser clickeables
         const isElectronicDocument = row.invoice_type !== "80";
-        
+
         if (row.status === "N") {
           type = "info";
           text = "NUEVO";
-          tooltip = isElectronicDocument 
-            ? "Click para enviar a SUNAT" 
+          tooltip = isElectronicDocument
+            ? "Click para enviar a SUNAT"
             : "Documento sin envío electrónico";
           isClickable = isElectronicDocument;
         } else if (row.status === "E") {
@@ -1496,7 +1529,7 @@ export const createSaleColumns = ({
         } else if (row.status === "A") {
           type = "error";
           text = "ANULADO";
-          tooltip = row?.['null_reason'] || "Documento anulado";
+          tooltip = row?.["null_reason"] || "Documento anulado";
           isClickable = false;
         } else if (row.status === "X") {
           type = "warning";
@@ -1526,12 +1559,12 @@ export const createSaleColumns = ({
                   size: "small",
                   type: type,
                   round: true,
-                  style: isClickable ? { cursor: 'pointer' } : {},
+                  style: isClickable ? { cursor: "pointer" } : {},
                   onClick: () => {
                     if (isClickable && changeStatus) {
                       changeStatus(row);
                     }
-                  }
+                  },
                 },
                 {
                   default: () => text,
@@ -1663,10 +1696,10 @@ export const createTillSalesColumns = () => {
           NPopover,
           {
             trigger: "hover",
-            disabled: !row?.['null_reason'],
+            disabled: !row?.["null_reason"],
           },
           {
-            default: () => row?.['null_reason'],
+            default: () => row?.["null_reason"],
             trigger: () =>
               h(
                 NTag,
@@ -1770,7 +1803,7 @@ export const createOrderColumns = ({
       align: "center",
       width: genericsStore.device !== "desktop" ? 100 : "auto",
       render(row) {
-        return `S/. ${parseFloat(row?.['initial_amount']).toFixed(2)}`;
+        return `S/. ${parseFloat(row?.["initial_amount"]).toFixed(2)}`;
       },
     },
     {
@@ -1868,10 +1901,10 @@ export const createOrderColumns = ({
           NPopover,
           {
             trigger: "hover",
-            disabled: !row?.['null_reason'],
+            disabled: !row?.["null_reason"],
           },
           {
-            default: () => row?.['null_reason'],
+            default: () => row?.["null_reason"],
             trigger: () =>
               h(
                 NTag,
@@ -1906,7 +1939,7 @@ export const createOrderColumns = ({
             },
             renderIcon("md-feed-round")
           ),
-          row?.['is_delivery']
+          row?.["is_delivery"]
             ? h(
                 NButton,
                 {
@@ -1991,7 +2024,7 @@ export const createTillOrderColumns = ({ showDetails, showDeliveryInfo }) => {
       align: "center",
       width: genericsStore.device !== "desktop" ? 100 : "auto",
       render(row) {
-        return `S/. ${parseFloat(row?.['initial_amount']).toFixed(2)}`;
+        return `S/. ${parseFloat(row?.["initial_amount"]).toFixed(2)}`;
       },
     },
     {
@@ -2071,10 +2104,10 @@ export const createTillOrderColumns = ({ showDetails, showDeliveryInfo }) => {
           NPopover,
           {
             trigger: "hover",
-            disabled: !row?.['null_reason'],
+            disabled: !row?.["null_reason"],
           },
           {
-            default: () => row?.['null_reason'],
+            default: () => row?.["null_reason"],
             trigger: () =>
               h(
                 NTag,
@@ -2116,7 +2149,7 @@ export const createTillOrderColumns = ({ showDetails, showDeliveryInfo }) => {
               size: "small",
               type: "warning",
               secondary: true,
-              disabled: !row?.['is_delivery'],
+              disabled: !row?.["is_delivery"],
               onClick: () => showDeliveryInfo(row),
             },
             renderIcon("md-deliverydining-round")
