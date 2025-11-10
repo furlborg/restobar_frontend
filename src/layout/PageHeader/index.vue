@@ -116,10 +116,10 @@ export default defineComponent({
           label: "Modo Mozo",
           key: 1,
         },
-        {
-          label: "Modo Chef",
-          key: 0,
-        },
+        // {
+        //   label: "Modo Chef",
+        //   key: 0,
+        // },
         {
           label: "Desconectar",
           key: -1,
