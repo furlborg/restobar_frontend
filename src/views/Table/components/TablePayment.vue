@@ -71,47 +71,11 @@
                 </n-gi>
               </n-grid>
             </n-form>
-            <n-scrollbar>
-              <n-table class="m-auto text-center fs-6 mb-3" :bordered="false">
-                <thead>
-                  <tr>
-                    <th v-if="settingsStore.businessSettings.sale?.manage_affectations">#</th>
-                    <th>Cantidad</th>
-                    <th>Producto</th>
-                    <th>Precio Unitario</th>
-                    <th v-if="settingsStore.business_settings.sale?.show_discount_label">Descuento</th>
-                    <th>Precio Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(detail, index) in saleStore.toSale" :key="index">
-                    <td v-if="settingsStore.businessSettings.sale?.manage_affectations">
-                      <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation"
-                        :disabled="!userStore.hasPermission('change_product_affectation')"
-                        :options="productStore.affectationsOptions" @update:value="saleStore.updateDetail(detail)">
-                        <n-tag size="small" :color="getAfcColor(detail.product_affectation)">
-                          {{ getAfcShort(detail.product_affectation) }}
-                        </n-tag>
-                      </n-popselect>
-                    </td>
-                    <td>{{ detail.quantity }}</td>
-                    <td><input class="custom-input" v-model="detail.product_name" v-autowidth @click="$event.target.select()"/></td>
-                    <td>
-                      S/. <input class="custom-input" type="number" :min="detail.product_affectation === 20 ? 1 : 0"
-                        step=".5" v-model="detail.price_sale" v-autowidth @click="$event.target.select()"
-                        :disabled="!settingsStore.business_settings.sale?.show_discount_label"
-                        @input="saleStore.updateDetail(detail), detail.discount = '0.00'"/>
-                    </td>
-                    <td v-if="settingsStore.business_settings.sale?.show_discount_label">
-                      S/. <input class="custom-input" type="number" min="0" :max="detail.price_sale || 0" step=".5"
-                        :disabled="detail.product_affectation === 21 || !!Number(sale.discount)"
-                        v-model="detail.discount" v-autowidth @click="$event.target.select()"/>
-                    </td>
-                    <td>{{ detail.product_affectation === 21 ? "0.00" : (detail.quantity * detail.price_sale - detail.discount).toFixed(2) }}</td>
-                  </tr>
-                </tbody>
-              </n-table>
-            </n-scrollbar>
+            <ProductTable
+              :sale="sale"
+              :sale-details="saleStore.toSale"
+              @update-detail="saleStore.updateDetail"
+            />
             <PaymentTotals
               :items="paymentTotalsItems"
               :total-amount="sale.amount"
@@ -185,33 +149,36 @@ import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 import ClientSelectInput from "@/views/Customer/components/ClientSelectInput.vue";
 import SaleSerieSelector from "@/views/Order/components/SaleSerieSelector.vue";
 import PaymentTotals from "@/views/Order/components/PaymentTotals.vue";
+import ProductTable from "@/views/Order/components/ProductTable.vue";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useRoute, useRouter } from "vue-router";
 import { useOrderStore } from "@/store/modules/order";
-import { useProductStore } from "@/store/modules/product";
 import { useSaleStore } from "@/store/modules/sale";
 import { useUserStore } from "@/store/modules/user";
 import { useGenericsStore } from "@/store/modules/generics";
 import { saleRules } from "@/utils/constants";
 import { cloneDeep } from "@/utils";
 import { useDialog, useMessage } from "naive-ui";
-import { directive as VueInputAutowidth } from "vue-input-autowidth";
 import format from "date-fns/format";
 import parse from "date-fns/parse";
 import startOfDay from "date-fns/startOfDay";
-import { lighten } from "@/utils";
 import { useBusinessStore } from "@/store/modules/business";
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 import { createSale, getSaleNumber, retrieveSale, sendSale } from "@/api/modules/sales";
 
 export default defineComponent({
   name: "TablePayment",
-  directives: { autowidth: VueInputAutowidth },
-  components: { SeparatePaymentsModal, PreviewDrawer, ClientSelectInput, SaleSerieSelector, PaymentTotals },
+  components: {
+    SeparatePaymentsModal,
+    PreviewDrawer,
+    ClientSelectInput,
+    SaleSerieSelector,
+    PaymentTotals,
+    ProductTable
+  },
   setup() {
     const router = useRouter();
     const route = useRoute();
-    const productStore = useProductStore();
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
     const userStore = useUserStore();
@@ -688,17 +655,6 @@ export default defineComponent({
       showSeparateModal.value = true;
     };
 
-    const getAfcColor = (afc) => {
-      const colors = {
-        10: { color: lighten("#008B8B", 48), textColor: "#008B8B", borderColor: lighten("#008B8B", 24) },
-        20: { color: lighten("#9932CC", 48), textColor: "#9932CC", borderColor: lighten("#9932CC", 24) },
-        21: { color: lighten("#006400", 48), textColor: "#006400", borderColor: lighten("#006400", 24) }
-      };
-      return colors[afc] || { color: lighten("#8B0000", 48), textColor: "#8B0000", borderColor: lighten("#8B0000", 24) };
-    };
-
-    const getAfcShort = (afc) => ({ 10: "GRV", 20: "EXN", 21: "GRT" }[afc] || "---");
-
     watch(() => sale.value.serie, (newSerie, oldSerie) => {
       if (newSerie && newSerie !== oldSerie) {
         obtainSaleNumber();
@@ -724,7 +680,7 @@ export default defineComponent({
     });
 
     return {
-      userStore, saleStore, orderStore, productStore, settingsStore, sale,
+      userStore, saleStore, orderStore, settingsStore, sale,
       loading, saleForm, formRules, handleCustomerSelected, handleCustomerCleared,
       changing, subTotal, changeCondition, changeSerie, handleSerieUpdate, handleSerieChanged, 
       showObservations, performCreateSale,
@@ -732,7 +688,7 @@ export default defineComponent({
       icbper, isMultiple, showPayments, createPayment, doMultiplePayment, filteredMethods,
       evalPayments, currentPaymentsAmount, openSeparatePaymentsModal, 
       closeSeparatePaymentsModal: () => {}, successSeparatePaymentsModal: obtainSaleNumber,
-      separatePayments, showSeparateModal, getAfcShort, getAfcColor, totalIGV, totalGRV,
+      separatePayments, showSeparateModal, totalIGV, totalGRV,
       totalEXN, totalGRT, totalDSCT, whatsappNumber, ticketPreview, previewDrawer, showPdf,
       pdfData, paymentTotalsItems, handleValueChange, handlePaymentChange, isCredit, isExpirationDateDisabled,
     };
@@ -740,36 +696,3 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss" scoped>
-
-.custom-input {
-  border: none;
-  outline: none;
-}
-
-.custom-input:hover {
-  border-radius: 5px;
-  outline: LightBlue solid 2px;
-}
-
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-input[type="number"] {
-  appearance: textfield;
-  -moz-appearance: textfield;
-}
-
-@media (max-width: 768px) {
-  .payment-section .payment-inputs {
-    justify-content: flex-start !important;
-    flex-direction: column;
-  }
-  .payment-section .totals {
-    align-items: flex-start !important;
-  }
-}
-</style>
