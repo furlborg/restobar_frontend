@@ -46,7 +46,7 @@ export async function createSupplieMovement(supplies) {
 }
 
 export async function getMeasureUnit() {
-  return await http.get("measureunit");
+  return await http.get("measureunit/");
 }
 export async function getConcept(search) {
   return await http.get(`inventoryconcept/${search}`);

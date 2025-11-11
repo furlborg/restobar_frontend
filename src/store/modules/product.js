@@ -83,6 +83,29 @@ export const useProductStore = defineStore("product", {
           console.error(error);
         });
     },
+    async tableCategories() {
+
+      try {
+        const response = await getProductCategories();
+
+        if (response?.data) {
+          this.categories = response.data.filter((cat) => {
+            const isEnabled = !cat.is_disabled;
+            const hasProducts = cat.has_products === true;
+            return isEnabled && hasProducts;
+          })
+          // Ordenar las categorías por descripción
+          // .sort((a, b) =>
+          //   a.description.toLowerCase().localeCompare(b.description.toLowerCase())
+          // )
+          ;
+        } else {
+          console.warn("⚠️ No hay response.data o está vacío");
+        }
+      } catch (error) {
+        console.error("❌ Error en tableCategories:", error);
+      }
+    },
     async refreshPlaces() {
       return await getProductPlaces()
         .then((response) => {

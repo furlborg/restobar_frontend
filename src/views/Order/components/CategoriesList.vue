@@ -146,7 +146,8 @@ export default defineComponent({
     });
 
     onMounted(async () => {
-      await productStore.refreshCategories();
+      // console.log("delivery monted");
+      await productStore.tableCategories();
     });
 
     return {

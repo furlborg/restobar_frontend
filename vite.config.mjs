@@ -7,7 +7,8 @@ export default defineConfig({
     plugins: [vue()],
     server: {
         host: true,
-        port: 5210
+        port: 5210,
+        historyApiFallback: true,
     },
     resolve: {
         extensions: [".js", ".vue", ".json", ".css", ".min.css"],

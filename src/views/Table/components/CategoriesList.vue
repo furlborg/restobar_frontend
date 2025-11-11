@@ -21,9 +21,9 @@
                                 <router-link
                                         class="text-decoration-none"
                                         :to="{
-                    name: 'CategoriesItems',
-                    params: { category: category.id },
-                  }"
+                                            name: 'CategoriesItems',
+                                            params: { category: category.id },
+                                        }"
                                 >
                                     <n-text class="fs-4">{{ category.description }}</n-text>
                                 </router-link>
@@ -79,7 +79,8 @@ export default defineComponent({
         const listType = ref("grid");
 
         onMounted(async() => {
-            await productStore.refreshCategories();
+            // console.log("mounted");
+            await productStore.tableCategories();
         });
 
         const productOptions = [

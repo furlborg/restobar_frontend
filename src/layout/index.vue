@@ -72,7 +72,7 @@ import { useDesignSettingStore } from "@/store/modules/designSetting";
 import { lighten } from "@/utils";
 
 export default defineComponent({
-  name: "Layout",
+  name: "TsiLayout",
   components: {
     AppProvider,
     Logo,
