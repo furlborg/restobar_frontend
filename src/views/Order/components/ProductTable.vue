@@ -50,6 +50,7 @@
                 :disabled="!settingsStore.business_settings?.sale?.show_discount_label"
                 @input="handlePriceInput(detail)"
                 @blur="handlePriceBlur(detail)"
+                @keydown.enter.prevent="handlePriceBlur(detail)"
               />
             </td>
             <td v-if="settingsStore.business_settings?.sale?.show_discount_label">
@@ -64,7 +65,9 @@
                 v-model="detail.discount"
                 v-autowidth
                 @click="$event.target.select()"
-                @input="handleDiscountChange(detail)"
+                @input="handleDiscountInput(detail)"
+                @blur="handleDiscountBlur(detail)"
+                @keydown.enter.prevent="handleDiscountBlur(detail)"
               />
             </td>
             <td>
@@ -169,10 +172,18 @@ export default defineComponent({
       emit("updateDetail", detail);
     };
 
-    const handleDiscountChange = (detail) => {
+    const getMaxDiscount = (detail) => {
       const quantity = normalizeNumber(detail.quantity);
       const price = normalizeNumber(detail.price_sale);
-      const maxDiscount = Math.round(quantity * price * 100) / 100;
+      return formatMoney(quantity * price);
+    };
+
+    const handleDiscountInput = (detail) => {
+      emit("updateDetail", detail);
+    };
+
+    const handleDiscountBlur = (detail) => {
+      const maxDiscount = getMaxDiscount(detail);
       let discount = normalizeNumber(detail.discount);
 
       if (discount > maxDiscount) {
@@ -189,7 +200,7 @@ export default defineComponent({
         detail.product_affectation = 21;
         resetDiscount(detail);
       } else {
-        detail.discount = discount.toFixed(2);
+        detail.discount = formatMoney(discount).toFixed(2);
       }
 
       emit("updateDetail", detail);
@@ -204,7 +215,8 @@ export default defineComponent({
       handleAffectationChange,
       handlePriceInput,
       handlePriceBlur,
-      handleDiscountChange
+      handleDiscountInput,
+      handleDiscountBlur
     };
   }
 });
