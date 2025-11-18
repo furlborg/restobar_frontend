@@ -52,7 +52,7 @@
         <n-spin v-if="tillStore.currentTillID" :show="isLoading">
             <n-card
                     class="my-2"
-                    v-for="area in tableStore.branchAreas"
+                    v-for="area in tableStore.branch_table_Areas"
                     :key="area.id"
                     :title="area.description"
                     embedded

@@ -34,6 +34,24 @@ export const useTableStore = defineStore("table", {
         account_printer: area.account_printer,
       }));
     },
+    getAreasTablesOptions() {
+      let areas = this.areas;
+      if (!userStore.user.branchoffice) {
+        areas = areas.filter(
+          (area) => area.branch === businessStore.currentBranch && area.has_tables === true
+        );
+      } else {
+        areas = areas.filter(
+          (area) => area.branch === userStore.user.branchoffice && area.has_tables === true
+        );
+      }
+      return areas.map((area) => ({
+        label: area.description,
+        value: area.id,
+        sale_printer: area.sale_printer,
+        account_printer: area.account_printer,
+      }));
+    },
     branchAreas() {
       if (!userStore.user.branchoffice) {
         return this.areas.filter(
@@ -42,6 +60,17 @@ export const useTableStore = defineStore("table", {
       } else {
         return this.areas.filter(
           (area) => area.branch === userStore.user.branchoffice
+        );
+      }
+    },
+    branch_table_Areas() {
+      if (!userStore.user.branchoffice) {
+        return this.areas.filter(
+          (area) => area.branch === businessStore.currentBranch && area.has_tables === true
+        );
+      } else {
+        return this.areas.filter(
+          (area) => area.branch === userStore.user.branchoffice && area.has_tables === true
         );
       }
     },

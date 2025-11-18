@@ -3,7 +3,7 @@
     <n-input-group>
       <n-select
         v-model:value="area"
-        :options="tableStore.getAreasOptions"
+        :options="tableStore.getAreasTablesOptions"
         placeholder="Seleccione area"
         :disabled="!tillStore.currentTillID || waiterStore.groupMode"
         @update:value="tableStore.refreshData()"
