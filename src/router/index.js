@@ -507,27 +507,27 @@ export const routes = [
       },
     ],
   },
-  {
-    path: "/chef-mode",
-    name: "ChefMode",
-    redirect: { name: "CHome" },
-    component: () =>
-      import(/* webpackChunkName: "chef-mode" */ "@/ChefMode/index.vue"),
-    meta: {
-      requiresAuth: true,
-      onlyWaiter: true,
-    },
-    children: [
-      {
-        name: "CHome",
-        path: "",
-        component: () =>
-          import(
-            /* webpackChunkName: "waiter-mode" */ "@/ChefMode/views/Home.vue"
-          ),
-      },
-    ],
-  },
+  // {
+  //   path: "/chef-mode",
+  //   name: "ChefMode",
+  //   redirect: { name: "CHome" },
+  //   component: () =>
+  //     import(/* webpackChunkName: "chef-mode" */ "@/ChefMode/index.vue"),
+  //   meta: {
+  //     requiresAuth: true,
+  //     onlyWaiter: true,
+  //   },
+  //   children: [
+  //     {
+  //       name: "CHome",
+  //       path: "",
+  //       component: () =>
+  //         import(
+  //           /* webpackChunkName: "waiter-mode" */ "@/ChefMode/views/Home.vue"
+  //         ),
+  //     },
+  //   ],
+  // },
   {
     path: "/:catchAll(.*)",
     name: "Page not found",
