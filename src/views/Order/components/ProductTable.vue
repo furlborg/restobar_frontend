@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="table-container">
     <n-scrollbar>
       <n-table class="m-auto text-center fs-6 mb-3" :bordered="false">
@@ -113,7 +113,9 @@ export default defineComponent({
     const settingsStore = useSettingsStore();
     const userStore = useUserStore();
 
-    // Datos de afectación para colores y etiquetas
+    const DEFAULT_AFFECTATION = 20;
+
+    // Datos de afectaciÃ³n para colores y etiquetas
     const afcData = {
       10: { short: "GRV", color: "#008B8B" },
       20: { short: "EXN", color: "#9932CC" },
@@ -145,24 +147,73 @@ export default defineComponent({
       detail.discount = parseFloat(0).toFixed(2);
     };
 
-    const ensureValidPrice = (detail) => {
-      let price = normalizeNumber(detail.price_sale);
-      if (detail.product_affectation !== 21 && price <= 0) {
-        price = 1;
+    const storePreviousPrice = (detail) => {
+      const price = normalizeNumber(detail.price_sale);
+      if (price > 0) {
+        detail._last_price_sale = formatMoney(price);
       }
-      detail.price_sale = formatMoney(price || (detail.product_affectation === 21 ? 0 : 1));
+    };
+
+    const restorePreviousPrice = (detail) => {
+      const lastPrice = normalizeNumber(detail._last_price_sale);
+      const price = lastPrice > 0 ? lastPrice : 1;
+      detail.price_sale = formatMoney(price);
+    };
+
+    const applyTransferenciaGratuita = (detail) => {
+      storePreviousPrice(detail);
+      detail.product_affectation = 21;
+      detail.price_sale = formatMoney(0);
+      resetDiscount(detail);
+    };
+
+    const ensureValidPrice = (detail, { fromAffectationChange = false } = {}) => {
+      const price = normalizeNumber(detail.price_sale);
+
+      if (detail.product_affectation === 21) {
+        detail.price_sale = formatMoney(0);
+        resetDiscount(detail);
+        return;
+      }
+
+      if (price <= 0) {
+        if (fromAffectationChange) {
+          restorePreviousPrice(detail);
+        } else {
+          applyTransferenciaGratuita(detail);
+        }
+        return;
+      }
+
+      detail.price_sale = formatMoney(price);
     };
 
     const handleAffectationChange = (detail) => {
       if (detail.product_affectation === 21) {
-        resetDiscount(detail);
+        applyTransferenciaGratuita(detail);
       } else {
-        ensureValidPrice(detail);
+        restorePreviousPrice(detail);
+        ensureValidPrice(detail, { fromAffectationChange: true });
       }
       emit("updateDetail", detail);
     };
 
     const handlePriceInput = (detail) => {
+      if (detail.price_sale === "" || detail.price_sale === null) {
+        emit("updateDetail", detail);
+        return;
+      }
+
+      const price = normalizeNumber(detail.price_sale);
+
+      if (price <= 0) {
+        applyTransferenciaGratuita(detail);
+      } else if (detail.product_affectation === 21) {
+        detail.product_affectation = DEFAULT_AFFECTATION;
+        detail.price_sale = formatMoney(price);
+        storePreviousPrice(detail);
+        resetDiscount(detail);
+      }
       emit("updateDetail", detail);
     };
 
@@ -197,8 +248,7 @@ export default defineComponent({
       const fullDiscount = maxDiscount > 0 && Math.abs(discount - maxDiscount) < 0.001;
 
       if (fullDiscount) {
-        detail.product_affectation = 21;
-        resetDiscount(detail);
+        applyTransferenciaGratuita(detail);
       } else {
         detail.discount = formatMoney(discount).toFixed(2);
       }
@@ -252,3 +302,5 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 </style>
+
+
