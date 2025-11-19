@@ -155,17 +155,7 @@
                       </template>
                       ¿Está seguro?
                       <template #action>
-                        <n-button
-                          type="error"
-                          size="small"
-                          @click="
-                            address.id
-                              ? (address.is_disabled = true)
-                              : popAddress(index)
-                          "
-                        >
-                          Sí
-                        </n-button>
+                          <n-button type="error" size="small" @click="popAddress(index)"> Sí</n-button>
                       </template>
                     </n-popconfirm>
                   </n-input-group>
@@ -503,7 +493,7 @@ export default defineComponent({
       });
     };
     const popAddress = (address) => {
-      customer.value.addresses.splice(address, 1);
+        customer.value.addresses = customer.value.addresses.splice(address, 1);
     };
 
     const changeDocMax = () => {
