@@ -126,7 +126,7 @@
               :x-gap="12"
             >
               <template
-                v-for="(address, index) in customer.addresses"
+                v-for="(address, index) in customer.addresses?.filter(dt => dt.is_disabled === false)"
                 :key="index"
               >
                 <n-form-item-gi label="Dirección" :span="24">
@@ -155,7 +155,7 @@
                       </template>
                       ¿Está seguro?
                       <template #action>
-                          <n-button type="error" size="small" @click="popAddress(index)"> Sí</n-button>
+                          <n-button type="error" size="small" @click="popAddress(address, index)"> Sí</n-button>
                       </template>
                     </n-popconfirm>
                   </n-input-group>
@@ -209,6 +209,7 @@ import { useMessage } from "naive-ui";
 import { useCustomerStore } from "@/store/modules/customer";
 import { useBusinessStore } from "@/store/modules/business";
 import { useGenericsStore } from "@/store/modules/generics";
+import { http } from "@/api";
 
 export default defineComponent({
   name: "CustomerModal",
@@ -492,9 +493,18 @@ export default defineComponent({
         is_disabled: false,
       });
     };
-    const popAddress = (address) => {
-        customer.value.addresses = customer.value.addresses.splice(address, 1);
-    };
+
+      const popAddress = async(address, idx) => {
+          if (address.id) {
+              const response = await http.delete(`/address/${ address.id }/`);
+              if (response.status === 202) {
+                  customer.value.addresses = customer.value.addresses.splice(idx, 1);
+                  message.success("Direccion eliminada");
+              }
+          } else {
+              customer.value.addresses = customer.value.addresses.splice(idx, 1);
+          }
+      };
 
     const changeDocMax = () => {
       switch (customer.value.doc_type) {
