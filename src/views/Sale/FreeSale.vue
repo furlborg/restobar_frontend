@@ -1,48 +1,15 @@
 <template>
   <div id="TablePayment">
     <n-page-header class="mb-2" @back="handleBack">
-      <template #title>
-        <n-space justify="space-between">
-          <n-text class="fs-2">Venta Libre</n-text>
-        </n-space>
-      </template>
-      <template #extra>
-        <n-button type="info" text @click="() => (showProductModal = true)">
-          <template #icon>
-            <v-icon name="md-add-round" />
-          </template>
-          Agregar Producto
-        </n-button>
-      </template>
-    </n-page-header>
-    <n-card>
-      <n-space class="mb-2" align="center" justify="space-between">
-        <div class="d-flex align-items-center">
-          <n-text class="fs-4">{{
-      `${saleStore.getSerieDescription(sale.serie)}-${sale.number}`
-    }}</n-text>
-        </div>
-        <n-radio-group v-model:value="sale.invoice_type" name="docType" size="small" @update:value="changeSerie">
-          <n-radio-button :value="1" :key="1">FACTURA</n-radio-button>
-          <n-radio-button :value="3" :key="3">BOLETA</n-radio-button>
-        </n-radio-group>
-        <n-radio-group v-model:value="sale.payment_condition" name="saleType" size="small" @update:value="changeCondition">
-          <n-radio-button :value="1" :key="1">CONTADO</n-radio-button>
-          <n-radio-button :value="2" :key="2">CRÉDITO</n-radio-button>
-        </n-radio-group>
-      </n-space>
-
-      <n-form class="mb-2" ref="saleForm" :model="sale" :rules="formRules">
-        <n-grid responsive="screen" cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12" :x-gap="12">
-          <n-form-item-gi :span="4" label="Cliente" :show-require-mark="formRules.customer.required" path="customer">
-            <n-input-group>
-              <n-auto-complete blur-after-select :input-props="{
-      autocomplete: 'disabled',
-    }" v-model:value="sale.customer_name" :options="customerOptions" :get-show="showOptions" :loading="searching"
-                @keypress.enter="autoCreateCustomer" @update:value="(v) => {
-      !v
-        ? ((sale.customer = 0),
-          (sale.address = null),
+            <PaymentTotals
+              :items="paymentTotalsItems"
+              :total-amount="sale.amount"
+              :payment-amount="sale.given_amount"
+              :payment-max="sale.payment_condition === 2 ? sale.amount - 0.1 : null"
+              :change-amount="changing"
+              @value-changed="handleValueChange"
+              @payment-changed="handlePaymentChange"
+            />
           (whatsappNumber = ''),
           (addressesOptions = []))
         : null;
@@ -67,14 +34,29 @@
               placeholder="" />
           </n-form-item-gi>
           <n-form-item-gi :span="2" label="Fecha">
-            <n-date-picker class="w-100" type="datetime" :is-date-disabled="dateDisabled"
-              v-model:formatted-value="sale.date_sale" />
+            <n-date-picker
+              class="w-100"
+              type="datetime"
+              :is-date-disabled="dateDisabled"
+              v-model:formatted-value="sale.date_sale"
+            />
           </n-form-item-gi>
-          <n-form-item-gi v-if="sale.payment_condition === 2" :span="2" label="Fecha vencimiento">
-            <n-date-picker class="w-100" type="datetime" format="dd/MM/yyyy HH:mm:ss" value-format="dd/MM/yyyy HH:mm:ss"
-              v-model:formatted-value="sale.expiration_sale" />
+          <n-form-item-gi
+            v-if="sale.payment_condition === 2"
+            :span="2"
+            label="Fecha vencimiento"
+            path="due_date"
+          >
+            <n-date-picker
+              class="w-100"
+              type="datetime"
+              format="dd/MM/yyyy HH:mm:ss"
+              value-format="dd/MM/yyyy HH:mm:ss"
+              v-model:formatted-value="sale.due_date"
+              :is-date-disabled="(ts) => ts <= new Date(sale.date_sale)"
+            />
           </n-form-item-gi>
-          <n-form-item-gi label="Método Pago">
+          <n-form-item-gi v-if="sale.payment_condition === 1" label="Método Pago">
             <n-select v-model:value="sale.payment_method" :options="saleStore.getPaymentMethodsOptions" filterable />
           </n-form-item-gi>
           <n-form-item-gi>
@@ -106,7 +88,6 @@
               <th>Producto</th>
               <th>Cantidad</th>
               <th>Precio Unitario</th>
-              <!-- <th>Descuento</th> -->
               <th>Precio Total</th>
               <th></th>
             </tr>
@@ -115,53 +96,52 @@
             <template v-for="(detail, index) in saleStore.toSale">
               <tr v-if="detail.quantity > 0" :key="index">
                 <td v-if="settingsStore.businessSettings.sale.manage_affectations">
-                  <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation"
-                    :disabled="!userStore.hasPermission('change_product_affectation')
-      " :options="productStore.affectationsOptions" @update:value="(v) => saleStore.updateDetail(detail)">
-                    <n-tag size="small" :color="getAfcColor(detail.product_affectation)">{{
-      getAfcShort(detail.product_affectation) }}</n-tag>
+                  <n-popselect
+                    size="small"
+                    placement="bottom-start"
+                    v-model:value="detail.product_affectation"
+                    :disabled="!userStore.hasPermission('change_product_affectation')"
+                    :options="productStore.affectationsOptions"
+                    @update:value="() => saleStore.updateDetail(detail)"
+                  >
+                    <n-tag size="small" :color="getAfcColor(detail.product_affectation)">
+                      {{ getAfcShort(detail.product_affectation) }}
+                    </n-tag>
                   </n-popselect>
                 </td>
                 <td>
-                  <input class="custom-input" v-model="detail.product_name" v-autowidth
-                    @click="$event.target.select()" />
+                  <input
+                    class="custom-input"
+                    v-model="detail.product_name"
+                    v-autowidth
+                    @click="$event.target.select()"
+                  />
                 </td>
                 <td align="center">
                   <n-input-number v-model:value="detail.quantity" style="width: 100px" :min="1" />
                 </td>
                 <td>
                   S/.
-                  <input class="custom-input" type="number" min="0" step=".5" v-model="detail.price_sale" @input="(v) => (
-      saleStore.updateDetail(detail),
-      (detail.discount = parseFloat(0).toFixed(2))
-    )
-      " v-autowidth @click="$event.target.select()" />
-                </td>
-                <!-- <td>
-                  S/.
                   <input
                     class="custom-input"
                     type="number"
                     min="0"
-                    :max="!detail.price_sale ? 0 : detail.price_sale"
-                    :disabled="
-                      detail.product_affectation === 21 ||
-                      !!Number(sale.discount)
-                    "
-                    step="0.1"
-                    v-model="detail.discount"
+                    step=".5"
+                    v-model="detail.price_sale"
+                    @input="() => (
+                      saleStore.updateDetail(detail),
+                      (detail.discount = parseFloat(0).toFixed(2))
+                    )"
                     v-autowidth
                     @click="$event.target.select()"
                   />
-                </td> -->
+                </td>
                 <td>
                   {{
-      detail.product_affectation === 21
-        ? "0.00"
-        : parseFloat(
-          detail.quantity * detail.price_sale - detail.discount
-        ).toFixed(2)
-    }}
+                    detail.product_affectation === 21
+                      ? '0.00'
+                      : parseFloat(detail.quantity * detail.price_sale - detail.discount).toFixed(2)
+                  }}
                 </td>
                 <td>
                   <n-button type="error" text @click="saleStore.toSale.splice(index, 1)">
@@ -206,9 +186,7 @@
         </n-gi>
       </n-grid>
       <n-button class="fs-1 py-5 mt-2" type="success" :disabled="!saleStore.toSale.filter((detail) => !!detail.quantity).length ||
-      sale.payment_condition === 1
-      ? sale.given_amount < sale.amount
-      : !(sale.given_amount < sale.amount)
+      (sale.payment_condition === 1 && sale.given_amount < sale.amount)
       " secondary block @click.prevent="isMultiple ? doMultiplePayment() : performCreateSale()">
         <v-icon class="me-2" name="fa-coins" scale="2" />Cobrar
       </n-button>
@@ -220,13 +198,13 @@
     }" preset="card" v-model:show="showPayments" title="Realizar venta" :mask-closable="false" closable
       @close="sale.payments = null">
       <n-space justify="space-between">
-        <n-tag type="info">Total: S/. {{ showPayments ? sale.amount : null }}</n-tag>
+        <n-tag type="info">Total: S/. {{ showPayments ? total : null }}</n-tag>
         <n-tag :type="evalPayments ? 'error' : 'success'">Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}
         </n-tag>
         <n-tag :type="evalPayments ? 'error' : 'warning'">Faltante: S/.
           {{
       showPayments
-        ? parseFloat(sale.amount - currentPaymentsAmount).toFixed(2)
+        ? parseFloat(total - currentPaymentsAmount).toFixed(2)
         : null
     }}</n-tag>
       </n-space>
@@ -336,7 +314,7 @@ export default defineComponent({
     const totalGRV = computed(() => {
       return saleStore.toSale.reduce((acc, curVal) => {
         return curVal.product_affectation === 10
-          ? (acc += parseFloat(curVal.price_sale - curVal.igv_tax) * curVal.quantity)
+          ? (acc += parseFloat(curVal.price_base) * curVal.quantity)
           : acc;
       }, 0);
     });
@@ -432,7 +410,7 @@ export default defineComponent({
       serie: saleStore.getFreeSaleSerieByType("3")?.id,
       number: "",
       date_sale: format(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss"),
-      expiration_sale: null,
+      due_date: null,
       count: products_count,
       amount: total,
       given_amount: parseFloat(0).toFixed(2),
@@ -458,7 +436,7 @@ export default defineComponent({
       igv_amount: totalIGV,
     });
 
-    const computeDefaultExpirationDate = () => {
+    const computeDefaultDueDate = () => {
       const baseDateString = sale.value.date_sale;
       if (baseDateString) {
         const parsed = parse(baseDateString, "dd/MM/yyyy HH:mm:ss", new Date());
@@ -473,11 +451,9 @@ export default defineComponent({
       () => sale.value.payment_condition,
       (condition) => {
         if (condition === 2) {
-          if (!sale.value.expiration_sale) {
-            sale.value.expiration_sale = computeDefaultExpirationDate();
-          }
+          sale.value.due_date = sale.value.due_date || computeDefaultDueDate();
         } else {
-          sale.value.expiration_sale = null;
+          sale.value.due_date = null;
         }
       },
       { immediate: true }
@@ -522,6 +498,30 @@ export default defineComponent({
     const formRules = computed(() => {
       let rules = saleRules;
       rules.customer.required = !(sale.value.invoice_type !== 1 && sale.value.payment_condition === 1 && sale.value.given_amount <= 699);
+      rules.due_date = sale.value.payment_condition === 2
+        ? {
+            required: true,
+            validator: (_, value) => {
+              if (!value) return new Error("Debes seleccionar fecha de vencimiento");
+              const toDate = (str) => {
+                const [datePart, timePart] = str.split(" ");
+                const [d, m, y] = datePart.split("/").map(Number);
+                const [hh, mm, ss] = timePart.split(":").map(Number);
+                return new Date(y, m - 1, d, hh, mm, ss);
+              };
+              try {
+                const due = toDate(value);
+                const saleDate = toDate(sale.value.date_sale);
+                if (!(due > saleDate)) {
+                  return new Error("La fecha de vencimiento debe ser mayor a la de emisión");
+                }
+                return true;
+              } catch(e) {
+                return new Error("Fecha de vencimiento inválida");
+              }
+            }
+          }
+        : { required: false };
       return rules;
     });
 
@@ -573,15 +573,13 @@ export default defineComponent({
 
     const changeCondition = (v) => {
       switch (v) {
-        case 1:
+        case 1: // CONTADO
           sale.value.given_amount = total.value;
-          sale.value.expiration_sale = null;
+          sale.value.due_date = null;
           break;
-        case 2:
+        case 2: // CREDITO
           sale.value.given_amount = parseFloat(0).toFixed(2);
-          if (!sale.value.expiration_sale) {
-            sale.value.expiration_sale = computeDefaultExpirationDate();
-          }
+          sale.value.due_date = sale.value.due_date || computeDefaultDueDate();
           break;
         default:
           console.error(`${v} invalido`);
@@ -627,9 +625,9 @@ export default defineComponent({
             onPositiveClick: async () => {
               loading.value = true;
               if (sale.value.payment_condition === 2) {
-                sale.value.expiration_sale = sale.value.expiration_sale || computeDefaultExpirationDate();
+                sale.value.due_date = sale.value.due_date || computeDefaultDueDate();
               } else {
-                sale.value.expiration_sale = null;
+                sale.value.due_date = null;
               }
               sale.value.order = orderStore.orderId;
               sale.value.sale_details = saleStore.toSale.map((detail) => ({
@@ -878,7 +876,7 @@ export default defineComponent({
       sale.value.payments = [
         {
           payment_method: sale.value.payment_method,
-          amount: String(sale.value.amount),
+          amount: String(total.value),
         },
       ];
       showPayments.value = true;
@@ -905,9 +903,8 @@ export default defineComponent({
           return acc + normalizePaymentAmount(val.amount);
         }, 0);
         return normalizedSum !== Number(sale.value.amount);
-      } else {
-        return true;
       }
+      return true;
     });
 
     const currentPaymentsAmount = computed(() => {

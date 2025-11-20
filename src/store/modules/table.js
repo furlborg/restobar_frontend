@@ -76,11 +76,21 @@ export const useTableStore = defineStore("table", {
     },
   },
   actions: {
+    sanitizeAreas(rawAreas = []) {
+      return rawAreas
+        .filter((area) => !area.is_disabled)
+        .map((area) => ({
+          ...area,
+          tables: Array.isArray(area.tables)
+            ? area.tables.filter((table) => !table.is_disabled)
+            : []
+        }));
+    },
     async initializeStore() {
       return await getAreasTables()
         .then((response) => {
-          this.areas = response.data;
-          return this.areas
+          this.areas = this.sanitizeAreas(response.data);
+          return this.areas;
         })
         .catch((error) => {
           console.error(error);
@@ -89,7 +99,7 @@ export const useTableStore = defineStore("table", {
     async refreshData() {
       return await getAreasTables()
         .then((response) => {
-          this.areas = response.data;
+          this.areas = this.sanitizeAreas(response.data);
         })
         .catch((error) => {
           console.error(error);

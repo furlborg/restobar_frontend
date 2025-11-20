@@ -1,5 +1,5 @@
 <template>
-  <div id="SeparatePayments">
+  <div id="TablePayment">
     <n-spin :show="loading">
       <n-card>
         <n-space class="mb-2" align="center" justify="space-between">
@@ -21,7 +21,8 @@
               :key="3">BOLETA</n-radio-button>
             <n-radio-button :value="80" :key="80">N. VENTA</n-radio-button>
           </n-radio-group>
-          <n-radio-group v-model:value="sale.payment_condition" name="saleType" size="small" :disabled="!(settingsStore.businessSettings?.sale?.enable_credits === true)
+          <n-radio-group v-model:value="sale.payment_condition" name="saleType" size="small"
+            @update:value="changeCondition" :disabled="!(settingsStore.businessSettings?.sale?.enable_credits === true)
       ">
             <n-radio-button :value="1" :key="1">CONTADO</n-radio-button>
             <n-radio-button :value="2" :key="2">CRÉDITO</n-radio-button>
@@ -34,9 +35,9 @@
                 <n-auto-complete blur-after-select :input-props="{
       autocomplete: 'disabled',
     }" v-model:value="sale.customer_name" :options="customerOptions" :get-show="showOptions" :loading="searching"
-                  @update:value="(v) => {
+                  @keypress.enter="autoCreateCustomer" @update:value="(v) => {
       !v
-        ? ((sale.customer = null),
+        ? ((sale.customer = 0),
           (sale.address = null),
           (whatsappNumber = ''),
           (addressesOptions = []))
@@ -49,8 +50,11 @@
       createAddressesOptions();
     }
       " placeholder="" clearable />
-                <n-button type="info" @click="showModal = true">
+                <n-button v-if="!sale.customer" type="info" @click="(sale.customer = 0), (showModal = true)">
                   <v-icon name="md-add-round" />
+                </n-button>
+                <n-button v-else type="warning" @click="showModal = true">
+                  <v-icon name="ri-edit-fill" />
                 </n-button>
               </n-input-group>
             </n-form-item-gi>
@@ -58,15 +62,16 @@
               <n-date-picker class="w-100" type="datetime" :is-date-disabled="dateDisabled"  disabled
                 v-model:formatted-value="sale.date_sale" />
             </n-form-item-gi>
-            <n-form-item-gi :span="6" label="Dirección">
+            <n-form-item-gi :span="5" label="Dirección">
               <n-select v-model:value="sale.address" :options="addressesOptions" :disabled="!sale.customer"
                 placeholder="" />
             </n-form-item-gi>
-            <n-form-item-gi :span="2" label="Método Pago">
+            <n-form-item-gi :span="3" label="Método Pago">
               <n-select v-model:value="sale.payment_method" :options="saleStore.getPaymentMethodsOptions" filterable />
             </n-form-item-gi>
             <n-form-item-gi :span="2">
-              <n-checkbox v-model:checked="sale.by_consumption">Por consumo</n-checkbox>
+              <n-checkbox v-model:checked="sale.by_consumption" :disabled="sale.payment_condition === 2">Por
+                consumo</n-checkbox>
             </n-form-item-gi>
             <n-form-item-gi :span="2">
               <n-button type="info" text @click="showObservations = !showObservations">{{
@@ -77,13 +82,13 @@
             <n-gi :span="12">
               <n-collapse-transition :show="showObservations">
                 <n-form-item label="Observaciones">
-                  <n-input type="textarea"  v-model:value="sale.observations"/>
+                  <n-input type="textarea" v-model:value="sale.observations"/>
                 </n-form-item>
               </n-collapse-transition>
             </n-gi>
           </n-grid>
         </n-form>
-        <n-scrollbar :x-scrollable="true" style="max-width: 1200px">
+        <n-scrollbar :x-scrollable="true" style="max-width: 1000px">
           <n-table class="fs-6 m-auto text-center" :bordered="false">
             <thead>
               <tr>
@@ -93,61 +98,44 @@
                 <th>Cantidad</th>
                 <th>Producto</th>
                 <th>Precio Unitario</th>
-                <th>Descuento</th>
+                <th v-if="settingsStore.business_settings.sale?.show_discount_label">Descuento</th>
                 <th>Precio Total</th>
-                <th></th>
               </tr>
             </thead>
             <tbody>
-              <template v-for="(detail, index) in sale.sale_details">
+            <template v-for="(detail, index) in saleStore.toSale">
                 <tr v-if="detail.quantity > 0" :key="index">
-                  <td v-if="settingsStore.businessSettings.sale.manage_affectations
+                    <td v-if="settingsStore.businessSettings.sale?.manage_affectations
       ">
-                    <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation"
-                      :options="productStore.affectationsOptions" @update:value="(v) => saleStore.updateDetail(detail)">
-                      <n-tag size="small" :color="getAfcColor(detail.product_affectation)">{{
-      getAfcShort(detail.product_affectation) }}</n-tag>
-                    </n-popselect>
-                  </td>
-                  <td align="center">
-                    <n-input-number v-model:value="detail.quantity" style="width: 100px" :min="1" :max="detail.max" />
-                  </td>
-                  <td>
-                    <input class="custom-input" v-model="detail.product_name" v-autowidth
-                      @click="$event.target.select()" />
-                  </td>
-                  <td>
-                    S/.
-                    <input class="custom-input" type="number" min="0" step=".01" v-model="detail.price_sale" @input="(v) => (
-      saleStore.updateDetail(detail),
-      (detail.discount = parseFloat(0).toFixed(2))
-    )
-      " v-autowidth @click="$event.target.select()" />
-                  </td>
-                  <td>
-                    S/.
-                    <input class="custom-input" type="number" min="0" :max="!detail.price_sale ? 0 : detail.price_sale"
-                      :disabled="detail.product_affectation === 21 ||
-      !!Number(sale.discount)
-      " step="0.1" v-model="detail.discount" v-autowidth @click="$event.target.select()" />
-                  </td>
-                  <td>
-                    {{
-      detail.product_affectation === 21
-        ? "0.00"
-        : parseFloat(
-          detail.quantity * detail.price_sale -
-          detail.discount
-        ).toFixed(2)
-    }}
-                  </td>
-                  <td>
-                    <n-button type="error" text @click="sale.sale_details.splice(index, 1)">
-                      <v-icon name="md-disabledbydefault-round" />
-                    </n-button>
-                  </td>
+                        <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation"
+                                     :disabled="!userStore.hasPermission('change_product_affectation')"
+                                     :options="productStore.affectationsOptions" @update:value="() => saleStore.updateDetail(detail)">
+                            <n-tag size="small" :color="getAfcColor(detail.product_affectation)">{{
+                                    getAfcShort(detail.product_affectation) }}
+                            </n-tag>
+                        </n-popselect>
+                    </td>
+                    <td>{{ detail.quantity }}</td>
+                    <td>
+                        <input class="custom-input" v-model="detail.product_name" v-autowidth @click="$event.target.select()"/>
+                    </td>
+                    <td>
+                        S/.
+                        <input class="custom-input" type="number" :min="detail.product_affectation === 20 ? 1 : 0" step=".5"
+                               v-model="detail.price_sale" v-autowidth @click="$event.target.select()" :disabled="!settingsStore.business_settings.sale?.show_discount_label"
+                               @input="() => (saleStore.updateDetail(detail), (detail.discount = parseFloat('0').toFixed(2)))"/>
+                    </td>
+                    <td v-if="settingsStore.business_settings.sale?.show_discount_label">
+                        S/.
+                        <input class="custom-input" type="number" min="0" :max="!detail.price_sale ? 0 : detail.price_sale" step=".5"
+                               :disabled="detail.product_affectation === 21 || !!Number(sale.discount)" v-model="detail.discount" 
+                               v-autowidth @click="$event.target.select()"/>
+                    </td>
+                    <td>
+                        {{ detail.product_affectation === 21 ? "0.00" : parseFloat(detail.quantity * detail.price_sale - detail.discount).toFixed(2) }}
+                    </td>
                 </tr>
-              </template>
+            </template>
             </tbody>
           </n-table>
         </n-scrollbar>
@@ -187,17 +175,17 @@
               <div v-if="totalIGV">
                 IGV: <span>S/. {{ totalIGV.toFixed(2) }}</span>
               </div>
-              <div v-if="icbper">
-                ICBPER: <span>S/. {{ icbper.toFixed(2) }}</span>
-              </div>
-              <div>
+              <div v-if="!settingsStore.business_settings.sale?.show_discount_label">
                 DSCT:
                 <span>S/.</span>
-                <input class="custom-input fw-bold" type="number" min="0" :max="discountInputLimit" step=".5" v-model="totalDSCT"
-                  v-autowidth :disabled="sale.sale_details.some(
+                <input class="custom-input fw-bold" type="number" min="0" step=".5" v-model="totalDSCT" v-autowidth
+                  :disabled="saleStore.toSale.some(
       (detail) => Number(detail.discount) > 0
     )
       " @click="$event.target.select()" />
+              </div>
+              <div v-if="icbper">
+                ICBPER: <span>S/. {{ icbper.toFixed(2) }}</span>
               </div>
               <div>
                 OTROS:
@@ -222,7 +210,10 @@
           @click.prevent="performCreateSale"
           ><v-icon class="me-2" name="fa-coins" scale="2" />Cobrar</n-button
         > -->
-        <n-checkbox v-model:checked="isMultiple">Pago multiple</n-checkbox>
+        <n-space v-if="sale.payment_condition === 1" justify="space-between">
+          <n-checkbox v-model:checked="isMultiple">Pago multiple</n-checkbox>
+          <n-button type="info" text @click="openSeparatePaymentsModal">Nueva cuenta</n-button>
+        </n-space>
         <n-divider />
         <n-grid responsive="screen" cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12" :x-gap="12">
           <!-- <n-gi :span="4">
@@ -241,11 +232,10 @@
             <n-checkbox v-model:checked="ticketPreview">Previsualizar ticket</n-checkbox>
           </n-gi>
         </n-grid>
-        <n-button class="fs-1 py-5 mt-2" type="success" :disabled="list.length < count
-      ? !list.length || sale.given_amount < sale.amount
-      : !list.some((detail) => detail.quantity < detail.max)
-        ? true
-        : !list.length || sale.given_amount < sale.amount
+        <n-button class="fs-1 py-5 mt-2" type="success" :disabled="!saleStore.toSale.filter((detail) => !!detail.quantity).length ||
+      sale.payment_condition === 1
+      ? sale.given_amount < sale.amount
+      : !(sale.given_amount < sale.amount)
       " secondary block @click.prevent="
       isMultiple ? doMultiplePayment() : performCreateSale()
       ">
@@ -260,13 +250,13 @@
     }" preset="card" v-model:show="showPayments" title="Realizar venta" :mask-closable="false" closable
       @close="sale.payments = null">
       <n-space justify="space-between">
-        <n-tag type="info">Total: S/. {{ showPayments ? total : null }}</n-tag>
+        <n-tag type="info">Total: S/. {{ showPayments ? sale.amount : null }}</n-tag>
         <n-tag :type="evalPayments ? 'error' : 'success'">Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}
         </n-tag>
         <n-tag :type="evalPayments ? 'error' : 'warning'">Faltante: S/.
           {{
       showPayments
-        ? parseFloat(total - currentPaymentsAmount).toFixed(2)
+        ? parseFloat(sale.amount - currentPaymentsAmount).toFixed(2)
         : null
     }}</n-tag>
       </n-space>
@@ -286,37 +276,33 @@
       sale.payments.some((pay) => pay.payment_method === null) ||
       sale.payments.some((pay) => Number(pay.amount) <= 0) ||
       loading
-      " :loading="loading" secondary @click="performCreateSale">Confirmar</n-button>
+      " secondary :loading="loading" @click="performCreateSale">Confirmar</n-button>
       </n-space>
     </n-modal>
     <!-- Customer Modal -->
-    <customer-modal v-model:show="showModal" :doc_type="sale.invoice_type === 1 ? '6' : null"
-      @update:show="onCloseModal" @on-success="onSuccess" />
+    <customer-modal v-model:show="showModal" :id-customer="sale.customer"
+      :doc_type="sale.invoice_type === 1 ? '6' : null" :document="customerDocument" @update:show="onCloseModal"
+      @on-success="onSuccess" />
+    <separate-payments-modal v-model:show="showSeparateModal" :data="separatePayments"
+      :on-close="closeSeparatePaymentsModal" @success="successSeparatePaymentsModal" />
     <preview-drawer ref="previewDrawer" v-model:show="showPdf" :data="pdfData" :previewOnly="!ticketPreview"
-      @printed="() => $emit('success')" @canceled="() => $emit('success')" />
+      @printed="() => $router.push({ name: 'TableHome' })" @canceled="() => $router.push({ name: 'TableHome' })" />
   </div>
 </template>
 
 <script>
-import {
-  defineComponent,
-  ref,
-  toRefs,
-  toRef,
-  computed,
-  watch,
-  onMounted,
-} from "vue";
+import { defineComponent, ref, toRefs, computed, watch, onMounted } from "vue";
 import CustomerModal from "@/views/Customer/components/CustomerModal";
-import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
+import SeparatePaymentsModal from "./SeparatePaymentsModal";
 import { useSettingsStore } from "@/store/modules/settings";
-import { useProductStore } from "@/store/modules/product";
+import { useRouter } from "vue-router";
 import { useOrderStore } from "@/store/modules/order";
+import { useProductStore } from "@/store/modules/product";
 import { useSaleStore } from "@/store/modules/sale";
+import { useUserStore } from "@/store/modules/user";
 import { useGenericsStore } from "@/store/modules/generics";
 import { saleRules } from "@/utils/constants";
 import { cloneDeep, isDecimal } from "@/utils";
-import { retrieveOrder } from "@/api/modules/orders";
 import {
   searchCustomerByName,
   searchRucCustomer,
@@ -328,50 +314,40 @@ import {
 } from "@/api/modules/sales";
 import { useDialog, useMessage } from "naive-ui";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
+import format from "date-fns/format";
 import { lighten } from "@/utils";
+import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 import { useBusinessStore } from "@/store/modules/business";
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 
 export default defineComponent({
-  name: "SeparatePayments",
+  name: "TablePayment",
   directives: { autowidth: VueInputAutowidth },
   components: {
     CustomerModal,
+    SeparatePaymentsModal,
     PreviewDrawer,
   },
-  props: {
-    data: {
-      type: Object,
-    },
-  },
-  emits: ["success"],
-  setup(props, { emit }) {
-    const sale = toRef(props, "data");
+  setup() {
     const dateNow = ref(null);
+    const router = useRouter();
+    const productStore = useProductStore();
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
-    const productStore = useProductStore();
+    const userStore = useUserStore();
     const settingsStore = useSettingsStore();
     const genericsStore = useGenericsStore();
     const message = useMessage();
     const loading = ref(false);
     const dialog = useDialog();
     const showModal = ref(false);
-    const ticketPreview = ref(settingsStore.businessSettings.sale.show_preview);
     const payment_amount = ref(parseFloat(0).toFixed(2));
     const saleForm = ref();
+    const ticketPreview = ref(settingsStore.businessSettings.sale.show_preview);
     const changing = computed(() => {
       return sale.value.given_amount > total.value
         ? total.value - sale.value.given_amount
         : 0.0;
-    });
-
-    const count = props.data.sale_details.filter(
-      (detail) => !!detail.quantity
-    ).length;
-
-    const list = computed(() => {
-      return sale.value.sale_details.filter((detail) => !!detail.quantity);
     });
 
     const icbper = computed(() => {
@@ -382,60 +358,68 @@ export default defineComponent({
         return (acc += 0);
       }, 0);
     });
-
-    const totalGRV = computed(() => {
-      return sale.value.sale_details.reduce((acc, curVal) => {
-        return curVal.product_affectation === 10
-          ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
-          : acc;
-      }, 0);
-    });
-
-    const totalEXN = computed(() => {
-      return sale.value.sale_details.reduce((acc, curVal) => {
-        return curVal.product_affectation === 20
-          ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
-          : acc;
-      }, 0);
-    });
-
-    const totalGRT = computed(() => {
-      return sale.value.sale_details.reduce((acc, curVal) => {
-        return curVal.product_affectation === 21
-          ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
-          : acc;
-      }, 0);
-    });
-
-    const totalIGV = computed(() => {
-      return sale.value.sale_details.reduce((acc, curVal) => {
-        return (acc += curVal.igv_tax * curVal.quantity);
-      }, 0);
-    });
+      
+      const precision = 10000; // Trabajamos con 4 decimales
+      
+      const totalGRV = computed(() => {
+          const totalScaled = saleStore.toSale.reduce((acc, curVal) => {
+              if (curVal.product_affectation === 10) {
+                  // Multiplica el precio por la cantidad y por la precisión
+                  const value = Math.round(parseFloat(curVal.price_sale) * curVal.quantity * precision);
+                  return acc + value;
+              }
+              return acc;
+          }, 0);
+          return totalScaled / precision;
+      });
+      
+      const totalEXN = computed(() => {
+          const totalScaled = saleStore.toSale.reduce((acc, curVal) => {
+              if (curVal.product_affectation === 20) {
+                  const value = Math.round(parseFloat(curVal.price_sale) * curVal.quantity * precision);
+                  return acc + value;
+              }
+              return acc;
+          }, 0);
+          return totalScaled / precision;
+      });
+      
+      const totalGRT = computed(() => {
+          const totalScaled = saleStore.toSale.reduce((acc, curVal) => {
+              if (curVal.product_affectation === 21) {
+                  const value = Math.round(parseFloat(curVal.price_sale) * curVal.quantity * precision);
+                  return acc + value;
+              }
+              return acc;
+          }, 0);
+          return totalScaled / precision;
+      });
+      
+      const totalIGV = computed(() => {
+          const totalScaled = saleStore.toSale.reduce((acc, curVal) => {
+              // Suponiendo que igv_tax ya es un valor decimal
+              const value = Math.round(curVal.igv_tax * curVal.quantity * precision);
+              return acc + value;
+          }, 0);
+          return totalScaled / precision;
+      });
 
     const totalDSCT = computed({
       get: () => {
-        if (
-          !sale.value.sale_details.some((detail) => Number(detail.discount) > 0)
-        ) {
-          return sale.value.sale_details.reduce((acc, curVal) => {
+        if (saleStore.toSale.some((detail) => Number(detail.discount) > 0)) {
+          return saleStore.toSale.reduce((acc, curVal) => {
             return (acc += Number(curVal.discount));
           }, 0);
         }
         return sale.value.discount;
       },
       set: (v) => {
-        if (
-          sale.value.sale_details.some((detail) => Number(detail.discount) > 0)
-        ) {
+        if (!saleStore.toSale.some((detail) => Number(detail.discount) > 0)) {
           sale.value.discount = v;
         } else {
-          sale.value.discount = sale.value.sale_details.reduce(
-            (acc, curVal) => {
-              return (acc += Number(curVal.discount));
-            },
-            0
-          );
+          sale.value.discount = saleStore.toSale.reduce((acc, curVal) => {
+            return (acc += Number(curVal.discount));
+          }, 0);
         }
       },
     });
@@ -443,7 +427,7 @@ export default defineComponent({
     const showObservations = ref(false);
 
     const subTotal = computed(() => {
-      return sale.value.sale_details.reduce((acc, curVal) => {
+      return saleStore.toSale.reduce((acc, curVal) => {
         return curVal.product_affectation === 21
           ? (acc += 0)
           : (acc += curVal.price_sale * curVal.quantity);
@@ -451,57 +435,92 @@ export default defineComponent({
     });
 
     const products_count = computed(() => {
-      return sale.value.sale_details.reduce((acc, curVal) => {
+      return saleStore.toSale.reduce((acc, curVal) => {
         return (acc += curVal.quantity);
       }, 0);
     });
 
     const total = computed(() => {
       return parseFloat(
-        subTotal.value -
-        parseFloat(sale.value.discount) +
+        totalIGV.value +
+        totalGRV.value +
+        totalEXN.value -
+        parseFloat(totalDSCT.value) +
         icbper.value +
         parseFloat(sale.value.other_charges)
       ).toFixed(2);
     });
 
-    const otherCharges = computed(() => {
-      const parsed = parseFloat(sale.value.other_charges);
-      return Number.isFinite(parsed) ? parsed : 0;
+    const sale = ref({
+      order: null,
+      serie: saleStore.getFirstOption(
+        settingsStore.businessSettings.sale.enable_invoices ? settingsStore.businessSettings.sale.default_invoice : 80
+      ),
+      number: "",
+      date_sale: format(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss"),
+      count: products_count,
+      amount: total,
+      given_amount: parseFloat(0).toFixed(2),
+      invoice_type: settingsStore.businessSettings.sale.enable_invoices ? settingsStore.businessSettings.sale.default_invoice : 80,
+      payment_method: 1,
+      payment_condition: 1,
+      customer_name: "",
+      customer: null,
+      address: null,
+      discount: "0.00",
+      icbper: icbper,
+      other_charges: "0.00",
+      observations: "",
+      by_consumption: false,
+      sale_details: [],
+      payments: null,
+      do_update: true,
+      is_change: true,
+      taxed_amount: totalGRV,
+      exempt_amount: totalEXN,
+      free_amount: totalGRT,
+      igv_amount: totalIGV,
     });
-
-    const discountBaseAmount = computed(() => subTotal.value + icbper.value + otherCharges.value);
-
-    const discountInputLimit = computed(() => {
-      if (discountBaseAmount.value <= 0) {
-        return 0;
-      }
-      const capped = discountBaseAmount.value - 0.01;
-      return Math.max(Math.round(capped * 100) / 100, 0);
-    });
-
-    const discountValidationThreshold = computed(() => Math.round(discountBaseAmount.value * 100) / 100);
-
-    watch(total, () => {
-      sale.value.amount =
-        total.value > 0 ? total.value : parseFloat(0).toFixed(2);
-      sale.value.given_amount =
-        total.value > 0 ? total.value : parseFloat(0).toFixed(2);
-      sale.value.count = products_count.value;
-    });
+      
+      watch(total, () => {
+          sale.value.given_amount =
+              total.value > 0 ? total.value : parseFloat("0").toFixed(2);
+      });
+      
+      // watchEffect(() => {
+      //     console.log(sale.value.amount);
+      //     // if(parseFloat(sale.value.amount) === 0) {
+      //     //     sale.value.payment_condition = 2;
+      //     console.log(sale.value.payment_condition);
+      //     console.log(sale.value.given_amount);
+      //         // sale.value.given_amount = parseFloat("0").toFixed(2);
+      //     //    
+      //     //     // changeCondition(sale.value.payment_condition);
+      //     // }
+      // });
 
     const formRules = computed(() => {
       let rules = saleRules;
-      if (sale.value.invoice_type !== 1 && sale.value.given_amount <= 699) {
-        rules.customer.required = false;
-      } else {
-        rules.customer.required = true;
-      }
+      rules.customer.required = !(sale.value.invoice_type !== 1 && sale.value.payment_condition === 1 && sale.value.given_amount <= 699);
       return rules;
     });
 
     const selectSerie = (v) => {
       sale.value.serie = v;
+    };
+
+    const changeCondition = (v) => {
+      switch (v) {
+        case 1:
+          sale.value.given_amount = total.value;
+          break;
+        case 2:
+          sale.value.given_amount = parseFloat('0').toFixed(2);
+          break;
+        default:
+          console.error(`${v} invalido`);
+          break;
+      }
     };
 
     const changeSerie = (v) => {
@@ -525,139 +544,118 @@ export default defineComponent({
 
     const businessStore = useBusinessStore();
 
-    const performCreateSale = () => {
-      saleForm.value.validate((errors) => {
-        if (!errors) {
-          const currentDiscount = Math.round((parseFloat(totalDSCT.value) || 0) * 100) / 100;
-          const maxAllowedDiscount = discountValidationThreshold.value;
-          if (maxAllowedDiscount > 0 && currentDiscount >= maxAllowedDiscount) {
-            message.warning("El descuento no puede ser 100%. Debe cambiar a operacion gratuita.");
-            return;
-          }
-          dialog.success({
-            closable: false,
-            title: "Venta",
-            content: "Realizar venta?",
-            positiveText: "Sí",
-            onPositiveClick: async () => {
-              loading.value = true;
-              sale.value.taxed_amount = totalGRV;
-              sale.value.exempt_amount = totalEXN;
-              sale.value.free_amount = totalGRT;
-              sale.value.igv_amount = totalIGV;
-              sale.value.sale_details = sale.value.sale_details.map(
-                (detail) => ({
-                  ...detail,
-                  igv_tax: detail.igv_tax.toFixed(2),
-                  price_base: detail.price_base.toFixed(2),
-                })
-              );
-              sale.value.discount = totalDSCT.value;
-              await createSale(sale.value)
-                .then(async (response) => {
-                  if (response.status === 201) {
-                      const dataPrint = async() => {
-                          const res = await retrieveSale(response.data?.id);
-                          pdfData.value = res.data;
-                          return res.data;
-                      };
-                      await dataPrint();
-                    if (settingsStore.business_settings.printer.print_html) {
-                      // pdfData.value = response.data;
-                      showPdf.value = true;
-                      if (!ticketPreview.value) {
-                        setTimeout(() => previewDrawer.value.generate(), 250);
-                      }
-                    } else {
-                      await VoucherPrint({
-                          data: await dataPrint(),
-                          businessStore,
-                          changing: changing.value,
-                          show: true,
-                      });
-                      emit("success");
-                    }
+      const performCreateSale = () => {
+          saleForm.value.validate((errors) => {
+              if(!errors) {
+                  dialog.success({
+                      closable: false,
+                      title: "Venta",
+                      content: "Realizar venta?",
+                      positiveText: "Sí",
+                      onPositiveClick: async() => {
+                          console.log("gordo puto");
+                          loading.value = true;
+                          sale.value.order = orderStore.orderId;
+                          sale.value.sale_details = saleStore.toSale.map((detail) => ({
+                              ...detail,
+                              igv_tax: detail.igv_tax.toFixed(2),
+                              price_base: detail.price_base.toFixed(2)
+                          }));
+                          sale.value.discount = totalDSCT.value;
+                          await createSale(sale.value).then(async(response) => {
+                              if(response.status === 201) {
+                                  const dataPrint = async() => {
+                                      const res = await retrieveSale(response.data?.id);
+                                      pdfData.value = res.data;
+                                      return res.data;
+                                  };
+                                    await dataPrint();
+                                  if(settingsStore.business_settings.printer.print_html) {
+                                      showPdf.value = true;
+                                      if(!ticketPreview.value) {
+                                          setTimeout(() => previewDrawer.value.generate(), 250);
+                                      }
+                                  } else {
+                                      await VoucherPrint({
+                                          data: await dataPrint(),
+                                          businessStore,
+                                          saleStore,
+                                          changing: changing.value,
+                                          show: true
+                                      });
+                                      await router.push({ name: "TableHome" });
+                                  }
 
-                    if (
-                      settingsStore.businessSettings.sale.auto_send &&
-                      response.data.invoice_type !== "80"
-                    ) {
-                      sendSale(response.data.id)
-                        .then((response) => {
-                          if (response.status === 200) {
-                            message.success("Enviado!");
-                          }
-                          // if (whatsappNumber.value.length >= 9) {
-                          //   sendWhatsapp(
-                          //     response.data.id,
-                          //     [response.data.serie, response.data.number],
-                          //     whatsappNumber.value
-                          //   )
-                          //     .then((response) => {
-                          //       if (response.status === 200)
-                          //         window.open(response.data.data.url, "_blank");
-                          //     })
-                          //     .catch((error) => {
-                          //       console.error(error);
-                          //     });
-                          // }
-                        }).catch((error) => {
-                          console.error(error);
-                      });
-                    }
-                    // else {
-                    //   if (whatsappNumber.value.length >= 9) {
-                    //     sendWhatsapp(
-                    //       response.data.id,
-                    //       [response.data.serie, response.data.number],
-                    //       whatsappNumber.value
-                    //     )
-                    //       .then((response) => {
-                    //         if (response.status === 200)
-                    //           window.open(response.data.data.url, "_blank");
-                    //       })
-                    //       .catch((error) => {
-                    //         console.error(error);
-                    //       });
-                    //   }
-                    // }
-                    retrieveOrder(orderStore.orderId)
-                      .then((response) => {
-                        if (response.status === 200) {
-                          orderStore.orders = response.data.order_details;
-                          saleStore.order_initial = cloneDeep(
-                            orderStore.orderList
-                          );
-                        }
-                      })
-                      .catch((error) => {
-                        console.error(error);
-                        message.error("Algo salió mal...");
-                      });
-                    message.success("Venta realizada correctamente!");
-                    // emit("success");
+                                  if(
+                                      settingsStore.businessSettings.sale.auto_send &&
+                                      response.data?.['invoiceType'] !== "80"
+                                  ) {
+                                      sendSale(response.data.id).then((response) => {
+                                          if(response.status === 200) {
+                                              message.success("Enviado!");
+                                              // if (whatsappNumber.value.length >= 9) {
+                                              //   sendWhatsapp(
+                                              //     sale.id,
+                                              //     [sale.serie, sale.number],
+                                              //     whatsappNumber.value
+                                              //   )
+                                              //     .then((response) => {
+                                              //       if (response.status === 200)
+                                              //         window.open(
+                                              //           response.data.data.url,
+                                              //           "_blank"
+                                              //         );
+                                              //     })
+                                              //     .catch((error) => {
+                                              //       console.error(error);
+                                              //     });
+                                              // }
+                                          }
+                                      }).catch((error) => {
+                                          console.error(error);
+                                          message.error("Algo salió mal...");
+                                      });
+                                  }
+                                  // else {
+                                  //   if (whatsappNumber.value.length >= 9) {
+                                  //     sendWhatsapp(
+                                  //       response.data.id,
+                                  //       [response.data.serie, response.data.number],
+                                  //       whatsappNumber.value
+                                  //     )
+                                  //       .then((response) => {
+                                  //         if (response.status === 200)
+                                  //           window.open(response.data.data.url, "_blank");
+                                  //       })
+                                  //       .catch((error) => {
+                                  //         console.error(error);
+                                  //       });
+                                  //   }
+                                  // }
+                                  message.success("Venta realizada correctamente!");
+                                  // router.push({ name: "TableHome" });
+                              }
+                          }).catch((error) => {
+                              console.error(error);
+                              message.error("Algo salió mal...");
+                          }).finally(() => {
+                              loading.value = false;
+                          });
+                      }
+                  });
+              } else {
+                  if(formRules.value.customer.required) {
+                      if(sale.value.invoice_type === 1) {
+                          message.warning("Debes agregar un cliente cuando la venta es con factura");
+                      } else {
+                          message.error("Debes agregar un cliente porque la venta es mayor a S/ 699");
+                      }
                   }
-                }).catch((error) => {
-                  console.error(error);
-              })
-                .finally(() => {
-                  loading.value = false;
-                });
-            },
+                  console.error(errors);
+                  message.error("Datos Incorrectos");
+              }
           });
-        } else {
-          if (formRules.value.customer.required) {
-            if (sale.value.invoice_type === 1) {
-              message.warning("Debes agregar un cliente cuando la venta es con factura");
-            } else {
-              message.error("Debes agregar un cliente porque la venta es mayor a S/ 699");
-            }
-          }
-          console.error(errors);
-          message.error("Datos Incorrectos");
-        }
-      });
-    };
+      };
 
     const obtainSaleNumber = async () => {
       loading.value = true;
@@ -753,11 +751,7 @@ export default defineComponent({
     });
 
     onMounted(async () => {
-      sale.value.amount = total.value;
       sale.value.given_amount = total.value;
-      sale.value.count = products_count.value;
-      sale.value.do_update = false;
-      sale.value.is_change = true;
       await obtainSaleNumber();
 
       const fetch = new Date();
@@ -804,7 +798,7 @@ export default defineComponent({
       sale.value.payments = [
         {
           payment_method: sale.value.payment_method,
-          amount: String(total.value),
+          amount: String(sale.value.amount),
         },
       ];
       showPayments.value = true;
@@ -820,17 +814,27 @@ export default defineComponent({
       }));
     });
 
-    const evalPayments = computed(() => {
-      if (sale.value.payments) {
-        return (
-          sale.value.payments.reduce((acc, val) => {
-            return (acc += parseFloat(val.amount));
-          }, 0) !== Number(total.value)
-        );
-      } else {
-        return true;
-      }
-    });
+      const evalPayments = computed(() => {
+          const payments = sale.value.payments;
+          const totalAmount = Number(sale.value.amount);
+
+          if (!payments || payments.length === 0) {
+              return true; // Devuelve true si no hay pagos
+          }
+
+          const totalPayments = payments.reduce((accumulator, payment) => {
+              const amount = parseFloat(payment.amount || '0');
+              const scaledAccumulator = Math.round(accumulator * 100); // Escala para manejar decimales
+              const scaledAmount = Math.round(amount * 100); // Escala el monto actual
+
+              const totalScaled = scaledAccumulator + scaledAmount; // Suma los valores escalados
+              return totalScaled / 100; // Devuelve a la escala original
+          }, 0);
+
+
+          return totalPayments !== totalAmount;
+      });
+
 
     const currentPaymentsAmount = computed(() => {
       if (sale.value.payments) {
@@ -843,8 +847,46 @@ export default defineComponent({
       }
     });
 
+    const separatePayments = ref({});
+
+    const showSeparateModal = ref(false);
+
+    const openSeparatePaymentsModal = () => {
+      separatePayments.value = cloneDeep(sale.value);
+      separatePayments.value.order = cloneDeep(orderStore.orderId);
+      separatePayments.value.sale_details = cloneDeep(saleStore.toSale);
+      separatePayments.value.sale_details.forEach(
+        (detail) => (detail.max = detail.quantity)
+      );
+      showSeparateModal.value = true;
+    };
+
+    const closeSeparatePaymentsModal = () => {
+      // console.log(separatePayments.value);
+    };
+
+    const successSeparatePaymentsModal = () => {
+      obtainSaleNumber();
+    };
+
     const dateDisabled = (ts) => {
       return ts > new Date(Date.now());
+    };
+
+    const customerDocument = ref("");
+
+    const autoCreateCustomer = () => {
+      if (!searching.value && !customerResults.value.length) {
+        if (
+          !isNaN(sale.value.customer_name) &&
+          ((sale.value.customer_name.length === 8 &&
+            sale.value.invoice_type !== 1) ||
+            sale.value.customer_name.length === 11)
+        ) {
+          customerDocument.value = sale.value.customer_name;
+          showModal.value = true;
+        }
+      }
     };
 
     function getAfcColor(afc) {
@@ -900,10 +942,11 @@ export default defineComponent({
 
     return {
       showModal,
-      settingsStore,
-      productStore,
-      orderStore,
+      userStore,
       saleStore,
+      orderStore,
+      productStore,
+      settingsStore,
       sale,
       isDecimal,
       loading,
@@ -911,12 +954,14 @@ export default defineComponent({
       formRules,
       showOptions,
       customerOptions,
+      autoCreateCustomer,
+      customerDocument,
       searching,
       changing,
       payment_amount,
       subTotal,
-      total,
       selectSerie,
+      changeCondition,
       changeSerie,
       showObservations,
       performCreateSale,
@@ -933,9 +978,12 @@ export default defineComponent({
       filteredMethods,
       evalPayments,
       currentPaymentsAmount,
+      openSeparatePaymentsModal,
+      closeSeparatePaymentsModal,
+      successSeparatePaymentsModal,
+      separatePayments,
+      showSeparateModal,
       dateDisabled,
-      count,
-      list,
       getAfcShort,
       getAfcColor,
       totalIGV,
@@ -943,11 +991,10 @@ export default defineComponent({
       totalEXN,
       totalGRT,
       totalDSCT,
-      discountInputLimit,
       whatsappNumber,
       ticketPreview,
-      showPdf,
       previewDrawer,
+      showPdf,
       pdfData,
     };
   },

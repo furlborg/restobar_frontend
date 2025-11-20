@@ -45,7 +45,7 @@ export const useProductStore = defineStore("product", {
       await getProductPlaces()
         .then((response) => {
           const printerStore = usePrinterStore();
-          this.places = response.data;
+          this.places = response.data.filter(place => !place.is_disabled);
           printerStore.managedPrinters = [
             printerStore.managedPrinters[0],
             ...this.getPlacesPrinters,

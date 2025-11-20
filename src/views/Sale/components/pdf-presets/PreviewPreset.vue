@@ -38,16 +38,17 @@
               </tr>
             </thead>
             <tbody>
-              <template
-                v-for="(detail, index) in data.order_details"
-                :key="index"
-              >
-                <tr v-if="detail.quantity > 0">
-                  <td align="center">{{ detail.quantity }}</td>
-                  <td align="left">{{ detail.product_name }}</td>
-                  <td align="right">{{ detail.price.toFixed(2) }}</td>
+              <template v-for="(detail, index) in expandedOrderDetails" :key="`detail-${index}`">
+                <tr v-if="detail.quantity > 0" :class="{ 'menu-header': detail.isMenuHeader, 'menu-product': detail.isMenuProduct }">
+                  <td align="center">{{ detail.isMenuProduct ? '' : detail.quantity }}</td>
+                  <td align="left" :style="detail.isMenuProduct ? 'font-size: 11px; color: #666;' : ''">
+                    {{ detail.product_name }}
+                  </td>
                   <td align="right">
-                    {{ parseFloat(detail.quantity * detail.price).toFixed(2) }}
+                    {{ detail.isMenuProduct ? '' : detail.price.toFixed(2) }}
+                  </td>
+                  <td align="right">
+                    {{ detail.isMenuProduct ? '' : parseFloat(detail.quantity * detail.price).toFixed(2) }}
                   </td>
                 </tr>
               </template>
@@ -56,15 +57,7 @@
               <tr>
                 <td align="right" colspan="3">TOTAL:</td>
                 <td align="right">
-                  {{
-                    data.order_details
-                      .reduce(
-                        (acc, curVal) =>
-                          (acc += curVal.quantity * curVal.price),
-                        0
-                      )
-                      .toFixed(2)
-                  }}
+                  {{ orderTotal.toFixed(2) }}
                 </td>
               </tr>
             </tfoot>
@@ -90,10 +83,11 @@
 </template>
 
 <script>
-import { defineComponent } from "vue";
+import { defineComponent, computed } from "vue";
 import { useTableStore } from "@/store/modules/table";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useBusinessStore } from "@/store/modules/business";
+import { expandOrderDetails, calculateOrderTotal } from "@/utils/menuExpander.js";
 
 export default defineComponent({
   name: "PreviewPreset",
@@ -101,16 +95,33 @@ export default defineComponent({
     data: {
       type: Object,
     },
+    isPrintMode: {
+      type: Boolean,
+      default: false,
+    },
   },
   setup(props) {
     const tableStore = useTableStore();
     const settingsStore = useSettingsStore();
     const businessStore = useBusinessStore();
 
+    // Expandir menús para mostrar productos individuales
+    const expandedOrderDetails = computed(() => {
+      console.log('PreviewPreset - order_details:', props.data.order_details);
+      return expandOrderDetails(props.data.order_details || []);
+    });
+
+    // Calcular el total correctamente incluyendo menús
+    const orderTotal = computed(() => {
+      return calculateOrderTotal(props.data.order_details || []);
+    });
+
     return {
       tableStore,
       businessStore,
       settingsStore,
+      expandedOrderDetails,
+      orderTotal,
     };
   },
 });
@@ -150,6 +161,15 @@ export default defineComponent({
               border-bottom: 1px dashed;
             }
           }
+        }
+        
+        .menu-header {
+          font-weight: bold;
+          border-top: 1px solid #ddd;
+        }
+        
+        .menu-product {
+          font-style: italic;
         }
       }
       tfoot {

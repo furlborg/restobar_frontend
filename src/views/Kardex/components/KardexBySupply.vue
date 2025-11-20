@@ -105,12 +105,12 @@
             </n-button>
           </n-dropdown> -->
         </template>
-        <n-grid responsive="screen" cols="3" :x-gap="6">
+        <n-grid responsive="screen" cols="3" :x-gap="6" :style="{ opacity: isStockControlDisabled ? 0.5 : 1 }">
           <n-gi>
             <div class="px-2" style="background-color: HoneyDew">
               <n-space justify="space-around" align="center">
                 <n-text>Entradas</n-text>
-                <div class="fs-4">{{ total.ingress }}</div>
+                <div class="fs-4">{{ isStockControlDisabled ? 0 : total.ingress }}</div>
               </n-space>
             </div>
           </n-gi>
@@ -118,7 +118,7 @@
             <div class="px-2" style="background-color: LavenderBlush">
               <n-space justify="space-around" align="center">
                 <n-text>Salidas</n-text>
-                <div class="fs-4">{{ total.egress }}</div>
+                <div class="fs-4">{{ isStockControlDisabled ? 0 : total.egress }}</div>
               </n-space>
             </div>
           </n-gi>
@@ -126,7 +126,7 @@
             <div class="px-2" style="background-color: LightCyan">
               <n-space justify="space-around" align="center">
                 <n-text>Stock</n-text>
-                <div class="fs-4">{{ total.total.toFixed(3) }}</div>
+                <div class="fs-4">{{ isStockControlDisabled ? 0 : total.total.toFixed(3) }}</div>
               </n-space>
             </div>
           </n-gi>
@@ -177,6 +177,9 @@ export default defineComponent({
       total: 0,
     });
 
+    // Variable para detectar si el control de stock está desactivado
+    const isStockControlDisabled = ref(false);
+
     onMounted(() => {
       listProducts();
     });
@@ -218,6 +221,7 @@ export default defineComponent({
       total.value.ingress = 0;
       total.value.egress = 0;
       total.value.total = 0;
+      isStockControlDisabled.value = false; // Reset del estado
       ProductInstance.value.id = id;
       ProductInstance.value.product = prod;
 
@@ -241,6 +245,11 @@ export default defineComponent({
                     : total.value.total - parseFloat(v.egress);
               }
             });
+            
+            // Verificar si el stock es NaN o negativo (control de stock desactivado)
+            if (isNaN(total.value.total) || total.value.total < 0) {
+              isStockControlDisabled.value = true;
+            }
           })
           .catch((error) => {
             message.error("Algo salió mal...");
@@ -263,6 +272,11 @@ export default defineComponent({
                   ? total.value.total + parseFloat(!v.ingress ? 0 : v.ingress)
                   : total.value.total - parseFloat(!v.egress ? 0 : v.egress);
             });
+            
+            // Verificar si el stock es NaN o negativo (control de stock desactivado)
+            if (isNaN(total.value.total) || total.value.total < 0) {
+              isStockControlDisabled.value = true;
+            }
           })
           .catch((error) => {
             message.error("Algo salió mal...");
@@ -344,6 +358,7 @@ export default defineComponent({
       ProductInstance,
       listSupplies,
       loadingList,
+      isStockControlDisabled,
       columns: createKardexBySupplyColumns(),
       generateReport,
     };

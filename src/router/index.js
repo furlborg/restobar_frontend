@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from "vue-router";
-// import { useTillStore } from "@/store/modules/till";
-// import { retrieveCurrentTill } from "@/api/modules/tills";
+import { useTillStore } from "@/store/modules/till";
+import { useUserStore } from "@/store/modules/user";
+import { useGenericsStore } from "@/store/modules/generics";
+import { retrieveCurrentTill } from "@/api/modules/tills";
 
 export const routes = [
   {
@@ -9,229 +11,205 @@ export const routes = [
     redirect: { name: "Dashboard" },
     component: () => import("@/layout/index.vue"),
     meta: {
-      requiresAuth: true,
+      requiresAuth: true
     },
     children: [
       {
         path: "dashboard",
         name: "Dashboard",
-        component: () => import("@/views/Dashboard/index.vue"),
+        component: () =>
+            import("@/views/Dashboard/index.vue")
       },
       {
         path: "/customer",
         name: "Customer",
         meta: {
-          requiredPerm: "view_customer",
+          requiredPerm: "view_customer"
         },
         component: () =>
-          import(
-            /* webpackChunkName: "customer" */ "@/views/Customer/index.vue"
-          ),
+            import(/* webpackChunkName: "customer" */ "@/views/Customer/index.vue")
       },
       {
         path: "/birthday",
         name: "Cums",
         component: () =>
-          import(/* webpackChunkName: "customer" */ "@/views/Cums/index.vue"),
+            import(/* webpackChunkName: "customer" */ "@/views/Cums/index.vue")
       },
       {
         path: "/anulate",
         name: "Anulate",
         component: () =>
-          import(
-            /* webpackChunkName: "customer" */ "@/views/Anulate/ViewAnulate.vue"
-          ),
+            import(/* webpackChunkName: "customer" */ "@/views/Anulate/ViewAnulate.vue")
       },
       {
         path: "/orders",
         name: "Orders",
         meta: {
-          requiredPerm: "view_order",
+          requiredPerm: "view_order"
         },
         component: () =>
-          import(/* webpackChunkName: "order" */ "@/views/Order/index.vue"),
+            import(/* webpackChunkName: "order" */ "@/views/Order/index.vue")
       },
       {
         path: "/sales",
         name: "Sales",
         meta: {
-          requiredPerm: "view_sale",
+          requiredPerm: "view_sale"
         },
-        component: () =>
-          import(/* webpackChunkName: "sale" */ "@/views/Sale/index.vue"),
+        component: () => import(/* webpackChunkName: "sale" */ "@/views/Sale/index.vue")
       },
       {
         path: "/menus",
         name: "Menu",
         meta: {
-          requiredPerm: "view_sale",
+          requiredPerm: "view_sale"
         },
-        component: () =>
-          import(/* webpackChunkName: "menu" */ "@/views/Menu/index.vue"),
+        component: () => import(/* webpackChunkName: "menu" */ "@/views/Menu/index.vue")
       },
       {
         path: "/combos",
         name: "Combo",
         meta: {
-          requiredPerm: "view_sale",
+          requiredPerm: "view_sale"
         },
-        component: () =>
-          import(/* webpackChunkName: "combo" */ "@/views/Combo/index.vue"),
+        component: () => import(/* webpackChunkName: "combo" */ "@/views/Combo/index.vue")
       },
       {
         path: "/reports",
         name: "Reports",
         meta: {
-          requiredPerm: "view_sale", // ajustar si existe un permiso específico de reportes
+          requiredPerm: "view_sale" // ajustar si existe un permiso específico de reportes
         },
-        component: () =>
-          import(/* webpackChunkName: "reports" */ "@/views/Reports/index.vue"),
+        component: () => import(/* webpackChunkName: "reports" */ "@/views/Reports/index.vue"),
         children: [
           {
             path: "products-sold",
             name: "ProductsSoldReport",
-            component: () =>
-              import(
-                /* webpackChunkName: "reports-products-sold" */ "@/views/Reports/components/ProductsSold.vue"
-              ),
+            component: () => import(/* webpackChunkName: "reports-products-sold" */ "@/views/Reports/components/ProductsSold.vue")
           },
           {
             path: "cash-flow",
             name: "CashFlowReport",
-            component: () =>
-              import("@/views/Reports/components/CashReport.vue"),
+            component: () => import("@/views/Reports/components/CashReport.vue")
           },
           {
             path: "sales-by-date",
             name: "SalesByDateReport",
-            component: () =>
-              import(
-                /* webpackChunkName: "reports-sales-by-date" */ "@/views/Reports/components/SalesByDate.vue"
-              ),
+            component: () => import(/* webpackChunkName: "reports-sales-by-date" */ "@/views/Reports/components/SalesByDate.vue")
           },
           {
             path: "sales-detailed",
             name: "SalesDetailedReport",
-            component: () =>
-              import(
-                /* webpackChunkName: "reports-sales-detailed" */ "@/views/Reports/components/SalesDetailed.vue"
-              ),
+            component: () => import(/* webpackChunkName: "reports-sales-detailed" */ "@/views/Reports/components/SalesDetailed.vue")
           },
           {
             path: "sales-record",
             name: "SalesRecordReport",
-            component: () =>
-              import(
-                /* webpackChunkName: "reports-sales-record" */ "@/views/Reports/components/SalesRecord.vue"
-              ),
-          },
-        ],
+            component: () => import(/* webpackChunkName: "reports-sales-record" */ "@/views/Reports/components/SalesRecord.vue")
+          }
+        ]
       },
       {
         path: "/credits",
         name: "Credits",
-
-        component: () => import("@/views/Sale/SaleCredits.vue"),
+        // meta: {
+        //   requiredPerm: "view_sale",
+        // },
+        component: () =>
+            import(/* webpackChunkName: "credits" */ "@/views/Sale/SaleCredits.vue")
       },
       {
         path: "/free-sale",
         name: "FreeSale",
-        component: () => import("@/views/Sale/FreeSale.vue"),
+        // meta: {
+        //   requiredPerm: "view_sale",
+        // },
+        component: () => import( "@/views/Sale/FreeSale.vue")
       },
       {
         path: "/till",
         name: "Till",
         redirect: { name: "CurrentTill" },
-        component: () =>
-          import(/* webpackChunkName: "till" */ "@/views/Till/index.vue"),
+        component: () => import(/* webpackChunkName: "till" */ "@/views/Till/index.vue"),
         children: [
           {
             path: "",
             name: "CurrentTill",
             meta: {
-              requiredPerm: "view_tilldetails",
+              requiredPerm: "view_tilldetails"
             },
-            component: () => import("@/views/Till/CurrentTill.vue"),
-            beforeEnter: async (to, from, next) => {
-              const { useTillStore } = await import("@/store/modules/till");
-              const { retrieveCurrentTill } = await import(
-                "@/api/modules/tills"
-              );
-
+            component: () =>
+                import(
+                    /* webpackChunkName: "currentTill" */ "@/views/Till/CurrentTill.vue"
+                    ),
+            beforeEnter: async(to, from, next) => {
               const tillStore = useTillStore();
-              await retrieveCurrentTill()
-                .then((response) => {
-                  if (response.status === 200) {
-                    tillStore.currentTillID = response.data.id;
-                    tillStore.currentTillOrders = response.data.orders_count;
-                  }
-                })
-                .catch((error) => {
-                  if (error.response.status === 404) {
-                    tillStore.currentTillID = null;
-                    tillStore.currentTillOrders = 0;
-                  }
-                });
+              await retrieveCurrentTill().then((response) => {
+                if(response.status === 200) {
+                  tillStore.currentTillID = response.data.id;
+                  tillStore.currentTillOrders = response.data.orders_count;
+                }
+              }).catch((error) => {
+                if(error.response.status === 404) {
+                  tillStore.currentTillID = null;
+                  tillStore.currentTillOrders = 0;
+                }
+              });
               tillStore.currentTillID !== null
-                ? next()
-                : next({ name: "TillList" });
-            },
+              ? next()
+              : next({ name: "TillList" });
+            }
           },
           {
             path: "till-list",
             name: "TillList",
             meta: {
-              requiredPerm: "view_till",
+              requiredPerm: "view_till"
             },
             component: () =>
-              import(
-                /* webpackChunkName: "till-list" */ "@/views/Till/TillList.vue"
-              ),
+                import(
+                    /* webpackChunkName: "till-list" */ "@/views/Till/TillList.vue"
+                    )
           },
           {
             path: ":till",
             name: "TillDetails",
             meta: {
-              requiredPerm: "view_tilldetails",
+              requiredPerm: "view_tilldetails"
             },
             component: () =>
-              import(
-                /* webpackChunkName: "till-details" */ "@/views/Till/TillDetails.vue"
-              ),
-          },
-        ],
+                import(
+                    /* webpackChunkName: "till-details" */ "@/views/Till/TillDetails.vue"
+                    )
+          }
+        ]
       },
       {
         path: "/table",
         name: "Table",
         redirect: { name: "TableHome" },
         component: () =>
-          import(/* webpackChunkName: "table" */ "@/views/Table/index.vue"),
+            import(/* webpackChunkName: "table" */ "@/views/Table/index.vue"),
         meta: {
-          onlyWaiter: true,
+          onlyWaiter: true
         },
-        beforeEnter: async (to, from, next) => {
-          const { useUserStore } = await import("@/store/modules/user");
-          const { useTillStore } = await import("@/store/modules/till");
-          const { retrieveCurrentTill } = await import("@/api/modules/tills");
+        beforeEnter: async(to, from, next) => {
           const tillStore = useTillStore();
           const userStore = useUserStore();
-          await retrieveCurrentTill()
-            .then((response) => {
-              if (response.status === 200) {
-                tillStore.currentTillID = response.data.id;
-                tillStore.currentTillOrders = response.data.orders_count;
-              }
-            })
-            .catch((error) => {
-              if (error.response.status === 404) {
-                tillStore.currentTillID = null;
-                tillStore.currentTillOrders = 0;
-              }
-            });
+          await retrieveCurrentTill().then((response) => {
+            if(response.status === 200) {
+              tillStore.currentTillID = response.data.id;
+              tillStore.currentTillOrders = response.data.orders_count;
+            }
+          }).catch((error) => {
+            if(error.response.status === 404) {
+              tillStore.currentTillID = null;
+              tillStore.currentTillOrders = 0;
+            }
+          });
           tillStore.currentTillID !== null
-            ? next()
-            : userStore.user.role === "MOZO"
+          ? next()
+          : userStore.user.role === "MOZO"
             ? next()
             : next({ name: "TillList" });
         },
@@ -240,138 +218,126 @@ export const routes = [
             name: "TableHome",
             path: "",
             meta: { requiredPerm: "view_table" },
-            component: () => import("@/views/Table/components/TableHome.vue"),
+            component: () => import("@/views/Table/components/TableHome.vue")
           },
           {
             name: "TakeOrder",
             path: "/take-order",
             meta: { requiredPerm: "take_away_order" },
-            component: () =>
-              import("@/views/Order/components/TakeOrderLayout.vue"),
+            component: () => import("@/views/Order/components/TakeOrderLayout.vue")
           },
           {
             name: "TableOrder",
             path: ":table",
-            meta: {
-              requiredPerm: "view_order",
+            meta: { 
+              requiredPerm: "view_order"
             },
             redirect: { name: "ProductCategories" },
-            component: () =>
-              import("@/views/Table/components/TableOrderLayout.vue"),
+            component: () => import("@/views/Table/components/TableOrderLayout.vue" ),
             children: [
               {
                 name: "ProductCategories",
                 path: "product-categories",
-                component: () =>
-                  import("@/views/Table/components/CategoriesList.vue"),
+                component: () => import("@/views/Table/components/CategoriesList.vue" )
               },
               {
                 name: "CategoriesItems",
                 path: "product-categories/:category",
-                component: () =>
-                  import("@/views/Table/components/CategoriesItems.vue"),
+                component: () => import("@/views/Table/components/CategoriesItems.vue")
               },
               {
                 name: "TablePayment",
                 path: "payment",
-                component: () =>
-                  import("@/views/Table/components/TablePayment.vue"),
-              },
-            ],
-          },
-        ],
+                component: () => import("@/views/Table/components/TablePayment.vue")
+              }
+            ]
+          }
+        ]
       },
       {
         path: "/product",
         name: "Product",
         meta: {
-          requiredPerm: "view_product",
+          requiredPerm: "view_product"
         },
         component: () =>
-          import( "@/views/Product/index.vue"),
+            import(/* webpackChunkName: "product" */ "@/views/Product/index.vue")
       },
       {
         path: "/shopping",
         name: "Shopping",
         component: () =>
-          import(
-            /* webpackChunkName: "shopping" */ "@/views/Shopping/index.vue"
-          ),
+            import(/* webpackChunkName: "shopping" */ "@/views/Shopping/index.vue")
       },
       {
         path: "/supplier",
         name: "Supplier",
         meta: {
-          requiredPerm: "view_supplier",
+          requiredPerm: "view_supplier"
         },
         component: () =>
-          import(
-            /* webpackChunkName: "supplier" */ "@/views/Supplier/index.vue"
-          ),
+            import(/* webpackChunkName: "supplier" */ "@/views/Supplier/index.vue")
       },
       {
         path: "/supplies",
         name: "Supplies",
         meta: {
-          requiredPerm: "view_supplies",
+          requiredPerm: "view_supplies"
         },
         component: () =>
-          import(
-            /* webpackChunkName: "supplies" */ "@/views/Supplies/index.vue"
-          ),
+            import(/* webpackChunkName: "supplies" */ "@/views/Supplies/index.vue")
       },
       {
         path: "/kardex",
         name: "Kardex",
         redirect: { name: "KardexHome" },
         meta: {
-          requiredPerm: "view_kardex",
+          requiredPerm: "view_kardex"
         },
         component: () =>
-          import(/* webpackChunkName: "kardex" */ "@/views/Kardex/index.vue"),
+            import(/* webpackChunkName: "kardex" */ "@/views/Kardex/index.vue"),
         children: [
           {
             path: "",
             name: "KardexHome",
             component: () =>
-              import(
-                /* webpackChunkName: "kardex-by-supply" */ "@/views/Kardex/components/KardexBySupply.vue"
-              ),
+                import(
+                    /* webpackChunkName: "kardex-by-supply" */ "@/views/Kardex/components/KardexBySupply.vue"
+                    )
           },
           {
             path: ":list",
             name: "KardexList",
             component: () =>
-              import(
-                /* webpackChunkName: "kardex-list" */ "@/views/Kardex/components/KardexList.vue"
-              ),
+                import(
+                    /* webpackChunkName: "kardex-list" */ "@/views/Kardex/components/KardexList.vue"
+                    ),
             beforeEnter: (to, from) => {
-              if (
-                !["products", "supplies"].some(
-                  (option) => option === to.params.list
-                )
+              if(
+                  !["products", "supplies"].some(
+                      (option) => option === to.params.list
+                  )
               ) {
                 return from.path === "/" ? { name: "Dashboard" } : false;
               }
-            },
-          },
-        ],
+            }
+          }
+        ]
       },
       {
         path: "/settings",
         name: "Settings",
         redirect: { name: "HomeSettings" },
         component: () =>
-          import(
-            /* webpackChunkName: "settings" */ "@/views/Settings/index.vue"
-          ),
-        beforeEnter: async (to, from, next) => {
-          const { useUserStore } = await import("@/store/modules/user");
+            import(/* webpackChunkName: "settings" */ "@/views/Settings/index.vue"),
+        beforeEnter: async(to, from, next) => {
           const userStore = useUserStore();
-          if (!userStore.user.role || userStore.user.role === "ADMINISTRADOR") {
+          if(!userStore.user.role || userStore.user.role === "ADMINISTRADOR") {
             next();
+
           } else {
             next(from.path === "/" ? { name: "Dashboard" } : false);
+
           }
         },
         children: [
@@ -379,195 +345,194 @@ export const routes = [
             name: "HomeSettings",
             path: "",
             component: () =>
-              import(
-                /* webpackChunkName: "home-settings" */ "@/views/Settings/components/HomeSettings.vue"
-              ),
+                import(
+                    /* webpackChunkName: "home-settings" */ "@/views/Settings/components/HomeSettings.vue"
+                    )
           },
           {
             name: "GeneralSettings",
             path: "general-settings",
             /* meta: {
-                         requiredPerm: "view_supplier",
-                         }, */
+             requiredPerm: "view_supplier",
+             }, */
             component: () =>
-              import(
-                /* webpackChunkName: "general-settings" */ "@/views/Settings/components/GeneralSettings.vue"
-              ),
+                import(
+                    /* webpackChunkName: "general-settings" */ "@/views/Settings/components/GeneralSettings.vue"
+                    )
           },
           {
             name: "BusinessSettings",
             path: "business-settings",
             meta: {
-              requiredPerm: "view_business",
+              requiredPerm: "view_business"
             },
             component: () =>
-              import(
-                /* webpackChunkName: "business-settings" */ "@/views/Settings/components/BusinessSettings.vue"
-              ),
+                import(
+                    /* webpackChunkName: "business-settings" */ "@/views/Settings/components/BusinessSettings.vue"
+                    )
           },
           {
             name: "AdvancedSettings",
             path: "advanced-settings",
             /* meta: {
-                         requiredPerm: "view_supplier",
-                         }, */
+             requiredPerm: "view_supplier",
+             }, */
             component: () =>
-              import(
-                /* webpackChunkName: "business-settings" */ "@/views/Settings/components/AdvancedSettings.vue"
-              ),
+                import(
+                    /* webpackChunkName: "business-settings" */ "@/views/Settings/components/AdvancedSettings.vue"
+                    )
           },
           {
             name: "UserSettings",
             path: "user-settings",
             meta: {
-              requiredPerm: "view_user",
+              requiredPerm: "view_user"
             },
             component: () =>
-              import(
-                /* webpackChunkName: "user-settings" */ "@/views/Settings/components/UserSettings.vue"
-              ),
-          },
-        ],
-      },
-    ],
+                import(
+                    /* webpackChunkName: "user-settings" */ "@/views/Settings/components/UserSettings.vue"
+                    )
+          }
+        ]
+      }
+    ]
   },
   {
     path: "/login",
     name: "Login",
-    component: () =>
-      import(/* webpackChunkName: "login" */ "@/views/login/index.vue"),
-    beforeEnter: async (to, from, next) => {
-      const { useUserStore } = await import("@/store/modules/user");
+    component: () => import(/* webpackChunkName: "login" */ "@/views/login/index.vue"),
+    beforeEnter: async(to, from, next) => {
       const userStore = useUserStore();
       await userStore.checkAuthentication();
-      if (!userStore.isAuthenticated) {
+      if(!userStore.isAuthenticated) {
         next();
       } else {
         next({ name: userStore.user.role === "MOZO" ? "WaiterMode" : "App" });
       }
-    },
+    }
   },
   {
     path: "/initial-setup",
     name: "InitialSetup",
-    component: () => import("@/InitialSetup/index.vue"),
+    component: () =>
+        import("@/InitialSetup/index.vue"),
     meta: {
-      requiresAuth: true,
-    },
+      requiresAuth: true
+    }
   },
   {
     path: "/waiter-mode",
     name: "WaiterMode",
     redirect: { name: "WHome" },
-    component: () => import("@/WaiterMode/index.vue"),
+    component: () =>
+        import("@/WaiterMode/index.vue"),
     meta: {
       requiresAuth: true,
-      onlyWaiter: true,
+      onlyWaiter: true
     },
     children: [
       {
         name: "WHome",
         path: "",
-        component: () => import("@/WaiterMode/views/Home.vue"),
+        component: () =>
+            import("@/WaiterMode/views/Home.vue")
       },
       {
         name: "WOrder",
         path: ":table",
         redirect: { name: "WCategories" },
         component: () =>
-          import(
-            /* webpackChunkName: "w-order" */ "@/WaiterMode/views/Order.vue"
-          ),
+            import(/* webpackChunkName: "w-order" */ "@/WaiterMode/views/Order.vue"),
         children: [
           {
             name: "WCategories",
             path: "",
             component: () =>
-              import(
-                /* webpackChunkName: "w-categories" */ "@/WaiterMode/views/Categories.vue"
-              ),
+                import(
+                    /* webpackChunkName: "w-categories" */ "@/WaiterMode/views/Categories.vue"
+                    )
           },
           {
             name: "WCombos",
             path: "combos",
             component: () =>
-              import(
-                /* webpackChunkName: "w-combos" */ "@/WaiterMode/views/Combos.vue"
-              ),
+                import(
+                    /* webpackChunkName: "w-combos" */ "@/WaiterMode/views/Combos.vue"
+                    )
           },
           {
             name: "WProducts",
             path: ":category",
             component: () =>
-              import(
-                /* webpackChunkName: "w-products" */ "@/WaiterMode/views/Products.vue"
-              ),
-          },
-        ],
-      },
-    ],
+                import(
+                    /* webpackChunkName: "w-products" */ "@/WaiterMode/views/Products.vue"
+                    )
+          }
+        ]
+      }
+    ]
   },
-  // {
-  //   path: "/chef-mode",
-  //   name: "ChefMode",
-  //   redirect: { name: "CHome" },
-  //   component: () =>
-  //     import(/* webpackChunkName: "chef-mode" */ "@/ChefMode/index.vue"),
-  //   meta: {
-  //     requiresAuth: true,
-  //     onlyWaiter: true,
-  //   },
-  //   children: [
-  //     {
-  //       name: "CHome",
-  //       path: "",
-  //       component: () =>
-  //         import(
-  //           /* webpackChunkName: "waiter-mode" */ "@/ChefMode/views/Home.vue"
-  //         ),
-  //     },
-  //   ],
-  // },
   {
-    path: "/:catchAll(.*)",
-    name: "Page not found",
-    redirect: "/",
-    meta: { requireAuth: false },
+    path: "/chef-mode",
+    name: "ChefMode",
+    redirect: { name: "CHome" },
+    component: () => import(/* webpackChunkName: "chef-mode" */ "@/ChefMode/index.vue"),
+    meta: {
+      requiresAuth: true,
+      onlyWaiter: true
+    },
+    children: [
+      {
+        name: "CHome",
+        path: "",
+        component: () =>
+            import(/* webpackChunkName: "waiter-mode" */ "@/ChefMode/views/Home.vue")
+      }
+    ]
   },
+  {
+    path: "/:catchAll(.*)", name: "Page not found", redirect: "/",
+    meta: { requireAuth: false }
+  }
 ];
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes,
+  routes
 });
 
-router.beforeEach(async (to, from, next) => {
-  const { useUserStore } = await import("@/store/modules/user");
-  const { useGenericsStore } = await import("@/store/modules/generics");
+router.beforeEach(async(to, from, next) => {
   const userStore = useUserStore();
   const genericsStore = useGenericsStore();
   genericsStore.updateDevice();
   await userStore.checkAuthentication();
+  
+  // Helper function to extract table ID from route
+  const extractTableId = (route) => {
+    // Try direct param
+    if (route.params.table) {
+      return parseInt(route.params.table, 10);
+    }
+    // Try path regex match for /table/:id or /waiter-mode/:id
+    const match = route.path.match(/\/(table|waiter-mode)\/(\d+)/);
+    return match ? parseInt(match[2], 10) : null;
+  };
 
   // Original authentication logic
-  if (to.matched.some((record) => record.meta.requiresAuth)) {
-    if (userStore.isAuthenticated) {
-      if (to.matched.some((record) => record.meta.requiredPerm)) {
-        if (
-          to.matched.some((record) =>
-            userStore.hasPermission(record.meta.requiredPerm)
-          )
-        ) {
-          if (!to.matched.some((record) => record.meta.onlyWaiter)) {
-            if (userStore.user.role === "MOZO") {
+  if(to.matched.some((record) => record.meta.requiresAuth)) {
+    if(userStore.isAuthenticated) {
+      if(to.matched.some((record) => record.meta.requiredPerm)) {
+        if(to.matched.some((record) => userStore.hasPermission(record.meta.requiredPerm))) {
+          if(!to.matched.some((record) => record.meta.onlyWaiter)) {
+            if(userStore.user.role === "MOZO") {
               next({
                 name:
-                  genericsStore.device === "desktop"
+                    genericsStore.device === "desktop"
                     ? "TableHome"
-                    : "WaiterMode",
+                    : "WaiterMode"
               });
               return;
-            } else if (userStore.user.role === "COCINERO") {
+            } else if(userStore.user.role === "COCINERO") {
               next({ name: "ChefMode" });
               return;
             } else {

@@ -198,6 +198,10 @@ export async function updateConcept(idConcept, concept) {
   });
 }
 
+export async function deleteConcept(id) {
+  return await http.delete(`concepts/${id}/`);
+}
+
 export async function getExcelReport(id, report, queryParams = null) {
   let baseRoute = "reports/";
   if (id) {

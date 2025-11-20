@@ -85,6 +85,7 @@ import {
   MdPrintRound,
   MdNotinterestedRound,
   MdPersonoutlineTwotone,
+  MdPersonaddRound,
   MdLockopenTwotone,
   MdNotealtTwotone,
   FaCoins,
@@ -117,6 +118,7 @@ import {
   FaDownload,
   FaCircle,
   MdCreditcardTwotone,
+  MdDeleteRound,
   CoBirthdayCake,
   MdCancelpresentationTwotone,
   BiTag,
@@ -127,8 +129,6 @@ import {
   BiBank,
   MdTablechart,
 } from "oh-vue-icons/icons";
-
-
 
 addIcons(
   MdTablechart,
@@ -141,7 +141,6 @@ addIcons(
   BiCreditCard2Front,
   BiCashCoin,
   BiThreeDots,
-  CoBirthdayCake,
   BiThreeDotsVertical,
   MdSpacedashboardTwotone,
   MdSupervisedusercircleTwotone,
@@ -178,7 +177,6 @@ addIcons(
   MdDeletesweepRound,
   MdPersonsearchRound,
   MdDiningTwotone,
-  MdCancelpresentationTwotone,
   GiMeal,
   MdAddRound,
   MdAddcircleRound,
@@ -225,6 +223,7 @@ addIcons(
   MdPrintRound,
   MdNotinterestedRound,
   MdPersonoutlineTwotone,
+  MdPersonaddRound,
   MdLockopenTwotone,
   MdNotealtTwotone,
   FaCoins,
@@ -256,6 +255,10 @@ addIcons(
   MdOutgoingmail,
   FaDownload,
   FaCircle,
-  MdCreditcardTwotone
+  MdCreditcardTwotone,
+  MdDeleteRound,
+  CoBirthdayCake,
+  MdCancelpresentationTwotone
 );
+
 export { OhVueIcon };

@@ -1,5 +1,5 @@
 <template>
-    <n-tabs type="line" justify-content="space-around">
+    <n-tabs v-model:value="activeTab" type="line" justify-content="space-around">
         <template #prefix>
             <n-button
                     class="ms-2"
@@ -14,11 +14,17 @@
         <n-tab-pane class="p-0" name="menu" tab="Carta">
             <router-view></router-view>
         </n-tab-pane>
+        <n-tab-pane class="p-0" name="menus" tab="Menús">
+            <WMenus />
+        </n-tab-pane>
+        <n-tab-pane class="p-0" name="combos" tab="Combos">
+            <WCombos />
+        </n-tab-pane>
         <n-tab-pane
                 id="OrderPane"
                 name="order"
                 tab="Pedido"
-                :disabled="!orderStore.orderId"
+                :disabled="!orderStore.orderId && orderStore.fullOrderList.length === 0"
         >
             <n-card title="Pedido" size="small" :segmented="{ content: 'hard' }">
                 <template #header-extra>
@@ -34,24 +40,62 @@
                 </template>
                 <!-- <n-h2>Pedido</n-h2> -->
                 <n-list class="m-0">
-                    <template v-for="(order, index) in orderStore.orderList">
-                        <n-list-item v-if="order.quantity > 0" :key="index">
-                            <n-thing>
-                                <template #header>
-                                    <n-tag>{{ order.quantity }}</n-tag>
-                                    <n-text class="ms-2">{{ order.product_name }}</n-text>
-                                </template>
-                                <template #header-extra>
-                                    <n-text>{{
-                                            `S/. ${ order.quantity * order.price.toFixed(2) }`
-                                        }}
-                                    </n-text>
-                                </template>
-                            </n-thing>
-                            <!-- @click="
-							  itemIndex = index;
-							  showModal = true;
-							" -->
+                    <template v-for="(order, index) in currentOrderList" :key="index">
+                        <n-list-item v-if="order.quantity > 0">
+                        <n-thing>
+                            <template #header>
+                            <n-tag>{{ order.quantity }}</n-tag>
+                            <!-- Caso producto normal -->
+                            <n-text v-if="order.product_name" class="ms-2">
+                                {{ order.product_name }}
+                            </n-text>
+                            <!-- Caso menú -->
+                            <n-text v-else-if="order.from_menu" class="ms-2">
+                                <n-icon color="#18a058" class="me-1">
+                                    <v-icon name="md-restaurant-round" />
+                                </n-icon>
+                                {{ order.name }}
+                            </n-text>
+                            <!-- Caso combo -->
+                            <n-text v-else-if="order.from_combo" class="ms-2">
+                                <n-icon color="#f0a020" class="me-1">
+                                    <v-icon name="gi-hot-meal" />
+                                </n-icon>
+                                {{ order.name }}
+                            </n-text>
+                            </template>
+
+                            <template #header-extra>
+                            <n-text>
+                                S/. {{ (order.quantity * order.price).toFixed(2) }}
+                            </n-text>
+                            </template>
+
+                            <!-- Listar los items si es un menú -->
+                            <template v-if="order.from_menu && order.items">
+                            <div class="ms-4 mt-2">
+                                <n-text class="fs-7" type="info">Productos del menú:</n-text>
+                                <ul class="ms-3 mt-1">
+                                    <li v-for="(item, idx) in order.items" :key="idx" class="fs-7">
+                                    {{ item.quantity }} x {{ item.product_name }}
+                                    <n-tag size="tiny" class="ms-1">{{ item.phase_name }}</n-tag>
+                                    </li>
+                                </ul>
+                            </div>
+                            </template>
+                            
+                            <!-- Listar los items si es un combo -->
+                            <template v-if="order.from_combo && order.items">
+                            <div class="ms-4 mt-2">
+                                <n-text class="fs-7" type="warning">Productos del combo:</n-text>
+                                <ul class="ms-3 mt-1">
+                                    <li v-for="(item, idx) in order.items" :key="idx" class="fs-7">
+                                    {{ item.quantity }} x {{ item.product_name }}
+                                    </li>
+                                </ul>
+                            </div>
+                            </template>
+                        </n-thing>
                         </n-list-item>
                     </template>
                 </n-list>
@@ -60,7 +104,7 @@
                     v-model:show="showModal"
                     preset="card"
                     title="Indicaciones"
-                    :product="orderStore.orderList[itemIndex]"
+                    :product="currentOrderList[itemIndex]"
                     @success="showModal = false"
             />
             <preview-drawer
@@ -75,8 +119,10 @@
 </template>
 
 <script>
-import { defineComponent, ref, onUpdated, onMounted } from "vue";
+import { defineComponent, ref, onUpdated, onMounted, provide, computed } from "vue";
 import ProductsDrawer from "../components/ProductsDrawer";
+import WMenus from "./Menus.vue";
+import WCombos from "./Combos.vue";
 import { useMessage, useDialog } from "naive-ui";
 import {
     useRoute,
@@ -101,7 +147,9 @@ export default defineComponent({
     components: {
         ProductIndications,
         ProductsDrawer,
-        PreviewDrawer
+        PreviewDrawer,
+        WMenus,
+        WCombos
     },
     setup() {
         const settingsStore = useSettingsStore();
@@ -118,10 +166,24 @@ export default defineComponent({
         const showModal = ref(false);
         const itemIndex = ref(null);
         const orderDetails = ref([]);
+        const activeTab = ref("menu"); // Controlar pestaña activa
+        
+        // Provide function para que WMenus pueda cambiar la pestaña
+        const switchToOrderTab = () => {
+            activeTab.value = "order";
+        };
+        
+        provide('switchToOrderTab', switchToOrderTab);
 
-        orderStore.orders = [];
-        saleStore.order_initial = [];
-        orderStore.orderId = null;
+        // Computed para hacer la lista más reactiva
+        const currentOrderList = computed(() => {
+            return orderStore.fullOrderList;
+        });
+
+        // Comentar la inicialización que puede estar interfiriendo
+        // orderStore.orders = [];
+        // saleStore.order_initial = [];
+        // orderStore.orderId = null;
 
         onBeforeRouteUpdate((to) => {
             if (to.name !== "WCategories" && to.name !== "WProducts") {
@@ -161,13 +223,61 @@ export default defineComponent({
         const performRetrieveTableOrder = () => {
             retrieveTableOrder(route.params.table).then((response) => {
                 if (response.status === 200) {
-                    orderStore.orders = response.data.order_details;
-                    saleStore.order_initial = cloneDeep(orderStore.orderList);
+                    // Transformar order_details del backend al formato que espera el frontend
+                    const transformedOrders = response.data.order.order_details.map(detail => {
+                        if (detail.product_set) {
+                            // Determinar si es MENU o COMBO
+                            const isCombo = detail.product_set.set_type === 'COMBO';
+                            return {
+                                id: detail.id,
+                                from_menu: detail.product_set.set_type === 'MENU',
+                                from_combo: isCombo,
+                                name: detail.product_set.menu_name || detail.product_set.name,
+                                price: parseFloat(detail.product_set.price || detail.product_set.fixed_price || detail.product_set.computed_price || 0),
+                                quantity: detail.quantity,
+                                product_set: detail.product_set,
+                                items: detail.product_set.items?.map(item => ({
+                                    quantity: item.quantity,
+                                    product_name: item.product_name,
+                                    phase_name: item.product_phase?.phase_name
+                                })) || []
+                            };
+                        } else if (detail.product) {
+                            // Es un producto regular
+                            return {
+                                id: detail.id,
+                                product: detail.product,
+                                product_name: detail.product_name,
+                                price: parseFloat(detail.price),
+                                quantity: detail.quantity,
+                                indication: detail.indication || [],
+                                icbper: detail.icbper,
+                                product_affectation: detail.product_affectation,
+                                product_igv: detail.product_igv
+                            };
+                        }
+                        return null;
+                    }).filter(Boolean);
+                    
+                    orderStore.setSavedOrders(transformedOrders);
+                    saleStore.order_initial = cloneDeep(orderStore.fullOrderList);
                     orderStore.orderId = response.data.id;
                 }
             }).catch((error) => {
-                if (error.response.status === 404) {
-                    orderStore.orders = [];
+                if (error.response && error.response.status === 423) {
+                    // Mesa bloqueada por otro usuario
+                    const lockData = error.response.data.lock_data || error.response.data;
+                    const lockedBy = lockData?.locked_by_username || 'otro usuario';
+                    const remainingMinutes = lockData?.remaining_minutes || 
+                        Math.ceil((lockData?.remaining_seconds || 0) / 60);
+                    
+                    message.error(
+                        `Mesa bloqueada por ${lockedBy}. Disponible en ${remainingMinutes} minutos.`,
+                        { duration: 5000 }
+                    );
+                    router.push({ name: 'WHome' });
+                } else if (error.response && error.response.status === 404) {
+                    orderStore.setSavedOrders([]);
                     saleStore.order_initial = [];
                     orderStore.orderId = null;
                 } else {
@@ -207,7 +317,7 @@ export default defineComponent({
         }
 
         onMounted(() => {
-            waiterStore.preOrderList = [];
+            // waiterStore.preOrderList = []; // Comentado temporalmente
             performRetrieveTableOrder();
             setTabStyle();
         });
@@ -229,11 +339,13 @@ export default defineComponent({
             itemIndex,
             orderDetails,
             showDrawer,
+            activeTab,
             printOrderPrebill,
             userStore,
             previewDrawer,
             showPreview,
-            previewData
+            previewData,
+            currentOrderList
         };
     }
 });
@@ -243,5 +355,9 @@ export default defineComponent({
 .n-tab-pane {
   position: relative;
   top: 42px;
+}
+
+.fs-7 {
+  font-size: 0.85rem;
 }
 </style>

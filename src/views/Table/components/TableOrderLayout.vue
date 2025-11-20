@@ -8,38 +8,17 @@
         <n-card v-if="!isMobile">
             <n-grid responsive="screen" cols="1 m:10">
                 <n-gi :span="!shouldShowCustomerMode ? '6' : '5 xl:6'" style="height: calc(100vh - 165px);">
-                    <router-view/>
+                    <router-view />
                 </n-gi>
                 <n-gi :span="!shouldShowCustomerMode ? '4' : '5 xl:4'" style="height: calc(100vh - 165px);">
                     <TableOrder
-                            :ask_for="ask_for"
-                            :orderUser="orderUser"
-                            :loading="loading"
-                            :checkState="checkState"
-                            @validateSend="validateSend"
-                            @addCustomer="addCustomer"
-                            @removeCustomer="removeCustomer"
-                            @deleteOrderDetail="deleteOrderDetail"
-                            @goToFirstTab="goToFirstTab"
-                            @update:selectedCustomerId="selectedCustomerId = $event"
-                            @update:ask_for="ask_for = $event"
-                            @update:orderUser="orderUser = $event"
-                    />
-                </n-gi>
-            </n-grid>
-        </n-card>
-        <n-tabs v-else tab-style="background: #fff;" v-model:value="activeTab" type="segment" animated>
-            <n-tab-pane name="main" tab="Principal">
-                <n-card>
-                    <router-view/>
-                </n-card>
-            </n-tab-pane>
-            <n-tab-pane name="payment" tab="Orden">
-                <TableOrder
                         :ask_for="ask_for"
                         :orderUser="orderUser"
                         :loading="loading"
-                        :checkState="checkState"
+                        :hasUnsavedChanges="hasUnsavedChanges"
+                        :customers="customers"
+                        :selectedCustomerId="selectedCustomerId"
+                        :shouldShowCustomerMode="shouldShowCustomerMode"
                         @validateSend="validateSend"
                         @addCustomer="addCustomer"
                         @removeCustomer="removeCustomer"
@@ -48,28 +27,52 @@
                         @update:selectedCustomerId="selectedCustomerId = $event"
                         @update:ask_for="ask_for = $event"
                         @update:orderUser="orderUser = $event"
+                        @productSelect="handleProductClick"
+                    />
+                </n-gi>
+            </n-grid>
+        </n-card>
+        <n-tabs v-else tab-style="background: #fff;" v-model:value="activeTab" type="segment" animated>
+            <n-tab-pane name="main" tab="Principal">
+                <n-card><router-view /></n-card>
+            </n-tab-pane>
+            <n-tab-pane name="payment" tab="Orden">
+                <TableOrder
+                    :ask_for="ask_for"
+                    :orderUser="orderUser"
+                    :loading="loading"
+                    :hasUnsavedChanges="hasUnsavedChanges"
+                    :customers="customers"
+                    :selectedCustomerId="selectedCustomerId"
+                    :shouldShowCustomerMode="shouldShowCustomerMode"
+                    @validateSend="validateSend"
+                    @addCustomer="addCustomer"
+                    @removeCustomer="removeCustomer"
+                    @deleteOrderDetail="deleteOrderDetail"
+                    @goToFirstTab="goToFirstTab"
+                    @update:selectedCustomerId="selectedCustomerId = $event"
+                    @update:ask_for="ask_for = $event"
+                    @update:orderUser="orderUser = $event"
+                    @productSelect="handleProductClick"
                 />
             </n-tab-pane>
         </n-tabs>
         <!-- Modales -->
         <n-modal title="Registrar pedido" preset="card" v-model:show="showUserConfirm" closable :mask-closable="false" :class="modalClass">
             <n-form-item label="Ingrese código de usuario">
-                <n-input type="password" v-model:value="userConfirm" placeholder="****"/>
+                <n-input type="password" v-model:value="userConfirm" placeholder="****" />
             </n-form-item>
             <template #action>
                 <n-space justify="end">
-                    <n-button type="success" :loading="loading" :disabled="!userConfirm || loading" secondary
-                              @click.prevent="orderStore.orderId ? performUpdateTableOrder() : performCreateTableOrder()">Confirmar
-                    </n-button>
+                    <n-button type="success" :loading="loading" :disabled="!userConfirm || loading" secondary @click.prevent="orderStore.orderId ? performUpdateTableOrder() : performCreateTableOrder()">Confirmar</n-button>
                 </n-space>
             </template>
         </n-modal>
-        <n-modal :class="modalClass" preset="card" v-model:show="showConfirm" title="Eliminando comanda" :mask-closable="false" closable
-                 @close="resetAnulateData">
+        <n-modal :class="modalClass" preset="card" v-model:show="showConfirm" title="Eliminando comanda" :mask-closable="false" closable @close="resetAnulateData">
             <div v-if="!userStore.hasPermission('cancel_orderdetail')">
                 <n-form ref="formRef" :model="dataAnulate" :rules="rules">
                     <n-form-item label="Cantidad">
-                        <n-input-number v-model:value="deleteQuantity" :min="1" :max="maxQuantity" style="width: 100%"/>
+                        <n-input-number v-model:value="deleteQuantity" :min="1" :max="maxQuantity" style="width: 100%" />
                     </n-form-item>
                 </n-form>
             </div>
@@ -77,23 +80,23 @@
                 <div v-if="requireUserPass">
                     <n-form ref="formRef" :model="dataAnulate" :rules="rules">
                         <n-form-item label="Ingrese su usuario" path="username">
-                            <n-input v-model:value="dataAnulate.username"/>
+                            <n-input v-model:value="dataAnulate.username" />
                         </n-form-item>
                         <n-form-item label="Ingrese su contraseña" path="pass">
-                            <n-input type="password" v-model:value="dataAnulate.pass"/>
+                            <n-input type="password" v-model:value="dataAnulate.pass" />
                         </n-form-item>
                         <n-form-item label="Cantidad">
-                            <n-input-number v-model:value="deleteQuantity" :min="1" :max="maxQuantity" style="width: 100%"/>
+                            <n-input-number v-model:value="deleteQuantity" :min="1" :max="maxQuantity" style="width: 100%" />
                         </n-form-item>
                     </n-form>
                 </div>
                 <div v-else-if="requireGeneralPass">
                     <n-form ref="formRef" :model="dataAnulate" :rules="rules">
                         <n-form-item label="Ingrese la contraseña" path="pass">
-                            <n-input type="password" v-model:value="dataAnulate.pass"/>
+                            <n-input type="password" v-model:value="dataAnulate.pass" />
                         </n-form-item>
                         <n-form-item label="Cantidad">
-                            <n-input-number v-model:value="deleteQuantity" :min="1" :max="maxQuantity" style="width: 100%"/>
+                            <n-input-number v-model:value="deleteQuantity" :min="1" :max="maxQuantity" style="width: 100%" />
                         </n-form-item>
                     </n-form>
                 </div>
@@ -103,21 +106,20 @@
             </div>
             <template #action>
                 <n-space justify="end">
-                    <n-button type="success" secondary @click.prevent="performDeleteDetail" :disabled="showConfigMessage">Confirmar
-                    </n-button>
+                    <n-button type="success" secondary @click.prevent="performDeleteDetail" :disabled="showConfigMessage">Confirmar</n-button>
                 </n-space>
             </template>
         </n-modal>
 
-        <ticket-preview ref="ticketPreview" v-model:show="showPdf" :data="pdfData" :hidden="true" :isUpdate="!!orderStore.orderId"
-                        @printed="goHome" @canceled="goHome"/>
+
+        <ticket-preview ref="ticketPreview" v-model:show="showPdf" :data="pdfData" :hidden="true" :isUpdate="!!orderStore.orderId" @printed="goHome" @canceled="goHome" />
     </div>
 </template>
 
 <script>
 import TableOrder from "./TableOrder.vue";
 import TicketPreview from "@/views/Order/components/TicketPreview";
-import { defineComponent, ref, computed, onMounted, watchEffect, provide } from "vue";
+import { defineComponent, ref, computed, onMounted, watchEffect, provide } from 'vue';
 import { useRoute, useRouter, onBeforeRouteLeave, onBeforeRouteUpdate } from "vue-router";
 import { useDialog, useMessage } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
@@ -129,7 +131,7 @@ import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { retrieveTableOrder, createTableOrder, updateTableOrder, cancelTableOrder, performDeleteOrderDetail } from "@/api/modules/tables";
 import { cloneDeep } from "@/utils";
-import { useBreakpoint } from "vooks";
+import { useBreakpoint } from 'vooks';
 
 export default defineComponent({
     name: "TableOrderLayout",
@@ -151,20 +153,16 @@ export default defineComponent({
         const saleStore = useSaleStore();
 
         const table = route.params.table;
-        const rules = {
-            username: { required: true, trigger: [ "blur", "input" ], message: "" },
-            pass: { required: true, trigger: [ "blur", "input" ], message: "" }
-        };
+        const rules = { username: { required: true, trigger: ["blur", "input"], message: "" }, pass: { required: true, trigger: ["blur", "input"], message: "" } };
 
         const dataAnulate = ref({ username: "", pass: "" });
-        const checkState = ref(false);
         const loading = ref(false);
         const ask_for = ref(undefined);
         const orderUser = ref(null);
         const orderUser_initial = ref(null);
+        const checkState = ref(false);
         const customerIdCounter = ref(1);
         const customers = ref([]);
-        const dataItems = ref([]);
         const selectedCustomerId = ref(null);
         const showConfirm = ref(false);
         const deleteQuantity = ref(1);
@@ -176,56 +174,51 @@ export default defineComponent({
         const showPdf = ref(false);
         const pdfData = ref(null);
         const ticketPreview = ref(null);
-        const activeTab = ref("main");
-
-        const isMobile = computed(() => [ "xs", "s" ].includes(breakpointRef.value));
+        const activeTab = ref('main')
+        const isMobile = computed(() => ['xs', 's'].includes(breakpointRef.value));
         const shouldShowCustomerMode = computed(() => orderStore.orderId ? orderStore.orderList.some(order => order.customer) : settingsStore.businessSettings?.order?.order_by_customer);
         const selectedCustomer = computed(() => customers.value.find(c => c.id === selectedCustomerId.value) || null);
-        const modalClass = computed(() => ({
-            "w-100": genericsStore.device === "mobile", "w-50": genericsStore.device === "tablet",
-            "w-25": genericsStore.device === "desktop"
-        }));
+        const modalClass = computed(() => ({ 'w-100': genericsStore.device === 'mobile', 'w-50': genericsStore.device === 'tablet', 'w-25': genericsStore.device === 'desktop' }));
         const requireUserPass = computed(() => settingsStore.businessSettings.sale?.require_user_pass_to_null);
         const requireGeneralPass = computed(() => settingsStore.businessSettings.sale.require_general_pass_to_null);
-        const showConfigMessage = computed(() => userStore.hasPermission("cancel_orderdetail") && !requireUserPass.value && !requireGeneralPass.value);
+        const showConfigMessage = computed(() => userStore.hasPermission('cancel_orderdetail') && !requireUserPass.value && !requireGeneralPass.value);
 
-        watchEffect(() => {
+        const hasUnsavedChanges = computed(() => {
             const ordersChanged = JSON.stringify(saleStore.order_initial) !== JSON.stringify(orderStore.orderList);
             const userChanged = orderUser_initial.value !== orderUser.value;
+            
             // Si no hay pedido aún y solo cambió el usuario → no lo consideres un cambio importante
-            if ( !orderStore.orderId && userChanged && !ordersChanged) {
-                checkState.value = true;
-                return;
+            if (!orderStore.orderId && userChanged && !ordersChanged) {
+                checkState.value = false; // No hay cambios importantes
+                return false;
             }
-            checkState.value = !ordersChanged && !userChanged;
+            
+            // Hay cambios si las órdenes cambiaron O el usuario cambió
+            const hasChanges = ordersChanged || userChanged;
+            checkState.value = !hasChanges; // checkState es true cuando NO hay cambios
+            
+            return hasChanges; // Retornar true si hay cambios
         });
 
-        const goToFirstTab = () => {
-            activeTab.value = "main";
-        };
+        const goToFirstTab = () => activeTab.value = 'main';
 
         const handleRouteGuard = (to, isLeave = false) => {
-            if ([ "ProductCategories", "CategoriesItems", "TablePayment" ].includes(to.name)) return;
+            if (["ProductCategories", "CategoriesItems"].includes(to.name)) return;
 
-            if (checkState.value) {
-                cleanupOrderStore();
-                return;
+            if (hasUnsavedChanges.value) {
+                dialog.error({
+                    title: "Cambios sin guardar",
+                    content: "¿Salir de todos modos?",
+                    positiveText: "Sí",
+                    onPositiveClick: () => {
+                        cleanupOrderStore();
+                        router.push(to);
+                    },
+                    ...(isLeave ? {} : { negativeText: "No" }),
+                    closable: !isLeave
+                });
+                return false;
             }
-
-            const config = {
-                title: "Cambios sin guardar",
-                content: "¿Salir de todos modos?",
-                positiveText: "Sí",
-                onPositiveClick: () => {
-                    checkState.value = true;
-                    cleanupOrderStore();
-                    router.push(to);
-                },
-                ...(isLeave ? {} : { negativeText: "No" }),
-                closable: !isLeave
-            };
-            dialog.error(config);
-            return false;
         };
 
         const cleanupOrderStore = () => {
@@ -234,15 +227,11 @@ export default defineComponent({
             saleStore.order_initial = [];
         };
 
-        onBeforeRouteUpdate((to) => handleRouteGuard(to));
-        onBeforeRouteLeave((to) => handleRouteGuard(to, true));
-
         const resetStores = () => {
             orderStore.orderId = null;
             orderStore.orders = [];
             saleStore.order_initial = [];
             customerIdCounter.value = 1;
-            dataItems.value = [];
         };
 
         const extractCustomers = (orderDetails) => {
@@ -258,15 +247,50 @@ export default defineComponent({
             return detectedCustomers;
         };
 
-        const performRetrieveTableOrder = async() => {
+        const performRetrieveTableOrder = async () => {
             resetStores();
             try {
                 const response = await retrieveTableOrder(table);
-                dataItems.value = response.data.order_details;
                 if (response.status === 200) {
-                    const { order_details: orderDetails, user: userId, ask_for: askFor, id } = response.data;
-                    const detectedCustomers = extractCustomers(orderDetails);
-                    orderStore.orders = orderDetails;
+                    const { order_details: orderDetails, user: userId, ask_for: askFor, id } = response.data.order;
+                    const mappedOrderDetails = orderDetails.map(detail => {
+                        if (detail.product_set) {
+                            // Determinar si es un MENU o un COMBO
+                            const isCombo = detail.product_set.set_type === 'COMBO';
+                            const isMenu = detail.product_set.set_type === 'MENU';
+                            
+                            return {
+                                from_menu: isMenu,
+                                from_combo: isCombo,
+                                product_set_id: detail.product_set.id,
+                                order_detail_id: detail.id,
+                                combo_id: detail.product_set?.combo || null,
+                                name: detail.product_set.menu_name || detail.product_set.name,
+                                set_type: detail.product_set.set_type,
+                                price: parseFloat(detail.product_set.price || detail.product_set.fixed_price || detail.product_set.computed_price || 0),
+                                fixed_price: detail.product_set.fixed_price,
+                                pricing_mode: detail.product_set.pricing_mode,
+                                quantity: detail.product_set.quantity,
+                                items: Array.isArray(detail.product_set.items)
+                                    ? detail.product_set.items.map(item => ({
+                                        id: item.id,
+                                        combo_product_id: item.combo_product?.id || item.combo_product_id,
+                                        product_phase_id: item.product_phase?.id,
+                                        product_id: item.product?.id,
+                                        product_name: item.product_name,
+                                        phase_name: item.product_phase?.phase_name,
+                                        quantity: item.quantity,
+                                        kardex_map: item.kardex_map,
+                                    }))
+                                    : [],
+                                ...(detail.id ? { id: detail.id } : {}),
+                                ...(detail.customer ? { customer: detail.customer } : {}),
+                            }
+                        }
+                        return detail;
+                    });
+                    const detectedCustomers = extractCustomers(mappedOrderDetails);
+                    orderStore.orders = mappedOrderDetails;
                     customers.value = detectedCustomers;
                     selectedCustomerId.value = detectedCustomers[0]?.id || null;
                     ask_for.value = askFor;
@@ -277,6 +301,22 @@ export default defineComponent({
                     orderUser.value = userId;
                 }
             } catch (error) {
+                if (error.response?.status === 423) {
+                    // Mesa bloqueada por otro usuario
+                    const lockData = error.response.data.lock_data || error.response.data;
+                    const lockedBy = lockData.locked_by_username || 'otro usuario';
+                    const remainingMinutes = lockData.remaining_minutes || Math.ceil((lockData.remaining_seconds || 0) / 60);
+                    
+                    message.error(
+                        `Mesa bloqueada por ${lockedBy}. Disponible en ${remainingMinutes} minutos.`,
+                        { duration: 5000 }
+                    );
+                    
+                    // Redirigir al listado de mesas
+                    router.push({ name: 'TableHome' });
+                    return;
+                }
+                
                 if (error.response?.status === 404) {
                     resetStores();
                     // const initialUser = activeUsersStore.usersOptions[0]?.value;
@@ -284,7 +324,7 @@ export default defineComponent({
                     // orderUser.value = userStore.user.role === 'MOZO' ? userStore.user.id : initialUser;
 
                     // Aseguramos que la lista de usuarios activos esté cargada
-                    if ( !activeUsersStore.users.length) {
+                    if (!activeUsersStore.users.length) {
                         await activeUsersStore.initializeStore();
                     }
 
@@ -303,6 +343,7 @@ export default defineComponent({
 
                 } else {
                     console.error(error);
+                    message.error("Algo salió mal...");
                 }
             } finally {
                 loading.value = false;
@@ -320,11 +361,10 @@ export default defineComponent({
             pdfData.value = response.data;
             showPdf.value = true;
             setTimeout(() => ticketPreview.value.generate(), 250);
-            checkState.value = true;
             cleanupOrderStore();
         };
 
-        const performCreateTableOrder = async() => {
+        const performCreateTableOrder = async () => {
             loading.value = true;
             try {
                 const response = await createTableOrder(table, orderStore.orderList, orderUser.value, ask_for.value);
@@ -345,179 +385,15 @@ export default defineComponent({
                 list.push(newOrder);
             } else if (item && JSON.stringify(order.indication) !== JSON.stringify(item.indication)) {
                 list.push(cloneDeep(order));
-            } else if ( !item) {
+            } else if (!item) {
                 list.push(order);
             }
             return list;
         }, []);
 
-        const normalizeOldOrders = (orderDetails = []) => {
-            const map = new Map();
-
-            for (const item of orderDetails) {
-                const key = `${ item.product }-${ JSON.stringify(item.indication || []) }`;
-                if (map.has(key)) {
-                    const existing = map.get(key);
-                    existing.quantity += item.quantity || 0;
-                    existing.sub_total = (existing.sub_total || 0) + (item.sub_total || 0);
-                    existing.sale_detail_total = (existing.sale_detail_total || 0) + (item.sale_detail_total || 0);
-                } else {
-                    map.set(key, { ...item });
-                }
-            }
-
-            return Array.from(map.values());
-        };
-
-        const buildUpdatedOrderList = (oldOrders = [], newOrders = []) => {
-            const updated = [];
-
-            for (const newItem of newOrders) {
-                const productId = newItem.product;
-                const price = parseFloat(newItem.price?.parsedValue || newItem.price || 0);
-                const newQty = Number(newItem.quantity) || 0;
-
-                // Limpia indicaciones vacías
-                const validIndications = (Array.isArray(newItem.indication) ? newItem.indication : []).filter(i => i?.description?.trim());
-
-                const oldItem = oldOrders.find(o => o.product === productId);
-                const oldQty = Number(oldItem?.quantity || 0);
-                const baseId = oldItem?.id || newItem.id;
-
-                // 🧩 Caso 1: Producto existente
-                if (oldItem) {
-                    const qtyChanged = newQty !== oldQty;
-
-                    // Si hay nuevas indicaciones o cambios de cantidad
-                    if (validIndications.length > 0) {
-                        // 1️⃣ Genera registros individuales por cada indicación
-                        for (const ind of validIndications) {
-                            updated.push({
-                                ...oldItem,
-                                id: baseId,
-                                indication: [ ind ],
-                                quantity: 1,
-                                subTotal: price,
-                                sub_total: price,
-                                sale_detail_total: price
-                            });
-                        }
-
-                        // 2️⃣ Determina las unidades sin indicación restantes
-                        let remainingQty;
-                        if (qtyChanged) {
-                            // si el usuario cambió la cantidad manualmente, restamos indicadas
-                            remainingQty = Math.max(newQty - validIndications.length, 0);
-                        } else {
-                            // si la cantidad no cambió, respetamos la cantidad original
-                            remainingQty = Math.max(oldQty - validIndications.length, 0);
-                        }
-
-                        if (remainingQty > 0) {
-                            updated.push({
-                                ...oldItem,
-                                id: baseId,
-                                indication: [],
-                                quantity: remainingQty,
-                                subTotal: price * remainingQty,
-                                sub_total: price * remainingQty,
-                                sale_detail_total: price * remainingQty
-                            });
-                        }
-                    } else {
-                        // No hay indicaciones — mantener la cantidad actual (nueva o vieja)
-                        updated.push({
-                            ...oldItem,
-                            id: baseId,
-                            indication: [],
-                            quantity: newQty || oldQty,
-                            subTotal: price * (newQty || oldQty),
-                            sub_total: price * (newQty || oldQty),
-                            sale_detail_total: price * (newQty || oldQty)
-                        });
-                    }
-                }
-
-                // 🧩 Caso 2: Producto nuevo
-                else {
-                    updated.push({
-                        ...newItem,
-                        id: newItem.id,
-                        indication: validIndications,
-                        quantity: newQty,
-                        subTotal: price * newQty,
-                        sub_total: price * newQty,
-                        sale_detail_total: price * newQty
-                    });
-                }
-            }
-
-            // 🧹 Evita duplicados exactos (producto + indicación)
-            const seen = new Set();
-            return updated.filter(o => {
-                const key = `${ o.product }-${ JSON.stringify(o.indication || []) }`;
-                if (seen.has(key)) return false;
-                seen.add(key);
-                return true;
-            });
-        };
-
-        function normalizeOrderDetails(details) {
-            const grouped = {};
-
-            // Agrupar por producto + descripción
-            details.forEach((item) => {
-                const desc =
-                    item.indication?.[0]?.description?.trim().toLowerCase() || "";
-                const key = `${ item.product }__${ desc }`;
-
-                if ( !grouped[key]) grouped[key] = [];
-                grouped[key].push(item);
-            });
-
-            const normalized = [];
-
-            // Procesar cada grupo
-            Object.values(grouped).forEach((items) => {
-                const totalQty = items.reduce((sum, i) => sum + i.quantity, 0);
-
-                // Si hay varios iguales, fusionar en uno solo
-                const merged = {
-                    ...items[0],
-                    quantity: totalQty
-                };
-
-                normalized.push(merged);
-            });
-
-            // Agrupar por producto y re-asignar cantidades
-            const byProduct = {};
-            normalized.forEach((item) => {
-                if ( !byProduct[item.product]) byProduct[item.product] = [];
-                byProduct[item.product].push(item);
-            });
-
-            const finalNormalized = [];
-
-            for (const items of Object.values(byProduct)) {
-                const totalQty = items.reduce((sum, i) => sum + i.quantity, 0);
-                items.forEach((item, index) => {
-                    item.quantity = index === items.length - 1 ? totalQty : 1;
-                    finalNormalized.push(item);
-                });
-            }
-
-            return finalNormalized;
-        }
-
-        const performUpdateTableOrder = async() => {
+        const performUpdateTableOrder = async () => {
             loading.value = true;
             try {
-
-                const cleanOldOrders = normalizeOldOrders(dataItems.value);
-                const createNewOrder = buildUpdatedOrderList(cleanOldOrders, orderStore.orderList);
-                const tetas = normalizeOrderDetails(createNewOrder);
-                console.log(tetas);
                 const response = await updateTableOrder(table, orderStore.orderId, orderStore.orderList, orderUser.value, ask_for.value);
                 if (response.status === 202) {
                     response.data.order_details = evalOrderList(response.data.order_details);
@@ -525,27 +401,30 @@ export default defineComponent({
                 }
             } catch (error) {
                 console.error(error);
+                message.error("Algo salió mal...");
             } finally {
                 resetConfirmState();
             }
         };
 
-        const performNullifyTableOrder = async() => {
+        const performNullifyTableOrder = async () => {
             try {
                 const response = await cancelTableOrder(table, dataAnulate.value);
                 if (response.status === 202) {
                     message.success("Pedido anulado correctamente!");
-                    checkState.value = true;
                     cleanupOrderStore();
-                    await router.push({ name: "TableHome" });
+                    router.push({ name: "TableHome" });
                 }
             } catch (error) {
                 console.error(error);
+                message.error("Algo salió mal...");
             }
         };
 
-        const nullifyTableOrder = async() => {
-            if ( !orderStore.orderList.length && orderStore.orderId) await performNullifyTableOrder();
+        const nullifyTableOrder = async () => {
+            if (!orderStore.orderList.length && orderStore.orderId) {
+                await performNullifyTableOrder();
+            }
         };
 
         const resetDeleteState = () => {
@@ -556,13 +435,13 @@ export default defineComponent({
             dataAnulate.value = { username: "", pass: "" };
         };
 
-        const performDeleteDetail = async() => {
+        const performDeleteDetail = async () => {
             try {
                 const response = await performDeleteOrderDetail(table, removingItem.value.id, dataAnulate.value, deleteQuantity.value);
                 if (response.status === 204) {
                     orderStore.orderList.splice(removingItem.value.ind, 1);
                     saleStore.order_initial.splice(removingItem.value.ind, 1);
-                    await nullifyTableOrder();
+                    nullifyTableOrder();
                     message.success("Comanda eliminada");
                 } else if (response.status === 202) {
                     const { ind } = removingItem.value;
@@ -571,8 +450,6 @@ export default defineComponent({
                     saleStore.order_initial[ind].quantity -= quantity;
                     saleStore.order_initial[ind].subTotal = saleStore.order_initial[ind].quantity * saleStore.order_initial[ind].price;
                     message.success("Comanda actualizada correctamente");
-                    const data = await retrieveTableOrder(table);
-                    dataItems.value = data.data.order_details;
                 }
                 resetDeleteState();
             } catch (error) {
@@ -582,11 +459,10 @@ export default defineComponent({
         };
 
         const addCustomer = (name) => {
-            if ( !name?.trim()) return;
+            if (!name?.trim()) return;
             const newCustomer = { id: customerIdCounter.value++, name: name.trim() };
-            customers.value.push(newCustomer);
+            customers.value = [...customers.value, newCustomer];
             selectedCustomerId.value = newCustomer.id;
-            return newCustomer;
         };
 
         const validateSend = () => {
@@ -600,11 +476,25 @@ export default defineComponent({
 
         const removeCustomer = (customerIndex) => {
             const customerId = customers.value[customerIndex].id;
-            orderStore.orderList = orderStore.orderList.filter(order => !order.customer || order.customer.id !== customerId);
+            
+            orderStore.orders = orderStore.orders.filter(order => !order.customer || order.customer.id !== customerId);
+            saleStore.order_initial = saleStore.order_initial.filter(order => !order.customer || order.customer.id !== customerId);
             customers.value.splice(customerIndex, 1);
+            
             if (selectedCustomerId.value === customerId) {
                 selectedCustomerId.value = customers.value[0]?.id || null;
             }
+        };
+
+        const handleProductClick = (product) => {
+            if (!product.has_stock || !product.has_supplies) return;
+
+            if (shouldShowCustomerMode.value && !selectedCustomer.value) {
+                message.warning("Seleccione un cliente primero");
+                return;
+            }
+
+            orderStore.addOrder(product, selectedCustomer.value);
         };
 
         const deleteOrderDetail = (detailIndex, detailId) => {
@@ -615,27 +505,34 @@ export default defineComponent({
             showConfirm.value = true;
         };
 
-        const resetAnulateData = () => dataAnulate.value = { username: "", pass: "" };
+        const resetAnulateData = () => {
+            dataAnulate.value = { username: "", pass: "" };
+        };
+
         const goHome = () => {
             cleanupOrderStore();
             router.push({ name: "TableHome" });
         };
 
-        onMounted(async() => {
-            await performRetrieveTableOrder();
-        });
+        onMounted(() => performRetrieveTableOrder());
 
+        onBeforeRouteUpdate(handleRouteGuard);
+        onBeforeRouteLeave((to) => handleRouteGuard(to, true));
+
+        provide("customers", customers);
         provide("selectedCustomer", selectedCustomer);
         provide("shouldShowCustomerMode", shouldShowCustomerMode);
+        provide("handleProductClick", handleProductClick);
 
         return {
-            isMobile, userStore, activeUsersStore, route, router, tableStore, table, settingsStore, genericsStore, productStore, orderStore,
-            saleStore, shouldShowCustomerMode, showUserConfirm, userConfirm, loadingConfirm,
-            loading, performCreateTableOrder, performUpdateTableOrder, showConfirm, dataAnulate, rules,
-            performDeleteDetail, deleteQuantity, maxQuantity, showPdf, pdfData, ticketPreview, validateSend,
-            deleteOrderDetail, modalClass, requireUserPass, requireGeneralPass, showConfigMessage, resetAnulateData,
-            goHome, customers, selectedCustomerId, selectedCustomer, ask_for, orderUser, checkState, addCustomer, removeCustomer,
-            goToFirstTab, activeTab
+            isMobile, userStore, activeUsersStore, route, router, tableStore, table, settingsStore, 
+            genericsStore, productStore, orderStore, saleStore, shouldShowCustomerMode, 
+            showUserConfirm, userConfirm, loadingConfirm, loading, performCreateTableOrder, 
+            performUpdateTableOrder, showConfirm, dataAnulate, rules, performDeleteDetail, 
+            deleteQuantity, maxQuantity, showPdf, pdfData, ticketPreview, validateSend, deleteOrderDetail, 
+            modalClass, requireUserPass, requireGeneralPass, showConfigMessage, resetAnulateData, goHome, 
+            customers, selectedCustomerId, selectedCustomer, ask_for, orderUser, hasUnsavedChanges, 
+            addCustomer, removeCustomer, goToFirstTab, activeTab, handleProductClick
         };
     }
 });

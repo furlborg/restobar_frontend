@@ -43,6 +43,14 @@
         </n-input>
       </n-form>
 
+      <!-- Nuevo: checkbox para mostrar deshabilitados -->
+      <n-space align="center" style="margin: -8px 0 12px 0">
+        <n-checkbox v-model:checked="showDisabled" @update:checked="listSupplies()">
+          Mostrar deshabilitados
+        </n-checkbox>
+      </n-space>
+
+
       <n-data-table :columns="tableColumns" :data="supplies" size="small" :scroll-x="900" :loading="isLoadingData" remote
                     :pagination="pagination" />
     </n-card>
@@ -79,6 +87,7 @@ export default defineComponent({
     const itemsMovement = reactive({});
     const isLoadingData = ref(false);
     const textSearch = ref("");
+    const showDisabled = ref(false);
     const page = ref(1);
     const type = ref(0);
     const pageCount = ref(null);
@@ -134,7 +143,8 @@ export default defineComponent({
           getSupplies("supplies", {
               offset: pagination.value.offset,
               limit: pagination.value.pageSize,
-              search: textSearch.value
+              search: textSearch.value,
+              state: showDisabled.value
           }).then((response) => {
               supplies.value = response.data.results; // Datos de la página actual
               pagination.value.itemCount = response.data.count; // Total de elementos
@@ -179,6 +189,7 @@ export default defineComponent({
       showModal,
       showModalMovement,
       textSearch,
+      showDisabled,
       isLoadingData,
       listSupplies, 
       newSupplies,

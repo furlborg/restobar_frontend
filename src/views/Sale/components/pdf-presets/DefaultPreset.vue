@@ -36,6 +36,12 @@
       <div class="ticket-body">
         <div class="ticket-body-info">
           <table>
+            <thead>
+              <tr>
+                <th></th>
+                <th></th>
+              </tr>
+            </thead>
             <tbody>
               <tr>
                 <td>F. EMISIÓN</td>
@@ -71,7 +77,7 @@
           </table>
         </div>
         <div class="ticket-body-details">
-          <table width="272px">
+          <table :width="isPrintMode ? '272px' : '100%'">
             <template v-if="data.by_consumption">
               <thead>
                 <tr>
@@ -108,15 +114,57 @@
                   <th :width="!!hasDiscounts ? '15%' : '20%'">TOTAL</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr v-for="(item, index) in sale.items" :key="index">
-                  <td>{{ item.cantidad }}</td>
-                  <td align="left">{{ item.descripcion }}</td>
-                  <td align="right">{{ item.precio_unitario.toFixed(2) }}</td>
-                  <td v-if="hasDiscounts" align="right">
-                    {{ data.sale_details[index].discount }}
+              <tbody v-if="!isCustomerMode">
+                <tr v-for="(item, index) in sale.items" :key="index" 
+                    :class="{ 'menu-header': item.isMenuHeader, 'menu-product': item.isMenuProduct }">
+                  <td>{{ item.isMenuProduct ? '' : item.cantidad }}</td>
+                  <td align="left" :style="item.isMenuProduct ? 'font-size: 11px; color: #666;' : ''">
+                    {{ item.descripcion }}
                   </td>
-                  <td align="right">{{ item.total_item.toFixed(2) }}</td>
+                  <td align="right">
+                    {{ item.isMenuProduct ? '' : item.precio_unitario.toFixed(2) }}
+                  </td>
+                  <td v-if="hasDiscounts" align="right">
+                    {{ item.isMenuProduct ? '' : (data.sale_details[index]?.discount || '0.00') }}
+                  </td>
+                  <td align="right">
+                    {{ item.isMenuProduct ? '' : item.total_item.toFixed(2) }}
+                  </td>
+                </tr>
+              </tbody>
+              <tbody v-else v-for="customer in groupedByCustomer" :key="customer.customerName">
+                <!-- Encabezado del cliente -->
+                <tr style="background-color: #f0f0f0; font-weight: bold;">
+                  <td colspan="6" align="center" style="padding: 4px; border-top: 1px solid #000; border-bottom: 1px solid #000;">
+                    {{ customer.customerName.toUpperCase() }}
+                  </td>
+                </tr>
+                <!-- Items del cliente -->
+                <tr v-for="(item, index) in customer.items" :key="`${customer.customerName}-${index}`"
+                    :class="{ 'menu-header': item.isMenuHeader, 'menu-product': item.isMenuProduct }">
+                  <td>{{ item.isMenuProduct ? '' : item.cantidad }}</td>
+                  <td align="left" :style="item.isMenuProduct ? 'font-size: 11px; color: #666;' : ''">
+                    {{ item.descripcion }}
+                  </td>
+                  <td align="right">
+                    {{ item.isMenuProduct ? '' : item.precio_unitario.toFixed(2) }}
+                  </td>
+                  <td v-if="hasDiscounts" align="right">
+                    {{ item.isMenuProduct ? '' : (data.sale_details[sale.items.indexOf(item)]?.discount || '0.00') }}
+                  </td>
+                  <td align="right">
+                    {{ item.isMenuProduct ? '' : item.total_item.toFixed(2) }}
+                  </td>
+                </tr>
+                <!-- Subtotal del cliente -->
+                <tr style="font-weight: bold; font-style: italic;">
+                  <td colspan="3" align="right">SUBTOTAL CLIENTE:</td>
+                  <td v-if="hasDiscounts"></td>
+                  <td align="right">{{ customer.total.toFixed(2) }}</td>
+                </tr>
+                <!-- Separador -->
+                <tr>
+                  <td colspan="6" style="border-bottom: 1px dashed #ccc; height: 8px;"></td>
                 </tr>
               </tbody>
             </template>
@@ -165,7 +213,7 @@
                   {{ sale.totales.total_igv.toFixed(2) }}
                 </td>
               </tr>
-              <tr v-if="!isCreditSale">
+              <tr>
                 <td align="right" :colspan="!!hasDiscounts ? 4 : 3">
                   IMPORTE TOTAL:
                 </td>
@@ -173,33 +221,9 @@
                   {{ sale.totales.total_venta.toFixed(2) }}
                 </td>
               </tr>
-              <tr v-else>
+              <tr>
                 <td align="right" :colspan="!!hasDiscounts ? 4 : 3">
-                  TOTAL DEL CREDITO:
-                </td>
-                <td align="right">
-                  {{ formatAmount(sale.amount) }}
-                </td>
-              </tr>
-              <tr v-if="isCreditSale">
-                <td align="right" :colspan="!!hasDiscounts ? 4 : 3">
-                  ANTICIPO:
-                </td>
-                <td align="right">
-                  {{ formatAmount(sale.given_amount) }}
-                </td>
-              </tr>
-              <tr v-if="data.payments" v-for="(payment, index) in data.payments" :key="'payment-' + index">
-                <td align="right" :colspan="!!hasDiscounts ? 4 : 3">
-                  {{ payment.description.toUpperCase() }}:
-                </td>
-                <td align="right">
-                  {{ parseFloat(payment.amount).toFixed(2) }}
-                </td>
-              </tr>
-              <tr v-else>
-                <td align="right" :colspan="!!hasDiscounts ? 4 : 3">
-                  EFECTIVO:
+                  EFECTIVO :
                 </td>
                 <td align="right">
                   {{
@@ -245,7 +269,7 @@
             </div>
             <div class="extra-info">
               <div class="extra-info-label">MÉTODO DE PAGO:</div>
-              <div class="extra-info-value">{{ info[2] }}</div>
+              <div class="extra-info-value">{{ paymentMethods }}</div>
               <div class="extra-info-label">CONDICIÓN DE PAGO:</div>
               <div class="extra-info-value">{{ info[1] }}</div>
               <div class="extra-info-label">USUARIO:</div>
@@ -284,10 +308,16 @@
         </div>
         <div v-else class="ticket-footer">
           <table>
+            <thead>
+              <tr>
+                <th></th>
+                <th></th>
+              </tr>
+            </thead>
             <tbody>
               <tr>
                 <td>MÉTODO DE PAGO:</td>
-                <td>{{ info[2] }}</td>
+                <td>{{ paymentMethods }}</td>
               </tr>
               <tr>
                 <td>CONDICIÓN DE PAGO:</td>
@@ -335,17 +365,22 @@
 </template>
 
 <script>
-import { defineComponent, watchEffect, computed } from 'vue';
+import { defineComponent, computed } from "vue";
 import { useBusinessStore } from "@/store/modules/business";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useTableStore } from "@/store/modules/table";
 import { numeroALetras } from "@/hooks/numberText.js";
+import { expandMenusInSaleData } from "@/utils/menuExpander.js";
 import qr from "qrcode";
 export default defineComponent({
   name: "DefaultPreset",
   props: {
     data: {
       type: Object,
+    },
+    isPrintMode: {
+      type: Boolean,
+      default: false,
     },
   },
   setup(props) {
@@ -357,14 +392,100 @@ export default defineComponent({
       (detail) => !!Number(detail.discount)
     );
 
+    // Detectar si es modo clientes
+    const isCustomerMode = computed(() =>(
+      props.data.order_by_customer === 'order_by_customer' ||
+      (props.data.original_sale_details &&
+      props.data.original_sale_details.some(detail => !!detail.customer))
+    ));
+
+    // Agrupar items por cliente para modo clientes
+    const groupedByCustomer = computed(() => {
+      if (!isCustomerMode.value) return null;
+
+      const groups = {};
+      const saleDetails = props.data.original_sale_details || props.data.sale_details;
+      const saleData = parseSale(); // Obtener los datos de venta aquí
+
+      saleDetails.forEach((detail, index) => {
+        const customerId = detail.customer.id || 'sin_cliente';
+        const customerName = detail.customer.name || 'Sin cliente';
+
+        if (!groups[customerId]) {
+          groups[customerId] = {
+            customerName,
+            items: [],
+            total: 0
+          };
+        }
+        
+        // Obtener el item correspondiente de saleData.items
+        const saleItem = saleData.items[index];
+        if (saleItem) {
+          groups[customerId].items.push({
+            ...saleItem,
+            customerName
+          });
+          groups[customerId].total += saleItem.total_item;
+        }
+      });
+      
+      return Object.values(groups);
+    });
+
     const parseSale = () => {
       let saleData = JSON.parse(props.data.json_sale);
+      // Expandir menús para mostrar productos individuales
       if (settingsStore.business_settings.printer.detail_items) {
-          const details = !!props.data?.['order_data']?.order_details ? props.data?.['order_data'].order_details : props.data?.sale_details
-          details.forEach((detail) => {
-              detail.indication = detail.indication ? detail.indication : []
+        const orderDetails = props.data?.order_data?.order_details || props.data?.order_details || [];
+        
+        // Crear items expandidos manualmente ya que el JSON de venta no los incluye
+        const expandedItems = [];
+        
+        saleData.items?.forEach((saleItem, saleIndex) => {
+          // Buscar si existe un menú correspondiente
+          const menuDetail = orderDetails.find(orderDetail => 
+            orderDetail.product_set && 
+            parseFloat(orderDetail.product_set.price) === saleItem.total_item
+          );
+          
+          if (menuDetail && menuDetail.product_set && menuDetail.product_set.items?.length > 0) {
+            // Es un menú, expandir
+            const menuName = menuDetail.product_set.menu_name || menuDetail.product_set.name || saleItem.descripcion;
+            
+            // Agregar encabezado del menú
+            expandedItems.push({
+              ...saleItem,
+              descripcion: `${menuName} (Menú)`,
+              isMenuHeader: true
+            });
+            
+            // Agregar productos del menú
+            menuDetail.product_set.items.forEach(menuItem => {
+              if (menuItem.product && menuItem.quantity > 0) {
+                expandedItems.push({
+                  cantidad: menuItem.quantity,
+                  descripcion: `  ↳ ${menuItem.product.name}`,
+                  precio_unitario: parseFloat(menuItem.product.prices) || 0,
+                  total_item: 0, // No mostrar total individual para productos de menú
+                  isMenuProduct: true,
+                  parentMenu: menuName
+                });
+              }
+            });
+          } else {
+            // Producto regular
+            expandedItems.push(saleItem);
+          }
+        });
+        
+        saleData.items = expandedItems;
+        
+        // Procesar indicaciones
+        orderDetails.forEach((detail) => {
+          detail.indication = detail.indication ? detail.indication : []
           const indication = detail?.indication.reduce((desc, indication) => {
-            if (indication.quick_indications.length) {
+            if (indication.quick_indications?.length) {
               indication.quick_indications.forEach((ind) => {
                 desc += `${ind}, `;
               });
@@ -374,31 +495,20 @@ export default defineComponent({
               : `${desc} [${indication.description}]`;
             return desc;
           }, "");
-          const item = saleData.items.find(
-            (i) => i.descripcion === detail.product_name
-          );
-          if (item) item.descripcion += indication;
+          
+          if (indication) {
+            const item = saleData.items.find(
+              (i) => i.descripcion === detail.product_name
+            );
+            if (item) item.descripcion += indication;
+          }
         });
       }
-      saleData.amount = props.data?.amount ?? saleData.amount ?? saleData?.totales?.total_venta ?? 0;
-      saleData.given_amount = props.data?.given_amount ?? saleData.given_amount ?? 0;
-      saleData.payment_condition = props.data?.payment_condition ?? saleData.payment_condition ?? saleData?.codigo_condicion_de_pago ?? null;
+      
       return saleData;
     };
 
     const sale = parseSale();
-    console.log(JSON.stringify(sale, null, 2))
-
-    const isCreditSale = computed(() => {
-      const paymentCondition = Number(props.data?.payment_condition);
-      const salePaymentCondition = Number(sale?.payment_condition);
-      return paymentCondition === 2 || salePaymentCondition === 2;
-    });
-
-    const formatAmount = (value) => {
-      const numericValue = Number(value);
-      return Number.isFinite(numericValue) ? numericValue.toFixed(2) : "0.00";
-    };
 
     const title = () => {
       switch (sale.codigo_tipo_documento) {
@@ -415,6 +525,17 @@ export default defineComponent({
     };
 
     const info = sale.informacion_adicional.split("|");
+
+    // Computed para métodos de pago
+    const paymentMethods = computed(() => {
+      if (sale.payments && Array.isArray(sale.payments) && sale.payments.length > 0) {
+        // Si hay pagos múltiples, construir cadena con todos los métodos
+        return sale.payments.map(p => `${p.payment_method}`).join(' | ');
+      } else {
+        // Pago único desde info[2]
+        return info[2];
+      }
+    });
 
     const amountText = numeroALetras(
       sale.totales.total_venta.toFixed("2"),
@@ -440,11 +561,12 @@ export default defineComponent({
       sale,
       title,
       info,
+      paymentMethods,
       generateQR,
       amountText,
-      isCreditSale,
-      formatAmount,
       hasDiscounts,
+      isCustomerMode,
+      groupedByCustomer,
     };
   },
 });
@@ -456,7 +578,7 @@ export default defineComponent({
   background-color: White;
   text-align: center;
   line-height: normal;
-  min-width: 272px;
+
   &-header {
     font-weight: bold;
     margin-bottom: 5px;
@@ -482,7 +604,6 @@ export default defineComponent({
     &-info {
       font-weight: bold;
       table {
-        width: 272px;
         td {
           &:first-child {
             width: 37%;
@@ -497,15 +618,24 @@ export default defineComponent({
     }
     &-details {
       table {
-        width: 272px;
         th {
           font-size: 12px;
         }
         tfoot {
           font-weight: bold;
         }
+        
+        .menu-header {
+          font-weight: bold;
+          border-top: 1px solid #ddd;
+        }
+        
+        .menu-product {
+          font-style: italic;
+        }
       }
     }
+
     .amount-text {
       font-weight: bold;
     }
@@ -528,7 +658,6 @@ export default defineComponent({
       font-weight: bold;
     }
     table {
-      width: 272px;
       td {
         &:first-child {
           width: 50%;

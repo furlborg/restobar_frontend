@@ -4,6 +4,7 @@ import { getDocumentSeries } from "@/api/modules/business";
 import { useBusinessStore } from "@/store/modules/business";
 import { useUserStore } from "@/store/modules/user";
 import { useOrderStore } from "@/store/modules/order";
+import { buildSalePayload, computePayloadTotals } from "@/services/saleAssembler";
 import { useSettingsStore } from "./settings";
 
 const businessStore = useBusinessStore();
@@ -14,7 +15,8 @@ export const useSaleStore = defineStore("sale", {
   state: () => ({
     payment_methods: [],
     series: [],
-    sale_details: [],
+    sale_details: [], // legacy flat product lines
+    sale_product_sets: [], // menu sets
     order_initial: [],
   }),
   getters: {
@@ -40,50 +42,46 @@ export const useSaleStore = defineStore("sale", {
         value: serie.id,
       }));
     },
-      toSale(state) {
-          const saleDetails = orderStore.orderList.map((order) => {
-              const detail = {
-                  product: order.product,
-                  product_name: order.product_name,
-                  product_affectation: order.product_affectation,
-                  product_igv: order.product_igv,
-                  price_base: parseFloat(order.price).toFixed(2),
-                  igv_tax: 0,
-                  discount: parseFloat(0).toFixed(2),
-                  price_sale: parseFloat(order.price).toFixed(2),
-                  quantity: Number(order.quantity),
-                  icbper: parseFloat(order.icbper_amount || 0).toFixed(2),
-              };
-              this.updateDetail(detail);
-              return detail;
-          });
-
-          const map = new Map();
-
-          for (const item of saleDetails) {
-              const key = item.product;
-
-              if (!map.has(key)) {
-                  map.set(key, { ...item });
-              } else {
-                  const existing = map.get(key);
-                  existing.quantity += item.quantity;
-                  existing.price_sale = parseFloat(item.price_sale).toFixed(2);
-                  existing.icbper = parseFloat(item.icbper).toFixed(2);
-              }
-          }
-
-          state.sale_details = Array.from(map.values());
-
-          return state.sale_details;
-      },
-      saleTotal(state) {
+    // Legacy getter (returns only product lines). Avoid mutating state; use buildSalePayload action for full structure.
+    toSale(state) {
+      const payload = this.buildSalePayload();
+      state.sale_details = payload.sale_details; // cache for legacy consumers
+      state.sale_product_sets = payload.sale_product_sets; // cache menus as well
+      return state.sale_details
+    },
+    salePayload() {
+      return this.buildSalePayload();
+    },
+    grandTotal() {
+      const totals = this.computeTotals();
+      return totals.grandTotal;
+    },
+    saleTotal(state) {
       return state.sale_details.reduce((acc, curVal) => {
-        return (acc += curVal.price * curVal.quantity - curVal.discount);
+        const price = Number(curVal.price_sale ?? curVal.price ?? 0);
+        const quantity = Number(curVal.quantity ?? 0);
+        const discount = Number(curVal.discount ?? 0);
+        return acc + price * quantity - discount;
       }, 0);
     },
   },
   actions: {
+    buildSalePayload() {
+      const orderStore = useOrderStore();
+      const payload = buildSalePayload(orderStore.orderList);
+      
+      // Apply tax calculations to product lines
+      payload.sale_details.forEach(detail => {
+        this.updateDetail(detail);
+      });
+      
+      return payload;
+    },
+    
+    computeTotals() {
+      const payload = this.buildSalePayload();
+      return computePayloadTotals(payload);
+    },
     async initializeStore() {
       await getPaymentMethods()
         .then((response) => {
@@ -200,16 +198,16 @@ export const useSaleStore = defineStore("sale", {
           detail.igv_tax = Math.round((parseFloat(detail.price_sale) - parseFloat(detail.price_base)) * 100) / 100;
           console.log('Updated detail:', detail);
           break;
-        case 20:
+        case 20: // Operación Exonerada
           detail.price_base = detail.price_sale
-              ? parseFloat(detail.price_sale)
-              : 0;
+            ? parseFloat(detail.price_sale)
+            : 0;
           detail.igv_tax = 0;
           break;
-        case 21:
+        case 21: // Operación Gratuita
           detail.price_base = detail.price_sale
-              ? parseFloat(detail.price_sale)
-              : 0;
+            ? parseFloat(detail.price_sale)
+            : 0;
           detail.igv_tax = 0;
           break;
         default:

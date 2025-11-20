@@ -1,12 +1,22 @@
 <template>
-  <n-modal :class="{
-    'w-100': genericsStore.device === 'mobile',
-    'w-75': genericsStore.device === 'tablet',
-    'w-50': genericsStore.device === 'desktop',
-  }" preset="card" :title="modalTitle" :show="show" :on-close="() => $emit('update:show')">
+  <n-modal
+    :class="{
+      'w-100': genericsStore.device === 'mobile',
+      'w-75': genericsStore.device === 'tablet',
+      'w-50': genericsStore.device === 'desktop',
+    }"
+    preset="card"
+    :title="modalTitle"
+    :show="show"
+    :on-close="() => $emit('update:show')"
+  >
     <n-spin :show="isLoadingData">
       <n-form :model="product" :rules="productRules" ref="productRef">
-        <n-grid responsive="screen" cols="6 s:6 m:24 l:24 xl:24 2xl:24" :x-gap="12">
+        <n-grid
+          responsive="screen"
+          cols="6 s:6 m:24 l:24 xl:24 2xl:24"
+          :x-gap="12"
+        >
           <n-form-item-gi label="Código" path="code" :span="4">
             <n-input v-model:value="product.code" placeholder="PRO0000000" />
           </n-form-item-gi>
@@ -14,30 +24,52 @@
             <n-input v-model:value="product.name" placeholder="" />
           </n-form-item-gi>
           <n-form-item-gi label="Precio venta" path="prices" :span="4">
-            <n-input v-model:value="product.prices" type="number" placeholder=""
-              @input="product.prices = restrictDecimal(product.prices)" @blur="
+            <n-input
+              v-model:value="product.prices"
+              type="number"
+              placeholder=""
+              @input="product.prices = restrictDecimal(product.prices)"
+              @blur="
                 () =>
                   (product.affectation = Number(product.prices) > 0 ? 20 : 21)
-              " />
+              "
+            />
           </n-form-item-gi>
           <n-form-item-gi label="Precio Compra" path="purchase_price" :span="4">
-            <n-input v-model:value="product.purchase_price" type="number" placeholder="" @input="
-              product.purchase_price = restrictDecimal(product.purchase_price)
-              " />
+            <n-input
+              v-model:value="product.purchase_price"
+              type="number"
+              placeholder=""
+              @input="
+                product.purchase_price = restrictDecimal(product.purchase_price)
+              "
+            />
           </n-form-item-gi>
           <n-gi :span="12">
             <transition name="mode-fade" mode="out-in">
-              <n-form-item v-if="categoryForm" :label="!categorie.id ? 'Crear Categoría' : 'Editar Categoría'">
+              <n-form-item
+                v-if="categoryForm"
+                :label="!categorie.id ? 'Crear Categoría' : 'Editar Categoría'"
+              >
                 <n-input-group>
-                  <n-input v-model:value="categorie.description" placeholder="" />
-                  <n-button type="info" tertiary :disabled="categorie.description ===
-                    productStore.getCategorieDescription(categorie.id) ||
-                    !categorie.description
-                    " @click="
+                  <n-input
+                    v-model:value="categorie.description"
+                    placeholder=""
+                  />
+                  <n-button
+                    type="info"
+                    tertiary
+                    :disabled="
+                      categorie.description ===
+                        productStore.getCategorieDescription(categorie.id) ||
+                      !categorie.description
+                    "
+                    @click="
                       !categorie.id
                         ? performCreateProductCategory()
                         : performUpdateProductCategory()
-                      ">
+                    "
+                  >
                     <v-icon name="md-save-round" />
                   </n-button>
                   <n-button type="error" tertiary @click="categoryForm = false">
@@ -47,71 +79,141 @@
               </n-form-item>
               <n-form-item v-else label="Categoría" path="category">
                 <n-input-group>
-                  <n-button v-if="userStore.hasPermission('add_productcategory')" type="info" tertiary @click="
-                    categoryForm = true;
-                  categorie.id = null;
-                  categorie.description = null;
-                  ">
+                  <n-button
+                    v-if="userStore.hasPermission('add_productcategory')"
+                    type="info"
+                    tertiary
+                    @click="
+                      categoryForm = true;
+                      categorie.id = null;
+                      categorie.description = null;
+                    "
+                  >
                     <v-icon name="md-add-round" />
                   </n-button>
-                  <n-select v-model:value="product.category" :options="categoriesOptions" placeholder="" filterable
-                    clearable />
-                  <n-button v-if="
-                    userStore.hasPermission('change_productcategory')
-                      ? product.category
-                      : false
-                  " type="warning" tertiary @click="
+                  <n-select
+                    v-model:value="product.category"
+                    :options="categoriesOptions"
+                    placeholder=""
+                    filterable
+                    clearable
+                  />
+                  <n-button
+                    v-if="
+                      userStore.hasPermission('change_productcategory')
+                        ? product.category
+                        : false
+                    "
+                    type="warning"
+                    tertiary
+                    @click="
                       categoryForm = true;
-                    categorie.id = product.category;
-                    categorie.description =
-                      productStore.getCategorieDescription(product.category);
-                    ">
+                      categorie.id = product.category;
+                      categorie.description =
+                        productStore.getCategorieDescription(product.category);
+                    "
+                  >
                     <v-icon name="ri-edit-fill" />
                   </n-button>
                 </n-input-group>
               </n-form-item>
             </transition>
           </n-gi>
-          <n-form-item-gi label="Lugar Preparación" path="preparation_place" :span="7">
-            <n-select v-model:value="product.preparation_place" :options="placesOptions" placeholder="" clearable />
+          <n-form-item-gi
+            label="Lugar Preparación"
+            path="preparation_place"
+            :span="7"
+          >
+            <n-select
+              v-model:value="product.preparation_place"
+              :options="placesOptions"
+              placeholder=""
+              clearable
+            />
           </n-form-item-gi>
           <n-form-item-gi label="Unidad de medida" :span="5">
-            <n-select v-model:value="product.measure_unit" placeholder="Seleccione" :options="optionsUND" />
+            <n-select
+              v-model:value="product.measure_unit"
+              placeholder="Seleccione"
+              :options="optionsUND"
+            />
           </n-form-item-gi>
           <n-form-item-gi label="Afectación" :span="8">
-            <n-select v-model:value="product.affectation" placeholder="Seleccione"
-              :options="productStore.affectationsOptions" :disabled="!settingsStore.businessSettings.sale.manage_affectations
-                " />
+            <n-select
+              v-model:value="product.affectation"
+              placeholder="Seleccione"
+              :options="productStore.affectationsOptions"
+              :disabled="
+                !settingsStore.businessSettings.sale.manage_affectations
+              "
+            />
           </n-form-item-gi>
           <n-form-item-gi label="IGV(%)" :span="4">
-            <n-input-number v-model:value="igv_percentage" placeholder="" :min="0" :max="100" :show-button="false"
-              @keydown="isNumber($event)" />
+            <n-input-number
+              v-model:value="igv_percentage"
+              placeholder=""
+              :min="0"
+              :max="100"
+              :show-button="false"
+              @keydown="isNumber($event)"
+            />
           </n-form-item-gi>
-          <n-form-item-gi v-if="!product.id" label="Stock Inicial" path="stock" :span="4">
-            <n-input type="number" v-model:value="product.stock" @input="product.stock = restrictDecimal(product.stock)"
-              placeholder="0.0" :disabled="!product.control_stock" />
+          <n-form-item-gi
+            v-if="!product.id"
+            label="Stock Inicial"
+            path="stock"
+            :span="4"
+          >
+            <n-input
+              type="number"
+              v-model:value="product.stock"
+              @input="product.stock = restrictDecimal(product.stock)"
+              placeholder="0.0"
+              :disabled="!product.control_stock"
+            />
           </n-form-item-gi>
           <n-form-item-gi path="control_stock" :span="4">
-            <n-checkbox v-model:checked="product.control_stock" @update:checked="product.stock = null">Controlar Stock
+            <n-checkbox
+              v-model:checked="product.control_stock"
+              @update:checked="product.stock = null"
+              >Controlar Stock
             </n-checkbox>
           </n-form-item-gi>
           <n-form-item-gi :span="3">
-            <n-checkbox v-model:checked="product.control_supplie" @update:checked="
-              (key) => {
-                product.supplies = key ? product.supplies : [];
-              }
-            ">Insumos</n-checkbox>
+            <n-checkbox
+              v-model:checked="product.control_supplie"
+              @update:checked="
+                (key) => {
+                  product.supplies = key ? product.supplies : [];
+                }
+              "
+              >Insumos</n-checkbox
+            >
           </n-form-item-gi>
-          <n-form-item-gi :span="4">
-            <n-checkbox v-model:checked="product.area_print"> Area de impresión
+        <n-form-item-gi :span="4">
+            <n-checkbox
+                    v-model:checked="product.area_print"
+            > Area de impresión
             </n-checkbox>
-          </n-form-item-gi>
-          <n-form-item-gi label="Indicaciones rápidas" path="quick_indications" :span="12">
+        </n-form-item-gi>
+          <n-form-item-gi
+            label="Indicaciones rápidas"
+            path="quick_indications"
+            :span="12"
+          >
             <n-input v-model:value="product.quick_indications" placeholder="" />
           </n-form-item-gi>
-          <n-form-item-gi v-if="settingsStore.businessSettings.printer.manage_fittings" label="Guarnición"
-            path="fitting" :span="8">
-            <n-select v-model:value="product.fitting" placeholder="" :options="productStore.getFittingsOptions" />
+          <n-form-item-gi
+            v-if="settingsStore.businessSettings.printer.manage_fittings"
+            label="Guarnición"
+            path="fitting"
+            :span="8"
+          >
+            <n-select
+              v-model:value="product.fitting"
+              placeholder=""
+              :options="productStore.getFittingsOptions"
+            />
           </n-form-item-gi>
           <!-- <n-form-item-gi label="N° Puntos" path="number_points" :span="4">
             <n-input-number
@@ -135,36 +237,94 @@
             <n-checkbox v-model:checked="product.icbper">ICBPER</n-checkbox>
           </n-form-item-gi>
           <n-form-item-gi label="Almacen" :span="12">
-            <n-select v-model:value="product.branchoffice" :disabled="!!product.id" placeholder="Seleccione"
-              :options="optionsEstablishment" />
+            <n-select
+              v-model:value="product.branchoffice"
+              :disabled="!!product.id"
+              placeholder="Seleccione"
+              :options="optionsEstablishment"
+            />
           </n-form-item-gi>
           <n-form-item-gi label="Descripción" path="description" :span="12">
-            <n-input v-model:value="product.description" type="textarea" placeholder="" />
+            <n-input
+              v-model:value="product.description"
+              type="textarea"
+              placeholder=""
+            />
           </n-form-item-gi>
-          <!-- <n-form-item-gi label="Imagen" :span="4">
-            <n-upload list-type="image" ref="uploadRef">
-              <n-button>Seleccionar Imagen</n-button>
+          <n-form-item-gi label="Imagen" :span="6">
+            <n-upload
+              ref="uploadRef"
+              list-type="image-card"
+              :max="1"
+              accept="image/*"
+              :default-upload="false"
+              :on-change="onImageChange"
+              :file-list="imageFileList"
+            >
+              Subir imagen
             </n-upload>
-          </n-form-item-gi> -->
-          <n-form-item-gi v-if="product.control_supplie" label="Lista de Insumos" :span="12">
+          </n-form-item-gi>
+          <n-form-item-gi v-if="product.image_url && !imageFileList.length" label="Vista previa" :span="6">
+            <img :src="product.image_url" alt="imagen producto" style="max-width: 120px; border: 1px solid #eee; padding: 4px;" />
+          </n-form-item-gi>
+          <n-form-item-gi
+            v-if="product.control_supplie"
+            label="Lista de Insumos"
+            :span="12"
+          >
             <n-input-group>
-              <n-select v-model:value="supplieItem.supplie" placeholder="Buscar..." filterable clearable
-                @search="supplieSearch" :options="optionsSupplie" />
-              <n-button v-if="userStore.hasPermission('add_supplies')" type="success" secondary @click="newSupplies()">
+              <n-select
+                v-model:value="supplieItem.supplie"
+                placeholder="Buscar..."
+                filterable
+                clearable
+                @search="supplieSearch"
+                :options="optionsSupplie"
+              />
+              <n-button
+                v-if="userStore.hasPermission('add_supplies')"
+                type="success"
+                secondary
+                @click="newSupplies()"
+              >
                 Nuevo
               </n-button>
             </n-input-group>
           </n-form-item-gi>
-          <n-form-item-gi v-if="product.control_supplie" label="Cantidad" :span="4">
-            <n-input-number placeholder="" v-model:value="supplieItem.stock" :min="0" :show-button="false" />
-            <!--              @keydown="isDecimal($event)"-->
+          <n-form-item-gi
+            v-if="product.control_supplie"
+            label="Cantidad"
+            :span="4"
+          >
+            <n-input-number
+              placeholder=""
+              v-model:value="supplieItem.stock"
+              :min="0"
+              :show-button="false"
+            />
+<!--              @keydown="isDecimal($event)"-->
           </n-form-item-gi>
           <n-form-item-gi v-if="product.control_supplie" :span="4">
-            <n-button type="primary" @click="addSupplie(supplieItem)" secondary :disabled="!(supplieItem.supplie && supplieItem.stock)
-              ">+ Agregar</n-button>
+            <n-button
+              type="primary"
+              @click="addSupplie(supplieItem)"
+              secondary
+              :disabled="
+                !(supplieItem.supplie && supplieItem.stock)
+              "
+              >+ Agregar</n-button
+            >
           </n-form-item-gi>
-          <n-form-item-gi v-if="product.control_supplie" span="24" style="margin-top: -30px">
-            <n-data-table :columns="columnsSupplie" :data="product.supplies" size="small" />
+          <n-form-item-gi
+            v-if="product.control_supplie"
+            span="24"
+            style="margin-top: -30px"
+          >
+            <n-data-table
+              :columns="columnsSupplie"
+              :data="product.supplies"
+              size="small"
+            />
           </n-form-item-gi>
         </n-grid>
       </n-form>
@@ -172,13 +332,31 @@
     <!-- <pre>{{ JSON.stringify(product, 0, 2) }}</pre> -->
     <template #action>
       <n-space justify="end">
-        <n-button v-if="idProduct === 0" type="primary" :loading="isLoadingData" :disabled="isLoadingData"
-          @click="performCreate" secondary>Registrar</n-button>
-        <n-button v-else type="warning" :loading="isLoadingData" :disabled="isLoadingData" @click="performUpdate"
-          secondary>Modificar</n-button>
+        <n-button
+          v-if="idProduct === 0"
+          type="primary"
+          :loading="isLoadingData"
+          :disabled="isLoadingData"
+          @click="performCreate"
+          secondary
+          >Registrar</n-button
+        >
+        <n-button
+          v-else
+          type="warning"
+          :loading="isLoadingData"
+          :disabled="isLoadingData"
+          @click="performUpdate"
+          secondary
+          >Modificar</n-button
+        >
       </n-space>
     </template>
-    <supplies-modal v-model:show="showModal" @on-success="refreshSupplie" :items="items" />
+    <supplies-modal
+      v-model:show="showModal"
+      @on-success="refreshSupplie"
+      :items="items"
+    />
   </n-modal>
 </template>
 
@@ -206,7 +384,7 @@ import { useSettingsStore } from "@/store/modules/settings";
 import { useUserStore } from "@/store/modules/user";
 import { NButton, useMessage } from "naive-ui";
 import { productRules } from "@/utils/constants";
-import { isNumber } from "@/utils";
+import { isNumber, isDecimal } from "@/utils";
 import { getBranchs } from "@/api/modules/business";
 import SuppliesModal from "../../Supplies/components/SuppliesModal.vue";
 
@@ -236,6 +414,13 @@ export default defineComponent({
     const userStore = useUserStore();
     const { idProduct, show } = toRefs(props);
     const uploadRef = ref(null);
+    const imageFileList = ref([]);
+    const onImageChange = ({ file, fileList }) => {
+      if (file?.file) {
+        product.value.image = file.file;
+      }
+      imageFileList.value = fileList.slice(0, 1);
+    };
     const modalTitle = ref("Registrar Producto");
     const productRef = ref(null);
     const items = reactive({});
@@ -247,11 +432,6 @@ export default defineComponent({
       stock: null,
       supplie_des: null,
     });
-
-    const defaultAffectation = computed(() => {
-      return settingsStore.businessSettings?.sale?.default_affectation || 20;
-    });
-
     const product = ref({
       code: null,
       name: null,
@@ -271,7 +451,7 @@ export default defineComponent({
       quick_indications: null,
       area_print: false,
       supplies: [],
-      affectation: defaultAffectation,
+      affectation: settingsStore.businessSettings.sale?.default_affectation,
       igv_tax: 0,
     });
 
@@ -294,7 +474,7 @@ export default defineComponent({
     });
 
     const supplieSearch = async (search) => {
-      getSupplies(`supplies/search/?search=${search}`)
+        getSupplies(`supplies/search/?search=${search}`)
         .then((response) => {
           optionsSupplie.value = response.data.map((v) => ({
             label: v.name,
@@ -302,7 +482,7 @@ export default defineComponent({
           }));
         })
         .catch(() => {
-
+          message.error("Algo salió mal...");
         });
     };
     supplieSearch("");
@@ -331,7 +511,7 @@ export default defineComponent({
           });
         })
         .catch(() => {
-
+          message.error("Algo salió mal...");
         });
     };
     getEstablishment();
@@ -345,7 +525,7 @@ export default defineComponent({
           }));
         })
         .catch(() => {
-
+          message.error("Algo salió mal...");
         });
     };
     getUND();
@@ -358,9 +538,16 @@ export default defineComponent({
           .then((response) => {
             product.value = response.data;
             product.value.branchoffice = optionsEstablishment.value[0].value;
+            product.value.image = null; // limpiar selección de nueva imagen
+            imageFileList.value = [];
+            // Si el backend devuelve image como url, normalizar
+            if (response.data.image) {
+              product.value.image_url = response.data.image;
+            }
           })
           .catch((error) => {
             console.error(error);
+            message.error("Algo salio mal...");
           })
           .finally(() => {
             isLoadingData.value = false;
@@ -372,7 +559,7 @@ export default defineComponent({
           name: null,
           description: null,
           prices: null,
-          purchase_price: null,
+          purchase_price: 0,
           measure_unit: 1,
           control_stock: false,
           stock: "",
@@ -385,9 +572,11 @@ export default defineComponent({
           quick_indications: null,
           branchoffice: optionsEstablishment.value[0].value,
           supplies: [],
-          affectation: settingsStore.businessSettings.sale.default_affectation,
+          affectation: settingsStore.businessSettings.sale?.default_affectation,
           igv_tax: 0,
         };
+        imageFileList.value = [];
+        product.value.image = null;
       }
     });
 
@@ -416,7 +605,7 @@ export default defineComponent({
               })
               .catch((error) => {
                 console.error(error.response.data);
-
+                message.error("Algo salió mal...");
               })
               .finally(() => {
                 isLoadingData.value = false;
@@ -449,7 +638,7 @@ export default defineComponent({
               })
               .catch((error) => {
                 console.error(error.response.data);
-
+                message.error("Algo salió mal...");
               })
               .finally(() => {
                 isLoadingData.value = false;
@@ -481,7 +670,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-
+          message.error("Algo salió mal...");
         })
         .finally(() => {
           categoryForm.value = false;
@@ -497,7 +686,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-
+          message.error("Algo salió mal...");
         })
         .finally(() => {
           categoryForm.value = false;
@@ -615,7 +804,7 @@ export default defineComponent({
       performUpdateProductCategory,
       performCreateProductCategory,
       isNumber,
-
+      isDecimal,
       optionsSupplie,
       supplieSearch,
       addSupplie,
@@ -637,6 +826,8 @@ export default defineComponent({
           return null;
         }
       },
+      onImageChange,
+      imageFileList,
     };
   },
 });

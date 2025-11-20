@@ -46,6 +46,10 @@ export async function updatePaymentMethod(idPayment, payment_method) {
     });
 }
 
+export async function deletePaymentMethod(idPayment) {
+    return await http.delete(`payment_methods/${idPayment}/`);
+}
+
 export async function createPaymentMethodDesc(description) {
     return await http.post("payment_methods/", {
         description: description
@@ -152,6 +156,7 @@ export async function createSale(sale, pass = null) {
             number: sale.number,
             date_sale: sale.date_sale,
             expiration_sale: expirationSale,
+            due_date: sale.due_date,
             count: sale.count,
             amount: sale.amount,
             given_amount: sale.given_amount,
@@ -169,6 +174,7 @@ export async function createSale(sale, pass = null) {
             by_consumption: sale.by_consumption,
             observations: sale.observations,
             sale_details: sale.sale_details.filter((detail) => detail.quantity > 0),
+            product_sets: sale.sale_product_sets || [], // Support for menu sets
             payments: sale.payments,
             till: tillStore.currentTillID,
             do_update: sale.do_update,
@@ -187,6 +193,7 @@ export async function createSale(sale, pass = null) {
             number: sale.number,
             date_sale: sale.date_sale,
             expiration_sale: expirationSale,
+            due_date: sale.due_date,
             count: sale.count,
             amount: sale.amount,
             given_amount: sale.given_amount,
@@ -204,6 +211,7 @@ export async function createSale(sale, pass = null) {
             by_consumption: sale.by_consumption,
             observations: sale.observations,
             sale_details: sale.sale_details.filter((detail) => detail.quantity > 0),
+            product_sets: sale.sale_product_sets || [], // Support for menu sets
             payments: sale.payments,
             till: tillStore.currentTillID,
             do_update: sale.do_update,
@@ -316,4 +324,53 @@ export async function createSaleCredit(data) {
         ...data,
         till: tillStore.currentTillID
     });
+}
+
+export async function getSaleDetails(productId, dateFrom = null, dateTo = null) {
+  const params = {};
+  
+  if (productId) {
+    params.product = productId;
+  }
+  
+  if (dateFrom) {
+    params.date_from = dateFrom;
+  }
+  
+  if (dateTo) {
+    params.date_to = dateTo;
+  }
+
+  return await http.get("saledetail/", { params });
+}
+
+export async function getSalesReportByProduct(productId, dateFrom = null, dateTo = null) {
+  const params = {};
+  
+  if (productId) {
+    params.product = productId;
+  }
+  
+  if (dateFrom) {
+    params.date_from = dateFrom;
+  }
+  
+  if (dateTo) {
+    params.date_to = dateTo;
+  }
+
+  return await http.get("sales_by_product/", { 
+    params,
+    responseType: "arraybuffer"
+  });
+}
+
+/**
+ * Reenviar todos los comprobantes pendientes (estado NUEVO)
+ * que NO sean nota de venta (invoice_type != '80')
+ * 
+ * @returns {Promise} Respuesta con estadísticas del proceso de reenvío
+ */
+export async function resendPendingVouchers() {
+  return await http.post("sales/resend-pending/");
 }

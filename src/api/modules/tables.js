@@ -2,6 +2,7 @@ import { http } from "@/api";
 import { useBusinessStore } from "@/store/modules/business";
 import { useUserStore } from "@/store/modules/user";
 import { useTillStore } from "@/store/modules/till";
+import { buildTableOrderPayload } from "@/services/saleAssembler";
 
 export async function getAreas() {
     return await http.get("areas/");
@@ -25,6 +26,10 @@ export async function updateArea(idArea, area) {
         account_printer: area.account_printer,
         branch: !userStore.user.branchoffice ? businessStore.currentBranch : null
     });
+}
+
+export async function disableArea(id) {
+    return await http.delete(`areas/${ id }/`);
 }
 
 export async function getTables() {
@@ -69,22 +74,22 @@ export async function retrieveTableOrder(idTable) {
 export async function createTableOrder(
     idTable,
     details,
-    user,
+    user = null,
     ask_for = undefined
 ) {
     const tillStore = useTillStore();
-    let order_details = details.map((order) => ({
-        product: order.product,
-        indication: order.indication || [],
-        quantity: order.quantity
-    }));
-    return await http.post(`tables/${ idTable }/take_order/`, {
-        till: tillStore.currentTillID,
-        order_type: "M",
-        order_details: order_details,
-        ask_for: ask_for,
-        user: user ?? null
+
+    // Use centralized assembler instead of inline logic
+    const payload = buildTableOrderPayload(details, {
+        tillId: tillStore.currentTillID,
+        orderType: "M",
+        askFor: ask_for,
+        user
     });
+
+    console.log("createTableOrder - payload:", payload);
+
+    return await http.post(`tables/${idTable}/take_order/`, payload);
 }
 
 export async function updateTableOrder(
@@ -95,31 +100,19 @@ export async function updateTableOrder(
     ask_for = undefined
 ) {
     const tillStore = useTillStore();
-    let order_details = details.map((order) => {
-        const detail = {
-            id: order.id,
-            product: order.product,
-            indication: order.indication || [],
-            quantity: order.quantity
-        };
-        
-        // Si el order_detail no tiene id (es nuevo), agregar el user
-        // para los order_details existentes su user es null ya que se usará el user del creador del pedido
-        if (!order.id) {
-            detail.user = user;
-        }
-        
-        return detail;
-    }).filter((detail) => detail.quantity > 0);
     
-    return await http.patch(`tables/${ idTable }/change_order/`, {
-        id: orderId,
-        till: tillStore.currentTillID,
-        order_type: "M",
-        order_details: order_details,
-        ask_for: ask_for,
+    // Use centralized assembler for updates
+    const payload = buildTableOrderPayload(details, {
+        tillId: tillStore.currentTillID,
+        orderType: "M",
+        askFor: ask_for,
         user: user ?? null
     });
+    
+    // Add update-specific fields
+    payload.id = orderId;
+    
+    return await http.patch(`tables/${idTable}/change_order/`, payload);
 }
 
 export async function cancelTableOrder(idTable, dataAnulate) {

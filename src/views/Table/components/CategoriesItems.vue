@@ -19,18 +19,12 @@
           class="w-100 p-0"
           v-for="(product, index) in itemsList"
           :key="index"
-          @click="
-            product.has_stock
-              ? product.has_supplies
-                ? orderStore.addOrder(product)
-                : null
-              : null
-          "
+          @click="addOrderToCustomer(product)"
           style="cursor: pointer"
         >
           <template #prefix>
             <img
-              src="~@/assets/images/default-food-image.jpg"
+               :src="productImage(product)"
               alt=""
               width="75"
               height="75"
@@ -71,29 +65,35 @@
 </template>
 
 <script>
-import { defineComponent, computed, onMounted, ref } from "vue";
+import { defineComponent, computed, onMounted, ref, inject } from "vue";
 import { useRoute } from "vue-router";
 import { useRouter } from "vue-router";
 import { useMessage } from "naive-ui";
 import { renderIcon } from "@/utils";
 import { useOrderStore } from "@/store/modules/order";
 import { useGenericsStore } from "@/store/modules/generics";
+import { useSettingsStore } from "@/store/modules/settings";
 import { getProductsByCategory } from "@/api/modules/products";
 import { useProductStore } from "@/store/modules/product";
+import defaultFoodImage from "@/assets/images/default-food-image.jpg";
 
 export default defineComponent({
   name: "CategoriesItems",
   setup() {
+    const productImage = (p) => p?.image || p?.image_url || defaultFoodImage;
     const message = useMessage();
     const route = useRoute();
     const router = useRouter();
     const genericsStore = useGenericsStore();
     const orderStore = useOrderStore();
     const productStore = useProductStore();
+    const settingsStore = useSettingsStore();
     const category = route.params.category;
     const listType = ref("list");
     const products = ref([]);
     const search = ref("");
+
+    const addOrderToCustomer = inject('handleProductClick', () => null);
 
     const itemsList = computed(() => {
       const list = products.value.filter((product) => {
@@ -153,6 +153,7 @@ export default defineComponent({
 
     return {
       handleBack,
+      addOrderToCustomer,
       listType,
       genericsStore,
       productOptions,
@@ -162,6 +163,7 @@ export default defineComponent({
       orderStore,
       search,
       itemsList,
+      productImage,
     };
   },
 });

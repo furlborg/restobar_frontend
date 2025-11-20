@@ -1,7 +1,7 @@
 ﻿<template>
   <div class="table-container">
     <n-scrollbar>
-      <n-table class="m-auto text-center fs-6 mb-3" :bordered="false">
+      <n-table class="product-details-table" :bordered="false">
         <thead>
           <tr>
             <th v-if="settingsStore.businessSettings?.sale?.manage_affectations">#</th>
@@ -13,7 +13,28 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(detail, index) in saleDetails" :key="index">
+          <template v-for="(menuSet, menuIndex) in saleMenuSets" :key="`menu-${menuIndex}`">
+            <tr style="background-color: #f8f8f8; font-weight: bold;">
+              <td v-if="settingsStore.businessSettings?.sale?.manage_affectations">
+                <n-tag size="small" type="warning">MENÚ</n-tag>
+              </td>
+              <td>{{ menuSet.quantity }}</td>
+              <td>
+                <input
+                  class="custom-input"
+                  v-model="menuSet.name"
+                  v-autowidth
+                  readonly
+                  style="font-weight: bold;"
+                />
+              </td>
+              <td class="currency-input-wrapper">S/. {{ Number(menuSet.price || 0).toFixed(2) }}</td>
+              <td v-if="settingsStore.business_settings?.sale?.show_discount_label">S/. 0.00</td>
+              <td>S/. {{ (menuSet.quantity * menuSet.price).toFixed(2) }}</td>
+            </tr>
+          </template>
+
+          <tr v-for="(detail, index) in saleDetails" :key="`product-${index}`">
             <td v-if="settingsStore.businessSettings?.sale?.manage_affectations">
               <n-popselect
                 size="small"
@@ -31,7 +52,7 @@
             <td>{{ detail.quantity }}</td>
             <td>
               <input
-                class="custom-input"
+                class="custom-input product-name-input"
                 v-model="detail.product_name"
                 v-autowidth
                 @click="$event.target.select()"
@@ -105,6 +126,10 @@ export default defineComponent({
     saleDetails: {
       type: Array,
       required: true
+    },
+    saleMenuSets: {
+      type: Array,
+      default: () => []
     }
   },
   emits: ["updateDetail"],

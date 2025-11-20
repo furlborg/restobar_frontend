@@ -11,8 +11,7 @@
       <n-grid responsive="screen" cols="1 xs:1 s:1 m:5 l:5 xl:5 2xl:5" :x-gap="12">
         <n-gi :span="3">
           <transition name="mode-fade" mode="out-in">
-            <OrderTaking
-              v-if="selectProducts"
+            <OrderTaking v-if="selectProducts"
               :loading="loading"
               :sale="sale"
               :show-observations="showObservations"
@@ -45,7 +44,9 @@
               @perform-take-away="performTakeAway"
               @do-multiple-payment="doMultiplePayment"
             />
-            <CategoriesList v-else />
+            <div v-else>
+              <CategoriesList />
+            </div>
           </transition>
         </n-gi>
         <n-gi span="2">
@@ -216,6 +217,7 @@
         </n-button>
       </n-space>
     </n-modal>
+
     <OrderIndications
       v-model:show="showModal"
       preset="card"
@@ -246,6 +248,7 @@
       @printed="() => $router.push({ name: 'TableHome' })"
       @canceled="() => $router.push({ name: 'TableHome' })"
     />
+
   </div>
 </template>
 
@@ -255,12 +258,13 @@ import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router";
 import { useMessage, useDialog } from "naive-ui";
 import { getSaleNumber } from "@/api/modules/sales";
 import { takeAwayOrder } from "@/api/modules/orders";
-import { searchCustomerByName, searchRucCustomer, retrieveCustomerAddresses } from "@/api/modules/customer";
+import { searchCustomerByName, searchRucCustomer } from "@/api/modules/customer";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useUserStore } from "@/store/modules/user";
+import { useSaleTotals } from "@/composables/useSaleTotals";
 import { useBreakpoint } from "vooks";
 import OrderTaking from "./OrderTaking.vue";
 import PaymentSummary from "./PaymentSummary.vue";
@@ -274,8 +278,13 @@ import format from "date-fns/format";
 export default defineComponent({
   name: "TakeOrderLayout",
   components: {
-    OrderTaking, PaymentSummary, CategoriesList, OrderIndications,
-    CustomerModal, TicketPreview, PreviewDrawer,
+    OrderTaking,
+    PaymentSummary,
+    CategoriesList,
+    OrderIndications,
+    CustomerModal,
+    TicketPreview,
+    PreviewDrawer,
   },
   setup() {
     const breakpointRef = useBreakpoint();
@@ -288,6 +297,7 @@ export default defineComponent({
     const userStore = useUserStore();
     const route = useRoute();
     const router = useRouter();
+    const { grandTotal, formattedTotals, taxBreakdown, summary, menuTotal } = useSaleTotals();
 
     const loading = ref(false);
     const selectProducts = ref(false);
@@ -306,6 +316,7 @@ export default defineComponent({
     const itemIndex = ref(null);
     const userConfirm = ref("");
     const productSearch = ref("");
+
     const pdfData = ref(null);
     const voucherData = ref(null);
     const addressesOptions = ref([]);
@@ -315,75 +326,22 @@ export default defineComponent({
     const whatsappNumber = ref("");
     const customerDocument = ref("");
 
-    const totals = computed(() => {
-      const toSale = saleStore.toSale;
-      return {
-        GRV: toSale.reduce(
-          (acc, cur) =>
-            cur.product_affectation === 10
-              ? acc + parseFloat(cur.price_sale - cur.igv_tax) * cur.quantity
-              : acc,
-          0
-        ),
-        EXN: toSale.reduce(
-          (acc, cur) =>
-            cur.product_affectation === 20
-              ? acc + parseFloat(cur.price_sale) * cur.quantity
-              : acc,
-          0
-        ),
-        GRT: toSale.reduce(
-          (acc, cur) =>
-            cur.product_affectation === 21
-              ? acc + parseFloat(cur.price_sale) * cur.quantity
-              : acc,
-          0
-        ),
-        IGV: toSale.reduce((acc, cur) => acc + cur.igv_tax * cur.quantity, 0),
-        DSCT: toSale.some((d) => Number(d.discount) > 0)
-          ? toSale.reduce((acc, cur) => acc + Number(cur.discount), 0)
-          : parseFloat(sale.value.discount),
-      };
-    });
+    // Usar el composable para obtener los totales correctos incluyendo menús
+    const subTotal = computed(() => summary.value.subtotal);
+    const icbper = computed(() => taxBreakdown.value.icbper);
+    const totalGRV = computed(() => taxBreakdown.value.taxed);
+    const totalEXN = computed(() => taxBreakdown.value.exempt + menuTotal.value);
+    const totalGRT = computed(() => taxBreakdown.value.free);
+    const totalIGV = computed(() => taxBreakdown.value.igv);
 
-    const totalGRV = computed(() => totals.value.GRV);
-    const totalEXN = computed(() => totals.value.EXN);
-    const totalGRT = computed(() => totals.value.GRT);
-    const totalIGV = computed(() => totals.value.IGV);
-    const totalDSCT = computed(() => totals.value.DSCT);
+    const totalDSCT = computed(() => 
+      saleStore.toSale.some(detail => Number(detail.discount) > 0)
+        ? saleStore.toSale.reduce((acc, curVal) => acc + Number(curVal.discount), 0)
+        : Number(sale.value.discount));
 
-    const subTotal = computed(() =>
-      saleStore.toSale.reduce(
-        (acc, cur) =>
-          cur.product_affectation === 21 ? acc : acc + cur.price_sale * cur.quantity,
-        0
-      )
-    );
+    const changing = computed(() => 
+      sale.value.given_amount > grandTotal.value ? (sale.value.given_amount - grandTotal.value).toFixed(2) : 0.0);
 
-    const products_count = computed(() =>
-      saleStore.toSale.reduce((acc, cur) => acc + cur.quantity, 0)
-    );
-
-    const total = computed(() => {
-      let cal = parseFloat(subTotal.value - parseFloat(totalDSCT.value) + icbper.value + parseFloat(sale.value.other_charges));
-      if (sale.value.delivery_info) {
-        cal += parseFloat(sale.value.delivery_info.amount)
-      };
-      return cal.toFixed(2);
-    });
-
-    const icbper = computed(() =>
-      orderStore.orderList.reduce(
-        (acc, curVal) => acc + (curVal.icbper ? curVal.icbper_amount : 0),
-        0
-      )
-    );
-
-    const changing = computed(() =>
-      sale.value.given_amount > total.value
-        ? (sale.value.given_amount - total.value).toFixed(2)
-        : 0.0
-    );
 
     const getModalClass = computed(() => ({
       "w-100": genericsStore.device === "mobile",
@@ -429,42 +387,33 @@ export default defineComponent({
       total_igv: "0.00",
     });
 
-    watch(
-      [
-        total,
-        icbper,
-        totalGRV,
-        totalEXN,
-        totalGRT,
-        totalIGV,
-        totalDSCT,
-        () => saleStore.toSale,
-        () => orderStore.orderList.length,
-      ],
-      () => {
-        const productCount = saleStore.toSale.reduce(
-          (acc, curVal) => acc + curVal.quantity,
-          0
-        );
-        Object.assign(sale.value, {
-          count: productCount,
-          amount: total.value,
-          icbper: icbper.value,
-          taxed_amount: totalGRV.value,
-          exempt_amount: totalEXN.value,
-          free_amount: totalGRT.value,
-          igv_amount: totalIGV.value,
-          total_igv: parseFloat(totalIGV.value || 0).toFixed(2),
-        });
-
-        if (sale.value.payment_condition === 1) {
-          const newGivenAmount = total.value > 0 ? total.value : parseFloat(0).toFixed(2);
-          if (sale.value.given_amount !== newGivenAmount) {
-            sale.value.given_amount = newGivenAmount;
-          }
+    // Watcher combinado que usa useSaleTotals para menús y para productos regulares
+    watch([grandTotal, icbper, totalGRV, totalEXN, totalGRT, totalIGV, totalDSCT, () => saleStore.toSale, () => orderStore.orderList.length], () => {
+      // Calcular la cantidad de productos directamente (incluyendo menús)
+      const productCount = saleStore.toSale.reduce((acc, curVal) => acc + curVal.quantity, 0);
+      const menuCount = (saleStore.salePayload.sale_product_sets || []).reduce((acc, curVal) => acc + curVal.quantity, 0);
+      
+      Object.assign(sale.value, {
+        count: productCount + menuCount,
+        amount: grandTotal.value,
+        icbper: icbper.value,
+        taxed_amount: totalGRV.value,
+        exempt_amount: totalEXN.value,
+        free_amount: totalGRT.value,
+        igv_amount: totalIGV.value,
+        total_igv: parseFloat(totalIGV.value || 0).toFixed(2),
+      });
+      
+      
+      // Actualizar el monto dado cuando cambia el total (para contado)
+      if (sale.value.payment_condition === 1) {
+        const newGivenAmount = grandTotal.value > 0 ? grandTotal.value : parseFloat(0).toFixed(2);
+        if (sale.value.given_amount !== newGivenAmount) {
+          sale.value.given_amount = newGivenAmount;
+          console.log("TakeOrderLayout - Monto de pago actualizado a:", newGivenAmount);
         }
       }
-    );
+    });
 
     const obtainSaleNumber = async () => {
       if (!sale.value.serie) return;
@@ -490,7 +439,10 @@ export default defineComponent({
       }
     );
 
-    onMounted(() => obtainSaleNumber());
+    onMounted(async () => {
+      console.log('Componente montado, obteniendo número de venta inicial');
+      await obtainSaleNumber();
+    });
 
     const selectSerie = (serieId) => {
       if (serieId !== undefined && serieId !== null) sale.value.serie = serieId;
@@ -529,7 +481,12 @@ export default defineComponent({
             const igvValue = parseFloat(sale.value.total_igv || sale.value.igv_amount || 0);
             sale.value.total_igv = igvValue.toFixed(2);
             const saleClone = JSON.parse(JSON.stringify(sale.value));
-            const response = await takeAwayOrder(orderStore.orderList, saleClone, userConfirm.value);
+            
+            // Obtener el payload completo que incluye sale_product_sets (menús)
+            const salePayload = saleStore.salePayload;
+            console.log("TakeOrderLayout - enviando orden con menús:", salePayload.sale_product_sets?.length || 0);
+            
+            const response = await takeAwayOrder(orderStore.orderList, saleClone, userConfirm.value, salePayload);
             if (response.status === 201) {
               checkState.value = true;
               cleanupOrderStore();
@@ -629,108 +586,28 @@ export default defineComponent({
       }
     };
 
-    const formatAddressLabel = (address) => {
-      const ubigeo = address?.ubigeo ?? "";
-      const description = address?.description ?? address?.address ?? "";
-      const parts = [ubigeo, description].filter(Boolean);
-      if (parts.length === 0 && address?.id) return String(address.id);
-      return parts.join(" - ");
-    };
-
-    const setDeliveryInfoFromCustomer = (customer, addressLabel) => {
-      if (!sale.value.delivery_info) return;
-      sale.value.delivery_info.person = customer?.names || "";
-      sale.value.delivery_info.phone = customer?.phone || "";
-      if (addressLabel !== undefined) {
-        sale.value.delivery_info.address = addressLabel ?? "";
-      } else if (!addressesOptions.value.length) {
-        sale.value.delivery_info.address = "";
-      }
-    };
-
-    const populateAddressOptions = (addresses, customer) => {
-      addressesOptions.value = addresses.map(address => ({
-        value: address.id,
-        label: formatAddressLabel(address)
-      }));
-
-      const existing = addressesOptions.value.find(option => option.value === sale.value.address);
-      sale.value.address = existing ? existing.value : (addressesOptions.value[0]?.value ?? null);
-
-      if (!sale.value.delivery_info) return;
-      const selectedOption = addressesOptions.value.find(option => option.value === sale.value.address);
-      const label = selectedOption?.label ?? "";
-      const parts = label.split(" - ");
-      const formattedAddress = parts.length > 1 ? parts.slice(-1)[0] : parts[0] ?? "";
-      setDeliveryInfoFromCustomer(customer, formattedAddress);
-    };
-
-    const resetAddressData = () => {
-      addressesOptions.value = [];
-      sale.value.address = null;
-      whatsappNumber.value = "";
-      if (sale.value.delivery_info) {
-        sale.value.delivery_info.person = "";
-        sale.value.delivery_info.phone = "";
-        sale.value.delivery_info.address = "";
-      }
-    };
-
-    const createAddressesOptions = async (selectedCustomer = null) => {
-      if (selectedCustomer && !customerResults.value.some(c => c.id === selectedCustomer.id)) {
-        customerResults.value.push(selectedCustomer);
-      }
-
-      const customer = selectedCustomer ?? customerResults.value.find(c => c.id === sale.value.customer);
+    const createAddressesOptions = () => {
+      const customer = customerResults.value.find(c => c.id === sale.value.customer);
       whatsappNumber.value = customer?.phone || "";
-
-      if (!customer) {
-        resetAddressData();
-        return;
-      }
-
-      let addresses = Array.isArray(customer.addresses) ? customer.addresses : [];
-
-      if ((!addresses || !addresses.length) && customer.id) {
-        try {
-          const response = await retrieveCustomerAddresses(customer.id);
-          if (response.status === 200) {
-            addresses = response.data || [];
-            customer.addresses = addresses;
-          }
-        } catch (error) {
-          console.error(error);
-          message.error("No se pudieron cargar las direcciones del cliente");
+      if (customer) {
+        addressesOptions.value = customer.addresses.map(address => ({
+          value: address.id,
+          label: `${address.ubigeo} - ${address.description}`
+        }));
+        if (addressesOptions.value.length) {
+          sale.value.address = addressesOptions.value[0].value;
+        }
+        if (sale.value.delivery_info) {
+          sale.value.delivery_info.person = customer.names;
+          sale.value.delivery_info.phone = customer.phone;
+          sale.value.delivery_info.address = customer.addresses.length ? customer.addresses[0].description : "";
         }
       }
-
-      if (addresses && addresses.length) {
-        populateAddressOptions(addresses, customer);
-      } else {
-        addressesOptions.value = [];
-        sale.value.address = null;
-        setDeliveryInfoFromCustomer(customer);
-      }
     };
 
-    watch(() => sale.value.customer, async (customerId) => {
-      if (customerId) {
-        await createAddressesOptions();
-      } else {
-        resetAddressData();
-      }
-    }, { immediate: true });
-
-    const changeAddress = (value, option) => {
-      if (!sale.value.delivery_info) return;
-      if (!value) {
-        sale.value.delivery_info.address = "";
-        return;
-      }
-      const label = option?.label || addressesOptions.value.find(address => address.value === value)?.label;
-      if (label) {
-        const parts = label.split(" - ");
-        sale.value.delivery_info.address = parts.length > 1 ? parts[1] : parts[0];
+    const changeAddress = (v, o) => {
+      if (sale.value.delivery_info && o?.label) {
+        sale.value.delivery_info.address = o.label.split(" - ")[1];
       }
     };
 
@@ -789,11 +666,12 @@ export default defineComponent({
       showCustomerModal.value = false;
     };
 
-    const onSuccess = async (customer) => {
+    const onSuccess = (customer) => {
       if ((sale.value.invoice_type === 1 && customer.doc_type === "6") || sale.value.invoice_type !== 1) {
+        customerResults.value.push(customer);
         sale.value.customer_name = `${customer.doc_num} - ${customer.names}`;
         sale.value.customer = customer.id;
-        await createAddressesOptions(customer);
+        createAddressesOptions();
       }
       showCustomerModal.value = false;
       onCloseModal();
@@ -835,46 +713,16 @@ export default defineComponent({
 
     return {
       // Estados
-      loading,
-      selectProducts,
-      showObservations,
-      isMultiple,
-      ticketPreview,
-      activeTab,
-      showModal,
-      showConfirm,
-      showPayments,
-      showCustomerModal,
-      showPdf,
-      showVoucher,
+      loading, selectProducts, showObservations, isMultiple, ticketPreview, activeTab,
+      showModal, showConfirm, showPayments, showCustomerModal, showPdf, showVoucher,
       // Referencias
-      ticketPreviewRef,
-      voucherDrawer,
-      itemIndex,
-      userConfirm,
-      productSearch,
+      ticketPreviewRef, voucherDrawer, itemIndex, userConfirm, productSearch,
       // Datos
-      sale,
-      pdfData,
-      voucherData,
-      addressesOptions,
-      customerOptions,
-      searchingCustomer,
-      whatsappNumber,
-      customerDocument,
+      sale, pdfData, voucherData, addressesOptions, customerOptions,
+      searchingCustomer, whatsappNumber, customerDocument,
       // Computados
-      changing,
-      subTotal,
-      totalGRV,
-      totalEXN,
-      totalGRT,
-      totalIGV,
-      totalDSCT,
-      icbper,
-      getModalClass,
-      evalPayments,
-      currentPaymentsAmount,
-      filteredMethods,
+      changing, subTotal, totalGRV, totalEXN, totalGRT, totalIGV, totalDSCT, icbper,
+      getModalClass, evalPayments, currentPaymentsAmount, filteredMethods,
       // Stores
       orderStore,
       // Métodos

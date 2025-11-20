@@ -160,14 +160,21 @@
       </n-list-item>
     </router-link> -->
   </n-list>
+  
+  <!-- Botón flotante de pedido -->
+  <FloatingOrderButton />
 </template>
 
 <script>
 import { defineComponent, ref, onMounted } from "vue";
 import { useProductStore } from "@/store/modules/product";
+import FloatingOrderButton from "@/WaiterMode/components/FloatingOrderButton.vue";
 
 export default defineComponent({
   name: "Categories",
+  components: {
+    FloatingOrderButton
+  },
   setup() {
     const productStore = useProductStore();
 
@@ -252,6 +259,11 @@ export default defineComponent({
 }
 .back-22 {
   background: -webkit-linear-gradient(-50deg, WhiteSmoke, HoneyDew);
+}
+.back-combos {
+  background: -webkit-linear-gradient(-50deg, #fff5e6, #ffe8c2);
+  border: 2px solid #f0a020;
+  font-weight: 700;
 }
 .box {
   height: 116px;
