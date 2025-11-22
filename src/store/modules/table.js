@@ -36,16 +36,27 @@ export const useTableStore = defineStore("table", {
     },
     getAreasTablesOptions() {
       let areas = this.areas;
-      if (!userStore.user.branchoffice) {
-        areas = areas.filter(
-          (area) => area.branch === businessStore.currentBranch && area.has_tables === true
-        );
-      } else {
-        areas = areas.filter(
-          (area) => area.branch === userStore.user.branchoffice && area.has_tables === true
-        );
+
+      // Determinar branch del usuario
+      const branchToFilter = !userStore.user.branchoffice
+        ? businessStore.currentBranch
+        : userStore.user.branchoffice;
+
+      // 1. Filtrar por branch (siempre)
+      areas = areas.filter(area => area.branch === branchToFilter);
+
+      // 2. Verificar si al menos una tiene el campo has_tables
+      const hasHasTablesField = areas.some(area =>
+        Object.prototype.hasOwnProperty.call(area, "has_tables")
+      );
+
+      // 3. Si existe has_tables en alguna → aplicar filtro
+      if (hasHasTablesField) {
+        areas = areas.filter(area => area.has_tables === true);
       }
-      return areas.map((area) => ({
+
+      // 4. Formateo final
+      return areas.map(area => ({
         label: area.description,
         value: area.id,
         sale_printer: area.sale_printer,
@@ -64,15 +75,26 @@ export const useTableStore = defineStore("table", {
       }
     },
     branch_table_Areas() {
-      if (!userStore.user.branchoffice) {
-        return this.areas.filter(
-          (area) => area.branch === businessStore.currentBranch && area.has_tables === true
-        );
-      } else {
-        return this.areas.filter(
-          (area) => area.branch === userStore.user.branchoffice && area.has_tables === true
-        );
+      const branchToFilter = !userStore.user.branchoffice
+        ? businessStore.currentBranch
+        : userStore.user.branchoffice;
+
+      // Primero filtrar por branch
+      let filteredAreas = this.areas.filter(
+        area => area.branch === branchToFilter
+      );
+
+      // Detectar si existe el campo has_tables en al menos un área
+      const hasHasTablesField = filteredAreas.some(area =>
+        Object.prototype.hasOwnProperty.call(area, "has_tables")
+      );
+
+      // Si existe el campo → filtrar SOLO las que tienen true
+      if (hasHasTablesField) {
+        filteredAreas = filteredAreas.filter(area => area.has_tables === true);
       }
+
+      return filteredAreas;
     },
   },
   actions: {
