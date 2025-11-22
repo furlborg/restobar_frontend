@@ -29,11 +29,16 @@
           style="cursor: pointer"
         >
           <template #prefix>
-            <img
+            <!-- <img
               src="~@/assets/images/default-food-image.jpg"
               alt=""
-              width="75"
-              height="75"
+              width="35"
+              height="35"
+            /> -->
+            <img
+              src="~@/assets/images/default-food-image.jpg"
+              :width="category_settings.width_image_product"
+              :height="category_settings.height_image_product"
             />
           </template>
           <n-thing>
@@ -80,6 +85,7 @@ import { useOrderStore } from "@/store/modules/order";
 import { useGenericsStore } from "@/store/modules/generics";
 import { getProductsByCategory } from "@/api/modules/products";
 import { useProductStore } from "@/store/modules/product";
+import { useSettingsStore } from "@/store/modules/settings";
 
 export default defineComponent({
   name: "CategoriesItems",
@@ -94,6 +100,15 @@ export default defineComponent({
     const listType = ref("list");
     const products = ref([]);
     const search = ref("");
+
+    const settingsStore = useSettingsStore();
+    const category_settings = computed(() => ({
+    use_image: false,
+    area_text_size: 16,
+    width_image_product: 35,
+    height_image_product: 35,
+    ...(settingsStore.business_settings?.category || {})
+    }));
 
     const itemsList = computed(() => {
       const list = products.value.filter((product) => {
@@ -139,7 +154,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          
+
         });
     };
 
@@ -162,6 +177,8 @@ export default defineComponent({
       orderStore,
       search,
       itemsList,
+      settingsStore,
+      category_settings,
     };
   },
 });

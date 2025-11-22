@@ -45,6 +45,7 @@ export async function updateBusinessSettings(business_settings) {
     customers: business_settings.customers,
     till: business_settings.till,
     reports: business_settings.reports,
+    category: business_settings.category, // ← AQUI
   });
 }
 
