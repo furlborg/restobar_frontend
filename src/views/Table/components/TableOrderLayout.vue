@@ -562,6 +562,7 @@ export default defineComponent({
                 if (response.status === 204) {
                     orderStore.orderList.splice(removingItem.value.ind, 1);
                     saleStore.order_initial.splice(removingItem.value.ind, 1);
+                    orderStore.removeOrder(removingItem.value.ind);
                     await nullifyTableOrder();
                     message.success("Comanda eliminada");
                 } else if (response.status === 202) {
@@ -609,6 +610,7 @@ export default defineComponent({
 
         const deleteOrderDetail = (detailIndex, detailId) => {
             Object.assign(removingItem.value, { ind: detailIndex, id: detailId });
+            console.log('dadada');
             const quantity = saleStore.getOrderQuantity(detailId);
             deleteQuantity.value = quantity;
             maxQuantity.value = quantity;
