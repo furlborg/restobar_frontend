@@ -24,10 +24,10 @@
         >
           <template #prefix>
             <img
-               :src="productImage(product)"
+              :src="productImage(product)"
               alt=""
-              width="75"
-              height="75"
+              :width="category_settings.width_image_product"
+              :height="category_settings.height_image_product"
             />
           </template>
           <n-thing>
@@ -66,10 +66,7 @@
 
 <script>
 import { defineComponent, computed, onMounted, ref, inject } from "vue";
-import { useRoute } from "vue-router";
-import { useRouter } from "vue-router";
-import { useMessage } from "naive-ui";
-import { renderIcon } from "@/utils";
+import { useRoute, useRouter } from "vue-router";
 import { useOrderStore } from "@/store/modules/order";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useSettingsStore } from "@/store/modules/settings";
@@ -81,7 +78,6 @@ export default defineComponent({
   name: "CategoriesItems",
   setup() {
     const productImage = (p) => p?.image || p?.image_url || defaultFoodImage;
-    const message = useMessage();
     const route = useRoute();
     const router = useRouter();
     const genericsStore = useGenericsStore();
@@ -93,7 +89,22 @@ export default defineComponent({
     const products = ref([]);
     const search = ref("");
 
-    const addOrderToCustomer = inject('handleProductClick', () => null);
+    const addOrderToCustomer = inject(
+      "handleProductClick",
+      (product) => {
+        if (product?.has_stock && product?.has_supplies) {
+          orderStore.addOrder(product);
+        }
+      }
+    );
+
+    const category_settings = computed(() => ({
+      use_image: false,
+      area_text_size: 16,
+      width_image_product: 35,
+      height_image_product: 35,
+      ...(settingsStore.business_settings?.category || {}),
+    }));
 
     const itemsList = computed(() => {
       const list = products.value.filter((product) => {
@@ -117,19 +128,6 @@ export default defineComponent({
       }
     });
 
-    const productOptions = [
-      {
-        label: "Editar",
-        key: "edit",
-        icon: renderIcon("ri-edit-fill"),
-      },
-      {
-        label: "Eliminar",
-        key: "delete",
-        icon: renderIcon("ri-delete-bin-2-fill"),
-      },
-    ];
-
     const loadProducts = async () => {
       await getProductsByCategory(route.params.category)
         .then((response) => {
@@ -139,7 +137,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          
+
         });
     };
 
@@ -156,7 +154,6 @@ export default defineComponent({
       addOrderToCustomer,
       listType,
       genericsStore,
-      productOptions,
       productStore,
       category,
       products,
@@ -164,6 +161,7 @@ export default defineComponent({
       search,
       itemsList,
       productImage,
+      category_settings,
     };
   },
 });

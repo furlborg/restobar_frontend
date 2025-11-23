@@ -76,7 +76,7 @@
             color="#901E00"
             text
           >
-            S/. {{ (table?.order_amount || 0).toFixed(2) }}
+            S/. {{ (Number(table?.order_amount) || 0)?.toFixed(2) }}
           </n-button>
         </n-card>
       </n-gi>
