@@ -152,6 +152,10 @@ export default defineComponent({
           primaryColorHover: lightenStr,
           primaryColorPressed: lightenStr,
         },
+          DataTable: {
+              thPaddingTiny: "2px 2px 6px 6px",
+              tdPaddingTiny: "2px 2px 6px 6px",
+          },
         LoadingBar: {
           colorLoading: appTheme,
         },
