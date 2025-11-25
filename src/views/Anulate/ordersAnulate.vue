@@ -187,27 +187,6 @@ const columns = [
     }
 ];
 
-// [
-//     {
-//         "id": 4820,
-//         "product": 2,
-//         "product_name": "1 POLLO BRASA + PLATANOS",
-//         "product_description": null,
-//         "product_category": "POLLO ENTERO",
-//         "product_affectation": 20,
-//         "product_igv": 0.0,
-//         "preparation_place": "HORNO",
-//         "quick_indications": null,
-//         "price": 61.0,
-//         "indication": [],
-//         "quantity": 2,
-//         "icbper": false,
-//         "sub_total": 122.0,
-//         "product_fitting": null,
-//         "username": "ADMIN"
-//     }
-// ]
-
 const columnsDataAnulate = [
     { key: "id", title: "ID", width: 10 },
     { key: "username", title: "Usuario", width: 30 },
