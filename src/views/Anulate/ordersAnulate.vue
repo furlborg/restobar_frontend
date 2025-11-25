@@ -62,7 +62,7 @@ const pagination = ref({
             pagination.value.pageCount = Math.trunc(
                 Number(response.data.count) / pagination.value.pageSize
             );
-            if(
+            if (
                 Number(response.data.count) % pagination.value.pageSize !== 0 ||
                 pagination.value.pageCount === 0
             ) {
@@ -71,7 +71,7 @@ const pagination = ref({
             orders.value = response.data.results;
         }).catch((error) => {
             console.error(error);
-            
+
         }).finally(() => {
             isTableLoading.value = false;
         });
@@ -80,18 +80,17 @@ const pagination = ref({
 
 const performFilter = async() => {
     isTableLoading.value = true;
-    pagination.value.pageSearchParams = { ...filterParams.value, created: `${filterParams.value.created[0]} 00:00:00, ${filterParams.value.created[1]} 23:59:59` };
+    const params = { ...filterParams.value };
+    if (filterParams.value.created && filterParams.value.created[0] && filterParams.value.created[1]) {
+        params.created = `${ filterParams.value.created[0] }, ${ filterParams.value.created[1] }`;
+    }
     pagination.value.page = 1;
-    await searchOrdersAnulate(
-        pagination.value.pageSearchParams,
-        pagination.value.page,
-        pagination.value.pageSize
-    ).then((response) => {
+    await searchOrdersAnulate(params, pagination.value.page, pagination.value.pageSize).then((response) => {
         pagination.value.total = response.data.count;
         pagination.value.pageCount = Math.trunc(
             Number(response.data.count) / pagination.value.pageSize
         );
-        if(
+        if (
             Number(response.data.count) % pagination.value.pageSize !== 0 ||
             pagination.value.pageCount === 0
         ) {
@@ -100,7 +99,7 @@ const performFilter = async() => {
         orders.value = response.data.results;
     }).catch((error) => {
         console.error(error);
-        
+
     }).finally(() => {
         isTableLoading.value = false;
     });
@@ -114,12 +113,16 @@ const columns = [
     { title: "#", key: "id", align: "center", width: 70 },
     // { title: "Cliente", key: "sale_customer", align: "center", width: 200 },
     { title: "Usuario", key: "username", align: "center", width: 200 },
-    { title: "Monto", align: "center", width: 100, render(row) { return `S/. ${parseFloat(row?.["initial_amount"]).toFixed(2)}`; } },
+    {
+        title: "Monto", align: "center", width: 100, render(row) {
+            return `S/. ${ parseFloat(row?.["initial_amount"]).toFixed(2) }`;
+        }
+    },
     { title: "Fecha", key: "created", align: "center", width: 120 },
     {
         title: "Mesa", align: "center", width: 130,
         render(row) {
-            switch(row.order_type) {
+            switch (row.order_type) {
                 case "M":
                     return tableStore.getTableByID(row.table).description;
                 case "P":
@@ -135,7 +138,7 @@ const columns = [
         title: "Tipo", align: "center", width: 120,
         render(row) {
             let color, text;
-            switch(row.order_type) {
+            switch (row.order_type) {
                 case "M":
                     color = "#3B689F";
                     text = "EN MESA";
@@ -173,7 +176,7 @@ const columns = [
             return h(
                 NTag,
                 { size: "small", type: "error", round: true },
-                { default: () => `ANULADO ${row?.["canceled_type_description"]}` }
+                { default: () => `ANULADO ${ row?.["canceled_type_description"] }` }
             );
         }
     },
@@ -202,16 +205,32 @@ const onCloseModal = () => {
 };
 
 const getDataPrintOrder = async(type = String) => {
+    const { created, ...rest } = filterParams.value;
+    console.log(filterParams.value);
+    const buildCreatedParam = () => {
+        if ( !created || !created.length) return undefined;
+        if ( !created[0] || !created[1]) return undefined;
+        return `${ created[0] } 00:00:00,${ created[1] } 23:59:59`;
+    };
+
+    const createdParam = buildCreatedParam();
+
     const response = await http.get(`orders/canceled_list/`, {
-        params: { ...filterParams.value, created: `${filterParams.value.created[0]} 00:00:00, ${filterParams.value.created[1]} 23:59:59`, canceled_type: type }
+        params: {
+            ...rest,
+            canceled_type: type,
+            ...(createdParam && { created: createdParam })
+        }
     });
-    if(response.data.results.length === 0) {
+
+    if (response.data.results.length === 0) {
         message.info("No hay resultados para imprimir");
-    } else {
-        message.success("Reporte generado con éxito");
-        const print = new printTicketOrderAnulate();
-        await print.generate(response.data.results, type);
+        return;
     }
+
+    message.success("Reporte generado con éxito");
+    const print = new printTicketOrderAnulate();
+    await print.generate(response.data.results, type);
 };
 
 </script>
