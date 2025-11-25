@@ -13,11 +13,36 @@
           v-for="(category, index) in productStore.categories"
           :key="index"
         >
-          <div class="item-zoom" @click="selectCategory(category.id)">
+          <!-- <div class="item-zoom" @click="selectCategory(category.id)">
             <div>
               <img src="~@/assets/images/category-bg.jpg" alt="" />
-                <n-text style="font-size: 21px; font-weight: 900; text-align: center; color: #000; top: 40%; left: 45%"
+                <n-text style="font-size: 21px; font-weight: 900; text-align: center; color: #000; top: 50%; left: 50%; "
                         class="position-absolute translate-middle">{{ category.description }}</n-text>
+            </div>
+          </div> -->
+
+          <div class="item-zoom" @click="selectCategory(category.id)">
+            <div class="category-container">
+
+              <!-- Si useImage === true, muestra la imagen -->
+              <img
+                v-if="category_settings.use_image"
+                src="~@/assets/images/category-bg.jpg"
+                alt=""
+                class="category-image"
+              />
+
+              <!-- Si useImage === false, muestra un cuadro -->
+              <div v-else class="fallback-box"></div>
+
+              <!-- Texto centrado -->
+              <n-text
+                class="category-text"
+                :style="{ fontSize: category_settings.area_text_size + 'px' }"
+              >
+                {{ category.description }}
+              </n-text>
+
             </div>
           </div>
         </n-gi>
@@ -45,11 +70,16 @@
               style="cursor: pointer"
             >
               <template #prefix>
-                <img
+                <!-- <img
                   src="~@/assets/images/default-food-image.jpg"
                   alt=""
-                  width="75"
-                  height="75"
+                  width="35"
+                  height="35"
+                /> -->
+                <img
+                  src="~@/assets/images/default-food-image.jpg"
+                  :width="category_settings.width_image_product"
+                  :height="category_settings.height_image_product"
                 />
               </template>
               <n-thing>
@@ -92,6 +122,7 @@ import { useProductStore } from "@/store/modules/product";
 import { useOrderStore } from "@/store/modules/order";
 import { getProductsByCategory } from "@/api/modules/products";
 import { useGenericsStore } from "@/store/modules/generics";
+import { useSettingsStore } from "@/store/modules/settings";
 
 export default defineComponent({
   name: "CategoriesList",
@@ -102,6 +133,14 @@ export default defineComponent({
     const productStore = useProductStore();
     const genericsStore = useGenericsStore();
     const orderStore = useOrderStore();
+    const settingsStore = useSettingsStore();
+    const category_settings = computed(() => ({
+      use_image: false,
+      area_text_size: 16,
+      width_image_product: 35,
+      height_image_product: 35,
+      ...(settingsStore.business_settings?.category || {})
+    }));
 
     const products = ref([]);
     const search = ref("");
@@ -116,7 +155,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          
+
         })
         .finally(() => {
           isLoading.value = false;
@@ -147,6 +186,7 @@ export default defineComponent({
 
     onMounted(async () => {
       // console.log("delivery monted");
+      await settingsStore.initializeStore();
       await productStore.tableCategories();
     });
 
@@ -159,38 +199,72 @@ export default defineComponent({
       orderStore,
       search,
       itemsList,
+      category_settings,
     };
   },
 });
 </script>
 
 <style lang="scss" scoped>
+
 .item-zoom {
   position: relative;
   border: 1px solid #333;
   overflow: hidden;
-  -moz-box-sizing: border-box;
-  -webkit-box-sizing: border-box;
   box-sizing: border-box;
+  cursor: pointer;
 }
 
+/* Imagen */
 .item-zoom img {
-  vertical-align: top;
-  max-width: 100%;
-  -moz-transition: all 0.3s;
-  -webkit-transition: all 0.3s;
-  transition: all 0.3s;
-  -webkit-filter: grayscale(100%);
-  -moz-filter: grayscale(100%);
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+
+  transition: all 0.3s ease;
   filter: grayscale(100%);
 }
 
 .item-zoom:hover img {
-  -moz-transform: scale(1.1);
-  -webkit-transform: scale(1.1);
   transform: scale(1.1);
-  -webkit-filter: grayscale(0%);
-  -moz-filter: grayscale(0%);
   filter: grayscale(0%);
 }
+
+/* Contenedor */
+.category-container {
+  position: relative;
+  width: 100%;
+  height: 130px;     /* ← mismo alto para coherencia */
+}
+
+/* Cuadro sin imagen */
+.fallback-box {
+  width: 100%;
+  height: 100%;      /* ← mismo alto que el contenedor */
+  background-color: #e0e0e0;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.item-zoom:hover .fallback-box {
+  background-color: #9ae2b8;
+  transform: scale(1.05);
+}
+
+/* Texto */
+.category-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  font-weight: 900;
+  color: #000;
+  text-align: center;
+
+  white-space: normal;
+  word-break: keep-all;
+  pointer-events: none;
+}
+
+
 </style>
