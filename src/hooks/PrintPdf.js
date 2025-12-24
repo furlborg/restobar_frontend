@@ -79,7 +79,18 @@ export const printPdf = async (objOrArry) => {
                 data: dataPdf,
               },
             ]).then(() => {
-              qz.websocket.disconnect();
+              // Mantener conexión abierta por 30 segundos para reutilización
+              setTimeout(() => {
+                if (qz.websocket && typeof qz.websocket.isActive === 'function') {
+                  try {
+                    if (qz.websocket.isActive()) {
+                      qz.websocket.disconnect();
+                    }
+                  } catch (e) {
+                    console.warn('Error disconnecting websocket:', e);
+                  }
+                }
+              }, 30000);
             });
           } else {
             console.error("La impresora especificada no se a encontrado");
@@ -91,6 +102,16 @@ export const printPdf = async (objOrArry) => {
     })
     .catch((error) => {
       console.error(error);
+      
+      if (qz.websocket && typeof qz.websocket.isActive === 'function') {
+        try {
+          if (qz.websocket.isActive()) {
+            qz.websocket.disconnect();
+          }
+        } catch (e) {
+          console.warn('Error disconnecting websocket:', e);
+        }
+      }
     });
 };
 
