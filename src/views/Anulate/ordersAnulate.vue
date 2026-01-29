@@ -14,14 +14,14 @@ const tableStore = useTableStore();
 const isTableLoading = ref(false);
 const showDetailsModal = ref(false);
 const showFilters = ref(false);
+const showModalAnulate = ref(false);
+const dataAnulateItems = ref([]);
 const idOrder = ref(0);
 const delivery = ref({});
 const today = new Date(Date.now());
 const filterParams = ref({
-    created: [
-        format(today, "dd/MM/yyyy"),
-        format(today, "dd/MM/yyyy")
-    ],
+    date_after: format(today, "dd/MM/yyyy"),
+    date_before: format(today, "dd/MM/yyyy"),
     take_aways: true,
     tables: true,
     deliverys: true,
@@ -37,15 +37,6 @@ const typeCancellation = ref([
 ]);
 
 const pagination = ref({
-    pageSearchParams: {
-        created: [
-            format(today, "dd/MM/yyyy HH:mm:ss"),
-            format(today, "dd/MM/yyyy HH:mm:ss")
-        ],
-        take_aways: true,
-        tables: true,
-        deliverys: true
-    },
     total: 0,
     page: 1,
     pageCount: 1,
@@ -54,7 +45,7 @@ const pagination = ref({
         isTableLoading.value = true;
         pagination.value.page = page;
         await listOrdersByPage(
-            pagination.value.pageSearchParams,
+            filterParams.value,
             pagination.value.page,
             pagination.value.pageSize
         ).then((response) => {
@@ -62,7 +53,7 @@ const pagination = ref({
             pagination.value.pageCount = Math.trunc(
                 Number(response.data.count) / pagination.value.pageSize
             );
-            if(
+            if (
                 Number(response.data.count) % pagination.value.pageSize !== 0 ||
                 pagination.value.pageCount === 0
             ) {
@@ -71,7 +62,7 @@ const pagination = ref({
             orders.value = response.data.results;
         }).catch((error) => {
             console.error(error);
-            
+
         }).finally(() => {
             isTableLoading.value = false;
         });
@@ -80,18 +71,14 @@ const pagination = ref({
 
 const performFilter = async() => {
     isTableLoading.value = true;
-    pagination.value.pageSearchParams = { ...filterParams.value, created: `${filterParams.value.created[0]} 00:00:00, ${filterParams.value.created[1]} 23:59:59` };
+
     pagination.value.page = 1;
-    await searchOrdersAnulate(
-        pagination.value.pageSearchParams,
-        pagination.value.page,
-        pagination.value.pageSize
-    ).then((response) => {
+    await searchOrdersAnulate(filterParams.value, pagination.value.page, pagination.value.pageSize).then((response) => {
         pagination.value.total = response.data.count;
         pagination.value.pageCount = Math.trunc(
             Number(response.data.count) / pagination.value.pageSize
         );
-        if(
+        if (
             Number(response.data.count) % pagination.value.pageSize !== 0 ||
             pagination.value.pageCount === 0
         ) {
@@ -100,7 +87,7 @@ const performFilter = async() => {
         orders.value = response.data.results;
     }).catch((error) => {
         console.error(error);
-        
+
     }).finally(() => {
         isTableLoading.value = false;
     });
@@ -114,12 +101,16 @@ const columns = [
     { title: "#", key: "id", align: "center", width: 70 },
     // { title: "Cliente", key: "sale_customer", align: "center", width: 200 },
     { title: "Usuario", key: "username", align: "center", width: 200 },
-    { title: "Monto", align: "center", width: 100, render(row) { return `S/. ${parseFloat(row?.["initial_amount"]).toFixed(2)}`; } },
+    {
+        title: "Monto", align: "center", width: 100, render(row) {
+            return `S/. ${ parseFloat(row?.["initial_amount"]).toFixed(2) }`;
+        }
+    },
     { title: "Fecha", key: "created", align: "center", width: 120 },
     {
         title: "Mesa", align: "center", width: 130,
         render(row) {
-            switch(row.order_type) {
+            switch (row.order_type) {
                 case "M":
                     return tableStore.getTableByID(row.table).description;
                 case "P":
@@ -135,7 +126,7 @@ const columns = [
         title: "Tipo", align: "center", width: 120,
         render(row) {
             let color, text;
-            switch(row.order_type) {
+            switch (row.order_type) {
                 case "M":
                     color = "#3B689F";
                     text = "EN MESA";
@@ -168,12 +159,12 @@ const columns = [
         }
     },
     {
-        title: "Estado", align: "center", width: 90,
+        title: "Estado", align: "center", width: 120,
         render(row) {
             return h(
                 NTag,
                 { size: "small", type: "error", round: true },
-                { default: () => `ANULADO ${row?.["canceled_type_description"]}` }
+                { default: () => `ANULADO ${ row?.["canceled_type_description"] }` }
             );
         }
     },
@@ -186,8 +177,8 @@ const columns = [
                     style: { color: "#3B689F", "margin": "4px" },
                     size: "small", type: "info", secondary: true,
                     onClick: () => {
-                        idOrder.value = row.id;
-                        showDetailsModal.value = true;
+                        dataAnulateItems.value = row?.["order_canceleddetails"] ?? [];
+                        showModalAnulate.value = true;
                     }
                 },
                 renderIcon("md-feed-round")
@@ -196,22 +187,33 @@ const columns = [
     }
 ];
 
+const columnsDataAnulate = [
+    { key: "id", title: "ID", width: 10 },
+    { key: "username", title: "Usuario", width: 30 },
+    { key: "quantity", title: "Cantidad", width: 15 },
+    { key: "product_name", title: "Producto", width: 100 },
+    { key: "product_category", title: "Categoría de Producto", width: 50 },
+    { key: "price", title: "Precio", width: 15 },
+    { key: "sub_total", title: "Sub Total", width: 15 }
+];
+
 const onCloseModal = () => {
     idOrder.value = 0;
     delivery.value = null;
 };
 
 const getDataPrintOrder = async(type = String) => {
-    const response = await http.get(`orders/canceled_list/`, {
-        params: { ...filterParams.value, created: `${filterParams.value.created[0]} 00:00:00, ${filterParams.value.created[1]} 23:59:59`, canceled_type: type }
-    });
-    if(response.data.results.length === 0) {
+
+    const response = await http.get(`orders/canceled_list/`, { params: { ...filterParams.value, canceled_type: type } });
+
+    if (response.data.results.length === 0) {
         message.info("No hay resultados para imprimir");
-    } else {
-        message.success("Reporte generado con éxito");
-        const print = new printTicketOrderAnulate();
-        await print.generate(response.data.results, type);
+        return;
     }
+
+    message.success("Reporte generado con éxito");
+    const print = new printTicketOrderAnulate();
+    await print.generate(response.data.results, type);
 };
 
 </script>
@@ -241,10 +243,10 @@ const getDataPrintOrder = async(type = String) => {
             <n-form>
                 <n-grid responsive="screen" cols="6 s:6 m:12 l:12 xl:24 2xl:24" :x-gap="12">
                     <n-form-item-gi label="Fecha Desde" :span="2">
-                        <n-date-picker type="date" v-model:formatted-value="filterParams.created[0]" format="dd/MM/yyyy" clearable/>
+                        <n-date-picker type="date" v-model:formatted-value="filterParams.date_after" format="dd/MM/yyyy" clearable/>
                     </n-form-item-gi>
                     <n-form-item-gi label="Fecha Hasta" :span="2">
-                        <n-date-picker type="date" v-model:formatted-value="filterParams.created[1]" format="dd/MM/yyyy" clearable/>
+                        <n-date-picker type="date" v-model:formatted-value="filterParams.date_before" format="dd/MM/yyyy" clearable/>
                     </n-form-item-gi>
                     <n-form-item-gi label="T. de Anulación" :span="2">
                         <n-select :options="typeCancellation" v-model:value="filterParams.canceled_type" clearable/>
@@ -259,6 +261,15 @@ const getDataPrintOrder = async(type = String) => {
 
         <n-data-table size="tiny" :data="orders" :columns="columns" :pagination="pagination" :single-line="false" :loading="isTableLoading"
                       class="mt-2" scroll-x="1100px" striped max-height="calc(100vh - 350px)" remote style="font-size: 13px !important;"/>
+
+        <n-modal :style="{ width: '90%', maxWidth: '85%' }" preset="card" title="Detalle de pedido"
+                 v-model:show="showModalAnulate" @close="() => ({ showModalAnulate: false, dataAnulateItems: []})">
+
+            <n-data-table size="tiny" :columns="columnsDataAnulate" :data="dataAnulateItems" scroll-x="1150px" striped
+                          max-height="calc(100vh - 350px)">
+
+            </n-data-table>
+        </n-modal>
         <details-modal v-model:show="showDetailsModal" :id-order="idOrder" @update:show="onCloseModal"/>
     </div>
 </template>

@@ -64,13 +64,39 @@ export async function printPdf(
           data: pdf.output("datauristring").split(",")[1],
         },
       ]).then(() => {
-        // qz.printers.stopListening();
-        // qz.websocket.disconnect();
+        // Mantener conexión abierta por 30 segundos para reutilización
+        // Si no hay más impresiones, se cierra automáticamente
+        setTimeout(() => {
+          try {
+            if (qz.websocket && typeof qz.websocket.isActive === 'function') {
+              if (qz.websocket.isActive()) {
+                qz.printers.stopListening();
+                qz.websocket.disconnect();
+              }
+            }
+          } catch (e) {
+            console.warn('Error closing QZ Tray connection:', e);
+          }
+        }, 30000); // 30 segundos de timeout
       });
     })
     .catch((error) => {
       console.error(error);
-      qz.printers.stopListening();
-      qz.websocket.disconnect();
+      
+      try {
+        qz.printers.stopListening();
+      } catch (e) {
+        console.warn('Error stopping printer listener:', e);
+      }
+      
+      if (qz.websocket && typeof qz.websocket.isActive === 'function') {
+        try {
+          if (qz.websocket.isActive()) {
+            qz.websocket.disconnect();
+          }
+        } catch (e) {
+          console.warn('Error disconnecting websocket:', e);
+        }
+      }
     });
 }
