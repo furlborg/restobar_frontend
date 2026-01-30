@@ -34,10 +34,19 @@ export const useProductStore = defineStore("product", {
     },
   },
   actions: {
+    normalizeCategoriesPayload(payload) {
+      if (Array.isArray(payload?.results)) {
+        return payload.results;
+      }
+      return payload;
+    },
     async initializeStore() {
       await getProductCategories()
         .then((response) => {
-          this.categories = response.data.filter(cat =>!cat.is_disabled);
+          const categories = this.normalizeCategoriesPayload(response.data);
+          this.categories = Array.isArray(categories)
+            ? categories.filter((cat) => !cat.is_disabled)
+            : [];
         })
         .catch((error) => {
           console.error(error);
@@ -77,7 +86,10 @@ export const useProductStore = defineStore("product", {
     async refreshCategories() {
       return await getProductCategories()
         .then((response) => {
-          this.categories = response.data.filter(cat =>!cat.is_disabled);
+          const categories = this.normalizeCategoriesPayload(response.data);
+          this.categories = Array.isArray(categories)
+            ? categories.filter((cat) => !cat.is_disabled)
+            : [];
         })
         .catch((error) => {
           console.error(error);
@@ -89,21 +101,28 @@ export const useProductStore = defineStore("product", {
         const response = await getProductCategories();
 
         if (response?.data) {
-          this.categories = response.data.filter((cat) => {
-            const isEnabled = !cat.is_disabled;
-            const hasProducts = cat.has_products === true;
-            return isEnabled && hasProducts;
-          })
-          // Ordenar las categorías por descripción
+          const categories = this.normalizeCategoriesPayload(response.data);
+          if (!Array.isArray(categories)) {
+            console.warn("Categorias invalidas para mesa");
+            return;
+          }
+
+          const enabled = categories.filter((cat) => !cat.is_disabled);
+          const withProducts = enabled.filter(
+            (cat) => cat.has_products !== false
+          );
+
+          this.categories = withProducts.length ? withProducts : enabled;
+          // Ordenar las categorias por descripcion
           // .sort((a, b) =>
           //   a.description.toLowerCase().localeCompare(b.description.toLowerCase())
           // )
-          ;
+          // ;
         } else {
-          console.warn("⚠️ No hay response.data o está vacío");
+          console.warn("No hay response.data o esta vacio");
         }
       } catch (error) {
-        console.error("❌ Error en tableCategories:", error);
+        console.error("Error en tableCategories:", error);
       }
     },
     async refreshPlaces() {

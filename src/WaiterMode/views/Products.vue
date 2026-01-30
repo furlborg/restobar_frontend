@@ -71,10 +71,11 @@
       </n-list-item>
     </n-list>
     <ProductIndications
+      v-if="selectedProduct"
       v-model:show="showModal"
       preset="card"
       title="Indicaciones"
-      :product="orderStore.orderList[orderItemIndex]"
+      :product="selectedProduct"
       @success="showModal = false"
     ></ProductIndications>
     <teleport to="body">
@@ -354,6 +355,10 @@ export default defineComponent({
 
     const pdfData = ref(null);
 
+    const selectedProduct = computed(
+      () => orderStore.orderList[orderItemIndex.value] || null
+    );
+
     return {
       loading,
       search,
@@ -362,6 +367,7 @@ export default defineComponent({
       productStore,
       waiterStore,
       orderItemIndex,
+      selectedProduct,
       filteredProducts,
       addToOrderStore,
       orderStore,

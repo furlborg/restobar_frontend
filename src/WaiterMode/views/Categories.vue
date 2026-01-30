@@ -171,7 +171,7 @@ import { useProductStore } from "@/store/modules/product";
 import FloatingOrderButton from "@/WaiterMode/components/FloatingOrderButton.vue";
 
 export default defineComponent({
-  name: "Categories",
+  name: "WCategories",
   components: {
     FloatingOrderButton
   },
