@@ -366,7 +366,7 @@ export default defineComponent({
             set: (value) => emit('update:selectedCustomerId', value)
         });
 
-        const selectProduct = (productId) => emit('productSelect', productId);
+        const selectProduct = product => emit('productSelect', product);
 
         const localAskFor = computed({
             get: () => props.ask_for,
@@ -399,7 +399,7 @@ export default defineComponent({
         });
 
         const productOptions = computed(() => products.value.map((product) => ({
-            value: product.id,
+            value: product,
             label: product.name,
             disabled: product.is_disabled,
             category: productStore.getCategorieDescription(product.category),
@@ -543,7 +543,7 @@ export default defineComponent({
             }
 
             // Si es texto con al menos 3 caracteres, buscar por nombre
-            if (value.length >= 3) {
+            if (value && value.length >= 3) {
                 searching.value = true
                 searchProductByName(value)
                 .then(res => {
@@ -554,7 +554,7 @@ export default defineComponent({
             } else {
                 products.value = []
             }
-            }, 500)
+        }, 500)
 
         // --- get-show solo controla visibilidad del dropdown ---
         const showOptions = (value) => {
@@ -584,16 +584,16 @@ export default defineComponent({
         const orderButtonDisabled = computed(() => !props.hasUnsavedChanges);
 
         return {
-            userStore, activeUsersStore, route, router, tableStore, settingsStore, genericsStore, 
+            userStore, activeUsersStore, route, router, tableStore, settingsStore, genericsStore,
             productStore, orderStore, saleStore,
             customers: computed(() => props.customers),
             shouldShowCustomerMode: computed(() => props.shouldShowCustomerMode),
             customerOptions, localSelectedCustomerId, addCustomer, removeCustomer, deleteOrderDetail,
             newCustomerName, showModal, itemIndex, searching, productSearch, products,
             localAskFor, localOrderUser, shouldSelectOrderUser, currentOrder, productOptions, isWaiter, isPaymentRoute,
-            showOptions, selectProduct, renderLabel, navigateToPayment, confirmRemoveCustomer, navigateToTakeOrder, 
-            handleAddCustomer, getCustomerOrders, getCustomerTotal, getTotalAmount, formatPrice, hasAnyOrders, 
-            getGlobalOrderIndex, validateSend, deleteOrderDetail, nullifyTableOrder, openOrderModal, handleRemoveOrder, 
+            showOptions, selectProduct, renderLabel, navigateToPayment, confirmRemoveCustomer, navigateToTakeOrder,
+            handleAddCustomer, getCustomerOrders, getCustomerTotal, getTotalAmount, formatPrice, hasAnyOrders,
+            getGlobalOrderIndex, validateSend, nullifyTableOrder, openOrderModal, handleRemoveOrder,
             handleRemoveMenuSet, handleRemoveProductLine, updateSaleStore, formattedTotals, orderButtonDisabled
         };
   }

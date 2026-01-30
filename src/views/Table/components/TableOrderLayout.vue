@@ -119,7 +119,7 @@
 <script>
 import TableOrder from "./TableOrder.vue";
 import TicketPreview from "@/views/Order/components/TicketPreview";
-import { defineComponent, ref, computed, onMounted, watchEffect, provide } from 'vue';
+import { defineComponent, ref, computed, onMounted, provide } from 'vue';
 import { useRoute, useRouter, onBeforeRouteLeave, onBeforeRouteUpdate } from "vue-router";
 import { useDialog, useMessage } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
@@ -186,17 +186,16 @@ export default defineComponent({
         const hasUnsavedChanges = computed(() => {
             const ordersChanged = JSON.stringify(saleStore.order_initial) !== JSON.stringify(orderStore.orderList);
             const userChanged = orderUser_initial.value !== orderUser.value;
-            
+
             // Si no hay pedido aún y solo cambió el usuario → no lo consideres un cambio importante
             if (!orderStore.orderId && userChanged && !ordersChanged) {
                 checkState.value = false; // No hay cambios importantes
                 return false;
             }
-            
             // Hay cambios si las órdenes cambiaron O el usuario cambió
             const hasChanges = ordersChanged || userChanged;
             checkState.value = !hasChanges; // checkState es true cuando NO hay cambios
-            
+
             return hasChanges; // Retornar true si hay cambios
         });
 
@@ -476,24 +475,28 @@ export default defineComponent({
 
         const removeCustomer = (customerIndex) => {
             const customerId = customers.value[customerIndex].id;
-            
+
             orderStore.orders = orderStore.orders.filter(order => !order.customer || order.customer.id !== customerId);
             saleStore.order_initial = saleStore.order_initial.filter(order => !order.customer || order.customer.id !== customerId);
             customers.value.splice(customerIndex, 1);
-            
+
             if (selectedCustomerId.value === customerId) {
                 selectedCustomerId.value = customers.value[0]?.id || null;
             }
         };
 
         const handleProductClick = (product) => {
-            if (!product.has_stock || !product.has_supplies) return;
+            if ((product.control_stock && !product.has_stock) || (product.control_supplies && !product.has_supplies)) {
+                message.warning("No hay stock o insumos suficientes para este producto");
+                return
+            }
 
             if (shouldShowCustomerMode.value && !selectedCustomer.value) {
                 message.warning("Seleccione un cliente primero");
                 return;
             }
 
+            console.log('Intentando agregar producto: ', product)
             orderStore.addOrder(product, selectedCustomer.value);
         };
 
@@ -526,13 +529,13 @@ export default defineComponent({
         provide("handleProductClick", handleProductClick);
 
         return {
-            isMobile, userStore, activeUsersStore, route, router, tableStore, table, settingsStore, 
-            genericsStore, productStore, orderStore, saleStore, shouldShowCustomerMode, 
-            showUserConfirm, userConfirm, loadingConfirm, loading, performCreateTableOrder, 
-            performUpdateTableOrder, showConfirm, dataAnulate, rules, performDeleteDetail, 
-            deleteQuantity, maxQuantity, showPdf, pdfData, ticketPreview, validateSend, deleteOrderDetail, 
-            modalClass, requireUserPass, requireGeneralPass, showConfigMessage, resetAnulateData, goHome, 
-            customers, selectedCustomerId, selectedCustomer, ask_for, orderUser, hasUnsavedChanges, 
+            isMobile, userStore, activeUsersStore, route, router, tableStore, table, settingsStore,
+            genericsStore, productStore, orderStore, saleStore, shouldShowCustomerMode,
+            showUserConfirm, userConfirm, loadingConfirm, loading, performCreateTableOrder,
+            performUpdateTableOrder, showConfirm, dataAnulate, rules, performDeleteDetail,
+            deleteQuantity, maxQuantity, showPdf, pdfData, ticketPreview, validateSend, deleteOrderDetail,
+            modalClass, requireUserPass, requireGeneralPass, showConfigMessage, resetAnulateData, goHome,
+            customers, selectedCustomerId, selectedCustomer, ask_for, orderUser, hasUnsavedChanges,
             addCustomer, removeCustomer, goToFirstTab, activeTab, handleProductClick
         };
     }
