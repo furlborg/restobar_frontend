@@ -11,7 +11,7 @@
     :on-close="() => $emit('update:show')"
   >
     <n-spin :show="isLoadingData">
-      <n-form :model="product" :rules="productRules" ref="productRef">
+      <n-form :model="product" :rules="productRulesLocal" ref="productRef">
         <n-grid
           responsive="screen"
           cols="6 s:6 m:24 l:24 xl:24 2xl:24"
@@ -146,6 +146,7 @@
               :disabled="
                 !settingsStore.businessSettings.sale.manage_affectations
               "
+              @update:value="onAffectationChange"
             />
           </n-form-item-gi>
           <n-form-item-gi label="IGV(%)" :span="4">
@@ -369,6 +370,7 @@ import {
   watch,
   reactive,
   h,
+  nextTick,
 } from "vue";
 import { useGenericsStore } from "@/store/modules/generics";
 import {
@@ -460,12 +462,60 @@ export default defineComponent({
       set: (v) => (product.value.igv_tax = v / 100),
     });
 
+    const allowZeroAffectationId = 21;
+
+    const productRulesLocal = computed(() => ({
+      ...productRules,
+      prices: {
+        ...productRules.prices,
+        validator(rule, value) {
+          const numericValue = Number(value);
+
+          if (value === null || value === "" || Number.isNaN(numericValue)) {
+            return new Error("Precio de Venta requerido");
+          }
+
+          if (numericValue > 0) {
+            return true;
+          }
+
+          if (
+            numericValue === 0 &&
+            product.value.affectation === allowZeroAffectationId
+          ) {
+            return true;
+          }
+
+          return new Error("Precio de Venta requerido");
+        },
+      },
+    }));
+
     const categoriesOptions = computed(() => {
       return productStore.categories.map((categorie) => ({
         label: categorie.description,
         value: categorie.id,
       }));
     });
+
+    const queuePricesValidation = async () => {
+      await nextTick();
+      if (productRef.value?.validateField) {
+        productRef.value.validateField("prices");
+      }
+    };
+
+    const onAffectationChange = () => {
+      product.value.prices = null;
+      queuePricesValidation();
+    };
+
+    watch(
+      () => product.value.affectation,
+      () => {
+        queuePricesValidation();
+      }
+    );
     const placesOptions = computed(() => {
       return productStore.places.map((place) => ({
         label: place.description,
@@ -798,6 +848,8 @@ export default defineComponent({
       product,
       productRef,
       productRules,
+      productRulesLocal,
+      onAffectationChange,
       categorie,
       performCreate,
       performUpdate,
