@@ -1,25 +1,59 @@
 <template>
   <div id="TablePayment">
     <n-page-header class="mb-2" @back="handleBack">
-            <PaymentTotals
-              :items="paymentTotalsItems"
-              :total-amount="sale.amount"
-              :payment-amount="sale.given_amount"
-              :payment-max="sale.payment_condition === 2 ? sale.amount - 0.1 : null"
-              :change-amount="changing"
-              @value-changed="handleValueChange"
-              @payment-changed="handlePaymentChange"
-            />
-          (whatsappNumber = ''),
-          (addressesOptions = []))
-        : null;
-    }
-      " @select="(value) => {
-      sale.customer = value;
-      sale.address = null;
-      whatsappNumber = '';
-      createAddressesOptions();
-    }
+      <template #title>
+        <n-space justify="space-between">
+          <n-text class="fs-2">Venta Libre</n-text>
+        </n-space>
+      </template>
+      <template #extra>
+        <n-button type="info" text @click="() => (showProductModal = true)">
+          <template #icon>
+            <v-icon name="md-add-round" />
+          </template>
+          Agregar Producto
+        </n-button>
+      </template>
+    </n-page-header>
+    <n-card>
+      <n-space class="mb-2" align="center" justify="space-between">
+        <div class="d-flex align-items-center">
+          <n-text class="fs-4">{{
+            `${saleStore.getSerieDescription(sale.serie)}-${sale.number}`
+            }}</n-text>
+        </div>
+        <n-radio-group v-model:value="sale.invoice_type" name="docType" size="small" @update:value="changeSerie">
+          <n-radio-button :value="1" :key="1">FACTURA</n-radio-button>
+          <n-radio-button :value="3" :key="3">BOLETA</n-radio-button>
+        </n-radio-group>
+        <n-radio-group v-model:value="sale.payment_condition" name="saleType" size="small"
+          @update:value="changeCondition">
+          <n-radio-button :value="1" :key="1">CONTADO</n-radio-button>
+          <n-radio-button :value="2" :key="2">CRÉDITO</n-radio-button>
+        </n-radio-group>
+      </n-space>
+
+      <n-form class="mb-2" ref="saleForm" :model="sale" :rules="formRules">
+        <n-grid responsive="screen" cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12" :x-gap="12">
+          <n-form-item-gi :span="4" label="Cliente" :show-require-mark="formRules.customer.required" path="customer">
+            <n-input-group>
+              <n-auto-complete blur-after-select :input-props="{
+                autocomplete: 'disabled',
+              }" v-model:value="sale.customer_name" :options="customerOptions" :get-show="showOptions" :loading="searching"
+                @keypress.enter="autoCreateCustomer" @update:value="(v) => {
+                  !v
+                    ? ((sale.customer = 0),
+                      (sale.address = null),
+                      (whatsappNumber = ''),
+                      (addressesOptions = []))
+                    : null;
+                }
+                " @select="(value) => {
+        sale.customer = value;
+        sale.address = null;
+        whatsappNumber = '';
+        createAddressesOptions();
+      }
       " placeholder="" clearable />
               <n-button v-if="!sale.customer" type="info" @click="(sale.customer = 0), (showModal = true)">
                 <v-icon name="md-add-round" />
@@ -34,27 +68,12 @@
               placeholder="" />
           </n-form-item-gi>
           <n-form-item-gi :span="2" label="Fecha">
-            <n-date-picker
-              class="w-100"
-              type="datetime"
-              :is-date-disabled="dateDisabled"
-              v-model:formatted-value="sale.date_sale"
-            />
+            <n-date-picker class="w-100" type="datetime" :is-date-disabled="dateDisabled"
+              v-model:formatted-value="sale.date_sale" />
           </n-form-item-gi>
-          <n-form-item-gi
-            v-if="sale.payment_condition === 2"
-            :span="2"
-            label="Fecha vencimiento"
-            path="due_date"
-          >
-            <n-date-picker
-              class="w-100"
-              type="datetime"
-              format="dd/MM/yyyy HH:mm:ss"
-              value-format="dd/MM/yyyy HH:mm:ss"
-              v-model:formatted-value="sale.due_date"
-              :is-date-disabled="(ts) => ts <= new Date(sale.date_sale)"
-            />
+          <n-form-item-gi v-if="sale.payment_condition === 2" :span="2" label="Fecha vencimiento" path="due_date">
+            <n-date-picker class="w-100" type="datetime" format="dd/MM/yyyy HH:mm:ss" value-format="dd/MM/yyyy HH:mm:ss"
+              v-model:formatted-value="sale.due_date" :is-date-disabled="(ts) => ts <= new Date(sale.date_sale)" />
           </n-form-item-gi>
           <n-form-item-gi v-if="sale.payment_condition === 1" label="Método Pago">
             <n-select v-model:value="sale.payment_method" :options="saleStore.getPaymentMethodsOptions" filterable />
@@ -65,14 +84,14 @@
           </n-form-item-gi>
           <n-form-item-gi>
             <n-button type="info" text @click="showObservations = !showObservations">{{
-      !showObservations ? "Ver" : "Ocultar"
-    }}
+              !showObservations ? "Ver" : "Ocultar"
+              }}
               Observaciones</n-button>
           </n-form-item-gi>
           <n-gi :span="12">
             <n-collapse-transition :show="showObservations">
               <n-form-item label="Observaciones">
-                <n-input type="textarea"  v-model:value="sale.observations"/>
+                <n-input type="textarea" v-model:value="sale.observations" />
               </n-form-item>
             </n-collapse-transition>
           </n-gi>
@@ -96,45 +115,27 @@
             <template v-for="(detail, index) in saleStore.toSale">
               <tr v-if="detail.quantity > 0" :key="index">
                 <td v-if="settingsStore.businessSettings.sale.manage_affectations">
-                  <n-popselect
-                    size="small"
-                    placement="bottom-start"
-                    v-model:value="detail.product_affectation"
+                  <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation"
                     :disabled="!userStore.hasPermission('change_product_affectation')"
-                    :options="productStore.affectationsOptions"
-                    @update:value="() => saleStore.updateDetail(detail)"
-                  >
+                    :options="productStore.affectationsOptions" @update:value="() => saleStore.updateDetail(detail)">
                     <n-tag size="small" :color="getAfcColor(detail.product_affectation)">
                       {{ getAfcShort(detail.product_affectation) }}
                     </n-tag>
                   </n-popselect>
                 </td>
                 <td>
-                  <input
-                    class="custom-input"
-                    v-model="detail.product_name"
-                    v-autowidth
-                    @click="$event.target.select()"
-                  />
+                  <input class="custom-input" v-model="detail.product_name" v-autowidth
+                    @click="$event.target.select()" />
                 </td>
                 <td align="center">
                   <n-input-number v-model:value="detail.quantity" style="width: 100px" :min="1" />
                 </td>
                 <td>
                   S/.
-                  <input
-                    class="custom-input"
-                    type="number"
-                    min="0"
-                    step=".5"
-                    v-model="detail.price_sale"
-                    @input="() => (
-                      saleStore.updateDetail(detail),
-                      (detail.discount = parseFloat(0).toFixed(2))
-                    )"
-                    v-autowidth
-                    @click="$event.target.select()"
-                  />
+                  <input class="custom-input" type="number" min="0" step=".5" v-model="detail.price_sale" @input="() => (
+                    saleStore.updateDetail(detail),
+                    (detail.discount = parseFloat(0).toFixed(2))
+                  )" v-autowidth @click="$event.target.select()" />
                 </td>
                 <td>
                   {{
@@ -154,15 +155,9 @@
         </n-table>
       </n-scrollbar>
 
-      <PaymentTotals
-        :items="paymentTotalsItems"
-        :total-amount="sale.amount"
-        :payment-amount="sale.given_amount"
-        :payment-max="sale.payment_condition === 2 ? sale.amount - 0.1 : null"
-        :change-amount="changing"
-        @value-changed="handleValueChange"
-        @payment-changed="handlePaymentChange"
-      />
+      <PaymentTotals :items="paymentTotalsItems" :total-amount="sale.amount" :payment-amount="sale.given_amount"
+        :payment-max="sale.payment_condition === 2 ? sale.amount - 0.1 : null" :change-amount="changing"
+        @value-changed="handleValueChange" @payment-changed="handlePaymentChange" />
 
       <n-space v-if="sale.payment_condition === 1" justify="space-between">
         <n-checkbox v-model:checked="isMultiple">Pago multiple</n-checkbox>
@@ -186,8 +181,8 @@
         </n-gi>
       </n-grid>
       <n-button class="fs-1 py-5 mt-2" type="success" :disabled="!saleStore.toSale.filter((detail) => !!detail.quantity).length ||
-      (sale.payment_condition === 1 && sale.given_amount < sale.amount)
-      " secondary block @click.prevent="isMultiple ? doMultiplePayment() : performCreateSale()">
+        (sale.payment_condition === 1 && sale.given_amount < sale.amount)
+        " secondary block @click.prevent="isMultiple ? doMultiplePayment() : performCreateSale()">
         <v-icon class="me-2" name="fa-coins" scale="2" />Cobrar
       </n-button>
     </n-card>
@@ -203,33 +198,27 @@
         </n-tag>
         <n-tag :type="evalPayments ? 'error' : 'warning'">Faltante: S/.
           {{
-      showPayments
-        ? parseFloat(total - currentPaymentsAmount).toFixed(2)
-        : null
-    }}</n-tag>
+            showPayments
+              ? parseFloat(total - currentPaymentsAmount).toFixed(2)
+              : null
+          }}</n-tag>
       </n-space>
       <n-form-item class="mt-2" label="Pagos">
         <n-dynamic-input v-model:value="sale.payments" :min="1" @create="createPayment">
           <template #default="{ value }">
             <div style="display: flex; align-items: center; width: 100%">
               <n-select v-model:value="value.payment_method" :options="filteredMethods" :disabled="loading" />
-                <n-input
-                  class="ms-2"
-                  v-model:value="value.amount"
-                  placeholder=""
-                  :disabled="loading"
-                  v-numeric-only
-                />
+              <n-input class="ms-2" v-model:value="value.amount" placeholder="" :disabled="loading" v-numeric-only />
             </div>
           </template>
         </n-dynamic-input>
       </n-form-item>
       <n-space justify="end">
         <n-button type="success" :disabled="evalPayments ||
-      sale.payments.some((pay) => pay.payment_method === null) ||
-      sale.payments.some((pay) => Number(pay.amount) <= 0) ||
-      loading
-      " secondary :loading="loading" @click="performCreateSale">Confirmar</n-button>
+          sale.payments.some((pay) => pay.payment_method === null) ||
+          sale.payments.some((pay) => Number(pay.amount) <= 0) ||
+          loading
+          " secondary :loading="loading" @click="performCreateSale">Confirmar</n-button>
       </n-space>
     </n-modal>
     <!-- Customer Modal -->
@@ -500,27 +489,27 @@ export default defineComponent({
       rules.customer.required = !(sale.value.invoice_type !== 1 && sale.value.payment_condition === 1 && sale.value.given_amount <= 699);
       rules.due_date = sale.value.payment_condition === 2
         ? {
-            required: true,
-            validator: (_, value) => {
-              if (!value) return new Error("Debes seleccionar fecha de vencimiento");
-              const toDate = (str) => {
-                const [datePart, timePart] = str.split(" ");
-                const [d, m, y] = datePart.split("/").map(Number);
-                const [hh, mm, ss] = timePart.split(":").map(Number);
-                return new Date(y, m - 1, d, hh, mm, ss);
-              };
-              try {
-                const due = toDate(value);
-                const saleDate = toDate(sale.value.date_sale);
-                if (!(due > saleDate)) {
-                  return new Error("La fecha de vencimiento debe ser mayor a la de emisión");
-                }
-                return true;
-              } catch(e) {
-                return new Error("Fecha de vencimiento inválida");
+          required: true,
+          validator: (_, value) => {
+            if (!value) return new Error("Debes seleccionar fecha de vencimiento");
+            const toDate = (str) => {
+              const [datePart, timePart] = str.split(" ");
+              const [d, m, y] = datePart.split("/").map(Number);
+              const [hh, mm, ss] = timePart.split(":").map(Number);
+              return new Date(y, m - 1, d, hh, mm, ss);
+            };
+            try {
+              const due = toDate(value);
+              const saleDate = toDate(sale.value.date_sale);
+              if (!(due > saleDate)) {
+                return new Error("La fecha de vencimiento debe ser mayor a la de emisión");
               }
+              return true;
+            } catch (e) {
+              return new Error("Fecha de vencimiento inválida");
             }
           }
+        }
         : { required: false };
       return rules;
     });
@@ -639,12 +628,12 @@ export default defineComponent({
               await createSale(sale.value)
                 .then(async (response) => {
                   if (response.status === 201) {
-                      const dataPrint = async() => {
-                          const res = await retrieveSale(response.data?.id);
-                          pdfData.value = res.data;
-                          return res.data;
-                      };
-                      await dataPrint();
+                    const dataPrint = async () => {
+                      const res = await retrieveSale(response.data?.id);
+                      pdfData.value = res.data;
+                      return res.data;
+                    };
+                    await dataPrint();
                     if (settingsStore.business_settings.printer.print_html) {
                       // pdfData.value = response.data;
                       showPdf.value = true;
@@ -653,11 +642,11 @@ export default defineComponent({
                       }
                     } else {
                       await VoucherPrint({
-                          data: await dataPrint(),
-                          businessStore,
-                          saleStore,
-                          changing: changing.value,
-                          show: true,
+                        data: await dataPrint(),
+                        businessStore,
+                        saleStore,
+                        changing: changing.value,
+                        show: true,
                       });
                       await router.push({ name: "TableHome" });
                     }
@@ -692,7 +681,7 @@ export default defineComponent({
                           }
                         }).catch((error) => {
                           console.error(error);
-                      });
+                        });
                     }
                     // else {
                     //   if (whatsappNumber.value.length >= 9) {
@@ -715,7 +704,7 @@ export default defineComponent({
                   }
                 }).catch((error) => {
                   console.error(error);
-              })
+                })
                 .finally(() => {
                   loading.value = false;
                 });
@@ -745,7 +734,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          
+
         })
         .finally(() => {
           loading.value = false;
@@ -794,7 +783,7 @@ export default defineComponent({
             })
             .catch((error) => {
               console.error(error);
-              
+
             })
             .finally(() => {
               searching.value = false;
@@ -809,7 +798,7 @@ export default defineComponent({
             })
             .catch((error) => {
               console.error(error);
-              
+
             })
             .finally(() => {
               searching.value = false;
