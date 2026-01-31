@@ -14,6 +14,106 @@ import axios from 'axios';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
+// WebSocket para bloqueos de mesas
+let lockSocket = null;
+let lockSocketConnected = ref(false);
+let reconnectTimeout = null;
+
+// Para obtener branch y usuario
+import { useBusinessStore } from '@/store/modules/business';
+import { useUserStore } from '@/store/modules/user';
+const businessStore = useBusinessStore();
+const userStore = useUserStore();
+  /**
+   * Conecta el WebSocket de bloqueos de mesas
+   */
+  const connectLockWebSocket = () => {
+    const branchId = userStore.user.branchoffice || businessStore.currentBranch || 1;
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const wsUrl = `${wsProtocol}://${window.location.host}/ws/table-locks/${branchId}/`;
+
+    if (lockSocket && lockSocket.readyState !== WebSocket.CLOSED) {
+      return;
+    }
+
+    lockSocket = new WebSocket(wsUrl);
+
+    lockSocket.onopen = () => {
+      lockSocketConnected.value = true;
+      //console.log('[TableLockWS] Conectado');
+    };
+
+    lockSocket.onclose = () => {
+      lockSocketConnected.value = false;
+      //console.warn('[TableLockWS] Desconectado');
+      // Intentar reconectar tras 2s
+      reconnectTimeout = setTimeout(connectLockWebSocket, 2000);
+    };
+
+    lockSocket.onerror = (e) => {
+      //console.error('[TableLockWS] Error', e);
+      lockSocket.close();
+    };
+
+    lockSocket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        switch (data.type) {
+          case 'table_locked': {
+            const lock = data.lock_data;
+            if (lock && lock.table_id) {
+              lockedTables.value.set(lock.table_id, lock);
+            }
+            break;
+          }
+          case 'table_unlocked': {
+            const unlock = data.unlock_data;
+            if (unlock && unlock.table_id) {
+              lockedTables.value.delete(unlock.table_id);
+            }
+            break;
+          }
+          case 'lock_error': {
+            // Opcional: mostrar error
+            break;
+          }
+        }
+      } catch (err) {
+        //console.error('[TableLockWS] Error procesando mensaje', err);
+      }
+    };
+  };
+
+  /**
+   * Desconecta el WebSocket de bloqueos
+   */
+  const disconnectLockWebSocket = () => {
+    if (lockSocket) {
+      lockSocket.close();
+      lockSocket = null;
+      lockSocketConnected.value = false;
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+    }
+  };
+
+  /**
+   * Envía lock_table por WebSocket
+   */
+  const wsLockTable = (tableId) => {
+    if (lockSocket && lockSocket.readyState === WebSocket.OPEN) {
+      lockSocket.send(JSON.stringify({ type: 'lock_table', table_id: tableId }));
+    }
+  };
+
+  /**
+   * Envía unlock_table por WebSocket
+   */
+  const wsUnlockTable = (tableId) => {
+    if (lockSocket && lockSocket.readyState === WebSocket.OPEN) {
+      lockSocket.send(JSON.stringify({ type: 'unlock_table', table_id: tableId }));
+    }
+  };
+
 // Estado global compartido entre todas las instancias
 const lockedTables = ref(new Map()); // Map<tableId, lockData>
 const myLocks = ref([]);
@@ -310,11 +410,14 @@ export function useTableLock() {
   };
 
   // Lifecycle hooks
+
   onMounted(() => {
+    connectLockWebSocket();
     //startPolling();
   });
 
   onUnmounted(() => {
+    disconnectLockWebSocket();
     //stopPolling();
   });
 
@@ -329,7 +432,8 @@ export function useTableLock() {
     myActiveLocksCount,
     hasActiveLocks,
     isRefreshing: computed(() => isRefreshing.value),
-    
+    lockSocketConnected,
+
     // Métodos
     checkLock,
     lockTable,
@@ -342,7 +446,13 @@ export function useTableLock() {
     getLockInfo,
     validateNavigation,
     lockAndNavigate,
-    
+
+    // WebSocket
+    connectLockWebSocket,
+    disconnectLockWebSocket,
+    wsLockTable,
+    wsUnlockTable,
+
     // Polling
     startPolling,
     stopPolling
