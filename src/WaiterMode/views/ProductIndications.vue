@@ -54,8 +54,11 @@ export default defineComponent({
         const indications = ref([]);
 
         const quickIndications = computed(() => {
-            if (product.value.quick_indications) {
-                return product.value?.quick_indications
+            const quicks = product.value?.quick_indications;
+            if (!quicks) return [];
+            if (Array.isArray(quicks)) return quicks;
+            if (typeof quicks === "string") {
+                return quicks.split(",").map((item) => item.trim()).filter(Boolean);
             }
             return [];
         });

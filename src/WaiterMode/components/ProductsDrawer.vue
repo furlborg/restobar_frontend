@@ -71,6 +71,7 @@ import { useWaiterStore } from "@/store/modules/waiter";
 import { useOrderStore } from "@/store/modules/order";
 import { useTableStore } from "@/store/modules/table";
 import { useSaleStore } from "@/store/modules/sale";
+import { useUserStore } from "@/store/modules/user";
 import { useRoute } from "vue-router";
 import { cloneDeep, lighten } from "@/utils";
 
@@ -94,6 +95,7 @@ export default defineComponent({
         const orderStore = useOrderStore();
         const tableStore = useTableStore();
         const saleStore = useSaleStore();
+        const userStore = useUserStore();
         const route = useRoute();
 
         const loading = ref(false);
@@ -254,6 +256,58 @@ export default defineComponent({
             product.indications = [];
         };
 
+        const transformOrderDetails = (orderDetails = []) => {
+            return orderDetails.map((detail) => {
+                if (detail.product_set) {
+                    const isCombo = detail.product_set.set_type === "COMBO";
+                    return {
+                        id: detail.id,
+                        from_menu: detail.product_set.set_type === "MENU",
+                        from_combo: isCombo,
+                        product_set_id: detail.product_set.id,
+                        order_detail_id: detail.id,
+                        combo_id: detail.product_set?.combo || null,
+                        name: detail.product_set.menu_name || detail.product_set.name,
+                        set_type: detail.product_set.set_type,
+                        price: parseFloat(detail.product_set.price || detail.product_set.fixed_price || detail.product_set.computed_price || 0),
+                        fixed_price: detail.product_set.fixed_price,
+                        pricing_mode: detail.product_set.pricing_mode,
+                        quantity: detail.quantity,
+                        product_set: detail.product_set,
+                        items: detail.product_set.items?.map((item) => ({
+                            quantity: item.quantity,
+                            product_name: item.product_name,
+                            phase_name: item.product_phase?.phase_name
+                        })) || []
+                    };
+                }
+                if (detail.product) {
+                    return {
+                        id: detail.id,
+                        product: detail.product,
+                        product_name: detail.product_name,
+                        price: parseFloat(detail.price),
+                        quantity: detail.quantity,
+                        indication: detail.indication || [],
+                        quick_indications: detail.quick_indications || "",
+                        icbper: detail.icbper,
+                        product_affectation: detail.product_affectation,
+                        product_igv: detail.product_igv
+                    };
+                }
+                return null;
+            }).filter(Boolean);
+        };
+
+        const syncOrderFromResponse = (data) => {
+            const orderData = data?.order ?? data;
+            if (!orderData?.order_details) return;
+            const transformed = transformOrderDetails(orderData.order_details);
+            orderStore.setSavedOrders(transformed);
+            orderStore.orderId = orderData.id ?? orderStore.orderId;
+            saleStore.order_initial = cloneDeep(orderStore.fullOrderList);
+        };
+
         const performCreateTableOrder = () => {
             dialog.info({
                 title: "¿Realizar pedido?",
@@ -264,9 +318,10 @@ export default defineComponent({
                     addToList();
                     loading.value = true;
                     console.log(orderStore.orderList);
-                    const response = await createTableOrder(route.params.table, orderStore.orderList, undefined, !ask_for.value ? undefined : ask_for.value);
+                    const response = await createTableOrder(route.params.table, orderStore.orderList, userStore.user?.id ?? null, !ask_for.value ? undefined : ask_for.value);
                     if (response.status === 201) {
                         message.success("Orden creada correctamente");
+                        syncOrderFromResponse(response.data);
                         pdfData.value = response.data;
                         console.log(response.data);
                         showPdf.value = true;
@@ -317,8 +372,8 @@ export default defineComponent({
                     const response = await updateTableOrder(
                         route.params.table,
                         orderStore.orderId,
-                        orderStore.orderList,
-                        undefined,
+                        orderStore.fullOrderList,
+                        userStore.user?.id ?? null,
                         !ask_for.value ? undefined : ask_for.value
                     );
                     if (response.status === 202) {
@@ -343,7 +398,11 @@ export default defineComponent({
         const addToList = () => {
             waiterStore.preOrderList.forEach((product) => {
                 const indications = Array.isArray(product.indication) ? product.indication : [];
-                const quicks = Array.isArray(product.quick_indications) ? product.quick_indications : [];
+                const quicks = Array.isArray(product.quick_indications)
+                    ? product.quick_indications
+                    : typeof product.quick_indications === "string"
+                    ? product.quick_indications.split(",").map((item) => item.trim()).filter(Boolean)
+                    : [];
 
                 if (indications.length === 0) {
                     const safeItem = {

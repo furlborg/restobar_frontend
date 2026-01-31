@@ -232,6 +232,7 @@ import { useSettingsStore } from "@/store/modules/settings";
 import { useOrderStore } from "@/store/modules/order";
 import { useTableStore } from "@/store/modules/table";
 import { useSaleStore } from "@/store/modules/sale";
+import { useUserStore } from "@/store/modules/user";
 import { getCombos } from "@/api/modules/products";
 import { createTableOrder, updateTableOrder } from "@/api/modules/tables";
 import { cloneDeep } from "@/utils";
@@ -254,6 +255,7 @@ export default defineComponent({
     const orderStore = useOrderStore();
     const tableStore = useTableStore();
     const saleStore = useSaleStore();
+    const userStore = useUserStore();
     
     const loading = ref(false);
     const loadingOrder = ref(false);
@@ -380,7 +382,7 @@ export default defineComponent({
       createTableOrder(
         route.params.table,
         orderStore.orderList,
-        undefined,
+        userStore.user?.id ?? null,
         !ask_for.value ? undefined : ask_for.value
       )
         .then((response) => {
@@ -429,7 +431,9 @@ export default defineComponent({
       loadingOrder.value = true;
       updateTableOrder(
         route.params.table,
-        evalOrderList(orderStore.orderList),
+        orderStore.orderId,
+        orderStore.fullOrderList,
+        userStore.user?.id ?? null,
         !ask_for.value ? undefined : ask_for.value
       )
         .then((response) => {

@@ -242,8 +242,14 @@ export default defineComponent({
                                 id: detail.id,
                                 from_menu: detail.product_set.set_type === 'MENU',
                                 from_combo: isCombo,
+                                product_set_id: detail.product_set.id,
+                                order_detail_id: detail.id,
+                                combo_id: detail.product_set?.combo || null,
                                 name: detail.product_set.menu_name || detail.product_set.name,
+                                set_type: detail.product_set.set_type,
                                 price: parseFloat(detail.product_set.price || detail.product_set.fixed_price || detail.product_set.computed_price || 0),
+                                fixed_price: detail.product_set.fixed_price,
+                                pricing_mode: detail.product_set.pricing_mode,
                                 quantity: detail.quantity,
                                 product_set: detail.product_set,
                                 items: detail.product_set.items?.map(item => ({
@@ -261,6 +267,7 @@ export default defineComponent({
                                 price: parseFloat(detail.price),
                                 quantity: detail.quantity,
                                 indication: detail.indication || [],
+                                quick_indications: detail.quick_indications || "",
                                 icbper: detail.icbper,
                                 product_affectation: detail.product_affectation,
                                 product_igv: detail.product_igv
@@ -271,7 +278,7 @@ export default defineComponent({
                     
                     orderStore.setSavedOrders(transformedOrders);
                     saleStore.order_initial = cloneDeep(orderStore.fullOrderList);
-                    orderStore.orderId = response.data.id;
+                    orderStore.orderId = response.data.order.id;
                 }
             }).catch((error) => {
                 if (error.response && error.response.status === 423) {

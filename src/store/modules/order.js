@@ -25,7 +25,10 @@ export const useOrderStore = defineStore("order", {
     // Para la pestaña "Pedido" - combinar items guardados + nuevos
     fullOrderList(state) {
       const settingsStore = useSettingsStore();
-      const allOrders = [...state.savedOrders, ...state.orders];
+      const allOrders = [
+        ...state.savedOrders,
+        ...state.orders.filter((order) => !order.is_delta)
+      ];
       allOrders.forEach((order) => {
         // Corregir: convertir a número después de toFixed()
         order.subTotal = Number((Number(order.quantity) * parseFloat(order.price)).toFixed(2));
@@ -132,40 +135,88 @@ export const useOrderStore = defineStore("order", {
     },
     addOrderItem(product) {
       const settingsStore = useSettingsStore();
-      const existence = this.orders.find(
-        (order) => order.product === product.id
+      const productId = product?.product ?? product?.id;
+      if (!productId) return;
+      const qtyToAdd = Number(product.quantity || 0);
+      if (!qtyToAdd) return;
+      const customerId = product?.customer?.id ?? null;
+      const matchesCustomer = (order) =>
+        customerId !== null ? order?.customer?.id === customerId : !order?.customer;
+      const mergeIndications = (target) => {
+        const incoming = Array.isArray(product.indication) ? product.indication : [];
+        if (!incoming.length) return;
+        if (!Array.isArray(target.indication)) target.indication = [];
+        if (!target.indication.length) {
+          target.indication = [...incoming];
+          return;
+        }
+        incoming.forEach((item) => target.indication.push(item));
+      };
+
+      const savedOrder = this.savedOrders.find(
+        (order) => order?.product === productId && matchesCustomer(order)
       );
-      if (typeof existence !== "undefined") {
-        existence.quantity += product.quantity;
-        if (
-          existence.indication.length === 0 &&
-          product.indication.length > 0
-        ) {
-          existence.indication = product.indication;
-        } else if (
-          existence.indication.length > 0 &&
-          product.indication.length > 0
-        ) {
-          product.indication.forEach((item) => {
-            existence.indication.push(item);
+      if (savedOrder) {
+        savedOrder.quantity = Number(savedOrder.quantity || 0) + qtyToAdd;
+        mergeIndications(savedOrder);
+        if (!savedOrder.quick_indications && product.quick_indications) {
+          savedOrder.quick_indications = product.quick_indications;
+        }
+
+        const deltaOrder = this.orders.find(
+          (order) => order?.is_delta && order?.product === productId && matchesCustomer(order)
+        );
+        if (deltaOrder) {
+          deltaOrder.quantity = Number(deltaOrder.quantity || 0) + qtyToAdd;
+          mergeIndications(deltaOrder);
+        } else {
+          const resolvedIgv = product?.igv_tax;
+          this.orders.push({
+            product: productId,
+            product_name: savedOrder.product_name ?? product.product_name ?? product.name,
+            price: savedOrder.price ?? product.price ?? product.prices,
+            quantity: qtyToAdd,
+            indication: Array.isArray(product.indication) ? [...product.indication] : [],
+            icbper: savedOrder.icbper ?? product.icbper,
+            product_affectation: savedOrder.product_affectation ?? product.affectation,
+            product_igv: savedOrder.product_igv ?? (!Number(resolvedIgv)
+              ? settingsStore.businessSettings.sale.igv_tax
+              : Number(resolvedIgv)),
+            quick_indications: savedOrder.quick_indications ?? product.quick_indications,
+            customer: savedOrder.customer ?? product.customer ?? null,
+            is_delta: true,
           });
         }
-      } else {
-        let order = {
-          product: product.id,
-          product_name: product.name,
-          price: product.prices,
-          quantity: Number(product.quantity),
-          indication: product.indication,
-          icbper: product.icbper,
-          product_affectation: product.affectation,
-          product_igv: !Number(product.igv_tax)
-            ? settingsStore.businessSettings.sale.igv_tax
-            : Number(product.igv_tax),
-          quick_indications: product.quick_indications,
-        };
-        this.orders.push(order);
+        return;
       }
+
+      const existing = this.orders.find(
+        (order) => !order.is_delta && order?.product === productId && matchesCustomer(order)
+      );
+      if (typeof existing !== "undefined") {
+        existing.quantity = Number(existing.quantity || 0) + qtyToAdd;
+        mergeIndications(existing);
+        if (!existing.quick_indications && product.quick_indications) {
+          existing.quick_indications = product.quick_indications;
+        }
+        return;
+      }
+
+      const resolvedIgv = product?.igv_tax;
+      this.orders.push({
+        product: productId,
+        product_name: product.product_name ?? product.name,
+        price: product.price ?? product.prices,
+        quantity: qtyToAdd,
+        indication: Array.isArray(product.indication) ? product.indication : [],
+        icbper: product.icbper,
+        product_affectation: product.affectation,
+        product_igv: !Number(resolvedIgv)
+          ? settingsStore.businessSettings.sale.igv_tax
+          : Number(resolvedIgv),
+        quick_indications: product.quick_indications,
+        customer: product.customer ?? null,
+      });
     },
     removeOrderItem(id) {
       const index = this.orders.findIndex(order => order.id === id);

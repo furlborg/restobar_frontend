@@ -170,6 +170,7 @@ import { useRoute } from 'vue-router'
 import { useOrderStore } from '@/store/modules/order'
 import { useTableStore } from '@/store/modules/table'
 import { useSettingsStore } from '@/store/modules/settings'
+import { useUserStore } from '@/store/modules/user'
 import { createTableOrder, updateTableOrder } from '@/api/modules/tables'
 
 export default defineComponent({
@@ -180,6 +181,7 @@ export default defineComponent({
     const orderStore = useOrderStore()
     const tableStore = useTableStore()
     const settingsStore = useSettingsStore()
+    const userStore = useUserStore()
     const switchToOrderTab = inject('switchToOrderTab', () => {})
     const showOrderDrawer = ref(false)
     const loading = ref(false)
@@ -212,14 +214,14 @@ export default defineComponent({
           ? await updateTableOrder(
               route.params.table,
               orderStore.orderId,
-              orderStore.orderList,
-              undefined,
+              orderStore.fullOrderList,
+              userStore.user?.id ?? null,
               ask_for.value || undefined
             )
           : await createTableOrder(
               route.params.table,
               orderStore.orderList,
-              undefined,
+              userStore.user?.id ?? null,
               ask_for.value || undefined
             )
             
@@ -238,15 +240,21 @@ export default defineComponent({
             const orderResponse = await retrieveTableOrder(route.params.table)
             if (orderResponse.status === 200) {
               // Transformar order_details igual que en Order.vue
-              const transformedOrders = orderResponse.data.order_details.map(detail => {
+              const transformedOrders = orderResponse.data.order.order_details.map(detail => {
                 if (detail.product_set) {
                   const isCombo = detail.product_set.set_type === 'COMBO';
                   return {
                     id: detail.id,
                     from_menu: detail.product_set.set_type === 'MENU',
                     from_combo: isCombo,
+                    product_set_id: detail.product_set.id,
+                    order_detail_id: detail.id,
+                    combo_id: detail.product_set?.combo || null,
                     name: detail.product_set.menu_name || detail.product_set.name,
+                    set_type: detail.product_set.set_type,
                     price: parseFloat(detail.product_set.price || detail.product_set.fixed_price || detail.product_set.computed_price || 0),
+                    fixed_price: detail.product_set.fixed_price,
+                    pricing_mode: detail.product_set.pricing_mode,
                     quantity: detail.quantity,
                     product_set: detail.product_set,
                     items: detail.product_set.items?.map(item => ({
@@ -263,6 +271,7 @@ export default defineComponent({
                     price: parseFloat(detail.price),
                     quantity: detail.quantity,
                     indication: detail.indication || [],
+                    quick_indications: detail.quick_indications || "",
                     icbper: detail.icbper,
                     product_affectation: detail.product_affectation,
                     product_igv: detail.product_igv
@@ -273,7 +282,7 @@ export default defineComponent({
               
               orderStore.setSavedOrders(transformedOrders)
               // Actualizar orderId para habilitar la pestaña de pedidos
-              orderStore.orderId = orderResponse.data.id
+              orderStore.orderId = orderResponse.data.order.id
             }
           } catch (error) {
             // Error recargando pedido, continuar sin fallar
