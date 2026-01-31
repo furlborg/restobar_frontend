@@ -85,7 +85,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, watchEffect } from "vue";
+import { defineComponent, ref, watchEffect, watch } from "vue";
 import { useMessage } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useSaleStore } from "@/store/modules/sale";
@@ -173,6 +173,17 @@ export default defineComponent({
                 }
             }
         });
+
+        watch(
+            () => props.show,
+            (show) => {
+                if (!show || !props.previewOnly) return;
+                const active = document?.activeElement;
+                if (active && typeof active.blur === "function") {
+                    active.blur();
+                }
+            }
+        );
 
         const generate = async(save = false) => {
             // Activar modo impresión para usar dimensiones correctas

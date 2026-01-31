@@ -249,7 +249,7 @@ export default defineComponent({
         const generateData = () => {
             let data = {
                 ...props.data,
-                order_details: !props.place
+                order_details: !props.place || props.place?.is_default
                     ? props.data.order_details
                     : props.data.order_details.filter((detail) => {
                         // Debug: verificar el filtrado para menús
@@ -342,7 +342,7 @@ export default defineComponent({
         const generateFittingData = () => {
             let data = {
                 ...props.data,
-                order_details: !props.place
+                order_details: !props.place || props.place?.is_default
                     ? props.data.order_details
                     : props.data.order_details.filter(
                         (detail) =>

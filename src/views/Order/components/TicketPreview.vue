@@ -80,14 +80,36 @@ export default defineComponent({
         let socket = null;
         const tableStore = useTableStore();
 
+        const orderDetails = computed(() =>
+            Array.isArray(props.data?.order_details) ? props.data.order_details : []
+        );
+
         const places = computed(() => {
-            return productStore.places.filter((place) =>
-                props.data.order_details.some(
+            const details = orderDetails.value;
+            const matchedPlaces = productStore.places.filter((place) =>
+                details.some(
                     (detail) =>
-                        detail.preparation_place === place.description ||
-                        detail.product_fitting?.preparation_place === place.description
+                        detail?.preparation_place === place.description ||
+                        detail?.product_fitting?.preparation_place === place.description
                 )
             );
+            if (matchedPlaces.length) return matchedPlaces;
+            if (!details.length) return [];
+
+            const fallbackPrinter =
+                props.data?.printer_name ||
+                settingsStore.businessSettings?.sale?.printer_name ||
+                settingsStore.business_settings?.sale?.printer_name;
+
+            return [
+                {
+                    id: "DEFAULT",
+                    description: props.data?.printer_name || "GENERAL",
+                    printer_name: fallbackPrinter,
+                    is_main: true,
+                    is_default: true
+                }
+            ];
         });
 
         const handleSocketMessage = (event) => {
@@ -234,25 +256,89 @@ export default defineComponent({
                             "reference": props.data.ask_for,
                             "username": props.data.username
                         },
-                        "ticket_content": !place ? props.data.order_details : props.data.order_details.filter((pl) =>
-                            settingsStore.business_settings.printer.subticket_mode && place.is_main
-                                ? !!pl.preparation_place : pl.preparation_place === place.description ||
-                                pl.product_fitting?.preparation_place === place.description
-                        ).map(it => ({
-                            "id": it.id,
-                            "cantidad": it.quantity,
-                            "descripcion": it.product_name,
-                            "product_name": it.product_name,
-                            "product_description": it.product_description,
-                            "product_category": it.product_category,
-                            "indicaciones": it.indication.filter(indicate => {
-                                return (
-                                    (!indicate.description.includes("[]") || indicate.description.length > 3 ||
-                                        indicate.quick_indications.length > 0) &&
-                                    indicate.description !== ""
+                        "ticket_content": (() => {
+                            const details = (!place || place.is_default)
+                                ? (props.data.order_details || [])
+                                : (props.data.order_details || []).filter((pl) =>
+                                    settingsStore.business_settings.printer.subticket_mode && place.is_main
+                                        ? !!pl.preparation_place
+                                        : pl.preparation_place === place.description ||
+                                          pl.product_fitting?.preparation_place === place.description
                                 );
-                            }).map(indicate => indicate.description) || ""
-                        }))
+
+                            const mapLine = (it) => ({
+                                "id": it.id,
+                                "cantidad": it.quantity,
+                                "descripcion": it.product_name || it.product_set?.name || "",
+                                "product_name": it.product_name || it.product_set?.name || "",
+                                "product_description": it.product_description || "",
+                                "product_category": it.product_category || "",
+                                "indicaciones": (it.indication || []).filter(indicate => {
+                                    return (
+                                        (!indicate.description.includes("[]") || indicate.description.length > 3 ||
+                                            indicate.quick_indications.length > 0) &&
+                                        indicate.description !== ""
+                                    );
+                                }).map(indicate => indicate.description) || ""
+                            });
+
+                            const orderByCustomer = !!settingsStore.business_settings?.order?.order_by_customer;
+                            const hasCustomers = details.some((detail) => !!detail?.customer);
+
+                            if (!orderByCustomer || !hasCustomers) {
+                                return details.map(mapLine);
+                            }
+
+                            const groups = [];
+                            const index = new Map();
+
+                            details.forEach((detail) => {
+                                const customerId = detail.customer?.id ?? "NO_CUSTOMER";
+                                const customerName =
+                                    detail.customer?.name ||
+                                    detail.customer?.full_name ||
+                                    (customerId === "NO_CUSTOMER" ? "SIN CLIENTE" : `CLIENTE ${customerId}`);
+
+                                if (!index.has(customerId)) {
+                                    index.set(customerId, groups.length);
+                                    groups.push({
+                                        key: customerId,
+                                        customerName,
+                                        items: []
+                                    });
+                                }
+
+                                groups[index.get(customerId)].items.push(detail);
+                            });
+
+                            const content = [];
+                            groups.forEach((group) => {
+                                content.push({
+                                    "cantidad": " ",
+                                    "quantity": " ",
+                                    "descripcion": `CLIENTE: ${group.customerName}`,
+                                    "product_name": `CLIENTE: ${group.customerName}`,
+                                    "product_description": "",
+                                    "product_category": "",
+                                    "is_header": true
+                                });
+                                content.push({
+                                    "cantidad": "CANT",
+                                    "quantity": "CANT",
+                                    "descripcion": "PRODUCTO",
+                                    "product_name": "PRODUCTO",
+                                    "product_description": "",
+                                    "product_category": "",
+                                    "is_header": true,
+                                    "is_table_header": true
+                                });
+                                group.items.forEach((detail) => {
+                                    content.push(mapLine(detail));
+                                });
+                            });
+
+                            return content;
+                        })()
                     };
                     // --- Ajustes especiales para el título ---
                     if (props.data.table !== null) {

@@ -93,22 +93,38 @@ export const useOrderStore = defineStore("order", {
     },
     addOrder(product, customer) {
       const settingsStore = useSettingsStore();
-      const existence = this.orders.find(order => order.product === product.id && (customer && order.customer.id === customer.id));
+      const productId = product?.id;
+      if (!productId) return;
+      const customerId = customer?.id ?? null;
+      let existence;
+      if (customerId != null) {
+        existence = this.orders.find(
+          (order) => order?.product === productId && order?.customer?.id === customerId
+        );
+      } else {
+        existence = this.orders.find(
+          (order) => order?.product === productId && !order?.customer
+        );
+        if (!existence) {
+          existence = this.orders.find((order) => order?.product === productId);
+        }
+      }
       if (typeof existence !== "undefined") {
         existence.quantity++;
       } else {
+        const resolvedIgv = product?.igv_tax;
         let order = {
           product: product.id,
           product_name: product.name,
           price: product.prices,
           quantity: 1,
           indication: [],
-          icbper: product.icbper,
-          product_affectation: product.affectation,
-          product_igv: !Number(product.igv_tax)
+          icbper: product?.icbper,
+          product_affectation: product?.affectation,
+          product_igv: !Number(resolvedIgv)
             ? settingsStore.businessSettings.sale.igv_tax
-            : Number(product.igv_tax),
-          quick_indications: product.quick_indications,
+            : Number(resolvedIgv),
+          quick_indications: product?.quick_indications ?? [],
           customer: customer || null,
         };
         this.orders.push(order);

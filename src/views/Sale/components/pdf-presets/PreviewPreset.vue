@@ -44,23 +44,23 @@
                     CLIENTE: {{ group.customerName }}
                   </td>
                 </tr>
-                <tr
-                  v-for="(detail, index) in group.items"
-                  :key="`detail-${group.key}-${index}`"
-                  v-if="detail.quantity > 0"
-                  :class="{ 'menu-header': detail.isMenuHeader, 'menu-product': detail.isMenuProduct }"
-                >
-                  <td align="center">{{ detail.isMenuProduct ? '' : detail.quantity }}</td>
-                  <td align="left" :style="detail.isMenuProduct ? 'font-size: 11px; color: #666;' : ''">
-                    {{ detail.product_name }}
-                  </td>
-                  <td align="right">
-                    {{ detail.isMenuProduct ? '' : detail.price.toFixed(2) }}
-                  </td>
-                  <td align="right">
-                    {{ detail.isMenuProduct ? '' : parseFloat(detail.quantity * detail.price).toFixed(2) }}
-                  </td>
-                </tr>
+                <template v-for="(detail, index) in group.items" :key="`detail-${group.key}-${index}`">
+                  <tr
+                    v-if="detail && detail.quantity > 0"
+                    :class="{ 'menu-header': detail.isMenuHeader, 'menu-product': detail.isMenuProduct }"
+                  >
+                    <td align="center">{{ detail.isMenuProduct ? '' : detail.quantity }}</td>
+                    <td align="left" :style="detail.isMenuProduct ? 'font-size: 11px; color: #666;' : ''">
+                      {{ detail.product_name }}
+                    </td>
+                    <td align="right">
+                      {{ detail.isMenuProduct ? '' : detail.price.toFixed(2) }}
+                    </td>
+                    <td align="right">
+                      {{ detail.isMenuProduct ? '' : parseFloat(detail.quantity * detail.price).toFixed(2) }}
+                    </td>
+                  </tr>
+                </template>
               </template>
             </tbody>
             <tfoot>
