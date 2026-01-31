@@ -3,8 +3,8 @@
     <n-card title="Menús" :segmented="{ content: 'hard' }">
       <template #header-extra>
         <n-space>
-          <n-button type="info" tertiary @click="goCreate">Crear menú</n-button>
-          <n-button type="info" tertiary @click="goSchedule">Programar menú del día</n-button>
+          <n-button v-if="canAddMenu" type="info" tertiary @click="goCreate">Crear menú</n-button>
+          <n-button v-if="canViewScheduleDay" type="info" tertiary @click="goSchedule">Programar menú del día</n-button>
         </n-space>
       </template>
 
@@ -68,7 +68,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, h } from 'vue'
+import { ref, onMounted, h, computed } from 'vue'
 import { useMessage, NButton } from 'naive-ui'
 import { useRouter } from 'vue-router'
 import { getMenus } from '@/api/modules/menu'
@@ -76,14 +76,22 @@ import MenuCreateModal from './components/MenuCreateModal.vue'
 import MenuProgramation from './components/MenuProgramation.vue'
 import MenuDetailModal from './components/MenuDetailModal.vue'
 import MenuDailyProgramation from './components/MenuDailyProgramation.vue'
+import { useUserStore } from '@/store/modules/user'
 
 
 const router = useRouter()
 const message = useMessage()
+const userStore = useUserStore()
 
 const isTableLoading = ref(false)
 const menus = ref([])
 const showFilters = ref(false)
+
+const canViewMenu = computed(() => userStore.hasPermission('view_menu'))
+const canAddMenu = computed(() => userStore.hasPermission('add_menu'))
+const canChangeMenu = computed(() => userStore.hasPermission('change_menu'))
+const canViewScheduleDay = computed(() => userStore.hasPermission('view_menuscheduledday'))
+const canViewProductPhaseAvailableDay = computed(() => userStore.hasPermission('view_productphaseavailableday'))
 
 const filterParams = ref({
   name: '',
@@ -118,6 +126,12 @@ const pagination = ref({
 })
 
 async function fetchMenus(params = null, page = 1, pageSize = 20) {
+  if (!canViewMenu.value) {
+    menus.value = []
+    pagination.value.total = 0
+    pagination.value.pageCount = 1
+    return
+  }
   try {
     const response = await getMenus({ search: params?.name, active: params?.active, page, page_size: pageSize })
     const data = response.data
@@ -178,21 +192,37 @@ const selectedMenuId = ref(null)
 
 
 function goCreate() {
+  if (!canAddMenu.value) {
+    message.error('No tienes permisos para crear menús')
+    return
+  }
   modalMode.value = 'create'
   editingId.value = null
   showCreateModal.value = true
 }
 
 function goSchedule() {
+  if (!canViewScheduleDay.value) {
+    message.error('No tienes permisos para ver la programación de menús')
+    return
+  }
   showDailyProgramationModal.value = true
 }
 
 function onSchedule(row) {
+  if (!canViewProductPhaseAvailableDay.value) {
+    message.error('No tienes permisos para programar disponibilidad semanal')
+    return
+  }
   selectedMenuId.value = row.id
   showProgramationModal.value = true
 }
 
 function onDetail(row) {
+  if (!canViewMenu.value) {
+    message.error('No tienes permisos para ver el menú')
+    return
+  }
   selectedMenuId.value = row.id
   showDetailModal.value = true
 }
@@ -204,47 +234,68 @@ function handleCancel() {
   // no-op for now
 }
 
-const tableColumns = [
-  { title: 'Nombre', key: 'name' },
-  { title: 'Fases', key: 'phases_count', render: (row) => String(row.phases_count ?? 0) },
-  { title: 'Precio', key: 'price', render: (row) => {
-      const p = Number(row.price ?? 0)
-      return `${p.toFixed(2)}`
-    }
-  },
-  { title: 'Estado', key: 'active', render: (row) => (row.active ? 'Activo' : 'Inactivo') },
-  {
-    title: 'Opciones', key: 'actions',render: (row) => h('div', { style: 'display:flex; gap:8px;' }, [
-      h(NButton, { 
-        size: 'small', 
-        text: true, 
-        type: 'primary',
-        onClick: () => onEdit(row) 
-      }, { 
-        default: () => 'Editar' 
-      }),
-      h(NButton, { 
-        size: 'small', 
-        text: true, 
-        type: 'info',
-        onClick: () => onDetail(row) 
-      }, { 
-        default: () => 'Detalle' 
-      }),
-      h(NButton, { 
-        size: 'small', 
-        text: true, 
-        type: 'warning',
-        onClick: () => onSchedule(row) 
-      }, { 
-        default: () => 'Programar' 
-      })
-    ])
+const tableColumns = computed(() => {
+  const columns = [
+    { title: 'Nombre', key: 'name' },
+    { title: 'Fases', key: 'phases_count', render: (row) => String(row.phases_count ?? 0) },
+    { title: 'Precio', key: 'price', render: (row) => {
+        const p = Number(row.price ?? 0)
+        return `${p.toFixed(2)}`
+      }
+    },
+    { title: 'Estado', key: 'active', render: (row) => (row.active ? 'Activo' : 'Inactivo') },
+  ]
+
+  if (canChangeMenu.value || canViewMenu.value || canViewProductPhaseAvailableDay.value) {
+    columns.push({
+      title: 'Opciones',
+      key: 'actions',
+      render: (row) => {
+        const actions = []
+        if (canChangeMenu.value) {
+          actions.push(h(NButton, {
+            size: 'small',
+            text: true,
+            type: 'primary',
+            onClick: () => onEdit(row)
+          }, {
+            default: () => 'Editar'
+          }))
+        }
+        if (canViewMenu.value) {
+          actions.push(h(NButton, {
+            size: 'small',
+            text: true,
+            type: 'info',
+            onClick: () => onDetail(row)
+          }, {
+            default: () => 'Detalle'
+          }))
+        }
+        if (canViewProductPhaseAvailableDay.value) {
+          actions.push(h(NButton, {
+            size: 'small',
+            text: true,
+            type: 'warning',
+            onClick: () => onSchedule(row)
+          }, {
+            default: () => 'Programar'
+          }))
+        }
+        return h('div', { style: 'display:flex; gap:8px;' }, actions)
+      }
+    })
   }
-]
+
+  return columns
+})
 
 function onView(row) { router.push({ name: 'MenuEdit', params: { id: row.id } }) }
 function onEdit(row) {
+  if (!canChangeMenu.value) {
+    message.error('No tienes permisos para editar menús')
+    return
+  }
   modalMode.value = 'edit'
   editingId.value = row.id
   showCreateModal.value = true

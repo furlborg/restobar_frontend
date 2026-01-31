@@ -17,7 +17,8 @@
         </n-gi>
         <n-gi>
           <div><strong>Fases de menú agregadas</strong></div>
-          <div>{{ menu?.phases?.length || 0 }} Fases</div>
+          <div v-if="canViewPhase">{{ menu?.phases?.length || 0 }} Fases</div>
+          <div v-else>Sin permiso</div>
         </n-gi>
         <n-gi>
           <div><strong>Estado del menú</strong></div>
@@ -29,7 +30,15 @@
 
       <div>
         <h4>Contenido del menú:</h4>
-        <n-grid cols="7" x-gap="8">
+        <n-alert
+          v-if="!canViewPhase || !canViewProductPhase || !canViewProductPhaseAvailableDay"
+          type="warning"
+          :bordered="false"
+          style="margin-bottom: 12px;"
+        >
+          No tienes permisos para ver el contenido del menú.
+        </n-alert>
+        <n-grid v-else cols="7" x-gap="8">
           <n-gi v-for="day in days" :key="day">
             <div class="day-column">
               <div class="day-title">{{ day }}</div>
@@ -62,6 +71,7 @@
 <script setup>
 import { ref, watch, computed } from 'vue'
 import { getMenuDetail } from '@/api/modules/menu'
+import { useUserStore } from '@/store/modules/user'
 
 
 const props = defineProps({
@@ -69,6 +79,11 @@ const props = defineProps({
   menuId: { type: Number, default: null }
 })
 const emit = defineEmits(['update:show'])
+
+const userStore = useUserStore()
+const canViewPhase = computed(() => userStore.hasPermission('view_fasemenu'))
+const canViewProductPhase = computed(() => userStore.hasPermission('view_productphase'))
+const canViewProductPhaseAvailableDay = computed(() => userStore.hasPermission('view_productphaseavailableday'))
 
 const menu = ref(null)
 const days = ['LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB', 'DOM']
@@ -89,6 +104,9 @@ const localShow = computed({
 
 function getPhasesByDay(day) {
   if (!menu.value || !menu.value.phases) return []
+  if (!canViewPhase.value || !canViewProductPhase.value || !canViewProductPhaseAvailableDay.value) {
+    return []
+  }
   return menu.value.phases
     .map(phase => {
       const filteredProducts = phase.products.filter(p =>

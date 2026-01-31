@@ -26,6 +26,7 @@
                   placeholder="Ej: Combo Familiar"
                   maxlength="100"
                   show-count
+                  :disabled="isReadOnly"
                 />
               </n-form-item-gi>
 
@@ -38,11 +39,14 @@
                       <n-input
                         v-model:value="category.description"
                         placeholder="Nombre de la categoría"
+                        :disabled="isReadOnly || (category.id ? !canChangeComboCategory : !canAddComboCategory)"
                       />
                       <n-button
                         type="info"
                         tertiary
                         :disabled="
+                          isReadOnly ||
+                          (category.id ? !canChangeComboCategory : !canAddComboCategory) ||
                           category.description === getCategoryDescription(category.id) ||
                           !category.description
                         "
@@ -64,6 +68,7 @@
                       <n-button
                         type="info"
                         tertiary
+                        :disabled="isReadOnly || !canAddComboCategory"
                         @click="
                           categoryForm = true;
                           category.id = null;
@@ -78,11 +83,13 @@
                         placeholder="Seleccionar categoría"
                         filterable
                         clearable
+                        :disabled="isReadOnly || !canViewComboCategory"
                       />
                       <n-button
                         v-if="formData.category_id"
                         type="warning"
                         tertiary
+                        :disabled="isReadOnly || !canChangeComboCategory"
                         @click="
                           categoryForm = true;
                           category.id = formData.category_id;
@@ -97,7 +104,7 @@
 
               <!-- Modo de precio -->
               <n-form-item-gi label="Modo de precio" path="pricing_mode" :span="12">
-                <n-radio-group v-model:value="formData.pricing_mode">
+                <n-radio-group v-model:value="formData.pricing_mode" :disabled="isReadOnly">
                   <n-space>
                     <n-radio value="FIXED">
                       <n-space align="center">
@@ -129,6 +136,7 @@
                   :min="0"
                   :step="0.5"
                   style="width: 100%"
+                  :disabled="isReadOnly"
                 >
                   <template #prefix>
                     S/
@@ -168,6 +176,7 @@
                   :default-upload="false"
                   :on-change="onImageChange"
                   :file-list="imageFileList"
+                  :disabled="isReadOnly"
                 >
                   Subir imagen
                 </n-upload>
@@ -185,7 +194,7 @@
           </n-tab-pane>
 
           <!-- Tab 2: Productos -->
-          <n-tab-pane name="products" tab="Productos del Combo">
+          <n-tab-pane v-if="canViewComboProduct" name="products" tab="Productos del Combo">
             <n-space vertical size="large">
               <!-- Buscador de productos -->
               <n-card title="Agregar productos" size="small">
@@ -195,6 +204,7 @@
                     placeholder="Buscar producto por nombre o código..."
                     clearable
                     @input="handleProductSearch"
+                    :disabled="isReadOnly || !canAddComboProduct"
                   >
                     <template #prefix>
                       <v-icon name="md-search-round" />
@@ -202,7 +212,12 @@
                   </n-input>
 
                   <!-- Resultados de búsqueda -->
-                  <n-list v-if="searchResults.length > 0" hoverable clickable bordered>
+                  <n-list
+                    v-if="searchResults.length > 0"
+                    :hoverable="!isReadOnly && canAddComboProduct"
+                    :clickable="!isReadOnly && canAddComboProduct"
+                    bordered
+                  >
                     <n-list-item
                       v-for="product in searchResults"
                       :key="product.id"
@@ -223,7 +238,7 @@
                           </n-space>
                         </template>
                         <template #action>
-                          <n-button size="small" type="primary">
+                          <n-button size="small" type="primary" :disabled="isReadOnly || !canAddComboProduct">
                             Agregar
                           </n-button>
                         </template>
@@ -264,6 +279,7 @@
                           :step="0.5"
                           size="small"
                           style="width: 100%"
+                          :disabled="isReadOnly || !canChangeComboProduct"
                         >
                           <template #prefix>
                             Cant:
@@ -281,11 +297,12 @@
                       <!-- Acciones -->
                       <n-gi :span="3">
                         <n-space>
-                          <n-button
-                            size="small"
-                            type="success"
-                            @click="openKardexModal(index)"
-                          >
+                        <n-button
+                          size="small"
+                          type="success"
+                          :disabled="isReadOnly || !canChangeComboProduct"
+                          @click="openKardexModal(index)"
+                        >
                             <template #icon>
                               <v-icon name="md-settings-round" scale="0.9" />
                             </template>
@@ -300,6 +317,7 @@
                           size="small"
                           type="error"
                           quaternary
+                          :disabled="isReadOnly || !canDeleteComboProduct"
                           @click="removeProduct(index)"
                         >
                           <template #icon>
@@ -332,11 +350,12 @@
                   Agrega palabras clave o adicionales que no tienen costo pero aparecerán en el pedido.
                 </n-text>
                 
-                <n-dynamic-tags v-model:value="formData.extras" type="success">
+                <n-dynamic-tags v-model:value="formData.extras" type="success" :disabled="isReadOnly">
                   <template #input="{ submit }">
                     <n-input
                       placeholder="Escribe y presiona Enter"
                       @keyup.enter="submit"
+                      :disabled="isReadOnly"
                     />
                   </template>
                 </n-dynamic-tags>
@@ -354,7 +373,7 @@
     <template #footer>
       <n-space justify="end">
         <n-button @click="handleCancel">Cancelar</n-button>
-        <n-button type="primary" :loading="isSaving" @click="handleSubmit">
+        <n-button type="primary" :loading="isSaving" :disabled="isReadOnly" @click="handleSubmit">
           {{ mode === 'create' ? 'Crear Combo' : 'Guardar Cambios' }}
         </n-button>
       </n-space>
@@ -382,6 +401,7 @@ import {
   updateComboCategory 
 } from '@/api/modules/products'
 import KardexConfigModal from './KardexConfigModal.vue'
+import { useUserStore } from '@/store/modules/user'
 
 const props = defineProps({
   show: {
@@ -402,6 +422,24 @@ const props = defineProps({
 const emit = defineEmits(['update:show', 'success'])
 
 const message = useMessage()
+const userStore = useUserStore()
+
+const canAddCombo = computed(() => userStore.hasPermission('add_combo'))
+const canChangeCombo = computed(() => userStore.hasPermission('change_combo'))
+const canViewComboProduct = computed(() => userStore.hasPermission('view_comboproduct'))
+const canAddComboProduct = computed(() => userStore.hasPermission('add_comboproduct'))
+const canChangeComboProduct = computed(() => userStore.hasPermission('change_comboproduct'))
+const canDeleteComboProduct = computed(() => userStore.hasPermission('delete_comboproduct'))
+const canViewComboCategory = computed(() => userStore.hasPermission('view_combocategory'))
+const canAddComboCategory = computed(() => userStore.hasPermission('add_combocategory'))
+const canChangeComboCategory = computed(() => userStore.hasPermission('change_combocategory'))
+
+const isReadOnly = computed(() => {
+  if (props.mode === 'create') {
+    return !canAddCombo.value
+  }
+  return !canChangeCombo.value
+})
 
 // Reactive state
 const modalVisible = computed({
@@ -504,6 +542,10 @@ const onImageChange = ({ file, fileList }) => {
 
 // Category management
 const performCreateCategory = async () => {
+  if (!canAddComboCategory.value) {
+    message.error('No tienes permisos para crear categorías de combo')
+    return
+  }
   try {
     const response = await createComboCategory(category.value.description, false)
     if (response.status === 201) {
@@ -525,6 +567,10 @@ const performCreateCategory = async () => {
 }
 
 const performUpdateCategory = async () => {
+  if (!canChangeComboCategory.value) {
+    message.error('No tienes permisos para editar categorías de combo')
+    return
+  }
   try {
     const response = await updateComboCategory(
       category.value.id,
@@ -544,6 +590,9 @@ const performUpdateCategory = async () => {
 
 // Methods
 const handleProductSearch = async () => {
+  if (isReadOnly.value || !canAddComboProduct.value) {
+    return
+  }
   if (!productSearch.value || productSearch.value.length < 2) {
     searchResults.value = []
     return
@@ -566,6 +615,10 @@ const handleProductSearch = async () => {
 }
 
 const addProduct = (product) => {
+  if (isReadOnly.value || !canAddComboProduct.value) {
+    message.error('No tienes permisos para agregar productos al combo')
+    return
+  }
   // Check if product already added
   const exists = formData.items.some(item => item.product_id === product.id)
   if (exists) {
@@ -590,15 +643,28 @@ const addProduct = (product) => {
 }
 
 const removeProduct = (index) => {
+  if (isReadOnly.value || !canDeleteComboProduct.value) {
+    message.error('No tienes permisos para eliminar productos del combo')
+    return
+  }
   formData.items.splice(index, 1)
 }
 
 const openKardexModal = (index) => {
+  if (isReadOnly.value || !canChangeComboProduct.value) {
+    message.error('No tienes permisos para editar productos del combo')
+    return
+  }
   selectedItemIndex.value = index
   showKardexModal.value = true
 }
 
 const handleKardexUpdate = (updatedKardexMap) => {
+  if (isReadOnly.value || !canChangeComboProduct.value) {
+    message.error('No tienes permisos para editar productos del combo')
+    showKardexModal.value = false
+    return
+  }
   if (selectedItemIndex.value !== null) {
     formData.items[selectedItemIndex.value].kardex_map = updatedKardexMap
     message.success('Configuración de kardex actualizada')
@@ -612,6 +678,15 @@ const handleCancel = () => {
 
 const handleSubmit = async () => {
   try {
+    if (props.mode === 'create' && !canAddCombo.value) {
+      message.error('No tienes permisos para crear combos')
+      return
+    }
+    if (props.mode === 'edit' && !canChangeCombo.value) {
+      message.error('No tienes permisos para editar combos')
+      return
+    }
+
     await formRef.value?.validate()
 
     // Validate items
@@ -730,6 +805,10 @@ const loadComboData = async () => {
 }
 
 const loadCategories = async () => {
+  if (!canViewComboCategory.value) {
+    categoryOptions.value = []
+    return
+  }
   try {
     const response = await getComboCategories({ active_only: true })
     const categories = response.data.results || response.data

@@ -17,15 +17,15 @@
         <n-card :segmented="{ content: 'soft' }" title="Información del menú">
           <n-grid cols="1 s:1 m:2 l:2 xl:2" x-gap="16">
             <n-form-item-gi :span="2" label="Nombre del menú" path="name">
-              <n-input v-model:value="form.name" placeholder="Nombre Menú" />
+              <n-input v-model:value="form.name" placeholder="Nombre Menú" :disabled="isReadOnly" />
             </n-form-item-gi>
             <n-form-item-gi :span="2" label="Precio del menú" path="price">
-              <n-input-number v-model:value="form.price" :min="0" :precision="2" placeholder="0.00">
+              <n-input-number v-model:value="form.price" :min="0" :precision="2" placeholder="0.00" :disabled="isReadOnly">
                 <template #prefix>S/</template>
               </n-input-number>
             </n-form-item-gi>
             <n-form-item-gi :span="2" label="Estado del menú" path="active">
-              <n-switch v-model:value="form.active">
+              <n-switch v-model:value="form.active" :disabled="isReadOnly">
                 <template #checked>Activo</template>
                 <template #unchecked>Inactivo</template>
               </n-switch>
@@ -36,13 +36,16 @@
     </div>
 
     <div v-else-if="currentStep === 2">
-      <n-grid cols="2 s:2 m:2 l:2 xl:2" x-gap="16">
+      <n-alert v-if="!canViewPhase" type="warning" :bordered="false" style="margin-bottom: 12px;">
+        No tienes permisos para ver las fases del menú.
+      </n-alert>
+      <n-grid v-else cols="2 s:2 m:2 l:2 xl:2" x-gap="16">
         <!-- Columna izquierda: fases -->
         <n-gi>
           <n-card :segmented="{ content: 'hard' }" title="Crea fases a tu menú">
             <div class="toolbar">
-              <n-input v-model:value="phaseSearch" clearable placeholder="Buscar fases de menú" />
-              <n-button type="info" secondary circle @click="openNewPhase">+</n-button>
+              <n-input v-model:value="phaseSearch" clearable placeholder="Buscar fases de menú" :disabled="!canViewPhase" />
+              <n-button type="info" secondary circle :disabled="isReadOnly || !canAddPhase" @click="openNewPhase">+</n-button>
             </div>
 
             <n-spin :show="loadingPhases">
@@ -69,9 +72,16 @@
         <!-- Columna derecha: productos de la fase seleccionada -->
         <n-gi>
           <n-card :segmented="{ content: 'hard' }" :title="assignPanelTitle">
+            <n-alert v-if="!canViewProductPhase" type="warning" :bordered="false" style="margin-bottom: 12px;">
+              No tienes permisos para ver los productos de la fase.
+            </n-alert>
             <div class="row between">
               <div class="label">Estado de la fase</div>
-              <n-switch :value="phaseActive" :disabled="!selectedPhaseId" @update:value="togglePhaseActive">
+              <n-switch
+                :value="phaseActive"
+                :disabled="!selectedPhaseId || isReadOnly || !canChangePhase"
+                @update:value="togglePhaseActive"
+              >
                 <template #checked>Activo</template>
                 <template #unchecked>Inactivo</template>
               </n-switch>
@@ -81,13 +91,13 @@
               <n-auto-complete
                 v-model:value="productQuery"
                 :options="productOptions"
-                :disabled="!selectedPhaseId"
+                :disabled="!selectedPhaseId || isReadOnly || !canViewProductPhase || !canAddProductPhase"
                 placeholder="Buscar un producto"
                 clearable
                 @update:value="onTypeProduct"
                 @select="onSelectProduct"
               />
-              <n-button quaternary circle :disabled="!selectedPhaseId">⤢</n-button>
+              <n-button quaternary circle :disabled="!selectedPhaseId || isReadOnly || !canViewProductPhase || !canAddProductPhase">></n-button>
             </div>
 
             <n-spin :show="loadingPhaseProducts">
@@ -97,14 +107,14 @@
                     <div class="name">{{ pp.product?.name || pp.product_name }}</div>
                     <div class="sub">{{ pp.product?.category_name || pp.product?.measure_unit_name || '' }}</div>
                   </div>
-                  <n-button text type="error" @click="removeProduct(pp)">✕</n-button>
+                  <n-button text type="error" :disabled="isReadOnly || !canDeleteProductPhase" @click="removeProduct(pp)">✕</n-button>
                 </div>
                 <div v-if="!loadingPhaseProducts && phaseProducts.length === 0" class="empty">No hay productos asignados.</div>
               </div>
             </n-spin>
 
             <div class="rename">
-              <n-button text :disabled="!selectedPhaseId" @click="openRename">✎ Editar nombre de fase</n-button>
+              <n-button text :disabled="!selectedPhaseId || isReadOnly || !canChangePhase" @click="openRename">✎ Editar nombre de fase</n-button>
             </div>
           </n-card>
         </n-gi>
@@ -116,7 +126,7 @@
         <template #action>
           <n-space>
             <n-button tertiary @click="showNewPhase = false">Cancelar</n-button>
-            <n-button type="info" :loading="creatingPhase" @click="createPhaseHandler">Crear</n-button>
+            <n-button type="info" :loading="creatingPhase" :disabled="isReadOnly || !canAddPhase" @click="createPhaseHandler">Crear</n-button>
           </n-space>
         </template>
       </n-modal>
@@ -127,7 +137,7 @@
         <template #action>
           <n-space>
             <n-button tertiary @click="showRename = false">Cancelar</n-button>
-            <n-button type="info" :loading="renaming" @click="renamePhase">Guardar</n-button>
+            <n-button type="info" :loading="renaming" :disabled="isReadOnly || !canChangePhase" @click="renamePhase">Guardar</n-button>
           </n-space>
         </template>
       </n-modal>
@@ -144,7 +154,7 @@
         <n-space>
           <n-button tertiary @click="onCancel">Cancelar</n-button>
           <n-button v-if="currentStep > 1" @click="prevStep">Volver</n-button>
-          <n-button v-if="currentStep === 1" type="info" :loading="submitting" @click="submitStep1">Siguiente</n-button>
+          <n-button v-if="currentStep === 1" type="info" :loading="submitting" :disabled="isReadOnly" @click="submitStep1">Siguiente</n-button>
           <n-button v-else-if="currentStep === 2" type="info" @click="nextStep">Finalizar</n-button>
           <n-button v-else type="info" @click="finish">Cerrar</n-button>
         </n-space>
@@ -158,6 +168,7 @@ import { ref, watch, computed } from 'vue'
 import { useMessage } from 'naive-ui'
 import { createMenu, updateMenu, retrieveMenu, getMenuPhases, createPhase, updatePhase, getMenuProductPhases, createProductPhase, deleteProductPhase } from '@/api/modules/menu'
 import { searchProductByName } from '@/api/modules/products'
+import { useUserStore } from '@/store/modules/user'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -167,6 +178,23 @@ const props = defineProps({
 const emit = defineEmits(['update:show', 'success', 'cancel', 'change'])
 
 const message = useMessage()
+const userStore = useUserStore()
+
+const canAddMenu = computed(() => userStore.hasPermission('add_menu'))
+const canChangeMenu = computed(() => userStore.hasPermission('change_menu'))
+const canViewPhase = computed(() => userStore.hasPermission('view_fasemenu'))
+const canAddPhase = computed(() => userStore.hasPermission('add_fasemenu'))
+const canChangePhase = computed(() => userStore.hasPermission('change_fasemenu'))
+const canViewProductPhase = computed(() => userStore.hasPermission('view_productphase'))
+const canAddProductPhase = computed(() => userStore.hasPermission('add_productphase'))
+const canDeleteProductPhase = computed(() => userStore.hasPermission('delete_productphase'))
+
+const isReadOnly = computed(() => {
+  if (props.mode === 'create') {
+    return !canAddMenu.value
+  }
+  return !canChangeMenu.value
+})
 
 const showLocal = ref(props.show)
 watch(() => props.show, v => showLocal.value = v)
@@ -217,7 +245,11 @@ const filteredPhases = computed(() => {
 })
 
 async function loadPhases() {
-  if (!createdMenu.value?.id) return
+  if (!createdMenu.value?.id || !canViewPhase.value) {
+    phases.value = []
+    selectedPhaseId.value = null
+    return
+  }
   loadingPhases.value = true
   try {
     const { data } = await getMenuPhases(createdMenu.value.id)
@@ -246,10 +278,18 @@ const showNewPhase = ref(false)
 const newPhaseName = ref('')
 const creatingPhase = ref(false)
 function openNewPhase() {
+  if (isReadOnly.value || !canAddPhase.value) {
+    message.error('No tienes permisos para crear fases')
+    return
+  }
   newPhaseName.value = ''
   showNewPhase.value = true
 }
 async function createPhaseHandler() {
+  if (isReadOnly.value || !canAddPhase.value) {
+    message.error('No tienes permisos para crear fases')
+    return
+  }
   const name = (newPhaseName.value || '').trim()
   if (!name) return message.warning('Ingresa un nombre de fase')
   try {
@@ -283,7 +323,10 @@ const phaseActive = ref(true)
 const assignPanelTitle = computed(() => `Asigna productos a tus fases ${phaseName.value ? '"' + phaseName.value + '"' : ''}`)
 
 async function loadPhaseProducts() {
-  if (!selectedPhaseId.value) { phaseProducts.value = []; return }
+  if (!selectedPhaseId.value || !canViewProductPhase.value) {
+    phaseProducts.value = []
+    return
+  }
   loadingPhaseProducts.value = true
   try {
     const { data } = await getMenuProductPhases(createdMenu.value.id, { phase: selectedPhaseId.value })
@@ -298,6 +341,10 @@ async function loadPhaseProducts() {
 
 async function togglePhaseActive(val) {
   if (!selectedPhaseId.value) return
+  if (isReadOnly.value || !canChangePhase.value) {
+    message.error('No tienes permisos para editar fases')
+    return
+  }
   try {
     await updatePhase(selectedPhaseId.value, { name: phaseName.value, menu: createdMenu.value.id, active: val })
     phaseActive.value = val
@@ -312,6 +359,9 @@ async function togglePhaseActive(val) {
 const productQuery = ref('')
 const productOptions = ref([])
 async function onTypeProduct(val) {
+  if (isReadOnly.value || !canViewProductPhase.value || !canAddProductPhase.value) {
+    return
+  }
   productQuery.value = val
   if (!val || val.length < 2) { productOptions.value = []; return }
   try {
@@ -324,6 +374,10 @@ async function onTypeProduct(val) {
 }
 async function onSelectProduct(value, option) {
   if (!selectedPhaseId.value) return
+  if (isReadOnly.value || !canViewProductPhase.value || !canAddProductPhase.value) {
+    message.error('No tienes permisos para agregar productos a la fase')
+    return
+  }
   try {
     await createProductPhase({ product: Number(value), phase: selectedPhaseId.value, stock: 0 })
     message.success('Producto asignado')
@@ -341,6 +395,10 @@ async function onSelectProduct(value, option) {
 }
 
 async function removeProduct(pp) {
+  if (isReadOnly.value || !canDeleteProductPhase.value) {
+    message.error('No tienes permisos para eliminar productos de la fase')
+    return
+  }
   try {
     await deleteProductPhase(pp.id)
     message.success('Producto retirado')
@@ -361,11 +419,19 @@ const renameValue = ref('')
 const renaming = ref(false)
 function openRename() {
   if (!selectedPhaseId.value) return
+  if (isReadOnly.value || !canChangePhase.value) {
+    message.error('No tienes permisos para editar fases')
+    return
+  }
   renameValue.value = phaseName.value
   showRename.value = true
 }
 async function renamePhase() {
   if (!selectedPhaseId.value) return
+  if (isReadOnly.value || !canChangePhase.value) {
+    message.error('No tienes permisos para editar fases')
+    return
+  }
   const name = (renameValue.value || '').trim()
   if (!name) return
   try {
@@ -411,6 +477,14 @@ function finish() {
 }
 
 function submitStep1() {
+  if (props.mode === 'create' && !canAddMenu.value) {
+    message.error('No tienes permisos para crear menús')
+    return
+  }
+  if (props.mode === 'edit' && !canChangeMenu.value) {
+    message.error('No tienes permisos para editar menús')
+    return
+  }
   formRef.value?.validate(async (errors) => {
     if (errors) return
     try {

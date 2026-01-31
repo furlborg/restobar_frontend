@@ -44,6 +44,9 @@
       </calendar-view>
     </div>
     <div v-else class="step2">
+      <n-alert v-if="!canViewScheduleItem" type="warning" :bordered="false" style="margin-bottom: 12px;">
+        No tienes permisos para ver los ítems programados de menú.
+      </n-alert>
       <div class="menus-list">
         <n-input v-model:value="menuSearch" placeholder="Buscar menú activo" clearable />
         <n-list bordered size="small" style="height: 320px; overflow-y: auto;">
@@ -76,6 +79,7 @@
                     :value="product.id"
                     :label="product.name"
                     :checked="isProductSelected(product.id)"
+                    :disabled="!canEditScheduleItem"
                     @update:checked="onProductToggle(product)"
                   />
                   <div v-if="isProductSelected(product.id)" class="stock-label">Stock: {{ getProductStock(product.id) }}</div>
@@ -99,7 +103,14 @@
       <n-button @click="onCancel">Cancelar</n-button>
       <n-button v-if="currentStep === 2" @click="onBack">Volver</n-button>
       <n-button v-if="currentStep === 1" :disabled="!selectedDate" @click="onNext" type="primary">Siguiente</n-button>
-      <n-button v-if="currentStep === 2" :disabled="!selectedMenu" type="primary" @click="onApply">Aplicar menú del día</n-button>
+      <n-button
+        v-if="currentStep === 2"
+        :disabled="!selectedMenu || !canEditScheduleDay || !canEditScheduleItem"
+        type="primary"
+        @click="onApply"
+      >
+        Aplicar menú del día
+      </n-button>
     </template>
   </n-modal>
 </template>
@@ -115,6 +126,7 @@ import {
   applyMenuScheduledDay,
   getScheduledDays   // 👈 importar el servicio
 } from '@/api/modules/menu'
+import { useUserStore } from '@/store/modules/user'
 
 const props = defineProps({
   show: { type: Boolean, default: false }
@@ -124,6 +136,20 @@ const localShow = computed({
   get: () => props.show,
   set: (v) => emit('update:show', v)
 })
+
+const userStore = useUserStore()
+const canViewScheduleDay = computed(() => userStore.hasPermission('view_menuscheduledday'))
+const canViewScheduleItem = computed(() => userStore.hasPermission('view_menuscheduleditem'))
+const canEditScheduleDay = computed(() =>
+  userStore.hasPermission('add_menuscheduledday') ||
+  userStore.hasPermission('change_menuscheduledday') ||
+  userStore.hasPermission('delete_menuscheduledday')
+)
+const canEditScheduleItem = computed(() =>
+  userStore.hasPermission('add_menuscheduleditem') ||
+  userStore.hasPermission('change_menuscheduleditem') ||
+  userStore.hasPermission('delete_menuscheduleditem')
+)
 
 const currentStep = ref(1)
 const selectedDate = ref(null)
@@ -141,6 +167,10 @@ const currentMonth = ref(new Date())
 const scheduledDaysForCalendar = ref([])
 
 async function loadScheduledDays() {
+  if (!canViewScheduleDay.value) {
+    scheduledDaysForCalendar.value = []
+    return
+  }
   try {
     const year = currentMonth.value.getFullYear()
     const month = currentMonth.value.getMonth() + 1
@@ -203,6 +233,11 @@ async function fetchMenus() {
 }
 
 async function prefillSelectedProducts(date) {
+  if (!canViewScheduleItem.value) {
+    selectedProducts.value = []
+    prefilledProductIds.value = []
+    return
+  }
   try {
     const dateFilter = new Date(date).toISOString().split('T')[0]
     const { data } = await getScheduledDays({date: dateFilter})
@@ -228,6 +263,10 @@ async function prefillSelectedProducts(date) {
 }
 
 async function fetchProductsByPhase(menuId) {
+  if (!canViewScheduleItem.value) {
+    productsByPhase.value = {}
+    return
+  }
   try {
     const phases = menus.value.find((menu) => menu.id === menuId).phases || []
 
@@ -272,6 +311,10 @@ async function selectMenu(menu) {
 
 async function onNext() {
   if (selectedDate.value) {
+    if (!canViewScheduleItem.value) {
+      window.$message?.error("No tienes permisos para ver los ítems programados")
+      return
+    }
     currentStep.value = 2
     selectedMenu.value = null
     productsByPhase.value = {}
@@ -313,6 +356,10 @@ async function loadSchedule(menuId, date) {
 
 async function onApply() {
   if (!selectedMenu.value || !selectedDate.value) return
+  if (!canEditScheduleDay.value || !canEditScheduleItem.value) {
+    window.$message?.error("No tienes permisos para programar el menú del día")
+    return
+  }
 
   try {
     await applyMenuScheduledDay(selectedMenu.value.id, {
@@ -340,6 +387,10 @@ function isProductSelected(productId) {
 }
 
 function onProductToggle(product) {
+  if (!canEditScheduleItem.value) {
+    window.$message?.error("No tienes permisos para editar el menú del día")
+    return
+  }
   const exists = selectedProducts.value.find(p => p.product_phase === product.id)
 
   if (exists) {
@@ -359,6 +410,10 @@ function onCancelStock() {
 }
 
 function onConfirmStock() {
+  if (!canEditScheduleItem.value) {
+    window.$message?.error("No tienes permisos para editar el menú del día")
+    return
+  }
   selectedProducts.value.push({
     product_phase: currentProduct.value.id,
     available: true,

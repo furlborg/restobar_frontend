@@ -135,7 +135,7 @@ export default defineComponent({
           ),
           key: 'Menu',
           icon: renderIcon('md-fastfood-twotone'),
-          disabled: !userStore.hasPermission('view_sale'),
+          disabled: !userStore.hasPermission('view_menu'),
         },
         {
           label: () =>
@@ -148,7 +148,7 @@ export default defineComponent({
             ),
           key: "Combo",
           icon: renderIcon("md-fastfood-twotone"),
-          disabled: !userStore.hasPermission("view_product"),
+          disabled: !userStore.hasPermission("view_combo"),
         },
         /* {
           label: () =>

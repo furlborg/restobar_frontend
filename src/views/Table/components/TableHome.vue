@@ -100,17 +100,17 @@
                             </div>
                             <div class="text-center position-absolute start-50 translate-middle-x"
                                  style="bottom: 35px; font-size: 13px; left: 50%; color: #e31414; font-weight: 900 !important; width: 100%;"
-                                 v-if="table?.order_amount">
+                                 v-if="table?.order_amount !== ''">
                                 Ult. Pedido:
                             </div>
                             <div class="text-center position-absolute start-50 translate-middle-x"
                                  style="bottom: 20px; font-size: 13px; left: 50%; color: #e31414; font-weight: 900 !important; width: 100%;"
-                                 v-if="table?.order_amount">
+                                 v-if="table?.order_amount !== ''">
                                 {{ table.modified }}
                             </div>
                             <n-button
                                     v-if="
-                  table.order_amount &&
+                  table.order_amount !== '' &&
                   settingsStore.business_settings?.order?.table_order_total
                 "
                                     class="bottom-0 text-center position-absolute start-50 translate-middle-x fs-5 fw-bolder"

@@ -62,7 +62,7 @@ export const routes = [
         path: "/menus",
         name: "Menu",
         meta: {
-          requiredPerm: "view_sale"
+          requiredPerm: "view_menu"
         },
         component: () => import(/* webpackChunkName: "menu" */ "@/views/Menu/index.vue")
       },
@@ -70,7 +70,7 @@ export const routes = [
         path: "/combos",
         name: "Combo",
         meta: {
-          requiredPerm: "view_sale"
+          requiredPerm: "view_combo"
         },
         component: () => import(/* webpackChunkName: "combo" */ "@/views/Combo/index.vue")
       },

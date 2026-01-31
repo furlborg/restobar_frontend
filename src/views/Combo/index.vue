@@ -3,7 +3,7 @@
     <n-card title="Combos" :segmented="{ content: 'hard' }">
       <template #header-extra>
         <n-space>
-          <n-button type="success" @click="goCreate">
+          <n-button v-if="canAddCombo" type="success" @click="goCreate">
             <template #icon>
               <v-icon name="md-add-round" />
             </template>
@@ -78,15 +78,17 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, h } from 'vue'
+import { ref, reactive, onMounted, h, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMessage, useDialog, NButton, NSpace, NTag } from 'naive-ui'
 import ComboFormModal from './components/ComboFormModal.vue'
 import { getCombos, deleteCombo, getCategories } from '@/api/modules/products'
+import { useUserStore } from '@/store/modules/user'
 
 const router = useRouter()
 const message = useMessage()
 const dialog = useDialog()
+const userStore = useUserStore()
 
 // State
 const showFilters = ref(false)
@@ -96,6 +98,11 @@ const combos = ref([])
 const categoryOptions = ref([])
 const selectedComboId = ref(null)
 const formMode = ref('create') // 'create' or 'edit'
+
+const canViewCombo = computed(() => userStore.hasPermission('view_combo'))
+const canAddCombo = computed(() => userStore.hasPermission('add_combo'))
+const canChangeCombo = computed(() => userStore.hasPermission('change_combo'))
+const canDeleteCombo = computed(() => userStore.hasPermission('delete_combo'))
 
 const filterParams = reactive({
   search: '',
@@ -119,79 +126,88 @@ const pricingModeOptions = [
 ]
 
 // Table columns
-const tableColumns = [
-  {
-    title: 'ID',
-    key: 'id',
-    width: 60,
-  },
-  {
-    title: 'Nombre',
-    key: 'name',
-    ellipsis: {
-      tooltip: true
+const tableColumns = computed(() => {
+  const columns = [
+    {
+      title: 'ID',
+      key: 'id',
+      width: 60,
     },
-  },
-  {
-    title: 'Categoría',
-    key: 'category_name',
-    render(row) {
-      return row.combo_category_name || '-'
+    {
+      title: 'Nombre',
+      key: 'name',
+      ellipsis: {
+        tooltip: true
+      },
     },
-  },
-  {
-    title: 'Modo de Precio',
-    key: 'pricing_mode',
-    width: 140,
-    render(row) {
-      const typeMap = {
-        FIXED: { label: 'Precio Fijo', type: 'success' },
-        VARIABLE: { label: 'Precio Variable', type: 'info' },
-      }
-      const config = typeMap[row.pricing_mode] || { label: row.pricing_mode, type: 'default' }
-      return h(NTag, { type: config.type, size: 'small' }, { default: () => config.label })
+    {
+      title: 'Categoría',
+      key: 'category_name',
+      render(row) {
+        return row.combo_category_name || '-'
+      },
     },
-  },
-  {
-    title: 'Precio',
-    key: 'price',
-    width: 100,
-    render(row) {
-      return `S/ ${parseFloat(row.computed_price || 0).toFixed(2)}`
+    {
+      title: 'Modo de Precio',
+      key: 'pricing_mode',
+      width: 140,
+      render(row) {
+        const typeMap = {
+          FIXED: { label: 'Precio Fijo', type: 'success' },
+          VARIABLE: { label: 'Precio Variable', type: 'info' },
+        }
+        const config = typeMap[row.pricing_mode] || { label: row.pricing_mode, type: 'default' }
+        return h(NTag, { type: config.type, size: 'small' }, { default: () => config.label })
+      },
     },
-  },
-  {
-    title: 'Items',
-    key: 'items_count',
-    width: 80,
-    render(row) {
-      return row.items?.length || 0
+    {
+      title: 'Precio',
+      key: 'price',
+      width: 100,
+      render(row) {
+        return `S/ ${parseFloat(row.computed_price || 0).toFixed(2)}`
+      },
     },
-  },
-  {
-    title: 'Acciones',
-    key: 'actions',
-    width: 180,
-    render(row) {
-      return h(NSpace, { justify: 'center' }, {
-        default: () => [
-          h(NButton, {
+    {
+      title: 'Items',
+      key: 'items_count',
+      width: 80,
+      render(row) {
+        return row.items?.length || 0
+      },
+    },
+  ]
+
+  if (canChangeCombo.value || canDeleteCombo.value) {
+    columns.push({
+      title: 'Acciones',
+      key: 'actions',
+      width: 180,
+      render(row) {
+        const actions = []
+        if (canChangeCombo.value) {
+          actions.push(h(NButton, {
             size: 'small',
             type: 'info',
             secondary: true,
             onClick: () => handleEdit(row.id)
-          }, { default: () => 'Editar' }),
-          h(NButton, {
+          }, { default: () => 'Editar' }))
+        }
+        if (canDeleteCombo.value) {
+          actions.push(h(NButton, {
             size: 'small',
             type: 'error',
             secondary: true,
             onClick: () => handleDelete(row.id, row.name)
-          }, { default: () => 'Eliminar' }),
-        ]
-      })
-    },
-  },
-]
+          }, { default: () => 'Eliminar' }))
+        }
+        return h(NSpace, { justify: 'center' }, { default: () => actions })
+      },
+    })
+  }
+
+  return columns
+})
 
 // Methods
 const toggleFilters = () => {
@@ -205,12 +221,20 @@ const goCreate = () => {
 }
 
 const handleEdit = (comboId) => {
+  if (!canChangeCombo.value) {
+    message.error('No tienes permisos para editar combos')
+    return
+  }
   selectedComboId.value = comboId
   formMode.value = 'edit'
   showFormModal.value = true
 }
 
 const handleDelete = (comboId, comboName) => {
+  if (!canDeleteCombo.value) {
+    message.error('No tienes permisos para eliminar combos')
+    return
+  }
   dialog.warning({
     title: 'Confirmar eliminación',
     content: `¿Estás seguro de eliminar el combo "${comboName}"?`,
@@ -248,6 +272,13 @@ const refreshTable = () => {
 }
 
 const fetchCombos = async () => {
+  if (!canViewCombo.value) {
+    combos.value = []
+    pagination.itemCount = 0
+    pagination.pageCount = 1
+    isTableLoading.value = false
+    return
+  }
   isTableLoading.value = true
   try {
     const params = {

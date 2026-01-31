@@ -1,6 +1,14 @@
 <template>
   <n-modal v-model:show="localShow" preset="card" style="width: 90vw; max-width: 1400px">
     <template #header>Programar Menú</template>
+    <n-alert
+      v-if="!canViewProductPhaseAvailableDay || !canViewProductPhase"
+      type="warning"
+      :bordered="false"
+      style="margin-bottom: 12px;"
+    >
+      No tienes permisos para ver la programación semanal de fases de producto.
+    </n-alert>
     <n-grid cols="12" x-gap="12">
       <n-gi :span="4">
         <div >
@@ -18,7 +26,7 @@
               <n-list-item v-for="prod in filteredProducts" :key="prod.id" class="product-list-item">
                 <div class="product-item">
                   <span class="product-name">{{ prod.product_name }} ({{ prod.phase_name }})</span>
-                  <n-button text size="tiny" @click="openAssignDays(prod)">
+                  <n-button text size="tiny" :disabled="!canEditProductPhaseAvailableDay" @click="openAssignDays(prod)">
                     <template #icon>
                       <v-icon name="md-add-round"/>
                     </template>
@@ -46,7 +54,7 @@
                 v-for="item in scheduleByDay(day)"
                 :key="item.id + '-' + day"
                 type="info"
-                closable
+                :closable="canEditProductPhaseAvailableDay"
                 @close="removeDay(item, day)"
                 class="mb-1"
                 style="height: 50px;"
@@ -68,7 +76,7 @@
     <template #action>
       <n-space justify="end">
         <n-button @click="localShow = false">Cancelar</n-button>
-        <n-button type="primary" @click="saveProgramation">Guardar programación</n-button>
+        <n-button type="primary" :disabled="!canEditProductPhaseAvailableDay" @click="saveProgramation">Guardar programación</n-button>
       </n-space>
     </template>
 
@@ -86,6 +94,7 @@
 import { ref, computed, watch } from 'vue'
 import AssignDaysModal from './AssignDaysModal.vue'
 import { getMenuPhases, getMenuProductPhases, getMenuWeeklyAvailability, saveMenuScheduleBulk, saveMenuWeeklyAvailability } from '@/api/modules/menu'
+import { useUserStore } from '@/store/modules/user'
 
 const props = defineProps({ show: Boolean, menuId: Number })
 const emit = defineEmits(['update:show'])
@@ -95,6 +104,15 @@ const localShow = computed({
   get: () => props.show,
   set: (value) => emit('update:show', value)
 })
+
+const userStore = useUserStore()
+const canViewProductPhase = computed(() => userStore.hasPermission('view_productphase'))
+const canViewProductPhaseAvailableDay = computed(() => userStore.hasPermission('view_productphaseavailableday'))
+const canEditProductPhaseAvailableDay = computed(() =>
+  userStore.hasPermission('add_productphaseavailableday') ||
+  userStore.hasPermission('change_productphaseavailableday') ||
+  userStore.hasPermission('delete_productphaseavailableday')
+)
 
 const search = ref('')
 const selectedPhase = ref(null)
@@ -120,6 +138,10 @@ function scheduleByDay(day) {
 const showAssignDays = ref(false)
 const selectedProduct = ref(null)
 function openAssignDays(prod) {
+  if (!canEditProductPhaseAvailableDay.value) {
+    window.$message?.error('No tienes permisos para editar la programación')
+    return
+  }
   selectedProduct.value = prod
   showAssignDays.value = true
 }
@@ -140,6 +162,10 @@ function handleAssignDays(days) {
 }
 
 function removeDay(item, day) {
+  if (!canEditProductPhaseAvailableDay.value) {
+    window.$message?.error('No tienes permisos para editar la programación')
+    return
+  }
   // Find schedule entry for this product
   const idx = schedule.value.findIndex(s => s.id === item.id)
   if (idx !== -1) {
@@ -153,6 +179,12 @@ function removeDay(item, day) {
 }
 
 async function loadPhasesAndProducts() {
+  if (!canViewProductPhase.value || !canViewProductPhaseAvailableDay.value) {
+    products.value = []
+    phaseOptions.value = []
+    schedule.value = []
+    return
+  }
   const phases = await getMenuPhases(props.menuId)
   phaseOptions.value = [{ label: 'Todas', value: null }, ...phases.data.map(p => ({ label: p.name, value: p.id }))]
   products.value = []
@@ -190,6 +222,10 @@ async function loadPhasesAndProducts() {
 }
 
 async function saveProgramation() {
+  if (!canEditProductPhaseAvailableDay.value) {
+    window.$message?.error('No tienes permisos para guardar la programación')
+    return
+  }
   const daysPayload = days.map(d => ({
     date: d, // You may need a real date mapping
     active: true,
