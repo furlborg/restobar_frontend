@@ -38,8 +38,18 @@
               </tr>
             </thead>
             <tbody>
-              <template v-for="(detail, index) in expandedOrderDetails" :key="`detail-${index}`">
-                <tr v-if="detail.quantity > 0" :class="{ 'menu-header': detail.isMenuHeader, 'menu-product': detail.isMenuProduct }">
+              <template v-for="group in groupedOrderDetails" :key="`group-${group.key}`">
+                <tr v-if="isCustomerMode" class="customer-group">
+                  <td colspan="4" align="center">
+                    CLIENTE: {{ group.customerName }}
+                  </td>
+                </tr>
+                <tr
+                  v-for="(detail, index) in group.items"
+                  :key="`detail-${group.key}-${index}`"
+                  v-if="detail.quantity > 0"
+                  :class="{ 'menu-header': detail.isMenuHeader, 'menu-product': detail.isMenuProduct }"
+                >
                   <td align="center">{{ detail.isMenuProduct ? '' : detail.quantity }}</td>
                   <td align="left" :style="detail.isMenuProduct ? 'font-size: 11px; color: #666;' : ''">
                     {{ detail.product_name }}
@@ -105,22 +115,63 @@ export default defineComponent({
     const settingsStore = useSettingsStore();
     const businessStore = useBusinessStore();
 
-    // Expandir menús para mostrar productos individuales
-    const expandedOrderDetails = computed(() => {
-      console.log('PreviewPreset - order_details:', props.data.order_details);
-      return expandOrderDetails(props.data.order_details || []);
+    const orderDetails = computed(() => props.data.order_details || []);
+
+    const isCustomerMode = computed(() => {
+      return orderDetails.value.some((detail) => !!detail?.customer);
+    });
+
+    const groupedOrderDetails = computed(() => {
+      const details = orderDetails.value;
+      if (!isCustomerMode.value) {
+        return [
+          {
+            key: "ALL",
+            customerName: "PRODUCTOS",
+            items: expandOrderDetails(details),
+          },
+        ];
+      }
+
+      const groups = [];
+      const index = new Map();
+
+      details.forEach((detail) => {
+        const customerId = detail.customer?.id ?? "NO_CUSTOMER";
+        const customerName =
+          detail.customer?.name ||
+          detail.customer?.full_name ||
+          (customerId === "NO_CUSTOMER" ? "SIN CLIENTE" : `CLIENTE ${customerId}`);
+
+        if (!index.has(customerId)) {
+          index.set(customerId, groups.length);
+          groups.push({
+            key: customerId,
+            customerName,
+            items: [],
+          });
+        }
+
+        groups[index.get(customerId)].items.push(detail);
+      });
+
+      return groups.map((group) => ({
+        ...group,
+        items: expandOrderDetails(group.items),
+      }));
     });
 
     // Calcular el total correctamente incluyendo menús
     const orderTotal = computed(() => {
-      return calculateOrderTotal(props.data.order_details || []);
+      return calculateOrderTotal(orderDetails.value);
     });
 
     return {
       tableStore,
       businessStore,
       settingsStore,
-      expandedOrderDetails,
+      groupedOrderDetails,
+      isCustomerMode,
       orderTotal,
     };
   },
@@ -160,6 +211,15 @@ export default defineComponent({
             td {
               border-bottom: 1px dashed;
             }
+          }
+        }
+
+        .customer-group {
+          td {
+            border-top: 1px solid #000;
+            border-bottom: 1px solid #000;
+            font-weight: bold;
+            padding: 4px 0;
           }
         }
         

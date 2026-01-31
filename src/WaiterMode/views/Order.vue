@@ -41,7 +41,7 @@
                 <!-- <n-h2>Pedido</n-h2> -->
                 <n-list class="m-0">
                     <template v-for="(order, index) in currentOrderList" :key="index">
-                        <n-list-item v-if="order.quantity > 0">
+                        <n-list-item v-if="order.quantity > 0" @click="openIndications(order, index)">
                         <n-thing>
                             <template #header>
                             <n-tag>{{ order.quantity }}</n-tag>
@@ -179,6 +179,16 @@ export default defineComponent({
         const currentOrderList = computed(() => {
             return orderStore.fullOrderList;
         });
+
+        const canOpenIndications = (order) => {
+            return !!order && !order.from_menu && !order.from_combo;
+        };
+
+        const openIndications = (order, index) => {
+            if (!canOpenIndications(order)) return;
+            itemIndex.value = index;
+            showModal.value = true;
+        };
 
         // Comentar la inicialización que puede estar interfiriendo
         // orderStore.orders = [];
@@ -345,7 +355,8 @@ export default defineComponent({
             previewDrawer,
             showPreview,
             previewData,
-            currentOrderList
+            currentOrderList,
+            openIndications
         };
     }
 });

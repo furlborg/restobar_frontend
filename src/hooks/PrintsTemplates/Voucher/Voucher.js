@@ -344,18 +344,64 @@ const VoucherPrint = (props) => {
   }
 
   let datProdsCons = [];
+  const orderDetails = props.data?.order_details || [];
+  const hasCustomers = orderDetails.some((detail) => !!detail?.customer);
 
   if (!!props.prePayment) {
-    datProdsCons = props.data.order_details.map((val) => {
-      totalProdSum += val.quantity * parseFloat(val.price);
+    if (hasCustomers) {
+      const groups = [];
+      const index = new Map();
 
-      return {
-        amount: val.quantity,
-        description: val.product_name,
-        price: parseFloat(val.price).toFixed("2"),
-        total: (val.quantity * parseFloat(val.price)).toFixed("2"),
-      };
-    });
+      orderDetails.forEach((detail) => {
+        const customerId = detail.customer?.id ?? "NO_CUSTOMER";
+        const customerName =
+          detail.customer?.name ||
+          detail.customer?.full_name ||
+          (customerId === "NO_CUSTOMER" ? "SIN CLIENTE" : `CLIENTE ${customerId}`);
+
+        if (!index.has(customerId)) {
+          index.set(customerId, groups.length);
+          groups.push({
+            key: customerId,
+            customerName,
+            items: [],
+          });
+        }
+
+        groups[index.get(customerId)].items.push(detail);
+      });
+
+      groups.forEach((group) => {
+        datProdsCons.push({
+          amount: "",
+          description: `CLIENTE: ${group.customerName}`,
+          price: "",
+          total: "",
+        });
+
+        group.items.forEach((val) => {
+          totalProdSum += val.quantity * parseFloat(val.price);
+
+          datProdsCons.push({
+            amount: val.quantity,
+            description: val.product_name,
+            price: parseFloat(val.price).toFixed("2"),
+            total: (val.quantity * parseFloat(val.price)).toFixed("2"),
+          });
+        });
+      });
+    } else {
+      datProdsCons = orderDetails.map((val) => {
+        totalProdSum += val.quantity * parseFloat(val.price);
+
+        return {
+          amount: val.quantity,
+          description: val.product_name,
+          price: parseFloat(val.price).toFixed("2"),
+          total: (val.quantity * parseFloat(val.price)).toFixed("2"),
+        };
+      });
+    }
   } else {
     datProdsCons = !props.data.by_consumption
       ? dataForPrint.items.map((val) => {

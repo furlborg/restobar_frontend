@@ -216,7 +216,9 @@ export default defineComponent({
                     const business = businessStore.business;
                     const sendTicketData = () => {
 
-                        const orders = props.data.order_details.map(order => {
+                        const orderDetails = props.data.order_details || [];
+
+                        const mapOrderLine = (order) => {
                             let totalOperation = 0;
                             let totalUnitPrice = 0;
                             let totalIGV = 0;
@@ -240,15 +242,61 @@ export default defineComponent({
                                 precio: totalUnitPrice,
                                 total: totalOperation
                             };
-                        });
-                        const totalIGV = orders.reduce((acc, it) => {
+                        };
+
+                        const baseOrders = orderDetails.map(mapOrderLine);
+                        const hasCustomers = orderDetails.some((detail) => !!detail?.customer);
+                        let orders = [];
+
+                        if (hasCustomers) {
+                            const groups = [];
+                            const index = new Map();
+
+                            orderDetails.forEach((detail) => {
+                                const customerId = detail.customer?.id ?? "NO_CUSTOMER";
+                                const customerName =
+                                    detail.customer?.name ||
+                                    detail.customer?.full_name ||
+                                    (customerId === "NO_CUSTOMER" ? "SIN CLIENTE" : `CLIENTE ${customerId}`);
+
+                                if (!index.has(customerId)) {
+                                    index.set(customerId, groups.length);
+                                    groups.push({
+                                        key: customerId,
+                                        customerName,
+                                        items: []
+                                    });
+                                }
+
+                                groups[index.get(customerId)].items.push(detail);
+                            });
+
+                            groups.forEach((group) => {
+                                orders.push({
+                                    cantidad: "",
+                                    descripcion: `CLIENTE: ${group.customerName}`,
+                                    "product_name": `CLIENTE: ${group.customerName}`,
+                                    "product_description": "",
+                                    "product_category": "",
+                                    is_header: true
+                                });
+
+                                group.items.forEach((detail) => {
+                                    orders.push(mapOrderLine(detail));
+                                });
+                            });
+                        } else {
+                            orders = baseOrders;
+                        }
+
+                        const totalIGV = baseOrders.reduce((acc, it) => {
                             return it.operation === 10 ? acc + it.total : acc;
                         }, 0);
-                        const totalExo = orders.reduce((acc, it) => {
+                        const totalExo = baseOrders.reduce((acc, it) => {
                             return it.operation === 20 ? acc + it.total : acc;
                         }, 0);
 
-                        const igvTotal = orders.reduce((acc, it) => {
+                        const igvTotal = baseOrders.reduce((acc, it) => {
                             return it.operation === 10 ? acc + it.igv : acc;
                         }, 0);
                         const gravado = parseFloat((totalIGV - igvTotal).toFixed(2));
