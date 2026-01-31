@@ -34,9 +34,9 @@
       body-content-style="padding: 12px"
       closable
     >
-      <n-list v-if="orderStore.orderList.length > 0" class="m-0">
-        <template v-for="(order, index) in orderStore.orderList" :key="index">
-          <n-list-item v-if="order.quantity > 0" class="py-2">
+      <n-list v-if="displayOrders.length > 0" class="m-0">
+        <template v-for="(order, index) in displayOrders" :key="index">
+          <n-list-item v-if="order.quantity > 0" class="py-2" @click="openIndications(order, index)">
             <n-thing>
               <template #header>
                 <n-space align="center">
@@ -75,7 +75,8 @@
                     type="error"
                     size="small"
                     text
-                    @click="removeOrderItem(index)"
+                    :disabled="!!order.id"
+                    @click.stop="removeOrderItem(order)"
                   >
                     <v-icon name="md-disabledbydefault-round" />
                   </n-button>
@@ -116,7 +117,7 @@
       <template #footer>
         <n-space justify="space-between" align="center">
           <n-text class="fs-5 fw-bold">
-            Total: S/. {{ orderStore.orderTotal.toFixed(2) }}
+            Total: S/. {{ fullOrderTotal }}
           </n-text>
           <n-space>
             <n-button
@@ -161,6 +162,14 @@
       </n-space>
     </template>
   </n-modal>
+
+  <ProductIndications
+    v-model:show="showModal"
+    preset="card"
+    title="Indicaciones"
+    :product="currentOrder"
+    @success="showModal = false"
+  />
 </template>
 
 <script>
@@ -172,9 +181,11 @@ import { useTableStore } from '@/store/modules/table'
 import { useSettingsStore } from '@/store/modules/settings'
 import { useUserStore } from '@/store/modules/user'
 import { createTableOrder, updateTableOrder } from '@/api/modules/tables'
+import ProductIndications from '../views/ProductIndications'
 
 export default defineComponent({
   name: 'FloatingOrderButton',
+  components: { ProductIndications },
   setup() {
     const message = useMessage()
     const route = useRoute()
@@ -187,12 +198,45 @@ export default defineComponent({
     const loading = ref(false)
     const showAskFor = ref(false)
     const ask_for = ref('')
+    const showModal = ref(false)
+    const orderItemIndex = ref(null)
+
+    const displayOrders = computed(() =>
+      orderStore.fullOrderList.filter((order) => Number(order.quantity || 0) > 0)
+    )
     
     const totalOrderCount = computed(() => {
-      return orderStore.orderList.reduce((total, order) => total + order.quantity, 0)
+      return displayOrders.value.reduce((total, order) => total + Number(order.quantity || 0), 0)
     })
+
+    const fullOrderTotal = computed(() => {
+      const total = displayOrders.value.reduce((acc, order) => {
+        const qty = Number(order.quantity || 0)
+        const price = parseFloat(order.price || 0)
+        return acc + qty * price
+      }, 0)
+      return total.toFixed(2)
+    })
+
+    const currentOrder = computed(() =>
+      typeof orderItemIndex.value === 'number' ? displayOrders.value[orderItemIndex.value] : null
+    )
+
+    const canOpenIndications = (order) => !!order && !order.from_menu && !order.from_combo
+
+    const openIndications = (order, index) => {
+      if (!canOpenIndications(order)) return
+      orderItemIndex.value = index
+      showModal.value = true
+    }
     
-    const removeOrderItem = (index) => {
+    const removeOrderItem = (order) => {
+      if (!order || order.id) return
+      const index = orderStore.orders.findIndex((item) => item === order)
+      if (index === -1) {
+        message.warning('No se pudo eliminar el item seleccionado')
+        return
+      }
       orderStore.orders.splice(index, 1)
       message.info('Producto eliminado del pedido')
     }
@@ -307,11 +351,16 @@ export default defineComponent({
     return {
       orderStore,
       totalOrderCount,
+      displayOrders,
+      fullOrderTotal,
+      currentOrder,
       showOrderDrawer,
       loading,
       showAskFor,
       ask_for,
+      showModal,
       removeOrderItem,
+      openIndications,
       performOrder,
       executeOrder,
       goToOrderTab

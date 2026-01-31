@@ -496,8 +496,6 @@ export default defineComponent({
                 return;
             }
 
-            console.log('Intentando agregar producto: ', product)
-            console.log('A la order: ', orderStore.orders)
             orderStore.addOrder(product, selectedCustomer.value);
         };
 

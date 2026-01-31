@@ -19,7 +19,7 @@ import { round2 } from '@/utils/money';
  */
 export function buildSalePayload(orders = [], options = {}) {
   const { includeZeroQty = false } = options;
-  
+
   const sale_details = [];
   const sale_product_sets = [];
 
@@ -30,7 +30,7 @@ export function buildSalePayload(orders = [], options = {}) {
         name: order.name || (order.from_combo ? 'Combo' : 'Menu'),
         price: Number(order.price || 0),
         quantity: Number(order.quantity || 1),
-        customer: order.customer || null, // Agregar campo customer para modo por cliente
+        customer: order.customer || null,
         items: (order.items || []).map(item => ({
           product_id: item.product_id,
           product_phase_id: item.product_phase_id,
@@ -41,8 +41,7 @@ export function buildSalePayload(orders = [], options = {}) {
           kardex_map: item.kardex_map
         }))
       };
-      
-      // Add optional fields if present
+
       if (order.id) productSet.id = order.id;
       if (order.product_set_id) productSet.product_set_id = order.product_set_id;
       if (order.menu_id) productSet.menu_id = order.menu_id;
@@ -52,42 +51,33 @@ export function buildSalePayload(orders = [], options = {}) {
       if (order.fixed_price) productSet.fixed_price = order.fixed_price;
       if (order.from_combo) productSet.from_combo = true;
       if (order.from_menu) productSet.from_menu = true;
-      
+
       sale_product_sets.push(productSet);
     } else {
-      // Regular product line
       const quantity = Number(order.quantity || 0);
       if (!includeZeroQty && quantity <= 0) return;
-      
-      // Skip if no valid product ID (could be invalid menu items)
+
       if (!order.product) return;
-      
+
       const detail = {
         product: order.product,
         product_name: order.product_name,
         product_affectation: order.product_affectation,
         product_igv: order.product_igv,
         price_base: Number(order.price || 0),
-        igv_tax: 0, // Will be computed by tax engine
+        igv_tax: 0,
         discount: Number(order.discount || 0),
         price_sale: Number(order.price || 0),
         quantity: quantity,
         icbper: Number(order.icbper_amount || 0),
         customer: order.customer || null
       };
-      
-      // Add optional fields (NO incluir 'id' porque es un OrderDetail ID, no SaleDetail ID)
-      // El backend creará un nuevo SaleDetail con su propio ID
+
       if (order.indication) detail.indication = order.indication;
       if (order.quick_indications) detail.quick_indications = order.quick_indications;
-      
+
       sale_details.push(detail);
     }
-  });
-
-  console.log("buildSalePayload - final counts:", {
-    sale_details: sale_details.length,
-    sale_product_sets: sale_product_sets.length
   });
 
   return { sale_details, sale_product_sets };

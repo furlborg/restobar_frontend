@@ -79,6 +79,7 @@ export default defineComponent({
         const delivery = ref(null);
         let socket = null;
         const tableStore = useTableStore();
+        const logPrefix = "[ORDER-PRINT]";
 
         const orderDetails = computed(() =>
             Array.isArray(props.data?.order_details) ? props.data.order_details : []
@@ -114,6 +115,7 @@ export default defineComponent({
 
         const handleSocketMessage = (event) => {
             const response = JSON.parse(event.data);
+            console.info(logPrefix, "WS message:", response);
             if(response.id) {
                 if(response.success) {
                     message.success(response.success);
@@ -131,16 +133,25 @@ export default defineComponent({
                 // eslint-disable-next-line no-undef
                 const apiUrl = import.meta.env.VITE_APP_URL.replace(/^https?:\/\//, "");
                 const socketUrl = `${window.location.protocol === "https:" ? "wss" : "ws"}://${apiUrl}/ws/print/`;
+                console.info(logPrefix, "Opening WS:", socketUrl);
                 socket = new WebSocket(socketUrl);
 
                 socket.onopen = (e) => {
-                    console.log("WebSocket abierto", e);
+                    console.info(logPrefix, "WS open", e);
                     if(callback) callback();
+                };
+                socket.onerror = (e) => {
+                    console.error(logPrefix, "WS error", e);
+                };
+                socket.onclose = (e) => {
+                    console.warn(logPrefix, "WS closed", e);
                 };
 
                 socket.onmessage = handleSocketMessage;  // Manejamos el mensaje globalmente aquí
             } else if(socket.readyState === WebSocket.OPEN) {
                 if(callback) callback();
+            } else {
+                console.warn(logPrefix, "WS not open yet:", socket?.readyState);
             }
         };
 
@@ -200,7 +211,18 @@ export default defineComponent({
                     };
 
                     if (send===true) {
-                        socket.send(JSON.stringify(jsonTicket));
+                        if (!socket || socket.readyState !== WebSocket.OPEN) {
+                            console.error(logPrefix, "WS not open for delivery print", {
+                                readyState: socket?.readyState,
+                                send
+                            });
+                        } else {
+                            console.info(logPrefix, "Sending DELIVERY ticket", {
+                                printer: jsonTicket.printer_name,
+                                contentCount: jsonTicket.ticket_content?.length
+                            });
+                            socket.send(JSON.stringify(jsonTicket));
+                        }
                     }
 
                     // socket.send(JSON.stringify(jsonTicket));
@@ -340,6 +362,13 @@ export default defineComponent({
                             return content;
                         })()
                     };
+                    console.info(logPrefix, "Prepared ORDER ticket", {
+                        orderId: props.data?.id,
+                        place: place?.description,
+                        printer: printerNameToPrint,
+                        contentCount: jsonTicket.ticket_content?.length,
+                        send
+                    });
                     // --- Ajustes especiales para el título ---
                     if (props.data.table !== null) {
                         // Caso mesa normal
@@ -360,7 +389,18 @@ export default defineComponent({
                     }
 
                     if (send===true) {
-                        socket?.send(JSON.stringify(jsonTicket));
+                        if (!socket || socket.readyState !== WebSocket.OPEN) {
+                            console.error(logPrefix, "WS not open for ORDER print", {
+                                readyState: socket?.readyState,
+                                send
+                            });
+                        } else {
+                            console.info(logPrefix, "Sending ORDER ticket", {
+                                printer: jsonTicket.printer_name,
+                                contentCount: jsonTicket.ticket_content?.length
+                            });
+                            socket.send(JSON.stringify(jsonTicket));
+                        }
                     }
 
                     // socket.send(JSON.stringify(jsonTicket));
@@ -372,6 +412,7 @@ export default defineComponent({
                                     socket.close();
                                 }
                             } else {
+                                console.error(logPrefix, "WS response without id/success", event.data);
                                 message.error("No se pudo establecer conexión con el servidor de impresiones");
                                 message.error("Iniciando impresión manual");
 
@@ -437,14 +478,27 @@ export default defineComponent({
         }
 
         const printTicketsForAllPlaces = async(send = false) => {
+            if (!places.value.length) {
+                console.warn(logPrefix, "No places available for printing", {
+                    orderId: props.data?.id,
+                    orderDetailsCount: orderDetails.value?.length
+                });
+            }
             for(const [i, place] of places.value.entries()) {
-                console.log(place);
+                console.info(logPrefix, "Queue place for printing", place);
                 await printTicket(i, place, send);
             }
         };
 
         const generate = async() => {
-            console.log(props);
+            console.info(logPrefix, "Generate print", {
+                orderId: props.data?.id,
+                orderType: props.data?.order_type,
+                details: orderDetails.value?.length,
+                places: places.value?.length,
+                printHtml: settingsStore.business_settings?.printer?.print_html,
+                nativePrinting: settingsStore.business_settings?.printer?.native_printing
+            });
             if(props.data.order_type === "D" && settingsStore.business_settings.printer.print_html) {
                 await printDelivery(true);
             }
