@@ -436,21 +436,19 @@ export default defineComponent({
             }
         }
 
-        const printTicketsForAllPlaces = async() => {
+        const printTicketsForAllPlaces = async(send = false) => {
             for(const [i, place] of places.value.entries()) {
                 console.log(place);
-                await printTicket(i, place);
+                await printTicket(i, place, send);
             }
         };
 
         const generate = async() => {
             console.log(props);
             if(props.data.order_type === "D" && settingsStore.business_settings.printer.print_html) {
-                await printDelivery();
+                await printDelivery(true);
             }
-            places.value.forEach((place, i) => {
-                printTicketsForAllPlaces(i, place);
-            });
+            await printTicketsForAllPlaces(true);
             emit("printed");
             emit("update:show", false);
         };
