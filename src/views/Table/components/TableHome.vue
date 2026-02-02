@@ -145,7 +145,6 @@
                                         width="128"
                                         height="128"
                                 />
-                                <!-- </router-link> -->
                             </n-space>
 
                             <n-drawer
@@ -318,7 +317,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, onMounted } from "vue";
+import { defineComponent, ref, onMounted, computed, watch } from "vue";
 import { useMessage } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useGenericsStore } from "@/store/modules/generics";
@@ -360,16 +359,75 @@ export default defineComponent({
         const userStore = useUserStore();
         const businessStore = useBusinessStore();
 
-        // Composable de table lock
+        // Composable de table lock (para enviar mensajes WS)
         const {
-            isTableLockedByOther,
-            getLockInfo
+            wsLockTable,
+            wsUnlockTable,
+            connectLockWebSocket
         } = useTableLock();
 
         // Estado del modal de mesa bloqueada
         const showLockedModal = ref(false);
         const lockedTableData = ref(null);
         const lockedTableDescription = ref('');
+
+        /**
+         * Verifica si una mesa está bloqueada usando el store (fuente de verdad global)
+         */
+        const isTableBlocked = (table) => {
+            // Primero verificar el estado del store (WebSocket global)
+            const wsLockInfo = tableStore.lockedTables[table.id];
+
+            if (wsLockInfo && wsLockInfo.user_id !== userStore.user.id) {
+                return {
+                    blocked: true,
+                    username: wsLockInfo.username,
+                    remaining: null
+                };
+            }
+
+            // Luego verificar lock_info de la API
+            if (table.lock_info && table.lock_info.is_locked && !table.lock_info.locked_by_me) {
+                return {
+                    blocked: true,
+                    username: table.lock_info.locked_by_username,
+                    remaining: table.lock_info.remaining_minutes
+                };
+            }
+
+            return { blocked: false };
+        };
+
+        /**
+         * Obtiene el color de la mesa según su estado
+         */
+        const getTableColor = (table) => {
+            const blockStatus = isTableBlocked(table);
+            if (blockStatus.blocked) {
+                return '#ffc107'; // Amarillo - Bloqueada
+            }
+            if (table.status === '3') {
+                return '#f44336'; // Rojo - Ocupada
+            }
+            return '#4caf50'; // Verde - Libre
+        };
+
+        /**
+         * Obtiene la clase de fondo de la mesa
+         */
+        const getTableBackgroundClass = (table) => {
+            const blockStatus = isTableBlocked(table);
+            if (blockStatus.blocked) {
+                return 'bg-locked';
+            }
+            if (table.status === '3') {
+                return 'bg-occuped';
+            }
+            return 'bg-free';
+        };
+
+        // Computed para forzar reactividad cuando cambian los locks
+        const lockedTablesState = computed(() => tableStore.lockedTables);
 
         /**
          * Maneja el click en una mesa
@@ -382,35 +440,32 @@ export default defineComponent({
                     tableGroups.value.some((g) => g.some((t) => t.id === table.id))) {
                     return;
                 }
-                
+
                 if (!currentGroup.value.some((t) => t.id === table.id)) {
                     addToGroup(table);
                 } else {
                     removeFromGroup(table);
                 }
             } else {
-                // Debug: verificar lock_info
-                console.log('🔍 handleTableClick - Mesa:', table.description);
-                console.log('   lock_info:', table.lock_info);
-                
-                // Validar si la mesa está bloqueada por otro usuario
-                if (table.lock_info && table.lock_info.is_locked && !table.lock_info.locked_by_me) {
-                    const remainingMinutes = table.lock_info.remaining_minutes;
-                    const lockedBy = table.lock_info.locked_by_username;
-                    
-                    console.log('❌ Mesa bloqueada por otro usuario:', lockedBy);
-                    
+                const blockStatus = isTableBlocked(table);
+
+                console.log('🔍 handleTableClick - Mesa:', table.description, 'Bloqueada:', blockStatus.blocked);
+
+                if (blockStatus.blocked) {
+                    console.log('❌ Mesa bloqueada por:', blockStatus.username);
+
+                    const remainingMsg = blockStatus.remaining 
+                        ? `Disponible en ${blockStatus.remaining} minutos.`
+                        : '';
+
                     message.warning(
-                        `Mesa bloqueada por ${lockedBy}. Disponible en ${remainingMinutes} minutos.`,
+                        `Mesa bloqueada por ${blockStatus.username}. ${remainingMsg}`,
                         { duration: 4000 }
                     );
                     return;
                 }
-                
+
                 console.log('✅ Permitiendo navegación a la mesa');
-                
-                // Modo normal - navegar directamente
-                // El backend validará el lock en el endpoint /tables/{id}/order/
                 router.push({
                     name: 'TableOrder',
                     params: { table: table.id }
@@ -426,6 +481,11 @@ export default defineComponent({
                 isLoading.value = false;
             });
         };
+
+        // Watch para forzar re-render cuando cambian los locks
+        watch(() => tableStore.lockedTables, () => {
+            console.log('[TableHome] 🔄 lockedTables cambió:', tableStore.lockedTables);
+        }, { deep: true });
 
         const performRetrieveTableOrder = async(table) => {
             await retrieveTableOrder(table).then((response) => {
@@ -522,8 +582,11 @@ export default defineComponent({
 
             dateNow.value = `${dd}/${mm + 1}/${yy} ${hh}:${msms}`;
 
-            // Conectar WebSocket único desde el store
+            // Conectar WebSocket de mesas (table store)
             tableStore.connectWebSocket();
+            
+            // Conectar WebSocket de locks (composable global)
+            connectLockWebSocket();
         });
 
         const changeTable = ref(false);
@@ -607,69 +670,27 @@ export default defineComponent({
             previewDrawer,
             showPreview,
             previewData,
-            // Table lock
-            isTableLockedByOther,
-            getLockInfo,
-            handleTableClick
+            // Table lock - computed para reactividad
+            handleTableClick,
+            isTableBlocked,
+            getTableColor,
+            getTableBackgroundClass
         };
-    },
-    methods: {
-        /**
-         * Obtener color de la mesa según su estado
-         * Verde: Libre
-         * Rojo: Con orden activa
-         * Amarillo: Bloqueada por otro usuario
-         */
-        getTableColor(table) {
-            // Mesa bloqueada por otro usuario -> Amarillo
-            if (table.lock_info && table.lock_info.is_locked && !table.lock_info.locked_by_me) {
-                return '#ffc107'; // Amarillo
-            }
-            
-            // Mesa con orden -> Rojo
-            if (table.status === '3') {
-                return '#f44336'; // Rojo
-            }
-            
-            // Mesa libre -> Verde
-            return '#4caf50'; // Verde
-        },
-
-        /**
-         * Obtener clase de fondo según el estado de la mesa
-         * bg-locked: Bloqueada por otro usuario (amarillo claro)
-         * bg-occuped: Con orden activa (rojo claro)
-         * bg-free: Libre (sin color especial)
-         */
-        getTableBackgroundClass(table) {
-            // Mesa bloqueada por otro usuario -> Fondo amarillo
-            if (table.lock_info && table.lock_info.is_locked && !table.lock_info.locked_by_me) {
-                return 'bg-locked';
-            }
-            
-            // Mesa con orden -> Fondo rojo
-            if (table.status === '3') {
-                return 'bg-occuped';
-            }
-            
-            // Mesa libre -> Fondo verde
-            return 'bg-free';
-        }
     }
 });
 </script>
 
 <style lang="scss" scoped>
 .bg-free {
-  background-color: rgba(76, 175, 80, 0.1); // Verde claro
+    background-color: rgba(76, 175, 80, 0.1);
 }
 
 .bg-locked {
-  background-color: rgba(255, 193, 7, 0.15); // Amarillo claro
+    background-color: rgba(255, 193, 7, 0.15);
 }
 
 .bg-occuped {
-  background-color: rgb(255, 162, 162); // Rojo claro
+    background-color: rgb(255, 162, 162);
 }
 
 .fs-alt {

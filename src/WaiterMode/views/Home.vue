@@ -161,12 +161,13 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed, onMounted } from "vue";
+import { defineComponent, ref, computed, onMounted, watch } from "vue";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useTableStore } from "@/store/modules/table";
 import { useWaiterStore } from "@/store/modules/waiter";
 import { useTillStore } from "@/store/modules/till";
 import { usePrinterStore } from "@/store/modules/printer";
+import { useUserStore } from "@/store/modules/user";
 import { changeOrderTable } from "@/api/modules/tables";
 import { useMessage } from "naive-ui";
 import { cloneDeep } from "@/utils";
@@ -188,9 +189,37 @@ export default defineComponent({
     const currentTableGrouping = ref(null);
     const currentGroup = ref([]);
     const tableGroups = ref([]);
+    const userStore = useUserStore();
     
-    // Composable de table lock
-    const { isTableLockedByOther, getLockInfo } = useTableLock();
+    // Composable de table lock (para enviar lock/unlock)
+    const { wsLockTable, wsUnlockTable, connectLockWebSocket } = useTableLock();
+
+    /**
+     * Verifica si una mesa está bloqueada usando el store (fuente de verdad global)
+     */
+    const isTableBlocked = (table) => {
+      // Verificar el estado del store (WebSocket global)
+      const wsLockInfo = tableStore.lockedTables[table.id];
+      
+      if (wsLockInfo && wsLockInfo.user_id !== userStore.user.id) {
+        return {
+          blocked: true,
+          username: wsLockInfo.username,
+          remaining: null
+        };
+      }
+      
+      // Luego verificar lock_info de la API
+      if (table.lock_info && table.lock_info.is_locked && !table.lock_info.locked_by_me) {
+        return {
+          blocked: true,
+          username: table.lock_info.locked_by_username,
+          remaining: table.lock_info.remaining_minutes
+        };
+      }
+      
+      return { blocked: false };
+    };
 
     /**
      * Maneja el click en una mesa
@@ -211,9 +240,10 @@ export default defineComponent({
         }
       } else {
         // Validar si la mesa está bloqueada por otro usuario
-        if (table.lock_info && table.lock_info.is_locked && !table.lock_info.locked_by_me) {
-          const remainingMinutes = table.lock_info.remaining_minutes;
-          const lockedBy = table.lock_info.locked_by_username;
+        const blockStatus = isTableBlocked(table);
+        if (blockStatus.blocked) {
+          const remainingMinutes = blockStatus.remaining || '?';
+          const lockedBy = blockStatus.username;
           
           message.warning(
             `Mesa bloqueada por ${lockedBy}. Disponible en ${remainingMinutes} minutos.`,
@@ -269,9 +299,17 @@ export default defineComponent({
         area.value = tableStore.getAreasOptions[0].id;
       }
       
-      // Conectar WebSocket único desde el store
+      // Conectar WebSocket de mesas (table store)
       tableStore.connectWebSocket();
+      
+      // Conectar WebSocket de locks (composable global)
+      connectLockWebSocket();
     });
+
+    // Watch para forzar re-render cuando cambian los locks
+    watch(() => tableStore.lockedTables, () => {
+      console.log('[WaiterHome] 🔄 lockedTables cambió:', tableStore.lockedTables);
+    }, { deep: true });
 
     const fromTable = ref(null);
 
@@ -324,8 +362,9 @@ export default defineComponent({
      * Amarillo: Bloqueada por otro usuario
      */
     const getTableColor = (table) => {
-      // Mesa bloqueada por otro usuario -> Amarillo
-      if (table.lock_info && table.lock_info.is_locked && !table.lock_info.locked_by_me) {
+      // Verificar bloqueo usando la función combinada
+      const blockStatus = isTableBlocked(table);
+      if (blockStatus.blocked) {
         return '#ffc107'; // Amarillo
       }
       
@@ -342,8 +381,9 @@ export default defineComponent({
      * Obtener clase de fondo de la mesa según su estado
      */
     const getTableBackgroundClass = (table) => {
-      // Mesa bloqueada por otro usuario -> Fondo amarillo
-      if (table.lock_info && table.lock_info.is_locked && !table.lock_info.locked_by_me) {
+      // Verificar bloqueo usando la función combinada
+      const blockStatus = isTableBlocked(table);
+      if (blockStatus.blocked) {
         return 'bg-locked';
       }
       

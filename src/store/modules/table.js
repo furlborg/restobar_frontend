@@ -13,7 +13,8 @@ export const useTableStore = defineStore("table", {
     areas: [],
     socket: null,
     wsConnected: false,
-    processedMessages: new Set(), // IDs de mensajes ya procesados
+    processedMessages: new Set(),
+    lockedTables: {},
   }),
   getters: {
     getAreasOptions() {
@@ -37,25 +38,20 @@ export const useTableStore = defineStore("table", {
     getAreasTablesOptions() {
       let areas = this.areas;
 
-      // Determinar branch del usuario
       const branchToFilter = !userStore.user.branchoffice
         ? businessStore.currentBranch
         : userStore.user.branchoffice;
 
-      // 1. Filtrar por branch (siempre)
       areas = areas.filter(area => area.branch === branchToFilter);
 
-      // 2. Verificar si al menos una tiene el campo has_tables
       const hasHasTablesField = areas.some(area =>
         Object.prototype.hasOwnProperty.call(area, "has_tables")
       );
 
-      // 3. Si existe has_tables en alguna → aplicar filtro
       if (hasHasTablesField) {
         areas = areas.filter(area => area.has_tables === true);
       }
 
-      // 4. Formateo final
       return areas.map(area => ({
         label: area.description,
         value: area.id,
@@ -79,17 +75,14 @@ export const useTableStore = defineStore("table", {
         ? businessStore.currentBranch
         : userStore.user.branchoffice;
 
-      // Primero filtrar por branch
       let filteredAreas = this.areas.filter(
         area => area.branch === branchToFilter
       );
 
-      // Detectar si existe el campo has_tables en al menos un área
       const hasHasTablesField = filteredAreas.some(area =>
         Object.prototype.hasOwnProperty.call(area, "has_tables")
       );
 
-      // Si existe el campo → filtrar SOLO las que tienen true
       if (hasHasTablesField) {
         filteredAreas = filteredAreas.filter(area => area.has_tables === true);
       }
@@ -114,18 +107,14 @@ export const useTableStore = defineStore("table", {
           this.areas = this.sanitizeAreas(response.data);
           return this.areas;
         })
-        .catch((error) => {
-          console.error(error);
-        });
+        .catch(() => {});
     },
     async refreshData() {
       return await getAreasTables()
         .then((response) => {
           this.areas = this.sanitizeAreas(response.data);
         })
-        .catch((error) => {
-          console.error(error);
-        });
+        .catch(() => {});
     },
     getAreaByID(id) {
       let area = this.areas.find((area) => area.id === id);
@@ -154,7 +143,6 @@ export const useTableStore = defineStore("table", {
       return table;
     },
     connectWebSocket() {
-      // Solo crear una conexión si no existe
       if (this.socket && this.socket.readyState !== WebSocket.CLOSED) {
         return;
       }
@@ -162,74 +150,85 @@ export const useTableStore = defineStore("table", {
       try {
         const apiUrl = import.meta.env.VITE_APP_URL.replace(/^https?:\/\//, '');
         const socketUrl = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${apiUrl}/ws/print/`;
-        
+
         this.socket = new WebSocket(socketUrl);
-        
+
         this.socket.onopen = () => {
           this.wsConnected = true;
         };
-        
+
         this.socket.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
-            
+
             if (data.type === 'table_status_changed') {
-              
-              // Filtrar duplicados por ID
+
               if (data.id && this.processedMessages.has(data.id)) {
                 return;
               }
-              
-              // Marcar como procesado
+
               if (data.id) {
                 this.processedMessages.add(data.id);
                 setTimeout(() => {
                   this.processedMessages.delete(data.id);
                 }, 10000);
               }
-              
-              // Actualizar datos
+
               this.refreshData().then(() => {
                 message.info(`Mesa ${data.table_id}: ${data.status_text}`);
               });
             }
-            
-            // Manejar actualización de orden
+
             if (data.type === 'order_updated') {
-              
-              // Filtrar duplicados por ID
+
               if (data.id && this.processedMessages.has(data.id)) {
                 return;
               }
-              
-              // Marcar como procesado
+
               if (data.id) {
                 this.processedMessages.add(data.id);
                 setTimeout(() => {
                   this.processedMessages.delete(data.id);
                 }, 10000);
               }
-              
-              // Si tiene mesa asociada, actualizar datos
+
               if (data.table_id) {
                 this.refreshData();
               }
             }
-          } catch (error) {
-            console.error('Error al procesar mensaje WebSocket:', error);
-          }
+
+            if (data.type === 'table_locked') {
+              this.lockedTables = {
+                ...this.lockedTables,
+                [data.table_id]: {
+                  table_id: data.table_id,
+                  user_id: data.user_id,
+                  username: data.username,
+                  locked_at: data.locked_at,
+                  expires_at: data.expires_at
+                }
+              };
+            }
+
+            if (data.type === 'table_unlocked') {
+              const { [data.table_id]: removed, ...rest } = this.lockedTables;
+              this.lockedTables = rest;
+            }
+
+          } catch (error) {}
         };
-        
-        this.socket.onerror = (error) => {
-          console.error('❌ Error WebSocket:', error);
+
+        this.socket.onerror = () => {
           this.wsConnected = false;
         };
-        
+
         this.socket.onclose = () => {
           this.wsConnected = false;
+          setTimeout(() => {
+            this.connectWebSocket();
+          }, 3000);
         };
       } catch (error) {
-        console.error('Error al conectar WebSocket:', error);
         this.wsConnected = false;
       }
     },

@@ -1,36 +1,26 @@
-/**
- * useTableLock - Composable para gestión de bloqueos de mesa
- * 
- * Funcionalidades:
- * - Polling cada 30 segundos para actualizar estado de locks
- * - Validación antes de navegar a una mesa
- * - Lock/unlock de mesas
- * - Información de locks activos
- */
-
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_APP_URL;
 
-// WebSocket para bloqueos de mesas
 let lockSocket = null;
 let lockSocketConnected = ref(false);
 let reconnectTimeout = null;
+let pendingMessages = [];
 
-// Para obtener branch y usuario
 import { useBusinessStore } from '@/store/modules/business';
 import { useUserStore } from '@/store/modules/user';
+import { useTableStore } from '@/store/modules/table';
 const businessStore = useBusinessStore();
 const userStore = useUserStore();
-  /**
-   * Conecta el WebSocket de bloqueos de mesas
-   */
-  const connectLockWebSocket = () => {
-    const branchId = userStore.user.branchoffice || businessStore.currentBranch || 1;
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    const wsUrl = `${wsProtocol}://${window.location.host}/ws/table-locks/${branchId}/`;
+const tableStore = useTableStore();
+
+const connectLockWebSocket = () => {
+  const branchId = userStore.user.branchoffice || businessStore.currentBranch || 1;
+  const apiUrl = import.meta.env.VITE_APP_URL.replace(/^https?:\/\//, '');
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+  const wsUrl = `${wsProtocol}://${apiUrl}/ws/tables/${branchId}/`;
 
     if (lockSocket && lockSocket.readyState !== WebSocket.CLOSED) {
       return;
@@ -38,55 +28,79 @@ const userStore = useUserStore();
 
     lockSocket = new WebSocket(wsUrl);
 
-    lockSocket.onopen = () => {
-      lockSocketConnected.value = true;
-      //console.log('[TableLockWS] Conectado');
-    };
-
-    lockSocket.onclose = () => {
-      lockSocketConnected.value = false;
-      //console.warn('[TableLockWS] Desconectado');
-      // Intentar reconectar tras 2s
-      reconnectTimeout = setTimeout(connectLockWebSocket, 2000);
-    };
-
-    lockSocket.onerror = (e) => {
-      //console.error('[TableLockWS] Error', e);
-      lockSocket.close();
-    };
-
-    lockSocket.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        switch (data.type) {
-          case 'table_locked': {
-            const lock = data.lock_data;
-            if (lock && lock.table_id) {
-              lockedTables.value.set(lock.table_id, lock);
-            }
-            break;
-          }
-          case 'table_unlocked': {
-            const unlock = data.unlock_data;
-            if (unlock && unlock.table_id) {
-              lockedTables.value.delete(unlock.table_id);
-            }
-            break;
-          }
-          case 'lock_error': {
-            // Opcional: mostrar error
-            break;
-          }
-        }
-      } catch (err) {
-        //console.error('[TableLockWS] Error procesando mensaje', err);
-      }
-    };
+  lockSocket.onopen = () => {
+    lockSocketConnected.value = true;
+    if (pendingMessages.length > 0) {
+      pendingMessages.forEach(msg => {
+        lockSocket.send(JSON.stringify(msg));
+      });
+      pendingMessages = [];
+    }
   };
 
-  /**
-   * Desconecta el WebSocket de bloqueos
-   */
+  lockSocket.onclose = (event) => {
+    lockSocketConnected.value = false;
+    reconnectTimeout = setTimeout(connectLockWebSocket, 3000);
+  };
+
+  lockSocket.onerror = (e) => {
+    lockSocket.close();
+  };
+
+  lockSocket.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+
+      switch (data.type) {
+        case 'table_locked': {
+          const lock = data.lock_data || data;
+          if (lock && lock.table_id) {
+            const newMap = new Map(lockedTables.value);
+            newMap.set(lock.table_id, {
+              table_id: lock.table_id,
+              user_id: lock.user_id,
+              username: lock.username,
+              locked_at: lock.locked_at,
+              expires_at: lock.expires_at,
+              remaining_seconds: lock.remaining_seconds
+            });
+            lockedTables.value = newMap;
+          }
+          break;
+        }
+        case 'table_unlocked': {
+          const unlock = data.unlock_data || data;
+          if (unlock && unlock.table_id) {
+            const newMap = new Map(lockedTables.value);
+            newMap.delete(unlock.table_id);
+            lockedTables.value = newMap;
+          }
+          break;
+        }
+        case 'lock_renewed': {
+          const renewData = data.lock_data || data;
+          if (renewData && renewData.table_id) {
+            const newMap = new Map(lockedTables.value);
+            newMap.set(renewData.table_id, renewData);
+            lockedTables.value = newMap;
+          }
+          break;
+        }
+        case 'lock_error': {
+          break;
+        }
+        case 'unlock_error': {
+          break;
+        }
+        case 'heartbeat_ack': {
+          break;
+        }
+      }
+    } catch (err) {
+    }
+  };
+};
+
   const disconnectLockWebSocket = () => {
     if (lockSocket) {
       lockSocket.close();
@@ -96,36 +110,116 @@ const userStore = useUserStore();
     }
   };
 
-  /**
-   * Envía lock_table por WebSocket
-   */
-  const wsLockTable = (tableId) => {
-    if (lockSocket && lockSocket.readyState === WebSocket.OPEN) {
-      lockSocket.send(JSON.stringify({ type: 'lock_table', table_id: tableId }));
+const wsLockTable = (tableId, durationMinutes = 15) => {
+  const message = {
+    type: 'lock_table',
+    table_id: tableId,
+    duration_minutes: durationMinutes
+  };
+  if (lockSocket && lockSocket.readyState === WebSocket.OPEN) {
+    lockSocket.send(JSON.stringify(message));
+  } else if (lockSocket && lockSocket.readyState === WebSocket.CONNECTING) {
+    pendingMessages.push(message);
+  } else {
+    pendingMessages.push(message);
+    if (!lockSocket || lockSocket.readyState === WebSocket.CLOSED) {
+      connectLockWebSocket();
     }
+  }
+};
+
+const wsUnlockTable = (tableId) => {
+  const message = {
+    type: 'unlock_table',
+    table_id: tableId
+  };
+  if (lockSocket && lockSocket.readyState === WebSocket.OPEN) {
+    lockSocket.send(JSON.stringify(message));
+  } else if (lockSocket && lockSocket.readyState === WebSocket.CONNECTING) {
+    pendingMessages.push(message);
+  } else {
+    pendingMessages.push(message);
+    if (!lockSocket || lockSocket.readyState === WebSocket.CLOSED) {
+      connectLockWebSocket();
+    }
+  }
+};
+
+const wsRenewLock = (tableId, durationMinutes = 15) => {
+  const message = {
+    type: 'renew_lock',
+    table_id: tableId,
+    duration_minutes: durationMinutes
   };
 
-  /**
-   * Envía unlock_table por WebSocket
-   */
-  const wsUnlockTable = (tableId) => {
-    if (lockSocket && lockSocket.readyState === WebSocket.OPEN) {
-      lockSocket.send(JSON.stringify({ type: 'unlock_table', table_id: tableId }));
+  if (lockSocket && lockSocket.readyState === WebSocket.OPEN) {
+    lockSocket.send(JSON.stringify(message));
+  } else {
+    pendingMessages.push(message);
+    if (!lockSocket || lockSocket.readyState === WebSocket.CLOSED) {
+      connectLockWebSocket();
     }
+  }
+};
+
+const wsCheckLock = (tableId) => {
+  const message = {
+    type: 'check_lock',
+    table_id: tableId
   };
 
-// Estado global compartido entre todas las instancias
-const lockedTables = ref(new Map()); // Map<tableId, lockData>
+  if (lockSocket && lockSocket.readyState === WebSocket.OPEN) {
+    lockSocket.send(JSON.stringify(message));
+  } else {
+    pendingMessages.push(message);
+    if (!lockSocket || lockSocket.readyState === WebSocket.CLOSED) {
+      connectLockWebSocket();
+    }
+  }
+};
+
+const wsHeartbeat = (tableId = null) => {
+  const message = { type: 'heartbeat' };
+  if (tableId) message.table_id = tableId;
+
+  if (lockSocket && lockSocket.readyState === WebSocket.OPEN) {
+    lockSocket.send(JSON.stringify(message));
+  } else {
+    pendingMessages.push(message);
+    if (!lockSocket || lockSocket.readyState === WebSocket.CLOSED) {
+      connectLockWebSocket();
+    }
+  }
+};
+
+const lockedTables = ref(new Map());
 const myLocks = ref([]);
 const pollingInterval = ref(null);
+
+const unlockTableHTTP = async (tableId) => {
+  try {
+    await axios.post(
+      `${API_BASE}/api/v1/table-locks/unlock/`,
+      { table_id: tableId },
+      { withCredentials: true }
+    );
+
+    const { [tableId]: removed, ...rest } = tableStore.lockedTables;
+    tableStore.lockedTables = rest;
+
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      message: error.response?.data?.error || 'Error al liberar mesa'
+    };
+  }
+};
 
 export function useTableLock() {
   const router = useRouter();
   const isRefreshing = ref(false);
 
-  /**
-   * Obtiene el estado de bloqueo de una mesa específica
-   */
   const checkLock = async (tableId) => {
     try {
       const response = await axios.get(
@@ -134,37 +228,30 @@ export function useTableLock() {
       );
       return response.data;
     } catch (error) {
-      console.error('[useTableLock] Error checking lock:', error);
       return { is_locked: false, lock: null };
     }
   };
 
-  /**
-   * Bloquea una mesa por X minutos
-   */
   const lockTable = async (tableId, durationMinutes = 15) => {
     try {
       const response = await axios.post(
         `${API_BASE}/api/v1/table-locks/lock/`,
-        { 
+        {
           table_id: tableId,
-          duration_minutes: durationMinutes 
+          duration_minutes: durationMinutes
         },
         { withCredentials: true }
       );
-      
-      // Actualizar cache local
+
       if (response.data.lock) {
         lockedTables.value.set(tableId, response.data.lock);
       }
-      
+
       return { success: true, data: response.data };
     } catch (error) {
       if (error.response?.status === 400 && error.response?.data?.error) {
-        // Mesa bloqueada por otro usuario
         const errorData = error.response.data;
-        
-        // El error contiene información del lock existente
+
         if (errorData.error.includes('bloqueada')) {
           return {
             success: false,
@@ -174,8 +261,7 @@ export function useTableLock() {
           };
         }
       }
-      
-      console.error('[useTableLock] Error locking table:', error);
+
       return {
         success: false,
         locked: false,
@@ -184,173 +270,105 @@ export function useTableLock() {
     }
   };
 
-  /**
-   * Libera el bloqueo de una mesa
-   */
   const unlockTable = async (tableId) => {
-    try {
-      await axios.post(
-        `${API_BASE}/api/v1/table-locks/unlock/`,
-        { table_id: tableId },
-        { withCredentials: true }
-      );
-      
-      // Remover del cache local
-      lockedTables.value.delete(tableId);
-      
-      return { success: true };
-    } catch (error) {
-      console.error('[useTableLock] Error unlocking table:', error);
-      return {
-        success: false,
-        message: error.response?.data?.error || 'Error al liberar mesa'
-      };
-    }
+    return await unlockTableHTTP(tableId);
   };
 
-  /**
-   * Obtiene todos los locks del usuario actual
-   */
   const getMyLocks = async () => {
     try {
       const response = await axios.get(
         `${API_BASE}/api/v1/table-locks/my_locks/`,
         { withCredentials: true }
       );
-      
-      // La respuesta tiene formato { count, locks }
+
       const locks = response.data.locks || [];
       myLocks.value = locks;
-      
-      // Actualizar cache de locked tables
+
       locks.forEach(lock => {
         if (lock.table) {
           lockedTables.value.set(lock.table.id, lock);
         }
       });
-      
+
       return locks;
     } catch (error) {
-      console.error('[useTableLock] Error getting my locks:', error);
       return [];
     }
   };
 
-  /**
-   * Refresca el estado de todas las mesas bloqueadas
-   */
   const refreshLocks = async () => {
     if (isRefreshing.value) return;
-    
+
     isRefreshing.value = true;
-    
+
     try {
-      // Obtener mis locks activos
       await getMyLocks();
-      
-      // Aquí podríamos obtener también todos los locks si necesitamos
-      // mostrar todas las mesas bloqueadas en el listado
     } catch (error) {
-      console.error('[useTableLock] Error refreshing locks:', error);
     } finally {
       isRefreshing.value = false;
     }
   };
 
-  /**
-   * Verifica si una mesa está bloqueada
-   */
   const isTableLocked = (tableId) => {
     return lockedTables.value.has(tableId);
   };
 
-  /**
-   * Verifica si una mesa está bloqueada por el usuario actual
-   */
   const isTableLockedByMe = (tableId) => {
     const lock = lockedTables.value.get(tableId);
     if (!lock) return false;
-    
-    // Aquí asumimos que el lock tiene info del usuario
+
     return myLocks.value.some(myLock => myLock.table.id === tableId);
   };
 
-  /**
-   * Verifica si una mesa está bloqueada por otro usuario
-   */
   const isTableLockedByOther = (tableId) => {
     return isTableLocked(tableId) && !isTableLockedByMe(tableId);
   };
 
-  /**
-   * Obtiene la información del lock de una mesa
-   */
   const getLockInfo = (tableId) => {
-    return lockedTables.value.get(tableId) || null;
+    const info = lockedTables.value.get(tableId) || null;
+    return info;
   };
 
-  /**
-   * Inicia el polling automático
-   */
   const startPolling = (intervalSeconds = 30) => {
-    if (pollingInterval.value) return; // Ya está corriendo
-    
-    // Primera carga inmediata
+    if (pollingInterval.value) return;
+
     refreshLocks();
-    
-    // Configurar polling
+
     pollingInterval.value = setInterval(() => {
       refreshLocks();
     }, intervalSeconds * 1000);
-    
-    console.log(`[useTableLock] Polling iniciado (cada ${intervalSeconds}s)`);
   };
 
-  /**
-   * Detiene el polling automático
-   */
   const stopPolling = () => {
     if (pollingInterval.value) {
       clearInterval(pollingInterval.value);
       pollingInterval.value = null;
-      console.log('[useTableLock] Polling detenido');
     }
   };
 
-  /**
-   * Valida si se puede navegar a una mesa
-   * Retorna { canNavigate: boolean, reason: string, lockData: object }
-   */
   const validateNavigation = async (tableId) => {
-    // Primero verificar estado actual en servidor
     const lockStatus = await checkLock(tableId);
-    
+
     if (!lockStatus.is_locked) {
-      // Mesa libre, se puede navegar
       return {
         canNavigate: true,
         reason: 'Mesa disponible'
       };
     }
-    
-    // Mesa bloqueada, verificar si es por el usuario actual
+
     const lockData = lockStatus.lock_data;
-    
-    // Aquí necesitamos comparar con el usuario actual
-    // Asumiendo que lockData tiene user_id o username
+
     const isMyLock = myLocks.value.some(
       lock => lock.table.id === tableId
     );
-    
+
     if (isMyLock) {
-      // Es mi propio lock, puedo navegar
       return {
         canNavigate: true,
         reason: 'Mesa bloqueada por ti'
       };
     }
-    
-    // Bloqueada por otro usuario
+
     return {
       canNavigate: false,
       reason: 'Mesa bloqueada por otro usuario',
@@ -358,27 +376,20 @@ export function useTableLock() {
     };
   };
 
-  /**
-   * Intenta bloquear y navegar a una mesa
-   */
   const lockAndNavigate = async (tableId, routeName, routeParams = {}) => {
-    // 1. Validar si se puede navegar
     const validation = await validateNavigation(tableId);
-    
+
     if (!validation.canNavigate) {
-      // Retornar info del lock para que el componente muestre modal
       return {
         success: false,
         blocked: true,
         lockData: validation.lockData
       };
     }
-    
-    // 2. Si no está bloqueada, intentar bloquear
+
     const lockResult = await lockTable(tableId);
-    
+
     if (!lockResult.success) {
-      // Falló al bloquear (probablemente otro usuario la bloqueó justo ahora)
       return {
         success: false,
         blocked: lockResult.locked,
@@ -386,22 +397,20 @@ export function useTableLock() {
         lockData: lockResult.lockData
       };
     }
-    
-    // 3. Navegar a la ruta
+
     try {
       await router.push({
         name: routeName,
         params: { ...routeParams, id: tableId }
       });
-      
+
       return {
         success: true,
         message: 'Mesa bloqueada y navegación exitosa'
       };
     } catch (error) {
-      // Si falla la navegación, liberar el lock
       await unlockTable(tableId);
-      
+
       return {
         success: false,
         message: 'Error al navegar a la mesa'
@@ -409,24 +418,10 @@ export function useTableLock() {
     }
   };
 
-  // Lifecycle hooks
-
-  onMounted(() => {
-    connectLockWebSocket();
-    //startPolling();
-  });
-
-  onUnmounted(() => {
-    disconnectLockWebSocket();
-    //stopPolling();
-  });
-
-  // Computeds
   const myActiveLocksCount = computed(() => myLocks.value.length);
   const hasActiveLocks = computed(() => myLocks.value.length > 0);
 
   return {
-    // Estado
     lockedTables: computed(() => lockedTables.value),
     myLocks: computed(() => myLocks.value),
     myActiveLocksCount,
@@ -434,7 +429,6 @@ export function useTableLock() {
     isRefreshing: computed(() => isRefreshing.value),
     lockSocketConnected,
 
-    // Métodos
     checkLock,
     lockTable,
     unlockTable,
@@ -447,13 +441,14 @@ export function useTableLock() {
     validateNavigation,
     lockAndNavigate,
 
-    // WebSocket
     connectLockWebSocket,
     disconnectLockWebSocket,
     wsLockTable,
     wsUnlockTable,
+    wsRenewLock,
+    wsCheckLock,
+    wsHeartbeat,
 
-    // Polling
     startPolling,
     stopPolling
   };

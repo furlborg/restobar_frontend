@@ -344,33 +344,6 @@ export default defineComponent({
         'productSelect'
     ],
     setup(props, { emit }) {
-        // Table lock composable
-        const { wsLockTable, wsUnlockTable, getLockInfo, isTableLockedByOther } = useTableLock();
-
-        // ID de la mesa desde la ruta
-        const tableId = computed(() => {
-            const param = route.params.table;
-            return typeof param === 'string' ? parseInt(param) : param;
-        });
-
-        // Controla si se debe desbloquear al salir
-        const shouldUnlock = ref(false);
-        // Al montar: intentar bloquear la mesa si está libre
-        onMounted(() => {
-            // Si la mesa no está ocupada ni bloqueada por otro, intentar lockear
-            const lockInfo = getLockInfo(tableId.value);
-            if (!lockInfo || !lockInfo.user_id || lockInfo.user_id !== userStore.user.id) {
-                wsLockTable(tableId.value);
-                shouldUnlock.value = true;
-            }
-        });
-
-        // Al desmontar: desbloquear si no se creó la orden
-        onUnmounted(() => {
-            if (shouldUnlock.value) {
-                wsUnlockTable(tableId.value);
-            }
-        });
 
         const route = useRoute();
         const router = useRouter();
@@ -386,6 +359,71 @@ export default defineComponent({
         const orderStore = useOrderStore();
         const saleStore = useSaleStore();
         const { formattedTotals } = useSaleTotals();
+
+        // Table lock composable (solo para enviar mensajes WS)
+        const { wsLockTable, wsUnlockTable } = useTableLock();
+
+        // ID de la mesa desde la ruta
+        const tableId = computed(() => {
+            const param = route.params.table;
+            return typeof param === 'string' ? parseInt(param) : param;
+        });
+
+        // Controla si se debe desbloquear al salir
+        const shouldUnlock = ref(false);
+        // Guardamos el tableId al montar para usarlo en unmount (cuando la ruta ya cambió)
+        const capturedTableId = ref(null);
+        
+        // Función para desbloquear mesa (usada en múltiples lugares)
+        const unlockCurrentTable = () => {
+            const idToUnlock = capturedTableId.value || tableId.value;
+            console.log('[TableOrder] 🔍 unlockCurrentTable llamado - shouldUnlock:', shouldUnlock.value, 'capturedTableId:', capturedTableId.value, 'tableId:', tableId.value);
+            if (shouldUnlock.value && idToUnlock) {
+                console.log('[TableOrder] 🔓 Desbloqueando mesa', idToUnlock);
+                wsUnlockTable(idToUnlock);
+                shouldUnlock.value = false;
+            } else {
+                console.log('[TableOrder] ⚠️ No se desbloqueará - shouldUnlock:', shouldUnlock.value, 'idToUnlock:', idToUnlock);
+            }
+        };
+        
+        // Handler para cierre brusco de ventana/pestaña
+        const handleBeforeUnload = () => {
+            console.log('[TableOrder] 🚪 beforeunload disparado');
+            unlockCurrentTable();
+        };
+        
+        // Al montar: intentar bloquear la mesa si está libre
+        onMounted(() => {
+            // Capturar el tableId inmediatamente para usarlo en unmount
+            capturedTableId.value = tableId.value;
+            console.log('[TableOrder] 🟢 Componente montado - Mesa:', capturedTableId.value);
+            
+            // Si la mesa no está bloqueada por mí, intentar lockear
+            const lockInfo = tableStore.lockedTables[capturedTableId.value];
+            const isMyLock = lockInfo && lockInfo.user_id === userStore.user.id;
+            
+            if (!lockInfo || isMyLock) {
+                console.log('[TableOrder] 🔒 Bloqueando mesa', capturedTableId.value);
+                wsLockTable(capturedTableId.value, 15); // 15 minutos de bloqueo
+                shouldUnlock.value = true;
+                
+                // Agregar listener para cierre brusco
+                window.addEventListener('beforeunload', handleBeforeUnload);
+            } else {
+                console.log('[TableOrder] ⚠️ Mesa ya bloqueada por otro usuario:', lockInfo.username);
+            }
+        });
+
+        // Al desmontar: SIEMPRE desbloquear la mesa
+        // El backend manejará la expiración automática para cierres bruscos
+        onUnmounted(() => {
+            console.log('[TableOrder] 🔴 Componente desmontado - Mesa:', tableId.value);
+            // Remover listener
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+            // Desbloquear
+            unlockCurrentTable();
+        });
 
         const customerOptions = computed(() => props.customers.map(customer => ({ label: customer.name, value: customer.id })));
 
@@ -622,8 +660,8 @@ export default defineComponent({
             showOptions, selectProduct, renderLabel, navigateToPayment, confirmRemoveCustomer, navigateToTakeOrder,
             handleAddCustomer, getCustomerOrders, getCustomerTotal, getTotalAmount, formatPrice, hasAnyOrders,
             getGlobalOrderIndex, validateSend, nullifyTableOrder, openOrderModal, handleRemoveOrder,
-            handleRemoveMenuSet, handleRemoveProductLine, updateSaleStore, formattedTotals, orderButtonDisabled
-            , wsLockTable, wsUnlockTable, isTableLockedByOther, getLockInfo
+            handleRemoveMenuSet, handleRemoveProductLine, updateSaleStore, formattedTotals, orderButtonDisabled,
+            wsLockTable, wsUnlockTable
         };
   }
 });
