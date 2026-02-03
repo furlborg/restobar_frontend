@@ -57,14 +57,14 @@
             v-model:value="search"
             placeholder="Buscar..."
             clearable
-            @clear="()=>{(search = ''); (show_disabled = false); performSearch()}"
-            @keyup.enter="performSearch"
+            @clear="()=>{(search = ''); (show_disabled = false); debouncedPerformSearch()}"
+            @keyup.enter="debouncedPerformSearch"
           />
-          <n-button type="primary" @click="performSearch" secondary>
+          <n-button type="primary" @click="debouncedPerformSearch" secondary>
             <v-icon name="md-search-round" />
           </n-button>
         </n-input-group>
-          <n-select v-model:value="category" :options="categoriesOptions" placeholder="Seleccione una categoria" @update:value="performSearch" filterable style="min-width: 200px"/>
+          <n-select v-model:value="category" :options="categoriesOptions" placeholder="Seleccione una categoria" @update:value="debouncedPerformSearch" filterable style="min-width: 200px"/>
           <n-checkbox v-model:checked="show_disabled">Mostrar deshabilitados</n-checkbox>
       </n-space>
       <!-- <n-radio-group v-model:value="listType" name="listType" size="small">
@@ -243,6 +243,7 @@ import { defineComponent, ref, onMounted, reactive, computed } from "vue";
 import defaultFoodImage from "@/assets/images/default-food-image.jpg";
 import { useMessage, useDialog } from "naive-ui";
 import { renderIcon } from "@/utils";
+import { useDebounce } from "@/composables/useDebounce";
 import ProductModal from "./components/ProductModal";
 import SalesReportModal from "./components/SalesReportModal";
 import { useProductStore } from "@/store/modules/product";
@@ -455,6 +456,8 @@ export default defineComponent({
         });
     };
 
+    const { debounced: debouncedPerformSearch } = useDebounce(() => performSearch(), 300);
+
     const performDisableProduct = (id, disabled) => {
       dialog.error({
         title: disabled ? "Habilitar producto" : "Deshabilitar producto",
@@ -532,6 +535,7 @@ export default defineComponent({
       refreshProducts,
       editProduct,
       performSearch,
+      debouncedPerformSearch,
       itemsMovement,
       newMovement,
       performDisableProduct,

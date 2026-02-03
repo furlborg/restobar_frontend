@@ -165,6 +165,7 @@
 
 <script setup>
 import { ref, watch, computed } from 'vue'
+import { useDebounce } from '@/composables/useDebounce'
 import { useMessage } from 'naive-ui'
 import { createMenu, updateMenu, retrieveMenu, getMenuPhases, createPhase, updatePhase, getMenuProductPhases, createProductPhase, deleteProductPhase } from '@/api/modules/menu'
 import { searchProductByName } from '@/api/modules/products'
@@ -358,12 +359,7 @@ async function togglePhaseActive(val) {
 // búsqueda / asignación de productos
 const productQuery = ref('')
 const productOptions = ref([])
-async function onTypeProduct(val) {
-  if (isReadOnly.value || !canViewProductPhase.value || !canAddProductPhase.value) {
-    return
-  }
-  productQuery.value = val
-  if (!val || val.length < 2) { productOptions.value = []; return }
+const { debounced: fetchProducts, cancel: cancelFetchProducts } = useDebounce(async (val) => {
   try {
     const { data } = await searchProductByName(val)
     const list = Array.isArray(data) ? data : (data.results || [])
@@ -371,6 +367,19 @@ async function onTypeProduct(val) {
   } catch {
     productOptions.value = []
   }
+}, 300)
+
+function onTypeProduct(val) {
+  if (isReadOnly.value || !canViewProductPhase.value || !canAddProductPhase.value) {
+    return
+  }
+  productQuery.value = val
+  if (!val || val.length < 2) {
+    cancelFetchProducts()
+    productOptions.value = []
+    return
+  }
+  fetchProducts(val)
 }
 async function onSelectProduct(value, option) {
   if (!selectedPhaseId.value) return

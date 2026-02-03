@@ -42,6 +42,7 @@
 
 <script setup>
 import { ref, watch, computed } from 'vue'
+import { useDebounce } from '@/composables/useDebounce'
 import { useMessage } from 'naive-ui'
 import { getMenuProductPhases, createProductPhase, deleteProductPhase, updatePhase, retrieveMenu, getMenuPhases } from '@/api/modules/menu'
 import { searchProductByName } from '@/api/modules/products'
@@ -92,14 +93,22 @@ async function loadProducts() {
   }
 }
 
-async function onType(val) {
-  query.value = val
-  if (!val || val.length < 2) { options.value = []; return }
+const { debounced: fetchOptions, cancel: cancelFetchOptions } = useDebounce(async (val) => {
   try {
     const { data } = await searchProductByName(val)
     const list = Array.isArray(data) ? data : (data.results || [])
     options.value = list.map(p => ({ label: p.name, value: String(p.id), raw: p }))
   } catch (e) { options.value = [] }
+}, 300)
+
+function onType(val) {
+  query.value = val
+  if (!val || val.length < 2) {
+    cancelFetchOptions()
+    options.value = []
+    return
+  }
+  fetchOptions(val)
 }
 
 async function onSelect(value, option) {

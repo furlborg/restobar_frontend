@@ -15,7 +15,7 @@
               v-model:value="filters.product"
               placeholder="Buscar..."
               filterable
-              @search="productSearch"
+              @search="debouncedProductSearch"
               :options="optionsProduct"
               clearable
               @update:value="onFilterChange"
@@ -83,6 +83,7 @@
 
 <script>
 import { defineComponent, ref, watch } from "vue";
+import { useDebounce } from "@/composables/useDebounce";
 import { useMessage } from "naive-ui";
 import { searchProduct } from "@/api/modules/products";
 import { getSaleDetails, getSalesReportByProduct } from "@/api/modules/sales";
@@ -172,6 +173,8 @@ export default defineComponent({
         message.error("Algo salió mal...");
       }
     };
+
+    const { debounced: debouncedProductSearch } = useDebounce(productSearch, 300);
 
     // Cargar productos iniciales al montar el componente
     productSearch("");
@@ -324,6 +327,7 @@ export default defineComponent({
       isExporting,
       closeModal,
       productSearch,
+      debouncedProductSearch,
       onFilterChange,
       fetchSalesData,
       exportToExcel,

@@ -464,6 +464,7 @@ import { useProductStore } from "@/store/modules/product";
 import { useTableStore } from "@/store/modules/table";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
+import { useDebounce } from "@/composables/useDebounce";
 import {
     retrieveTableOrder,
     createTableOrder,
@@ -824,21 +825,28 @@ export default defineComponent({
             }));
         });
 
+        const { debounced: fetchProducts, cancel: cancelFetchProducts } = useDebounce((value) => {
+            searching.value = true;
+            searchProductByName(value).then((response) => {
+                if (response.status === 200) {
+                    products.value = response.data;
+                }
+            }).catch((error) => {
+                console.error(error);
+                message.error("Algo salió mal...");
+            }).finally(() => {
+                searching.value = false;
+            });
+        }, 300);
+
         const showOptions = (value) => {
             if (value.length >= 3) {
-                searching.value = true;
-                searchProductByName(value).then((response) => {
-                    if (response.status === 200) {
-                        products.value = response.data;
-                    }
-                }).catch((error) => {
-                    console.error(error);
-                    message.error("Algo salió mal...");
-                }).finally(() => {
-                    searching.value = false;
-                });
+                fetchProducts(value);
                 return true;
             }
+            cancelFetchProducts();
+            products.value = [];
+            searching.value = false;
             return false;
         };
 

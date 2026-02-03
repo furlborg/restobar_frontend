@@ -399,6 +399,7 @@ import { useSaleStore } from "@/store/modules/sale";
 import { useBusinessStore } from "@/store/modules/business";
 import { useGenericsStore } from "@/store/modules/generics";
 import { searchProductByName } from "@/api/modules/products";
+import { useDebounce } from "@/composables/useDebounce";
 import { takeAwayOrder } from "@/api/modules/orders";
 import { sendSale, getSaleNumber } from "@/api/modules/sales";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
@@ -598,17 +599,24 @@ export default defineComponent({
             category: productStore.getCategorieDescription(product.category)
         })));
 
+        const { debounced: fetchProducts, cancel: cancelFetchProducts } = useDebounce((value) => {
+            searching.value = true;
+            searchProductByName(value).then((response) => {
+                if (response.status === 200) products.value = response.data;
+            }).catch((error) => {
+                console.error(error);
+                message.error("Algo salió mal...");
+            }).finally(() => searching.value = false);
+        }, 300);
+
         const showOptions = (value) => {
             if (value.length >= 3) {
-                searching.value = true;
-                searchProductByName(value).then((response) => {
-                    if (response.status === 200) products.value = response.data;
-                }).catch((error) => {
-                    console.error(error);
-                    message.error("Algo salió mal...");
-                }).finally(() => searching.value = false);
+                fetchProducts(value);
                 return true;
             }
+            cancelFetchProducts();
+            products.value = [];
+            searching.value = false;
             return false;
         };
 

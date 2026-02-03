@@ -13,7 +13,7 @@
             v-model:value="formitem.product"
             placeholder="Buscar..."
             filterable
-            @search="productSearch"
+            @search="debouncedProductSearch"
             :options="optionsProduct"
             clearable
           />
@@ -60,6 +60,7 @@
 
 <script>
 import { defineComponent, onUpdated, ref, toRefs } from "vue";
+import { useDebounce } from "@/composables/useDebounce";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useMessage } from "naive-ui";
 import { useUserStore } from "@/store/modules/user";
@@ -122,6 +123,8 @@ export default defineComponent({
           console.error(error);
         });
     };
+
+    const { debounced: debouncedProductSearch } = useDebounce(productSearch, 300);
     productSearch("");
 
     const getEstablishment = async () => {
@@ -198,6 +201,7 @@ export default defineComponent({
       genericsStore,
       optionsProduct,
       productSearch,
+      debouncedProductSearch,
       optionsConcept,
       optionsEstablishment,
       rules: {

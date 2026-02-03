@@ -65,6 +65,7 @@ import { h, defineComponent, ref, computed, nextTick } from "vue";
 import { NThing, NTag, NSpace, NText, useMessage, useDialog } from "naive-ui";
 import { createTableOrder, updateTableOrder } from "@/api/modules/tables";
 import { searchProductByName, searchProductPrice } from "@/api/modules/products";
+import { useDebounce } from "@/composables/useDebounce";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useProductStore } from "@/store/modules/product";
 import { useWaiterStore } from "@/store/modules/waiter";
@@ -120,36 +121,34 @@ export default defineComponent({
             }));
         });
 
+        const priceRegex = /^\d+(\.\d{0,2})?$/;
+
+        const { debounced: fetchProducts, cancel: cancelFetchProducts } = useDebounce((value) => {
+            searchingProduct.value = true;
+            const request = priceRegex.test(value)
+                ? searchProductPrice(value)
+                : searchProductByName(value);
+
+            request.then((response) => {
+                if (response.status === 200) {
+                    products.value = response.data;
+                }
+            }).catch((error) => {
+                console.error(error);
+                message.error("Algo salió mal...");
+            }).finally(() => {
+                searchingProduct.value = false;
+            });
+        }, 300);
+
         const showOptions = (value) => {
-            const priceRegex = /^\d+(\.\d{0,2})?$/;
-            if (priceRegex.test(value)) {
-                searchingProduct.value = true;
-                searchProductPrice(value).then((response) => {
-                    if (response.status === 200) {
-                        products.value = response.data;
-                    }
-                }).catch((error) => {
-                    console.error(error);
-                    message.error("Algo salió mal...");
-                }).finally(() => {
-                    searchingProduct.value = false;
-                });
+            if (priceRegex.test(value) || value.length >= 3) {
+                fetchProducts(value);
                 return true;
             }
-            if (value.length >= 3) {
-                searchingProduct.value = true;
-                searchProductByName(value).then((response) => {
-                    if (response.status === 200) {
-                        products.value = response.data;
-                    }
-                }).catch((error) => {
-                    console.error(error);
-                    message.error("Algo salió mal...");
-                }).finally(() => {
-                    searchingProduct.value = false;
-                });
-                return true;
-            }
+            cancelFetchProducts();
+            products.value = [];
+            searchingProduct.value = false;
             return false;
         };
 

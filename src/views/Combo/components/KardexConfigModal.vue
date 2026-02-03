@@ -163,6 +163,7 @@
 
 <script setup>
 import { ref, reactive, computed, watch } from 'vue'
+import { useDebounce } from '@/composables/useDebounce'
 import { useMessage } from 'naive-ui'
 import { searchProducts, getProductById } from '@/api/modules/products'
 
@@ -216,16 +217,11 @@ const kardexPreview = computed(() => {
 })
 
 // Methods
-const handleProductSearch = async () => {
-  if (!productSearch.value || productSearch.value.length < 2) {
-    searchResults.value = []
-    return
-  }
-
+const { debounced: fetchProducts, cancel: cancelFetchProducts } = useDebounce(async (term) => {
   isLoading.value = true
   try {
     const response = await searchProducts({
-      search: productSearch.value,
+      search: term,
       product_type: 'NORMAL',
       limit: 10
     })
@@ -236,6 +232,16 @@ const handleProductSearch = async () => {
   } finally {
     isLoading.value = false
   }
+}, 300)
+
+const handleProductSearch = () => {
+  if (!productSearch.value || productSearch.value.length < 2) {
+    cancelFetchProducts()
+    searchResults.value = []
+    isLoading.value = false
+    return
+  }
+  fetchProducts(productSearch.value)
 }
 
 const selectProduct = (product) => {

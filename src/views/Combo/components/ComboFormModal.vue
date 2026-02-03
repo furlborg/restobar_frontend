@@ -390,6 +390,7 @@
 
 <script setup>
 import { ref, reactive, computed, watch, nextTick } from 'vue'
+import { useDebounce } from '@/composables/useDebounce'
 import { useMessage } from 'naive-ui'
 import { 
   getCombo,
@@ -589,19 +590,11 @@ const performUpdateCategory = async () => {
 }
 
 // Methods
-const handleProductSearch = async () => {
-  if (isReadOnly.value || !canAddComboProduct.value) {
-    return
-  }
-  if (!productSearch.value || productSearch.value.length < 2) {
-    searchResults.value = []
-    return
-  }
-
+const { debounced: fetchProducts, cancel: cancelFetchProducts } = useDebounce(async (term) => {
   isSearching.value = true
   try {
     const response = await searchProducts({
-      search: productSearch.value,
+      search: term,
       product_type: 'NORMAL', // Only normal products for combo items
       limit: 10
     })
@@ -612,6 +605,19 @@ const handleProductSearch = async () => {
   } finally {
     isSearching.value = false
   }
+}, 300)
+
+const handleProductSearch = () => {
+  if (isReadOnly.value || !canAddComboProduct.value) {
+    return
+  }
+  if (!productSearch.value || productSearch.value.length < 2) {
+    cancelFetchProducts()
+    searchResults.value = []
+    isSearching.value = false
+    return
+  }
+  fetchProducts(productSearch.value)
 }
 
 const addProduct = (product) => {

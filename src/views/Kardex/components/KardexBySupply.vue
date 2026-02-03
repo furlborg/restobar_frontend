@@ -33,7 +33,7 @@
             <n-input
               placeholder="Buscar..."
               v-model:value="textSearch"
-              @keyup.enter="searchItem(textSearch)"
+              @keyup.enter="debouncedSearchItem(textSearch)"
             >
               <template #prefix>
                 <n-icon style="margin-top: -4px">
@@ -147,6 +147,7 @@
 
 <script>
 import { defineComponent, ref, onMounted } from "vue";
+import { useDebounce } from "@/composables/useDebounce";
 import { createKardexBySupplyColumns } from "@/utils/constants";
 import { renderIcon } from "@/utils";
 import { getSupplies } from "@/api/modules/supplies";
@@ -304,6 +305,8 @@ export default defineComponent({
       }
     };
 
+    const { debounced: debouncedSearchItem } = useDebounce(searchItem, 300);
+
     const options = ref([
       {
         label: "PDF",
@@ -349,6 +352,7 @@ export default defineComponent({
       dataKardex,
       checkedValue,
       searchItem,
+      debouncedSearchItem,
       loadingData,
       total,
       textSearch,

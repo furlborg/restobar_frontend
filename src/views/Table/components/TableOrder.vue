@@ -297,6 +297,7 @@ import { useTableStore } from "@/store/modules/table";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { useSaleTotals } from "@/composables/useSaleTotals";
+import { useDebounce } from "@/composables/useDebounce";
 import { searchProductByName, searchProductPrice } from "@/api/modules/products";
 
 export default defineComponent({
@@ -585,15 +586,7 @@ export default defineComponent({
             }
         };
 
-        const debounce = (fn, delay = 500) => {
-            let timeout
-            return (...args) => {
-                clearTimeout(timeout)
-                timeout = setTimeout(() => fn(...args), delay)
-            }
-        }
-
-        const fetchProducts = debounce((value) => {
+        const { debounced: fetchProducts } = useDebounce((value) => {
             const priceRegex = /^\d+(\.\d{0,2})?$/
 
             // Si es un precio, buscar por precio
@@ -620,7 +613,7 @@ export default defineComponent({
             } else {
                 products.value = []
             }
-        }, 500)
+        }, 300)
 
         // --- get-show solo controla visibilidad del dropdown ---
         const showOptions = (value) => {

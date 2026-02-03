@@ -126,6 +126,7 @@ import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { useProductStore } from "@/store/modules/product";
 import { useSaleTotals } from "@/composables/useSaleTotals";
+import { useDebounce } from "@/composables/useDebounce";
 import { useMessage } from "naive-ui";
 import { searchProductByName, searchProductPrice } from "@/api/modules/products";
 import ProductSearchLabel from "@/views/Product/components/ProductSearchLabel.vue";
@@ -191,42 +192,37 @@ export default defineComponent({
     })));
 
     // Función para mostrar opciones cuando se busca (igual que TableOrder)
+    const priceRegex = /^\d+(\.\d{0,2})?$/;
+
+    const { debounced: fetchProducts, cancel: cancelFetchProducts } = useDebounce((value) => {
+      searching.value = true;
+      const request = priceRegex.test(value)
+        ? searchProductPrice(value)
+        : searchProductByName(value);
+
+      request
+        .then((response) => {
+          if (response.status === 200) {
+            products.value = response.data;
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          message.error("Algo salió mal...");
+        })
+        .finally(() => {
+          searching.value = false;
+        });
+    }, 300);
+
     const showOptions = (value) => {
-      const priceRegex = /^\d+(\.\d{0,2})?$/;
-      if (priceRegex.test(value)) {
-        searching.value = true;
-        searchProductPrice(value)
-          .then((response) => {
-            if (response.status === 200) {
-              products.value = response.data;
-            }
-          })
-          .catch((error) => {
-            console.error(error);
-            message.error("Algo salió mal...");
-          })
-          .finally(() => {
-            searching.value = false;
-          });
+      if (priceRegex.test(value) || value.length >= 3) {
+        fetchProducts(value);
         return true;
       }
-      if (value.length >= 3) {
-        searching.value = true;
-        searchProductByName(value)
-          .then((response) => {
-            if (response.status === 200) {
-              products.value = response.data;
-            }
-          })
-          .catch((error) => {
-            console.error(error);
-            message.error("Algo salió mal...");
-          })
-          .finally(() => {
-            searching.value = false;
-          });
-        return true;
-      }
+      cancelFetchProducts();
+      products.value = [];
+      searching.value = false;
       return false;
     };
 
