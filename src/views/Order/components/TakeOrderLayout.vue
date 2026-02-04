@@ -490,18 +490,14 @@ export default defineComponent({
             if (response.status === 201) {
               checkState.value = true;
               cleanupOrderStore();
-              pdfData.value = response.data.order;
-              showPdf.value = true;
-              setTimeout(() => {
-                ticketPreviewRef.value.generate();
-                if (settingsStore.businessSettings.printer.print_html) {
-                  voucherData.value = response.data.sale;
-                  showVoucher.value = true;
-                  if (!ticketPreview.value) {
-                    setTimeout(() => voucherDrawer.value.generate(), 250);
-                  }
+              if (settingsStore.businessSettings.printer.print_html) {
+                voucherData.value = response.data.sale;
+                showVoucher.value = true;
+                if (!ticketPreview.value) {
+                  setTimeout(() => voucherDrawer.value.generate(), 250);
                 }
-              }, 250);
+              }
+              router.push({ name: "TableHome" });
             }
           } catch (error) {
             message.error("Ha ocurrido un error al procesar la venta");
@@ -637,18 +633,14 @@ export default defineComponent({
           message.success("Venta realizada correctamente!");
           checkState.value = true;
           cleanupOrderStore();
-          pdfData.value = response.data.order;
-          showPdf.value = true;
-          setTimeout(() => {
-            ticketPreviewRef.value.generate();
-            if (settingsStore.businessSettings.printer.print_html) {
-              voucherData.value = response.data.sale;
-              showVoucher.value = true;
-              if (!ticketPreview.value) {
-                setTimeout(() => voucherDrawer.value.generate(), 250);
-              }
+          if (settingsStore.businessSettings.printer.print_html) {
+            voucherData.value = response.data.sale;
+            showVoucher.value = true;
+            if (!ticketPreview.value) {
+              setTimeout(() => voucherDrawer.value.generate(), 250);
             }
-          }, 250);
+          }
+          router.push({ name: "TableHome" });
         }
       } catch (error) {
         console.error(error);

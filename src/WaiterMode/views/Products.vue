@@ -157,7 +157,7 @@
 <script>
 import { useSettingsStore } from "@/store/modules/settings";
 import { defineComponent, ref, computed, onMounted, onUnmounted } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useMessage } from "naive-ui";
 import ProductIndications from "./ProductIndications";
 import TicketPreview from "@/views/Order/components/TicketPreview";
@@ -191,6 +191,7 @@ export default defineComponent({
     const saleStore = useSaleStore();
     const waiterStore = useWaiterStore();
     const userStore = useUserStore();
+    const router = useRouter();
     const showModal = ref(false);
     const loading = ref(false);
     const orderItemIndex = ref(null);
@@ -268,14 +269,10 @@ export default defineComponent({
             message.success("Orden creada correctamente");
             syncOrderFromResponse(response.data);
 
-            pdfData.value = response.data;
-            showPdf.value = true;
-            setTimeout(() => ticketPreview.value.generate(), 250);
-
             tableStore.refreshData();
             // Limpiar solo productos del carrito que no son menús
             orderStore.orders = orderStore.orders.filter(order => order.from_menu);
-            // router.push({ name: "WHome" });
+            router.push({ name: "WHome" });
           }
         })
         .catch((error) => {
@@ -285,28 +282,6 @@ export default defineComponent({
         .finally(() => {
           loading.value = false;
         });
-    };
-
-    const evalOrderList = (details) => {
-      let list = [];
-      details.forEach((order) => {
-        let item = saleStore.order_initial.find((v) => v.id === order.id);
-        if (!!item && order.quantity > item.quantity) {
-          let newOrder = cloneDeep(order);
-          newOrder.quantity = order.quantity - item.quantity;
-          newOrder.indication = newOrder.indication.slice(order.quantity - 1);
-          list.push(newOrder);
-        } else if (
-          !!item &&
-          JSON.stringify(order.indication) !== JSON.stringify(item.indication)
-        ) {
-          let newOrder = cloneDeep(order);
-          list.push(newOrder);
-        } else if (typeof item === "undefined") {
-          list.push(order);
-        }
-      });
-      return list;
     };
 
     const performUpdateTableOrder = async () => {
@@ -321,18 +296,11 @@ export default defineComponent({
         .then((response) => {
           if (response.status === 202) {
             message.success("Orden actualizada correctamente");
-            response.data.order_details = evalOrderList(
-              response.data.order_details
-            );
-
-            pdfData.value = response.data;
-            showPdf.value = true;
-            setTimeout(() => ticketPreview.value.generate(), 250);
 
             tableStore.refreshData();
             // Limpiar solo productos del carrito que no son menús
             orderStore.orders = orderStore.orders.filter(order => order.from_menu);
-            // router.push({ name: "WHome" });
+            router.push({ name: "WHome" });
           }
         })
         .catch((error) => {

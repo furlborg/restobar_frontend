@@ -655,10 +655,8 @@ export default defineComponent({
             )
                 .then(async response => {
                     if (response.status === 201) {
-                        pdfData.value = response.data;
-                        showPdf.value = true;
-                        setTimeout(() => ticketPreview.value.generate(), 250);
                         checkState.value = true;
+                        router.push({ name: "TableHome" });
                     }
                 })
                 .catch(error => {
@@ -672,28 +670,6 @@ export default defineComponent({
                 });
         };
 
-        const evalOrderList = (details) => {
-            let list = [];
-            details.forEach((order) => {
-                let item = saleStore.order_initial.find((v) => v.id === order.id);
-                if (!!item && order.quantity > item.quantity) {
-                    let newOrder = cloneDeep(order);
-                    newOrder.quantity = order.quantity - item.quantity;
-                    newOrder.indication = newOrder.indication.slice(order.quantity - 1);
-                    list.push(newOrder);
-                } else if (
-                    !!item &&
-                    JSON.stringify(order.indication) !== JSON.stringify(item.indication)
-                ) {
-                    let newOrder = cloneDeep(order);
-                    list.push(newOrder);
-                } else if (typeof item === "undefined") {
-                    list.push(order);
-                }
-            });
-            return list;
-        };
-
         const performUpdateTableOrder = async () => {
             loading.value = true;
             await updateTableOrder(
@@ -705,13 +681,8 @@ export default defineComponent({
             )
                 .then(async (response) => {
                     if (response.status === 202) {
-                        response.data.order_details = evalOrderList(
-                            response.data.order_details
-                        );
-                        pdfData.value = response.data;
-                        showPdf.value = true;
-                        setTimeout(() => ticketPreview.value.generate(), 250);
                         checkState.value = true;
+                        router.push({ name: "TableHome" });
                     }
                 })
                 .catch((error) => {

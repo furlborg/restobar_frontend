@@ -61,7 +61,7 @@
 <script>
 import ProductIndications from "../views/ProductIndications";
 import TicketPreview from "@/views/Order/components/TicketPreview.vue";
-import { h, defineComponent, ref, computed, nextTick } from "vue";
+import { h, defineComponent, ref, computed } from "vue";
 import { NThing, NTag, NSpace, NText, useMessage, useDialog } from "naive-ui";
 import { createTableOrder, updateTableOrder } from "@/api/modules/tables";
 import { searchProductByName, searchProductPrice } from "@/api/modules/products";
@@ -73,7 +73,7 @@ import { useOrderStore } from "@/store/modules/order";
 import { useTableStore } from "@/store/modules/table";
 import { useSaleStore } from "@/store/modules/sale";
 import { useUserStore } from "@/store/modules/user";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { cloneDeep, lighten } from "@/utils";
 
 export default defineComponent({
@@ -98,6 +98,7 @@ export default defineComponent({
         const saleStore = useSaleStore();
         const userStore = useUserStore();
         const route = useRoute();
+        const router = useRouter();
 
         const loading = ref(false);
         const orderItemIndex = ref(null);
@@ -321,42 +322,16 @@ export default defineComponent({
                     if (response.status === 201) {
                         message.success("Orden creada correctamente");
                         syncOrderFromResponse(response.data);
-                        pdfData.value = response.data;
-                        console.log(response.data);
-                        showPdf.value = true;
                         waiterStore.preOrderList = [];
-                        await nextTick();
-                        await ticketPreview.value.generate();
                         emit("update:show", false);
                         await tableStore.refreshData();
+                        router.push({ name: "WHome" });
                         // router.push({ name: "WHome" });
                     }
                 },
                 onNegativeClick: () => {
                 }
             });
-        };
-
-        const evalOrderList = (details) => {
-            let list = [];
-            details.forEach((order) => {
-                let item = saleStore.order_initial.find((v) => v.id === order.id);
-                if ( !!item && order.quantity > item.quantity) {
-                    let newOrder = cloneDeep(order);
-                    newOrder.quantity = order.quantity - item.quantity;
-                    newOrder.indication = newOrder.indication.slice(order.quantity - 1);
-                    list.push(newOrder);
-                } else if (
-                    !!item &&
-                    JSON.stringify(order.indication) !== JSON.stringify(item.indication)
-                ) {
-                    let newOrder = cloneDeep(order);
-                    list.push(newOrder);
-                } else if (typeof item === "undefined") {
-                    list.push(order);
-                }
-            });
-            return list;
         };
 
         const performUpdateTableOrder = async() => {
@@ -377,15 +352,10 @@ export default defineComponent({
                     );
                     if (response.status === 202) {
                         message.success("Orden actualizada correctamente");
-                        pdfData.value = response.data;
-                        response.data.order_details = evalOrderList(response.data.order_details);
-                        console.log(response.data);
-                        showPdf.value = true;
                         waiterStore.preOrderList = [];
-                        await nextTick();
-                        await ticketPreview.value.generate();
                         emit("update:show", false);
                         await tableStore.refreshData();
+                        router.push({ name: "WHome" });
                         // router.push({ name: "WHome" });
                     }
                 },

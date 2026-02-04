@@ -357,10 +357,8 @@ export default defineComponent({
         };
 
         const handleOrderSuccess = (response) => {
-            pdfData.value = response.data;
-            showPdf.value = true;
-            setTimeout(() => ticketPreview.value.generate(), 250);
             cleanupOrderStore();
+            router.push({ name: "TableHome" });
         };
 
         const performCreateTableOrder = async () => {
@@ -375,27 +373,11 @@ export default defineComponent({
             }
         };
 
-        const evalOrderList = (details) => details.reduce((list, order) => {
-            const item = saleStore.order_initial.find(v => v.id === order.id);
-            if (item && order.quantity > item.quantity) {
-                const newOrder = cloneDeep(order);
-                newOrder.quantity = order.quantity - item.quantity;
-                newOrder.indication = newOrder.indication.slice(order.quantity - 1);
-                list.push(newOrder);
-            } else if (item && JSON.stringify(order.indication) !== JSON.stringify(item.indication)) {
-                list.push(cloneDeep(order));
-            } else if (!item) {
-                list.push(order);
-            }
-            return list;
-        }, []);
-
         const performUpdateTableOrder = async () => {
             loading.value = true;
             try {
                 const response = await updateTableOrder(table, orderStore.orderId, orderStore.orderList, orderUser.value, ask_for.value);
                 if (response.status === 202) {
-                    response.data.order_details = evalOrderList(response.data.order_details);
                     handleOrderSuccess(response);
                 }
             } catch (error) {

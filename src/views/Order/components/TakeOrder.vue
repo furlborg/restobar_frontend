@@ -843,10 +843,7 @@ export default defineComponent({
             await takeAwayOrder(orderStore.orderList, sale.value, userConfirm.value).then((response) => {
                 if (response.status === 201) {
                     message.success("Venta realizada correctamente!");
-                    pdfData.value = response.data.order;
-                    showPdf.value = true;
                     setTimeout(() => {
-                        ticketPreviewRef.value.generate();
                         if (settingsStore.business_settings.printer.print_html) {
                             voucherData.value = response.data.sale;
                             // Si hay pagos múltiples en json_sale, agregarlos a voucherData
@@ -859,6 +856,7 @@ export default defineComponent({
                             // PrintsAfterTakeOrder(response.data);
                         }
                     }, 250);
+                    router.push({ name: "TableHome" });
                 }
             }).catch((error) => console.error(error)).finally(() => {
                 userConfirm.value = "";
@@ -899,10 +897,7 @@ export default defineComponent({
                                 ).then((response) => {
                                     if (response.status === 201) {
                                         message.success("Venta realizada correctamente!");
-                                        pdfData.value = response.data.order;
-                                        showPdf.value = true;
                                         setTimeout(() => {
-                                            ticketPreviewRef.value.generate();
                                             if (
                                                 settingsStore.business_settings.printer.print_html
                                             ) {
@@ -922,6 +917,7 @@ export default defineComponent({
                                                 // PrintsAfterTakeOrder(response.data);
                                             }
                                         }, 250);
+                                        router.push({ name: "TableHome" });
                                         if (
                                             settingsStore.businessSettings.sale.auto_send &&
                                             !sale.value.delivery_info &&

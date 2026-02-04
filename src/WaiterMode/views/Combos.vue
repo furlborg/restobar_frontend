@@ -235,7 +235,6 @@ import { useSaleStore } from "@/store/modules/sale";
 import { useUserStore } from "@/store/modules/user";
 import { getCombos } from "@/api/modules/products";
 import { createTableOrder, updateTableOrder } from "@/api/modules/tables";
-import { cloneDeep } from "@/utils";
 import ComboExtrasModal from "@/WaiterMode/components/ComboExtrasModal.vue";
 import TicketPreview from "@/views/Order/components/TicketPreview";
 import FloatingOrderButton from "@/WaiterMode/components/FloatingOrderButton.vue";
@@ -388,13 +387,11 @@ export default defineComponent({
         .then((response) => {
           if (response.status === 201) {
             message.success("Orden creada correctamente");
-            pdfData.value = response.data;
-            showPdf.value = true;
-            setTimeout(() => ticketPreview.value.generate(), 250);
             tableStore.refreshData();
             orderStore.orders = orderStore.orders.filter(
               (order) => order.from_menu
             );
+            router.push({ name: "WHome" });
           }
         })
         .catch((error) => {
@@ -404,27 +401,6 @@ export default defineComponent({
         .finally(() => {
           loadingOrder.value = false;
         });
-    };
-
-    const evalOrderList = (details) => {
-      let list = [];
-      details.forEach((order) => {
-        let item = saleStore.order_initial.find((v) => v.id === order.id);
-        if (!!item && order.quantity > item.quantity) {
-          let newOrder = cloneDeep(order);
-          newOrder.quantity = order.quantity - item.quantity;
-          list.push(newOrder);
-        } else if (
-          !!item &&
-          JSON.stringify(order.indication) !== JSON.stringify(item.indication)
-        ) {
-          let newOrder = cloneDeep(order);
-          list.push(newOrder);
-        } else if (typeof item === "undefined") {
-          list.push(order);
-        }
-      });
-      return list;
     };
 
     const performUpdateTableOrder = () => {
@@ -439,11 +415,9 @@ export default defineComponent({
         .then((response) => {
           if (response.status === 200) {
             message.success("Orden actualizada correctamente");
-            pdfData.value = response.data;
-            showPdf.value = true;
-            setTimeout(() => ticketPreview.value.generate(), 250);
             tableStore.refreshData();
             orderStore.clearNewOrders();
+            router.push({ name: "WHome" });
           }
         })
         .catch((error) => {
