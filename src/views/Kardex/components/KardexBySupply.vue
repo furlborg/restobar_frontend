@@ -233,22 +233,36 @@ export default defineComponent({
         }
         getProductKardex(filter)
           .then((response) => {
-            dataKardex.value = response.data;
-            response.data.map(function (v) {
+            const rows = Array.isArray(response.data) ? response.data : [];
+            dataKardex.value = [...rows].reverse();
+            const toNumber = (val) => {
+              if (val === null || val === undefined) return 0;
+              if (typeof val === "string" && val.trim() === "") return 0;
+              const num = Number(val);
+              return Number.isFinite(num) ? num : 0;
+            };
+            const hasNumericMovement = rows.some((v) => {
+              if (v?.ingress === null || v?.ingress === undefined) {
+                return (
+                  v?.egress !== null &&
+                  v?.egress !== undefined &&
+                  Number.isFinite(Number(v.egress))
+                );
+              }
+              if (typeof v.ingress === "string" && v.ingress.trim() === "") return false;
+              return Number.isFinite(Number(v.ingress)) || Number.isFinite(Number(v.egress));
+            });
+            const lastBalance = rows.length ? toNumber(rows[rows.length - 1]?.balance) : 0;
+
+            rows.map(function (v) {
               total.value.ingress =
                 v.type == "0" ? total.value.ingress + 1 : total.value.ingress;
               total.value.egress =
                 v.type == "1" ? total.value.egress + 1 : total.value.egress;
-              if (v.ingress !== null) {
-                total.value.total =
-                  v.type == "0"
-                    ? total.value.total + parseFloat(v.ingress)
-                    : total.value.total - parseFloat(v.egress);
-              }
             });
-            
-            // Verificar si el stock es NaN o negativo (control de stock desactivado)
-            if (isNaN(total.value.total) || total.value.total < 0) {
+            total.value.total = lastBalance;
+
+            if (!hasNumericMovement && !Number.isFinite(lastBalance)) {
               isStockControlDisabled.value = true;
             }
           })
@@ -262,20 +276,36 @@ export default defineComponent({
         }
         getSuplieKardex(filter)
           .then((response) => {
-            dataKardex.value = response.data;
-            response.data.map(function (v) {
+            const rows = Array.isArray(response.data) ? response.data : [];
+            dataKardex.value = [...rows].reverse();
+            const toNumber = (val) => {
+              if (val === null || val === undefined) return 0;
+              if (typeof val === "string" && val.trim() === "") return 0;
+              const num = Number(val);
+              return Number.isFinite(num) ? num : 0;
+            };
+            const hasNumericMovement = rows.some((v) => {
+              if (v?.ingress === null || v?.ingress === undefined) {
+                return (
+                  v?.egress !== null &&
+                  v?.egress !== undefined &&
+                  Number.isFinite(Number(v.egress))
+                );
+              }
+              if (typeof v.ingress === "string" && v.ingress.trim() === "") return false;
+              return Number.isFinite(Number(v.ingress)) || Number.isFinite(Number(v.egress));
+            });
+            const lastBalance = rows.length ? toNumber(rows[rows.length - 1]?.balance) : 0;
+
+            rows.map(function (v) {
               total.value.ingress =
                 v.type == "0" ? total.value.ingress + 1 : total.value.ingress;
               total.value.egress =
                 v.type == "1" ? total.value.egress + 1 : total.value.egress;
-              total.value.total =
-                v.type == "0"
-                  ? total.value.total + parseFloat(!v.ingress ? 0 : v.ingress)
-                  : total.value.total - parseFloat(!v.egress ? 0 : v.egress);
             });
-            
-            // Verificar si el stock es NaN o negativo (control de stock desactivado)
-            if (isNaN(total.value.total) || total.value.total < 0) {
+            total.value.total = lastBalance;
+
+            if (!hasNumericMovement && !Number.isFinite(lastBalance)) {
               isStockControlDisabled.value = true;
             }
           })
