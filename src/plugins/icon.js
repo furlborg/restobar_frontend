@@ -13,6 +13,7 @@ import {
   BiFullscreenExit,
   BiFullscreen,
   GiSettingsKnobs,
+  GiHotMeal,
   OiSidebarCollapse,
   OiSidebarExpand,
   BiCaretUpFill,
@@ -131,6 +132,7 @@ import {
 } from "oh-vue-icons/icons";
 
 addIcons(
+  GiHotMeal,
   MdTablechart,
   BiBank,
   MdEventavailableRound,

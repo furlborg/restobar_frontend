@@ -3,9 +3,17 @@
     <n-tabs type="line" animated>
       <n-tab-pane name="categories" tab="Categorías">
         <n-space vertical size="large">
-          <n-card :bordered="false" title="Categorías disponibles" content-class="category-card">
+          <n-card
+            v-if="!selectedCategory"
+            :bordered="false"
+            title="Categorías disponibles"
+            content-class="category-card"
+          >
             <n-spin :show="!productStore.categories.length && isLoadingCategories">
-              <n-empty v-if="!productStore.categories.length && !isLoadingCategories" description="No se encontraron categorías activas" />
+              <n-empty
+                v-if="!productStore.categories.length && !isLoadingCategories"
+                description="No se encontraron categorías activas"
+              />
               <n-grid
                 v-else
                 responsive="screen"
@@ -39,23 +47,23 @@
             </n-spin>
           </n-card>
 
-          <n-card :bordered="false" class="product-card">
+          <n-card v-else :bordered="false" class="product-card">
             <template #header>
               <n-space justify="space-between" align="center" class="w-100">
                 <n-text class="fs-4">{{ selectedCategoryTitle }}</n-text>
-                <n-button v-if="selectedCategory" size="small" secondary type="primary" @click="clearSelectedCategory">
-                  Limpiar selección
+                <n-button size="small" secondary type="primary" @click="clearSelectedCategory">
+                  Volver a categorías
                 </n-button>
               </n-space>
             </template>
-            <div v-if="selectedCategory">
-              <n-input v-model:value="search" placeholder="Buscar producto" clearable class="mb-3">
-                <template #prefix>
-                  <v-icon name="md-search-round" />
-                </template>
-              </n-input>
-              <n-spin :show="isLoading">
-                <n-list v-if="itemsList.length" class="product-list">
+            <n-input v-model:value="search" placeholder="Buscar producto" clearable class="mb-3">
+              <template #prefix>
+                <v-icon name="md-search-round" />
+              </template>
+            </n-input>
+            <n-spin :show="isLoading">
+              <n-scrollbar style="max-height: 700px">
+                <n-list v-if="itemsList.length" class="product-list me-2">
                   <n-list-item
                     v-for="product in itemsList"
                     :key="product.id"
@@ -95,9 +103,12 @@
                   </n-list-item>
                 </n-list>
                 <n-empty v-else description="No se encontraron productos para esta categoría" />
-              </n-spin>
-            </div>
-            <n-empty v-else description="Seleccione una categoría para mostrar sus productos" />
+                <div ref="loadMoreTrigger" style="height: 1px;"></div>
+                <div v-if="isLoadingMore" class="text-center py-2">
+                  <n-text depth="3">Cargando mas productos...</n-text>
+                </div>
+              </n-scrollbar>
+            </n-spin>
           </n-card>
         </n-space>
       </n-tab-pane>
@@ -191,7 +202,15 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed, onMounted } from "vue";
+import {
+  defineComponent,
+  ref,
+  computed,
+  onMounted,
+  onUnmounted,
+  nextTick,
+  watch,
+} from "vue";
 import { useMessage } from "naive-ui";
 import { useProductStore } from "@/store/modules/product";
 import { useOrderStore } from "@/store/modules/order";
@@ -222,6 +241,12 @@ export default defineComponent({
     const products = ref([]);
     const search = ref("");
     const selectedCategory = ref(null);
+    const pageLimit = 10;
+    const totalCount = ref(null);
+    const lastBatchCount = ref(0);
+    const isLoadingMore = ref(false);
+    const loadMoreTrigger = ref(null);
+    let scrollRoot = null;
 
     const scheduledMenus = ref([]);
     const showMenuModal = ref(false);
@@ -246,18 +271,110 @@ export default defineComponent({
     );
 
     const itemsList = computed(() => {
-      const list = products.value.filter((product) => {
+      const source = Array.isArray(products.value) ? products.value : [];
+      const list = source.filter((product) => {
         const searchTerm = search.value.toLowerCase();
         const productName = product.name.toLowerCase();
         const productPrice = parseFloat(product.prices).toFixed(2);
         return productName.includes(searchTerm) || productPrice.includes(searchTerm);
       });
 
-      if (products.value.every((product) => !!product.order_index)) {
+      if (source.every((product) => !!product.order_index)) {
         return list.sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
       }
       return list;
     });
+
+    const normalizePaginated = (payload) => {
+      if (Array.isArray(payload)) {
+        return {
+          count: payload.length,
+          results: payload,
+          next: null,
+          previous: null,
+        };
+      }
+      const results = Array.isArray(payload?.results) ? payload.results : [];
+      const count =
+        typeof payload?.count === "number" ? payload.count : results.length;
+      return {
+        count,
+        results,
+        next: payload?.next ?? null,
+        previous: payload?.previous ?? null,
+      };
+    };
+
+    const hasMoreProducts = computed(() => {
+      if (totalCount.value !== null) {
+        return products.value.length < totalCount.value;
+      }
+      return lastBatchCount.value !== 0;
+    });
+
+    const getScrollParent = (el) => {
+      let parent = el?.parentElement;
+      while (parent) {
+        const style = window.getComputedStyle(parent);
+        if (/(auto|scroll)/.test(style.overflowY)) return parent;
+        parent = parent.parentElement;
+      }
+      return null;
+    };
+
+    const getScrollRoot = () => {
+      if (loadMoreTrigger.value) {
+        const byClosest = loadMoreTrigger.value.closest(".n-scrollbar-container");
+        if (byClosest) return byClosest;
+        const parent = getScrollParent(loadMoreTrigger.value);
+        if (parent) return parent;
+      }
+      return null;
+    };
+
+    const scrollThreshold = 200;
+
+    const getScrollMetrics = () => {
+      if (scrollRoot && scrollRoot !== window) {
+        return {
+          scrollTop: scrollRoot.scrollTop,
+          clientHeight: scrollRoot.clientHeight,
+          scrollHeight: scrollRoot.scrollHeight,
+        };
+      }
+      const doc = document.documentElement;
+      return {
+        scrollTop: doc.scrollTop || window.pageYOffset,
+        clientHeight: window.innerHeight,
+        scrollHeight: doc.scrollHeight,
+      };
+    };
+
+    const handleScroll = () => {
+      if (isLoading.value || isLoadingMore.value) return;
+      if (!hasMoreProducts.value) return;
+      const { scrollTop, clientHeight, scrollHeight } = getScrollMetrics();
+      if (scrollTop + clientHeight >= scrollHeight - scrollThreshold) {
+        loadProducts(false);
+      }
+    };
+
+    const setupScrollListener = () => {
+      const root = getScrollRoot();
+      const nextRoot = root || window;
+      if (scrollRoot === nextRoot) return;
+      if (scrollRoot) {
+        scrollRoot.removeEventListener("scroll", handleScroll);
+      }
+      scrollRoot = nextRoot;
+      scrollRoot.addEventListener("scroll", handleScroll, { passive: true });
+    };
+
+    const teardownScrollListener = () => {
+      if (!scrollRoot) return;
+      scrollRoot.removeEventListener("scroll", handleScroll);
+      scrollRoot = null;
+    };
 
     const selectedCategoryTitle = computed(() => {
       return selectedCategory.value
@@ -269,28 +386,63 @@ export default defineComponent({
       return selectedCategory.value ? selectedCategory.value.id === categoryId : false;
     };
 
+    const loadProducts = async (reset = false) => {
+      if (!selectedCategory.value) return;
+      if (isLoading.value || isLoadingMore.value) return;
+      if (!reset && !hasMoreProducts.value) return;
+
+      if (reset) {
+        products.value = [];
+        totalCount.value = null;
+        lastBatchCount.value = 0;
+      }
+
+      const offset = products.value.length;
+      const isInitialLoad = reset || offset === 0;
+      if (isInitialLoad) {
+        isLoading.value = true;
+      } else {
+        isLoadingMore.value = true;
+      }
+
+      try {
+        const response = await getProductsByCategory(selectedCategory.value.id, {
+          limit: pageLimit,
+          offset,
+        });
+        if (response.status === 200) {
+          const { results, count } = normalizePaginated(response.data);
+          products.value = offset === 0 ? results : [...products.value, ...results];
+          lastBatchCount.value = results.length;
+          totalCount.value = results.length === 0 ? products.value.length : count;
+        }
+      } catch (error) {
+        console.error(error);
+        message.error("No se pudieron cargar los productos de la categor??a");
+      } finally {
+        isLoading.value = false;
+        isLoadingMore.value = false;
+      }
+    };
+
     const selectCategory = async (category) => {
       if (!category) return;
       selectedCategory.value = category;
       search.value = "";
-      isLoading.value = true;
-      try {
-        const response = await getProductsByCategory(category.id);
-        if (response.status === 200) {
-          products.value = response.data;
-        }
-      } catch (error) {
-        console.error(error);
-        message.error("No se pudieron cargar los productos de la categoría");
-      } finally {
-        isLoading.value = false;
-      }
+      await loadProducts(true);
+      await loadProducts(false);
+      await nextTick();
+      setupScrollListener();
     };
 
     const clearSelectedCategory = () => {
       selectedCategory.value = null;
       products.value = [];
+      totalCount.value = null;
+      lastBatchCount.value = 0;
+      isLoadingMore.value = false;
       search.value = "";
+      teardownScrollListener();
     };
 
     const handleSelectProduct = (product) => {
@@ -368,6 +520,16 @@ export default defineComponent({
       }
     };
 
+    watch(loadMoreTrigger, (value) => {
+      if (value) {
+        setupScrollListener();
+      }
+    });
+
+    onUnmounted(() => {
+      teardownScrollListener();
+    });
+
     onMounted(async () => {
       await settingsStore.initializeStore?.();
       await loadCategories();
@@ -402,6 +564,8 @@ export default defineComponent({
       canUsePrograms,
       selectedCategoryTitle,
       isCategorySelected,
+      isLoadingMore,
+      loadMoreTrigger,
     };
   },
 });

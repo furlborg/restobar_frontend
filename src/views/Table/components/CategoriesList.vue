@@ -1,75 +1,50 @@
 <template>
     <div id="CategoriesList">
         <n-tabs type="line" animated>
-            <n-tab-pane name="categorias" tab="Categorías">
-                <n-card title="Categorías" :bordered="false" class="h-100" content-class="overflow-auto">
-                    <n-scrollbar>
-                        <div>
-                            <n-list v-if="listType === 'list'" class="me-2">
-                                <n-list-item v-for="(category, index) in productStore.categories" :key="index">
-                                    <template #prefix>
-                                        <img
-                                            :src="getCategoryImage(category)"
-                                            alt=""
-                                            :width="category_settings.width_image_product"
-                                            :height="category_settings.height_image_product"
-                                        />
-                                    </template>
-                                    <n-thing>
-                                        <n-space vertical>
-                                            <n-space align="center">
-                                                <router-link
-                                                    class="text-decoration-none"
-                                                    :to="{
-                                                        name: 'CategoriesItems',
-                                                        params: { category: category.id },
-                                                    }"
-                                                >
-                                                    <n-text class="fs-4">{{ category.description }}</n-text>
-                                                </router-link>
-                                                <n-text class="fs-6" type="success">S/. 10.00</n-text>
-                                            </n-space>
-                                            <n-text depth="3">Explora los productos asociados a esta categoría.</n-text>
-                                        </n-space>
-                                    </n-thing>
-                                    <template #suffix>
-                                        <n-button type="info" text>
-                                            <v-icon name="md-addbox-round" scale="2" />
-                                        </n-button>
-                                    </template>
-                                </n-list-item>
-                            </n-list>
+            <n-tab-pane name="categorias" tab="Categorias">
+                <n-space vertical size="large">
+                    <n-card
+                        :bordered="false"
+                        title="Categorias disponibles"
+                        content-class="category-card overflow-auto"
+                    >
+                        <n-spin :show="!productStore.categories.length && isLoadingCategories">
+                            <n-empty
+                                v-if="!productStore.categories.length && !isLoadingCategories"
+                                description="No se encontraron categorias activas"
+                            />
                             <n-grid
-                                v-if="listType === 'grid'"
+                                v-else
                                 responsive="screen"
                                 cols="8 xs:8 s:12 m:12 l:16 xl:20 2xl:20"
-                                :x-gap="5"
-                                :y-gap="5"
+                                :x-gap="8"
+                                :y-gap="8"
                             >
-                                <n-gi :span="4" v-for="(category, index) in productStore.categories" :key="index">
-                                    <div class="item-zoom">
-                                        <router-link
-                                            class="text-decoration-none"
-                                            :to="{ name: 'CategoriesItems', params: { category: category.id } }"
-                                        >
-                                            <div class="category-container">
-                                                <img
-                                                    v-if="category_settings.use_image && categoryHasImage(category)"
-                                                    :src="category.image || category.image_url"
-                                                    alt=""
-                                                />
-                                                <div v-else class="fallback-box"></div>
-                                                <n-text class="category-text" :style="{ fontSize: category_settings.area_text_size + 'px' }">
-                                                    {{ category.description }}
-                                                </n-text>
-                                            </div>
-                                        </router-link>
+                                <n-gi :span="4" v-for="category in productStore.categories" :key="category.id">
+                                    <div
+                                        class="item-zoom"
+                                        role="button"
+                                        tabindex="0"
+                                        @click="goToCategory(category)"
+                                        @keyup.enter="goToCategory(category)"
+                                    >
+                                        <div class="category-container">
+                                            <img
+                                                v-if="category_settings.use_image && (category.image || category.image_url)"
+                                                :src="category.image || category.image_url"
+                                                alt="Imagen de categoria"
+                                            />
+                                            <div v-else class="fallback-box"></div>
+                                            <n-text class="category-text" :style="{ fontSize: category_settings.area_text_size + 'px' }">
+                                                {{ category.description }}
+                                            </n-text>
+                                        </div>
                                     </div>
                                 </n-gi>
                             </n-grid>
-                        </div>
-                    </n-scrollbar>
-                </n-card>
+                        </n-spin>
+                    </n-card>
+                </n-space>
             </n-tab-pane>
 
             <n-tab-pane v-if="canUsePrograms" name="menu" tab="Menú">
@@ -161,12 +136,12 @@
 
 <script>
 import { defineComponent, ref, onMounted, computed } from "vue";
+import { useRouter } from "vue-router";
 import { useProductStore } from "@/store/modules/product";
 import { useSettingsStore } from "@/store/modules/settings";
 import { getMenuToday, getComboCategories, getCombos } from "@/api/modules/products";
 import MenuProductModal from "./MenuProductModal.vue";
 import ComboProductModal from "./ComboProductModal.vue";
-import categoryFallback from "@/assets/images/category-bg.jpg";
 
 export default defineComponent({
     name: "CategoriesList",
@@ -177,7 +152,7 @@ export default defineComponent({
     setup() {
         const productStore = useProductStore();
         const settingsStore = useSettingsStore();
-        const listType = ref("grid");
+        const router = useRouter();
         const scheduledMenus = ref([]);
         const showMenuModal = ref(false);
         const selectedMenu = ref(null);
@@ -187,6 +162,7 @@ export default defineComponent({
         const loadingCombos = ref(false);
         const showComboModal = ref(false);
         const selectedCombo = ref(null);
+        const isLoadingCategories = ref(false);
 
         const category_settings = computed(() => ({
             use_image: false,
@@ -201,15 +177,9 @@ export default defineComponent({
             return !(orderSettings && orderSettings.order_by_customer);
         });
 
-        const getCategoryImage = (category) => {
-            if (category_settings.value.use_image && categoryHasImage(category)) {
-                return category.image || category.image_url;
-            }
-            return categoryFallback;
-        };
-
-        const categoryHasImage = (category) => {
-            return Boolean(category && (category.image || category.image_url));
+        const goToCategory = (category) => {
+            if (!category) return;
+            router.push({ name: "CategoriesItems", params: { category: category.id } });
         };
 
         const handleOpenMenuModal = async (menu) => {
@@ -254,14 +224,18 @@ export default defineComponent({
         };
 
         onMounted(async () => {
-            await productStore.refreshCategories();
+            isLoadingCategories.value = true;
+            try {
+                await productStore.refreshCategories();
+            } finally {
+                isLoadingCategories.value = false;
+            }
             const menuData = await getMenuToday();
             scheduledMenus.value = menuData.data || [];
             await loadCombos();
         });
 
         return {
-            listType,
             productStore,
             scheduledMenus,
             showMenuModal,
@@ -275,9 +249,9 @@ export default defineComponent({
             handleOpenComboModal,
             getCombosForCategory,
             category_settings,
-            getCategoryImage,
-            categoryHasImage,
             canUsePrograms,
+            isLoadingCategories,
+            goToCategory,
         };
     },
 });
@@ -288,15 +262,26 @@ export default defineComponent({
     height: 100%;
 }
 
-.item-zoom {
-    position: relative;
-    border: 1px solid #333;
-    overflow: hidden;
-    box-sizing: border-box;
-    cursor: pointer;
+.category-card {
+    min-height: 200px;
 }
 
-.item-zoom img {
+.item-zoom {
+    position: relative;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.3s ease, transform 0.3s ease;
+}
+
+.item-zoom.is-selected {
+    border-color: #18a058;
+    transform: translateY(-2px);
+}
+
+.item-zoom img,
+.category-container img {
     width: 100%;
     height: 130px;
     object-fit: cover;
@@ -305,7 +290,7 @@ export default defineComponent({
 }
 
 .item-zoom:hover img {
-    transform: scale(1.1);
+    transform: scale(1.05);
     filter: grayscale(0%);
 }
 
@@ -318,13 +303,13 @@ export default defineComponent({
 .fallback-box {
     width: 100%;
     height: 100%;
-    background-color: #e0e0e0;
+    background: #f3f3f3;
     transition: background-color 0.3s ease, transform 0.3s ease;
 }
 
 .item-zoom:hover .fallback-box {
-    background-color: #9ae2b8;
-    transform: scale(1.05);
+    background-color: #d5f3e5;
+    transform: scale(1.02);
 }
 
 .category-text {
@@ -332,11 +317,11 @@ export default defineComponent({
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-weight: 900;
-    color: #000;
+    font-weight: 700;
+    color: #2b2b2b;
     text-align: center;
     white-space: normal;
-    word-break: keep-all;
+    word-break: break-word;
     pointer-events: none;
 }
 </style>
