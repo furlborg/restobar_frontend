@@ -158,6 +158,7 @@ export async function createTillDetails(detail) {
     payment_method: detail.payment_method,
     amount: detail.amount,
     concept: detail.concept,
+    operation: detail.operation,
   });
 }
 

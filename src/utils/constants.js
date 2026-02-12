@@ -847,6 +847,15 @@ export const createMovementsColumns = ({
       },
     },
     {
+      title: "Operación",
+      key: "operation",
+      align: "center",
+      width: 200,
+      render(rowData) {
+        return rowData?.operation|| ''; 
+      }
+    },
+    {
       title: "Ingreso",
       key: "income",
       align: "center",
