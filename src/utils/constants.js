@@ -246,7 +246,7 @@ export const createCustomerColumns = ({
           },
           {
             default: () => text,
-          }
+          },
         );
       },
     },
@@ -267,7 +267,7 @@ export const createCustomerColumns = ({
               disabled: !userStore.hasPermission("change_customer"),
               onClick: () => editCustomer(row),
             },
-            renderIcon("la-user-edit-solid")
+            renderIcon("la-user-edit-solid"),
           ),
           settingsStore.business_settings?.["sale"]?.["customer_credits"] &&
             h(
@@ -280,7 +280,7 @@ export const createCustomerColumns = ({
                 // disabled: !userStore.hasPermission("change_customer"),
                 onClick: () => showCredits(row),
               },
-              renderIcon("bi-eye")
+              renderIcon("bi-eye"),
             ),
           h(
             NButton,
@@ -293,7 +293,7 @@ export const createCustomerColumns = ({
             },
             row.is_disabled
               ? renderIcon("la-user-check-solid")
-              : renderIcon("la-user-times-solid")
+              : renderIcon("la-user-times-solid"),
           ),
         ];
       },
@@ -404,7 +404,7 @@ export const createUserColumns = ({
           },
           {
             default: () => text,
-          }
+          },
         );
       },
     },
@@ -424,7 +424,7 @@ export const createUserColumns = ({
                 secondary: true,
                 onClick: () => editUser(row),
               },
-              renderIcon("la-user-edit-solid")
+              renderIcon("la-user-edit-solid"),
             ),
           userStore.hasPermission("change_permissions") &&
             h(
@@ -437,7 +437,7 @@ export const createUserColumns = ({
                 secondary: true,
                 onClick: () => changePermissions(row),
               },
-              renderIcon("md-factcheck-twotone")
+              renderIcon("md-factcheck-twotone"),
             ),
           userStore.hasPermission("change_passwords") &&
             h(
@@ -449,7 +449,7 @@ export const createUserColumns = ({
                 secondary: true,
                 onClick: () => changePassword(row),
               },
-              renderIcon("ri-rotate-lock-fill")
+              renderIcon("ri-rotate-lock-fill"),
             ),
           userStore.hasPermission("delete_user") &&
             h(
@@ -460,7 +460,7 @@ export const createUserColumns = ({
                 secondary: true,
                 onClick: () => deleteUser(row),
               },
-              renderIcon("la-user-slash-solid")
+              renderIcon("la-user-slash-solid"),
             ),
         ];
       },
@@ -568,7 +568,7 @@ export const createTillColumns = ({
           },
           {
             default: () => text,
-          }
+          },
         );
       },
     },
@@ -590,7 +590,7 @@ export const createTillColumns = ({
                 secondary: true,
                 onClick: () => viewDetails(row),
               },
-              renderIcon("bi-eye")
+              renderIcon("bi-eye"),
             ),
           !row.status &&
             h(
@@ -768,9 +768,9 @@ export const createTillColumns = ({
                       type: "warning",
                       secondary: true,
                     },
-                    renderIcon("md-insertchart-outlined")
+                    renderIcon("md-insertchart-outlined"),
                   ),
-              }
+              },
             ),
           userStore.hasPermission("delete_till") &&
             h(
@@ -782,7 +782,7 @@ export const createTillColumns = ({
                 disabled: !row.status,
                 onClick: () => closeTill(row),
               },
-              renderIcon("md-lock-round")
+              renderIcon("md-lock-round"),
             ),
         ];
       },
@@ -824,8 +824,9 @@ export const movementRules = {
 
 export const createMovementsColumns = ({
   hasSells,
-  editMovement,
+  printMovement,
   deleteMovement,
+  editMovement,
 }) => {
   const cols = [
     {
@@ -834,7 +835,7 @@ export const createMovementsColumns = ({
       align: "center",
       width: 100,
       render(rowData) {
-        return rowData?.document || 'N/A';
+        return rowData?.document || "N/A";
       },
     },
     {
@@ -843,7 +844,7 @@ export const createMovementsColumns = ({
       align: "center",
       width: 200,
       render(rowData) {
-        return rowData?.description || 'N/A';
+        return rowData?.description || "N/A";
       },
     },
     {
@@ -852,8 +853,8 @@ export const createMovementsColumns = ({
       align: "center",
       width: 200,
       render(rowData) {
-        return rowData?.operation|| ''; 
-      }
+        return rowData?.operation || "";
+      },
     },
     {
       title: "Ingreso",
@@ -862,7 +863,7 @@ export const createMovementsColumns = ({
       width: 100,
       render(rowData) {
         if (!rowData) return "----";
-        
+
         let concept_type = tillStore.getConceptType(rowData.concept);
         return concept_type === "0" ? rowData.amount : "----";
       },
@@ -874,7 +875,7 @@ export const createMovementsColumns = ({
       width: 100,
       render(rowData) {
         if (!rowData) return "----";
-        
+
         let concept_type = tillStore.getConceptType(rowData.concept);
         return concept_type === "1" ? rowData.amount : "----";
       },
@@ -885,8 +886,8 @@ export const createMovementsColumns = ({
       align: "center",
       width: 225,
       render(rowData) {
-        if (!rowData) return 'N/A';
-        
+        if (!rowData) return "N/A";
+
         return tillStore.getConceptDescription(rowData.concept);
       },
     },
@@ -906,10 +907,10 @@ export const createMovementsColumns = ({
             },
             {
               default: () => "N/A",
-            }
+            },
           );
         }
-        
+
         let concept_type = tillStore.getConceptType(rowData.concept);
 
         return h(
@@ -921,7 +922,7 @@ export const createMovementsColumns = ({
           },
           {
             default: () => (concept_type === "0" ? "INGRESO" : "EGRESO"),
-          }
+          },
         );
       },
     },
@@ -931,7 +932,7 @@ export const createMovementsColumns = ({
       align: "center",
       width: 200,
       render(rowData) {
-        return rowData?.created || 'N/A';
+        return rowData?.created || "N/A";
       },
     },
     {
@@ -941,15 +942,23 @@ export const createMovementsColumns = ({
       width: 125,
       render(rowData) {
         if (!rowData) {
-          return h(NSpace, {}, {
-            default: () => [
-              h(NButton, {
-                size: "small",
-                type: "default",
-                disabled: true,
-              }, { default: () => "N/A" })
-            ]
-          });
+          return h(
+            NSpace,
+            {},
+            {
+              default: () => [
+                h(
+                  NButton,
+                  {
+                    size: "small",
+                    type: "default",
+                    disabled: true,
+                  },
+                  { default: () => "N/A" },
+                ),
+              ],
+            },
+          );
         }
 
         return [
@@ -960,9 +969,9 @@ export const createMovementsColumns = ({
               size: "small",
               type: "info",
               secondary: true,
-              onClick: () => editMovement(rowData),
+              onClick: () => printMovement(rowData),
             },
-            renderIcon("md-print-round")
+            renderIcon("md-print-round"),
           ),
           userStore.hasPermission("null_tilldetails")
             ? !(
@@ -986,17 +995,29 @@ export const createMovementsColumns = ({
                         : rowData.concept === 1 && hasSells(),
                     onClick: () => deleteMovement(rowData),
                   },
-                  renderIcon("md-notinterested-round")
+                  renderIcon("md-notinterested-round"),
                 )
               : null
             : null,
+          h(
+            NButton,
+            {
+              class: "me-2",
+              size: "small",
+              type: "warning",
+              secondary: true,
+              onClick: () => editMovement(rowData),
+            },
+            renderIcon("md-edit"),
+          ),
         ];
       },
     },
   ];
-  
-  const hasClosureCashTotal = settingsStore.business_settings?.['till']?.closure_cash_total;
-  
+
+  const hasClosureCashTotal =
+    settingsStore.business_settings?.["till"]?.closure_cash_total;
+
   if (!hasClosureCashTotal) {
     cols.splice(2, 0, {
       title: "Método Pago",
@@ -1004,8 +1025,8 @@ export const createMovementsColumns = ({
       align: "center",
       width: 200,
       render(rowData) {
-        if (!rowData) return 'N/A';
-        
+        if (!rowData) return "N/A";
+
         return saleStore.getPaymentMethodDescription(rowData.payment_method);
       },
     });
@@ -1090,7 +1111,7 @@ export const createTillDetailsColumns = () => {
           },
           {
             default: () => (concept_type === "0" ? "INGRESO" : "EGRESO"),
-          }
+          },
         );
       },
     },
@@ -1155,7 +1176,7 @@ export const createSuppliersColumns = ({ editSupplier, deleteSupplier }) => {
           },
           {
             default: () => text,
-          }
+          },
         );
       },
     },
@@ -1172,7 +1193,7 @@ export const createSuppliersColumns = ({ editSupplier, deleteSupplier }) => {
               type: "warning",
               onClick: () => editSupplier(row),
             },
-            renderIcon("la-user-edit-solid")
+            renderIcon("la-user-edit-solid"),
           ),
           h(
             NButton,
@@ -1181,7 +1202,7 @@ export const createSuppliersColumns = ({ editSupplier, deleteSupplier }) => {
               type: row.state ? "error" : "success",
               onClick: () => deleteSupplier(row),
             },
-            renderIcon("la-user-slash-solid")
+            renderIcon("la-user-slash-solid"),
           ),
         ];
       },
@@ -1230,7 +1251,7 @@ export const createSuppliesColumns = ({ editSupplies, deleteSupplies }) => {
                   type: "success",
                   circle: true,
                 },
-                renderIcon("md-search-round")
+                renderIcon("md-search-round"),
               ),
             default: () =>
               h(
@@ -1241,9 +1262,9 @@ export const createSuppliesColumns = ({ editSupplies, deleteSupplies }) => {
                     row.amount.map((v) => {
                       return [h(NText, {}, { default: () => v.amount })];
                     }),
-                }
+                },
               ),
-          }
+          },
         );
       },
     },
@@ -1269,7 +1290,7 @@ export const createSuppliesColumns = ({ editSupplies, deleteSupplies }) => {
           },
           {
             default: () => text,
-          }
+          },
         );
       },
     },
@@ -1288,7 +1309,7 @@ export const createSuppliesColumns = ({ editSupplies, deleteSupplies }) => {
                 secondary: true,
                 onClick: () => editSupplies(row),
               },
-              renderIcon("md-edit")
+              renderIcon("md-edit"),
             ),
           userStore.hasPermission("delete_supplies") &&
             h(
@@ -1299,7 +1320,7 @@ export const createSuppliesColumns = ({ editSupplies, deleteSupplies }) => {
                 secondary: true,
                 onClick: () => deleteSupplies(row),
               },
-              renderIcon("md-delete")
+              renderIcon("md-delete"),
             ),
         ];
       },
@@ -1393,7 +1414,7 @@ export const saleRules = {
 const verifyDate = (date) =>
   differenceInDays(
     Date.now(),
-    parse(date.split(" ")[0], "dd/MM/yyyy", new Date())
+    parse(date.split(" ")[0], "dd/MM/yyyy", new Date()),
   ) > 5;
 
 export const createSaleColumns = ({
@@ -1443,7 +1464,7 @@ export const createSaleColumns = ({
             },
             {
               default: () => `Reemplaza ${target}`,
-            }
+            },
           );
           return reference
             ? h(
@@ -1454,7 +1475,7 @@ export const createSaleColumns = ({
                 {
                   default: () => reference,
                   trigger: () => tag,
-                }
+                },
               )
             : tag;
         }
@@ -1468,7 +1489,7 @@ export const createSaleColumns = ({
             },
             {
               default: () => `Reemplazado por ${row.recovery_of_document}`,
-            }
+            },
           );
           return reference
             ? h(
@@ -1479,7 +1500,7 @@ export const createSaleColumns = ({
                 {
                   default: () => reference,
                   trigger: () => tag,
-                }
+                },
               )
             : tag;
         }
@@ -1490,7 +1511,7 @@ export const createSaleColumns = ({
           },
           {
             default: () => "-",
-          }
+          },
         );
       },
     },
@@ -1577,9 +1598,9 @@ export const createSaleColumns = ({
                 },
                 {
                   default: () => text,
-                }
+                },
               ),
-          }
+          },
         );
       },
     },
@@ -1600,7 +1621,7 @@ export const createSaleColumns = ({
                   disabled: row.status === "E" || row.status === "A",
                   onClick: () => sendSale(row),
                 },
-                renderIcon("ri-send-plane-fill")
+                renderIcon("ri-send-plane-fill"),
               )
             : null,
           userStore.hasPermission("delete_sale") &&
@@ -1617,7 +1638,7 @@ export const createSaleColumns = ({
                     : row.status === "A",
                 onClick: () => nullifySale(row),
               },
-              renderIcon("md-cancel-twotone")
+              renderIcon("md-cancel-twotone"),
             ),
           userStore.hasPermission("change_sale") &&
             h(
@@ -1633,7 +1654,7 @@ export const createSaleColumns = ({
                     : !["N", "X"].includes(row.status),
                 onClick: () => updateSale(row),
               },
-              renderIcon("gi-card-exchange")
+              renderIcon("gi-card-exchange"),
             ),
           h(
             NButton,
@@ -1643,7 +1664,7 @@ export const createSaleColumns = ({
               secondary: true,
               onClick: () => printSale(row),
             },
-            renderIcon("md-print-round")
+            renderIcon("md-print-round"),
           ),
         ];
       },
@@ -1719,9 +1740,9 @@ export const createTillSalesColumns = () => {
                 },
                 {
                   default: () => text,
-                }
+                },
               ),
-          }
+          },
         );
       },
     } /* {
@@ -1878,7 +1899,7 @@ export const createOrderColumns = ({
           },
           {
             default: () => text,
-          }
+          },
         );
       },
     },
@@ -1924,9 +1945,9 @@ export const createOrderColumns = ({
                 },
                 {
                   default: () => text,
-                }
+                },
               ),
-          }
+          },
         );
       },
     },
@@ -1946,7 +1967,7 @@ export const createOrderColumns = ({
               secondary: true,
               onClick: () => showDetails(row),
             },
-            renderIcon("md-feed-round")
+            renderIcon("md-feed-round"),
           ),
           row?.["is_delivery"]
             ? h(
@@ -1958,7 +1979,7 @@ export const createOrderColumns = ({
                   secondary: true,
                   onClick: () => showDeliveryInfo(row),
                 },
-                renderIcon("md-deliverydining-round")
+                renderIcon("md-deliverydining-round"),
               )
             : null,
           userStore.hasPermission("charge_order") && !row.table
@@ -1972,7 +1993,7 @@ export const createOrderColumns = ({
                   disabled: row.status !== "1",
                   onClick: () => payDeliver(row),
                 },
-                renderIcon("fa-dollar-sign")
+                renderIcon("fa-dollar-sign"),
               )
             : null,
           h(
@@ -1984,7 +2005,7 @@ export const createOrderColumns = ({
               secondary: true,
               onClick: () => printOrder(row),
             },
-            renderIcon("md-print-round")
+            renderIcon("md-print-round"),
           ),
           userStore.hasPermission("delete_order") &&
             h(
@@ -1997,7 +2018,7 @@ export const createOrderColumns = ({
                 disabled: row.status !== "1",
                 onClick: () => nullifyOrder(row),
               },
-              renderIcon("md-cancel-twotone")
+              renderIcon("md-cancel-twotone"),
             ),
         ];
       },
@@ -2081,7 +2102,7 @@ export const createTillOrderColumns = ({ showDetails, showDeliveryInfo }) => {
           },
           {
             default: () => text,
-          }
+          },
         );
       },
     },
@@ -2127,9 +2148,9 @@ export const createTillOrderColumns = ({ showDetails, showDeliveryInfo }) => {
                 },
                 {
                   default: () => text,
-                }
+                },
               ),
-          }
+          },
         );
       },
     },
@@ -2149,7 +2170,7 @@ export const createTillOrderColumns = ({ showDetails, showDeliveryInfo }) => {
               secondary: true,
               onClick: () => showDetails(row),
             },
-            renderIcon("md-feed-round")
+            renderIcon("md-feed-round"),
           ),
           h(
             NButton,
@@ -2161,7 +2182,7 @@ export const createTillOrderColumns = ({ showDetails, showDeliveryInfo }) => {
               disabled: !row?.["is_delivery"],
               onClick: () => showDeliveryInfo(row),
             },
-            renderIcon("md-deliverydining-round")
+            renderIcon("md-deliverydining-round"),
           ),
         ];
       },
@@ -2254,8 +2275,10 @@ export const permissionsLabels = {
   delete_productphase: "Eliminar Fase de Producto",
   view_productphase: "Ver Fase de Producto",
   add_productphaseavailableday: "Agregar Días Disponibles de Fase de Producto",
-  change_productphaseavailableday: "Editar Días Disponibles de Fase de Producto",
-  delete_productphaseavailableday: "Eliminar Días Disponibles de Fase de Producto",
+  change_productphaseavailableday:
+    "Editar Días Disponibles de Fase de Producto",
+  delete_productphaseavailableday:
+    "Eliminar Días Disponibles de Fase de Producto",
   view_productphaseavailableday: "Ver Días Disponibles de Fase de Producto",
   add_inventoryconcept: "Agregar Concepto de Inventario",
   change_inventoryconcept: "Editar Concepto de Inventario",

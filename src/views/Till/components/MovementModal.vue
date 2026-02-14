@@ -3,7 +3,9 @@
     'w-100': genericsStore.device === 'mobile',
     'w-50': genericsStore.device === 'tablet',
     'w-25': genericsStore.device === 'desktop',
-  }" preset="card" :title="movementType === '0' ? 'Registrar Ingreso' : 'Registrar Egreso'" :show="show"
+  }" preset="card" :title="detailId
+    ? (movementType === '0' ? 'Editar Ingreso' : 'Editar Egreso')
+    : (movementType === '0' ? 'Registrar Ingreso' : 'Registrar Egreso')" :show="show"
     :on-close="() => ($emit('update:show'), cleanDetail())">
     <n-spin :show="isLoading">
       <n-form :rules="extendedMovementRules" :model="detail" ref="detailRef">
@@ -17,7 +19,9 @@
                 ? true
                 : false
                 " @click="
-                  !concept.id ? performCreateConcept() : performUpdateConcept()
+                  !concept.id
+                    ? performCreateConcept(movementType)
+                    : performUpdateConcept()
                   ">
                 <v-icon name="md-save-round" />
               </n-button>
@@ -47,7 +51,7 @@
                 conceptForm = true;
               concept.id = detail.concept;
               concept.description = tillStore.getConceptDescription(
-                detail.concept
+                detail.concept,
               );
               ">
                 <v-icon name="ri-edit-fill" />
@@ -93,7 +97,7 @@
                 paymentForm = true;
               payment.id = detail.payment_method;
               payment.description = saleStore.getPaymentMethodDescription(
-                detail.payment_method
+                detail.payment_method,
               );
               ">
                 <v-icon name="ri-edit-fill" />
@@ -113,27 +117,20 @@
       </n-form>
     </n-spin>
     <template #action>
-      <n-button type="success" :loading="isLoading" :disabled="isLoading" block @click="performCreateDetail">Registrar
+      <n-button type="success" :loading="isLoading" :disabled="isLoading" block @click="handleSaveDetail">
+        {{ detailId ? 'Actualizar' : 'Registrar' }}
         {{ movementType === "0" ? "Ingreso" : "Egreso" }}</n-button>
     </template>
   </n-modal>
 </template>
 
 <script>
-import { computed, defineComponent, ref, toRefs } from "vue";
-import { useMessage } from "naive-ui";
+import { defineComponent, watch } from "vue";
+
 import { useUserStore } from "@/store/modules/user";
 import { useGenericsStore } from "@/store/modules/generics";
-import { useTillStore } from "@/store/modules/till";
-import { useSaleStore } from "@/store/modules/sale";
 import { isLetter, isNumber, isLetterOrNumber } from "@/utils";
-import {
-  createTillDetails,
-  createConcept,
-  updateConcept,
-} from "@/api/modules/tills";
-import { createPaymentMethod, updatePaymentMethod } from "@/api/modules/sales";
-import { movementRules } from "@/utils/constants";
+import { useTillDetail } from "../composables/useTillDetail";
 
 export default defineComponent({
   name: "TillModal",
@@ -147,160 +144,54 @@ export default defineComponent({
       type: String,
       default: null,
     },
+    detailId: {
+      type: Number,
+      default: null
+    }
   },
   setup(props, { emit }) {
-    const { show, movementType } = toRefs(props);
     const userStore = useUserStore();
     const genericsStore = useGenericsStore();
-    const message = useMessage();
-    const tillStore = useTillStore();
-    const saleStore = useSaleStore();
 
-    const isLoading = ref(false);
+    const tillDetail = useTillDetail();
 
-    const detailRef = ref(null);
+    const {
+      detail,
+      cleanDetail,
+      isLoading,
+      detailRef,
+      performCreateDetail,
+      tillStore,
+      extendedMovementRules,
+      performCreateConcept,
+      performUpdateConcept,
+      performCreatePayment,
+      performUpdatePayment,
+      concept,
+      conceptForm,
+      payment,
+      paymentForm,
+      saleStore,
+      performUpdateDetail,
+      detailId,
+      performFindDetailById,
+    } = tillDetail;
 
-    const detail = ref({
-      till: tillStore.currentTillID,
-      document: "",
-      description: "",
-      payment_method: null,
-      amount: 0.0,
-      concept: null,
-      operation: ""
-    });
-
-    const cleanDetail = () => {
-      detail.value = {
-        till: tillStore.currentTillID,
-        document: "",
-        description: "",
-        payment_method: null,
-        amount: 0.0,
-        concept: null,
-        operation: ""
-      };
+    const handleSaveDetail = () => {
+      if (detailId.value) {
+        performUpdateDetail(() => { emit("on-success"); }, () => emit("update:show", false));
+      } else {
+        performCreateDetail(() => emit("on-success"));
+      }
     };
 
-    const extendedMovementRules = computed(() => ({
-      ...movementRules,
-      operation: detail.value.payment_method !== 1 ? {
-        required: true,
-        message: 'Número de operación es requerido',
-        trigger: ['blur', 'input'],
-      } : {}
-    }));
-
-    const performCreateDetail = () => {
-      detailRef.value.validate(async (errors) => {
-        if (!errors) {
-          isLoading.value = true;
-          await createTillDetails(detail.value)
-            .then((response) => {
-              if (response.status === 201) {
-                cleanDetail();
-                emit("on-success");
-              }
-            })
-            .catch((error) => {
-              console.error(error.response.data);
-            })
-            .finally(() => {
-              isLoading.value = false;
-            });
-        } else {
-          message.error("Datos incorrectos");
-        }
-      });
-    };
-
-    const conceptForm = ref(false);
-
-    const concept = ref({
-      id: null,
-      description: null,
-      concept_type: movementType.value,
-    });
-
-    const performCreateConcept = async () => {
-      concept.value.concept_type = movementType.value;
-      await createConcept(concept.value)
-        .then((response) => {
-          if (response.status === 201) {
-            tillStore.refreshConcepts().then(() => {
-              detail.value.concept = tillStore.getConceptID(
-                concept.value.description
-              );
-            });
-          }
-        })
-        .catch((error) => {
-          console.error(error);
-
-        })
-        .finally(() => {
-          conceptForm.value = false;
-        });
-    };
-
-    const performUpdateConcept = async () => {
-      await updateConcept(concept.value.id, concept.value)
-        .then((response) => {
-          if (response.status === 202) {
-            tillStore.refreshConcepts();
-          }
-        })
-        .catch((error) => {
-          console.error(error);
-
-        })
-        .finally(() => {
-          conceptForm.value = false;
-        });
-    };
-
-    const paymentForm = ref(false);
-
-    const payment = ref({
-      id: null,
-      description: null,
-    });
-
-    const performCreatePayment = async () => {
-      await createPaymentMethod(payment.value)
-        .then((response) => {
-          if (response.status === 201) {
-            saleStore.refreshPaymentMethods().then(() => {
-              detail.value.payment_method = saleStore.getPaymentMethodID(
-                payment.value.description
-              );
-            });
-          }
-        })
-        .catch((error) => {
-          console.error(error);
-
-        })
-        .finally(() => {
-          paymentForm.value = false;
-        });
-    };
-
-    const performUpdatePayment = async () => {
-      await updatePaymentMethod(payment.value.id, payment.value)
-        .then((response) => {
-          if (response.status === 202) {
-            saleStore.refreshPaymentMethods();
-          }
-        })
-        .catch((error) => {
-          console.error(error);
-
-        })
-        .finally(() => {
-          paymentForm.value = false;
-        });
-    };
+    watch(() => props.detailId, (newId) => {
+      if (newId) { performFindDetailById(newId) }
+      else {
+        detailId.value = null;
+        cleanDetail();
+      }
+    }, { immediate: true })
 
     return {
       userStore,
@@ -323,7 +214,8 @@ export default defineComponent({
       payment,
       performCreatePayment,
       performUpdatePayment,
-      extendedMovementRules
+      extendedMovementRules,
+      handleSaveDetail,
     };
   },
 });

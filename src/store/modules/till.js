@@ -58,7 +58,7 @@ export const useTillStore = defineStore("till", {
     },
     getConceptID(description) {
       const concept = this.concepts.find(
-        (concept) => concept.description === description
+        (concept) => concept.description === description,
       );
       if (concept) {
         return concept.id;

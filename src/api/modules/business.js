@@ -36,6 +36,12 @@ export async function retrieveBusinessSettings() {
   return await http.get("business/business_settings/");
 }
 
+export async function validateGeneralPass(pass) {
+  return await http.post("business/validate_pass/", {
+    pass: pass,
+  });
+}
+
 export async function updateBusinessSettings(business_settings) {
   return await http.put("business/business_settings/", {
     qz_config: business_settings.qz_config,

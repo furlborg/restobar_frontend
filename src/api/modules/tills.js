@@ -162,12 +162,15 @@ export async function createTillDetails(detail) {
   });
 }
 
-export async function updateTillDetails(idTill, till) {
-  return await http.patch(`till_details/${idTill}/`, {
-    closing_responsable: till.closing_responsable,
-    closing_amount: till.closing_amount,
-    closing_observations: till.closing_observations,
-    status: false,
+export async function updateTillDetails(idTillDetail, detail) {
+  return await http.put(`till_details/${idTillDetail}/`, {
+    till: detail.till,
+    document: detail.document,
+    description: detail.description,
+    payment_method: detail.payment_method,
+    amount: detail.amount,
+    concept: detail.concept,
+    operation: detail.operation,
   });
 }
 

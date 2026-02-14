@@ -9,7 +9,7 @@
               <n-text class="fs-5">Ingresos</n-text>
             </n-space>
             <n-button v-if="userStore.hasPermission('make_income_details')" type="success" tertiary circle
-              @click="((movementType = '0'), (showModal = true))">
+              @click="((movementType = '0'), (showModal = true), (detailId = null))">
               <v-icon name="bi-pencil-square" scale="1.25" />
             </n-button>
           </n-space>
@@ -26,7 +26,7 @@
               <n-text class="fs-5">Egresos</n-text>
             </n-space>
             <n-button v-if="userStore.hasPermission('make_outcome_details')" type="error" tertiary circle
-              @click="((movementType = '1'), (showModal = true))">
+              @click="((movementType = '1'), (showModal = true), (detailId = null))">
               <v-icon name="bi-pencil-square" scale="1.25" />
             </n-button>
           </n-space>
@@ -102,9 +102,6 @@
               <n-select v-model:value="filterParams.payment_method" placeholder=""
                 :options="saleStore.getPaymentMethodsOptions" clearable />
             </n-form-item-gi>
-            <!-- <n-form-item-gi label="Sucursal" :span="3">
-              <n-select clearable />
-            </n-form-item-gi> -->
             <n-form-item-gi :span="3">
               <n-button type="info" secondary @click="performFilter">Buscar</n-button>
             </n-form-item-gi>
@@ -114,8 +111,8 @@
       <n-data-table class="mt-2" :columns="tableColumns" :data="movements" :loading="isLoading"
         :pagination="pagination" />
     </n-card>
-    <movement-modal v-model:show="showModal" :movement-type="movementType" @update:show="onCloseModal"
-      @on-success="onSuccess" />
+    <movement-modal v-model:show="showModal" :movement-type="movementType" :detailId="detailId"
+      @update:show="onCloseModal" @on-success="onSuccess" />
   </div>
 </template>
 
@@ -156,6 +153,7 @@ export default defineComponent({
     const showFilters = ref(false);
     const isLoading = ref(false);
     const movements = ref([]);
+    const detailId = ref(null);
     const filterParams = ref({
       document: null,
       description: null,
@@ -276,13 +274,14 @@ export default defineComponent({
     });
 
     const onCloseModal = () => {
-      // idProduct.value = 0
+      detailId.value = null;
     };
 
     const onSuccess = async () => {
       showModal.value = false;
       await loadMovements();
       onCloseModal();
+      detailId.value = null;
     };
 
     return {
@@ -316,7 +315,7 @@ export default defineComponent({
             (movement) => movement.concept !== 1 && movement.concept !== 7,
           );
         },
-        editMovement(rowData) {
+        printMovement(rowData) {
           let infoTikect = [];
 
           let info = {
@@ -342,8 +341,8 @@ export default defineComponent({
                 [
                   {
                     content: `RECIBO DE ${tillStore.getConceptType(rowData.concept) === "0"
-                        ? "INGRESO"
-                        : "EGRESO"
+                      ? "INGRESO"
+                      : "EGRESO"
                       }`,
                     styles: {
                       fontStyle: "bold",
@@ -426,7 +425,14 @@ export default defineComponent({
             },
           });
         },
+        editMovement(rowData) {
+          const concept_type = tillStore.getConceptType(rowData.concept);
+          detailId.value = rowData.id;
+          movementType.value = concept_type;
+          showModal.value = true;
+        }
       }),
+      detailId,
     };
   },
 });
