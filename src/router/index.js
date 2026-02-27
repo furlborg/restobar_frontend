@@ -25,24 +25,17 @@ export const routes = [
         meta: {
           requiredPerm: "view_customer",
         },
-        component: () =>
-          import(
-            /* webpackChunkName: "customer" */ "@/views/Customer/index.vue"
-          ),
+        component: () => import("@/views/Customer/index.vue"),
       },
       {
         path: "/birthday",
         name: "Cums",
-        component: () =>
-          import(/* webpackChunkName: "customer" */ "@/views/Cums/index.vue"),
+        component: () => import("@/views/Cums/index.vue"),
       },
       {
         path: "/anulate",
         name: "Anulate",
-        component: () =>
-          import(
-            /* webpackChunkName: "customer" */ "@/views/Anulate/ViewAnulate.vue"
-          ),
+        component: () => import("@/views/Anulate/ViewAnulate.vue"),
       },
       {
         path: "/orders",
@@ -50,8 +43,7 @@ export const routes = [
         meta: {
           requiredPerm: "view_order",
         },
-        component: () =>
-          import(/* webpackChunkName: "order" */ "@/views/Order/index.vue"),
+        component: () => import("@/views/Order/index.vue"),
       },
       {
         path: "/sales",
@@ -59,8 +51,7 @@ export const routes = [
         meta: {
           requiredPerm: "view_sale",
         },
-        component: () =>
-          import(/* webpackChunkName: "sale" */ "@/views/Sale/index.vue"),
+        component: () => import("@/views/Sale/index.vue"),
       },
       {
         path: "/menus",
@@ -68,8 +59,7 @@ export const routes = [
         meta: {
           requiredPerm: "view_menu",
         },
-        component: () =>
-          import(/* webpackChunkName: "menu" */ "@/views/Menu/index.vue"),
+        component: () => import("@/views/Menu/index.vue"),
       },
       {
         path: "/combos",
@@ -77,8 +67,7 @@ export const routes = [
         meta: {
           requiredPerm: "view_combo",
         },
-        component: () =>
-          import(/* webpackChunkName: "combo" */ "@/views/Combo/index.vue"),
+        component: () => import("@/views/Combo/ComboIndex.vue"),
       },
       {
         path: "/reports",
@@ -86,16 +75,13 @@ export const routes = [
         meta: {
           requiredPerm: "view_sale", // ajustar si existe un permiso específico de reportes
         },
-        component: () =>
-          import(/* webpackChunkName: "reports" */ "@/views/Reports/index.vue"),
+        component: () => import("@/views/Reports/index.vue"),
         children: [
           {
             path: "products-sold",
             name: "ProductsSoldReport",
             component: () =>
-              import(
-                /* webpackChunkName: "reports-products-sold" */ "@/views/Reports/components/ProductsSold.vue"
-              ),
+              import("@/views/Reports/components/ProductsSold.vue"),
           },
           {
             path: "cash-flow",
@@ -107,53 +93,37 @@ export const routes = [
             path: "sales-by-date",
             name: "SalesByDateReport",
             component: () =>
-              import(
-                /* webpackChunkName: "reports-sales-by-date" */ "@/views/Reports/components/SalesByDate.vue"
-              ),
+              import("@/views/Reports/components/SalesByDate.vue"),
           },
           {
             path: "sales-detailed",
             name: "SalesDetailedReport",
             component: () =>
-              import(
-                /* webpackChunkName: "reports-sales-detailed" */ "@/views/Reports/components/SalesDetailed.vue"
-              ),
+              import("@/views/Reports/components/SalesDetailed.vue"),
           },
           {
             path: "sales-record",
             name: "SalesRecordReport",
             component: () =>
-              import(
-                /* webpackChunkName: "reports-sales-record" */ "@/views/Reports/components/SalesRecord.vue"
-              ),
+              import("@/views/Reports/components/SalesRecord.vue"),
           },
         ],
       },
       {
         path: "/credits",
         name: "Credits",
-        // meta: {
-        //   requiredPerm: "view_sale",
-        // },
-        component: () =>
-          import(
-            /* webpackChunkName: "credits" */ "@/views/Sale/SaleCredits.vue"
-          ),
+        component: () => import("@/views/Sale/SaleCredits.vue"),
       },
       {
         path: "/free-sale",
         name: "FreeSale",
-        // meta: {
-        //   requiredPerm: "view_sale",
-        // },
         component: () => import("@/views/Sale/FreeSale.vue"),
       },
       {
         path: "/till",
         name: "Till",
         redirect: { name: "CurrentTill" },
-        component: () =>
-          import(/* webpackChunkName: "till" */ "@/views/Till/index.vue"),
+        component: () => import("@/views/Till/index.vue"),
         children: [
           {
             path: "",
@@ -161,10 +131,7 @@ export const routes = [
             meta: {
               requiredPerm: "view_tilldetails",
             },
-            component: () =>
-              import(
-                /* webpackChunkName: "currentTill" */ "@/views/Till/CurrentTill.vue"
-              ),
+            component: () => import("@/views/Till/CurrentTill.vue"),
             beforeEnter: async (to, from, next) => {
               const tillStore = useTillStore();
               await retrieveCurrentTill()
@@ -191,10 +158,7 @@ export const routes = [
             meta: {
               requiredPerm: "view_till",
             },
-            component: () =>
-              import(
-                /* webpackChunkName: "till-list" */ "@/views/Till/TillList.vue"
-              ),
+            component: () => import("@/views/Till/TillList.vue"),
           },
           {
             path: ":till",
@@ -202,10 +166,7 @@ export const routes = [
             meta: {
               requiredPerm: "view_tilldetails",
             },
-            component: () =>
-              import(
-                /* webpackChunkName: "till-details" */ "@/views/Till/TillDetails.vue"
-              ),
+            component: () => import("@/views/Till/TillDetails.vue"),
           },
         ],
       },
@@ -213,8 +174,7 @@ export const routes = [
         path: "/table",
         name: "Table",
         redirect: { name: "TableHome" },
-        component: () =>
-          import(/* webpackChunkName: "table" */ "@/views/Table/index.vue"),
+        component: () => import("@/views/Table/index.vue"),
         meta: {
           onlyWaiter: true,
         },
@@ -292,16 +252,12 @@ export const routes = [
         meta: {
           requiredPerm: "view_product",
         },
-        component: () =>
-          import(/* webpackChunkName: "product" */ "@/views/Product/index.vue"),
+        component: () => import("@/views/Product/index.vue"),
       },
       {
         path: "/shopping",
         name: "Shopping",
-        component: () =>
-          import(
-            /* webpackChunkName: "shopping" */ "@/views/Shopping/index.vue"
-          ),
+        component: () => import("@/views/Shopping/index.vue"),
       },
       {
         path: "/supplier",
@@ -309,10 +265,7 @@ export const routes = [
         meta: {
           requiredPerm: "view_supplier",
         },
-        component: () =>
-          import(
-            /* webpackChunkName: "supplier" */ "@/views/Supplier/index.vue"
-          ),
+        component: () => import("@/views/Supplier/index.vue"),
       },
       {
         path: "/supplies",
@@ -320,10 +273,7 @@ export const routes = [
         meta: {
           requiredPerm: "view_supplies",
         },
-        component: () =>
-          import(
-            /* webpackChunkName: "supplies" */ "@/views/Supplies/index.vue"
-          ),
+        component: () => import("@/views/Supplies/index.vue"),
       },
       {
         path: "/kardex",
@@ -332,24 +282,18 @@ export const routes = [
         meta: {
           requiredPerm: "view_kardex",
         },
-        component: () =>
-          import(/* webpackChunkName: "kardex" */ "@/views/Kardex/index.vue"),
+        component: () => import("@/views/Kardex/index.vue"),
         children: [
           {
             path: "",
             name: "KardexHome",
             component: () =>
-              import(
-                /* webpackChunkName: "kardex-by-supply" */ "@/views/Kardex/components/KardexBySupply.vue"
-              ),
+              import("@/views/Kardex/components/KardexBySupply.vue"),
           },
           {
             path: ":list",
             name: "KardexList",
-            component: () =>
-              import(
-                /* webpackChunkName: "kardex-list" */ "@/views/Kardex/components/KardexList.vue"
-              ),
+            component: () => import("@/views/Kardex/components/KardexList.vue"),
             beforeEnter: (to, from) => {
               if (
                 !["products", "supplies"].some(
@@ -366,10 +310,7 @@ export const routes = [
         path: "/settings",
         name: "Settings",
         redirect: { name: "HomeSettings" },
-        component: () =>
-          import(
-            /* webpackChunkName: "settings" */ "@/views/Settings/index.vue"
-          ),
+        component: () => import("@/views/Settings/index.vue"),
         beforeEnter: async (to, from, next) => {
           const userStore = useUserStore();
           if (!userStore.user.role || userStore.user.role === "ADMINISTRADOR") {
@@ -383,20 +324,14 @@ export const routes = [
             name: "HomeSettings",
             path: "",
             component: () =>
-              import(
-                /* webpackChunkName: "home-settings" */ "@/views/Settings/components/HomeSettings.vue"
-              ),
+              import("@/views/Settings/components/HomeSettings.vue"),
           },
           {
             name: "GeneralSettings",
             path: "general-settings",
-            /* meta: {
-             requiredPerm: "view_supplier",
-             }, */
+
             component: () =>
-              import(
-                /* webpackChunkName: "general-settings" */ "@/views/Settings/components/GeneralSettings.vue"
-              ),
+              import("@/views/Settings/components/GeneralSettings.vue"),
           },
           {
             name: "BusinessSettings",
@@ -405,20 +340,14 @@ export const routes = [
               requiredPerm: "view_business",
             },
             component: () =>
-              import(
-                /* webpackChunkName: "business-settings" */ "@/views/Settings/components/BusinessSettings.vue"
-              ),
+              import("@/views/Settings/components/BusinessSettings.vue"),
           },
           {
             name: "AdvancedSettings",
             path: "advanced-settings",
-            /* meta: {
-             requiredPerm: "view_supplier",
-             }, */
+
             component: () =>
-              import(
-                /* webpackChunkName: "business-settings" */ "@/views/Settings/components/AdvancedSettings.vue"
-              ),
+              import("@/views/Settings/components/AdvancedSettings.vue"),
           },
           {
             name: "UserSettings",
@@ -427,9 +356,7 @@ export const routes = [
               requiredPerm: "view_user",
             },
             component: () =>
-              import(
-                /* webpackChunkName: "user-settings" */ "@/views/Settings/components/UserSettings.vue"
-              ),
+              import("@/views/Settings/components/UserSettings.vue"),
           },
         ],
       },
@@ -438,8 +365,7 @@ export const routes = [
   {
     path: "/login",
     name: "Login",
-    component: () =>
-      import(/* webpackChunkName: "login" */ "@/views/login/index.vue"),
+    component: () => import("@/views/login/index.vue"),
     beforeEnter: async (to, from, next) => {
       const userStore = useUserStore();
       await userStore.checkAuthentication();
@@ -477,34 +403,22 @@ export const routes = [
         name: "WOrder",
         path: ":table",
         redirect: { name: "WCategories" },
-        component: () =>
-          import(
-            /* webpackChunkName: "w-order" */ "@/WaiterMode/views/Order.vue"
-          ),
+        component: () => import("@/WaiterMode/views/Order.vue"),
         children: [
           {
             name: "WCategories",
             path: "",
-            component: () =>
-              import(
-                /* webpackChunkName: "w-categories" */ "@/WaiterMode/views/Categories.vue"
-              ),
+            component: () => import("@/WaiterMode/views/Categories.vue"),
           },
           {
             name: "WCombos",
             path: "combos",
-            component: () =>
-              import(
-                /* webpackChunkName: "w-combos" */ "@/WaiterMode/views/Combos.vue"
-              ),
+            component: () => import("@/WaiterMode/views/Combos.vue"),
           },
           {
             name: "WProducts",
             path: ":category",
-            component: () =>
-              import(
-                /* webpackChunkName: "w-products" */ "@/WaiterMode/views/Products.vue"
-              ),
+            component: () => import("@/WaiterMode/views/Products.vue"),
           },
         ],
       },
@@ -514,8 +428,7 @@ export const routes = [
     path: "/chef-mode",
     name: "ChefMode",
     redirect: { name: "CHome" },
-    component: () =>
-      import(/* webpackChunkName: "chef-mode" */ "@/ChefMode/index.vue"),
+    component: () => import("@/ChefMode/index.vue"),
     meta: {
       requiresAuth: true,
       onlyWaiter: true,
@@ -524,10 +437,7 @@ export const routes = [
       {
         name: "CHome",
         path: "",
-        component: () =>
-          import(
-            /* webpackChunkName: "waiter-mode" */ "@/ChefMode/views/Home.vue"
-          ),
+        component: () => import("@/ChefMode/views/Home.vue"),
       },
     ],
   },
@@ -549,17 +459,6 @@ router.beforeEach(async (to, from, next) => {
   const genericsStore = useGenericsStore();
   genericsStore.updateDevice();
   await userStore.checkAuthentication();
-
-  // Helper function to extract table ID from route
-  const extractTableId = (route) => {
-    // Try direct param
-    if (route.params.table) {
-      return parseInt(route.params.table, 10);
-    }
-    // Try path regex match for /table/:id or /waiter-mode/:id
-    const match = route.path.match(/\/(table|waiter-mode)\/(\d+)/);
-    return match ? parseInt(match[2], 10) : null;
-  };
 
   // Original authentication logic
   if (to.matched.some((record) => record.meta.requiresAuth)) {

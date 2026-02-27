@@ -1,11 +1,11 @@
 import { http } from "@/api";
 
 export async function getProducts(disabled = false) {
-    return await http.get("products/", {
-        params: {
-            disabled: disabled,
-        },
-    });
+  return await http.get("products/", {
+    params: {
+      disabled: disabled,
+    },
+  });
 }
 
 export async function getProductsAll(disabled = false) {
@@ -17,21 +17,21 @@ export async function getProductsAll(disabled = false) {
 }
 
 export async function getProductSimpleSearch(search) {
-    return await http.get("products/simplesearch/" + search);
+  return await http.get("products/simplesearch/" + search);
 }
 
 export async function retrieveProduct(id) {
-    return await http.get(`products/${id}/`, {
-        transformResponse: [
-            function (data) {
-                if (data) {
-                    data = JSON.parse(data);
-                    data.prices = Number(data.prices).toFixed(2);
-                }
-                return data;
-            },
-        ],
-    });
+  return await http.get(`products/${id}/`, {
+    transformResponse: [
+      function (data) {
+        if (data) {
+          data = JSON.parse(data);
+          data.prices = Number(data.prices).toFixed(2);
+        }
+        return data;
+      },
+    ],
+  });
 }
 
 export async function createProduct(product) {
@@ -107,15 +107,15 @@ export async function updateProduct(idProduct, product) {
 }
 
 export async function disableProduct(id) {
-    return await http.delete(`products/${id}/`);
+  return await http.delete(`products/${id}/`);
 }
 
 export async function searchProduct(
-    search,
-    category,
-    disabled = false,
-    pageLimit,
-    pageOffset
+  search,
+  category,
+  disabled = false,
+  pageLimit,
+  pageOffset,
 ) {
   const params = {
     search: search,
@@ -135,29 +135,29 @@ export async function searchProduct(
 }
 
 export async function searchProductByName(search) {
-    return await http.get("products/search_products/", {
-        params: {
-            search: search,
-        },
-    });
+  return await http.get("products/search_products/", {
+    params: {
+      search: search,
+    },
+  });
 }
 
 export async function searchProductPrice(search) {
-    return await http.get("products/search_price/", {
-        params: {
-            search: search,
-        },
-    });
+  return await http.get("products/search_price/", {
+    params: {
+      search: search,
+    },
+  });
 }
 
 export async function getProductCategories() {
-    return await http.get("product-categories/");
+  return await http.get("product-categories/");
 }
 
 export async function getMenuToday(menu_id = null) {
-    const params = {};
-    if (menu_id) params.menu_id = menu_id;
-    return await http.get("menus/today", { params });
+  const params = {};
+  if (menu_id) params.menu_id = menu_id;
+  return await http.get("menus/today", { params });
 }
 
 export async function getProductsByCategory(categoryId) {
@@ -165,29 +165,29 @@ export async function getProductsByCategory(categoryId) {
 }
 
 export async function disableProductCategory(id) {
-    return await http.delete(`product-categories/${id}/`);
+  return await http.delete(`product-categories/${id}/`);
 }
 
 export async function getInventoryConcepts() {
-    return await http.get("inventoryconcept/");
+  return await http.get("inventoryconcept/");
 }
 
 export async function retrieveInventoryConcept(id) {
-    return await http.get(`inventoryconcept/${id}/`);
+  return await http.get(`inventoryconcept/${id}/`);
 }
 
 export async function createInventoryConcept(concept) {
-    return await http.post("inventoryconcept/", {
-        concept: concept.description,
-        concept_type: concept.concept_type,
-    });
+  return await http.post("inventoryconcept/", {
+    concept: concept.description,
+    concept_type: concept.concept_type,
+  });
 }
 
 export async function updateInventoryConcept(idConcept, concept) {
-    return await http.put(`inventoryconcept/${idConcept}/`, {
-        concept: concept.description,
-        concept_type: concept.concept_type,
-    });
+  return await http.put(`inventoryconcept/${idConcept}/`, {
+    concept: concept.description,
+    concept_type: concept.concept_type,
+  });
 }
 
 export async function deleteInventoryConcept(id) {
@@ -195,17 +195,17 @@ export async function deleteInventoryConcept(id) {
 }
 
 export async function createGuarnition(concept) {
-    return await http.post("product-fitting/", {
-        ...concept,
-        preparation_place: concept.preparation_place_id
-    });
+  return await http.post("product-fitting/", {
+    ...concept,
+    preparation_place: concept.preparation_place_id,
+  });
 }
 
 export async function updateGuarnition(idConcept, concept) {
-    return await http.put(`product-fitting/${idConcept}/`, {
-        ...concept,
-        preparation_place: concept.preparation_place_id
-    });
+  return await http.put(`product-fitting/${idConcept}/`, {
+    ...concept,
+    preparation_place: concept.preparation_place_id,
+  });
 }
 
 export async function deleteGuarnition(id) {
@@ -213,98 +213,98 @@ export async function deleteGuarnition(id) {
 }
 
 export async function disableInventoryConcepts(id) {
-    return await http.delete(`inventoryconcept/${id}/`);
+  return await http.delete(`inventoryconcept/${id}/`);
 }
 
 export async function getProductPlaces() {
-    return await http.get("preparation-places/");
+  return await http.get("preparation-places/");
 }
 
 export async function createProductPlace(place, printer_name, printer_format) {
-    return await http.post("preparation-places/", {
-        description: place.toUpperCase(),
-        printer_name: printer_name,
-        printer_format: printer_format,
-    });
+  return await http.post("preparation-places/", {
+    description: place.toUpperCase(),
+    printer_name: printer_name,
+    printer_format: printer_format,
+  });
 }
 
 export async function updateProductPlace(
-    idPlace,
-    place,
-    printer_name,
-    printer_format
+  idPlace,
+  place,
+  printer_name,
+  printer_format,
 ) {
-    return await http.put(`preparation-places/${idPlace}/`, {
-        description: place.toUpperCase(),
-        printer_name: printer_name,
-        printer_format: printer_format,
-    });
+  return await http.put(`preparation-places/${idPlace}/`, {
+    description: place.toUpperCase(),
+    printer_name: printer_name,
+    printer_format: printer_format,
+  });
 }
 
 export async function disableProductPlace(id) {
-    return await http.delete(`preparation-places/${id}/`);
+  return await http.delete(`preparation-places/${id}/`);
 }
 
 export async function createProductMovement(products) {
-    return await http.post("productmovement/", {
-        product: products.product,
-        type: products.type,
-        branchoffice: products.branchoffice,
-        concept: products.concept,
-        amount: products.amount,
-    });
+  return await http.post("productmovement/", {
+    product: products.product,
+    type: products.type,
+    branchoffice: products.branchoffice,
+    concept: products.concept,
+    amount: products.amount,
+  });
 }
 
 export async function getProductAffectations() {
-    return await http.get("product-affectation/");
+  return await http.get("product-affectation/");
 }
 
 export async function getProductFittings() {
-    return await http.get("product-fitting/");
+  return await http.get("product-fitting/");
 }
 
 export async function downloadProductsSoldReport({
-                                                     date_from,
-                                                     date_to,
-                                                     product,
-                                                     branch_office,
-                                                     category
-                                                 } = {}) {
-    const params = {};
-    if (date_from) params.date_from = date_from; // YYYY-MM-DD
-    if (date_to) params.date_to = date_to;       // YYYY-MM-DD
-    if (product) params.product = product;
-    if (branch_office) params.branch_office = branch_office;
-    if (category) params.category = category;
+  date_from,
+  date_to,
+  product,
+  branch_office,
+  category,
+} = {}) {
+  const params = {};
+  if (date_from) params.date_from = date_from; // YYYY-MM-DD
+  if (date_to) params.date_to = date_to; // YYYY-MM-DD
+  if (product) params.product = product;
+  if (branch_office) params.branch_office = branch_office;
+  if (category) params.category = category;
 
-    params.format = 'xlsx';
+  params.format = "xlsx";
 
-    return await http.get("products-sold/", {
-        params,
-        responseType: "blob", // XLSX
-    });
+  return await http.get("products-sold/", {
+    params,
+    responseType: "blob", // XLSX
+  });
 }
 
 export async function getProductsSold({
-                                          date_from,
-                                          date_to,
-                                          product,
-                                          branch_office,
-                                          category,
-                                          ordering,
-                                      } = {}) {
-    const params = {};
-    if (date_from) params.date_from = date_from; // YYYY-MM-DD
-    if (date_to) params.date_to = date_to;       // YYYY-MM-DD
-    if (product) params.product = product;
-    if (branch_office) params.branch_office = branch_office;
-    if (category) params.category = category;
-    if (ordering) params.ordering = ordering; // e.g. '-total' or '-counter'
-    params.format = 'json'; // fuerza JSON en DRF si está habilitado
+  date_from,
+  date_to,
+  product,
+  branch_office,
+  category,
+  ordering,
+} = {}) {
+  const params = {};
+  if (date_from) params.date_from = date_from; // YYYY-MM-DD
+  if (date_to) params.date_to = date_to; // YYYY-MM-DD
+  if (product) params.product = product;
+  if (branch_office) params.branch_office = branch_office;
+  if (category) params.category = category;
+  if (ordering) params.ordering = ordering; // e.g. '-total' or '-counter'
+  params.format = "json"; // fuerza JSON en DRF si está habilitado
 
-    return await http.get('products-sold/', {
-        params,
-    });
+  return await http.get("products-sold/", {
+    params,
+  });
 }
 
 // -----------------------------
@@ -317,7 +317,7 @@ export async function getProductsSold({
  * @returns {Promise}
  */
 export async function getCategories(params = {}) {
-    return await http.get("product-categories/", { params });
+  return await http.get("product-categories/", { params });
 }
 
 /**
@@ -326,7 +326,7 @@ export async function getCategories(params = {}) {
  * @returns {Promise}
  */
 export async function getCategoryById(id) {
-    return await http.get(`product-categories/${id}/`);
+  return await http.get(`product-categories/${id}/`);
 }
 
 /**
@@ -336,10 +336,10 @@ export async function getCategoryById(id) {
  * @returns {Promise}
  */
 export async function createProductCategory(description, is_disabled = false) {
-    return await http.post("product-categories/", {
-        description,
-        is_disabled
-    });
+  return await http.post("product-categories/", {
+    description,
+    is_disabled,
+  });
 }
 
 /**
@@ -350,10 +350,10 @@ export async function createProductCategory(description, is_disabled = false) {
  * @returns {Promise}
  */
 export async function updateProductCategory(id, description, is_disabled) {
-    return await http.put(`product-categories/${id}/`, {
-        description,
-        is_disabled
-    });
+  return await http.put(`product-categories/${id}/`, {
+    description,
+    is_disabled,
+  });
 }
 
 // -----------------------------
@@ -368,7 +368,7 @@ export async function updateProductCategory(id, description, is_disabled) {
  * @returns {Promise}
  */
 export async function getComboCategories(params = {}) {
-    return await http.get("combo-categories/", { params });
+  return await http.get("combo-categories/", { params });
 }
 
 /**
@@ -377,7 +377,7 @@ export async function getComboCategories(params = {}) {
  * @returns {Promise}
  */
 export async function getComboCategoryById(id) {
-    return await http.get(`combo-categories/${id}/`);
+  return await http.get(`combo-categories/${id}/`);
 }
 
 /**
@@ -387,10 +387,10 @@ export async function getComboCategoryById(id) {
  * @returns {Promise}
  */
 export async function createComboCategory(description, is_disabled = false) {
-    return await http.post("combo-categories/", {
-        description,
-        is_disabled
-    });
+  return await http.post("combo-categories/", {
+    description,
+    is_disabled,
+  });
 }
 
 /**
@@ -401,10 +401,10 @@ export async function createComboCategory(description, is_disabled = false) {
  * @returns {Promise}
  */
 export async function updateComboCategory(id, description, is_disabled) {
-    return await http.put(`combo-categories/${id}/`, {
-        description,
-        is_disabled
-    });
+  return await http.put(`combo-categories/${id}/`, {
+    description,
+    is_disabled,
+  });
 }
 
 /**
@@ -413,7 +413,7 @@ export async function updateComboCategory(id, description, is_disabled) {
  * @returns {Promise}
  */
 export async function deleteComboCategory(id) {
-    return await http.delete(`combo-categories/${id}/`);
+  return await http.delete(`combo-categories/${id}/`);
 }
 
 // -----------------------------
@@ -426,7 +426,7 @@ export async function deleteComboCategory(id) {
  * @returns {Promise}
  */
 export async function getCombos(params = {}) {
-    return await http.get("combos/", { params });
+  return await http.get("combos/", { params });
 }
 
 /**
@@ -435,7 +435,7 @@ export async function getCombos(params = {}) {
  * @returns {Promise}
  */
 export async function getCombo(id) {
-    return await http.get(`combos/${id}/`);
+  return await http.get(`combos/${id}/`);
 }
 
 /**
@@ -444,27 +444,22 @@ export async function getCombo(id) {
  * @returns {Promise}
  */
 export async function createCombo(combo) {
-    const form = new FormData();
-    form.append("name", combo.name || "");
-    form.append("description", combo.description || "");
-    form.append("combo_category", combo.combo_category_id || combo.combo_category);
-    form.append("pricing_mode", combo.pricing_mode || "FIXED");
-    if (combo.fixed_price) {
-        form.append("fixed_price", combo.fixed_price);
-    }
-    form.append("is_active", combo.is_active !== false);
+  const form = new FormData();
+  form.append("name", combo.name);
+  form.append("description", combo.description || "");
+  form.append("combo_category_id", combo.combo_category_id);
+  form.append("pricing_mode", combo.pricing_mode || "FIXED");
+  if (combo.image && combo.image instanceof File) {
+    form.append("image", combo.image);
+  }
 
-    if (combo.image && combo.image instanceof File) {
-        form.append("image", combo.image);
-    }
+  if (combo.products && Array.isArray(combo.products)) {
+    form.append("products", JSON.stringify(combo.products));
+  }
 
-    if (combo.items && Array.isArray(combo.items)) {
-        form.append("items", JSON.stringify(combo.items));
-    }
-
-    return await http.post("combos/", form, {
-        headers: { "Content-Type": "multipart/form-data" },
-    });
+  return await http.post("combos/", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
 }
 
 /**
@@ -474,27 +469,27 @@ export async function createCombo(combo) {
  * @returns {Promise}
  */
 export async function updateCombo(id, combo) {
-    const form = new FormData();
-    form.append("name", combo.name || "");
-    form.append("description", combo.description || "");
-    form.append("combo_category", combo.combo_category_id || combo.combo_category);
-    form.append("pricing_mode", combo.pricing_mode || "FIXED");
-    if (combo.fixed_price) {
-        form.append("fixed_price", combo.fixed_price);
-    }
-    form.append("is_active", combo.is_active !== false);
+  const form = new FormData();
+  form.append("name", combo.name || "");
+  form.append("description", combo.description || "");
+  form.append("combo_category_id", combo.combo_category_id);
+  form.append("pricing_mode", combo.pricing_mode || "FIXED");
+  if (combo.fixed_price) {
+    form.append("fixed_price", combo.fixed_price);
+  }
+  form.append("is_active", combo.is_active !== false);
 
-    if (combo.image && combo.image instanceof File) {
-        form.append("image", combo.image);
-    }
+  if (combo.image && combo.image instanceof File) {
+    form.append("image", combo.image);
+  }
 
-    if (combo.items && Array.isArray(combo.items)) {
-        form.append("items", JSON.stringify(combo.items));
-    }
+  if (combo.products && Array.isArray(combo.products)) {
+    form.append("products", JSON.stringify(combo.products));
+  }
 
-    return await http.patch(`combos/${id}/`, form, {
-        headers: { "Content-Type": "multipart/form-data" },
-    });
+  return await http.put(`combos/${id}/`, form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
 }
 
 /**
@@ -503,7 +498,7 @@ export async function updateCombo(id, combo) {
  * @returns {Promise}
  */
 export async function deleteCombo(id) {
-    return await http.delete(`combos/${id}/`);
+  return await http.delete(`combos/${id}/`);
 }
 
 // -----------------------------
@@ -516,7 +511,7 @@ export async function deleteCombo(id) {
  * @returns {Promise}
  */
 export async function searchProducts(params = {}) {
-    return await http.get("products/", { params });
+  return await http.get("products/", { params });
 }
 
 /**
@@ -525,5 +520,5 @@ export async function searchProducts(params = {}) {
  * @returns {Promise}
  */
 export async function getProductById(id) {
-    return await retrieveProduct(id);
+  return await retrieveProduct(id);
 }

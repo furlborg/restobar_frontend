@@ -5,29 +5,15 @@
         <n-space vertical size="large">
           <n-card :bordered="false" title="Categorías disponibles" content-class="category-card">
             <n-spin :show="!productStore.categories.length && isLoadingCategories">
-              <n-empty v-if="!productStore.categories.length && !isLoadingCategories" description="No se encontraron categorías activas" />
-              <n-grid
-                v-else
-                responsive="screen"
-                cols="8 xs:8 s:12 m:12 l:16 xl:20 2xl:20"
-                :x-gap="8"
-                :y-gap="8"
-              >
+              <n-empty v-if="!productStore.categories.length && !isLoadingCategories"
+                description="No se encontraron categorías activas" />
+              <n-grid v-else responsive="screen" cols="8 xs:8 s:12 m:12 l:16 xl:20 2xl:20" :x-gap="8" :y-gap="8">
                 <n-gi :span="4" v-for="category in productStore.categories" :key="category.id">
-                  <div
-                    class="item-zoom"
-                    :class="{ 'is-selected': isCategorySelected(category.id) }"
-                    role="button"
-                    tabindex="0"
-                    @click="selectCategory(category)"
-                    @keyup.enter="selectCategory(category)"
-                  >
+                  <div class="item-zoom" :class="{ 'is-selected': isCategorySelected(category.id) }" role="button"
+                    tabindex="0" @click="selectCategory(category)" @keyup.enter="selectCategory(category)">
                     <div class="category-container">
-                      <img
-                        v-if="category_settings.use_image && (category.image || category.image_url)"
-                        :src="category.image || category.image_url"
-                        alt="Imagen de categoría"
-                      />
+                      <img v-if="category_settings.use_image && (category.image || category.image_url)"
+                        :src="category.image || category.image_url" alt="Imagen de categoría" />
                       <div v-else class="fallback-box"></div>
                       <n-text class="category-text" :style="{ fontSize: category_settings.area_text_size + 'px' }">
                         {{ category.description }}
@@ -56,20 +42,13 @@
               </n-input>
               <n-spin :show="isLoading">
                 <n-list v-if="itemsList.length" class="product-list">
-                  <n-list-item
-                    v-for="product in itemsList"
-                    :key="product.id"
-                    class="product-list-item"
+                  <n-list-item v-for="product in itemsList" :key="product.id" class="product-list-item"
                     :class="{ 'product-disabled': !product.has_stock || !product.has_supplies }"
-                    @click="handleSelectProduct(product)"
-                  >
+                    @click="handleSelectProduct(product)">
                     <template #prefix>
-                      <n-avatar
-                        round
-                        :size="category_settings.width_image_product"
+                      <n-avatar round :size="category_settings.width_image_product"
                         :style="{ minWidth: category_settings.width_image_product + 'px' }"
-                        :src="product.image || product.image_url"
-                      >
+                        :src="product.image || product.image_url">
                         <v-icon name="gi-hot-meal" />
                       </n-avatar>
                     </template>
@@ -102,19 +81,11 @@
         </n-space>
       </n-tab-pane>
 
-      <n-tab-pane
-        v-if="canUsePrograms"
-        name="menu"
-        tab="Menú"
-      >
+      <n-tab-pane v-if="canUsePrograms" name="menu" tab="Menú">
         <n-card title="Menú programado" :bordered="false" content-class="overflow-auto">
           <n-list v-if="scheduledMenus.length">
-            <n-list-item
-              v-for="menu in scheduledMenus"
-              :key="menu.id"
-              style="cursor: pointer"
-              @click="handleOpenMenuModal(menu)"
-            >
+            <n-list-item v-for="menu in scheduledMenus" :key="menu.id" style="cursor: pointer"
+              @click="handleOpenMenuModal(menu)">
               <n-thing>
                 <n-space vertical>
                   <n-text class="fs-4">{{ menu.menu.name }}</n-text>
@@ -127,11 +98,7 @@
         </n-card>
       </n-tab-pane>
 
-      <n-tab-pane
-        v-if="canUsePrograms"
-        name="combos"
-        tab="Combos"
-      >
+      <n-tab-pane v-if="canUsePrograms" name="combos" tab="Combos">
         <n-card title="Combos disponibles" :bordered="false" content-class="overflow-auto" class="h-100">
           <n-spin :show="loadingCombos">
             <n-space vertical size="large">
@@ -140,12 +107,8 @@
                   <n-text class="fs-5 fw-bold">{{ category.description }}</n-text>
                 </n-divider>
                 <n-list>
-                  <n-list-item
-                    v-for="combo in getCombosForCategory(category.id)"
-                    :key="combo.id"
-                    style="cursor: pointer"
-                    @click="handleOpenComboModal(combo)"
-                  >
+                  <n-list-item v-for="combo in getCombosForCategory(category.id)" :key="combo.id"
+                    style="cursor: pointer" @click="handleOpenComboModal(combo)">
                     <template #prefix>
                       <n-avatar v-if="combo.image" :src="combo.image" :size="60" />
                       <n-avatar v-else :size="60" style="background-color: #18a058">
@@ -176,10 +139,12 @@
                     </template>
                   </n-list-item>
                 </n-list>
-                <n-empty v-if="!getCombosForCategory(category.id).length" description="No hay combos para esta categoría" size="small" />
+                <n-empty v-if="!getCombosForCategory(category.id).length"
+                  description="No hay combos para esta categoría" size="small" />
               </div>
             </n-space>
-            <n-empty v-if="!comboCategories.length && !loadingCombos" description="No hay categorías de combos disponibles" />
+            <n-empty v-if="!comboCategories.length && !loadingCombos"
+              description="No hay categorías de combos disponibles" />
           </n-spin>
         </n-card>
       </n-tab-pane>
@@ -335,7 +300,7 @@ export default defineComponent({
           page: 1,
           page_size: 100,
         });
-        combos.value = combosResponse.data.results || combosResponse.data || [];
+        combos.value = combosResponse.data || [];
       } catch (error) {
         console.error("Error loading combos", error);
         message.error("Error al cargar los combos");

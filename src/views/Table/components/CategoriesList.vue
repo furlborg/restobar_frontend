@@ -8,23 +8,17 @@
                             <n-list v-if="listType === 'list'" class="me-2">
                                 <n-list-item v-for="(category, index) in productStore.categories" :key="index">
                                     <template #prefix>
-                                        <img
-                                            :src="getCategoryImage(category)"
-                                            alt=""
+                                        <img :src="getCategoryImage(category)" alt=""
                                             :width="category_settings.width_image_product"
-                                            :height="category_settings.height_image_product"
-                                        />
+                                            :height="category_settings.height_image_product" />
                                     </template>
                                     <n-thing>
                                         <n-space vertical>
                                             <n-space align="center">
-                                                <router-link
-                                                    class="text-decoration-none"
-                                                    :to="{
-                                                        name: 'CategoriesItems',
-                                                        params: { category: category.id },
-                                                    }"
-                                                >
+                                                <router-link class="text-decoration-none" :to="{
+                                                    name: 'CategoriesItems',
+                                                    params: { category: category.id },
+                                                }">
                                                     <n-text class="fs-4">{{ category.description }}</n-text>
                                                 </router-link>
                                                 <n-text class="fs-6" type="success">S/. 10.00</n-text>
@@ -39,27 +33,18 @@
                                     </template>
                                 </n-list-item>
                             </n-list>
-                            <n-grid
-                                v-if="listType === 'grid'"
-                                responsive="screen"
-                                cols="8 xs:8 s:12 m:12 l:16 xl:20 2xl:20"
-                                :x-gap="5"
-                                :y-gap="5"
-                            >
+                            <n-grid v-if="listType === 'grid'" responsive="screen"
+                                cols="8 xs:8 s:12 m:12 l:16 xl:20 2xl:20" :x-gap="5" :y-gap="5">
                                 <n-gi :span="4" v-for="(category, index) in productStore.categories" :key="index">
                                     <div class="item-zoom">
-                                        <router-link
-                                            class="text-decoration-none"
-                                            :to="{ name: 'CategoriesItems', params: { category: category.id } }"
-                                        >
+                                        <router-link class="text-decoration-none"
+                                            :to="{ name: 'CategoriesItems', params: { category: category.id } }">
                                             <div class="category-container">
-                                                <img
-                                                    v-if="category_settings.use_image && categoryHasImage(category)"
-                                                    :src="category.image || category.image_url"
-                                                    alt=""
-                                                />
+                                                <img v-if="category_settings.use_image && categoryHasImage(category)"
+                                                    :src="category.image || category.image_url" alt="" />
                                                 <div v-else class="fallback-box"></div>
-                                                <n-text class="category-text" :style="{ fontSize: category_settings.area_text_size + 'px' }">
+                                                <n-text class="category-text"
+                                                    :style="{ fontSize: category_settings.area_text_size + 'px' }">
                                                     {{ category.description }}
                                                 </n-text>
                                             </div>
@@ -75,16 +60,13 @@
             <n-tab-pane v-if="canUsePrograms" name="menu" tab="Menú">
                 <n-card title="Menú Programado" :bordered="false" class="h-100" content-class="overflow-auto">
                     <n-list v-if="scheduledMenus.length">
-                        <n-list-item
-                            v-for="menu in scheduledMenus"
-                            :key="menu.id"
-                            @click="handleOpenMenuModal(menu)"
-                            style="cursor: pointer"
-                        >
+                        <n-list-item v-for="menu in scheduledMenus" :key="menu.id" @click="handleOpenMenuModal(menu)"
+                            style="cursor: pointer">
                             <n-thing>
                                 <n-space vertical>
                                     <n-text class="fs-4">{{ menu.menu.name }}</n-text>
-                                    <n-text class="fs-6" type="info">S/. {{ parseFloat(menu.menu.price).toFixed(2) }}</n-text>
+                                    <n-text class="fs-6" type="info">S/. {{ parseFloat(menu.menu.price).toFixed(2)
+                                    }}</n-text>
                                 </n-space>
                             </n-thing>
                         </n-list-item>
@@ -102,12 +84,8 @@
                                     <n-text class="fs-5 fw-bold">{{ category.description }}</n-text>
                                 </n-divider>
                                 <n-list>
-                                    <n-list-item
-                                        v-for="combo in getCombosForCategory(category.id)"
-                                        :key="combo.id"
-                                        @click="handleOpenComboModal(combo)"
-                                        style="cursor: pointer"
-                                    >
+                                    <n-list-item v-for="combo in getCombosForCategory(category.id)" :key="combo.id"
+                                        @click="handleOpenComboModal(combo)" style="cursor: pointer">
                                         <template #prefix>
                                             <n-avatar v-if="combo.image" :src="combo.image" :size="60" />
                                             <n-avatar v-else :size="60" style="background-color: #18a058">
@@ -121,10 +99,12 @@
                                             <template #description>
                                                 <n-space vertical size="small">
                                                     <n-text type="success" class="fs-6">
-                                                        S/. {{ parseFloat(combo.computed_price || combo.fixed_price || 0).toFixed(2) }}
+                                                        S/. {{ parseFloat(combo.price ||
+                                                            0).toFixed(2) }}
                                                     </n-text>
                                                     <n-text depth="3" style="font-size: 12px">
-                                                        {{ combo.combo_products ? combo.combo_products.length : 0 }} productos incluidos
+                                                        {{ combo.combo_products ? combo.products.length : 0 }}
+                                                        productos incluidos
                                                     </n-text>
                                                 </n-space>
                                             </template>
@@ -138,17 +118,12 @@
                                         </template>
                                     </n-list-item>
                                 </n-list>
-                                <n-empty
-                                    v-if="getCombosForCategory(category.id).length === 0"
-                                    description="No hay combos disponibles en esta categoría"
-                                    size="small"
-                                />
+                                <n-empty v-if="getCombosForCategory(category.id).length === 0"
+                                    description="No hay combos disponibles en esta categoría" size="small" />
                             </div>
                         </n-space>
-                        <n-empty
-                            v-if="comboCategories.length === 0 && !loadingCombos"
-                            description="No hay categorías de combos disponibles"
-                        />
+                        <n-empty v-if="comboCategories.length === 0 && !loadingCombos"
+                            description="No hay categorías de combos disponibles" />
                     </n-spin>
                 </n-card>
             </n-tab-pane>
@@ -226,7 +201,7 @@ export default defineComponent({
         };
 
         const getCombosForCategory = (categoryId) => {
-            return combos.value.filter((combo) => combo.combo_category === categoryId);
+            return combos.value.filter((combo) => combo.category?.id === categoryId);
         };
 
         const loadCombos = async () => {
@@ -236,15 +211,14 @@ export default defineComponent({
                     is_disabled: false,
                     only_with_combos: true,
                 });
-                comboCategories.value =
-                    categoriesResponse.data.results || categoriesResponse.data || [];
+                comboCategories.value = categoriesResponse.data || [];
 
                 const combosResponse = await getCombos({
                     is_active: true,
                     page: 1,
                     page_size: 100,
                 });
-                combos.value = combosResponse.data.results || combosResponse.data || [];
+                combos.value = combosResponse.data || [];
             } catch (error) {
                 console.error("Error loading combos", error);
                 window.$message?.error("Error al cargar los combos");

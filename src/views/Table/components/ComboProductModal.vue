@@ -1,11 +1,6 @@
 <template>
-  <n-modal
-    :show="true"
-    preset="card"
-    :title="`Agregar Combo: ${combo.name}`"
-    :style="{ width: '90%', maxWidth: '800px' }"
-    @close="emit('close')"
-  >
+  <n-modal :show="true" preset="card" :title="`Agregar Combo: ${combo.name}`"
+    :style="{ width: '90%', maxWidth: '800px' }" @close="emit('close')">
     <n-spin :show="false">
       <n-space vertical size="large">
         <!-- Información del combo -->
@@ -14,22 +9,22 @@
             <n-space justify="space-between" align="center">
               <n-text class="fs-4 fw-bold">{{ combo.name }}</n-text>
               <n-tag type="success" size="large">
-                S/. {{ formatPrice(combo.computed_price || combo.fixed_price || 0) }}
+                S/. {{ formatPrice(combo.price || 0) }}
               </n-tag>
             </n-space>
-            
+
             <n-divider style="margin: 8px 0;" />
-            
+
             <!-- Items incluidos en el combo -->
             <div>
               <n-text class="fs-6 fw-bold">Productos incluidos:</n-text>
               <n-list style="margin-top: 8px;">
-                <n-list-item v-for="item in combo.combo_products" :key="item.id">
+                <n-list-item v-for="item in combo.products" :key="item.id">
                   <n-space align="center">
                     <n-tag type="info" size="small">{{ item.quantity }}x</n-tag>
                     <n-text>{{ item.product_name || item.product?.name }}</n-text>
                     <n-text depth="3" style="font-size: 12px;">
-                      (S/. {{ formatPrice(item.product_price || item.product?.prices || 0) }} c/u)
+                      (S/. {{ formatPrice(item.unit_price || 0) }} c/u)
                     </n-text>
                   </n-space>
                 </n-list-item>
@@ -44,14 +39,7 @@
             <n-text depth="3">
               Selecciona cuántos combos deseas agregar al pedido
             </n-text>
-            <n-input-number
-              v-model:value="quantity"
-              :min="1"
-              :max="99"
-              :step="1"
-              size="large"
-              style="width: 100%;"
-            >
+            <n-input-number v-model:value="quantity" :min="1" :max="99" :step="1" size="large" style="width: 100%;">
               <template #prefix>
                 Cantidad:
               </template>
@@ -68,15 +56,11 @@
             </n-text>
           </n-space>
         </n-card>
-        
+
         <!-- Selector de cliente (si está en modo cliente) -->
         <n-card v-if="shouldShowCustomerSelector" size="small" title="Asignar a cliente">
-          <n-select
-            v-model:value="selectedCustomerId"
-            :options="customerOptions"
-            placeholder="Seleccione un cliente"
-            clearable
-          />
+          <n-select v-model:value="selectedCustomerId" :options="customerOptions" placeholder="Seleccione un cliente"
+            clearable />
         </n-card>
       </n-space>
     </n-spin>
@@ -84,11 +68,7 @@
     <template #footer>
       <n-space justify="end">
         <n-button @click="emit('close')">Cancelar</n-button>
-        <n-button 
-          type="primary" 
-          @click="handleAddCombo"
-          :disabled="quantity <= 0"
-        >
+        <n-button type="primary" @click="handleAddCombo" :disabled="quantity <= 0">
           <template #icon>
             <v-icon name="md-add-round" />
           </template>
@@ -123,11 +103,11 @@ const selectedCustomerId = ref(null);
 const addOrderToCustomer = inject('addOrderToCustomer', null);
 const customers = inject('customers', ref([]));
 
-const shouldShowCustomerSelector = computed(() => 
+const shouldShowCustomerSelector = computed(() =>
   settingsStore.businessSettings?.order?.order_by_customer && customers.value.length > 0
 );
 
-const customerOptions = computed(() => 
+const customerOptions = computed(() =>
   customers.value.map(customer => ({
     label: customer.name,
     value: customer.id
@@ -135,7 +115,7 @@ const customerOptions = computed(() =>
 );
 
 const totalPrice = computed(() => {
-  const price = parseFloat(props.combo.computed_price || props.combo.fixed_price || 0);
+  const price = parseFloat(props.combo.price || 0);
   return price * quantity.value;
 });
 

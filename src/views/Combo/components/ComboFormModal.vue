@@ -1,105 +1,63 @@
 <template>
-  <n-modal
-    v-model:show="modalVisible"
-    preset="card"
-    :title="mode === 'create' ? 'Crear Combo' : 'Editar Combo'"
-    :style="{ width: '90%', maxWidth: '1200px' }"
-    :segmented="{ content: 'hard' }"
-    @after-leave="handleAfterLeave"
-  >
+  <n-modal v-model:show="modalVisible" preset="card" :title="mode === 'create' ? 'Crear Combo' : 'Editar Combo'"
+    :style="{ width: '90%', maxWidth: '1200px' }" :segmented="{ content: 'hard' }" @after-leave="handleAfterLeave">
     <n-spin :show="isLoading">
-      <n-form
-        ref="formRef"
-        :model="formData"
-        :rules="formRules"
-        label-placement="top"
-        require-mark-placement="right-hanging"
-      >
+      <n-form ref="formRef" :model="formData" :rules="formRules" label-placement="top"
+        require-mark-placement="right-hanging">
         <n-tabs type="line" animated>
           <!-- Tab 1: Información del combo -->
           <n-tab-pane name="info" tab="Información del Combo">
             <n-grid :cols="24" :x-gap="16">
               <!-- Nombre -->
               <n-form-item-gi label="Nombre del combo" path="name" :span="12">
-                <n-input
-                  v-model:value="formData.name"
-                  placeholder="Ej: Combo Familiar"
-                  maxlength="100"
-                  show-count
-                  :disabled="isReadOnly"
-                />
+                <n-input v-model:value="formData.name" placeholder="Ej: Combo Familiar" maxlength="100" show-count
+                  :disabled="isReadOnly" />
               </n-form-item-gi>
 
               <!-- Categoría con botones de crear/editar -->
               <n-form-item-gi :span="12" label="Categoría">
-                  <n-form-item
-                    v-if="categoryForm"
-                  >
-                    <n-input-group>
-                      <n-input
-                        v-model:value="category.description"
-                        placeholder="Nombre de la categoría"
-                        :disabled="isReadOnly || (category.id ? !canChangeComboCategory : !canAddComboCategory)"
-                      />
-                      <n-button
-                        type="info"
-                        tertiary
-                        :disabled="
-                          isReadOnly ||
-                          (category.id ? !canChangeComboCategory : !canAddComboCategory) ||
-                          category.description === getCategoryDescription(category.id) ||
-                          !category.description
-                        "
-                        @click="
-                          !category.id
-                            ? performCreateCategory()
-                            : performUpdateCategory()
-                        "
-                      >
-                        <v-icon name="md-save-round" />
-                      </n-button>
-                      <n-button type="error" tertiary @click="categoryForm = false">
-                        <v-icon name="md-close-round" />
-                      </n-button>
-                    </n-input-group>
-                  </n-form-item>
-                  <n-form-item v-else path="category_id">
-                    <n-input-group>
-                      <n-button
-                        type="info"
-                        tertiary
-                        :disabled="isReadOnly || !canAddComboCategory"
-                        @click="
-                          categoryForm = true;
-                          category.id = null;
-                          category.description = null;
-                        "
-                      >
-                        <v-icon name="md-add-round" />
-                      </n-button>
-                      <n-select
-                        v-model:value="formData.category_id"
-                        :options="categoryOptions"
-                        placeholder="Seleccionar categoría"
-                        filterable
-                        clearable
-                        :disabled="isReadOnly || !canViewComboCategory"
-                      />
-                      <n-button
-                        v-if="formData.category_id"
-                        type="warning"
-                        tertiary
-                        :disabled="isReadOnly || !canChangeComboCategory"
-                        @click="
-                          categoryForm = true;
-                          category.id = formData.category_id;
-                          category.description = getCategoryDescription(formData.category_id);
-                        "
-                      >
-                        <v-icon name="ri-edit-fill" />
-                      </n-button>
-                    </n-input-group>
-                  </n-form-item>
+                <n-form-item v-if="categoryForm">
+                  <n-input-group>
+                    <n-input v-model:value="category.description" placeholder="Nombre de la categoría"
+                      :disabled="isReadOnly || (category.id ? !canChangeComboCategory : !canAddComboCategory)" />
+                    <n-button type="info" tertiary :disabled="isReadOnly ||
+                      (category.id ? !canChangeComboCategory : !canAddComboCategory) ||
+                      category.description === getCategoryDescription(category.id) ||
+                      !category.description
+                      " @click="
+                        !category.id
+                          ? performCreateCategory()
+                          : performUpdateCategory()
+                        ">
+                      <v-icon name="md-save-round" />
+                    </n-button>
+                    <n-button type="error" tertiary @click="categoryForm = false">
+                      <v-icon name="md-close-round" />
+                    </n-button>
+                  </n-input-group>
+                </n-form-item>
+                <n-form-item v-else path="category_id">
+                  <n-input-group>
+                    <n-button type="info" tertiary :disabled="isReadOnly || !canAddComboCategory" @click="
+                      categoryForm = true;
+                    category.id = null;
+                    category.description = null;
+                    ">
+                      <v-icon name="md-add-round" />
+                    </n-button>
+                    <n-select v-model:value="formData.category_id" :options="categoryOptions"
+                      placeholder="Seleccionar categoría" filterable clearable
+                      :disabled="isReadOnly || !canViewComboCategory" />
+                    <n-button v-if="formData.category_id" type="warning" tertiary
+                      :disabled="isReadOnly || !canChangeComboCategory" @click="
+                        categoryForm = true;
+                      category.id = formData.category_id;
+                      category.description = getCategoryDescription(formData.category_id);
+                      ">
+                      <v-icon name="ri-edit-fill" />
+                    </n-button>
+                  </n-input-group>
+                </n-form-item>
               </n-form-item-gi>
 
               <!-- Modo de precio -->
@@ -123,21 +81,10 @@
               </n-form-item-gi>
 
               <!-- Precio fijo (solo si pricing_mode=FIXED) -->
-              <n-form-item-gi
-                v-if="formData.pricing_mode === 'FIXED'"
-                label="Precio fijo"
-                path="fixed_price"
-                :span="12"
-              >
-                <n-input-number
-                  v-model:value="formData.fixed_price"
-                  placeholder="0.00"
-                  :precision="2"
-                  :min="0"
-                  :step="0.5"
-                  style="width: 100%"
-                  :disabled="isReadOnly"
-                >
+              <n-form-item-gi v-if="formData.pricing_mode === 'FIXED'" label="Precio fijo" path="fixed_price"
+                :span="12">
+                <n-input-number v-model:value="formData.fixed_price" placeholder="0.00" :precision="2" :min="0"
+                  :step="0.5" style="width: 100%" :disabled="isReadOnly">
                   <template #prefix>
                     S/
                   </template>
@@ -145,18 +92,8 @@
               </n-form-item-gi>
 
               <!-- Precio calculado (si pricing_mode=VARIABLE) -->
-              <n-form-item-gi
-                v-if="formData.pricing_mode === 'VARIABLE'"
-                label="Precio total (calculado)"
-                :span="12"
-              >
-                <n-input-number
-                  :value="computedPrice"
-                  placeholder="0.00"
-                  :precision="2"
-                  disabled
-                  style="width: 100%"
-                >
+              <n-form-item-gi v-if="formData.pricing_mode === 'VARIABLE'" label="Precio total (calculado)" :span="12">
+                <n-input-number :value="computedPrice" placeholder="0.00" :precision="2" disabled style="width: 100%">
                   <template #prefix>
                     S/
                   </template>
@@ -168,27 +105,16 @@
 
               <!-- Imagen Upload -->
               <n-form-item-gi label="Imagen" :span="12">
-                <n-upload
-                  ref="uploadRef"
-                  list-type="image-card"
-                  :max="1"
-                  accept="image/*"
-                  :default-upload="false"
-                  :on-change="onImageChange"
-                  :file-list="imageFileList"
-                  :disabled="isReadOnly"
-                >
+                <n-upload ref="uploadRef" list-type="image-card" :max="1" accept="image/*" :default-upload="false"
+                  :on-change="onImageChange" :file-list="imageFileList" :disabled="isReadOnly">
                   Subir imagen
                 </n-upload>
               </n-form-item-gi>
 
               <!-- Vista previa de imagen existente -->
               <n-form-item-gi v-if="formData.image_url && !imageFileList.length" label="Vista previa" :span="12">
-                <img 
-                  :src="formData.image_url" 
-                  alt="imagen combo" 
-                  style="max-width: 200px; max-height: 200px; border: 1px solid #eee; padding: 4px; border-radius: 4px;" 
-                />
+                <img :src="formData.image_url" alt="imagen combo"
+                  style="max-width: 200px; max-height: 200px; border: 1px solid #eee; padding: 4px; border-radius: 4px;" />
               </n-form-item-gi>
             </n-grid>
           </n-tab-pane>
@@ -199,30 +125,17 @@
               <!-- Buscador de productos -->
               <n-card title="Agregar productos" size="small">
                 <n-space vertical>
-                  <n-input
-                    v-model:value="productSearch"
-                    placeholder="Buscar producto por nombre o código..."
-                    clearable
-                    @input="handleProductSearch"
-                    :disabled="isReadOnly || !canAddComboProduct"
-                  >
+                  <n-input v-model:value="productSearch" placeholder="Buscar producto por nombre o código..." clearable
+                    @input="handleProductSearch" :disabled="isReadOnly || !canAddComboProduct">
                     <template #prefix>
                       <v-icon name="md-search-round" />
                     </template>
                   </n-input>
 
                   <!-- Resultados de búsqueda -->
-                  <n-list
-                    v-if="searchResults.length > 0"
-                    :hoverable="!isReadOnly && canAddComboProduct"
-                    :clickable="!isReadOnly && canAddComboProduct"
-                    bordered
-                  >
-                    <n-list-item
-                      v-for="product in searchResults"
-                      :key="product.id"
-                      @click="addProduct(product)"
-                    >
+                  <n-list v-if="searchResults.length > 0" :hoverable="!isReadOnly && canAddComboProduct"
+                    :clickable="!isReadOnly && canAddComboProduct" bordered>
+                    <n-list-item v-for="product in searchResults" :key="product.id" @click="addProduct(product)">
                       <n-thing>
                         <template #header>
                           {{ product.name }}
@@ -245,21 +158,18 @@
                       </n-thing>
                     </n-list-item>
                   </n-list>
-                  <n-empty
-                    v-else-if="productSearch && !isSearching"
-                    description="No se encontraron productos"
-                  />
+                  <n-empty v-else-if="productSearch && !isSearching" description="No se encontraron productos" />
                 </n-space>
               </n-card>
 
               <!-- Lista de productos agregados -->
               <n-card title="Productos agregados" size="small">
-                <n-alert v-if="formData.items.length === 0" type="warning" style="margin-bottom: 16px">
+                <n-alert v-if="formData.products.length === 0" type="warning" style="margin-bottom: 16px">
                   Debes agregar al menos 1 producto al combo
                 </n-alert>
 
-                <n-list v-if="formData.items.length > 0" bordered>
-                  <n-list-item v-for="(item, index) in formData.items" :key="index">
+                <n-list v-if="formData.products.length > 0" bordered>
+                  <n-list-item v-for="(item, index) in formData.products" :key="index">
                     <n-grid :cols="24" :x-gap="12" style="align-items: center">
                       <!-- Nombre del producto -->
                       <n-gi :span="6">
@@ -272,15 +182,8 @@
 
                       <!-- Cantidad -->
                       <n-gi :span="7">
-                        <n-input-number
-                          v-model:value="item.quantity"
-                          :min="0.01"
-                          :precision="2"
-                          :step="0.5"
-                          size="small"
-                          style="width: 100%"
-                          :disabled="isReadOnly || !canChangeComboProduct"
-                        >
+                        <n-input-number v-model:value="item.quantity" :min="0.01" :precision="2" :step="0.5"
+                          size="small" style="width: 100%" :disabled="isReadOnly || !canChangeComboProduct">
                           <template #prefix>
                             Cant:
                           </template>
@@ -297,12 +200,8 @@
                       <!-- Acciones -->
                       <n-gi :span="3">
                         <n-space>
-                        <n-button
-                          size="small"
-                          type="success"
-                          :disabled="isReadOnly || !canChangeComboProduct"
-                          @click="openKardexModal(index)"
-                        >
+                          <n-button size="small" type="success" :disabled="isReadOnly || !canChangeComboProduct"
+                            @click="openKardexModal(index)">
                             <template #icon>
                               <v-icon name="md-settings-round" scale="0.9" />
                             </template>
@@ -313,13 +212,8 @@
 
                       <!-- Botón eliminar -->
                       <n-gi :span="4" style="text-align: right; margin-top: 8px">
-                        <n-button
-                          size="small"
-                          type="error"
-                          quaternary
-                          :disabled="isReadOnly || !canDeleteComboProduct"
-                          @click="removeProduct(index)"
-                        >
+                        <n-button size="small" type="error" quaternary :disabled="isReadOnly || !canDeleteComboProduct"
+                          @click="removeProduct(index)">
                           <template #icon>
                             <v-icon name="md-delete-round" />
                           </template>
@@ -333,10 +227,11 @@
                 <n-empty v-else description="No hay productos agregados" />
 
                 <!-- Resumen de items -->
-                <n-divider v-if="formData.items.length > 0" />
-                <n-space v-if="formData.items.length > 0" justify="space-between">
-                  <n-text>Total de items: <n-text strong>{{ formData.items.length }}</n-text></n-text>
-                  <n-text>Precio total: <n-text strong type="success">S/ {{ computedPrice.toFixed(2) }}</n-text></n-text>
+                <n-divider v-if="formData.products.length > 0" />
+                <n-space v-if="formData.products.length > 0" justify="space-between">
+                  <n-text>Total de items: <n-text strong>{{ formData.products.length }}</n-text></n-text>
+                  <n-text>Precio total: <n-text strong type="success">S/ {{ computedPrice.toFixed(2)
+                  }}</n-text></n-text>
                 </n-space>
               </n-card>
             </n-space>
@@ -349,16 +244,8 @@
                 <n-text>
                   Agrega palabras clave o adicionales que no tienen costo pero aparecerán en el pedido.
                 </n-text>
-                
-                <n-dynamic-tags v-model:value="formData.extras" type="success" :disabled="isReadOnly">
-                  <template #input="{ submit }">
-                    <n-input
-                      placeholder="Escribe y presiona Enter"
-                      @keyup.enter="submit"
-                      :disabled="isReadOnly"
-                    />
-                  </template>
-                </n-dynamic-tags>
+
+                <n-dynamic-tags v-model:value="formData.extras" type="success" />
 
                 <n-text depth="3" style="font-size: 12px">
                   Ejemplo: "Sin cebolla", "Extra salsa", "Papas fritas", etc.
@@ -380,29 +267,31 @@
     </template>
 
     <!-- Modal Configurar Cambios (Kardex) -->
-    <KardexConfigModal
-      v-model:show="showKardexModal"
-      :item="selectedItem"
-      @update="handleKardexUpdate"
-    />
+    <KardexConfigModal v-model:show="showKardexModal" :item="selectedItem" @update="handleKardexUpdate" />
   </n-modal>
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, nextTick } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { useDebounce } from '@/composables/useDebounce'
-import { useMessage } from 'naive-ui'
-import { 
+import { useMessage, NDynamicTags } from 'naive-ui'
+import {
   getCombo,
-  createCombo, 
+  createCombo,
   updateCombo,
-  getComboCategories, 
-  searchProducts, 
-  createComboCategory, 
-  updateComboCategory 
+  getComboCategories,
+  searchProducts,
+  createComboCategory,
+  updateComboCategory
 } from '@/api/modules/products'
 import KardexConfigModal from './KardexConfigModal.vue'
 import { useUserStore } from '@/store/modules/user'
+import { addIcons } from 'oh-vue-icons'
+import {
+  MdAddRound, MdCalculateRound, MdCloseRound, MdDeleteRound, MdMonetizationonRound, MdSaveRound, MdSearchRound, MdSettingsRound, RiEditFill
+} from 'oh-vue-icons/icons'
+
+addIcons(MdMonetizationonRound, MdCalculateRound, MdSearchRound, MdAddRound, RiEditFill, MdSaveRound, MdCloseRound, MdSettingsRound, MdDeleteRound)
 
 const props = defineProps({
   show: {
@@ -471,8 +360,8 @@ const imageFileList = ref([])
 const showKardexModal = ref(false)
 const selectedItemIndex = ref(null)
 const selectedItem = computed(() => {
-  if (selectedItemIndex.value !== null && formData.items[selectedItemIndex.value]) {
-    return formData.items[selectedItemIndex.value]
+  if (selectedItemIndex.value !== null && formData.products[selectedItemIndex.value]) {
+    return formData.products[selectedItemIndex.value]
   }
   return null
 })
@@ -484,7 +373,7 @@ const formData = reactive({
   category_id: null,
   image_url: '',
   image: null, // Nueva imagen a subir
-  items: [],
+  products: [],
   extras: []
 })
 
@@ -519,9 +408,9 @@ const computedPrice = computed(() => {
   if (formData.pricing_mode === 'FIXED') {
     return parseFloat(formData.fixed_price || 0)
   }
-  
+
   // VARIABLE: sum of items
-  return formData.items.reduce((sum, item) => {
+  return formData.products.reduce((sum, item) => {
     const price = parseFloat(item.product_price || 0)
     const qty = parseFloat(item.quantity || 0)
     return sum + (price * qty)
@@ -626,13 +515,13 @@ const addProduct = (product) => {
     return
   }
   // Check if product already added
-  const exists = formData.items.some(item => item.product_id === product.id)
+  const exists = formData.products.some(item => item.product_id === product.id)
   if (exists) {
     message.warning('Este producto ya está agregado')
     return
   }
 
-  formData.items.push({
+  formData.products.push({
     product_id: product.id,
     product_name: product.name,
     product_price: product.prices,
@@ -644,7 +533,7 @@ const addProduct = (product) => {
   // Clear search
   productSearch.value = ''
   searchResults.value = []
-  
+
   message.success('Producto agregado')
 }
 
@@ -653,7 +542,7 @@ const removeProduct = (index) => {
     message.error('No tienes permisos para eliminar productos del combo')
     return
   }
-  formData.items.splice(index, 1)
+  formData.products.splice(index, 1)
 }
 
 const openKardexModal = (index) => {
@@ -672,7 +561,7 @@ const handleKardexUpdate = (updatedKardexMap) => {
     return
   }
   if (selectedItemIndex.value !== null) {
-    formData.items[selectedItemIndex.value].kardex_map = updatedKardexMap
+    formData.products[selectedItemIndex.value].kardex_map = updatedKardexMap
     message.success('Configuración de kardex actualizada')
   }
   showKardexModal.value = false
@@ -696,7 +585,7 @@ const handleSubmit = async () => {
     await formRef.value?.validate()
 
     // Validate items
-    if (formData.items.length === 0) {
+    if (formData.products.length === 0) {
       message.error('Debes agregar al menos 1 producto')
       return
     }
@@ -710,7 +599,7 @@ const handleSubmit = async () => {
       combo_category_id: formData.category_id,  // Usar combo_category_id
       image_url: formData.image_url || null,
       image: formData.image, // Agregar imagen si existe
-      items: formData.items.map(item => {
+      products: formData.products.map(item => {
         // Asegurar que product_id siempre esté presente
         if (!item.product_id) {
           console.error('Item sin product_id:', item)
@@ -760,7 +649,7 @@ const handleAfterLeave = () => {
     category_id: null,
     image_url: '',
     image: null,
-    items: [],
+    products: [],
     extras: []
   })
   productSearch.value = ''
@@ -783,24 +672,22 @@ const loadComboData = async () => {
       pricing_mode: combo.pricing_mode,
       fixed_price: Number(combo.fixed_price) || null,
       // Usar combo_category del serializer
-      category_id: combo.combo_category,
+      category_id: combo.category.id,
       image_url: combo.image || '',
       image: null, // Limpiar selección de nueva imagen
-      items: (combo.combo_products || []).map(item => {
-        // Asegurar que product_id siempre esté presente
-        const productId = item.product
+      products: (combo.products).map(item => {
         return {
-          product_id: productId,
-          product_name: item.product_name || item.product?.name || `Producto ${productId}`,
-          product_price: item.product_price || item.product?.prices || 0,
-          quantity: item.quantity || 1,
+          product_id: item.id,
+          product_name: item.name,
+          product_price: item.unit_price || 0,
+          quantity: parseFloat(item.quantity) || 0,
           kardex_map: item.kardex_map || null,
           indication: item.indication || ''
         }
       }),
       extras: combo.extras || []
     })
-    
+
     // Limpiar lista de archivos de imagen
     imageFileList.value = []
   } catch (error) {
