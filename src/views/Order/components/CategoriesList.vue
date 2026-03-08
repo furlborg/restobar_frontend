@@ -5,29 +5,15 @@
         <n-space vertical size="large">
           <n-card :bordered="false" title="Categorías disponibles" content-class="category-card">
             <n-spin :show="!productStore.categories.length && isLoadingCategories">
-              <n-empty v-if="!productStore.categories.length && !isLoadingCategories" description="No se encontraron categorías activas" />
-              <n-grid
-                v-else
-                responsive="screen"
-                cols="8 xs:8 s:12 m:12 l:16 xl:20 2xl:20"
-                :x-gap="8"
-                :y-gap="8"
-              >
+              <n-empty v-if="!productStore.categories.length && !isLoadingCategories"
+                description="No se encontraron categorías activas" />
+              <n-grid v-else responsive="screen" cols="8 xs:8 s:12 m:12 l:16 xl:20 2xl:20" :x-gap="8" :y-gap="8">
                 <n-gi :span="4" v-for="category in productStore.categories" :key="category.id">
-                  <div
-                    class="item-zoom"
-                    :class="{ 'is-selected': isCategorySelected(category.id) }"
-                    role="button"
-                    tabindex="0"
-                    @click="selectCategory(category)"
-                    @keyup.enter="selectCategory(category)"
-                  >
+                  <div class="item-zoom" :class="{ 'is-selected': isCategorySelected(category.id) }" role="button"
+                    tabindex="0" @click="selectCategory(category)" @keyup.enter="selectCategory(category)">
                     <div class="category-container">
-                      <img
-                        v-if="category_settings.use_image && (category.image || category.image_url)"
-                        :src="category.image || category.image_url"
-                        alt="Imagen de categoría"
-                      />
+                      <img v-if="category_settings.use_image && (category.image || category.image_url)"
+                        :src="category.image || category.image_url" alt="Imagen de categoría" />
                       <div v-else class="fallback-box"></div>
                       <n-text class="category-text" :style="{ fontSize: category_settings.area_text_size + 'px' }">
                         {{ category.description }}
@@ -38,83 +24,14 @@
               </n-grid>
             </n-spin>
           </n-card>
-
-          <n-card :bordered="false" class="product-card">
-            <template #header>
-              <n-space justify="space-between" align="center" class="w-100">
-                <n-text class="fs-4">{{ selectedCategoryTitle }}</n-text>
-                <n-button v-if="selectedCategory" size="small" secondary type="primary" @click="clearSelectedCategory">
-                  Limpiar selección
-                </n-button>
-              </n-space>
-            </template>
-            <div v-if="selectedCategory">
-              <n-input v-model:value="search" placeholder="Buscar producto" clearable class="mb-3">
-                <template #prefix>
-                  <v-icon name="md-search-round" />
-                </template>
-              </n-input>
-              <n-spin :show="isLoading">
-                <n-list v-if="itemsList.length" class="product-list">
-                  <n-list-item
-                    v-for="product in itemsList"
-                    :key="product.id"
-                    class="product-list-item"
-                    :class="{ 'product-disabled': !product.has_stock || !product.has_supplies }"
-                    @click="handleSelectProduct(product)"
-                  >
-                    <template #prefix>
-                      <n-avatar
-                        round
-                        :size="category_settings.width_image_product"
-                        :style="{ minWidth: category_settings.width_image_product + 'px' }"
-                        :src="product.image || product.image_url"
-                      >
-                        <v-icon name="gi-hot-meal" />
-                      </n-avatar>
-                    </template>
-                    <n-thing>
-                      <template #header>
-                        <n-text class="fw-bold">{{ product.name }}</n-text>
-                      </template>
-                      <template #description>
-                        <n-space align="center" size="small">
-                          <n-text type="success">S/. {{ parseFloat(product.prices).toFixed(2) }}</n-text>
-                          <n-tag v-if="!product.has_stock" type="error" size="small" round>Sin stock</n-tag>
-                          <n-tag v-else-if="!product.has_supplies" type="warning" size="small" round>Sin insumos</n-tag>
-                        </n-space>
-                      </template>
-                    </n-thing>
-                    <template #suffix>
-                      <n-button circle type="primary" :disabled="!product.has_stock || !product.has_supplies">
-                        <template #icon>
-                          <v-icon name="md-add-round" />
-                        </template>
-                      </n-button>
-                    </template>
-                  </n-list-item>
-                </n-list>
-                <n-empty v-else description="No se encontraron productos para esta categoría" />
-              </n-spin>
-            </div>
-            <n-empty v-else description="Seleccione una categoría para mostrar sus productos" />
-          </n-card>
         </n-space>
       </n-tab-pane>
 
-      <n-tab-pane
-        v-if="canUsePrograms"
-        name="menu"
-        tab="Menú"
-      >
+      <n-tab-pane v-if="canUsePrograms" name="menu" tab="Menú">
         <n-card title="Menú programado" :bordered="false" content-class="overflow-auto">
           <n-list v-if="scheduledMenus.length">
-            <n-list-item
-              v-for="menu in scheduledMenus"
-              :key="menu.id"
-              style="cursor: pointer"
-              @click="handleOpenMenuModal(menu)"
-            >
+            <n-list-item v-for="menu in scheduledMenus" :key="menu.id" style="cursor: pointer"
+              @click="handleOpenMenuModal(menu)">
               <n-thing>
                 <n-space vertical>
                   <n-text class="fs-4">{{ menu.menu.name }}</n-text>
@@ -127,11 +44,7 @@
         </n-card>
       </n-tab-pane>
 
-      <n-tab-pane
-        v-if="canUsePrograms"
-        name="combos"
-        tab="Combos"
-      >
+      <n-tab-pane v-if="canUsePrograms" name="combos" tab="Combos">
         <n-card title="Combos disponibles" :bordered="false" content-class="overflow-auto" class="h-100">
           <n-spin :show="loadingCombos">
             <n-space vertical size="large">
@@ -140,12 +53,8 @@
                   <n-text class="fs-5 fw-bold">{{ category.description }}</n-text>
                 </n-divider>
                 <n-list>
-                  <n-list-item
-                    v-for="combo in getCombosForCategory(category.id)"
-                    :key="combo.id"
-                    style="cursor: pointer"
-                    @click="handleOpenComboModal(combo)"
-                  >
+                  <n-list-item v-for="combo in getCombosForCategory(category.id)" :key="combo.id"
+                    style="cursor: pointer" @click="handleOpenComboModal(combo)">
                     <template #prefix>
                       <n-avatar v-if="combo.image" :src="combo.image" :size="60" />
                       <n-avatar v-else :size="60" style="background-color: #18a058">
@@ -176,10 +85,12 @@
                     </template>
                   </n-list-item>
                 </n-list>
-                <n-empty v-if="!getCombosForCategory(category.id).length" description="No hay combos para esta categoría" size="small" />
+                <n-empty v-if="!getCombosForCategory(category.id).length"
+                  description="No hay combos para esta categoría" size="small" />
               </div>
             </n-space>
-            <n-empty v-if="!comboCategories.length && !loadingCombos" description="No hay categorías de combos disponibles" />
+            <n-empty v-if="!comboCategories.length && !loadingCombos"
+              description="No hay categorías de combos disponibles" />
           </n-spin>
         </n-card>
       </n-tab-pane>
@@ -194,9 +105,7 @@
 import { defineComponent, ref, computed, onMounted } from "vue";
 import { useMessage } from "naive-ui";
 import { useProductStore } from "@/store/modules/product";
-import { useOrderStore } from "@/store/modules/order";
 import {
-  getProductsByCategory,
   getComboCategories,
   getCombos,
   getMenuToday,
@@ -204,6 +113,7 @@ import {
 import { useSettingsStore } from "@/store/modules/settings";
 import ComboProductModal from "@/views/Table/components/ComboProductModal.vue";
 import MenuProductModal from "@/views/Table/components/MenuProductModal.vue";
+import { useRoute, useRouter } from "vue-router";
 
 export default defineComponent({
   name: "CategoriesList",
@@ -214,7 +124,6 @@ export default defineComponent({
   setup() {
     const message = useMessage();
     const productStore = useProductStore();
-    const orderStore = useOrderStore();
     const settingsStore = useSettingsStore();
 
     const isLoading = ref(false);
@@ -232,6 +141,9 @@ export default defineComponent({
     const loadingCombos = ref(false);
     const showComboModal = ref(false);
     const selectedCombo = ref(null);
+
+    const router = useRouter();
+    const route = useRoute();
 
     const category_settings = computed(() => ({
       use_image: false,
@@ -271,32 +183,8 @@ export default defineComponent({
 
     const selectCategory = async (category) => {
       if (!category) return;
-      selectedCategory.value = category;
-      search.value = "";
-      isLoading.value = true;
-      try {
-        const response = await getProductsByCategory(category.id);
-        if (response.status === 200) {
-          products.value = response.data;
-        }
-      } catch (error) {
-        console.error(error);
-        message.error("No se pudieron cargar los productos de la categoría");
-      } finally {
-        isLoading.value = false;
-      }
-    };
-
-    const clearSelectedCategory = () => {
-      selectedCategory.value = null;
-      products.value = [];
-      search.value = "";
-    };
-
-    const handleSelectProduct = (product) => {
-      if (!product.has_stock || !product.has_supplies) return;
-      orderStore.addOrder(product);
-      message.success(`${product.name} agregado`);
+      router.push({ name: "CategoriesOrderItems", params: { category_id: category.id }, query: { delivery: route.query.delivery || "false" } });
+      return;
     };
 
     const handleOpenComboModal = (combo) => {
@@ -381,8 +269,6 @@ export default defineComponent({
       isLoading,
       isLoadingCategories,
       selectCategory,
-      clearSelectedCategory,
-      handleSelectProduct,
       products,
       search,
       itemsList,

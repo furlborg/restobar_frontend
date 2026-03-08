@@ -251,8 +251,23 @@ export const routes = [
             name: "TakeOrder",
             path: "/take-order",
             meta: { requiredPerm: "take_away_order" },
+            redirect: { name: "CategoriesOrder" },
             component: () =>
               import("@/views/Order/components/TakeOrderLayout.vue"),
+            children: [
+              {
+                name: "CategoriesOrder",
+                path: "order-items",
+                component: () =>
+                  import("@/views/Order/components/CategoriesList.vue"),
+              },
+              {
+                name: "CategoriesOrderItems",
+                path: "order-items/:category_id",
+                component: () =>
+                  import("@/views/Order/components/CategoriesItem.vue"),
+              },
+            ],
           },
           {
             name: "TableOrder",
@@ -551,15 +566,15 @@ router.beforeEach(async (to, from, next) => {
   await userStore.checkAuthentication();
 
   // Helper function to extract table ID from route
-  const extractTableId = (route) => {
-    // Try direct param
-    if (route.params.table) {
-      return parseInt(route.params.table, 10);
-    }
-    // Try path regex match for /table/:id or /waiter-mode/:id
-    const match = route.path.match(/\/(table|waiter-mode)\/(\d+)/);
-    return match ? parseInt(match[2], 10) : null;
-  };
+  // const extractTableId = (route) => {
+  //   // Try direct param
+  //   if (route.params.table) {
+  //     return parseInt(route.params.table, 10);
+  //   }
+  //   // Try path regex match for /table/:id or /waiter-mode/:id
+  //   const match = route.path.match(/\/(table|waiter-mode)\/(\d+)/);
+  //   return match ? parseInt(match[2], 10) : null;
+  // };
 
   // Original authentication logic
   if (to.matched.some((record) => record.meta.requiresAuth)) {

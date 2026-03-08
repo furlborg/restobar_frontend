@@ -11,24 +11,13 @@
                     <router-view />
                 </n-gi>
                 <n-gi :span="!shouldShowCustomerMode ? '4' : '5 xl:4'" style="height: calc(100vh - 165px);">
-                    <TableOrder
-                        :ask_for="ask_for"
-                        :orderUser="orderUser"
-                        :loading="loading"
-                        :hasUnsavedChanges="hasUnsavedChanges"
-                        :customers="customers"
-                        :selectedCustomerId="selectedCustomerId"
-                        :shouldShowCustomerMode="shouldShowCustomerMode"
-                        @validateSend="validateSend"
-                        @addCustomer="addCustomer"
-                        @removeCustomer="removeCustomer"
-                        @deleteOrderDetail="deleteOrderDetail"
-                        @goToFirstTab="goToFirstTab"
-                        @update:selectedCustomerId="selectedCustomerId = $event"
-                        @update:ask_for="ask_for = $event"
-                        @update:orderUser="orderUser = $event"
-                        @productSelect="handleProductClick"
-                    />
+                    <TableOrder :ask_for="ask_for" :orderUser="orderUser" :loading="loading"
+                        :hasUnsavedChanges="hasUnsavedChanges" :customers="customers"
+                        :selectedCustomerId="selectedCustomerId" :shouldShowCustomerMode="shouldShowCustomerMode"
+                        @validateSend="validateSend" @addCustomer="addCustomer" @removeCustomer="removeCustomer"
+                        @deleteOrderDetail="deleteOrderDetail" @goToFirstTab="goToFirstTab"
+                        @update:selectedCustomerId="selectedCustomerId = $event" @update:ask_for="ask_for = $event"
+                        @update:orderUser="orderUser = $event" @productSelect="handleProductClick" />
                 </n-gi>
             </n-grid>
         </n-card>
@@ -37,42 +26,35 @@
                 <n-card><router-view /></n-card>
             </n-tab-pane>
             <n-tab-pane name="payment" tab="Orden">
-                <TableOrder
-                    :ask_for="ask_for"
-                    :orderUser="orderUser"
-                    :loading="loading"
-                    :hasUnsavedChanges="hasUnsavedChanges"
-                    :customers="customers"
-                    :selectedCustomerId="selectedCustomerId"
-                    :shouldShowCustomerMode="shouldShowCustomerMode"
-                    @validateSend="validateSend"
-                    @addCustomer="addCustomer"
-                    @removeCustomer="removeCustomer"
-                    @deleteOrderDetail="deleteOrderDetail"
-                    @goToFirstTab="goToFirstTab"
-                    @update:selectedCustomerId="selectedCustomerId = $event"
-                    @update:ask_for="ask_for = $event"
-                    @update:orderUser="orderUser = $event"
-                    @productSelect="handleProductClick"
-                />
+                <TableOrder :ask_for="ask_for" :orderUser="orderUser" :loading="loading"
+                    :hasUnsavedChanges="hasUnsavedChanges" :customers="customers"
+                    :selectedCustomerId="selectedCustomerId" :shouldShowCustomerMode="shouldShowCustomerMode"
+                    @validateSend="validateSend" @addCustomer="addCustomer" @removeCustomer="removeCustomer"
+                    @deleteOrderDetail="deleteOrderDetail" @goToFirstTab="goToFirstTab"
+                    @update:selectedCustomerId="selectedCustomerId = $event" @update:ask_for="ask_for = $event"
+                    @update:orderUser="orderUser = $event" @productSelect="handleProductClick" />
             </n-tab-pane>
         </n-tabs>
         <!-- Modales -->
-        <n-modal title="Registrar pedido" preset="card" v-model:show="showUserConfirm" closable :mask-closable="false" :class="modalClass">
+        <n-modal title="Registrar pedido" preset="card" v-model:show="showUserConfirm" closable :mask-closable="false"
+            :class="modalClass">
             <n-form-item label="Ingrese código de usuario">
                 <n-input type="password" v-model:value="userConfirm" placeholder="****" />
             </n-form-item>
             <template #action>
                 <n-space justify="end">
-                    <n-button type="success" :loading="loading" :disabled="!userConfirm || loading" secondary @click.prevent="orderStore.orderId ? performUpdateTableOrder() : performCreateTableOrder()">Confirmar</n-button>
+                    <n-button type="success" :loading="loading" :disabled="!userConfirm || loading" secondary
+                        @click.prevent="orderStore.orderId ? performUpdateTableOrder() : performCreateTableOrder()">Confirmar</n-button>
                 </n-space>
             </template>
         </n-modal>
-        <n-modal :class="modalClass" preset="card" v-model:show="showConfirm" title="Eliminando comanda" :mask-closable="false" closable @close="resetAnulateData">
+        <n-modal :class="modalClass" preset="card" v-model:show="showConfirm" title="Eliminando comanda"
+            :mask-closable="false" closable @close="resetAnulateData">
             <div v-if="!userStore.hasPermission('cancel_orderdetail')">
                 <n-form ref="formRef" :model="dataAnulate" :rules="rules">
                     <n-form-item label="Cantidad">
-                        <n-input-number v-model:value="deleteQuantity" :min="1" :max="maxQuantity" style="width: 100%" />
+                        <n-input-number v-model:value="deleteQuantity" :min="1" :max="maxQuantity"
+                            style="width: 100%" />
                     </n-form-item>
                 </n-form>
             </div>
@@ -86,7 +68,8 @@
                             <n-input type="password" v-model:value="dataAnulate.pass" />
                         </n-form-item>
                         <n-form-item label="Cantidad">
-                            <n-input-number v-model:value="deleteQuantity" :min="1" :max="maxQuantity" style="width: 100%" />
+                            <n-input-number v-model:value="deleteQuantity" :min="1" :max="maxQuantity"
+                                style="width: 100%" />
                         </n-form-item>
                     </n-form>
                 </div>
@@ -96,23 +79,27 @@
                             <n-input type="password" v-model:value="dataAnulate.pass" />
                         </n-form-item>
                         <n-form-item label="Cantidad">
-                            <n-input-number v-model:value="deleteQuantity" :min="1" :max="maxQuantity" style="width: 100%" />
+                            <n-input-number v-model:value="deleteQuantity" :min="1" :max="maxQuantity"
+                                style="width: 100%" />
                         </n-form-item>
                     </n-form>
                 </div>
             </div>
             <div v-if="showConfigMessage">
-                <span style="font-weight: 700; font-size: 16px">Para poder anular un pedido, primero debe de activar la configuración "Requerir clave de usuario para anular" en la sección de configuraciones.</span>
+                <span style="font-weight: 700; font-size: 16px">Para poder anular un pedido, primero debe de activar la
+                    configuración "Requerir clave de usuario para anular" en la sección de configuraciones.</span>
             </div>
             <template #action>
                 <n-space justify="end">
-                    <n-button type="success" secondary @click.prevent="performDeleteDetail" :disabled="showConfigMessage">Confirmar</n-button>
+                    <n-button type="success" secondary @click.prevent="performDeleteDetail"
+                        :disabled="showConfigMessage">Confirmar</n-button>
                 </n-space>
             </template>
         </n-modal>
 
 
-        <ticket-preview ref="ticketPreview" v-model:show="showPdf" :data="pdfData" :hidden="true" :isUpdate="!!orderStore.orderId" @printed="goHome" @canceled="goHome" />
+        <ticket-preview ref="ticketPreview" v-model:show="showPdf" :data="pdfData" :hidden="true"
+            :isUpdate="!!orderStore.orderId" @printed="goHome" @canceled="goHome" />
     </div>
 </template>
 
@@ -257,7 +244,7 @@ export default defineComponent({
                             // Determinar si es un MENU o un COMBO
                             const isCombo = detail.product_set.set_type === 'COMBO';
                             const isMenu = detail.product_set.set_type === 'MENU';
-                            
+
                             return {
                                 from_menu: isMenu,
                                 from_combo: isCombo,
@@ -305,17 +292,17 @@ export default defineComponent({
                     const lockData = error.response.data.lock_data || error.response.data;
                     const lockedBy = lockData.locked_by_username || 'otro usuario';
                     const remainingMinutes = lockData.remaining_minutes || Math.ceil((lockData.remaining_seconds || 0) / 60);
-                    
+
                     message.error(
                         `Mesa bloqueada por ${lockedBy}. Disponible en ${remainingMinutes} minutos.`,
                         { duration: 5000 }
                     );
-                    
+
                     // Redirigir al listado de mesas
                     router.push({ name: 'TableHome' });
                     return;
                 }
-                
+
                 if (error.response?.status === 404) {
                     resetStores();
                     // const initialUser = activeUsersStore.usersOptions[0]?.value;
