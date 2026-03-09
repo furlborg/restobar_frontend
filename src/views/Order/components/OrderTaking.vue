@@ -346,7 +346,7 @@ export default defineComponent({
       const updatedSale = { ...props.sale };
       updatedSale.customer = customer.id;
       updatedSale.customer_name = localCustomerName.value;
-      updatedSale.address = customer.addresses.length > 0 ? customer.addresses[0].id : null;
+      updatedSale.address = customer.addresses.length > 0 ? customer.addresses[0] : null;
       localDeliveryInfo.value.person = customer.names;
       localDeliveryInfo.value.phone = customer.phone;
       localDeliveryInfo.value.address = customer.addresses.length > 0 ? customer.addresses[0].description : null;
