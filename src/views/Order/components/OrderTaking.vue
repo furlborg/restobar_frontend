@@ -346,10 +346,10 @@ export default defineComponent({
       const updatedSale = { ...props.sale };
       updatedSale.customer = customer.id;
       updatedSale.customer_name = localCustomerName.value;
-      updatedSale.address = null;
+      updatedSale.address = customer.address;
       localDeliveryInfo.value.person = customer.names;
       localDeliveryInfo.value.phone = customer.phone;
-      localDeliveryInfo.value.address = customer.address;
+      localDeliveryInfo.value.address = customer.address.description;
       updatedSale.delivery_info = { ...localDeliveryInfo.value };
       emit('update:sale', updatedSale);
       emit('createAddressesOptions', customer);
