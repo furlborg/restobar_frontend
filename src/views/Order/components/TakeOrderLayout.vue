@@ -86,8 +86,9 @@
       :mask-closable="false" closable @close="sale.payments = null">
       <n-space justify="space-between">
         <n-tag type="info">Total: S/. {{ showPayments ? sale.amount : null }}</n-tag>
-        <n-tag :type="evalPayments ? 'error' : 'success'">Monto: S/. {{ showPayments ? currentPaymentsAmount : null
-          }}</n-tag>
+        <n-tag :type="evalPayments ? 'error' : 'success'">
+          Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}
+        </n-tag>
         <n-tag :type="evalPayments ? 'error' : 'warning'">Faltante: S/.
           {{
             showPayments
@@ -140,7 +141,7 @@ import { useSettingsStore } from "@/store/modules/settings";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useUserStore } from "@/store/modules/user";
 import { useSaleTotals } from "@/composables/useSaleTotals";
-import { useBreakpoint } from "vooks";
+//import { useBreakpoint } from "vooks";
 import OrderTaking from "./OrderTaking.vue";
 import PaymentSummary from "./PaymentSummary.vue";
 import CategoriesList from "./CategoriesList.vue";
@@ -162,7 +163,7 @@ export default defineComponent({
     PreviewDrawer,
   },
   setup() {
-    const breakpointRef = useBreakpoint();
+    //const breakpointRef = useBreakpoint();
     const orderStore = useOrderStore();
     const message = useMessage();
     const dialog = useDialog();
@@ -172,7 +173,7 @@ export default defineComponent({
     const userStore = useUserStore();
     const route = useRoute();
     const router = useRouter();
-    const { grandTotal, formattedTotals, taxBreakdown, summary, menuTotal } = useSaleTotals();
+    const { grandTotal, taxBreakdown, summary, menuTotal } = useSaleTotals();
 
     const loading = ref(false);
     const selectProducts = ref(false);
@@ -574,6 +575,7 @@ export default defineComponent({
       orderStore.orders = [];
       orderStore.orderList.splice(0);
       saleStore.toSale.splice(0);
+      orderStore.clearNewOrders();
     };
 
     onBeforeRouteLeave((to) => handleRouteGuard(to, true));

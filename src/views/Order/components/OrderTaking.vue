@@ -2,43 +2,23 @@
   <n-spin :show="loading">
     <n-card>
       <n-space class="mb-2" align="center" justify="space-between">
-        <SaleSerieSelector
-          :sale="sale"
-          :invoice-type="sale.invoice_type"
-          @update:serie="handleSerieUpdate"
-          @serie-changed="handleSerieChanged"
-        />
+        <SaleSerieSelector :sale="sale" :invoice-type="sale.invoice_type" @update:serie="handleSerieUpdate"
+          @serie-changed="handleSerieChanged" />
 
-        <n-radio-group
-          v-model:value="localInvoiceType"
-          name="docType"
-          size="small"
-          @update:value="handleInvoiceTypeChange"
-        >
-          <n-radio-button
-            :disabled="!settingsStore.businessSettings.sale.enable_invoices"
-            :value="1"
-            :key="1"
-          >
+        <n-radio-group v-model:value="localInvoiceType" name="docType" size="small"
+          @update:value="handleInvoiceTypeChange">
+          <n-radio-button :disabled="!settingsStore.businessSettings.sale.enable_invoices" :value="1" :key="1">
             FACTURA
           </n-radio-button>
-          <n-radio-button
-            :disabled="!settingsStore.businessSettings.sale.enable_invoices"
-            :value="3"
-            :key="3"
-          >
+          <n-radio-button :disabled="!settingsStore.businessSettings.sale.enable_invoices" :value="3" :key="3">
             BOLETA
           </n-radio-button>
           <n-radio-button :value="80" :key="80">N. VENTA</n-radio-button>
         </n-radio-group>
 
-        <n-radio-group
-          v-model:value="localPaymentCondition"
-          name="saleType"
-          size="small"
+        <n-radio-group v-model:value="localPaymentCondition" name="saleType" size="small"
           @update:value="handlePaymentConditionChange"
-          :disabled="!(settingsStore.businessSettings?.sale?.enable_credits === true)"
-        >
+          :disabled="!(settingsStore.businessSettings?.sale?.enable_credits === true)">
           <n-radio-button :value="1" :key="1">CONTADO</n-radio-button>
           <n-radio-button :value="2" :key="2">CRÉDITO</n-radio-button>
         </n-radio-group>
@@ -48,58 +28,31 @@
       <n-form class="mb-2" ref="saleForm" :model="sale" :rules="formRules">
         <n-grid responsive="screen" cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12" :x-gap="12">
           <!-- Cliente -->
-          <n-form-item-gi
-            :span="9"
-            :show-require-mark="formRules.customer?.required"
-            label="Cliente"
-            :path="formRules.customer?.required ? 'customer' : ''"
-          >
-            <ClientSelectInput
-              v-model:customer-name="localCustomerName"
-              :customer-id="sale.customer"
-              :invoice-type="sale.invoice_type"
-              @update:customerName="handleCustomerNameInput"
-              @customer-selected="handleCustomerSelected"
-              @customer-cleared="handleCustomerCleared"
-            />
+          <n-form-item-gi :span="9" :show-require-mark="formRules.customer?.required" label="Cliente"
+            :path="formRules.customer?.required ? 'customer' : ''">
+            <ClientSelectInput v-model:customer-name="localCustomerName" :customer-id="sale.customer"
+              :invoice-type="sale.invoice_type" @update:customerName="handleCustomerNameInput"
+              @customer-selected="handleCustomerSelected" @customer-cleared="handleCustomerCleared" />
           </n-form-item-gi>
 
           <n-form-item-gi :span="3" label="Fecha">
-            <n-date-picker
-              class="w-100"
-              type="datetime"
-              :is-date-disabled="dateDisabled"
-              :formatted-value="localDateSale"
-              disabled
-            />
+            <n-date-picker class="w-100" type="datetime" :is-date-disabled="dateDisabled"
+              :formatted-value="localDateSale" disabled />
           </n-form-item-gi>
 
           <n-form-item-gi :span="4" label="Dirección">
-            <n-select
-              v-model:value="localAddress"
-              :options="addressesOptions"
-              :disabled="!sale.customer"
-              placeholder=""
-              @update:value="handleAddressChange"
-            />
+            <n-select v-model:value="localAddress" :options="addressesOptions" :disabled="!sale.customer" placeholder=""
+              @update:value="handleAddressChange" />
           </n-form-item-gi>
 
           <n-form-item-gi :span="4" label="Método Pago">
-            <n-select
-              v-model:value="localPaymentMethod"
-              :options="saleStore.getPaymentMethodsOptions"
-              filterable
-              @update:value="handlePaymentMethodChange"
-            />
+            <n-select v-model:value="localPaymentMethod" :options="saleStore.getPaymentMethodsOptions" filterable
+              @update:value="handlePaymentMethodChange" />
           </n-form-item-gi>
 
           <n-form-item-gi :span="2" label="Preguntar por">
-            <n-input
-              v-model:value="localAskFor"
-              placeholder=""
-              :disabled="!!sale.delivery_info"
-              @update:value="handleAskForChange"
-            />
+            <n-input v-model:value="localAskFor" placeholder="" :disabled="!!sale.delivery_info"
+              @update:value="handleAskForChange" />
           </n-form-item-gi>
 
           <n-form-item-gi v-if="$route.query.delivery === undefined" :span="2">
@@ -109,11 +62,7 @@
           </n-form-item-gi>
 
           <n-form-item-gi :span="2">
-            <n-button
-              type="info"
-              text
-              @click="$emit('update:showObservations', !showObservations)"
-            >
+            <n-button type="info" text @click="$emit('update:showObservations', !showObservations)">
               {{ !showObservations ? "Ver" : "Ocultar" }} Observaciones
             </n-button>
           </n-form-item-gi>
@@ -121,7 +70,7 @@
           <n-gi :span="12">
             <n-collapse-transition :show="showObservations">
               <n-form-item label="Observaciones">
-                <n-input type="textarea" v-model:value="localObservations" @update:value="handleObservationsChange"/>
+                <n-input type="textarea" v-model:value="localObservations" @update:value="handleObservationsChange" />
               </n-form-item>
             </n-collapse-transition>
           </n-gi>
@@ -131,20 +80,20 @@
               <n-text class="fs-5">Información de delivery</n-text>
               <n-grid class="mt-2" responsive="screen" cols="12" :x-gap="12">
                 <n-form-item-gi label="Nombres" :span="6" path="delivery_info.person">
-                  <n-input
-                    v-model:value="localDeliveryInfo.person"
-                    @update:value="handleDeliveryPersonChange"
-                    placeholder=""
-                  />
+                  <n-input v-model:value="localDeliveryInfo.person" @update:value="handleDeliveryPersonChange"
+                    placeholder="" />
                 </n-form-item-gi>
                 <n-form-item-gi label="Dirección" :span="6" path="delivery_info.address">
-                  <n-input v-model:value="localDeliveryInfo.address" @update:value="handleDeliveryAddressChange" placeholder=""/>
+                  <n-input v-model:value="localDeliveryInfo.address" @update:value="handleDeliveryAddressChange"
+                    placeholder="" />
                 </n-form-item-gi>
                 <n-form-item-gi label="Teléfono" :span="6" path="delivery_info.phone">
-                  <n-input v-model:value="localDeliveryInfo.phone" @update:value="handleDeliveryPhoneChange" placeholder=""/>
+                  <n-input v-model:value="localDeliveryInfo.phone" @update:value="handleDeliveryPhoneChange"
+                    placeholder="" />
                 </n-form-item-gi>
                 <n-form-item-gi label="Repartidor" :span="6">
-                  <n-input v-model:value="localDeliveryInfo.deliveryman" @update:value="handleDeliverymanChange" placeholder=""/>
+                  <n-input v-model:value="localDeliveryInfo.deliveryman" @update:value="handleDeliverymanChange"
+                    placeholder="" />
                 </n-form-item-gi>
               </n-grid>
             </n-collapse-transition>
@@ -152,34 +101,20 @@
         </n-grid>
       </n-form>
 
-      <ProductTable
-        :sale="sale"
-        :sale-details="saleStore.toSale"
-        :sale-menu-sets="saleStore.salePayload.sale_product_sets"
-        @update-detail="saleStore.updateDetail"
-      />
+      <ProductTable :sale="sale" :sale-details="saleStore.toSale"
+        :sale-menu-sets="saleStore.salePayload.sale_product_sets" @update-detail="saleStore.updateDetail" />
 
-      <PaymentTotals
-        :items="paymentTotalsItems"
-        :total-amount="totalAmount"
-        :payment-amount="sale.given_amount"
-        :payment-max="sale.payment_condition === 2 ? sale.amount - 0.1 : null"
-        :change-amount="changing"
-        @value-changed="handleValueChange"
-        @payment-changed="handlePaymentChange"
-      />
+      <PaymentTotals :items="paymentTotalsItems" :total-amount="totalAmount" :payment-amount="sale.given_amount"
+        :payment-max="sale.payment_condition === 2 ? sale.amount - 0.1 : null" :change-amount="changing"
+        @value-changed="handleValueChange" @payment-changed="handlePaymentChange" />
 
-      <n-checkbox
-        v-if="!sale.delivery_info || sale.payment_condition === 1"
-        v-model:checked="localIsMultiple"
-        :disabled="settingsStore.businessSettings.order.pending_takeaway"
-        @update:checked="handleIsMultipleChange"
-        class="mt-2"
-      >
+      <n-checkbox v-if="!sale.delivery_info || sale.payment_condition === 1" v-model:checked="localIsMultiple"
+        :disabled="settingsStore.businessSettings.order.pending_takeaway" @update:checked="handleIsMultipleChange"
+        class="mt-2">
         Pago multiple
       </n-checkbox>
 
-      <n-divider/>
+      <n-divider />
 
       <n-grid responsive="screen" cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12" :x-gap="12">
         <n-gi class="d-flex align-items-center" :span="3">
@@ -189,15 +124,9 @@
         </n-gi>
       </n-grid>
 
-      <n-button
-        class="mt-2 py-5 fs-1"
-        type="success"
-        :disabled="isPaymentDisabled"
-        secondary
-        block
-        @click="handleMainAction"
-      >
-        <v-icon class="me-2" name="fa-coins" scale="2"/>
+      <n-button class="mt-2 py-5 fs-1" type="success" :disabled="isPaymentDisabled" secondary block
+        @click="handleMainAction">
+        <v-icon class="me-2" name="fa-coins" scale="2" />
         {{ userStore.user.role !== "MOZO" ? "Cobrar" : "Realizar pedido" }}
       </n-button>
     </n-card>
@@ -205,13 +134,13 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed, watch, watchEffect, onMounted, toRefs } from "vue";
+import { defineComponent, ref, computed, watch, onMounted, toRefs } from "vue";
 import { useRoute } from "vue-router";
 import { useSaleStore } from "@/store/modules/sale";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useUserStore } from "@/store/modules/user";
 import { useSaleTotals } from "@/composables/useSaleTotals";
-import { useMessage } from "naive-ui";
+// import { useMessage } from "naive-ui";
 import ProductTable from "./ProductTable.vue";
 import PaymentTotals from "./PaymentTotals.vue";
 import ClientSelectInput from "@/views/Customer/components/ClientSelectInput.vue";
@@ -316,7 +245,7 @@ export default defineComponent({
     const saleStore = useSaleStore();
     const settingsStore = useSettingsStore();
     const userStore = useUserStore();
-    const message = useMessage();
+    //const message = useMessage();
     const { grandTotal } = useSaleTotals();
 
     const saleForm = ref();
@@ -395,7 +324,7 @@ export default defineComponent({
       const hasRegularProducts = saleStore.toSale.length > 0;
       const hasMenuSets = saleStore.salePayload.sale_product_sets && saleStore.salePayload.sale_product_sets.length > 0;
       const hasAnyItems = hasRegularProducts || hasMenuSets;
-      
+
       const givenAmount = Number(props.sale.given_amount) || 0;
       const totalAmountValue = Number(props.sale.amount) || 0;
       const isCashPayment = props.sale.payment_condition === 1;
@@ -418,6 +347,10 @@ export default defineComponent({
       updatedSale.customer = customer.id;
       updatedSale.customer_name = localCustomerName.value;
       updatedSale.address = null;
+      localDeliveryInfo.value.person = customer.names;
+      localDeliveryInfo.value.phone = customer.phone;
+      localDeliveryInfo.value.address = customer.address;
+      updatedSale.delivery_info = { ...localDeliveryInfo.value };
       emit('update:sale', updatedSale);
       emit('createAddressesOptions', customer);
     };
@@ -453,7 +386,7 @@ export default defineComponent({
       emit('selectSerie', newSerie);
     };
 
-    const handleSerieChanged = () => {};
+    const handleSerieChanged = () => { };
 
     const handleInvoiceTypeChange = (value) => {
       localInvoiceType.value = value;
@@ -604,16 +537,16 @@ export default defineComponent({
       if (newTotal > 0) {
         const updates = { ...props.sale };
         updates.amount = newTotal;
-        
+
         // Solo actualizar given_amount si está vacío o es 0
         if (!props.sale.given_amount || props.sale.given_amount === 0) {
           updates.given_amount = newTotal;
         }
-        
+
         emit('update:sale', updates);
       }
     }, { immediate: true });
-    
+
 
     // Manejar cambios en los valores editables
     const handleValueChange = ({ field, value }) => {
