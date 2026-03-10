@@ -462,7 +462,7 @@ export default defineComponent({
       console.info("si llega a crear las opciones de dirección, cliente seleccionado:", sale.value.customer?.id);
 
       const customer = sale.value.customer;
-
+      sale.value.customer = customer.id;
       whatsappNumber.value = customer?.phone || "";
       if (customer) {
         console.info("Direcciones del cliente:", customer.addresses);
