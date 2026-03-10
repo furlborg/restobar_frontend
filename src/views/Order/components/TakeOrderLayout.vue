@@ -462,6 +462,7 @@ export default defineComponent({
       const customer = customerResults.value.find(c => c.id === sale.value.customer);
       whatsappNumber.value = customer?.phone || "";
       if (customer) {
+        console.info("Direcciones del cliente:", customer.addresses);
         addressesOptions.value = customer.addresses.map(address => ({
           value: address.id,
           label: `${address.ubigeo} - ${address.description}`
