@@ -459,6 +459,7 @@ export default defineComponent({
     };
 
     const createAddressesOptions = () => {
+      console.info("si llega a crear las opciones de dirección, cliente seleccionado:", sale.value.customer);
       const customer = customerResults.value.find(c => c.id === sale.value.customer);
       whatsappNumber.value = customer?.phone || "";
       if (customer) {
