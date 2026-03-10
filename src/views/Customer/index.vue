@@ -1,13 +1,8 @@
 <template>
   <n-card title="Clientes" :bordered="false" :segmented="{ content: 'hard' }">
     <template #header-extra>
-      <n-button
-        v-if="userStore.hasPermission('add_customer')"
-        :disabled="isTableLoading"
-        type="primary"
-        @click="showModal = true"
-        secondary
-      >
+      <n-button v-if="userStore.hasPermission('add_customer')" :disabled="isTableLoading" type="primary"
+        @click="showModal = true" secondary>
         <template #icon>
           <n-icon>
             <v-icon name="la-user-plus-solid" />
@@ -17,22 +12,13 @@
       </n-button>
     </template>
     <n-space justify="space-between">
-      <n-button
-        type="info"
-        text
-        @click="
-          showFilters === false ? (showFilters = true) : (showFilters = false)
-        "
-      >
+      <n-button type="info" text @click="
+        showFilters === false ? (showFilters = true) : (showFilters = false)
+        ">
         <v-icon name="md-filteralt-round" />
         {{ showFilters ? "Ocultar Filtros" : "Mostrar filtros" }}
       </n-button>
-      <n-button
-        type="info"
-        :disabled="isTableLoading"
-        text
-        @click="refreshTable"
-      >
+      <n-button type="info" :disabled="isTableLoading" text @click="refreshTable">
         <v-icon name="hi-solid-refresh" />
         Recargar
       </n-button>
@@ -40,18 +26,9 @@
     <n-collapse-transition class="mt-2" :show="showFilters">
       <!-- Search Customer Form -->
       <n-form>
-        <n-grid
-          responsive="screen"
-          cols="6 s:6 m:12 l:12 xl:24 2xl:24"
-          :x-gap="12"
-        >
+        <n-grid responsive="screen" cols="6 s:6 m:12 l:12 xl:24 2xl:24" :x-gap="12">
           <n-form-item-gi label="Tipo Documento" :span="3">
-            <n-select
-              v-model:value="searchParams.doc_type"
-              :options="documentOptions"
-              placeholder=""
-              clearable
-            />
+            <n-select v-model:value="searchParams.doc_type" :options="documentOptions" placeholder="" clearable />
           </n-form-item-gi>
           <n-form-item-gi label="Nº Documento" :span="3">
             <n-input v-model:value="searchParams.doc_num" placeholder="" />
@@ -63,44 +40,23 @@
             <n-input v-model:value="searchParams.email" placeholder="" />
           </n-form-item-gi>
           <n-form-item-gi label="Celular" :span="3">
-            <n-input-number
-              v-model:value="searchParams.phone"
-              :show-button="false"
-              placeholder=""
-            />
+            <n-input-number v-model:value="searchParams.phone" :show-button="false" placeholder="" />
           </n-form-item-gi>
           <n-form-item-gi :span="3">
-            <n-button type="primary" @click="performSearch" secondary
-              >Buscar</n-button
-            >
+            <n-button type="primary" @click="performSearch" secondary>Buscar</n-button>
           </n-form-item-gi>
         </n-grid>
       </n-form>
     </n-collapse-transition>
     <!-- Customer Data Table -->
-    <n-data-table
-      class="mt-2"
-      :columns="tableColumns"
-      :data="customers"
-      :pagination="pagination"
-      :loading="isTableLoading"
-      :scroll-x="900"
-      remote
-    />
+    <n-data-table class="mt-2" :columns="tableColumns" :data="customers" :pagination="pagination"
+      :loading="isTableLoading" :scroll-x="900" remote />
     <!-- Customer Modal -->
-    <customer-modal
-      v-model:show="showModal"
-      :id-customer="idCustomer"
-      @update:show="onCloseModal"
-      @on-success="onSuccess"
-    />
+    <customer-modal v-model:show="showModal" :id-customer="idCustomer" @update:show="onCloseModal"
+      @on-success="onSuccess" />
     <!-- Customer Credits Drawer -->
-    <customer-credits-drawer
-      v-model:show="showCredits"
-      :id="idCustomer"
-      @update:show="onCloseModal"
-      @on-success="onSuccess"
-    />
+    <customer-credits-drawer v-model:show="showCredits" :id="idCustomer" @update:show="onCloseModal"
+      @on-success="onSuccess" />
   </n-card>
 </template>
 
@@ -119,7 +75,7 @@ import CustomerModal from "./components/CustomerModal";
 import CustomerCreditsDrawer from "./components/CustomerCreditsDrawer";
 
 export default defineComponent({
-  name: "Customer",
+  name: "CustomerIndex",
   components: {
     CustomerModal,
     CustomerCreditsDrawer,
@@ -176,7 +132,7 @@ export default defineComponent({
           })
           .catch((error) => {
             console.error(error);
-            
+
           })
           .finally(() => {
             isTableLoading.value = false;
@@ -207,7 +163,7 @@ export default defineComponent({
           })
           .catch((error) => {
             console.error(error);
-            
+
           })
           .finally(() => {
             isTableLoading.value = false;
@@ -235,7 +191,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          
+
         })
         .finally(() => {
           isTableLoading.value = false;
@@ -267,7 +223,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          
+
         })
         .finally(() => {
           isTableLoading.value = false;

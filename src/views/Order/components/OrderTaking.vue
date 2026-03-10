@@ -344,7 +344,7 @@ export default defineComponent({
       console.log('CUSTOMER SELECCIONADO: ', customer)
       localCustomerName.value = `${customer.doc_num} - ${customer.names}`;
       const updatedSale = { ...props.sale };
-      updatedSale.customer = customer.id;
+      updatedSale.customer = customer;
       updatedSale.customer_name = localCustomerName.value;
       updatedSale.addresses = customer.addresses.length > 0 ? customer.addresses : null;
       localDeliveryInfo.value.person = customer.names;
@@ -361,8 +361,8 @@ export default defineComponent({
       updatedSale.customer = 0;
       updatedSale.customer_name = '';
       updatedSale.address = null;
-      emit('update:sale', updatedSale);
       emit('createAddressesOptions', null);
+      emit('update:sale', updatedSale);
     };
 
     const handleCustomerNameInput = (value) => {
