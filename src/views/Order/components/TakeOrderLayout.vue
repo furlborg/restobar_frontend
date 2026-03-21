@@ -11,243 +11,119 @@
       <n-grid responsive="screen" cols="1 xs:1 s:1 m:5 l:5 xl:5 2xl:5" :x-gap="12">
         <n-gi :span="3">
           <transition name="mode-fade" mode="out-in">
-            <OrderTaking v-if="selectProducts"
-              :loading="loading"
-              :sale="sale"
-              :show-observations="showObservations"
-              :addresses-options="addressesOptions"
-              :customer-options="customerOptions"
-              :searching-customer="searchingCustomer"
-              :whatsapp-number="whatsappNumber"
-              :changing="changing"
-              :sub-total="subTotal"
-              :total-grv="totalGRV"
-              :total-exn="totalEXN"
-              :total-grt="totalGRT"
-              :total-igv="totalIGV"
-              :icbper="icbper"
-              :total-dsct="totalDSCT"
-              :is-multiple="isMultiple"
-              :ticket-preview="ticketPreview"
-              @update:sale="(newSale) => Object.assign(sale, newSale)"
-              @update:show-observations="showObservations = $event"
-              @update:is-multiple="isMultiple = $event"
-              @update:ticket-preview="ticketPreview = $event"
-              @select-serie="selectSerie"
-              @change-serie="changeSerie"
-              @change-condition="changeCondition"
-              @auto-create-customer="autoCreateCustomer"
-              @create-addresses-options="createAddressesOptions"
-              @change-address="changeAddress"
-              @handle-delivery="handleDelivery"
-              @show-customer-modal="showCustomerModal = true"
-              @perform-take-away="performTakeAway"
-              @do-multiple-payment="doMultiplePayment"
-            />
+            <OrderTaking v-if="selectProducts" :loading="loading" :sale="sale" :show-observations="showObservations"
+              :addresses-options="addressesOptions" :customer-options="customerOptions"
+              :searching-customer="searchingCustomer" :whatsapp-number="whatsappNumber" :changing="changing"
+              :sub-total="subTotal" :total-grv="totalGRV" :total-exn="totalEXN" :total-grt="totalGRT"
+              :total-igv="totalIGV" :icbper="icbper" :total-dsct="totalDSCT" :is-multiple="isMultiple"
+              :ticket-preview="ticketPreview" @update:sale="(newSale) => Object.assign(sale, newSale)"
+              @update:show-observations="showObservations = $event" @update:is-multiple="isMultiple = $event"
+              @update:ticket-preview="ticketPreview = $event" @select-serie="selectSerie" @change-serie="changeSerie"
+              @change-condition="changeCondition" @auto-create-customer="autoCreateCustomer"
+              @create-addresses-options="createAddressesOptions" @change-address="changeAddress"
+              @handle-delivery="handleDelivery" @show-customer-modal="showCustomerModal = true"
+              @perform-take-away="performTakeAway" @do-multiple-payment="doMultiplePayment" />
             <div v-else>
-              <CategoriesList />
+              <router-view />
             </div>
           </transition>
         </n-gi>
         <n-gi span="2">
-          <PaymentSummary
-            :select-products="selectProducts"
-            :product-search="productSearch"
-            :show-modal="showModal"
-            :item-index="itemIndex"
-            @update:select-products="selectProducts = $event"
-            @update:product-search="productSearch = $event"
-            @update:show-modal="showModal = $event"
-            @update:item-index="itemIndex = $event"
-          />
+          <PaymentSummary :select-products="selectProducts" :product-search="productSearch" :show-modal="showModal"
+            :item-index="itemIndex" @update:select-products="selectProducts = $event"
+            @update:product-search="productSearch = $event" @update:show-modal="showModal = $event"
+            @update:item-index="itemIndex = $event" />
         </n-gi>
       </n-grid>
     </n-card>
-    <n-tabs
-      class="d-lg-none"
-      tab-style="background: #fff;"
-      v-model:value="activeTab"
-      type="segment"
-      animated
-    >
+    <n-tabs class="d-lg-none" tab-style="background: #fff;" v-model:value="activeTab" type="segment" animated>
       <n-tab-pane name="main" tab="Tomar pedido">
         <n-card>
           <transition name="mode-fade" mode="out-in">
-            <OrderTaking
-              v-if="selectProducts"
-              :loading="loading"
-              :sale="sale"
-              :show-observations="showObservations"
-              :addresses-options="addressesOptions"
-              :customer-options="customerOptions"
-              :searching-customer="searchingCustomer"
-              :whatsapp-number="whatsappNumber"
-              :changing="changing"
-              :sub-total="subTotal"
-              :total-grv="totalGRV"
-              :total-exn="totalEXN"
-              :total-grt="totalGRT"
-              :total-igv="totalIGV"
-              :icbper="icbper"
-              :total-dsct="totalDSCT"
-              :is-multiple="isMultiple"
-              :ticket-preview="ticketPreview"
-              @update:sale="(newSale) => Object.assign(sale, newSale)"
-              @update:show-observations="showObservations = $event"
-              @update:is-multiple="isMultiple = $event"
-              @update:ticket-preview="ticketPreview = $event"
-              @select-serie="selectSerie"
-              @change-serie="changeSerie"
-              @change-condition="changeCondition"
-              @show-customer-options="showCustomerOptions"
-              @auto-create-customer="autoCreateCustomer"
-              @create-addresses-options="createAddressesOptions"
-              @change-address="changeAddress"
-              @handle-delivery="handleDelivery"
-              @show-customer-modal="showCustomerModal = true"
-              @perform-take-away="performTakeAway"
-              @do-multiple-payment="doMultiplePayment"
-              @goToFirstTab="goToFirstTab"
-            />
+            <OrderTaking v-if="selectProducts" :loading="loading" :sale="sale" :show-observations="showObservations"
+              :addresses-options="addressesOptions" :customer-options="customerOptions"
+              :searching-customer="searchingCustomer" :whatsapp-number="whatsappNumber" :changing="changing"
+              :sub-total="subTotal" :total-grv="totalGRV" :total-exn="totalEXN" :total-grt="totalGRT"
+              :total-igv="totalIGV" :icbper="icbper" :total-dsct="totalDSCT" :is-multiple="isMultiple"
+              :ticket-preview="ticketPreview" @update:sale="(newSale) => Object.assign(sale, newSale)"
+              @update:show-observations="showObservations = $event" @update:is-multiple="isMultiple = $event"
+              @update:ticket-preview="ticketPreview = $event" @select-serie="selectSerie" @change-serie="changeSerie"
+              @change-condition="changeCondition" @show-customer-options="showCustomerOptions"
+              @auto-create-customer="autoCreateCustomer" @create-addresses-options="createAddressesOptions"
+              @change-address="changeAddress" @handle-delivery="handleDelivery"
+              @show-customer-modal="showCustomerModal = true" @perform-take-away="performTakeAway"
+              @do-multiple-payment="doMultiplePayment" @goToFirstTab="goToFirstTab" />
             <CategoriesList v-else />
           </transition>
         </n-card>
       </n-tab-pane>
       <n-tab-pane name="payment" tab="Resumen">
-        <PaymentSummary
-          :select-products="selectProducts"
-          :product-search="productSearch"
-          :show-modal="showModal"
-          :item-index="itemIndex"
-          @update:select-products="
+        <PaymentSummary :select-products="selectProducts" :product-search="productSearch" :show-modal="showModal"
+          :item-index="itemIndex" @update:select-products="
             (value) => {
               selectProducts = value;
               goToFirstTab();
             }
-          "
-          @update:product-search="productSearch = $event"
-          @update:show-modal="showModal = $event"
-          @update:item-index="itemIndex = $event"
-          @go-to-first-tab="goToFirstTab"
-        />
+          " @update:product-search="productSearch = $event" @update:show-modal="showModal = $event"
+          @update:item-index="itemIndex = $event" @go-to-first-tab="goToFirstTab" />
       </n-tab-pane>
     </n-tabs>
-    <n-modal
-      :class="getModalClass"
-      preset="card"
-      v-model:show="showConfirm"
-      title="Registrar pedido"
-      :mask-closable="false"
-      closable
-    >
+    <n-modal :class="getModalClass" preset="card" v-model:show="showConfirm" title="Registrar pedido"
+      :mask-closable="false" closable>
       <n-form-item label="Ingrese código de usuario">
         <n-input type="password" v-model:value="userConfirm" placeholder="" />
       </n-form-item>
       <template #action>
         <n-space justify="end">
-          <n-button
-            type="success"
-            :loading="loading"
-            :disabled="!userConfirm || loading"
-            secondary
-            @click.prevent="performCreateOrder"
-          >
+          <n-button type="success" :loading="loading" :disabled="!userConfirm || loading" secondary
+            @click.prevent="performCreateOrder">
             Confirmar
           </n-button>
         </n-space>
       </template>
     </n-modal>
-    <n-modal
-      :class="getModalClass"
-      preset="card"
-      v-model:show="showPayments"
-      title="Realizar venta"
-      :mask-closable="false"
-      closable
-      @close="sale.payments = null"
-    >
+    <n-modal :class="getModalClass" preset="card" v-model:show="showPayments" title="Realizar venta"
+      :mask-closable="false" closable @close="sale.payments = null">
       <n-space justify="space-between">
         <n-tag type="info">Total: S/. {{ showPayments ? sale.amount : null }}</n-tag>
-        <n-tag :type="evalPayments ? 'error' : 'success'"
-          >Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}</n-tag
-        >
-        <n-tag :type="evalPayments ? 'error' : 'warning'"
-          >Faltante: S/.
+        <n-tag :type="evalPayments ? 'error' : 'success'">
+          Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}
+        </n-tag>
+        <n-tag :type="evalPayments ? 'error' : 'warning'">Faltante: S/.
           {{
             showPayments
               ? (parseFloat(sale.amount) - currentPaymentsAmount).toFixed(2)
               : null
-          }}</n-tag
-        >
+          }}</n-tag>
       </n-space>
       <n-form-item class="mt-2" label="Pagos">
         <n-dynamic-input v-model:value="sale.payments" :min="1" @create="createPayment">
           <template #default="{ value }">
             <div style="display: flex; align-items: center; width: 100%">
-              <n-select
-                v-model:value="value.payment_method"
-                :disabled="loading"
-                :options="filteredMethods"
-              />
-              <n-input
-                class="ms-2"
-                v-model:value="value.amount"
-                placeholder=""
-                :disabled="loading"
-                v-numeric-only
-              />
+              <n-select v-model:value="value.payment_method" :disabled="loading" :options="filteredMethods" />
+              <n-input class="ms-2" v-model:value="value.amount" placeholder="" :disabled="loading" v-numeric-only />
             </div>
           </template>
         </n-dynamic-input>
       </n-form-item>
       <n-space justify="end">
-        <n-button
-          type="success"
-          :disabled="
-            evalPayments ||
-            sale.payments?.some((p) => p.payment_method === null) ||
-            sale.payments?.some((p) => Number(p.amount) <= 0) ||
-            loading
-          "
-          :loading="loading"
-          secondary
-          @click="performTakeAway"
-        >
+        <n-button type="success" :disabled="evalPayments ||
+          sale.payments?.some((p) => p.payment_method === null) ||
+          sale.payments?.some((p) => Number(p.amount) <= 0) ||
+          loading
+          " :loading="loading" secondary @click="performTakeAway">
           Confirmar
         </n-button>
       </n-space>
     </n-modal>
 
-    <OrderIndications
-      v-model:show="showModal"
-      preset="card"
-      title="Indicaciones"
-      :order="orderStore.orderList[itemIndex]"
-      @success="showModal = false"
-    />
-    <customer-modal
-      v-model:show="showCustomerModal"
-      :id-customer="sale.customer"
-      :document="customerDocument"
-      :doc_type="sale.invoice_type === 1 ? '6' : null"
-      @update:show="onCloseModal"
-      @on-success="onSuccess"
-    />
-    <ticket-preview
-      ref="ticketPreviewRef"
-      v-model:show="showPdf"
-      :data="pdfData"
-      :hidden="true"
-      :isUpdate="false"
-    />
-    <preview-drawer
-      ref="voucherDrawer"
-      v-model:show="showVoucher"
-      :data="voucherData"
-      :previewOnly="!ticketPreview"
-      @printed="() => $router.push({ name: 'TableHome' })"
-      @canceled="() => $router.push({ name: 'TableHome' })"
-    />
+    <OrderIndications v-model:show="showModal" preset="card" title="Indicaciones"
+      :order="orderStore.orderList[itemIndex]" @success="showModal = false" />
+    <customer-modal v-model:show="showCustomerModal" :id-customer="sale.customer" :document="customerDocument"
+      :doc_type="sale.invoice_type === 1 ? '6' : null" @update:show="onCloseModal" @on-success="onSuccess" />
+    <ticket-preview ref="ticketPreviewRef" v-model:show="showPdf" :data="pdfData" :hidden="true" :isUpdate="false" />
+    <preview-drawer ref="voucherDrawer" v-model:show="showVoucher" :data="voucherData" :previewOnly="!ticketPreview"
+      @printed="() => $router.push({ name: 'TableHome' })" @canceled="() => $router.push({ name: 'TableHome' })" />
 
   </div>
 </template>
@@ -265,7 +141,7 @@ import { useSettingsStore } from "@/store/modules/settings";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useUserStore } from "@/store/modules/user";
 import { useSaleTotals } from "@/composables/useSaleTotals";
-import { useBreakpoint } from "vooks";
+//import { useBreakpoint } from "vooks";
 import OrderTaking from "./OrderTaking.vue";
 import PaymentSummary from "./PaymentSummary.vue";
 import CategoriesList from "./CategoriesList.vue";
@@ -287,7 +163,7 @@ export default defineComponent({
     PreviewDrawer,
   },
   setup() {
-    const breakpointRef = useBreakpoint();
+    //const breakpointRef = useBreakpoint();
     const orderStore = useOrderStore();
     const message = useMessage();
     const dialog = useDialog();
@@ -297,7 +173,7 @@ export default defineComponent({
     const userStore = useUserStore();
     const route = useRoute();
     const router = useRouter();
-    const { grandTotal, formattedTotals, taxBreakdown, summary, menuTotal } = useSaleTotals();
+    const { grandTotal, taxBreakdown, summary, menuTotal } = useSaleTotals();
 
     const loading = ref(false);
     const selectProducts = ref(false);
@@ -334,12 +210,12 @@ export default defineComponent({
     const totalGRT = computed(() => taxBreakdown.value.free);
     const totalIGV = computed(() => taxBreakdown.value.igv);
 
-    const totalDSCT = computed(() => 
+    const totalDSCT = computed(() =>
       saleStore.toSale.some(detail => Number(detail.discount) > 0)
         ? saleStore.toSale.reduce((acc, curVal) => acc + Number(curVal.discount), 0)
         : Number(sale.value.discount));
 
-    const changing = computed(() => 
+    const changing = computed(() =>
       sale.value.given_amount > grandTotal.value ? (sale.value.given_amount - grandTotal.value).toFixed(2) : 0.0);
 
 
@@ -392,7 +268,7 @@ export default defineComponent({
       // Calcular la cantidad de productos directamente (incluyendo menús)
       const productCount = saleStore.toSale.reduce((acc, curVal) => acc + curVal.quantity, 0);
       const menuCount = (saleStore.salePayload.sale_product_sets || []).reduce((acc, curVal) => acc + curVal.quantity, 0);
-      
+
       Object.assign(sale.value, {
         count: productCount + menuCount,
         amount: grandTotal.value,
@@ -403,8 +279,8 @@ export default defineComponent({
         igv_amount: totalIGV.value,
         total_igv: parseFloat(totalIGV.value || 0).toFixed(2),
       });
-      
-      
+
+
       // Actualizar el monto dado cuando cambia el total (para contado)
       if (sale.value.payment_condition === 1) {
         const newGivenAmount = grandTotal.value > 0 ? grandTotal.value : parseFloat(0).toFixed(2);
@@ -481,11 +357,11 @@ export default defineComponent({
             const igvValue = parseFloat(sale.value.total_igv || sale.value.igv_amount || 0);
             sale.value.total_igv = igvValue.toFixed(2);
             const saleClone = JSON.parse(JSON.stringify(sale.value));
-            
+
             // Obtener el payload completo que incluye sale_product_sets (menús)
             const salePayload = saleStore.salePayload;
             console.log("TakeOrderLayout - enviando orden con menús:", salePayload.sale_product_sets?.length || 0);
-            
+
             const response = await takeAwayOrder(orderStore.orderList, saleClone, userConfirm.value, salePayload);
             if (response.status === 201) {
               checkState.value = true;
@@ -540,8 +416,8 @@ export default defineComponent({
     });
 
     const filteredMethods = computed(() => saleStore.getPaymentMethodsOptions.map(option => ({
-        ...option,
-        disabled: sale.value.payments?.some(pay => pay.payment_method === option.value)
+      ...option,
+      disabled: sale.value.payments?.some(pay => pay.payment_method === option.value)
     })));
 
     const showCustomerOptions = async (value) => {
@@ -583,9 +459,13 @@ export default defineComponent({
     };
 
     const createAddressesOptions = () => {
-      const customer = customerResults.value.find(c => c.id === sale.value.customer);
+      console.info("si llega a crear las opciones de dirección, cliente seleccionado:", sale.value.customer?.id);
+
+      const customer = sale.value.customer;
+      sale.value.customer = customer.id;
       whatsappNumber.value = customer?.phone || "";
       if (customer) {
+        console.info("Direcciones del cliente:", customer.addresses);
         addressesOptions.value = customer.addresses.map(address => ({
           value: address.id,
           label: `${address.ubigeo} - ${address.description}`
@@ -627,7 +507,7 @@ export default defineComponent({
           price_base: detail.price_base.toFixed(2)
         }));
         sale.value.discount = totalDSCT.value;
-        
+
         const response = await takeAwayOrder(orderStore.orderList, sale.value, userConfirm.value);
         if (response.status === 201) {
           message.success("Venta realizada correctamente!");
@@ -699,6 +579,7 @@ export default defineComponent({
       orderStore.orders = [];
       orderStore.orderList.splice(0);
       saleStore.toSale.splice(0);
+      orderStore.clearNewOrders();
     };
 
     onBeforeRouteLeave((to) => handleRouteGuard(to, true));

@@ -16,7 +16,7 @@ export async function retrieveCustomerAddresses(id) {
 export async function getCustomersByPageNumber(
   searchParams,
   pageLimit,
-  pageOffset
+  pageOffset,
 ) {
   if (searchParams) {
     return await http.get("customers/", {
@@ -120,8 +120,8 @@ export async function searchCustomerByDocument(document) {
   return await http.get("customers/", {
     params: {
       doc_num__icontains: document,
-      limit: 10
-    }
+      limit: 10,
+    },
   });
 }
 
@@ -133,10 +133,11 @@ export async function requestCustomerData(document) {
     },
     {
       timeout: 10000,
-    }
+    },
   );
 }
 
 export async function getUbigee() {
+  console.log("Fetching ubigee data from API...");
   return await http.get("customers/ubigee/");
 }

@@ -1,24 +1,12 @@
 <template>
-  <n-config-provider
-    :locale="commonEsPE"
-    :date-locale="dateEsPE"
-    :theme="getDarkTheme"
-    :theme-overrides="getThemeOverrides"
-  >
+  <n-config-provider :locale="commonEsPE" :date-locale="dateEsPE" :theme="getDarkTheme"
+    :theme-overrides="getThemeOverrides">
     <!-- <app-provider> -->
     <n-layout class="layout" position="absolute" has-sider>
-      <n-layout-sider
-        v-if="genericsStore.device !== 'mobile'"
-        class="layout-sider"
-        @collapse="collapsed = true"
-        @expand="collapsed = false"
-        :collapsed="userStore.user.role !== 'MOZO' ? collapsed : true"
-        :collapsed-width="userStore.user.role !== 'MOZO' ? 64 : 0"
-        collapse-mode="width"
-        :width="175"
-        :native-scrollbar="false"
-        bordered
-      >
+      <n-layout-sider v-if="genericsStore.device !== 'mobile'" class="layout-sider" @collapse="collapsed = true"
+        @expand="collapsed = false" :collapsed="userStore.user.role !== 'MOZO' ? collapsed : true"
+        :collapsed-width="userStore.user.role !== 'MOZO' ? 64 : 0" collapse-mode="width" :width="175"
+        :native-scrollbar="false" bordered>
         <Logo :collapsed="collapsed" />
         <AsideMenu v-model:collapsed="collapsed" />
       </n-layout-sider>
@@ -32,11 +20,8 @@
         <n-layout-header position="absolute" bordered>
           <PageHeader v-model:collapsed="collapsed" />
         </n-layout-header>
-        <n-layout-content
-          class="layout-content"
-          :class="{ 'layout-default-background': getDarkTheme === undefined }"
-          :native-scrollbar="false"
-        >
+        <n-layout-content class="layout-content" :class="{ 'layout-default-background': getDarkTheme === undefined }"
+          :native-scrollbar="false">
           <div class="layout-content-main">
             <router-view v-slot="{ Component }">
               <transition name="zoom-fade" mode="out-in" appear>
@@ -152,10 +137,10 @@ export default defineComponent({
           primaryColorHover: lightenStr,
           primaryColorPressed: lightenStr,
         },
-          DataTable: {
-              thPaddingTiny: "2px 2px 6px 6px",
-              tdPaddingTiny: "2px 2px 6px 6px",
-          },
+        DataTable: {
+          thPaddingTiny: "2px 2px 6px 6px",
+          tdPaddingTiny: "2px 2px 6px 6px",
+        },
         LoadingBar: {
           colorLoading: appTheme,
         },

@@ -211,8 +211,23 @@ export const routes = [
             name: "TakeOrder",
             path: "/take-order",
             meta: { requiredPerm: "take_away_order" },
+            redirect: { name: "CategoriesOrder" },
             component: () =>
               import("@/views/Order/components/TakeOrderLayout.vue"),
+            children: [
+              {
+                name: "CategoriesOrder",
+                path: "order-items",
+                component: () =>
+                  import("@/views/Order/components/CategoriesList.vue"),
+              },
+              {
+                name: "CategoriesOrderItems",
+                path: "order-items/:category_id",
+                component: () =>
+                  import("@/views/Order/components/CategoriesItem.vue"),
+              },
+            ],
           },
           {
             name: "TableOrder",

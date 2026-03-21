@@ -4,240 +4,137 @@
             <n-space v-if="tillStore.currentTillID" align="end">
                 <n-tooltip>
                     <template #trigger>
-                        <v-icon 
-                            name="fa-circle" 
-                            scale="0.75" 
-                            :color="tableStore.wsConnected ? 'green' : 'red'"
-                            :animation="tableStore.wsConnected ? undefined : 'flash'"
-                        />
+                        <v-icon name="fa-circle" scale="0.75" :color="tableStore.wsConnected ? 'green' : 'red'"
+                            :animation="tableStore.wsConnected ? undefined : 'flash'" />
                     </template>
                     {{ tableStore.wsConnected ? 'WebSocket conectado' : 'WebSocket desconectado' }}
                 </n-tooltip>
                 <n-button type="info" text @click="refreshData">
-                    <v-icon name="hi-solid-refresh"/>
+                    <v-icon name="hi-solid-refresh" />
                     Recargar
                 </n-button>
-                <template
-                        v-if="settingsStore.business_settings?.order?.divide_delivery_takeaway"
-                >
-                    <n-button
-                        v-if="userStore.hasPermission('take_away_order')"
-                        type="info"
-                        secondary
-                        @click="$router.push({ name: 'TakeOrder', query: { delivery: true } })"
-                    >
+                <template v-if="settingsStore.business_settings?.order?.divide_delivery_takeaway">
+                    <n-button v-if="userStore.hasPermission('take_away_order')" type="info" secondary
+                        @click="$router.push({ name: 'TakeOrder', query: { delivery: true } })">
                         Delivery
                     </n-button>
-                    <n-button
-                        v-if="userStore.hasPermission('take_away_order')"
-                        type="info"
-                        secondary
-                        @click="$router.push({ name: 'TakeOrder', query: { delivery: false } })"
-                    >
+                    <n-button v-if="userStore.hasPermission('take_away_order')" type="info" secondary
+                        @click="$router.push({ name: 'TakeOrder', query: { delivery: false } })">
                         {{ settingsStore.business_settings.order?.fast_sale_format ? "Venta Rápida" : "Para llevar" }}
                     </n-button>
                 </template>
                 <template v-else>
-                    <n-button
-                            v-if="userStore.hasPermission('take_away_order')"
-                            type="info"
-                            secondary
-                            @click="$router.push({ name: 'TakeOrder' })"
-                    >
-                        {{ settingsStore.business_settings.order?.fast_sale_format ? "Venta Rápida" : "Para llevar" }} / Delivery
+                    <n-button v-if="userStore.hasPermission('take_away_order')" type="info" secondary
+                        @click="$router.push({ name: 'TakeOrder' })">
+                        {{ settingsStore.business_settings.order?.fast_sale_format ? "Venta Rápida" : "Para llevar" }} /
+                        Delivery
                     </n-button>
                 </template>
             </n-space>
         </template>
         <n-spin v-if="tillStore.currentTillID" :show="isLoading">
-            <n-card
-                    class="my-2"
-                    v-for="area in tableStore.branch_table_Areas"
-                    :key="area.id"
-                    :title="area.description"
-                    embedded
-            >
-                <n-grid
-                        responsive="screen"
-                        cols="3 xs:3 s:12 m:12 l:15 xl:21 2xl:21"
-                        :x-gap="12"
-                        :y-gap="12"
-                >
+            <n-card class="my-2" v-for="area in tableStore.branch_table_Areas" :key="area.id" :title="area.description"
+                embedded>
+                <n-grid responsive="screen" cols="3 xs:3 s:12 m:12 l:15 xl:21 2xl:21" :x-gap="12" :y-gap="12">
                     <n-gi v-for="table in area.tables.filter(dt => !dt?.is_disabled)" :key="table.id" :span="3">
-                        <n-card
-                                :id="`table-${table.id}`"
-                                class="overflow-hidden position-relative rounded-3"
-                                :class="getTableBackgroundClass(table)"
-                                :style="{
-                                  borderLeft: `6px solid ${getTableColor(table)}`,
-                                  borderRight: `6px solid ${getTableColor(table)}`
-                                }"
-                                size="small"
-                                @click="handleTableClick(table)"
-                                style="cursor: pointer"
-                        >
-                            <n-checkbox
-                                    v-if="groupMode"
-                                    :checked="currentGroup.some((t) => t.id === table.id)"
-                                    :disabled="
-                  tableGroups.some((g) => g.some((t) => t.id === table.id)) ||
-                  currentTableGrouping === table.id
-                "
-                                    size="large"
-                                    class="top-0 m-2 position-absolute start-0"
-                            />
-                            <div
-                                    class="text-center text-wrap position-absolute top-50 start-50 translate-middle"
-                                    :class="{
-                  'fs-alt': table.description.length <= 3,
-                  'fs-4':
-                    table.description.length > 3 &&
-                    table.description.length <= 15,
-                  'fs-6': table.description.length > 15,
-                }"
-                            >
+                        <n-card :id="`table-${table.id}`" class="overflow-hidden position-relative rounded-3"
+                            :class="getTableBackgroundClass(table)" :style="{
+                                borderLeft: `6px solid ${getTableColor(table)}`,
+                                borderRight: `6px solid ${getTableColor(table)}`
+                            }" size="small" @click="handleTableClick(table)" style="cursor: pointer">
+                            <n-checkbox v-if="groupMode" :checked="currentGroup.some((t) => t.id === table.id)"
+                                :disabled="tableGroups.some((g) => g.some((t) => t.id === table.id)) ||
+                                    currentTableGrouping === table.id
+                                    " size="large" class="top-0 m-2 position-absolute start-0" />
+                            <div class="text-center text-wrap position-absolute top-50 start-50 translate-middle"
+                                :class="{
+                                    'fs-alt': table.description.length <= 3,
+                                    'fs-4':
+                                        table.description.length > 3 &&
+                                        table.description.length <= 15,
+                                    'fs-6': table.description.length > 15,
+                                }">
                                 {{ table.description }}
                             </div>
                             <div class="text-center position-absolute start-50 translate-middle-x"
-                                 style="bottom: 35px; font-size: 13px; left: 50%; color: #e31414; font-weight: 900 !important; width: 100%;"
-                                 v-if="table?.order_amount !== ''">
+                                style="bottom: 35px; font-size: 13px; left: 50%; color: #e31414; font-weight: 900 !important; width: 100%;"
+                                v-if="table?.order_amount !== ''">
                                 Ult. Pedido:
                             </div>
                             <div class="text-center position-absolute start-50 translate-middle-x"
-                                 style="bottom: 20px; font-size: 13px; left: 50%; color: #e31414; font-weight: 900 !important; width: 100%;"
-                                 v-if="table?.order_amount !== ''">
+                                style="bottom: 20px; font-size: 13px; left: 50%; color: #e31414; font-weight: 900 !important; width: 100%;"
+                                v-if="table?.order_amount !== ''">
                                 {{ table.modified }}
                             </div>
-                            <n-button
-                                    v-if="
-                  table.order_amount !== '' &&
-                  settingsStore.business_settings?.order?.table_order_total
-                "
-                                    class="bottom-0 text-center position-absolute start-50 translate-middle-x fs-5 fw-bolder"
-                                    color="#901E00"
-                                    text
-                            >
+                            <n-button v-if="
+                                table.order_amount !== '' &&
+                                settingsStore.business_settings?.order?.table_order_total
+                            " class="bottom-0 text-center position-absolute start-50 translate-middle-x fs-5 fw-bolder"
+                                color="#901E00" text>
                                 S/. {{ (Number(table?.order_amount) || 0).toFixed(2) }}
                             </n-button>
-                            <n-button
-                                    @click.stop="openOptions.push(table.id)"
-                                    class="top-0 position-absolute end-0"
-                                    quaternary
-                                    size="small"
-                            >
-                                <v-icon name="bi-three-dots-vertical"/>
+                            <n-button @click.stop="openOptions.push(table.id)" class="top-0 position-absolute end-0"
+                                quaternary size="small">
+                                <v-icon name="bi-three-dots-vertical" />
                             </n-button>
-                            <v-icon
-                                    v-if="
-                  groupMode === true &&
-                  tableGroups.some((g) => g.some((t) => t.id === table.id))
-                "
-                                    class="position-absolute top-50 start-50 translate-middle fs-4"
-                                    name="ri-forbid-line"
-                                    scale="8"
-                                    fill="#FA8072"
-                            />
+                            <v-icon v-if="
+                                groupMode === true &&
+                                tableGroups.some((g) => g.some((t) => t.id === table.id))
+                            " class="position-absolute top-50 start-50 translate-middle fs-4" name="ri-forbid-line"
+                                scale="8" fill="#FA8072" />
                             <n-space justify="center">
-                                <img
-                                        draggable="false"
-                                        src="~@/assets/images/default-table.png"
-                                        alt=""
-                                        width="128"
-                                        height="128"
-                                />
+                                <img draggable="false" src="~@/assets/images/default-table.png" alt="" width="128"
+                                    height="128" />
                             </n-space>
 
-                            <n-drawer
-                                    :show="
-                  groupMode
-                    ? ((openOptions = []), false)
-                    : openOptions.some((t) => t === table.id)
-                "
-                                    height="100%"
-                                    placement="top"
-                                    :to="`#table-${table.id}`"
-                                    @maskClick.stop
-                            >
+                            <n-drawer :show="groupMode
+                                ? ((openOptions = []), false)
+                                : openOptions.some((t) => t === table.id)
+                                " height="100%" placement="top" :to="`#table-${table.id}`" @maskClick.stop>
                                 <n-drawer-content :native-scrollbar="false" @click.stop>
                                     <n-space vertical align="center">
-                                        <n-button
-                                                type="error"
-                                                size="small"
-                                                tertiary
-                                                circle
-                                                @click="
-                        openOptions.splice(
-                          openOptions.findIndex((i) => i === table.id),
-                          1
-                        )
-                      "
-                                        >
-                                            <v-icon name="md-close-round"/>
+                                        <n-button type="error" size="small" tertiary circle @click="
+                                            openOptions.splice(
+                                                openOptions.findIndex((i) => i === table.id),
+                                                1
+                                            )
+                                            ">
+                                            <v-icon name="md-close-round" />
                                         </n-button>
                                     </n-space>
-                                    <n-button
-                                            v-if="userStore.hasPermission('charge_order')"
-                                            class="mb-1"
-                                            type="success"
-                                            size="small"
-                                            block
-                                            secondary
-                                            :disabled="table.status === '1'"
-                                            @click="
-                      $router.push({
-                        name: 'TablePayment',
-                        params: { table: table.id },
-                      })
-                    "
-                                    >
+                                    <n-button v-if="userStore.hasPermission('charge_order')" class="mb-1" type="success"
+                                        size="small" block secondary :disabled="table.status === '1'" @click="
+                                            $router.push({
+                                                name: 'TablePayment',
+                                                params: { table: table.id },
+                                            })
+                                            ">
                                         Cobrar pedido
                                     </n-button>
-                                    <n-button
-                                            class="mb-1"
-                                            type="info"
-                                            size="small"
-                                            block
-                                            secondary
-                                            :disabled="table.status === '1'"
-                                            @click="performRetrieveTableOrder(table.id)"
-                                    >
+                                    <n-button class="mb-1" type="info" size="small" block secondary
+                                        :disabled="table.status === '1'" @click="performRetrieveTableOrder(table.id)">
                                         Pre-cuenta
                                     </n-button>
-                                    <n-button
-                                            class="mb-1"
-                                            type="warning"
-                                            size="small"
-                                            block
-                                            secondary
-                                            :disabled="table.status === '1'"
-                                            @click="
-                      openOptions.splice(
-                        openOptions.findIndex((i) => i === table.id),
-                        1
-                      );
-                      fromTable = table.id;
-                      currentArea = area.id;
-                      changeTable = true;
-                    "
-                                    >
+                                    <n-button class="mb-1" type="warning" size="small" block secondary
+                                        :disabled="table.status === '1'" @click="
+                                            openOptions.splice(
+                                                openOptions.findIndex((i) => i === table.id),
+                                                1
+                                            );
+                                        fromTable = table.id;
+                                        currentArea = area.id;
+                                        changeTable = true;
+                                        ">
                                         Cambiar mesa
                                     </n-button>
-                                    <n-button
-                                            v-if="userStore.hasPermission('null_orders')"
-                                            class="mb-1"
-                                            type="error"
-                                            size="small"
-                                            block
-                                            secondary
-                                            :disabled="table.status === '1'"
-                                            @click="
-                      openOptions.splice(
-                        openOptions.findIndex((i) => i === table.id),
-                        1
-                      ),
-                        nullifyTableOrder(table.id)
-                    "
-                                    >
+                                    <n-button v-if="userStore.hasPermission('null_orders')" class="mb-1" type="error"
+                                        size="small" block secondary :disabled="table.status === '1'" @click="
+                                            openOptions.splice(
+                                                openOptions.findIndex((i) => i === table.id),
+                                                1
+                                            ),
+                                            nullifyTableOrder(table.id)
+                                            ">
                                         Anular pedido
                                     </n-button>
                                 </n-drawer-content>
@@ -250,69 +147,39 @@
         <div v-else>
             <n-space align="center" vertical>
                 <v-icon label="No Open Till" scale="6">
-                    <v-icon name="md-pointofsale-twotone"/>
-                    <v-icon name="md-notinterested-round" scale="2" fill="#fC644d"/>
+                    <v-icon name="md-pointofsale-twotone" />
+                    <v-icon name="md-notinterested-round" scale="2" fill="#fC644d" />
                 </v-icon>
                 <n-text class="fs-3">NO SE HA APERTURADO CAJA</n-text>
             </n-space>
         </div>
-        <n-modal
-                :class="{
-        'w-100': genericsStore.device === 'mobile',
-        'w-50': genericsStore.device === 'tablet',
-        'w-25': genericsStore.device === 'desktop',
-      }"
-                preset="card"
-                v-model:show="changeTable"
-                title="Cambiar mesa"
-                :mask-closable="false"
-                closable
-        >
+        <n-modal :class="{
+            'w-100': genericsStore.device === 'mobile',
+            'w-50': genericsStore.device === 'tablet',
+            'w-25': genericsStore.device === 'desktop',
+        }" preset="card" v-model:show="changeTable" title="Cambiar mesa" :mask-closable="false" closable>
             <n-form-item label="Mesa actual">
-                <n-select
-                        :value="fromTable"
-                        disabled
-                        :options="tableStore.getAreaTablesOptions(currentArea)"
-                        placeholder=""
-                />
+                <n-select :value="fromTable" disabled :options="tableStore.getAreaTablesOptions(currentArea)"
+                    placeholder="" />
             </n-form-item>
             <n-form-item label="Area">
-                <n-select
-                        v-model:value="currentArea"
-                        :options="tableStore.getAreasOptions"
-                        placeholder=""
-                />
+                <n-select v-model:value="currentArea" :options="tableStore.getAreasOptions" placeholder="" />
             </n-form-item>
             <n-form-item label="Mesa">
-                <n-select
-                        v-model:value="toTable"
-                        :options="tableStore.getAreaTablesOptions(currentArea)"
-                        placeholder=""
-                        filterable
-                />
+                <n-select v-model:value="toTable" :options="tableStore.getAreaTablesOptions(currentArea)" placeholder=""
+                    filterable />
             </n-form-item>
             <template #action>
                 <n-space justify="end">
-                    <n-button
-                            type="success"
-                            :loading="isLoading"
-                            :disabled="!toTable || isLoading"
-                            secondary
-                            @click.prevent="performChangeTable"
-                    >Confirmar
-                    </n-button
-                    >
+                    <n-button type="success" :loading="isLoading" :disabled="!toTable || isLoading" secondary
+                        @click.prevent="performChangeTable">Confirmar
+                    </n-button>
                 </n-space>
             </template>
         </n-modal>
-        <preview-drawer
-                ref="previewDrawer"
-                v-model:show="showPreview"
-                :data="previewData"
-                :preVoucher="true"
-                :previewOnly="true"
-        />
-        <modal-anulate-sale :data-modal="showConfirm"/>
+        <preview-drawer ref="previewDrawer" v-model:show="showPreview" :data="previewData" :preVoucher="true"
+            :previewOnly="true" />
+        <modal-anulate-sale :data-modal="showConfirm" />
     </n-card>
 </template>
 
@@ -332,13 +199,13 @@ import {
 import { cloneDeep } from "@/utils";
 import { useBusinessStore } from "@/store/modules/business";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
-import VuoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 import ModalAnulateSale from "@/views/Sale/modalAnulateSale.vue";
 import { useTableLock } from "@/composables/useTableLock";
 import { useRouter } from 'vue-router';
+import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher";
 
 export default defineComponent({
-    name: "Tables",
+    name: "TableHome",
     components: {
         ModalAnulateSale,
         PreviewDrawer
@@ -360,16 +227,12 @@ export default defineComponent({
         const businessStore = useBusinessStore();
 
         // Composable de table lock (para enviar mensajes WS)
-        const {
-            wsLockTable,
-            wsUnlockTable,
-            connectLockWebSocket
-        } = useTableLock();
+        const { connectLockWebSocket } = useTableLock();
 
         // Estado del modal de mesa bloqueada
-        const showLockedModal = ref(false);
-        const lockedTableData = ref(null);
-        const lockedTableDescription = ref('');
+        // const showLockedModal = ref(false);
+        // const lockedTableData = ref(null);
+        // const lockedTableDescription = ref('');
 
         /**
          * Verifica si una mesa está bloqueada usando el store (fuente de verdad global)
@@ -427,7 +290,7 @@ export default defineComponent({
         };
 
         // Computed para forzar reactividad cuando cambian los locks
-        const lockedTablesState = computed(() => tableStore.lockedTables);
+        computed(() => tableStore.lockedTables);
 
         /**
          * Maneja el click en una mesa
@@ -454,7 +317,7 @@ export default defineComponent({
                 if (blockStatus.blocked) {
                     console.log('❌ Mesa bloqueada por:', blockStatus.username);
 
-                    const remainingMsg = blockStatus.remaining 
+                    const remainingMsg = blockStatus.remaining
                         ? `Disponible en ${blockStatus.remaining} minutos.`
                         : '';
 
@@ -475,7 +338,7 @@ export default defineComponent({
 
         const dateNow = ref(null);
 
-        const loadTablesData = async() => {
+        const loadTablesData = async () => {
             isLoading.value = true;
             await tableStore.refreshData().then(() => {
                 isLoading.value = false;
@@ -487,10 +350,10 @@ export default defineComponent({
             console.log('[TableHome] 🔄 lockedTables cambió:', tableStore.lockedTables);
         }, { deep: true });
 
-        const performRetrieveTableOrder = async(table) => {
+        const performRetrieveTableOrder = async (table) => {
             await retrieveTableOrder(table).then((response) => {
-                if(response.status === 200) {
-                    if(settingsStore.business_settings.printer.print_html) {
+                if (response.status === 200) {
+                    if (settingsStore.business_settings.printer.print_html) {
                         previewData.value = response.data.order;
                         showPreview.value = true;
                         setTimeout(() => previewDrawer.value.generate(), 250);
@@ -530,10 +393,10 @@ export default defineComponent({
             nullReason.value = undefined;
         };
 
-        const performNullifyTableOrder = async(id, dataAnulate) => {
+        const performNullifyTableOrder = async (id, dataAnulate) => {
             isLoading.value = true;
             await cancelTableOrder(id, dataAnulate).then((response) => {
-                if(response.status === 202) {
+                if (response.status === 202) {
                     message.success("Pedido anulado correctamente!");
                     showConfirm.value = { show: false, saleId: null };
                     deleteId.value = null;
@@ -564,7 +427,7 @@ export default defineComponent({
             currentTableGrouping.value = null;
         };
 
-        const refreshData = async() => {
+        const refreshData = async () => {
             isLoading.value = true;
             await tableStore.refreshData();
             isLoading.value = false;
@@ -584,7 +447,7 @@ export default defineComponent({
 
             // Conectar WebSocket de mesas (table store)
             tableStore.connectWebSocket();
-            
+
             // Conectar WebSocket de locks (composable global)
             connectLockWebSocket();
         });
@@ -597,10 +460,10 @@ export default defineComponent({
 
         const toTable = ref(null);
 
-        const performChangeTable = async() => {
+        const performChangeTable = async () => {
             isLoading.value = true;
             await changeOrderTable(fromTable.value, toTable.value).then((response) => {
-                if(response.status === 200) {
+                if (response.status === 200) {
                     message.success("Mesa cambiada!");
                     changeTable.value = false;
                     fromTable.value = null;
@@ -609,12 +472,12 @@ export default defineComponent({
                     loadTablesData();
                 }
             }).catch((error) => {
-                if(error.response.status === 400) {
-                    for(const value in error.response.data) {
-                        if(Array.isArray(error.response.data[`${value}`])) {
+                if (error.response.status === 400) {
+                    for (const value in error.response.data) {
+                        if (Array.isArray(error.response.data[`${value}`])) {
                             error.response.data[`${value}`].forEach((err) => {
-                                if(typeof err === "object") {
-                                    for(const v in err) {
+                                if (typeof err === "object") {
+                                    for (const v in err) {
                                         message.error(`${err[`${v}`]}`);
                                     }
                                 } else {
@@ -694,14 +557,14 @@ export default defineComponent({
 }
 
 .fs-alt {
-  font-size: 3rem;
-  font-weight: bold;
+    font-size: 3rem;
+    font-weight: bold;
 }
 
 .black-outline {
-  -webkit-text-stroke: 0.75px black;
-  color: Gainsboro;
-  -webkit-font-smoothing: antialiased;
-  font-weight: bold;
+    -webkit-text-stroke: 0.75px black;
+    color: Gainsboro;
+    -webkit-font-smoothing: antialiased;
+    font-weight: bold;
 }
 </style>

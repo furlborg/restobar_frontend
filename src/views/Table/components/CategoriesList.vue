@@ -66,7 +66,7 @@
                                 <n-space vertical>
                                     <n-text class="fs-4">{{ menu.menu.name }}</n-text>
                                     <n-text class="fs-6" type="info">S/. {{ parseFloat(menu.menu.price).toFixed(2)
-                                    }}</n-text>
+                                        }}</n-text>
                                 </n-space>
                             </n-thing>
                         </n-list-item>

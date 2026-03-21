@@ -76,7 +76,7 @@ import CustomerModal from "./components/CustomerModal";
 import CustomerCreditsDrawer from "./components/CustomerCreditsDrawer";
 
 export default defineComponent({
-  name: "Customer",
+  name: "CustomerIndex",
   components: {
     CustomerModal,
     CustomerCreditsDrawer,

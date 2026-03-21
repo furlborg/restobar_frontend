@@ -16,67 +16,81 @@
                                 <n-space class="mb-2" align="center" justify="space-between">
                                     <div class="d-flex align-items-center">
                                         <n-text class="fs-4">{{
-                                                `${ saleStore.getSerieDescription(sale.serie) }-${ sale.number
-                                                }`
-                                            }}
+                                            `${saleStore.getSerieDescription(sale.serie)}-${sale.number}` }}
                                         </n-text>
                                         <n-dropdown trigger="click" :options="saleStore.getDocumentSeriesOptions(sale.invoice_type)
-      " :show-arrow="true" placement="bottom-end" size="huge" @select="selectSerie">
+                                            " :show-arrow="true" placement="bottom-end" size="huge"
+                                            @select="selectSerie">
                                             <n-button type="info" text>
-                                                <v-icon class="p-0" name="md-arrowdropdown-round" scale="1.75"/>
+                                                <v-icon class="p-0" name="md-arrowdropdown-round" scale="1.75" />
                                             </n-button>
                                         </n-dropdown>
                                     </div>
-                                    <n-radio-group v-model:value="sale.invoice_type" name="docType" size="small" @update:value="changeSerie">
-                                        <n-radio-button :disabled="!settingsStore.businessSettings.sale.enable_invoices" :value="1" :key="1">FACTURA</n-radio-button>
-                                        <n-radio-button :disabled="!settingsStore.businessSettings.sale.enable_invoices" :value="3" :key="3">BOLETA</n-radio-button>
+                                    <n-radio-group v-model:value="sale.invoice_type" name="docType" size="small"
+                                        @update:value="changeSerie">
+                                        <n-radio-button :disabled="!settingsStore.businessSettings.sale.enable_invoices"
+                                            :value="1" :key="1">FACTURA</n-radio-button>
+                                        <n-radio-button :disabled="!settingsStore.businessSettings.sale.enable_invoices"
+                                            :value="3" :key="3">BOLETA</n-radio-button>
                                         <n-radio-button :value="80" :key="80">N. VENTA</n-radio-button>
                                     </n-radio-group>
-                                    <n-radio-group v-model:value="sale.payment_condition" name="saleType" size="small" @update:value="changeCondition" :disabled="!(settingsStore.businessSettings?.sale?.enable_credits === true)">
+                                    <n-radio-group v-model:value="sale.payment_condition" name="saleType" size="small"
+                                        @update:value="changeCondition"
+                                        :disabled="!(settingsStore.businessSettings?.sale?.enable_credits === true)">
                                         <n-radio-button :value="1" :key="1">CONTADO</n-radio-button>
                                         <n-radio-button :value="2" :key="2">CRÉDITO</n-radio-button>
                                     </n-radio-group>
                                 </n-space>
                                 <n-form class="mb-2" ref="saleForm" :model="sale" :rules="formRules">
                                     <n-grid responsive="screen" cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12" :x-gap="12">
-                                        <n-form-item-gi :span="9" :show-require-mark="formRules.customer.required" label="Cliente"
-                                                        :path="formRules.customer.required ? 'customer' : ''">
+                                        <n-form-item-gi :span="9" :show-require-mark="formRules.customer.required"
+                                            label="Cliente" :path="formRules.customer.required ? 'customer' : ''">
                                             <n-input-group>
                                                 <n-auto-complete blur-after-select :input-props="{
-      autocomplete: 'disabled',
-    }" v-model:value="sale.customer_name" :options="customerOptions" :get-show="showCustomerOptions"
-                                                                 :loading="searchingCustomer"                                                                  @update:value="(v) => { if (!v) { sale.customer = 0; sale.address = null; whatsappNumber = ''; addressesOptions = []; } }" @select="(value) => { sale.customer = value; sale.address = null; whatsappNumber = ''; createAddressesOptions(); }" @keyup.enter="autoCreateCustomer" placeholder="" clearable/>
-                                                <n-button v-if="!sale.customer" type="info" @click="sale.customer = 0, showCustomerModal = true">
-                                                    <v-icon name="md-add-round"/>
+                                                    autocomplete: 'disabled',
+                                                }" v-model:value="sale.customer_name" :options="customerOptions"
+                                                    :get-show="showCustomerOptions" :loading="searchingCustomer"
+                                                    @update:value="(v) => { if (!v) { sale.customer = 0; sale.address = null; whatsappNumber = ''; addressesOptions = []; } }"
+                                                    @select="(value) => { sale.customer = value; sale.address = null; whatsappNumber = ''; createAddressesOptions(); }"
+                                                    @keyup.enter="autoCreateCustomer" placeholder="" clearable />
+                                                <n-button v-if="!sale.customer" type="info"
+                                                    @click="sale.customer = 0, showCustomerModal = true">
+                                                    <v-icon name="md-add-round" />
                                                 </n-button>
                                                 <n-button v-else type="warning" @click="showCustomerModal = true">
-                                                    <v-icon name="ri-edit-fill"/>
+                                                    <v-icon name="ri-edit-fill" />
                                                 </n-button>
                                             </n-input-group>
                                         </n-form-item-gi>
                                         <n-form-item-gi :span="3" label="Fecha">
-                                            <n-date-picker class="w-100" type="datetime" :is-date-disabled="dateDisabled"
-                                                           v-model:formatted-value="sale.date_sale" disabled/>
+                                            <n-date-picker class="w-100" type="datetime"
+                                                :is-date-disabled="dateDisabled"
+                                                v-model:formatted-value="sale.date_sale" disabled />
                                         </n-form-item-gi>
                                         <n-form-item-gi :span="4" label="Dirección">
-                                            <n-select v-model:value="sale.address" :options="addressesOptions" :disabled="!sale.customer" placeholder="" @update:value="changeAddress"/>
+                                            <n-select v-model:value="sale.address" :options="addressesOptions"
+                                                :disabled="!sale.customer" placeholder=""
+                                                @update:value="changeAddress" />
                                         </n-form-item-gi>
                                         <n-form-item-gi :span="4" label="Método Pago">
-                                            <n-select v-model:value="sale.payment_method" :options="saleStore.getPaymentMethodsOptions" filterable/>
+                                            <n-select v-model:value="sale.payment_method"
+                                                :options="saleStore.getPaymentMethodsOptions" filterable />
                                         </n-form-item-gi>
                                         <n-form-item-gi :span="2" label="Preguntar por">
-                                            <n-input v-model:value="sale.ask_for" placeholder="" :disabled="!!sale.delivery_info"/>
+                                            <n-input v-model:value="sale.ask_for" placeholder=""
+                                                :disabled="!!sale.delivery_info" />
                                         </n-form-item-gi>
                                         <n-form-item-gi v-if="$route.query.delivery === undefined" :span="2">
                                             <n-checkbox @update:checked="handleDelivery">Delivery</n-checkbox>
                                         </n-form-item-gi>
                                         <n-form-item-gi :span="2">
-                                            <n-button type="info" text @click="showObservations = !showObservations">{{ !showObservations ? "Ver" : "Ocultar" }} Observaciones</n-button>
+                                            <n-button type="info" text @click="showObservations = !showObservations">{{
+                                                !showObservations ? "Ver" : "Ocultar" }} Observaciones</n-button>
                                         </n-form-item-gi>
                                         <n-gi :span="12">
                                             <n-collapse-transition :show="showObservations">
                                                 <n-form-item label="Observaciones">
-                                                    <n-input type="textarea" v-model:value="sale.observations"/>
+                                                    <n-input type="textarea" v-model:value="sale.observations" />
                                                 </n-form-item>
                                             </n-collapse-transition>
                                         </n-gi>
@@ -84,19 +98,24 @@
                                             <n-collapse-transition :show="!!sale.delivery_info">
                                                 <n-text class="fs-5">Información de delivery</n-text>
                                                 <n-grid class="mt-2" responsive="screen" cols="12" :x-gap="12">
-                                                    <n-form-item-gi label="Nombres" :span="6" path="delivery_info.person">
+                                                    <n-form-item-gi label="Nombres" :span="6"
+                                                        path="delivery_info.person">
                                                         <n-input v-model:value="sale.delivery_info.person"
-                                                                 @update:value="(v) => (sale.ask_for = v)"
-                                                                 placeholder=""/>
+                                                            @update:value="(v) => (sale.ask_for = v)" placeholder="" />
                                                     </n-form-item-gi>
-                                                    <n-form-item-gi label="Dirección" :span="6" path="delivery_info.address">
-                                                        <n-input v-model:value="sale.delivery_info.address" placeholder=""/>
+                                                    <n-form-item-gi label="Dirección" :span="6"
+                                                        path="delivery_info.address">
+                                                        <n-input v-model:value="sale.delivery_info.address"
+                                                            placeholder="" />
                                                     </n-form-item-gi>
-                                                    <n-form-item-gi label="Teléfono" :span="6" path="delivery_info.phone">
-                                                        <n-input v-model:value="sale.delivery_info.phone" placeholder=""/>
+                                                    <n-form-item-gi label="Teléfono" :span="6"
+                                                        path="delivery_info.phone">
+                                                        <n-input v-model:value="sale.delivery_info.phone"
+                                                            placeholder="" />
                                                     </n-form-item-gi>
                                                     <n-form-item-gi label="Repartidor" :span="6">
-                                                        <n-input v-model:value="sale.delivery_info.deliveryman" placeholder=""/>
+                                                        <n-input v-model:value="sale.delivery_info.deliveryman"
+                                                            placeholder="" />
                                                     </n-form-item-gi>
                                                 </n-grid>
                                             </n-collapse-transition>
@@ -106,41 +125,57 @@
                                 <div class="table-container">
                                     <n-table class="order-details-table" :bordered="false">
                                         <thead>
-                                        <tr>
-                                            <th v-if="settingsStore.businessSettings.sale.manage_affectations">#</th>
-                                            <th>Cantidad</th>
-                                            <th>Producto</th>
-                                            <th>Precio Unitario</th>
-                                            <th>Descuento</th>
-                                            <th>Precio Total</th>
-                                        </tr>
+                                            <tr>
+                                                <th v-if="settingsStore.businessSettings.sale.manage_affectations">#
+                                                </th>
+                                                <th>Cantidad</th>
+                                                <th>Producto</th>
+                                                <th>Precio Unitario</th>
+                                                <th>Descuento</th>
+                                                <th>Precio Total</th>
+                                            </tr>
                                         </thead>
                                         <tbody>
-                                        <tr v-for="(detail, index) in saleStore.toSale" :key="index">
-                                            <td v-if="settingsStore.businessSettings.sale.manage_affectations">
-                                                <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation" :options="productStore.affectationsOptions" @update:value="(v) => saleStore.updateDetail(detail)">
-                                                    <n-tag size="small" :color="getAfcColor(detail.product_affectation)">{{ getAfcShort(detail.product_affectation) }}</n-tag>
-                                                </n-popselect>
-                                            </td>
-                                            <td>{{ detail.quantity }}</td>
-                                            <td>
-                                                <input class="custom-input product-name-input" v-model="detail.product_name" v-autowidth
-                                                       @click="$event.target.select()"/>
-                                            </td>
-                                            <td>
-                                                <div class="currency-input-wrapper">
-                                                    <span class="currency-symbol">S/.</span>
-                                                    <input class="custom-input price-input" type="number" min="0" step=".5" v-model="detail.price_sale" @input="saleStore.updateDetail(detail), (detail.discount = parseFloat(0).toFixed(2))" v-autowidth @click="$event.target.select()"/>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="currency-input-wrapper">
-                                                    <span class="currency-symbol">S/.</span>
-                                                    <input class="custom-input discount-input" type="number" min="0" :max="!detail.price_sale ? 0 : detail.price_sale" :disabled="detail.product_affectation === 21 || !!Number(sale.discount)" step=".5" v-model="detail.discount" v-autowidth @click="$event.target.select()"/>
-                                                </div>
-                                            </td>
-                                            <td class="total-cell">{{ detail.product_affectation === 21 ? "0.00" : (detail.quantity * detail.price_sale - detail.discount).toFixed(2) }}</td>
-                                        </tr>
+                                            <tr v-for="(detail, index) in saleStore.toSale" :key="index">
+                                                <td v-if="settingsStore.businessSettings.sale.manage_affectations">
+                                                    <n-popselect size="small" placement="bottom-start"
+                                                        v-model:value="detail.product_affectation"
+                                                        :options="productStore.affectationsOptions"
+                                                        @update:value="(v) => saleStore.updateDetail(detail)">
+                                                        <n-tag size="small"
+                                                            :color="getAfcColor(detail.product_affectation)">{{
+                                                                getAfcShort(detail.product_affectation) }}</n-tag>
+                                                    </n-popselect>
+                                                </td>
+                                                <td>{{ detail.quantity }}</td>
+                                                <td>
+                                                    <input class="custom-input product-name-input"
+                                                        v-model="detail.product_name" v-autowidth
+                                                        @click="$event.target.select()" />
+                                                </td>
+                                                <td>
+                                                    <div class="currency-input-wrapper">
+                                                        <span class="currency-symbol">S/.</span>
+                                                        <input class="custom-input price-input" type="number" min="0"
+                                                            step=".5" v-model="detail.price_sale"
+                                                            @input="saleStore.updateDetail(detail), (detail.discount = parseFloat(0).toFixed(2))"
+                                                            v-autowidth @click="$event.target.select()" />
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="currency-input-wrapper">
+                                                        <span class="currency-symbol">S/.</span>
+                                                        <input class="custom-input discount-input" type="number" min="0"
+                                                            :max="!detail.price_sale ? 0 : detail.price_sale"
+                                                            :disabled="detail.product_affectation === 21 || !!Number(sale.discount)"
+                                                            step=".5" v-model="detail.discount" v-autowidth
+                                                            @click="$event.target.select()" />
+                                                    </div>
+                                                </td>
+                                                <td class="total-cell">{{ detail.product_affectation === 21 ? "0.00" :
+                                                    (detail.quantity * detail.price_sale - detail.discount).toFixed(2)
+                                                }}</td>
+                                            </tr>
                                         </tbody>
                                     </n-table>
                                 </div>
@@ -152,8 +187,8 @@
                                                 <div class="fs-5">
                                                     S/.
                                                     <input class="fs-1 custom-input" type="number" min="0" step=".01"
-                                                           v-model="sale.given_amount"
-                                                           v-autowidth @click="$event.target.select()"/>
+                                                        v-model="sale.given_amount" v-autowidth
+                                                        @click="$event.target.select()" />
                                                 </div>
                                             </n-space>
                                             <n-space align="center" vertical>
@@ -191,29 +226,23 @@
                                                 DELIVERY:
                                                 <span>S/.</span>
                                                 <input class="custom-input fw-bold" type="number" min="0" step=".1"
-                                                       v-model="sale.delivery_info.amount" v-autowidth @click="$event.target.select()"/>
+                                                    v-model="sale.delivery_info.amount" v-autowidth
+                                                    @click="$event.target.select()" />
                                             </div>
                                             <div>
                                                 DSCT:
                                                 <span>S/.</span>
-                                                <input
-                                                    class="custom-input fw-bold"
-                                                    type="number"
-                                                    min="0"
-                                                    step=".5"
-                                                    :max="discountInputLimit"
-                                                    v-model="totalDSCT"
-                                                    v-autowidth
+                                                <input class="custom-input fw-bold" type="number" min="0" step=".5"
+                                                    :max="discountInputLimit" v-model="totalDSCT" v-autowidth
                                                     :disabled="saleStore.toSale.some(d => Number(d.discount) > 0)"
-                                                    @click="$event.target.select()"
-                                                />
+                                                    @click="$event.target.select()" />
                                             </div>
                                             <div>
                                                 OTROS:
                                                 <span>S/.</span>
                                                 <input class="custom-input fw-bold" type="number" min="0" step=".1"
-                                                       v-model="sale.other_charges"
-                                                       v-autowidth @click="$event.target.select()"/>
+                                                    v-model="sale.other_charges" v-autowidth
+                                                    @click="$event.target.select()" />
                                             </div>
                                             <div>
                                                 TOTAL: <span>S/. {{ sale.amount }}</span>
@@ -221,8 +250,11 @@
                                         </n-space>
                                     </n-gi>
                                 </n-grid>
-                                <n-checkbox v-if="!sale.delivery_info || sale.payment_condition === 1" v-model:checked="isMultiple" :disabled="settingsStore.businessSettings.order.pending_takeaway">Pago multiple</n-checkbox>
-                                <n-divider/>
+                                <n-checkbox v-if="!sale.delivery_info || sale.payment_condition === 1"
+                                    v-model:checked="isMultiple"
+                                    :disabled="settingsStore.businessSettings.order.pending_takeaway">Pago
+                                    multiple</n-checkbox>
+                                <n-divider />
                                 <n-grid responsive="screen" cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12" :x-gap="12">
                                     <n-gi class="d-flex align-items-center" :span="3">
                                         <n-checkbox v-model:checked="ticketPreview">Previsualizar ticket</n-checkbox>
@@ -232,84 +264,90 @@
                                     ? sale.given_amount < sale.amount
                                     : !(sale.given_amount < sale.amount)
                                     " secondary block @click="
-                                    userStore.user.role !== 'MOZO'
-                                        ? isMultiple
-                                        ? doMultiplePayment()
-                                        : performTakeAway()
-                                        : performTakeAway()
-                                    ">
-                                    <v-icon class="me-2" name="fa-coins" scale="2"/>
+                                        userStore.user.role !== 'MOZO'
+                                            ? isMultiple
+                                                ? doMultiplePayment()
+                                                : performTakeAway()
+                                            : performTakeAway()
+                                        ">
+                                    <v-icon class="me-2" name="fa-coins" scale="2" />
                                     {{ userStore.user.role !== "MOZO" ? "Cobrar" : "Realizar pedido" }}
                                 </n-button>
-                                <ticket-preview ref="ticketPreviewRef" v-model:show="showPdf" :data="pdfData" :hidden="true"
-                                                :isUpdate="false"/>
+                                <ticket-preview ref="ticketPreviewRef" v-model:show="showPdf" :data="pdfData"
+                                    :hidden="true" :isUpdate="false" />
                                 <preview-drawer ref="voucherDrawer" v-model:show="showVoucher" :data="voucherData"
-                                                :previewOnly="!ticketPreview" @printed="() => $router.push({ name: 'TableHome' })"
-                                                @canceled="() => $router.push({ name: 'TableHome' })"/>
+                                    :previewOnly="!ticketPreview" @printed="() => $router.push({ name: 'TableHome' })"
+                                    @canceled="() => $router.push({ name: 'TableHome' })" />
                             </n-card>
                         </n-spin>
-                        <CategoriesList v-else/>
+                        <CategoriesList v-else />
                     </transition>
                     <!-- Customer Modal -->
-                    <customer-modal v-model:show="showCustomerModal" :id-customer="sale.customer" :document="customerDocument"
-                                    :doc_type="sale.invoice_type === 1 ? '6' : null" @update:show="onCloseModal"
-                                    @on-success="onSuccess"/>
+                    <customer-modal v-model:show="showCustomerModal" :id-customer="sale.customer"
+                        :document="customerDocument" :doc_type="sale.invoice_type === 1 ? '6' : null"
+                        @update:show="onCloseModal" @on-success="onSuccess" />
                 </n-gi>
                 <n-gi span="2">
                     <n-card class="h-100" :bordered="false" embedded>
                         <template #header>
-                            <n-button type="info" secondary @click="selectProducts = !selectProducts">{{ selectProducts ? "Seleccionar productos" : "Cobrar" }}</n-button>
+                            <n-button type="info" secondary @click="selectProducts = !selectProducts">{{ selectProducts
+                                ? "Seleccionar productos" : "Cobrar" }}</n-button>
                         </template>
                         <n-input-group>
                             <n-auto-complete :input-props="{
-        autocomplete: 'disabled',
-      }" v-model:value="productSearch" :options="productOptions" :get-show="showOptions" :loading="searching"
-                                             clear-after-select :render-label="renderLabel" placeholder="Buscar producto"
-                                             @select="selectProduct"/>
+                                autocomplete: 'disabled',
+                            }" v-model:value="productSearch" :options="productOptions" :get-show="showOptions"
+                                :loading="searching" clear-after-select :render-label="renderLabel"
+                                placeholder="Buscar producto" @select="selectProduct" />
                         </n-input-group>
                         <n-scrollbar :x-scrollable="true" style="max-width: 900px">
                             <n-table class="mt-3">
                                 <thead>
-                                <tr>
-                                    <th width="10%"></th>
-                                    <th width="40%">Producto</th>
-                                    <th width="25%">Cantidad</th>
-                                    <th width="15%">SubTotal</th>
-                                    <th width="10%"></th>
-                                </tr>
+                                    <tr>
+                                        <th width="10%"></th>
+                                        <th width="40%">Producto</th>
+                                        <th width="25%">Cantidad</th>
+                                        <th width="15%">SubTotal</th>
+                                        <th width="10%"></th>
+                                    </tr>
                                 </thead>
                                 <tbody>
-                                                                    <tr v-for="(order, index) in orderStore.orderList" :key="index" style="cursor: pointer" @click="itemIndex = index; showModal = true;">
-                                    <td>
-                                        <n-button type="info" text>
-                                            <v-icon name="md-listalt-round"/>
-                                        </n-button>
-                                    </td>
-                                    <td>
-                                        <span>{{ order.product_name }}</span><br>
-                                        <span v-if="order?.indication.length > 0">
-                                                {{ order.indication.map(dt => dt?.description.split(", ")).flat().join(", ") }}
-                                        </span> <br v-if="order?.indication.length > 0">
-                                    </td>
-                                    <td>
-                                        <n-input-number class="border-top-0" size="small" :min="1" v-model:value="order.quantity" @update:value="saleStore.sale_details = orderStore.orderList" @click.stop/>
-                                    </td>
-                                    <td>S/. {{ order.subTotal.toFixed(2) }}</td>
-                                    <td>
-                                        <n-button type="error" text @click.stop="orderStore.removeOrder(index);">
-                                            <v-icon name="md-disabledbydefault-round"/>
-                                        </n-button>
-                                    </td>
-                                </tr>
+                                    <tr v-for="(order, index) in orderStore.orderList" :key="index"
+                                        style="cursor: pointer" @click="itemIndex = index; showModal = true;">
+                                        <td>
+                                            <n-button type="info" text>
+                                                <v-icon name="md-listalt-round" />
+                                            </n-button>
+                                        </td>
+                                        <td>
+                                            <span>{{ order.product_name }}</span><br>
+                                            <span v-if="order?.indication.length > 0">
+                                                {{order.indication.map(dt =>
+                                                    dt?.description.split(", ")).flat().join(",")}}
+                                            </span> <br v-if="order?.indication.length > 0">
+                                        </td>
+                                        <td>
+                                            <n-input-number class="border-top-0" size="small" :min="1"
+                                                v-model:value="order.quantity"
+                                                @update:value="saleStore.sale_details = orderStore.orderList"
+                                                @click.stop />
+                                        </td>
+                                        <td>S/. {{ order.subTotal.toFixed(2) }}</td>
+                                        <td>
+                                            <n-button type="error" text @click.stop="orderStore.removeOrder(index);">
+                                                <v-icon name="md-disabledbydefault-round" />
+                                            </n-button>
+                                        </td>
+                                    </tr>
                                 </tbody>
                                 <tfoot>
-                                <tr>
-                                    <td colspan="3">
-                                    </td>
-                                    <td colspan="2" class="fs-6 fw-bold">
-                                        S/. {{ orderStore.orderTotal.toFixed(2) }}
-                                    </td>
-                                </tr>
+                                    <tr>
+                                        <td colspan="3">
+                                        </td>
+                                        <td colspan="2" class="fs-6 fw-bold">
+                                            S/. {{ orderStore.orderTotal.toFixed(2) }}
+                                        </td>
+                                    </tr>
                                 </tfoot>
                             </n-table>
                         </n-scrollbar>
@@ -317,61 +355,56 @@
                 </n-gi>
             </n-grid>
             <n-modal :class="{
-      'w-100': genericsStore.device === 'mobile',
-      'w-50': genericsStore.device === 'tablet',
-      'w-25': genericsStore.device === 'desktop',
-    }" preset="card" v-model:show="showConfirm" title="Registrar pedido" :mask-closable="false" closable>
+                'w-100': genericsStore.device === 'mobile',
+                'w-50': genericsStore.device === 'tablet',
+                'w-25': genericsStore.device === 'desktop',
+            }" preset="card" v-model:show="showConfirm" title="Registrar pedido" :mask-closable="false" closable>
                 <n-form-item label="Ingrese código de usuario">
-                    <n-input type="password" v-model:value="userConfirm" placeholder=""/>
+                    <n-input type="password" v-model:value="userConfirm" placeholder="" />
                 </n-form-item>
                 <template #action>
                     <n-space justify="end">
                         <n-button type="success" :loading="loading" :disabled="!userConfirm || loading" secondary
-                                  @click.prevent="performCreateOrder">Confirmar
+                            @click.prevent="performCreateOrder">Confirmar
                         </n-button>
                     </n-space>
                 </template>
             </n-modal>
-            <n-modal
-                :class="{
-                    'w-100': genericsStore.device === 'mobile',
-                    'w-50': genericsStore.device === 'tablet',
-                    'w-25': genericsStore.device === 'desktop',
-                }"
-                preset="card"
-                v-model:show="showPayments"
-                title="Realizar venta"
-                :mask-closable="false"
-                closable
-                @close="sale.payments = null"
-            >
+            <n-modal :class="{
+                'w-100': genericsStore.device === 'mobile',
+                'w-50': genericsStore.device === 'tablet',
+                'w-25': genericsStore.device === 'desktop',
+            }" preset="card" v-model:show="showPayments" title="Realizar venta" :mask-closable="false" closable
+                @close="sale.payments = null">
                 <n-space justify="space-between">
                     <n-tag type="info">Total: S/. {{ showPayments ? total : null }}</n-tag>
-                    <n-tag :type="evalPayments ? 'error' : 'success'">Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}</n-tag>
-                    <n-tag :type="evalPayments ? 'error' : 'warning'">Faltante: S/. {{ showPayments ? (parseFloat(total) - currentPaymentsAmount).toFixed(2) : null }}</n-tag>
+                    <n-tag :type="evalPayments ? 'error' : 'success'">Monto: S/. {{ showPayments ? currentPaymentsAmount
+                        : null
+                    }}</n-tag>
+                    <n-tag :type="evalPayments ? 'error' : 'warning'">Faltante: S/. {{ showPayments ? (parseFloat(total)
+                        -
+                        currentPaymentsAmount).toFixed(2) : null }}</n-tag>
                 </n-space>
                 <n-form-item class="mt-2" label="Pagos">
                     <n-dynamic-input v-model:value="sale.payments" :min="1" @create="createPayment">
                         <template #default="{ value }">
                             <div style="display: flex; align-items: center; width: 100%">
-                                <n-select v-model:value="value.payment_method" :disabled="loading" :options="filteredMethods"/>
-                                <n-input
-                                    class="ms-2"
-                                    v-model:value="value.amount"
-                                    placeholder=""
-                                    :disabled="loading"
-                                    v-numeric-only
-                                />
+                                <n-select v-model:value="value.payment_method" :disabled="loading"
+                                    :options="filteredMethods" />
+                                <n-input class="ms-2" v-model:value="value.amount" placeholder="" :disabled="loading"
+                                    v-numeric-only />
                             </div>
                         </template>
                     </n-dynamic-input>
                 </n-form-item>
                 <n-space justify="end">
-                    <n-button type="success" :disabled="evalPayments || sale.payments.some(p => p.payment_method === null) || sale.payments.some(p => Number(p.amount) <= 0) || loading" :loading="loading" secondary @click="performTakeAway">Confirmar</n-button>
+                    <n-button type="success"
+                        :disabled="evalPayments || sale.payments.some(p => p.payment_method === null) || sale.payments.some(p => Number(p.amount) <= 0) || loading"
+                        :loading="loading" secondary @click="performTakeAway">Confirmar</n-button>
                 </n-space>
             </n-modal>
-            <OrderIndications v-model:show="showModal" preset="card" title="Indicaciones" :order="orderStore.orderList[itemIndex]"
-                              @success="showModal = false"/>
+            <OrderIndications v-model:show="showModal" preset="card" title="Indicaciones"
+                :order="orderStore.orderList[itemIndex]" @success="showModal = false" />
         </n-card>
     </div>
 </template>
@@ -451,8 +484,8 @@ export default defineComponent({
 
         const changing = computed(() => {
             return sale.value.given_amount > total.value
-                   ? total.value - sale.value.given_amount
-                   : 0.0;
+                ? total.value - sale.value.given_amount
+                : 0.0;
         });
 
         const icbper = computed(() => orderStore.orderList.reduce((acc, cur) => cur.icbper ? acc + cur.icbper_amount : acc, 0));
@@ -529,14 +562,14 @@ export default defineComponent({
             ask_for: "",
             delivery_info:
                 !(route.query.delivery === undefined) && route.query.delivery === "true"
-                ? {
+                    ? {
                         person: "",
                         address: "",
                         phone: "",
                         deliveryman: "",
                         amount: parseFloat(0).toFixed(2)
                     }
-                : null,
+                    : null,
             payments: null,
             do_update: true,
             is_change: true,
@@ -659,10 +692,10 @@ export default defineComponent({
                                     !searchProductOption(option.value).has_stock ||
                                     !searchProductOption(option.value).has_supplies,
                                 type: searchProductOption(option.value).has_supplies
-                                      ? searchProductOption(option.value).has_stock
+                                    ? searchProductOption(option.value).has_stock
                                         ? "default"
                                         : "error"
-                                      : "error"
+                                    : "error"
                             },
                             {
                                 default: () => t[0]
@@ -683,10 +716,10 @@ export default defineComponent({
                                         {
                                             default: () =>
                                                 option.category.toLowerCase().includes("menu")
-                                                ? "MENU"
-                                                : option.category.toLowerCase().includes("comb")
-                                                  ? "COMBO"
-                                                  : "CARTA"
+                                                    ? "MENU"
+                                                    : option.category.toLowerCase().includes("comb")
+                                                        ? "COMBO"
+                                                        : "CARTA"
                                         }
                                     ),
                                     h(
@@ -720,7 +753,7 @@ export default defineComponent({
             );
         };
 
-        const obtainSaleNumber = async() => {
+        const obtainSaleNumber = async () => {
             loading.value = true;
             await getSaleNumber(sale.value.serie).then((response) => {
                 if (response.status === 200) sale.value.number = Number(response.data.number) + 1;
@@ -764,7 +797,7 @@ export default defineComponent({
             if (sale.value.delivery_info) sale.value.delivery_info.address = o.label.split(" - ")[1];
         };
 
-        const showCustomerOptions = async(value) => {
+        const showCustomerOptions = async (value) => {
             if (value.length >= 3 && value.length <= 11) {
                 searchingCustomer.value = true;
                 const searchFunc = sale.value.invoice_type === 1 ? searchRucCustomer : searchCustomerByName;
@@ -795,7 +828,7 @@ export default defineComponent({
 
         const { serie } = toRefs(sale.value);
 
-        watch(serie, async() => {
+        watch(serie, async () => {
             await obtainSaleNumber();
         });
         const handleDelivery = (v) => {
@@ -826,7 +859,7 @@ export default defineComponent({
             router.push({ name: "TableHome" });
         };
 
-        const performCreateOrder = async() => {
+        const performCreateOrder = async () => {
             const currentDiscount = Math.round((parseFloat(totalDSCT.value) || 0) * 100) / 100;
             const maxAllowedDiscount = discountValidationThreshold.value;
             if (maxAllowedDiscount > 0 && currentDiscount >= maxAllowedDiscount) {
@@ -853,7 +886,7 @@ export default defineComponent({
                             showVoucher.value = true;
                             if (!ticketPreview.value) setTimeout(() => voucherDrawer.value.generate(), 250);
                         } else {
-                            // PrintsAfterTakeOrder(response.data);
+                            PrintsAfterTakeOrder(response.data);
                         }
                     }, 250);
                     router.push({ name: "TableHome" });
@@ -883,7 +916,7 @@ export default defineComponent({
                             title: "Confirmar pedido",
                             content: "Realizar pedido?",
                             positiveText: "Sí",
-                            onPositiveClick: async() => {
+                            onPositiveClick: async () => {
                                 loading.value = true;
                                 sale.value.sale_details = saleStore.toSale.map((detail) => ({
                                     ...detail,
@@ -914,7 +947,7 @@ export default defineComponent({
                                                     );
                                                 }
                                             } else {
-                                                // PrintsAfterTakeOrder(response.data);
+                                                PrintsAfterTakeOrder(response.data);
                                             }
                                         }, 250);
                                         router.push({ name: "TableHome" });
@@ -955,7 +988,7 @@ export default defineComponent({
             });
         };
 
-        onMounted(async() => {
+        onMounted(async () => {
             await obtainSaleNumber();
             const fetch = new Date();
             dateNow.value = `${fetch.getDate()}/${fetch.getMonth() + 1}/${fetch.getFullYear()} ${fetch.getHours()}:${fetch.getMinutes()}`;
@@ -1125,190 +1158,193 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 .custom-input {
-  border: none;
-  outline: none;
+    border: none;
+    outline: none;
 }
 
 .custom-input:hover {
-  border-radius: 5px;
-  outline: LightBlue solid 2px;
+    border-radius: 5px;
+    outline: LightBlue solid 2px;
 }
 
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
-  /* display: none; <- Crashes Chrome on hover */
-  -webkit-appearance: none;
-  margin: 0;
-  /* <-- Apparently some margin are still there even though it's hidden */
+    /* display: none; <- Crashes Chrome on hover */
+    -webkit-appearance: none;
+    margin: 0;
+    /* <-- Apparently some margin are still there even though it's hidden */
 }
 
 input[type="number"] {
-  -moz-appearance: textfield;
-  appearance: textfield;
-  /* Firefox */
+    -moz-appearance: textfield;
+    appearance: textfield;
+    /* Firefox */
 }
 
 /* Estilos para tabla responsiva */
 .table-container {
-  width: 100%;
-  overflow-x: auto;
-  margin: 16px 0;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  background: white;
+    width: 100%;
+    overflow-x: auto;
+    margin: 16px 0;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    background: white;
 }
 
 .order-details-table {
-  width: 100%;
-  min-width: 800px; /* Ancho mínimo para evitar que se comprima demasiado */
-  margin: 0;
-  text-align: center;
-  font-size: 14px;
-  border-collapse: collapse;
+    width: 100%;
+    min-width: 800px;
+    /* Ancho mínimo para evitar que se comprima demasiado */
+    margin: 0;
+    text-align: center;
+    font-size: 14px;
+    border-collapse: collapse;
 
-  th {
-    background-color: #f8fafc;
-    border-bottom: 2px solid #e5e7eb;
-    padding: 12px 8px;
-    font-weight: 600;
-    color: #374151;
-    white-space: nowrap;
-  }
+    th {
+        background-color: #f8fafc;
+        border-bottom: 2px solid #e5e7eb;
+        padding: 12px 8px;
+        font-weight: 600;
+        color: #374151;
+        white-space: nowrap;
+    }
 
-  td {
-    padding: 8px;
-    border-bottom: 1px solid #e5e7eb;
-    vertical-align: middle;
-  }
+    td {
+        padding: 8px;
+        border-bottom: 1px solid #e5e7eb;
+        vertical-align: middle;
+    }
 
-  tr:hover {
-    background-color: #f9fafb;
-  }
+    tr:hover {
+        background-color: #f9fafb;
+    }
 
-  tr:last-child td {
-    border-bottom: none;
-  }
+    tr:last-child td {
+        border-bottom: none;
+    }
 }
 
 /* Estilos para inputs dentro de la tabla */
 .currency-input-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    white-space: nowrap;
 
-  .currency-symbol {
-    font-weight: 500;
-    color: #6b7280;
-    font-size: 14px;
-  }
+    .currency-symbol {
+        font-weight: 500;
+        color: #6b7280;
+        font-size: 14px;
+    }
 }
 
 .custom-input {
-  &.product-name-input {
-    min-width: 120px;
-    max-width: 200px;
-    text-align: left;
-  }
+    &.product-name-input {
+        min-width: 120px;
+        max-width: 200px;
+        text-align: left;
+    }
 
-  &.price-input,
-  &.discount-input {
-    min-width: 60px;
-    max-width: 80px;
-    text-align: right;
-  }
+    &.price-input,
+    &.discount-input {
+        min-width: 60px;
+        max-width: 80px;
+        text-align: right;
+    }
 }
 
 .total-cell {
-  font-weight: 600;
-  color: #059669;
-  white-space: nowrap;
+    font-weight: 600;
+    color: #059669;
+    white-space: nowrap;
 }
 
 /* Responsividad para la tabla */
 @media (max-width: 1024px) {
-  .order-details-table {
-    min-width: 700px;
-    font-size: 13px;
+    .order-details-table {
+        min-width: 700px;
+        font-size: 13px;
 
-    th, td {
-      padding: 6px 4px;
-    }
-  }
-
-  .custom-input {
-    &.product-name-input {
-      min-width: 100px;
-      max-width: 150px;
+        th,
+        td {
+            padding: 6px 4px;
+        }
     }
 
-    &.price-input,
-    &.discount-input {
-      min-width: 50px;
-      max-width: 70px;
-      font-size: 12px;
+    .custom-input {
+        &.product-name-input {
+            min-width: 100px;
+            max-width: 150px;
+        }
+
+        &.price-input,
+        &.discount-input {
+            min-width: 50px;
+            max-width: 70px;
+            font-size: 12px;
+        }
     }
-  }
 }
 
 @media (max-width: 768px) {
-  .order-details-table {
-    min-width: 600px;
-    font-size: 12px;
+    .order-details-table {
+        min-width: 600px;
+        font-size: 12px;
 
-    th, td {
-      padding: 4px 2px;
-    }
-  }
-
-  .custom-input {
-    &.product-name-input {
-      min-width: 80px;
-      max-width: 120px;
-      font-size: 11px;
+        th,
+        td {
+            padding: 4px 2px;
+        }
     }
 
-    &.price-input,
-    &.discount-input {
-      min-width: 45px;
-      max-width: 60px;
-      font-size: 11px;
-    }
-  }
+    .custom-input {
+        &.product-name-input {
+            min-width: 80px;
+            max-width: 120px;
+            font-size: 11px;
+        }
 
-  .currency-input-wrapper .currency-symbol {
-    font-size: 12px;
-  }
+        &.price-input,
+        &.discount-input {
+            min-width: 45px;
+            max-width: 60px;
+            font-size: 11px;
+        }
+    }
+
+    .currency-input-wrapper .currency-symbol {
+        font-size: 12px;
+    }
 }
 
 /* Scrollbar personalizado para la tabla */
 .table-container::-webkit-scrollbar {
-  height: 8px;
+    height: 8px;
 }
 
 .table-container::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 4px;
+    background: #f1f5f9;
+    border-radius: 4px;
 }
 
 .table-container::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
-  transition: background 0.2s;
+    background: #cbd5e1;
+    border-radius: 4px;
+    transition: background 0.2s;
 }
 
 .table-container::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+    background: #94a3b8;
 }
 
 .mode-fade-enter-active,
 .mode-fade-leave-active {
-  transition: opacity 0.2s ease;
+    transition: opacity 0.2s ease;
 }
 
 .mode-fade-enter-from,
 .mode-fade-leave-to {
-  opacity: 0;
+    opacity: 0;
 }
 </style>

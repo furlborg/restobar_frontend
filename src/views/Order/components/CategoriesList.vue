@@ -159,9 +159,7 @@
 import { defineComponent, ref, computed, onMounted } from "vue";
 import { useMessage } from "naive-ui";
 import { useProductStore } from "@/store/modules/product";
-import { useOrderStore } from "@/store/modules/order";
 import {
-  getProductsByCategory,
   getComboCategories,
   getCombos,
   getMenuToday,
@@ -169,6 +167,7 @@ import {
 import { useSettingsStore } from "@/store/modules/settings";
 import ComboProductModal from "@/views/Table/components/ComboProductModal.vue";
 import MenuProductModal from "@/views/Table/components/MenuProductModal.vue";
+import { useRoute, useRouter } from "vue-router";
 
 export default defineComponent({
   name: "CategoriesList",
@@ -179,7 +178,6 @@ export default defineComponent({
   setup() {
     const message = useMessage();
     const productStore = useProductStore();
-    const orderStore = useOrderStore();
     const settingsStore = useSettingsStore();
 
     const isLoading = ref(false);
@@ -197,6 +195,9 @@ export default defineComponent({
     const loadingCombos = ref(false);
     const showComboModal = ref(false);
     const selectedCombo = ref(null);
+
+    const router = useRouter();
+    const route = useRoute();
 
     const category_settings = computed(() => ({
       use_image: false,
@@ -236,32 +237,8 @@ export default defineComponent({
 
     const selectCategory = async (category) => {
       if (!category) return;
-      selectedCategory.value = category;
-      search.value = "";
-      isLoading.value = true;
-      try {
-        const response = await getProductsByCategory(category.id);
-        if (response.status === 200) {
-          products.value = response.data;
-        }
-      } catch (error) {
-        console.error(error);
-        message.error("No se pudieron cargar los productos de la categoría");
-      } finally {
-        isLoading.value = false;
-      }
-    };
-
-    const clearSelectedCategory = () => {
-      selectedCategory.value = null;
-      products.value = [];
-      search.value = "";
-    };
-
-    const handleSelectProduct = (product) => {
-      if (!product.has_stock || !product.has_supplies) return;
-      orderStore.addOrder(product);
-      message.success(`${product.name} agregado`);
+      router.push({ name: "CategoriesOrderItems", params: { category_id: category.id }, query: { delivery: route.query.delivery || "false" } });
+      return;
     };
 
     const handleOpenComboModal = (combo) => {
@@ -346,8 +323,6 @@ export default defineComponent({
       isLoading,
       isLoadingCategories,
       selectCategory,
-      clearSelectedCategory,
-      handleSelectProduct,
       products,
       search,
       itemsList,
