@@ -267,7 +267,7 @@ export const routes = [
         meta: {
           requiredPerm: "view_product",
         },
-        component: () => import("@/views/Product/index.vue"),
+        component: () => import("@/views/Product/ProductIndex.vue"),
       },
       {
         path: "/shopping",

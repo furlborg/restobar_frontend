@@ -3,139 +3,78 @@
         <n-card title="Ventas" :segmented="{ content: 'hard' }">
             <template #header-extra>
                 <n-space>
-                    <n-select
-                            v-if="!userStore.user.branchoffice"
-                            class="ps-2"
-                            v-model:value="filterParams.branch"
-                            :options="businessStore.branchSelectOptions"
-                            @update:value="refreshTable"
-                    />
+                    <n-select v-if="!userStore.user.branchoffice" class="ps-2" v-model:value="filterParams.branch"
+                        :options="businessStore.branchSelectOptions" @update:value="refreshTable" />
                     <n-button
-                            v-if="settingsStore.businessSettings.sale?.enable_invoices && settingsStore.businessSettings?.sale?.free_sale"
-                            type="info"
-                            tertiary
-                            @click="() => $router.push({ name: 'FreeSale' })"
-                    >
+                        v-if="settingsStore.businessSettings.sale?.enable_invoices && settingsStore.businessSettings?.sale?.free_sale"
+                        type="info" tertiary @click="() => $router.push({ name: 'FreeSale' })">
                         Venta Libre
                     </n-button>
-                    <n-button
-                            v-if="userStore.hasPermission('make_excel_report')"
-                            type="info"
-                            tertiary
-                            @click="showReport = true"
-                    >
+                    <n-button v-if="userStore.hasPermission('make_excel_report')" type="info" tertiary
+                        @click="showReport = true">
                         Reporte
                     </n-button>
-                    <n-button
-                            v-if="settingsStore.businessSettings.sale?.enable_invoices"
-                            type="warning"
-                            tertiary
-                            :loading="resendingVouchers"
-                            @click="handleResendPendingVouchers"
-                    >
-                        <v-icon name="md-send-round" class="me-1"/>
+                    <n-button v-if="settingsStore.businessSettings.sale?.enable_invoices" type="warning" tertiary
+                        :loading="resendingVouchers" @click="handleResendPendingVouchers">
+                        <v-icon name="md-send-round" class="me-1" />
                         Reenviar Pendientes
                     </n-button>
                 </n-space>
             </template>
             <n-space justify="space-between">
-                <n-button
-                        type="info"
-                        text
-                        @click="
-            showFilters === false ? (showFilters = true) : (showFilters = false)
-          "
-                >
-                    <v-icon name="md-filteralt-round"/>
+                <n-button type="info" text @click="
+                    showFilters === false ? (showFilters = true) : (showFilters = false)
+                    ">
+                    <v-icon name="md-filteralt-round" />
                     {{ showFilters ? "Ocultar Filtros" : "Mostrar filtros" }}
                 </n-button>
                 <div class="d-flex">
                     <n-button type="info" text @click="refreshTable">
-                        <v-icon name="hi-solid-refresh"/>
+                        <v-icon name="hi-solid-refresh" />
                         Recargar
                     </n-button>
                 </div>
             </n-space>
             <n-collapse-transition class="mt-2" :show="showFilters">
                 <n-form>
-                    <n-grid
-                            responsive="screen"
-                            cols="6 s:6 m:12 l:12 xl:24 2xl:24"
-                            :x-gap="12"
-                    >
+                    <n-grid responsive="screen" cols="6 s:6 m:12 l:12 xl:24 2xl:24" :x-gap="12">
                         <n-form-item-gi label="Cliente" :span="4">
-                            <n-input
-                                    v-model:value="filterParams.customer"
-                                    placeholder=""
-                                    @keypress="isLetter($event)"
-                            />
+                            <n-input v-model:value="filterParams.customer" placeholder=""
+                                @keypress="isLetter($event)" />
                         </n-form-item-gi>
                         <n-form-item-gi label="Serie" :span="2">
-                            <n-select
-                                    v-model:value="filterParams.serie"
-                                    :options="saleStore.getSeriesOptions"
-                                    placeholder=""
-                                    clearable
-                            />
+                            <n-select v-model:value="filterParams.serie" :options="saleStore.getSeriesOptions"
+                                placeholder="" clearable />
                         </n-form-item-gi>
                         <n-form-item-gi label="Número" :span="2">
-                            <n-input
-                                    v-model:value="filterParams.number"
-                                    placeholder=""
-                                    @keypress="isNumber($event)"
-                            />
+                            <n-input v-model:value="filterParams.number" placeholder="" @keypress="isNumber($event)" />
                         </n-form-item-gi>
                         <n-form-item-gi label="Método Pago" :span="3">
-                            <n-select
-                                    v-model:value="filterParams.payment_method"
-                                    :options="saleStore.getPaymentMethodsOptions"
-                                    placeholder=""
-                                    clearable
-                            />
+                            <n-select v-model:value="filterParams.payment_method"
+                                :options="saleStore.getPaymentMethodsOptions" placeholder="" clearable />
                         </n-form-item-gi>
                         <n-form-item-gi label="Estado" :span="2">
-                            <n-select
-                                    v-model:value="filterParams.status"
-                                    :options="statusOptions"
-                                    placeholder=""
-                                    clearable
-                            />
+                            <n-select v-model:value="filterParams.status" :options="statusOptions" placeholder=""
+                                clearable />
                         </n-form-item-gi>
                         <n-form-item-gi label="Fecha" :span="6">
-                            <n-date-picker
-                                    type="daterange"
-                                    v-model:formatted-value="filterParams.date_sale"
-                                    format="dd/MM/yyyy"
-                                    clearable
-                            />
+                            <n-date-picker type="daterange" v-model:formatted-value="filterParams.date_sale"
+                                format="dd/MM/yyyy" clearable />
                         </n-form-item-gi>
                         <n-form-item-gi :span="5">
-                            <n-button type="info" secondary @click="performFilter"
-                            >Buscar
-                            </n-button
-                            >
+                            <n-button type="info" secondary @click="performFilter">Buscar
+                            </n-button>
                         </n-form-item-gi>
                     </n-grid>
                 </n-form>
             </n-collapse-transition>
-            <n-data-table
-                    class="mt-2"
-                    scroll-x="1200"
-                    :columns="tableColumns"
-                    :data="sales"
-                    :loading="isTableLoading"
-                    :pagination="pagination"
-                    remote
-            />
+            <n-data-table class="mt-2" scroll-x="1200" :columns="tableColumns" :data="sales" :loading="isTableLoading"
+                :pagination="pagination" remote />
         </n-card>
-        <SaleUpdate
-                v-model:sale="saleId"
-                @update:sale="onCloseUpdate"
-                @on-success="updateSuccess"
-        />
-                <sale-report-modal v-model:show="showReport"/>
-        <preview-drawer v-model:show="showPdf" :data="saleData"/>
-        <modal-anulate-sale :data-modal="showConfirm"/>
+        <SaleUpdate v-model:sale="saleId" @update:sale="onCloseUpdate" @on-success="updateSuccess" />
+        <sale-report-modal v-model:show="showReport" />
+        <preview-drawer v-model:show="showPdf" :data="saleData" />
+        <modal-anulate-sale :data-modal="showConfirm" />
     </div>
 </template>
 
@@ -148,7 +87,7 @@ import {
     listSalesByPage,
     searchSales,
     retrieveSale,
-    sendSale, 
+    sendSale,
     nullSale,
     changeSaleStatus,
     resendPendingVouchers
@@ -205,7 +144,7 @@ export default defineComponent({
             pageSize: 20,
             showSizePicker: true,
             pageSizes: [20, 50, 100],
-            onChange: async(page) => {
+            onChange: async (page) => {
                 isTableLoading.value = true;
                 pagination.value.page = page;
                 await listSalesByPage(
@@ -217,7 +156,7 @@ export default defineComponent({
                     pagination.value.pageCount = Math.trunc(
                         Number(response.data.count) / pagination.value.pageSize
                     );
-                    if(
+                    if (
                         Number(response.data.count) % pagination.value.pageSize !== 0 ||
                         pagination.value.pageCount === 0
                     ) {
@@ -226,12 +165,12 @@ export default defineComponent({
                     sales.value = response.data.results;
                 }).catch((error) => {
                     console.error(error);
-                    
+
                 }).finally(() => {
                     isTableLoading.value = false;
                 });
             },
-            onPageSizeChange: async(pageSize) => {
+            onPageSizeChange: async (pageSize) => {
                 isTableLoading.value = true;
                 pagination.value.pageSize = pageSize;
                 await listSalesByPage(
@@ -243,7 +182,7 @@ export default defineComponent({
                     pagination.value.pageCount = Math.trunc(
                         Number(response.data.count) / pagination.value.pageSize
                     );
-                    if(
+                    if (
                         Number(response.data.count) % pagination.value.pageSize !== 0 ||
                         pagination.value.pageCount === 0
                     ) {
@@ -252,14 +191,14 @@ export default defineComponent({
                     sales.value = response.data.results;
                 }).catch((error) => {
                     console.error(error);
-                    
+
                 }).finally(() => {
                     isTableLoading.value = false;
                 });
             }
         });
 
-        const loadSales = async() => {
+        const loadSales = async () => {
             isTableLoading.value = true;
             // pagination.value.pageSize = 20;
             await listSales(filterParams.value.branch).then((response) => {
@@ -267,7 +206,7 @@ export default defineComponent({
                 pagination.value.pageCount = Math.trunc(
                     Number(response.data.count) / pagination.value.pageSize
                 );
-                if(
+                if (
                     Number(response.data.count) % pagination.value.pageSize !== 0 ||
                     pagination.value.pageCount === 0
                 ) {
@@ -276,13 +215,13 @@ export default defineComponent({
                 sales.value = response.data.results;
             }).catch((error) => {
                 console.error(error);
-                
+
             }).finally(() => {
                 isTableLoading.value = false;
             });
         };
 
-        const performFilter = async() => {
+        const performFilter = async () => {
             isTableLoading.value = true;
             pagination.value.pageSearchParams = filterParams.value;
             pagination.value.page = 1;
@@ -295,7 +234,7 @@ export default defineComponent({
                 pagination.value.pageCount = Math.trunc(
                     Number(response.data.count) / pagination.value.pageSize
                 );
-                if(
+                if (
                     Number(response.data.count) % pagination.value.pageSize !== 0 ||
                     pagination.value.pageCount === 0
                 ) {
@@ -304,13 +243,13 @@ export default defineComponent({
                 sales.value = response.data.results;
             }).catch((error) => {
                 console.error(error);
-                
+
             }).finally(() => {
                 isTableLoading.value = false;
             });
         };
 
-        const refreshTable = async() => {
+        const refreshTable = async () => {
             filterParams.value.customer = "";
             filterParams.value.serie = null;
             filterParams.value.number = "";
@@ -322,11 +261,11 @@ export default defineComponent({
             await loadSales();
         };
 
-        const handleResendPendingVouchers = async() => {
+        const handleResendPendingVouchers = async () => {
             resendingVouchers.value = true;
             try {
                 const { data } = await resendPendingVouchers();
-                
+
                 // Mostrar mensaje detallado
                 if (data.sent_successfully > 0 || data.failed > 0) {
                     message.success(
@@ -336,7 +275,7 @@ export default defineComponent({
                 } else {
                     message.info(data.message || 'No hay comprobantes pendientes');
                 }
-                
+
                 // Refrescar tabla para mostrar estados actualizados
                 await refreshTable();
             } catch (error) {
@@ -366,7 +305,7 @@ export default defineComponent({
             }
         ];
 
-        onMounted(async() => {
+        onMounted(async () => {
             await loadSales();
 
             const fetch = new Date();
@@ -383,7 +322,7 @@ export default defineComponent({
 
         const saleId = ref(null);
 
-        const onCloseUpdate = async() => {
+        const onCloseUpdate = async () => {
             saleId.value = null;
             await performFilter();
         };
@@ -413,10 +352,10 @@ export default defineComponent({
 
         const deleteId = ref(null);
 
-        const performNullifySale = async(id, info) => {
+        const performNullifySale = async (id, info) => {
             isLoading.value = true;
             await nullSale(id, info).then((response) => {
-                if(response.status === 202) {
+                if (response.status === 202) {
                     message.success("Anulado");
                     showConfirm.value = { show: false, saleId: null };
                     // deleteId.value = null;
@@ -440,11 +379,11 @@ export default defineComponent({
 
         const changeStatus = (row) => {
             // Transición 1: ERROR → NUEVO (cambio de estado simple)
-            if(row.status === 'X') {
+            if (row.status === 'X') {
                 performStatusChange(row, 'N', 'ERROR', 'NUEVO');
             }
             // Transición 2: NUEVO → ENVIADO (intenta enviar)
-            else if(row.status === 'N') {
+            else if (row.status === 'N') {
                 performStatusChange(row, 'E', 'NUEVO', 'ENVIADO', true); // true = maneja error
             }
             else {
@@ -452,48 +391,48 @@ export default defineComponent({
             }
         };
 
-        const performStatusChange = async(row, newStatus, fromLabel, toLabel, handleError = false) => {
-            if(isChangingStatus.value) {
+        const performStatusChange = async (row, newStatus, fromLabel, toLabel, handleError = false) => {
+            if (isChangingStatus.value) {
                 message.warning("Hay un cambio de estado en progreso...");
                 return;
             }
-            
+
             isChangingStatus.value = true;
             isTableLoading.value = true;
-            
+
             try {
                 const response = await changeSaleStatus(row.id, newStatus);
-                if(response.status === 200) {
+                if (response.status === 200) {
                     message.success(response.data.message || `Estado cambiado de ${fromLabel} a ${toLabel}`);
                     await pagination.value.onChange(pagination.value.page);
                 }
-            } catch(error) {
+            } catch (error) {
                 console.error(error);
-                
+
                 // Extraer SOLO el mensaje de error principal, ignorando otros campos
                 let errorMessage = "Error al cambiar el estado";
-                
-                if(error.response?.data) {
+
+                if (error.response?.data) {
                     // Si hay un campo 'error' específico, usarlo
-                    if(typeof error.response.data.error === 'string') {
+                    if (typeof error.response.data.error === 'string') {
                         errorMessage = error.response.data.error;
                     }
                     // Si no hay campo 'error', pero hay status 400, mensaje genérico
-                    else if(error.response.status === 400) {
+                    else if (error.response.status === 400) {
                         errorMessage = "Error al enviar la venta. El documento ha sido marcado como ERROR.";
                     }
-                } else if(error.response?.status === 500) {
+                } else if (error.response?.status === 500) {
                     errorMessage = "Error interno del servidor. Intente nuevamente.";
-                } else if(error.message) {
+                } else if (error.message) {
                     errorMessage = error.message;
                 }
-                
+
                 // Mostrar SOLO un mensaje
                 message.error(errorMessage, {
                     duration: 5000,
                     closable: true
                 });
-                
+
                 // Refrescar tabla para mostrar el estado actualizado
                 await pagination.value.onChange(pagination.value.page);
             } finally {
@@ -541,15 +480,15 @@ export default defineComponent({
                     showModal.value = true;
                     saleId.value = row.id;
                     /* modal.value = h(SaleUpdate, {
-					  show: true,
-					  data: row,
-					  onUpdateShow: () => (modal.value = null),
-					}); */
+                      show: true,
+                      data: row,
+                      onUpdateShow: () => (modal.value = null),
+                    }); */
                 },
                 printSale(row) {
                     retrieveSale(row.id).then((response) => {
-                        if(response.status === 200) {
-                            if(settingsStore.business_settings.printer.print_html) {
+                        if (response.status === 200) {
+                            if (settingsStore.business_settings.printer.print_html) {
                                 saleData.value = response.data;
                                 showPdf.value = true;
                             } else {
@@ -563,21 +502,21 @@ export default defineComponent({
                         }
                     }).catch((error) => {
                         console.error(error);
-                        
+
                     });
                 },
                 async sendSale(row) {
                     isTableLoading.value = true;
                     await sendSale(row.id).then((response) => {
-                        if(response.status === 200) {
+                        if (response.status === 200) {
                             message.success("Enviado");
                         }
                     }).catch((error) => {
-                        if(error.response.status === 400) {
+                        if (error.response.status === 400) {
                             message.error(error.response.data.error);
                         } else {
                             console.error(error);
-                            
+
                         }
                     }).finally(() => {
                         pagination.value.onChange(pagination.value.page);

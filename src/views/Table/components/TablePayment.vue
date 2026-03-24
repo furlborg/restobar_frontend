@@ -5,15 +5,13 @@
         <n-spin :show="loading">
           <n-card :bordered="false" content-class="p-0">
             <n-space class="mb-2" align="center" justify="space-between">
-              <SaleSerieSelector
-                :sale="sale"
-                :invoice-type="sale.invoice_type"
-                @update:serie="handleSerieUpdate"
-                @serie-changed="handleSerieChanged"
-              />
+              <SaleSerieSelector :sale="sale" :invoice-type="sale.invoice_type" @update:serie="handleSerieUpdate"
+                @serie-changed="handleSerieChanged" />
               <n-radio-group v-model:value="sale.invoice_type" name="docType" size="small" @update:value="changeSerie">
-                <n-radio-button :disabled="!settingsStore.businessSettings.sale?.enable_invoices" :value="1">FACTURA</n-radio-button>
-                <n-radio-button :disabled="!settingsStore.businessSettings.sale?.enable_invoices" :value="3">BOLETA</n-radio-button>
+                <n-radio-button :disabled="!settingsStore.businessSettings.sale?.enable_invoices"
+                  :value="1">FACTURA</n-radio-button>
+                <n-radio-button :disabled="!settingsStore.businessSettings.sale?.enable_invoices"
+                  :value="3">BOLETA</n-radio-button>
                 <n-radio-button :value="80">N. VENTA</n-radio-button>
               </n-radio-group>
               <n-radio-group v-model:value="sale.payment_condition" name="saleType" size="small"
@@ -24,38 +22,31 @@
             </n-space>
             <n-form class="mb-2" ref="saleForm" :model="sale" :rules="formRules">
               <n-grid responsive="screen" cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12" :x-gap="12">
-                <n-form-item-gi :span="9" label="Cliente" :show-require-mark="formRules.customer.required" path="customer">
-                  <ClientSelectInput
-                    v-model:customer-name="sale.customer_name"
-                    v-model:customer-id="sale.customer"
-                    :invoice-type="sale.invoice_type"
-                    @customer-selected="handleCustomerSelected"
-                    @customer-cleared="handleCustomerCleared"
-                  />
+                <n-form-item-gi :span="9" label="Cliente" :show-require-mark="formRules.customer.required"
+                  path="customer">
+                  <ClientSelectInput v-model:customer-name="sale.customer_name" v-model:customer-id="sale.customer"
+                    :invoice-type="sale.invoice_type" @customer-selected="handleCustomerSelected"
+                    @customer-cleared="handleCustomerCleared" />
                 </n-form-item-gi>
                 <n-form-item-gi :span="3" label="Fecha">
-                  <n-date-picker class="w-100" type="datetime" :is-date-disabled="ts => ts > new Date()"
-                    disabled v-model:formatted-value="sale.date_sale" />
+                  <n-date-picker class="w-100" type="datetime" :is-date-disabled="ts => ts > new Date()" disabled
+                    v-model:formatted-value="sale.date_sale" />
                 </n-form-item-gi>
                 <n-form-item-gi v-if="isCredit" :span="3" label="Fecha de vencimiento" path="expiration_sale">
-                  <n-date-picker
-                    class="w-100"
-                    type="date"
-                    format="dd/MM/yyyy"
-                    value-format="dd/MM/yyyy"
-                    :is-date-disabled="isExpirationDateDisabled"
-                    v-model:formatted-value="sale.expiration_sale"
-                  />
+                  <n-date-picker class="w-100" type="date" format="dd/MM/yyyy" value-format="dd/MM/yyyy"
+                    :is-date-disabled="isExpirationDateDisabled" v-model:formatted-value="sale.expiration_sale" />
                 </n-form-item-gi>
                 <n-form-item-gi :span="5" label="Dirección">
-                  <n-select v-model:value="sale.address" :options="addressesOptions"
-                    :disabled="!sale.customer" placeholder="" />
+                  <n-select v-model:value="sale.address" :options="addressesOptions" :disabled="!sale.customer"
+                    placeholder="" />
                 </n-form-item-gi>
                 <n-form-item-gi :span="3" label="Método Pago">
-                  <n-select v-model:value="sale.payment_method" :options="saleStore.getPaymentMethodsOptions" filterable />
+                  <n-select v-model:value="sale.payment_method" :options="saleStore.getPaymentMethodsOptions"
+                    filterable />
                 </n-form-item-gi>
                 <n-form-item-gi :span="2">
-                  <n-checkbox v-model:checked="sale.by_consumption" :disabled="sale.payment_condition === 2">Por consumo</n-checkbox>
+                  <n-checkbox v-model:checked="sale.by_consumption" :disabled="sale.payment_condition === 2">Por
+                    consumo</n-checkbox>
                 </n-form-item-gi>
                 <n-form-item-gi :span="2">
                   <n-button type="info" text @click="showObservations = !showObservations">
@@ -65,26 +56,17 @@
                 <n-gi :span="12">
                   <n-collapse-transition :show="showObservations">
                     <n-form-item label="Observaciones">
-                      <n-input type="textarea" v-model:value="sale.observations"/>
+                      <n-input type="textarea" v-model:value="sale.observations" />
                     </n-form-item>
                   </n-collapse-transition>
                 </n-gi>
               </n-grid>
             </n-form>
-            <ProductTable
-              :sale="sale"
-              :sale-details="saleStore.toSale"
-              @update-detail="saleStore.updateDetail"
-            />
-            <PaymentTotals
-              :items="paymentTotalsItems"
-              :total-amount="sale.amount"
-              :payment-amount="sale.given_amount"
-              :change-amount="changing"
-              :payment-max="sale.payment_condition === 2 ? sale.amount - 0.1 : null"
-              @value-changed="handleValueChange"
-              @payment-changed="handlePaymentChange"
-            />
+            <ProductTable :sale="sale" :sale-details="saleStore.toSale" @update-detail="saleStore.updateDetail" />
+
+            <PaymentTotals :items="paymentTotalsItems" :total-amount="sale.amount" :payment-amount="sale.given_amount"
+              :change-amount="changing" :payment-max="sale.payment_condition === 2 ? sale.amount - 0.1 : null"
+              @value-changed="handleValueChange" @payment-changed="handlePaymentChange" />
             <n-space v-if="sale.payment_condition === 1" justify="space-between" class="mt-2">
               <n-checkbox v-model:checked="isMultiple">Pago multiple</n-checkbox>
               <n-button type="info" text @click="openSeparatePaymentsModal">Nueva cuenta</n-button>
@@ -95,9 +77,8 @@
                 <n-checkbox v-model:checked="ticketPreview">Previsualizar ticket</n-checkbox>
               </n-gi>
             </n-grid>
-            <n-button class="fs-1 py-5 mt-2" type="success"
-              :disabled="!saleStore.toSale.filter(d => !!d.quantity).length ||
-                (sale.payment_condition === 1 ? sale.given_amount < sale.amount : !(sale.given_amount < sale.amount))"
+            <n-button class="fs-1 py-5 mt-2" type="success" :disabled="!saleStore.toSale.filter(d => !!d.quantity).length ||
+              (sale.payment_condition === 1 ? sale.given_amount < sale.amount : !(sale.given_amount < sale.amount))"
               secondary block @click.prevent="isMultiple ? doMultiplePayment() : performCreateSale()">
               <v-icon class="me-2" name="fa-coins" scale="2" />Cobrar
             </n-button>
@@ -107,11 +88,12 @@
           'w-100': genericsStore.device === 'mobile',
           'w-50': genericsStore.device === 'tablet',
           'w-25': genericsStore.device === 'desktop',
-        }" preset="card" v-model:show="showPayments" title="Realizar venta" :mask-closable="false"
-          closable @close="sale.payments = null">
+        }" preset="card" v-model:show="showPayments" title="Realizar venta" :mask-closable="false" closable
+          @close="sale.payments = null">
           <n-space justify="space-between">
             <n-tag type="info">Total: S/. {{ showPayments ? sale.amount : null }}</n-tag>
-            <n-tag :type="evalPayments ? 'error' : 'success'">Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}</n-tag>
+            <n-tag :type="evalPayments ? 'error' : 'success'">Monto: S/. {{ showPayments ? currentPaymentsAmount : null
+              }}</n-tag>
             <n-tag :type="evalPayments ? 'error' : 'warning'">
               Faltante: S/. {{ showPayments ? parseFloat(sale.amount - currentPaymentsAmount).toFixed(2) : null }}
             </n-tag>
@@ -121,14 +103,16 @@
               <template #default="{ value }">
                 <div style="display: flex; align-items: center; width: 100%">
                   <n-select v-model:value="value.payment_method" :options="filteredMethods" :disabled="loading" />
-                  <n-input class="ms-2" v-model:value="value.amount" placeholder="" :disabled="loading" v-numeric-only />
+                  <n-input class="ms-2" v-model:value="value.amount" placeholder="" :disabled="loading"
+                    v-numeric-only />
                 </div>
               </template>
             </n-dynamic-input>
           </n-form-item>
           <n-space justify="end">
             <n-button type="success" :disabled="evalPayments || sale.payments.some(p => p.payment_method === null) ||
-              sale.payments.some(p => Number(p.amount) <= 0) || loading" secondary :loading="loading" @click="performCreateSale">
+              sale.payments.some(p => Number(p.amount) <= 0) || loading" secondary :loading="loading"
+              @click="performCreateSale">
               Confirmar
             </n-button>
           </n-space>
@@ -558,13 +542,13 @@ export default defineComponent({
                     const sendResponse = await sendSale(response.data.id);
                     if (sendResponse.status === 200) message.success("Enviado!");
                   } catch (error) {
-                    console.error(error);                    
+                    console.error(error);
                   }
                 }
                 message.success("Venta realizada correctamente!");
               }
             } catch (error) {
-              console.error(error);              
+              console.error(error);
             } finally {
               loading.value = false;
             }
@@ -585,7 +569,7 @@ export default defineComponent({
           sale.value.number = newNumber;
         }
       } catch (error) {
-          console.log(error);
+        console.log(error);
       } finally {
         loading.value = false;
       }
@@ -682,12 +666,12 @@ export default defineComponent({
     return {
       userStore, saleStore, orderStore, settingsStore, sale,
       loading, saleForm, formRules, handleCustomerSelected, handleCustomerCleared,
-      changing, subTotal, changeCondition, changeSerie, handleSerieUpdate, handleSerieChanged, 
+      changing, subTotal, changeCondition, changeSerie, handleSerieUpdate, handleSerieChanged,
       showObservations, performCreateSale,
       addressesOptions, createAddressesOptions, genericsStore,
       icbper, isMultiple, showPayments, createPayment, doMultiplePayment, filteredMethods,
-      evalPayments, currentPaymentsAmount, openSeparatePaymentsModal, 
-      closeSeparatePaymentsModal: () => {}, successSeparatePaymentsModal: obtainSaleNumber,
+      evalPayments, currentPaymentsAmount, openSeparatePaymentsModal,
+      closeSeparatePaymentsModal: () => { }, successSeparatePaymentsModal: obtainSaleNumber,
       separatePayments, showSeparateModal, totalIGV, totalGRV,
       totalEXN, totalGRT, totalDSCT, whatsappNumber, ticketPreview, previewDrawer, showPdf,
       pdfData, paymentTotalsItems, handleValueChange, handlePaymentChange, isCredit, isExpirationDateDisabled,
@@ -695,4 +679,3 @@ export default defineComponent({
   },
 });
 </script>
-
