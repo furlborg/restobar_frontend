@@ -29,7 +29,7 @@ export const useProductStore = defineStore("product", {
       return this.fittings.map((fitting) => ({
         value: fitting.id,
         label: fitting.name,
-        ...fitting
+        ...fitting,
       }));
     },
   },
@@ -54,7 +54,7 @@ export const useProductStore = defineStore("product", {
       await getProductPlaces()
         .then((response) => {
           const printerStore = usePrinterStore();
-          this.places = response.data.filter(place => !place.is_disabled);
+          this.places = response.data.filter((place) => !place.is_disabled);
           printerStore.managedPrinters = [
             printerStore.managedPrinters[0],
             ...this.getPlacesPrinters,
@@ -96,7 +96,6 @@ export const useProductStore = defineStore("product", {
         });
     },
     async tableCategories() {
-
       try {
         const response = await getProductCategories();
 
@@ -109,15 +108,10 @@ export const useProductStore = defineStore("product", {
 
           const enabled = categories.filter((cat) => !cat.is_disabled);
           const withProducts = enabled.filter(
-            (cat) => cat.has_products !== false
+            (cat) => cat.has_products !== false,
           );
 
           this.categories = withProducts.length ? withProducts : enabled;
-          // Ordenar las categorias por descripcion
-          // .sort((a, b) =>
-          //   a.description.toLowerCase().localeCompare(b.description.toLowerCase())
-          // )
-          // ;
         } else {
           console.warn("No hay response.data o esta vacio");
         }
@@ -141,7 +135,7 @@ export const useProductStore = defineStore("product", {
     },
     getCategorieID(description) {
       const categorie = this.categories.find(
-        (categorie) => categorie.description === description
+        (categorie) => categorie.description === description,
       );
       if (categorie) {
         return categorie.id;
@@ -151,7 +145,7 @@ export const useProductStore = defineStore("product", {
     },
     getCategorieDescription(id) {
       const categorie = this.categories.find(
-        (categorie) => categorie.id === Number(id)
+        (categorie) => categorie.id === Number(id),
       );
       if (categorie) {
         return categorie.description;
@@ -161,7 +155,7 @@ export const useProductStore = defineStore("product", {
     },
     getPlacePrinterName(description) {
       const place = this.places.find(
-        (place) => place.description === description
+        (place) => place.description === description,
       );
       if (place) {
         return place.printer_name;
@@ -179,7 +173,7 @@ export const useProductStore = defineStore("product", {
     },
     getPlacePrinterFormat(description) {
       const place = this.places.find(
-        (place) => place.description === description
+        (place) => place.description === description,
       );
       if (place) {
         return place.printer_format;

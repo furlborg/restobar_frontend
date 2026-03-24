@@ -66,7 +66,7 @@
                                 <n-space vertical>
                                     <n-text class="fs-4">{{ menu.menu.name }}</n-text>
                                     <n-text class="fs-6" type="info">S/. {{ parseFloat(menu.menu.price).toFixed(2)
-                                    }}</n-text>
+                                        }}</n-text>
                                 </n-space>
                             </n-thing>
                         </n-list-item>
@@ -99,11 +99,11 @@
                                             <template #description>
                                                 <n-space vertical size="small">
                                                     <n-text type="success" class="fs-6">
-                                                        S/. {{ parseFloat(combo.computed_price || combo.fixed_price ||
+                                                        S/. {{ parseFloat(combo.price ||
                                                             0).toFixed(2) }}
                                                     </n-text>
                                                     <n-text depth="3" style="font-size: 12px">
-                                                        {{ combo.combo_products ? combo.combo_products.length : 0 }}
+                                                        {{ combo.combo_products ? combo.products.length : 0 }}
                                                         productos incluidos
                                                     </n-text>
                                                 </n-space>
@@ -201,7 +201,7 @@ export default defineComponent({
         };
 
         const getCombosForCategory = (categoryId) => {
-            return combos.value.filter((combo) => combo.combo_category === categoryId);
+            return combos.value.filter((combo) => combo.category?.id === categoryId);
         };
 
         const loadCombos = async () => {
@@ -211,15 +211,14 @@ export default defineComponent({
                     is_disabled: false,
                     only_with_combos: true,
                 });
-                comboCategories.value =
-                    categoriesResponse.data.results || categoriesResponse.data || [];
+                comboCategories.value = categoriesResponse.data || [];
 
                 const combosResponse = await getCombos({
                     is_active: true,
                     page: 1,
                     page_size: 100,
                 });
-                combos.value = combosResponse.data.results || combosResponse.data || [];
+                combos.value = combosResponse.data || [];
             } catch (error) {
                 console.error("Error loading combos", error);
                 window.$message?.error("Error al cargar los combos");

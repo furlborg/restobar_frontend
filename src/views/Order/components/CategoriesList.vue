@@ -24,6 +24,60 @@
               </n-grid>
             </n-spin>
           </n-card>
+
+          <n-card :bordered="false" class="product-card">
+            <template #header>
+              <n-space justify="space-between" align="center" class="w-100">
+                <n-text class="fs-4">{{ selectedCategoryTitle }}</n-text>
+                <n-button v-if="selectedCategory" size="small" secondary type="primary" @click="clearSelectedCategory">
+                  Limpiar selección
+                </n-button>
+              </n-space>
+            </template>
+            <div v-if="selectedCategory">
+              <n-input v-model:value="search" placeholder="Buscar producto" clearable class="mb-3">
+                <template #prefix>
+                  <v-icon name="md-search-round" />
+                </template>
+              </n-input>
+              <n-spin :show="isLoading">
+                <n-list v-if="itemsList.length" class="product-list">
+                  <n-list-item v-for="product in itemsList" :key="product.id" class="product-list-item"
+                    :class="{ 'product-disabled': !product.has_stock || !product.has_supplies }"
+                    @click="handleSelectProduct(product)">
+                    <template #prefix>
+                      <n-avatar round :size="category_settings.width_image_product"
+                        :style="{ minWidth: category_settings.width_image_product + 'px' }"
+                        :src="product.image || product.image_url">
+                        <v-icon name="gi-hot-meal" />
+                      </n-avatar>
+                    </template>
+                    <n-thing>
+                      <template #header>
+                        <n-text class="fw-bold">{{ product.name }}</n-text>
+                      </template>
+                      <template #description>
+                        <n-space align="center" size="small">
+                          <n-text type="success">S/. {{ parseFloat(product.prices).toFixed(2) }}</n-text>
+                          <n-tag v-if="!product.has_stock" type="error" size="small" round>Sin stock</n-tag>
+                          <n-tag v-else-if="!product.has_supplies" type="warning" size="small" round>Sin insumos</n-tag>
+                        </n-space>
+                      </template>
+                    </n-thing>
+                    <template #suffix>
+                      <n-button circle type="primary" :disabled="!product.has_stock || !product.has_supplies">
+                        <template #icon>
+                          <v-icon name="md-add-round" />
+                        </template>
+                      </n-button>
+                    </template>
+                  </n-list-item>
+                </n-list>
+                <n-empty v-else description="No se encontraron productos para esta categoría" />
+              </n-spin>
+            </div>
+            <n-empty v-else description="Seleccione una categoría para mostrar sus productos" />
+          </n-card>
         </n-space>
       </n-tab-pane>
 
@@ -223,7 +277,7 @@ export default defineComponent({
           page: 1,
           page_size: 100,
         });
-        combos.value = combosResponse.data.results || combosResponse.data || [];
+        combos.value = combosResponse.data || [];
       } catch (error) {
         console.error("Error loading combos", error);
         message.error("Error al cargar los combos");

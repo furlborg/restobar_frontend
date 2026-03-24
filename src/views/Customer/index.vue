@@ -31,16 +31,17 @@
             <n-select v-model:value="searchParams.doc_type" :options="documentOptions" placeholder="" clearable />
           </n-form-item-gi>
           <n-form-item-gi label="Nº Documento" :span="3">
-            <n-input v-model:value="searchParams.doc_num" placeholder="" />
+            <n-input v-model:value="searchParams.doc_num" placeholder="" @keyup.enter="performSearch" />
           </n-form-item-gi>
           <n-form-item-gi label="Nombre" :span="6">
-            <n-input v-model:value="searchParams.names" placeholder="" />
+            <n-input v-model:value="searchParams.names" placeholder="" @keyup.enter="performSearch" />
           </n-form-item-gi>
           <n-form-item-gi label="Email" :span="6">
-            <n-input v-model:value="searchParams.email" placeholder="" />
+            <n-input v-model:value="searchParams.email" placeholder="" @keyup.enter="performSearch" />
           </n-form-item-gi>
           <n-form-item-gi label="Celular" :span="3">
-            <n-input-number v-model:value="searchParams.phone" :show-button="false" placeholder="" />
+            <n-input-number v-model:value="searchParams.phone" :show-button="false" placeholder=""
+              @keyup.enter="performSearch" />
           </n-form-item-gi>
           <n-form-item-gi :span="3">
             <n-button type="primary" @click="performSearch" secondary>Buscar</n-button>
