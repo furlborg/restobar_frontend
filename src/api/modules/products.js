@@ -452,6 +452,7 @@ export async function createCombo(combo) {
   if (combo.image && combo.image instanceof File) {
     form.append("image", combo.image);
   }
+  form.append("fixed_price", combo.fixed_price);
 
   if (combo.products && Array.isArray(combo.products)) {
     form.append("products", JSON.stringify(combo.products));
@@ -485,6 +486,10 @@ export async function updateCombo(id, combo) {
 
   if (combo.products && Array.isArray(combo.products)) {
     form.append("products", JSON.stringify(combo.products));
+  }
+
+  if (combo.image instanceof File || combo.image instanceof Blob) {
+    form.append("image", combo.image);
   }
 
   return await http.put(`combos/${id}/`, form, {

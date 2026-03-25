@@ -611,7 +611,7 @@ const handleSubmit = async () => {
           kardex_map: item.kardex_map,
           indication: item.indication || ''
         }
-      })
+      }),
     }
 
     if (formData.pricing_mode === 'FIXED') {
