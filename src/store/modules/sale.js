@@ -4,12 +4,16 @@ import { getDocumentSeries } from "@/api/modules/business";
 import { useBusinessStore } from "@/store/modules/business";
 import { useUserStore } from "@/store/modules/user";
 import { useOrderStore } from "@/store/modules/order";
-import { buildSalePayload, computePayloadTotals } from "@/services/saleAssembler";
+import {
+  buildSalePayload,
+  computePayloadTotals,
+} from "@/services/saleAssembler";
 import { useSettingsStore } from "./settings";
 
 const businessStore = useBusinessStore();
 const userStore = useUserStore();
-const orderStore = useOrderStore();
+const settingsStore = useSettingsStore();
+//const orderStore = useOrderStore();
 
 export const useSaleStore = defineStore("sale", {
   state: () => ({
@@ -21,20 +25,22 @@ export const useSaleStore = defineStore("sale", {
   }),
   getters: {
     getPaymentMethodsOptions(state) {
-      return state.payment_methods.filter(it => !it.is_disabled).map((payment_method) => ({
-        label: payment_method.description,
-        value: payment_method.id,
-      }));
+      return state.payment_methods
+        .filter((it) => !it.is_disabled)
+        .map((payment_method) => ({
+          label: payment_method.description,
+          value: payment_method.id,
+        }));
     },
     getSeriesOptions(state) {
       let series = state.series;
       if (!userStore.user.branchoffice) {
         series = series.filter(
-          (serie) => serie.sucursal === businessStore.currentBranch
+          (serie) => serie.sucursal === businessStore.currentBranch,
         );
       } else {
         series = series.filter(
-          (serie) => serie.sucursal === userStore.user.branchoffice
+          (serie) => serie.sucursal === userStore.user.branchoffice,
         );
       }
       return series.map((serie) => ({
@@ -47,7 +53,8 @@ export const useSaleStore = defineStore("sale", {
       const payload = this.buildSalePayload();
       state.sale_details = payload.sale_details; // cache for legacy consumers
       state.sale_product_sets = payload.sale_product_sets; // cache menus as well
-      return state.sale_details
+
+      return state.sale_details;
     },
     salePayload() {
       return this.buildSalePayload();
@@ -69,15 +76,15 @@ export const useSaleStore = defineStore("sale", {
     buildSalePayload() {
       const orderStore = useOrderStore();
       const payload = buildSalePayload(orderStore.orderList);
-      
+
       // Apply tax calculations to product lines
-      payload.sale_details.forEach(detail => {
+      payload.sale_details.forEach((detail) => {
         this.updateDetail(detail);
       });
-      
+
       return payload;
     },
-    
+
     computeTotals() {
       const payload = this.buildSalePayload();
       return computePayloadTotals(payload);
@@ -114,7 +121,7 @@ export const useSaleStore = defineStore("sale", {
     },
     getPaymentMethodID(description) {
       const payment = this.payment_methods.find(
-        (payment) => payment.description === description
+        (payment) => payment.description === description,
       );
       if (payment) {
         return payment.id;
@@ -143,15 +150,20 @@ export const useSaleStore = defineStore("sale", {
       let series = this.series.filter((s) => !s.is_disabled && !s.free_sale);
       if (!userStore.user.branchoffice) {
         series = series.filter(
-          (serie) => serie.sucursal === businessStore.currentBranch
+          (serie) => serie.sucursal === businessStore.currentBranch,
         );
       } else {
         series = series.filter(
-          (serie) => serie.sucursal === userStore.user.branchoffice
+          (serie) => serie.sucursal === userStore.user.branchoffice,
         );
       }
-      const filteredSeries = series.filter((serie) => serie.doc_type === String(doc_type));
-      const options = filteredSeries.map((serie) => ({ label: serie.description, value: serie.id }));
+      const filteredSeries = series.filter(
+        (serie) => serie.doc_type === String(doc_type),
+      );
+      const options = filteredSeries.map((serie) => ({
+        label: serie.description,
+        value: serie.id,
+      }));
       return options;
     },
     getSerieDescription(id) {
@@ -161,7 +173,7 @@ export const useSaleStore = defineStore("sale", {
     },
     getSerieID(description) {
       const serie = this.series.find(
-        (serie) => serie.description === description
+        (serie) => serie.description === description,
       );
       return serie ? serie.id : null;
     },
@@ -169,18 +181,18 @@ export const useSaleStore = defineStore("sale", {
       let series = this.series.filter((s) => !s.is_disabled && !s.free_sale);
       if (!userStore.user.branchoffice) {
         series = series.filter(
-          (serie) => serie.sucursal === businessStore.currentBranch
+          (serie) => serie.sucursal === businessStore.currentBranch,
         );
       } else {
         series = series.filter(
-          (serie) => serie.sucursal === userStore.user.branchoffice
+          (serie) => serie.sucursal === userStore.user.branchoffice,
         );
       }
       series = series.filter((serie) => serie.doc_type === String(doc_type));
       if (!series.length) {
         return null;
       } else {
-          return series[0].id;
+        return series[0].id;
       }
     },
     getOrderQuantity(id) {
@@ -190,13 +202,21 @@ export const useSaleStore = defineStore("sale", {
     updateDetail(detail) {
       const settingsStore = useSettingsStore();
       detail.product_igv = !Number(detail.product_igv)
-            ? settingsStore.businessSettings.sale.igv_tax
-            : Number(detail.product_igv);
+        ? settingsStore.businessSettings.sale.igv_tax
+        : Number(detail.product_igv);
       switch (detail.product_affectation) {
         case 10:
-          detail.price_base = Math.round((Number(detail.price_sale) / parseFloat(detail.product_igv + 1)) * 100) / 100;
-          detail.igv_tax = Math.round((parseFloat(detail.price_sale) - parseFloat(detail.price_base)) * 100) / 100;
-          console.log('Updated detail:', detail);
+          detail.price_base =
+            Math.round(
+              (Number(detail.price_sale) / parseFloat(detail.product_igv + 1)) *
+                100,
+            ) / 100;
+          detail.igv_tax =
+            Math.round(
+              (parseFloat(detail.price_sale) - parseFloat(detail.price_base)) *
+                100,
+            ) / 100;
+          console.log("Updated detail:", detail);
           break;
         case 20: // Operación Exonerada
           detail.price_base = detail.price_sale

@@ -174,7 +174,7 @@ export const routes = [
         path: "/table",
         name: "Table",
         redirect: { name: "TableHome" },
-        component: () => import("@/views/Table/index.vue"),
+        component: () => import("@/views/Table/TableIndex.vue"),
         meta: {
           onlyWaiter: true,
         },

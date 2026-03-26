@@ -13,9 +13,13 @@ export const useOrderStore = defineStore("order", {
       const settingsStore = useSettingsStore();
       state.orders.forEach((order) => {
         // Corregir: convertir a número después de toFixed()
-        order.subTotal = Number((Number(order.quantity) * parseFloat(order.price)).toFixed(2));
+        order.subTotal = Number(
+          (Number(order.quantity) * parseFloat(order.price)).toFixed(2),
+        );
         if (order.icbper) {
-          order.icbper_amount = Number(order.quantity) * parseFloat(settingsStore.businessSettings.sale.icbper_tax);
+          order.icbper_amount =
+            Number(order.quantity) *
+            parseFloat(settingsStore.businessSettings.sale.icbper_tax);
         } else {
           order.icbper_amount = 0;
         }
@@ -27,13 +31,17 @@ export const useOrderStore = defineStore("order", {
       const settingsStore = useSettingsStore();
       const allOrders = [
         ...state.savedOrders,
-        ...state.orders.filter((order) => !order.is_delta)
+        ...state.orders.filter((order) => !order.is_delta),
       ];
       allOrders.forEach((order) => {
         // Corregir: convertir a número después de toFixed()
-        order.subTotal = Number((Number(order.quantity) * parseFloat(order.price)).toFixed(2));
+        order.subTotal = Number(
+          (Number(order.quantity) * parseFloat(order.price)).toFixed(2),
+        );
         if (order.icbper) {
-          order.icbper_amount = Number(order.quantity) * parseFloat(settingsStore.businessSettings.sale.icbper_tax);
+          order.icbper_amount =
+            Number(order.quantity) *
+            parseFloat(settingsStore.businessSettings.sale.icbper_tax);
         } else {
           order.icbper_amount = 0;
         }
@@ -42,19 +50,23 @@ export const useOrderStore = defineStore("order", {
     },
     // Obtener solo los productos individuales (no menús ni combos)
     productLines(state) {
-      return state.orders.filter(order => !order.from_menu && !order.from_combo);
+      return state.orders.filter(
+        (order) => !order.from_menu && !order.from_combo,
+      );
     },
     // Obtener solo los menús y combos (ProductSets)
     menuSets(state) {
-      return state.orders.filter(order => order.from_menu || order.from_combo);
+      return state.orders.filter(
+        (order) => order.from_menu || order.from_combo,
+      );
     },
     // Obtener solo menús
     onlyMenus(state) {
-      return state.orders.filter(order => order.from_menu);
+      return state.orders.filter((order) => order.from_menu);
     },
     // Obtener solo combos
     onlyCombos(state) {
-      return state.orders.filter(order => order.from_combo);
+      return state.orders.filter((order) => order.from_combo);
     },
     // Para acceso reactivo a savedOrders
     savedOrderList(state) {
@@ -84,14 +96,14 @@ export const useOrderStore = defineStore("order", {
     addMenuOrder(menuOrder) {
       this.orders.push({
         ...menuOrder,
-        created_at: Date.now()
+        created_at: Date.now(),
       });
     },
     addComboOrder(comboOrder) {
       // Agregar combo al carrito
       this.orders.push({
         ...comboOrder,
-        created_at: Date.now()
+        created_at: Date.now(),
       });
     },
     addOrder(product, customer) {
@@ -102,11 +114,12 @@ export const useOrderStore = defineStore("order", {
       let existence;
       if (customerId != null) {
         existence = this.orders.find(
-          (order) => order?.product === productId && order?.customer?.id === customerId
+          (order) =>
+            order?.product === productId && order?.customer?.id === customerId,
         );
       } else {
         existence = this.orders.find(
-          (order) => order?.product === productId && !order?.customer
+          (order) => order?.product === productId && !order?.customer,
         );
         if (!existence) {
           existence = this.orders.find((order) => order?.product === productId);
@@ -141,9 +154,13 @@ export const useOrderStore = defineStore("order", {
       if (!qtyToAdd) return;
       const customerId = product?.customer?.id ?? null;
       const matchesCustomer = (order) =>
-        customerId !== null ? order?.customer?.id === customerId : !order?.customer;
+        customerId !== null
+          ? order?.customer?.id === customerId
+          : !order?.customer;
       const mergeIndications = (target) => {
-        const incoming = Array.isArray(product.indication) ? product.indication : [];
+        const incoming = Array.isArray(product.indication)
+          ? product.indication
+          : [];
         if (!incoming.length) return;
         if (!Array.isArray(target.indication)) target.indication = [];
         if (!target.indication.length) {
@@ -154,7 +171,7 @@ export const useOrderStore = defineStore("order", {
       };
 
       const savedOrder = this.savedOrders.find(
-        (order) => order?.product === productId && matchesCustomer(order)
+        (order) => order?.product === productId && matchesCustomer(order),
       );
       if (savedOrder) {
         savedOrder.quantity = Number(savedOrder.quantity || 0) + qtyToAdd;
@@ -164,7 +181,10 @@ export const useOrderStore = defineStore("order", {
         }
 
         const deltaOrder = this.orders.find(
-          (order) => order?.is_delta && order?.product === productId && matchesCustomer(order)
+          (order) =>
+            order?.is_delta &&
+            order?.product === productId &&
+            matchesCustomer(order),
         );
         if (deltaOrder) {
           deltaOrder.quantity = Number(deltaOrder.quantity || 0) + qtyToAdd;
@@ -173,16 +193,23 @@ export const useOrderStore = defineStore("order", {
           const resolvedIgv = product?.igv_tax;
           this.orders.push({
             product: productId,
-            product_name: savedOrder.product_name ?? product.product_name ?? product.name,
+            product_name:
+              savedOrder.product_name ?? product.product_name ?? product.name,
             price: savedOrder.price ?? product.price ?? product.prices,
             quantity: qtyToAdd,
-            indication: Array.isArray(product.indication) ? [...product.indication] : [],
+            indication: Array.isArray(product.indication)
+              ? [...product.indication]
+              : [],
             icbper: savedOrder.icbper ?? product.icbper,
-            product_affectation: savedOrder.product_affectation ?? product.affectation,
-            product_igv: savedOrder.product_igv ?? (!Number(resolvedIgv)
-              ? settingsStore.businessSettings.sale.igv_tax
-              : Number(resolvedIgv)),
-            quick_indications: savedOrder.quick_indications ?? product.quick_indications,
+            product_affectation:
+              savedOrder.product_affectation ?? product.affectation,
+            product_igv:
+              savedOrder.product_igv ??
+              (!Number(resolvedIgv)
+                ? settingsStore.businessSettings.sale.igv_tax
+                : Number(resolvedIgv)),
+            quick_indications:
+              savedOrder.quick_indications ?? product.quick_indications,
             customer: savedOrder.customer ?? product.customer ?? null,
             is_delta: true,
           });
@@ -191,7 +218,10 @@ export const useOrderStore = defineStore("order", {
       }
 
       const existing = this.orders.find(
-        (order) => !order.is_delta && order?.product === productId && matchesCustomer(order)
+        (order) =>
+          !order.is_delta &&
+          order?.product === productId &&
+          matchesCustomer(order),
       );
       if (typeof existing !== "undefined") {
         existing.quantity = Number(existing.quantity || 0) + qtyToAdd;
@@ -219,7 +249,7 @@ export const useOrderStore = defineStore("order", {
       });
     },
     removeOrderItem(id) {
-      const index = this.orders.findIndex(order => order.id === id);
+      const index = this.orders.findIndex((order) => order.id === id);
       if (index !== -1) {
         this.orders.splice(index, 1);
       }
@@ -229,6 +259,6 @@ export const useOrderStore = defineStore("order", {
     },
     clearNewOrders() {
       this.orders = [];
-    }
+    },
   },
 });

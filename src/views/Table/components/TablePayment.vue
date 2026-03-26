@@ -93,7 +93,7 @@
           <n-space justify="space-between">
             <n-tag type="info">Total: S/. {{ showPayments ? sale.amount : null }}</n-tag>
             <n-tag :type="evalPayments ? 'error' : 'success'">Monto: S/. {{ showPayments ? currentPaymentsAmount : null
-              }}</n-tag>
+            }}</n-tag>
             <n-tag :type="evalPayments ? 'error' : 'warning'">
               Faltante: S/. {{ showPayments ? parseFloat(sale.amount - currentPaymentsAmount).toFixed(2) : null }}
             </n-tag>
@@ -127,7 +127,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed, watch, onMounted, watchEffect } from "vue";
+import { defineComponent, ref, computed, watch, onMounted } from "vue";
 import SeparatePaymentsModal from "./SeparatePaymentsModal";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 import ClientSelectInput from "@/views/Customer/components/ClientSelectInput.vue";
@@ -135,7 +135,7 @@ import SaleSerieSelector from "@/views/Order/components/SaleSerieSelector.vue";
 import PaymentTotals from "@/views/Order/components/PaymentTotals.vue";
 import ProductTable from "@/views/Order/components/ProductTable.vue";
 import { useSettingsStore } from "@/store/modules/settings";
-import { useRoute, useRouter } from "vue-router";
+import { useRouter } from "vue-router";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { useUserStore } from "@/store/modules/user";
@@ -162,7 +162,6 @@ export default defineComponent({
   },
   setup() {
     const router = useRouter();
-    const route = useRoute();
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
     const userStore = useUserStore();
@@ -224,6 +223,7 @@ export default defineComponent({
 
     const totals = computed(() => {
       const toSale = saleStore.toSale;
+
       return {
         GRV: toSale.reduce(
           (acc, cur) =>

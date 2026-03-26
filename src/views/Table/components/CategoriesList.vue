@@ -134,8 +134,8 @@
     </div>
 </template>
 
-<script>
-import { defineComponent, ref, onMounted, computed } from "vue";
+<script setup>
+import { ref, onMounted, computed } from "vue";
 import { useProductStore } from "@/store/modules/product";
 import { useSettingsStore } from "@/store/modules/settings";
 import { getMenuToday, getComboCategories, getCombos } from "@/api/modules/products";
@@ -143,118 +143,90 @@ import MenuProductModal from "./MenuProductModal.vue";
 import ComboProductModal from "./ComboProductModal.vue";
 import categoryFallback from "@/assets/images/category-bg.jpg";
 
-export default defineComponent({
-    name: "CategoriesList",
-    components: {
-        MenuProductModal,
-        ComboProductModal,
-    },
-    setup() {
-        const productStore = useProductStore();
-        const settingsStore = useSettingsStore();
-        const listType = ref("grid");
-        const scheduledMenus = ref([]);
-        const showMenuModal = ref(false);
-        const selectedMenu = ref(null);
+const productStore = useProductStore();
+const settingsStore = useSettingsStore();
+const listType = ref("grid");
+const scheduledMenus = ref([]);
+const showMenuModal = ref(false);
+const selectedMenu = ref(null);
 
-        const comboCategories = ref([]);
-        const combos = ref([]);
-        const loadingCombos = ref(false);
-        const showComboModal = ref(false);
-        const selectedCombo = ref(null);
+const comboCategories = ref([]);
+const combos = ref([]);
+const loadingCombos = ref(false);
+const showComboModal = ref(false);
+const selectedCombo = ref(null);
 
-        const category_settings = computed(() => ({
-            use_image: false,
-            area_text_size: 16,
-            width_image_product: 35,
-            height_image_product: 35,
-            ...(settingsStore.business_settings?.category || {}),
-        }));
+const category_settings = computed(() => ({
+    use_image: false,
+    area_text_size: 16,
+    width_image_product: 35,
+    height_image_product: 35,
+    ...(settingsStore.business_settings?.category || {}),
+}));
 
-        const canUsePrograms = computed(() => {
-            const orderSettings = settingsStore.businessSettings?.order;
-            return !(orderSettings && orderSettings.order_by_customer);
-        });
-
-        const getCategoryImage = (category) => {
-            if (category_settings.value.use_image && categoryHasImage(category)) {
-                return category.image || category.image_url;
-            }
-            return categoryFallback;
-        };
-
-        const categoryHasImage = (category) => {
-            return Boolean(category && (category.image || category.image_url));
-        };
-
-        const handleOpenMenuModal = async (menu) => {
-            const menuData = await getMenuToday(menu.id);
-            if (menuData && menuData.data && menuData.data.length > 0) {
-                selectedMenu.value = menuData.data[0];
-                showMenuModal.value = true;
-            }
-        };
-
-        const handleOpenComboModal = (combo) => {
-            selectedCombo.value = combo;
-            showComboModal.value = true;
-        };
-
-        const getCombosForCategory = (categoryId) => {
-            return combos.value.filter((combo) => combo.category?.id === categoryId);
-        };
-
-        const loadCombos = async () => {
-            loadingCombos.value = true;
-            try {
-                const categoriesResponse = await getComboCategories({
-                    is_disabled: false,
-                    only_with_combos: true,
-                });
-                comboCategories.value = categoriesResponse.data || [];
-
-                const combosResponse = await getCombos({
-                    is_active: true,
-                    page: 1,
-                    page_size: 100,
-                });
-                combos.value = combosResponse.data || [];
-            } catch (error) {
-                console.error("Error loading combos", error);
-                window.$message?.error("Error al cargar los combos");
-            } finally {
-                loadingCombos.value = false;
-            }
-        };
-
-        onMounted(async () => {
-            await productStore.refreshCategories();
-            const menuData = await getMenuToday();
-            scheduledMenus.value = menuData.data || [];
-            await loadCombos();
-        });
-
-        return {
-            listType,
-            productStore,
-            scheduledMenus,
-            showMenuModal,
-            selectedMenu,
-            handleOpenMenuModal,
-            comboCategories,
-            combos,
-            loadingCombos,
-            showComboModal,
-            selectedCombo,
-            handleOpenComboModal,
-            getCombosForCategory,
-            category_settings,
-            getCategoryImage,
-            categoryHasImage,
-            canUsePrograms,
-        };
-    },
+const canUsePrograms = computed(() => {
+    const orderSettings = settingsStore.businessSettings?.order;
+    return !(orderSettings && orderSettings.order_by_customer);
 });
+
+const getCategoryImage = (category) => {
+    if (category_settings.value.use_image && categoryHasImage(category)) {
+        return category.image || category.image_url;
+    }
+    return categoryFallback;
+};
+
+const categoryHasImage = (category) => {
+    return Boolean(category && (category.image || category.image_url));
+};
+
+const handleOpenMenuModal = async (menu) => {
+    const menuData = await getMenuToday(menu.id);
+    if (menuData && menuData.data && menuData.data.length > 0) {
+        selectedMenu.value = menuData.data[0];
+        showMenuModal.value = true;
+    }
+};
+
+const handleOpenComboModal = (combo) => {
+    selectedCombo.value = combo;
+    showComboModal.value = true;
+};
+
+const getCombosForCategory = (categoryId) => {
+    return combos.value.filter((combo) => combo.category?.id === categoryId);
+};
+
+const loadCombos = async () => {
+    loadingCombos.value = true;
+    try {
+        const categoriesResponse = await getComboCategories({
+            is_disabled: false,
+            only_with_combos: true,
+        });
+        comboCategories.value = categoriesResponse.data || [];
+
+        const combosResponse = await getCombos({
+            is_active: true,
+            page: 1,
+            page_size: 100,
+        });
+        combos.value = combosResponse.data || [];
+    } catch (error) {
+        console.error("Error loading combos", error);
+        window.$message?.error("Error al cargar los combos");
+    } finally {
+        loadingCombos.value = false;
+    }
+};
+
+onMounted(async () => {
+    await productStore.refreshCategories();
+    const menuData = await getMenuToday();
+    scheduledMenus.value = menuData.data || [];
+    await loadCombos();
+});
+
 </script>
 
 <style lang="scss" scoped>

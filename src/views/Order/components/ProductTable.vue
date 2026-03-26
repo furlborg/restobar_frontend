@@ -20,13 +20,7 @@
               </td>
               <td>{{ menuSet.quantity }}</td>
               <td>
-                <input
-                  class="custom-input"
-                  v-model="menuSet.name"
-                  v-autowidth
-                  readonly
-                  style="font-weight: bold;"
-                />
+                <input class="custom-input" v-model="menuSet.name" v-autowidth readonly style="font-weight: bold;" />
               </td>
               <td class="currency-input-wrapper">S/. {{ Number(menuSet.price || 0).toFixed(2) }}</td>
               <td v-if="settingsStore.business_settings?.sale?.show_discount_label">S/. 0.00</td>
@@ -36,14 +30,9 @@
 
           <tr v-for="(detail, index) in saleDetails" :key="`product-${index}`">
             <td v-if="settingsStore.businessSettings?.sale?.manage_affectations">
-              <n-popselect
-                size="small"
-                placement="bottom-start"
-                v-model:value="detail.product_affectation"
-                :disabled="!userStore.hasPermission('change_product_affectation')"
-                :options="productStore.affectationsOptions"
-                @update:value="handleAffectationChange(detail)"
-              >
+              <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation"
+                :disabled="!userStore.hasPermission('change_product_affectation')" :options="menuAffectationOptions"
+                @update:value="handleAffectationChange(detail)">
                 <n-tag size="small" :color="getAfcColor(detail.product_affectation)">
                   {{ getAfcShort(detail.product_affectation) }}
                 </n-tag>
@@ -51,45 +40,24 @@
             </td>
             <td>{{ detail.quantity }}</td>
             <td>
-              <input
-                class="custom-input product-name-input"
-                v-model="detail.product_name"
-                v-autowidth
-                @click="$event.target.select()"
-              />
+              <input class="custom-input product-name-input" v-model="detail.product_name" v-autowidth
+                @click="$event.target.select()" />
             </td>
             <td>
               S/.
-              <input
-                class="custom-input"
-                type="number"
-                :min="detail.product_affectation === 21 ? 0 : 1"
-                step=".5"
-                v-model="detail.price_sale"
-                v-autowidth
-                @click="$event.target.select()"
+              <input class="custom-input" type="number" :min="detail.product_affectation === 21 ? 0 : 1" step=".5"
+                v-model="detail.price_sale" v-autowidth @click="$event.target.select()"
                 :disabled="!settingsStore.business_settings?.sale?.show_discount_label"
-                @input="handlePriceInput(detail)"
-                @blur="handlePriceBlur(detail)"
-                @keydown.enter.prevent="handlePriceBlur(detail)"
-              />
+                @input="handlePriceInput(detail)" @blur="handlePriceBlur(detail)"
+                @keydown.enter.prevent="handlePriceBlur(detail)" />
             </td>
             <td v-if="settingsStore.business_settings?.sale?.show_discount_label">
               S/.
-              <input
-                class="custom-input"
-                type="number"
-                min="0"
-                :max="(detail.price_sale || 0) * (detail.quantity || 0)"
-                step=".5"
-                :disabled="detail.product_affectation === 21 || !!Number(sale.discount)"
-                v-model="detail.discount"
-                v-autowidth
-                @click="$event.target.select()"
-                @input="handleDiscountInput(detail)"
-                @blur="handleDiscountBlur(detail)"
-                @keydown.enter.prevent="handleDiscountBlur(detail)"
-              />
+              <input class="custom-input" type="number" min="0" :max="(detail.price_sale || 0) * (detail.quantity || 0)"
+                step=".5" :disabled="detail.product_affectation === 21 || !!Number(sale.discount)"
+                v-model="detail.discount" v-autowidth @click="$event.target.select()"
+                @input="handleDiscountInput(detail)" @blur="handleDiscountBlur(detail)"
+                @keydown.enter.prevent="handleDiscountBlur(detail)" />
             </td>
             <td>
               {{
@@ -106,7 +74,7 @@
 </template>
 
 <script>
-import { defineComponent } from "vue";
+import { defineComponent, computed } from 'vue';
 import { useProductStore } from "@/store/modules/product";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useUserStore } from "@/store/modules/user";
@@ -187,8 +155,9 @@ export default defineComponent({
 
     const applyTransferenciaGratuita = (detail) => {
       storePreviousPrice(detail);
+      //console.info(detail)
       detail.product_affectation = 21;
-      detail.price_sale = formatMoney(0);
+      //detail.price_sale = formatMoney(0);
       resetDiscount(detail);
     };
 
@@ -281,6 +250,11 @@ export default defineComponent({
       emit("updateDetail", detail);
     };
 
+    const menuAffectationOptions = computed(() => {
+      const options = productStore.affectationsOptions;
+      return options.filter(opt => opt.value === 21)
+    });
+
     return {
       productStore,
       settingsStore,
@@ -291,7 +265,8 @@ export default defineComponent({
       handlePriceInput,
       handlePriceBlur,
       handleDiscountInput,
-      handleDiscountBlur
+      handleDiscountBlur,
+      menuAffectationOptions
     };
   }
 });
@@ -327,5 +302,3 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 </style>
-
-

@@ -2,7 +2,8 @@
     <n-card title="Pedidos" :bordered="false" class="h-100" content-class="overflow-auto">
         <template #header-extra>
             <div v-if="userStore.hasPermission('charge_order')">
-                <n-button v-if="!($route.name === 'TablePayment')" type="success" :disabled="!orderStore.orderId" text @click="navigateToPayment">
+                <n-button v-if="!($route.name === 'TablePayment')" type="success" :disabled="!orderStore.orderId" text
+                    @click="navigateToPayment">
                     <v-icon class="me-1" name="fa-coins" />
                     <span class="fs-6">Cobrar</span>
                 </n-button>
@@ -18,45 +19,35 @@
                 <div>
                     <n-form v-if="!($route.name === 'TablePayment')">
                         <n-grid cols="2" x-gap="12">
+                            <!-- Mozo -->
                             <n-form-item-gi v-if="shouldSelectOrderUser" :span="2" label="Mozo">
-                                <n-select :options="activeUsersStore.usersOptions" v-model:value="localOrderUser" placeholder="Seleccione un mozo" filterable />
+                                <n-select :options="activeUsersStore.usersOptions" v-model:value="localOrderUser"
+                                    placeholder="Seleccione un mozo" filterable />
                             </n-form-item-gi>
-                            <n-form-item-gi
-                                v-if="shouldShowCustomerMode"
+                            <n-form-item-gi v-if="shouldShowCustomerMode"
                                 :span="!shouldShowCustomerMode ? 2 : customers.length > 0 ? 1 : 2"
-                                label="Agregar Cliente"
-                            >
+                                label="Agregar Cliente">
                                 <n-input-group>
-                                    <n-input
-                                        v-model:value="newCustomerName"
-                                        placeholder="Nombre del cliente"
-                                        @keyup.enter="handleAddCustomer"
-                                    />
-                                    <n-button
-                                        type="primary"
-                                        @click="handleAddCustomer"
-                                        :disabled="!newCustomerName.trim()"
-                                    >
+                                    <n-input v-model:value="newCustomerName" placeholder="Nombre del cliente"
+                                        @keyup.enter="handleAddCustomer" />
+                                    <n-button type="primary" @click="handleAddCustomer"
+                                        :disabled="!newCustomerName.trim()">
                                         <v-icon class="me-1" name="md-personadd-round" />
                                     </n-button>
                                 </n-input-group>
                             </n-form-item-gi>
-                            <n-form-item-gi
-                                v-if="shouldShowCustomerMode && customers.length > 0"
-                                :span="1"
-                                label="Seleccionar Cliente"
-                            >
-                                <n-select
-                                    :options="customerOptions"
-                                    v-model:value="localSelectedCustomerId"
-                                    placeholder="Seleccione un cliente"
-                                    filterable
-                                />
+                            <n-form-item-gi v-if="shouldShowCustomerMode && customers.length > 0" :span="1"
+                                label="Seleccionar Cliente">
+                                <n-select :options="customerOptions" v-model:value="localSelectedCustomerId"
+                                    placeholder="Seleccione un cliente" filterable />
                             </n-form-item-gi>
-                            <n-form-item-gi v-if="!shouldShowCustomerMode || localSelectedCustomerId" :span="2" label="Buscar producto">
+                            <!-- buscar producto -->
+                            <n-form-item-gi v-if="!shouldShowCustomerMode || localSelectedCustomerId" :span="2"
+                                label="Buscar producto">
                                 <n-input-group>
-                                    <n-auto-complete v-model:value="productSearch" :options="productOptions" :get-show="showOptions" :loading="searching"
-                                        :render-label="renderLabel" :input-props="{ autocomplete: 'disabled' }" placeholder="Nombre del producto"
+                                    <n-auto-complete v-model:value="productSearch" :options="productOptions"
+                                        :get-show="showOptions" :loading="searching" :render-label="renderLabel"
+                                        :input-props="{ autocomplete: 'disabled' }" placeholder="Nombre del producto"
                                         clear-after-select @select="selectProduct" />
                                 </n-input-group>
                             </n-form-item-gi>
@@ -64,7 +55,7 @@
                     </n-form>
 
                     <!-- Tabla original para modo sin clientes -->
-                    <n-table v-if="!shouldShowCustomerMode" size="small" >
+                    <n-table v-if="!shouldShowCustomerMode" size="small">
                         <thead>
                             <tr>
                                 <th style="width: 10%"></th>
@@ -76,18 +67,21 @@
                         </thead>
                         <tbody>
                             <!-- Menús y Combos -->
-                            <template v-for="(menuSet, menuIndex) in orderStore.menuSets" :key="`menu-set-table-${menuIndex}`">
+                            <template v-for="(menuSet, menuIndex) in orderStore.menuSets"
+                                :key="`menu-set-table-${menuIndex}`">
                                 <!-- Fila principal del Menú o Combo -->
                                 <tr :style="{ backgroundColor: menuSet.from_combo ? '#f0f9ff' : '#f8f8f8' }">
                                     <td>
                                         <n-button :type="menuSet.from_combo ? 'success' : 'warning'" text>
-                                            <v-icon :name="menuSet.from_combo ? 'gi-hot-meal' : 'md-restaurant-round'"/>
+                                            <v-icon
+                                                :name="menuSet.from_combo ? 'gi-hot-meal' : 'md-restaurant-round'" />
                                         </n-button>
                                     </td>
                                     <td>
                                         <b>{{ menuSet.from_combo ? 'Combo' : 'Menú' }}: {{ menuSet.name }}</b>
                                         <br>
-                                        <n-tag v-if="menuSet.from_combo" size="small" type="success" style="margin-top: 4px;">
+                                        <n-tag v-if="menuSet.from_combo" size="small" type="success"
+                                            style="margin-top: 4px;">
                                             {{ menuSet.items?.length || 0 }} productos incluidos
                                         </n-tag>
                                     </td>
@@ -96,13 +90,16 @@
                                     </td>
                                     <td>S/. {{ formatPrice(menuSet.price * menuSet.quantity) }}</td>
                                     <td>
-                                        <n-button v-if="!isPaymentRoute" type="error" text @click.stop="handleRemoveMenuSet(menuIndex)">
+                                        <n-button v-if="!isPaymentRoute" type="error" text
+                                            @click.stop="handleRemoveMenuSet(menuIndex)">
                                             <v-icon name="md-disabledbydefault-round" />
                                         </n-button>
                                     </td>
                                 </tr>
                                 <!-- Items del menú o combo -->
-                                <tr v-for="item in menuSet.items" :key="`menu-set-item-table-${item.product_id || item.id}`" :style="{ backgroundColor: menuSet.from_combo ? '#fafeff' : '#fafafa' }">
+                                <tr v-for="item in menuSet.items"
+                                    :key="`menu-set-item-table-${item.product_id || item.id}`"
+                                    :style="{ backgroundColor: menuSet.from_combo ? '#fafeff' : '#fafafa' }">
                                     <td></td>
                                     <td style="padding-left: 20px;">
                                         {{ item.product_name }}
@@ -118,20 +115,23 @@
                             <template v-for="(order, index) in orderStore.productLines" :key="`product-table-${index}`">
                                 <tr v-if="order.quantity > 0" style="cursor: pointer" @click="openOrderModal(index)">
                                     <td>
-                                        <n-button v-if="!isPaymentRoute" type="info" text><v-icon name="md-listalt-round" /></n-button>
+                                        <n-button v-if="!isPaymentRoute" type="info" text><v-icon
+                                                name="md-listalt-round" /></n-button>
                                     </td>
                                     <td>
                                         <span>{{ order.product_name }}</span><br>
                                         <span style="color: #15151c; font-size: 12px;">{{ order.modified }}</span>
                                     </td>
                                     <td>
-                                        <n-input-number v-if="!isPaymentRoute" size="small" :min="order.id ? saleStore.getOrderQuantity(order.id) : 1"
+                                        <n-input-number v-if="!isPaymentRoute" size="small"
+                                            :min="order.id ? saleStore.getOrderQuantity(order.id) : 1"
                                             v-model:value="order.quantity" @click.stop />
                                         <template v-else>{{ order.quantity }}</template>
                                     </td>
                                     <td>S/. {{ formatPrice(order.subTotal) }}</td>
                                     <td>
-                                        <n-button v-if="!isPaymentRoute" type="error" text @click.stop="handleRemoveProductLine(index)">
+                                        <n-button v-if="!isPaymentRoute" type="error" text
+                                            @click.stop="handleRemoveProductLine(index)">
                                             <v-icon name="md-disabledbydefault-round" />
                                         </n-button>
                                     </td>
@@ -147,10 +147,12 @@
                         <tfoot>
                             <tr>
                                 <td colspan="3">
-                                    <n-button v-if="!isPaymentRoute" :type="orderStore.orderId ? 'info' : 'primary'" :loading="loading"
-                                        :disabled="orderButtonDisabled" @click="validateSend()" text block>
+                                    <n-button v-if="!isPaymentRoute" :type="orderStore.orderId ? 'info' : 'primary'"
+                                        :loading="loading" :disabled="orderButtonDisabled" @click="validateSend()" text
+                                        block>
                                         <v-icon class="me-2" name="md-notealt-twotone" scale="1.5" />
-                                        <span class="fs-4">{{ orderStore.orderId ? 'Actualizar' : 'Realizar' }} pedido</span>
+                                        <span class="fs-4">{{ orderStore.orderId ? 'Actualizar' : 'Realizar' }}
+                                            pedido</span>
                                     </n-button>
                                 </td>
                                 <td colspan="2" class="fs-6 fw-bold">{{ formattedTotals.grandTotal }}</td>
@@ -161,23 +163,14 @@
                     <!-- Nueva tabla para modo con clientes -->
                     <n-card :bordered="false" v-else content-class="p-0" footer-class="p-0">
                         <template v-for="(customer, customerIndex) in customers" :key="customer.id">
-                            <n-card
-                                class="mb-4"
-                                size="small"
-                                :title="customer.name"
-                                :bordered="false"
-                                header-class="p-0 pb-2"
-                                content-class="p-0"
-                            >
+                            <n-card class="mb-4" size="small" :title="customer.name" :bordered="false"
+                                header-class="p-0 pb-2" content-class="p-0">
                                 <template #header-extra>
                                     <n-space>
                                         <n-text class="fs-6 fw-bold">
                                             S/. {{ formatPrice(getCustomerTotal(customer.id)) }}
                                         </n-text>
-                                        <n-button
-                                            v-if="!($route.name === 'TablePayment')"
-                                            type="error"
-                                            size="small"
+                                        <n-button v-if="!($route.name === 'TablePayment')" type="error" size="small"
                                             @click="confirmRemoveCustomer(customerIndex, customer.name)"
                                             :title="`Eliminar cliente ${customer.name}`">
                                             <v-icon name="md-delete-round" />
@@ -198,14 +191,10 @@
                                     <tbody>
                                         <template v-for="(order, orderIndex) in getCustomerOrders(customer.id)"
                                             :key="orderIndex">
-                                            <tr
-                                                v-if="order.quantity > 0"
-                                                style="cursor: pointer"
-                                                @click="openOrderModal(order)"
-                                            >
+                                            <tr v-if="order.quantity > 0" style="cursor: pointer"
+                                                @click="openOrderModal(order)">
                                                 <td>
-                                                    <n-button v-if="!($route.name === 'TablePayment')"
-                                                        type="info" text>
+                                                    <n-button v-if="!($route.name === 'TablePayment')" type="info" text>
                                                         <v-icon name="md-listalt-round" />
                                                     </n-button>
                                                 </td>
@@ -226,12 +215,8 @@
                                                 </td>
                                                 <td>S/. {{ formatPrice(order.subTotal) }}</td>
                                                 <td>
-                                                    <n-button
-                                                        v-if="!($route.name === 'TablePayment')"
-                                                        type="error"
-                                                        text
-                                                        @click.stop="handleRemoveProductLine(orderIndex)"
-                                                    >
+                                                    <n-button v-if="!($route.name === 'TablePayment')" type="error" text
+                                                        @click.stop="handleRemoveProductLine(orderIndex)">
                                                         <v-icon name="md-disabledbydefault-round" />
                                                     </n-button>
                                                 </td>
@@ -240,7 +225,8 @@
                                     </tbody>
                                 </n-table>
 
-                                <n-empty v-if="getCustomerOrders(customer.id).length === 0" description="No hay productos agregados" size="small" class="my-4" />
+                                <n-empty v-if="getCustomerOrders(customer.id).length === 0"
+                                    description="No hay productos agregados" size="small" class="my-4" />
                             </n-card>
                         </template>
                         <template #footer>
@@ -255,43 +241,39 @@
                                             {{ customers.length }} cliente(s)
                                         </n-text>
                                     </n-space>
-                                    <n-button
-                                        v-if="!($route.name === 'TablePayment')"
-                                        :loading="loading"
-                                        :type="orderStore.orderId ? 'info' : 'primary'"
-                                        :disabled="orderButtonDisabled"
-                                        size="large"
-                                        @click="validateSend()"
-                                        block
-                                    >
+                                    <n-button v-if="!($route.name === 'TablePayment')" :loading="loading"
+                                        :type="orderStore.orderId ? 'info' : 'primary'" :disabled="orderButtonDisabled"
+                                        size="large" @click="validateSend()" block>
                                         <v-icon class="me-2" name="md-notealt-twotone" scale="1.2" />
-                                        <span class="fs-5">{{ orderStore.orderId ? 'Actualizar' : 'Realizar' }} pedido</span>
+                                        <span class="fs-5">{{ orderStore.orderId ? 'Actualizar' : 'Realizar' }}
+                                            pedido</span>
                                     </n-button>
                                 </n-space>
                             </div>
                         </template>
 
-                        <n-empty v-if="customers.length === 0" description="Agregue un cliente para realizar un pedido" class="m-4" />
+                        <n-empty v-if="customers.length === 0" description="Agregue un cliente para realizar un pedido"
+                            class="m-4" />
                     </n-card>
                 </div>
             </n-scrollbar>
         </template>
     </n-card>
 
-    <OrderIndications v-model:show="showModal" preset="card" title="Indicaciones" :order="currentOrder" @success="showModal = false" />
+    <OrderIndications v-model:show="showModal" preset="card" title="Indicaciones" :order="currentOrder"
+        @success="showModal = false" />
 </template>
 
-<script>
+<script setup>
 import OrderIndications from "./OrderIndications";
 import ProductSearchLabel from "@/views/Product/components/ProductSearchLabel.vue";
-import { defineComponent, ref, computed, h, watchEffect, provide, watch, onMounted, onUnmounted } from "vue";
+import { ref, computed, h, watch, onMounted, onUnmounted, toRefs } from "vue";
 import { useTableLock } from '@/composables/useTableLock';
 
 import { useRoute, useRouter } from "vue-router";
 import { useMessage, useDialog } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useUserStore, useActiveUsersStore } from "@/store/modules/user";
-import { useGenericsStore } from "@/store/modules/generics";
 import { useProductStore } from "@/store/modules/product";
 import { useTableStore } from "@/store/modules/table";
 import { useOrderStore } from "@/store/modules/order";
@@ -300,362 +282,304 @@ import { useSaleTotals } from "@/composables/useSaleTotals";
 import { useDebounce } from "@/composables/useDebounce";
 import { searchProductByName, searchProductPrice } from "@/api/modules/products";
 
-export default defineComponent({
-    name: "TableOrder",
-    components: { OrderIndications, ProductSearchLabel },
-    props: {
-        ask_for: {
-            type: String,
-            default: ''
-        },
-        orderUser: {
-            type: [Number, String],
-            default: null
-        },
-        loading: {
-            type: Boolean,
-            default: false
-        },
-        hasUnsavedChanges: {
-            type: Boolean,
-            default: false
-        },
-        customers: {
-            type: Array,
-            default: () => []
-        },
-        selectedCustomerId: {
-            type: [Number, String],
-            default: null
-        },
-        shouldShowCustomerMode: {
-            type: Boolean,
-            default: false
-        }
-    },
-    emits: [
-        'validateSend',
-        'addCustomer',
-        'removeCustomer',
-        'deleteOrderDetail',
-        'goToFirstTab',
-        'update:ask_for',
-        'update:orderUser',
-        'update:selectedCustomerId',
-        'productSelect'
-    ],
-    setup(props, { emit }) {
-
-        const route = useRoute();
-        const router = useRouter();
-        const message = useMessage();
-        const dialog = useDialog();
-
-        const userStore = useUserStore();
-        const activeUsersStore = useActiveUsersStore();
-        const tableStore = useTableStore();
-        const settingsStore = useSettingsStore();
-        const genericsStore = useGenericsStore();
-        const productStore = useProductStore();
-        const orderStore = useOrderStore();
-        const saleStore = useSaleStore();
-        const { formattedTotals } = useSaleTotals();
-
-        // Table lock composable (solo para enviar mensajes WS)
-        const { wsLockTable, wsUnlockTable } = useTableLock();
-
-        // ID de la mesa desde la ruta
-        const tableId = computed(() => {
-            const param = route.params.table;
-            return typeof param === 'string' ? parseInt(param) : param;
-        });
-
-        // Controla si se debe desbloquear al salir
-        const shouldUnlock = ref(false);
-        // Guardamos el tableId al montar para usarlo en unmount (cuando la ruta ya cambió)
-        const capturedTableId = ref(null);
-        
-        // Función para desbloquear mesa (usada en múltiples lugares)
-        const unlockCurrentTable = () => {
-            const idToUnlock = capturedTableId.value || tableId.value;
-            console.log('[TableOrder] 🔍 unlockCurrentTable llamado - shouldUnlock:', shouldUnlock.value, 'capturedTableId:', capturedTableId.value, 'tableId:', tableId.value);
-            if (shouldUnlock.value && idToUnlock) {
-                console.log('[TableOrder] 🔓 Desbloqueando mesa', idToUnlock);
-                wsUnlockTable(idToUnlock);
-                shouldUnlock.value = false;
-            } else {
-                console.log('[TableOrder] ⚠️ No se desbloqueará - shouldUnlock:', shouldUnlock.value, 'idToUnlock:', idToUnlock);
-            }
-        };
-        
-        // Handler para cierre brusco de ventana/pestaña
-        const handleBeforeUnload = () => {
-            console.log('[TableOrder] 🚪 beforeunload disparado');
-            unlockCurrentTable();
-        };
-        
-        // Al montar: intentar bloquear la mesa si está libre
-        onMounted(() => {
-            // Capturar el tableId inmediatamente para usarlo en unmount
-            capturedTableId.value = tableId.value;
-            console.log('[TableOrder] 🟢 Componente montado - Mesa:', capturedTableId.value);
-            
-            // Si la mesa no está bloqueada por mí, intentar lockear
-            const lockInfo = tableStore.lockedTables[capturedTableId.value];
-            const isMyLock = lockInfo && lockInfo.user_id === userStore.user.id;
-            
-            if (!lockInfo || isMyLock) {
-                console.log('[TableOrder] 🔒 Bloqueando mesa', capturedTableId.value);
-                wsLockTable(capturedTableId.value, 15); // 15 minutos de bloqueo
-                shouldUnlock.value = true;
-                
-                // Agregar listener para cierre brusco
-                window.addEventListener('beforeunload', handleBeforeUnload);
-            } else {
-                console.log('[TableOrder] ⚠️ Mesa ya bloqueada por otro usuario:', lockInfo.username);
-            }
-        });
-
-        // Al desmontar: SIEMPRE desbloquear la mesa
-        // El backend manejará la expiración automática para cierres bruscos
-        onUnmounted(() => {
-            console.log('[TableOrder] 🔴 Componente desmontado - Mesa:', tableId.value);
-            // Remover listener
-            window.removeEventListener('beforeunload', handleBeforeUnload);
-            // Desbloquear
-            unlockCurrentTable();
-        });
-
-        const customerOptions = computed(() => props.customers.map(customer => ({ label: customer.name, value: customer.id })));
-
-        const localSelectedCustomerId = computed({
-            get: () => props.selectedCustomerId,
-            set: (value) => emit('update:selectedCustomerId', value)
-        });
-
-        const selectProduct = product => emit('productSelect', product);
-
-        const localAskFor = computed({
-            get: () => props.ask_for,
-            set: (value) => emit('update:ask_for', value)
-        });
-
-        const localOrderUser = computed({
-            get: () => props.orderUser,
-            set: (value) => emit('update:orderUser', value)
-        });
-
-        const validateSend = () => emit('validateSend');
-        const addCustomer = (name) => emit('addCustomer', name);
-        const removeCustomer = (index) => emit('removeCustomer', index);
-        const deleteOrderDetail = (index, id) => emit('deleteOrderDetail', index, id);
-
-        const newCustomerName = ref("");
-        const showModal = ref(false);
-        const itemIndex = ref(null);
-        const searching = ref(false);
-        const productSearch = ref("");
-        const products = ref([]);
-
-        const isWaiter = computed(() => userStore.user.role === 'MOZO');
-        const isPaymentRoute = computed(() => route.name === 'TablePayment');
-        const shouldSelectOrderUser = computed(() => settingsStore.businessSettings?.order?.select_order_user && !isWaiter.value);
-        const currentOrder = computed(() => {
-            const index = itemIndex.value;
-            return typeof index === 'number' && index >= 0 ? orderStore.orderList[index] : null;
-        });
-
-        const productOptions = computed(() => products.value.map((product) => ({
-            value: product,
-            label: product.name,
-            disabled: product.is_disabled,
-            category: productStore.getCategorieDescription(product.category),
-            stock: product.stock,
-            price: parseFloat(product.prices).toFixed(2),
-        })));
-
-        const getGlobalOrderIndex = (targetOrder) => {
-            if (targetOrder == null) return -1;
-
-            if (typeof targetOrder === 'number') {
-                if (targetOrder >= 0 && targetOrder < orderStore.orderList.length) {
-                    return targetOrder;
-                }
-                return orderStore.orderList.findIndex(order => order.id === targetOrder);
-            }
-
-            if (typeof targetOrder === 'string') {
-                return orderStore.orderList.findIndex(order => String(order.id) === targetOrder);
-            }
-
-            const byId = targetOrder.id != null
-                ? orderStore.orderList.findIndex(order => order.id === targetOrder.id)
-                : -1;
-            if (byId !== -1) return byId;
-
-            if (targetOrder.created_at) {
-                const byCreated = orderStore.orderList.findIndex(order => order.created_at === targetOrder.created_at);
-                if (byCreated !== -1) return byCreated;
-            }
-
-            return orderStore.orderList.findIndex(order => order === targetOrder);
-        };
-
-        const openOrderModal = (order) => {
-            const index = getGlobalOrderIndex(order);
-            itemIndex.value = index !== -1 ? index : null;
-            if (index !== -1) {
-                showModal.value = true;
-            }
-        };
-
-        const handleAddCustomer = () => {
-            if (!newCustomerName.value.trim()) return;
-            addCustomer(newCustomerName.value.trim());
-            newCustomerName.value = "";
-        };
-
-        const confirmRemoveCustomer = (customerIndex, customerName) => {
-            dialog.warning({
-                title: 'Confirmar eliminación',
-                content: `¿Estás seguro de que quieres eliminar al cliente "${customerName}"? Esto también eliminará todos sus pedidos.`,
-                positiveText: 'Sí, eliminar',
-                negativeText: 'Cancelar',
-                onPositiveClick: () => removeCustomer(customerIndex)
-            });
-        };
-
-        const getCustomerOrders = (customerId) => 
-            orderStore.orderList.filter(order => order.customer?.id === customerId && order.quantity > 0);
-        const getCustomerTotal = (customerId) => 
-            getCustomerOrders(customerId).reduce((total, order) => total + Number(order.subTotal || 0), 0);
-        const getTotalAmount = () => orderStore.orderTotal;
-        const formatPrice = (price) => (isNaN(price) ? 0 : Number(price)).toFixed(2);
-        const hasAnyOrders = computed(() => orderStore.orderList.some(order => order.quantity > 0));
-
-        const handleRemoveOrder = (order, index) => {
-            order.id ? deleteOrderDetail(index, order.id) : (orderStore.orderList.splice(index, 1), nullifyTableOrder());
-        };
-
-        const handleRemoveMenuSet = (menuIndex) => {
-            // Obtener menús Y combos (ProductSets)
-            const menuSetItems = orderStore.orderList.filter(item => item.from_menu || item.from_combo);
-            const menuSetToRemove = menuSetItems[menuIndex];
-            if (!menuSetToRemove) return;
-
-            const orderIndex = orderStore.orderList.findIndex(item => item === menuSetToRemove);
-            if (orderIndex === -1) return;
-
-            if (!menuSetToRemove.id) {
-                orderStore.orderList.splice(orderIndex, 1);
-                nullifyTableOrder();
-            } else {
-                deleteOrderDetail(orderIndex, menuSetToRemove.id);
-            }
-            updateSaleStore();
-        };
-
-        const handleRemoveProductLine = (productIndex) => {
-            const productItems = orderStore.orderList.filter(item => !item.from_menu);
-            const productToRemove = productItems[productIndex];
-            if (!productToRemove) return;
-
-            const orderIndex = orderStore.orderList.findIndex(item => item === productToRemove);
-            if (orderIndex === -1) return;
-
-            if (!productToRemove.id) {
-                orderStore.orderList.splice(orderIndex, 1);
-                nullifyTableOrder();
-            } else {
-                deleteOrderDetail(orderIndex, productToRemove.id);
-            }
-            updateSaleStore();
-        };
-
-        const updateSaleStore = () => {
-            Object.assign(saleStore, {
-                sale_details: orderStore.productLines,
-                sale_product_sets: orderStore.menuSets
-            });
-            saleStore.buildSalePayload();
-        };
-
-        const nullifyTableOrder = async () => {
-            if (!orderStore.orderList.length && orderStore.orderId) {
-                // console.log('Nullifying table order for:', order);
-            }
-        };
-
-        const { debounced: fetchProducts } = useDebounce((value) => {
-            const priceRegex = /^\d+(\.\d{0,2})?$/
-
-            // Si es un precio, buscar por precio
-            if (priceRegex.test(value)) {
-                searching.value = true
-                searchProductPrice(value)
-                .then(res => {
-                    if (res.status === 200) products.value = res.data
-                })
-                .catch(() => message.error('Algo salió mal...'))
-                .finally(() => (searching.value = false))
-                return
-            }
-
-            // Si es texto con al menos 3 caracteres, buscar por nombre
-            if (value && value.length >= 3) {
-                searching.value = true
-                searchProductByName(value)
-                .then(res => {
-                    if (res.status === 200) products.value = res.data
-                })
-                .catch(() => message.error('Algo salió mal...'))
-                .finally(() => (searching.value = false))
-            } else {
-                products.value = []
-            }
-        }, 300)
-
-        // --- get-show solo controla visibilidad del dropdown ---
-        const showOptions = (value) => {
-            if (!value) return false
-            // cuando hay algo escrito, deja mostrar las opciones
-            return value.length >= 3 || /^\d+(\.\d{0,2})?$/.test(value)
-        }
-
-        watch(productSearch, (value) => {
-            fetchProducts(value)
-        })
-
-        const renderLabel = (option) => {
-            return h(ProductSearchLabel, { option });
-        };
-
-        const navigateToPayment = () => {
-            emit('goToFirstTab');
-            router.push({ name: 'TablePayment', params: { table: route.params.table } });
-        };
-
-        const navigateToTakeOrder = () => {
-            emit('goToFirstTab');
-            router.push({ name: 'ProductCategories', params: { table: route.params.table } });
-        };
-
-        const orderButtonDisabled = computed(() => !props.hasUnsavedChanges);
-
-        return {
-            userStore, activeUsersStore, route, router, tableStore, settingsStore, genericsStore,
-            productStore, orderStore, saleStore,
-            customers: computed(() => props.customers),
-            shouldShowCustomerMode: computed(() => props.shouldShowCustomerMode),
-            customerOptions, localSelectedCustomerId, addCustomer, removeCustomer, deleteOrderDetail,
-            newCustomerName, showModal, itemIndex, searching, productSearch, products,
-            localAskFor, localOrderUser, shouldSelectOrderUser, currentOrder, productOptions, isWaiter, isPaymentRoute,
-            showOptions, selectProduct, renderLabel, navigateToPayment, confirmRemoveCustomer, navigateToTakeOrder,
-            handleAddCustomer, getCustomerOrders, getCustomerTotal, getTotalAmount, formatPrice, hasAnyOrders,
-            getGlobalOrderIndex, validateSend, nullifyTableOrder, openOrderModal, handleRemoveOrder,
-            handleRemoveMenuSet, handleRemoveProductLine, updateSaleStore, formattedTotals, orderButtonDisabled,
-            wsLockTable, wsUnlockTable
-        };
-  }
+const props = defineProps({
+    ask_for: { type: String, default: '' },
+    orderUser: { type: [Number, String], default: null },
+    loading: { type: Boolean, default: false },
+    hasUnsavedChanges: { type: Boolean, default: false },
+    customers: { type: Array, default: () => [] },
+    selectedCustomerId: { type: [Number, String], default: null },
+    shouldShowCustomerMode: { type: Boolean, default: false }
 });
+
+const emit = defineEmits([
+    'validateSend',
+    'addCustomer',
+    'removeCustomer',
+    'deleteOrderDetail',
+    'goToFirstTab',
+    'update:ask_for',
+    'update:orderUser',
+    'update:selectedCustomerId',
+    'productSelect'
+]);
+
+const route = useRoute();
+const router = useRouter();
+const message = useMessage();
+const dialog = useDialog();
+
+const userStore = useUserStore();
+const activeUsersStore = useActiveUsersStore();
+const tableStore = useTableStore();
+const settingsStore = useSettingsStore();
+const productStore = useProductStore();
+const orderStore = useOrderStore();
+const saleStore = useSaleStore();
+const { formattedTotals } = useSaleTotals();
+
+
+// Table lock composable (solo para enviar mensajes WS)
+const { wsLockTable, wsUnlockTable } = useTableLock();
+
+// Para acceder a props reactivamente
+const { customers, shouldShowCustomerMode, selectedCustomerId, orderUser } = toRefs(props)
+
+// Estado local
+const newCustomerName = ref("");
+const showModal = ref(false);
+const itemIndex = ref(null);
+const searching = ref(false);
+const productSearch = ref("");
+const products = ref([]);
+
+// ID de la mesa desde la ruta
+const tableId = computed(() => {
+    const param = route.params.table;
+    return typeof param === 'string' ? parseInt(param) : param;
+});
+const customerOptions = computed(() => customers.value.map(customer => ({ label: customer.name, value: customer.id })));
+const localSelectedCustomerId = computed({
+    get: () => selectedCustomerId.value,
+    set: (value) => emit('update:selectedCustomerId', value)
+});
+const isWaiter = computed(() => userStore.user.role === 'MOZO');
+const isPaymentRoute = computed(() => route.name === 'TablePayment');
+const shouldSelectOrderUser = computed(() => settingsStore.businessSettings?.order?.select_order_user && !isWaiter.value);
+const currentOrder = computed(() => {
+    const index = itemIndex.value;
+    return typeof index === 'number' && index >= 0 ? orderStore.orderList[index] : null;
+});
+const productOptions = computed(() => products.value.map((product) => ({
+    value: product,
+    label: product.name,
+    disabled: product.is_disabled,
+    category: productStore.getCategorieDescription(product.category),
+    stock: product.stock,
+    price: parseFloat(product.prices).toFixed(2),
+})));
+const getTotalAmount = computed(() => orderStore.orderTotal);
+const orderButtonDisabled = computed(() => !props.hasUnsavedChanges);
+
+// Controla si se debe desbloquear al salir
+const shouldUnlock = ref(false);
+// Guardamos el tableId al montar para usarlo en unmount (cuando la ruta ya cambió)
+const capturedTableId = ref(null);
+
+// Función para desbloquear mesa (usada en múltiples lugares)
+const unlockCurrentTable = () => {
+    const idToUnlock = capturedTableId.value || tableId.value;
+    console.log('[TableOrder] 🔍 unlockCurrentTable llamado - shouldUnlock:', shouldUnlock.value, 'capturedTableId:', capturedTableId.value, 'tableId:', tableId.value);
+    if (shouldUnlock.value && idToUnlock) {
+        console.log('[TableOrder] 🔓 Desbloqueando mesa', idToUnlock);
+        wsUnlockTable(idToUnlock);
+        shouldUnlock.value = false;
+    } else {
+        console.log('[TableOrder] ⚠️ No se desbloqueará - shouldUnlock:', shouldUnlock.value, 'idToUnlock:', idToUnlock);
+    }
+};
+
+// Handler para cierre brusco de ventana/pestaña
+const handleBeforeUnload = () => {
+    console.log('[TableOrder] 🚪 beforeunload disparado');
+    unlockCurrentTable();
+};
+
+const selectProduct = product => emit('productSelect', product);
+
+const localOrderUser = computed({
+    get: () => orderUser.value,
+    set: (value) => emit('update:orderUser', value)
+});
+
+const validateSend = () => emit('validateSend');
+const addCustomer = (name) => emit('addCustomer', name);
+const removeCustomer = (index) => emit('removeCustomer', index);
+const deleteOrderDetail = (index, id) => emit('deleteOrderDetail', index, id);
+
+const getGlobalOrderIndex = (targetOrder) => {
+    if (targetOrder == null) return -1;
+
+    if (typeof targetOrder === 'number') {
+        if (targetOrder >= 0 && targetOrder < orderStore.orderList.length) {
+            return targetOrder;
+        }
+        return orderStore.orderList.findIndex(order => order.id === targetOrder);
+    }
+
+    if (typeof targetOrder === 'string') {
+        return orderStore.orderList.findIndex(order => String(order.id) === targetOrder);
+    }
+
+    const byId = targetOrder.id != null
+        ? orderStore.orderList.findIndex(order => order.id === targetOrder.id)
+        : -1;
+    if (byId !== -1) return byId;
+
+    if (targetOrder.created_at) {
+        const byCreated = orderStore.orderList.findIndex(order => order.created_at === targetOrder.created_at);
+        if (byCreated !== -1) return byCreated;
+    }
+
+    return orderStore.orderList.findIndex(order => order === targetOrder);
+};
+
+const openOrderModal = (order) => {
+    const index = getGlobalOrderIndex(order);
+    itemIndex.value = index !== -1 ? index : null;
+    if (index !== -1) {
+        showModal.value = true;
+    }
+};
+
+const handleAddCustomer = () => {
+    if (!newCustomerName.value.trim()) return;
+    addCustomer(newCustomerName.value.trim());
+    newCustomerName.value = "";
+};
+
+const confirmRemoveCustomer = (customerIndex, customerName) => {
+    dialog.warning({
+        title: 'Confirmar eliminación',
+        content: `¿Estás seguro de que quieres eliminar al cliente "${customerName}"? Esto también eliminará todos sus pedidos.`,
+        positiveText: 'Sí, eliminar',
+        negativeText: 'Cancelar',
+        onPositiveClick: () => removeCustomer(customerIndex)
+    });
+};
+
+const getCustomerOrders = (customerId) =>
+    orderStore.orderList.filter(order => order.customer?.id === customerId && order.quantity > 0);
+const getCustomerTotal = (customerId) =>
+    getCustomerOrders(customerId).reduce((total, order) => total + Number(order.subTotal || 0), 0);
+
+const formatPrice = (price) => (isNaN(price) ? 0 : Number(price)).toFixed(2);
+
+const handleRemoveMenuSet = (menuIndex) => {
+    // Obtener menús Y combos (ProductSets)
+    const menuSetItems = orderStore.orderList.filter(item => item.from_menu || item.from_combo);
+    const menuSetToRemove = menuSetItems[menuIndex];
+    if (!menuSetToRemove) return;
+
+    const orderIndex = orderStore.orderList.findIndex(item => item === menuSetToRemove);
+    if (orderIndex === -1) return;
+
+    if (!menuSetToRemove.id) {
+        orderStore.orderList.splice(orderIndex, 1);
+    } else {
+        deleteOrderDetail(orderIndex, menuSetToRemove.id);
+    }
+    updateSaleStore();
+};
+
+const handleRemoveProductLine = (productIndex) => {
+    const productItems = orderStore.orderList.filter(item => !item.from_menu);
+    const productToRemove = productItems[productIndex];
+    if (!productToRemove) return;
+
+    const orderIndex = orderStore.orderList.findIndex(item => item === productToRemove);
+    if (orderIndex === -1) return;
+
+    if (!productToRemove.id) {
+        orderStore.orderList.splice(orderIndex, 1);
+    } else {
+        deleteOrderDetail(orderIndex, productToRemove.id);
+    }
+    updateSaleStore();
+};
+
+const updateSaleStore = () => {
+    Object.assign(saleStore, {
+        sale_details: orderStore.productLines,
+        sale_product_sets: orderStore.menuSets
+    });
+    saleStore.buildSalePayload();
+};
+
+const { debounced: fetchProducts } = useDebounce((value) => {
+    const priceRegex = /^\d+(\.\d{0,2})?$/
+
+    // Si es un precio, buscar por precio
+    if (priceRegex.test(value)) {
+        searching.value = true
+        searchProductPrice(value)
+            .then(res => {
+                if (res.status === 200) products.value = res.data
+            })
+            .catch(() => message.error('Algo salió mal...'))
+            .finally(() => (searching.value = false))
+        return
+    }
+
+    // Si es texto con al menos 3 caracteres, buscar por nombre
+    if (value && value.length >= 3) {
+        searching.value = true
+        searchProductByName(value)
+            .then(res => {
+                if (res.status === 200) products.value = res.data
+            })
+            .catch(() => message.error('Algo salió mal...'))
+            .finally(() => (searching.value = false))
+    } else {
+        products.value = []
+    }
+}, 300)
+
+// --- get-show solo controla visibilidad del dropdown ---
+const showOptions = (value) => {
+    if (!value) return false
+    // cuando hay algo escrito, deja mostrar las opciones
+    return value.length >= 3 || /^\d+(\.\d{0,2})?$/.test(value)
+}
+
+watch(productSearch, (value) => {
+    fetchProducts(value)
+})
+
+const renderLabel = (option) => {
+    return h(ProductSearchLabel, { option });
+};
+
+const navigateToPayment = () => {
+    emit('goToFirstTab');
+    router.push({ name: 'TablePayment', params: { table: route.params.table } });
+};
+
+const navigateToTakeOrder = () => {
+    emit('goToFirstTab');
+    router.push({ name: 'ProductCategories', params: { table: route.params.table } });
+};
+
+// Al montar: intentar bloquear la mesa si está libre
+onMounted(() => {
+    // Capturar el tableId inmediatamente para usarlo en unmount
+    capturedTableId.value = tableId.value;
+    console.log('[TableOrder] 🟢 Componente montado - Mesa:', capturedTableId.value);
+
+    // Si la mesa no está bloqueada por mí, intentar lockear
+    const lockInfo = tableStore.lockedTables[capturedTableId.value];
+    const isMyLock = lockInfo && lockInfo.user_id === userStore.user.id;
+
+    if (!lockInfo || isMyLock) {
+        console.log('[TableOrder] 🔒 Bloqueando mesa', capturedTableId.value);
+        wsLockTable(capturedTableId.value, 15); // 15 minutos de bloqueo
+        shouldUnlock.value = true;
+
+        // Agregar listener para cierre brusco
+        window.addEventListener('beforeunload', handleBeforeUnload);
+    } else {
+        console.log('[TableOrder] ⚠️ Mesa ya bloqueada por otro usuario:', lockInfo.username);
+    }
+});
+
+// Al desmontar: SIEMPRE desbloquear la mesa
+// El backend manejará la expiración automática para cierres bruscos
+onUnmounted(() => {
+    console.log('[TableOrder] 🔴 Componente desmontado - Mesa:', tableId.value);
+    // Remover listener
+    window.removeEventListener('beforeunload', handleBeforeUnload);
+    // Desbloquear
+    unlockCurrentTable();
+});
+
 </script>

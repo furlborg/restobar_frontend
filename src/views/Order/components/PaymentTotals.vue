@@ -8,27 +8,18 @@
       <n-grid responsive="screen" cols="1 xs:1 s:2 m:3 l:4" :x-gap="12" :y-gap="12">
         <n-gi v-for="(item, index) in itemsToShow" :key="index">
           <n-space vertical size="small">
-            <n-text type="secondary" strong class="fs-6" >{{ item.label }}</n-text>
+            <n-text type="secondary" strong class="fs-6">{{ item.label }}</n-text>
 
             <template v-if="!item.editable">
               <n-text style="font-size: 16px;">{{ currencySymbol }} {{ formatNumber(item.value) }}</n-text>
             </template>
 
             <template v-else>
-              <n-input-number
-                :data-numeric-decimals="item.precision ?? 2"
-                :value="getNumericValue(item.value)"
-                :min="item.min ?? 0"
-                :max="typeof item.max === 'number' ? item.max : undefined"
-                :step="item.step ?? 0.1"
-                :precision="item.precision ?? 2"
-                :disabled="item.disabled"
-                :class="getInputClass(item)"
-                @click="$event.target.select()"
-                @update:value="(value) => handleNumberChange(item, value)"
-                @input="(event) => onItemInput(item, event)"
-                @blur="(event) => onItemBlur(item, event)"
-              >
+              <n-input-number :data-numeric-decimals="item.precision ?? 2" :value="getNumericValue(item.value)"
+                :min="item.min ?? 0" :max="typeof item.max === 'number' ? item.max : undefined" :step="item.step ?? 0.1"
+                :precision="item.precision ?? 2" :disabled="item.disabled" :class="getInputClass(item)"
+                @click="$event.target.select()" @update:value="(value) => handleNumberChange(item, value)"
+                @input="(event) => onItemInput(item, event)" @blur="(event) => onItemBlur(item, event)">
                 <template #prefix>{{ currencySymbol }}</template>
               </n-input-number>
             </template>
@@ -49,23 +40,12 @@
         <n-card size="small">
           <n-space vertical align="center">
             <n-text strong class="fs-5">PAGO</n-text>
-              <n-input-number
-                ref="paymentInput"
-                data-numeric-decimals="2"
-                :value="localPayment"
-                :min="paymentMin"
-                :max="typeof paymentMax === 'number' ? paymentMax : undefined"
-                :precision="2"
-                step="0.1"
-                size="large"
-                class="payment-input"
-                @update:value="(value) => localPayment = value"
-                @click="$event.target.select()"
-                @input="onLocalPaymentInput"
-                @blur="onPaymentBlur"
-              >
-                  <template #prefix>{{ currencySymbol }}</template>
-              </n-input-number>
+            <n-input-number ref="paymentInput" data-numeric-decimals="2" :value="localPayment" :min="paymentMin"
+              :max="typeof paymentMax === 'number' ? paymentMax : undefined" :precision="2" step="0.1" size="large"
+              class="payment-input" @update:value="(value) => localPayment = value" @click="$event.target.select()"
+              @input="onLocalPaymentInput" @blur="onPaymentBlur">
+              <template #prefix>{{ currencySymbol }}</template>
+            </n-input-number>
           </n-space>
         </n-card>
       </n-gi>
@@ -132,7 +112,7 @@ export default defineComponent({
       paymentMin,
       paymentMax
     } = toRefs(props);
-      const paymentInput = ref(null);
+    const paymentInput = ref(null);
     const itemsToShow = computed(() =>
       props.items.filter(
         (item) =>
@@ -142,45 +122,45 @@ export default defineComponent({
       )
     );
 
-      const localPayment = ref(Number(props.paymentAmount) || 0);
+    const localPayment = ref(Number(props.paymentAmount) || 0);
 
-      watch(() => props.paymentAmount, (val) => {
-          localPayment.value = Number(val) || 0;
+    watch(() => props.paymentAmount, (val) => {
+      localPayment.value = Number(val) || 0;
+    });
+    watch(() => props.paymentAmount, (val) => {
+      if (document.activeElement !== paymentInput.value?.inputElRef) {
+        localPayment.value = Number(val) || 0;
+      }
+    });
+    const onLocalPaymentInput = (e) => {
+      const el = e.target;
+      const start = el.selectionStart;
+      const end = el.selectionEnd;
+      localPayment.value = Number(e.target.value || 0);
+      nextTick(() => {
+        el.setSelectionRange(start, end);
       });
-      watch(() => props.paymentAmount, (val) => {
-          if (document.activeElement !== paymentInput.value?.inputElRef) {
-              localPayment.value = Number(val) || 0;
-          }
-      });
-      const onLocalPaymentInput = (e) => {
-          const el = e.target;
-          const start = el.selectionStart;
-          const end = el.selectionEnd;
-          localPayment.value = Number(e.target.value || 0);
-          nextTick(() => {
-              el.setSelectionRange(start, end);
-          });
-      };
-      
-      const emitPaymentChange = () => {
-          emit('paymentChanged', Number(localPayment.value) || 0);
-      };
-      
-      const calculatedChange = computed(() => {
-          const payment = parseFloat(localPayment.value) || 0;
-          const total = parseFloat(props.totalAmount) || 0;
-          return payment > total ? payment - total : 0;
-      });
+    };
 
-      const onPaymentBlur = () => {
-          const numericValue = parseFloat(localPayment.value);
-          emit("paymentChanged", Number.isFinite(numericValue) ? numericValue : 0);
-      };
-      
-      const onPaymentInput = (e) => {
-          emit('paymentChanged', Number(e.target.value || 0));
-      };
-      
+    const emitPaymentChange = () => {
+      emit('paymentChanged', Number(localPayment.value) || 0);
+    };
+
+    const calculatedChange = computed(() => {
+      const payment = parseFloat(localPayment.value) || 0;
+      const total = parseFloat(props.totalAmount) || 0;
+      return payment > total ? payment - total : 0;
+    });
+
+    const onPaymentBlur = () => {
+      const numericValue = parseFloat(localPayment.value);
+      emit("paymentChanged", Number.isFinite(numericValue) ? numericValue : 0);
+    };
+
+    const onPaymentInput = (e) => {
+      emit('paymentChanged', Number(e.target.value || 0));
+    };
+
     const formatNumber = (value) => {
       if (value === undefined || value === null || isNaN(Number(value))) {
         return "0.00";
@@ -271,7 +251,7 @@ export default defineComponent({
       handlePaymentInput,
       getInputClass,
       onPaymentInput,
-        onLocalPaymentInput,
+      onLocalPaymentInput,
       onPaymentBlur,
       onItemInput,
       onItemBlur,
