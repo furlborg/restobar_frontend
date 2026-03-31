@@ -177,14 +177,14 @@
                 </n-space>
             </template>
         </n-modal>
-        <preview-drawer ref="previewDrawer" v-model:show="showPreview" :data="previewData" :preVoucher="true"
+        <PreviewDrawer ref="previewDrawer" v-model:show="showPreview" :data="previewData" :preVoucher="true"
             :previewOnly="true" />
         <modal-anulate-sale :data-modal="showConfirm" />
     </n-card>
 </template>
 
-<script>
-import { defineComponent, ref, onMounted, computed, watch } from "vue";
+<script setup>
+import { ref, onMounted, computed, watch } from "vue";
 import { useMessage } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useGenericsStore } from "@/store/modules/generics";
@@ -204,343 +204,274 @@ import { useTableLock } from "@/composables/useTableLock";
 import { useRouter } from 'vue-router';
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher";
 
-export default defineComponent({
-    name: "TableHome",
-    components: {
-        ModalAnulateSale,
-        PreviewDrawer
-    },
-    setup() {
-        const groupMode = ref(false);
-        const isLoading = ref(false);
-        const message = useMessage();
-        const router = useRouter();
-        const openOptions = ref([]);
-        const tableGroups = ref([]);
-        const currentTableGrouping = ref(null);
-        const currentGroup = ref([]);
-        const settingsStore = useSettingsStore();
-        const genericsStore = useGenericsStore();
-        const tillStore = useTillStore();
-        const tableStore = useTableStore();
-        const userStore = useUserStore();
-        const businessStore = useBusinessStore();
 
-        // Composable de table lock (para enviar mensajes WS)
-        const { connectLockWebSocket } = useTableLock();
+const groupMode = ref(false);
+const isLoading = ref(false);
+const message = useMessage();
+const router = useRouter();
+const openOptions = ref([]);
+const tableGroups = ref([]);
+const currentTableGrouping = ref(null);
+const currentGroup = ref([]);
+const settingsStore = useSettingsStore();
+const genericsStore = useGenericsStore();
+const tillStore = useTillStore();
+const tableStore = useTableStore();
+const userStore = useUserStore();
+const businessStore = useBusinessStore();
 
-        // Estado del modal de mesa bloqueada
-        // const showLockedModal = ref(false);
-        // const lockedTableData = ref(null);
-        // const lockedTableDescription = ref('');
+// Composable de table lock (para enviar mensajes WS)
+const { connectLockWebSocket } = useTableLock();
 
-        /**
-         * Verifica si una mesa está bloqueada usando el store (fuente de verdad global)
-         */
-        const isTableBlocked = (table) => {
-            // Primero verificar el estado del store (WebSocket global)
-            const wsLockInfo = tableStore.lockedTables[table.id];
+/**
+ * Verifica si una mesa está bloqueada usando el store (fuente de verdad global)
+ */
+const isTableBlocked = (table) => {
+    // Primero verificar el estado del store (WebSocket global)
+    const wsLockInfo = tableStore.lockedTables[table.id];
 
-            if (wsLockInfo && wsLockInfo.user_id !== userStore.user.id) {
-                return {
-                    blocked: true,
-                    username: wsLockInfo.username,
-                    remaining: null
-                };
-            }
-
-            // Luego verificar lock_info de la API
-            if (table.lock_info && table.lock_info.is_locked && !table.lock_info.locked_by_me) {
-                return {
-                    blocked: true,
-                    username: table.lock_info.locked_by_username,
-                    remaining: table.lock_info.remaining_minutes
-                };
-            }
-
-            return { blocked: false };
-        };
-
-        /**
-         * Obtiene el color de la mesa según su estado
-         */
-        const getTableColor = (table) => {
-            const blockStatus = isTableBlocked(table);
-            if (blockStatus.blocked) {
-                return '#ffc107'; // Amarillo - Bloqueada
-            }
-            if (table.status === '3') {
-                return '#f44336'; // Rojo - Ocupada
-            }
-            return '#4caf50'; // Verde - Libre
-        };
-
-        /**
-         * Obtiene la clase de fondo de la mesa
-         */
-        const getTableBackgroundClass = (table) => {
-            const blockStatus = isTableBlocked(table);
-            if (blockStatus.blocked) {
-                return 'bg-locked';
-            }
-            if (table.status === '3') {
-                return 'bg-occuped';
-            }
-            return 'bg-free';
-        };
-
-        // Computed para forzar reactividad cuando cambian los locks
-        computed(() => tableStore.lockedTables);
-
-        /**
-         * Maneja el click en una mesa
-         * Valida el lock_info antes de navegar
-         */
-        const handleTableClick = (table) => {
-            if (groupMode.value) {
-                // Modo de agrupación
-                if (currentTableGrouping.value === table.id ||
-                    tableGroups.value.some((g) => g.some((t) => t.id === table.id))) {
-                    return;
-                }
-
-                if (!currentGroup.value.some((t) => t.id === table.id)) {
-                    addToGroup(table);
-                } else {
-                    removeFromGroup(table);
-                }
-            } else {
-                const blockStatus = isTableBlocked(table);
-
-                console.log('🔍 handleTableClick - Mesa:', table.description, 'Bloqueada:', blockStatus.blocked);
-
-                if (blockStatus.blocked) {
-                    console.log('❌ Mesa bloqueada por:', blockStatus.username);
-
-                    const remainingMsg = blockStatus.remaining
-                        ? `Disponible en ${blockStatus.remaining} minutos.`
-                        : '';
-
-                    message.warning(
-                        `Mesa bloqueada por ${blockStatus.username}. ${remainingMsg}`,
-                        { duration: 4000 }
-                    );
-                    return;
-                }
-
-                console.log('✅ Permitiendo navegación a la mesa');
-                router.push({
-                    name: 'TableOrder',
-                    params: { table: table.id }
-                });
-            }
-        };
-
-        const dateNow = ref(null);
-
-        const loadTablesData = async () => {
-            isLoading.value = true;
-            await tableStore.refreshData().then(() => {
-                isLoading.value = false;
-            });
-        };
-
-        // Watch para forzar re-render cuando cambian los locks
-        watch(() => tableStore.lockedTables, () => {
-            console.log('[TableHome] 🔄 lockedTables cambió:', tableStore.lockedTables);
-        }, { deep: true });
-
-        const performRetrieveTableOrder = async (table) => {
-            await retrieveTableOrder(table).then((response) => {
-                if (response.status === 200) {
-                    if (settingsStore.business_settings.printer.print_html) {
-                        previewData.value = response.data.order;
-                        showPreview.value = true;
-                        setTimeout(() => previewDrawer.value.generate(), 250);
-                    } else {
-                        VoucherPrint({
-                            data: response.data.order,
-                            businessStore,
-                            prePayment: true,
-                            auto: true,
-                            show: false
-                        });
-                    }
-                }
-            }).catch((error) => {
-                console.error(error);
-            });
-        };
-
-        const showConfirm = ref({ show: false, saleId: null });
-
-        const passConfirm = ref("");
-
-        const addReason = ref(false);
-
-        const nullReason = ref(undefined);
-
-        const deleteId = ref(null);
-
-        const nullifyTableOrder = (id) => {
-            deleteId.value = id;
-            showConfirm.value = { show: true, saleId: id, permission: "cancel_order", loadTablesData, performNullifyTableOrder };
-        };
-
-        const closeNullModal = () => {
-            addReason.value = false;
-            passConfirm.value = "";
-            nullReason.value = undefined;
-        };
-
-        const performNullifyTableOrder = async (id, dataAnulate) => {
-            isLoading.value = true;
-            await cancelTableOrder(id, dataAnulate).then((response) => {
-                if (response.status === 202) {
-                    message.success("Pedido anulado correctamente!");
-                    showConfirm.value = { show: false, saleId: null };
-                    deleteId.value = null;
-                    passConfirm.value = "";
-                    loadTablesData();
-                }
-            }).catch((error) => {
-                console.error(error);
-                message.error("Error al anular pedido...");
-                passConfirm.value = "";
-                isLoading.value = false;
-            });
-        };
-
-        const addToGroup = (table) => {
-            currentGroup.value.push(cloneDeep(table));
-        };
-
-        const removeFromGroup = (table) => {
-            let index = currentGroup.value.findIndex((t) => t?.id === table.id);
-            currentGroup.value.splice(index, 1);
-        };
-
-        const saveGroup = () => {
-            tableGroups.value.push(cloneDeep(currentGroup.value));
-            groupMode.value = false;
-            currentGroup.value = [];
-            currentTableGrouping.value = null;
-        };
-
-        const refreshData = async () => {
-            isLoading.value = true;
-            await tableStore.refreshData();
-            isLoading.value = false;
-        };
-
-        onMounted(() => {
-            loadTablesData();
-
-            const fetch = new Date();
-            const dd = fetch.getDate();
-            const mm = fetch.getMonth();
-            const yy = fetch.getFullYear();
-            const hh = fetch.getHours();
-            const msms = fetch.getMinutes();
-
-            dateNow.value = `${dd}/${mm + 1}/${yy} ${hh}:${msms}`;
-
-            // Conectar WebSocket de mesas (table store)
-            tableStore.connectWebSocket();
-
-            // Conectar WebSocket de locks (composable global)
-            connectLockWebSocket();
-        });
-
-        const changeTable = ref(false);
-
-        const fromTable = ref(null);
-
-        const currentArea = ref(null);
-
-        const toTable = ref(null);
-
-        const performChangeTable = async () => {
-            isLoading.value = true;
-            await changeOrderTable(fromTable.value, toTable.value).then((response) => {
-                if (response.status === 200) {
-                    message.success("Mesa cambiada!");
-                    changeTable.value = false;
-                    fromTable.value = null;
-                    currentArea.value = null;
-                    toTable.value = null;
-                    loadTablesData();
-                }
-            }).catch((error) => {
-                if (error.response.status === 400) {
-                    for (const value in error.response.data) {
-                        if (Array.isArray(error.response.data[`${value}`])) {
-                            error.response.data[`${value}`].forEach((err) => {
-                                if (typeof err === "object") {
-                                    for (const v in err) {
-                                        message.error(`${err[`${v}`]}`);
-                                    }
-                                } else {
-                                    message.error(`${err}`);
-                                }
-                            });
-                        } else {
-                            message.error(error.response.data[`${value}`]);
-                        }
-                    }
-                } else {
-                    console.error(error);
-                }
-                isLoading.value = false;
-            });
-        };
-
-        const previewDrawer = ref(null);
-
-        const showPreview = ref(false);
-
-        const previewData = ref(null);
-
+    if (wsLockInfo && wsLockInfo.user_id !== userStore.user.id) {
         return {
-            isLoading,
-            groupMode,
-            tableStore,
-            userStore,
-            openOptions,
-            currentGroup,
-            saveGroup,
-            addToGroup,
-            refreshData,
-            removeFromGroup,
-            nullifyTableOrder,
-            performNullifyTableOrder,
-            tableGroups,
-            currentTableGrouping,
-            performRetrieveTableOrder,
-            showConfirm,
-            addReason,
-            nullReason,
-            closeNullModal,
-            passConfirm,
-            genericsStore,
-            tillStore,
-            changeTable,
-            fromTable,
-            currentArea,
-            toTable,
-            performChangeTable,
-            settingsStore,
-            previewDrawer,
-            showPreview,
-            previewData,
-            // Table lock - computed para reactividad
-            handleTableClick,
-            isTableBlocked,
-            getTableColor,
-            getTableBackgroundClass
+            blocked: true,
+            username: wsLockInfo.username,
+            remaining: null
         };
     }
+
+    // Luego verificar lock_info de la API
+    if (table.lock_info && table.lock_info.is_locked && !table.lock_info.locked_by_me) {
+        return {
+            blocked: true,
+            username: table.lock_info.locked_by_username,
+            remaining: table.lock_info.remaining_minutes
+        };
+    }
+
+    return { blocked: false };
+};
+
+/**
+ * Obtiene el color de la mesa según su estado
+ */
+const getTableColor = (table) => {
+    const blockStatus = isTableBlocked(table);
+    if (blockStatus.blocked) {
+        return '#ffc107'; // Amarillo - Bloqueada
+    }
+    if (table.status === '3') {
+        return '#f44336'; // Rojo - Ocupada
+    }
+    return '#4caf50'; // Verde - Libre
+};
+
+/**
+ * Obtiene la clase de fondo de la mesa
+ */
+const getTableBackgroundClass = (table) => {
+    const blockStatus = isTableBlocked(table);
+    if (blockStatus.blocked) {
+        return 'bg-locked';
+    }
+    if (table.status === '3') {
+        return 'bg-occuped';
+    }
+    return 'bg-free';
+};
+
+// Computed para forzar reactividad cuando cambian los locks
+computed(() => tableStore.lockedTables);
+
+/**
+ * Maneja el click en una mesa
+ * Valida el lock_info antes de navegar
+ */
+const handleTableClick = (table) => {
+    if (groupMode.value) {
+        // Modo de agrupación
+        if (currentTableGrouping.value === table.id ||
+            tableGroups.value.some((g) => g.some((t) => t.id === table.id))) {
+            return;
+        }
+
+        if (!currentGroup.value.some((t) => t.id === table.id)) {
+            addToGroup(table);
+        } else {
+            removeFromGroup(table);
+        }
+    } else {
+        const blockStatus = isTableBlocked(table);
+
+        console.log('🔍 handleTableClick - Mesa:', table.description, 'Bloqueada:', blockStatus.blocked);
+
+        if (blockStatus.blocked) {
+            console.log('❌ Mesa bloqueada por:', blockStatus.username);
+
+            const remainingMsg = blockStatus.remaining
+                ? `Disponible en ${blockStatus.remaining} minutos.`
+                : '';
+
+            message.warning(
+                `Mesa bloqueada por ${blockStatus.username}. ${remainingMsg}`,
+                { duration: 4000 }
+            );
+            return;
+        }
+
+        console.log('✅ Permitiendo navegación a la mesa');
+        router.push({
+            name: 'TableOrder',
+            params: { table: table.id }
+        });
+    }
+};
+
+const dateNow = ref(null);
+
+const loadTablesData = async () => {
+    isLoading.value = true;
+    await tableStore.refreshData().then(() => {
+        isLoading.value = false;
+    });
+};
+
+// Watch para forzar re-render cuando cambian los locks
+watch(() => tableStore.lockedTables, () => {
+    console.log('[TableHome] 🔄 lockedTables cambió:', tableStore.lockedTables);
+}, { deep: true });
+
+const performRetrieveTableOrder = async (table) => {
+    await retrieveTableOrder(table).then((response) => {
+        if (response.status === 200) {
+            if (settingsStore.business_settings.printer.print_html) {
+                previewData.value = response.data.order;
+                showPreview.value = true;
+                setTimeout(() => previewDrawer.value.generate(), 250);
+            } else {
+                VoucherPrint({
+                    data: response.data.order,
+                    businessStore,
+                    prePayment: true,
+                    auto: true,
+                    show: false
+                });
+            }
+        }
+    }).catch((error) => {
+        console.error(error);
+    });
+};
+
+const showConfirm = ref({ show: false, saleId: null });
+const passConfirm = ref("");
+const deleteId = ref(null);
+
+const nullifyTableOrder = (id) => {
+    deleteId.value = id;
+    showConfirm.value = { show: true, saleId: id, permission: "cancel_order", loadTablesData, performNullifyTableOrder };
+};
+
+
+const performNullifyTableOrder = async (id, dataAnulate) => {
+    isLoading.value = true;
+    await cancelTableOrder(id, dataAnulate).then((response) => {
+        if (response.status === 202) {
+            message.success("Pedido anulado correctamente!");
+            showConfirm.value = { show: false, saleId: null };
+            deleteId.value = null;
+            passConfirm.value = "";
+            loadTablesData();
+        }
+    }).catch((error) => {
+        console.error(error);
+        message.error("Error al anular pedido...");
+        passConfirm.value = "";
+        isLoading.value = false;
+    });
+};
+
+const addToGroup = (table) => {
+    currentGroup.value.push(cloneDeep(table));
+};
+
+const removeFromGroup = (table) => {
+    let index = currentGroup.value.findIndex((t) => t?.id === table.id);
+    currentGroup.value.splice(index, 1);
+};
+
+const refreshData = async () => {
+    isLoading.value = true;
+    await tableStore.refreshData();
+    isLoading.value = false;
+};
+
+onMounted(() => {
+    loadTablesData();
+
+    const fetch = new Date();
+    const dd = fetch.getDate();
+    const mm = fetch.getMonth();
+    const yy = fetch.getFullYear();
+    const hh = fetch.getHours();
+    const msms = fetch.getMinutes();
+
+    dateNow.value = `${dd}/${mm + 1}/${yy} ${hh}:${msms}`;
+
+    // Conectar WebSocket de mesas (table store)
+    tableStore.connectWebSocket();
+
+    // Conectar WebSocket de locks (composable global)
+    connectLockWebSocket();
 });
+
+const changeTable = ref(false);
+
+const fromTable = ref(null);
+
+const currentArea = ref(null);
+
+const toTable = ref(null);
+
+const performChangeTable = async () => {
+    isLoading.value = true;
+    await changeOrderTable(fromTable.value, toTable.value).then((response) => {
+        if (response.status === 200) {
+            message.success("Mesa cambiada!");
+            changeTable.value = false;
+            fromTable.value = null;
+            currentArea.value = null;
+            toTable.value = null;
+            loadTablesData();
+        }
+    }).catch((error) => {
+        if (error.response.status === 400) {
+            for (const value in error.response.data) {
+                if (Array.isArray(error.response.data[`${value}`])) {
+                    error.response.data[`${value}`].forEach((err) => {
+                        if (typeof err === "object") {
+                            for (const v in err) {
+                                message.error(`${err[`${v}`]}`);
+                            }
+                        } else {
+                            message.error(`${err}`);
+                        }
+                    });
+                } else {
+                    message.error(error.response.data[`${value}`]);
+                }
+            }
+        } else {
+            console.error(error);
+        }
+        isLoading.value = false;
+    });
+};
+
+const previewDrawer = ref(null);
+
+const showPreview = ref(false);
+
+const previewData = ref(null);
+
 </script>
 
 <style lang="scss" scoped>

@@ -93,7 +93,7 @@
           <n-space justify="space-between">
             <n-tag type="info">Total: S/. {{ showPayments ? sale.amount : null }}</n-tag>
             <n-tag :type="evalPayments ? 'error' : 'success'">Monto: S/. {{ showPayments ? currentPaymentsAmount : null
-            }}</n-tag>
+              }}</n-tag>
             <n-tag :type="evalPayments ? 'error' : 'warning'">
               Faltante: S/. {{ showPayments ? parseFloat(sale.amount - currentPaymentsAmount).toFixed(2) : null }}
             </n-tag>
@@ -119,15 +119,15 @@
         </n-modal>
         <separate-payments-modal v-model:show="showSeparateModal" :data="separatePayments"
           :on-close="closeSeparatePaymentsModal" @success="successSeparatePaymentsModal" />
-        <preview-drawer ref="previewDrawer" v-model:show="showPdf" :data="pdfData" :previewOnly="!ticketPreview"
+        <PreviewDrawer ref="previewDrawer" v-model:show="showPdf" :data="pdfData" :previewOnly="!ticketPreview"
           @printed="$router.push({ name: 'TableHome' })" @canceled="$router.push({ name: 'TableHome' })" />
       </div>
     </n-scrollbar>
   </n-card>
 </template>
 
-<script>
-import { defineComponent, ref, computed, watch, onMounted } from "vue";
+<script setup>
+import { ref, computed, watch, onMounted } from "vue";
 import SeparatePaymentsModal from "./SeparatePaymentsModal";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 import ClientSelectInput from "@/views/Customer/components/ClientSelectInput.vue";
@@ -138,7 +138,7 @@ import { useSettingsStore } from "@/store/modules/settings";
 import { useRouter } from "vue-router";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
-import { useUserStore } from "@/store/modules/user";
+//import { useUserStore } from "@/store/modules/user";
 import { useGenericsStore } from "@/store/modules/generics";
 import { saleRules } from "@/utils/constants";
 import { cloneDeep } from "@/utils";
@@ -150,532 +150,532 @@ import { useBusinessStore } from "@/store/modules/business";
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 import { createSale, getSaleNumber, retrieveSale, sendSale } from "@/api/modules/sales";
 
-export default defineComponent({
-  name: "TablePayment",
-  components: {
-    SeparatePaymentsModal,
-    PreviewDrawer,
-    ClientSelectInput,
-    SaleSerieSelector,
-    PaymentTotals,
-    ProductTable
+// export default defineComponent({
+//   name: "TablePayment",
+//   components: {
+//     SeparatePaymentsModal,
+//     PreviewDrawer,
+//     ClientSelectInput,
+//     SaleSerieSelector,
+//     PaymentTotals,
+//     ProductTable
+//   },
+//   setup() {
+const router = useRouter();
+const orderStore = useOrderStore();
+const saleStore = useSaleStore();
+//const userStore = useUserStore();
+const settingsStore = useSettingsStore();
+const genericsStore = useGenericsStore();
+const businessStore = useBusinessStore();
+const message = useMessage();
+const dialog = useDialog();
+
+const loading = ref(false);
+const saleForm = ref();
+const ticketPreview = ref(settingsStore.businessSettings?.sale?.show_preview ?? true);
+const showObservations = ref(false);
+const addressesOptions = ref([]);
+const isMultiple = ref(false);
+const showPayments = ref(false);
+const separatePayments = ref({});
+const showSeparateModal = ref(false);
+const whatsappNumber = ref("");
+const showPdf = ref(false);
+const previewDrawer = ref(null);
+const pdfData = ref(null);
+
+const defaultInvoiceType = settingsStore.businessSettings.sale?.enable_invoices
+  ? settingsStore.businessSettings.sale.default_invoice : 80;
+
+const defaultSerieId = saleStore.getFirstOption(defaultInvoiceType);
+
+const sale = ref({
+  serie: defaultSerieId,
+  number: "",
+  date_sale: format(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss"),
+  count: 0,
+  amount: "0.00",
+  given_amount: Number(0).toFixed(2),
+  invoice_type: defaultInvoiceType,
+  payment_method: 1,
+  payment_condition: 1,
+  expiration_sale: null,
+  customer_name: "",
+  customer: null,
+  address: null,
+  discount: "0.00",
+  icbper: 0,
+  other_charges: "0.00",
+  observations: "",
+  by_consumption: false,
+  sale_details: [],
+  ask_for: "",
+  payments: null,
+  do_update: true,
+  is_change: true,
+  taxed_amount: 0,
+  exempt_amount: 0,
+  free_amount: 0,
+  igv_amount: 0,
+  total_igv: "0.00",
+});
+
+const totals = computed(() => {
+  const toSale = saleStore.toSale;
+
+  return {
+    GRV: toSale.reduce(
+      (acc, cur) =>
+        cur.product_affectation === 10
+          ? acc + parseFloat(cur.price_sale - cur.igv_tax) * cur.quantity
+          : acc,
+      0
+    ),
+    EXN: toSale.reduce(
+      (acc, cur) =>
+        cur.product_affectation === 20
+          ? acc + parseFloat(cur.price_sale) * cur.quantity
+          : acc,
+      0
+    ),
+    GRT: toSale.reduce(
+      (acc, cur) =>
+        cur.product_affectation === 21
+          ? acc + parseFloat(cur.price_sale) * cur.quantity
+          : acc,
+      0
+    ),
+    IGV: toSale.reduce((acc, cur) => acc + cur.igv_tax * cur.quantity, 0),
+    DSCT: toSale.some((d) => Number(d.discount) > 0)
+      ? toSale.reduce((acc, cur) => acc + Number(cur.discount), 0)
+      : parseFloat(sale.value.discount),
+  };
+});
+
+const totalGRV = computed(() => totals.value.GRV);
+const totalEXN = computed(() => totals.value.EXN);
+const totalGRT = computed(() => totals.value.GRT);
+const totalIGV = computed(() => totals.value.IGV);
+const totalDSCT = computed(() => totals.value.DSCT);
+
+const subTotal = computed(() =>
+  saleStore.toSale.reduce(
+    (acc, cur) =>
+      cur.product_affectation === 21 ? acc : acc + cur.price_sale * cur.quantity,
+    0
+  )
+);
+
+const products_count = computed(() =>
+  saleStore.toSale.reduce((acc, cur) => acc + cur.quantity, 0)
+);
+
+const total = computed(() => {
+  let cal = parseFloat(
+    subTotal.value - parseFloat(totalDSCT.value) + icbper.value + parseFloat(sale.value.other_charges)
+  );
+  if (sale.value.delivery_info) {
+    cal += parseFloat(sale.value.delivery_info.amount);
+  }
+  return cal.toFixed(2);
+});
+
+const icbper = computed(() =>
+  orderStore.orderList.reduce(
+    (acc, curVal) => acc + (curVal.icbper ? curVal.icbper_amount : 0),
+    0
+  )
+);
+
+const otherCharges = computed(() => {
+  const parsed = parseFloat(sale.value.other_charges);
+  return Number.isFinite(parsed) ? parsed : 0;
+});
+
+const discountBaseAmount = computed(
+  () => subTotal.value + icbper.value + otherCharges.value
+);
+
+const discountInputMax = computed(() => {
+  if (discountBaseAmount.value <= 0) {
+    return 0;
+  }
+  const capped = discountBaseAmount.value - 0.01;
+  return Math.max(Math.round(capped * 100) / 100, 0);
+});
+
+const discountValidationThreshold = computed(
+  () => Math.round(discountBaseAmount.value * 100) / 100
+);
+
+const changing = computed(() =>
+  sale.value.given_amount > total.value
+    ? (sale.value.given_amount - total.value).toFixed(2)
+    : 0.0
+);
+
+const paymentTotalsItems = computed(() => {
+  return [
+    { label: "SUBTOTAL", value: subTotal.value, editable: false },
+    { label: "OP. GRAVADAS", value: totalGRV.value, editable: false },
+    { label: "OP. EXONERADAS", value: totalEXN.value, editable: false, alwaysShow: false },
+    { label: "OP. GRATUITAS", value: totalGRT.value, editable: false, alwaysShow: false },
+    { label: "IGV", value: totalIGV.value, editable: false },
+    { label: "ICBPER", value: icbper.value, editable: false, alwaysShow: false },
+    {
+      label: "DSCT",
+      value: totalDSCT.value,
+      editable: !settingsStore.business_settings.sale?.show_discount_label,
+      field: "discount",
+      step: 0.5,
+      disabled: saleStore.toSale.some(d => Number(d.discount) > 0),
+      max: discountInputMax.value
+    },
+    {
+      label: "OTROS",
+      value: sale.value.other_charges || 0,
+      editable: true,
+      field: "other_charges",
+      step: 0.5,
+      disabled: false
+    }
+  ];
+});
+
+watch(
+  [
+    total,
+    icbper,
+    totalGRV,
+    totalEXN,
+    totalGRT,
+    totalIGV,
+    totalDSCT,
+    () => saleStore.toSale,
+    () => orderStore.orderList.length,
+  ],
+  () => {
+    const productCount = saleStore.toSale.reduce(
+      (acc, curVal) => acc + curVal.quantity,
+      0
+    );
+    Object.assign(sale.value, {
+      count: productCount,
+      amount: total.value,
+      icbper: icbper.value,
+      taxed_amount: totalGRV.value,
+      exempt_amount: totalEXN.value,
+      free_amount: totalGRT.value,
+      igv_amount: totalIGV.value,
+      total_igv: parseFloat(totalIGV.value || 0).toFixed(2),
+    });
+
+    if (sale.value.payment_condition === 1) {
+      const newGivenAmount = total.value > 0 ? total.value : parseFloat(0).toFixed(2);
+      if (sale.value.given_amount !== newGivenAmount) {
+        sale.value.given_amount = newGivenAmount;
+      }
+    }
   },
-  setup() {
-    const router = useRouter();
-    const orderStore = useOrderStore();
-    const saleStore = useSaleStore();
-    const userStore = useUserStore();
-    const settingsStore = useSettingsStore();
-    const genericsStore = useGenericsStore();
-    const businessStore = useBusinessStore();
-    const message = useMessage();
-    const dialog = useDialog();
+  { immediate: true, deep: true }
+);
 
-    const loading = ref(false);
-    const saleForm = ref();
-    const ticketPreview = ref(settingsStore.businessSettings?.sale?.show_preview ?? true);
-    const showObservations = ref(false);
-    const addressesOptions = ref([]);
-    const isMultiple = ref(false);
-    const showPayments = ref(false);
-    const separatePayments = ref({});
-    const showSeparateModal = ref(false);
-    const whatsappNumber = ref("");
-    const showPdf = ref(false);
-    const previewDrawer = ref(null);
-    const pdfData = ref(null);
+watch(
+  () => sale.value.payment_condition,
+  (condition) => {
+    if (Number(condition) !== 2) {
+      sale.value.expiration_sale = null;
+    }
+  }
+);
 
+const expirationMinDate = computed(() => {
+  const saleDate = sale.value.date_sale;
+  if (!saleDate) {
+    return null;
+  }
+  try {
+    const parsedDate = parse(saleDate, "dd/MM/yyyy HH:mm:ss", new Date());
+    return startOfDay(parsedDate).getTime();
+  } catch {
+    return null;
+  }
+});
+
+const isExpirationDateDisabled = (ts) => {
+  const limit = expirationMinDate.value;
+  if (limit === null) {
+    return false;
+  }
+  return ts <= limit;
+};
+
+const isCredit = computed(() => Number(sale.value.payment_condition) === 2);
+
+const formRules = computed(() => {
+  const rules = {
+    customer: {
+      ...saleRules.customer,
+      required: !(
+        sale.value.invoice_type !== 1 &&
+        sale.value.payment_condition === 1 &&
+        sale.value.given_amount <= 699
+      ),
+    },
+  };
+  if (isCredit.value) {
+    rules.expiration_sale = {
+      validator(rule, value) {
+        if (!value) {
+          return new Error("Debe ingresar la fecha de vencimiento para ventas al credito.");
+        }
+        return true;
+      },
+      trigger: ["blur", "change"],
+    };
+  }
+  return rules;
+});
+
+const changeCondition = (v) => {
+  sale.value.given_amount = v === 1 ? total.value : parseFloat("0").toFixed(2);
+  if (v !== 2) {
+    sale.value.expiration_sale = null;
+  }
+};
+
+const changeSerie = (v) => {
+  if (v === 1) {
+    sale.value.customer_name = "";
+    sale.value.customer = null;
+    sale.value.address = null;
+  }
+  const newSerie = saleStore.getFirstOption(v);
+  sale.value.serie = newSerie;
+};
+
+const handleSerieUpdate = (newSerie) => {
+  if (!newSerie) {
+    return;
+  }
+  sale.value.serie = newSerie;
+};
+
+const handleSerieChanged = () => {
+  obtainSaleNumber();
+};
+
+// Handlers para PaymentTotals
+const handleValueChange = ({ field, value }) => {
+  if (field === 'discount') {
+    sale.value.discount = parseFloat(value) || 0;
+  } else if (field === 'other_charges') {
+    sale.value.other_charges = parseFloat(value) || 0;
+  }
+};
+
+const handlePaymentChange = (value) => {
+  sale.value.given_amount = parseFloat(value) || 0;
+};
+
+const performCreateSale = () => {
+  saleForm.value.validate((errors) => {
+    if (errors) {
+      if (formRules.value.customer.required) {
+        const msg = sale.value.invoice_type === 1
+          ? "Debes agregar un cliente cuando la venta es con factura"
+          : "Debes agregar un cliente porque la venta es mayor a S/ 699";
+        message.warning(msg);
+      }
+      message.error("Datos Incorrectos");
+      return;
+    }
+
+    const currentDiscount = Math.round((parseFloat(totalDSCT.value) || 0) * 100) / 100;
+    const maxAllowedDiscount = discountValidationThreshold.value;
+    if (maxAllowedDiscount > 0 && currentDiscount >= maxAllowedDiscount) {
+      message.warning("El descuento no puede ser 100%. Debe cambiar a operacion gratuita.");
+      return;
+    }
+
+    dialog.success({
+      closable: false,
+      title: "Venta",
+      content: "Realizar venta?",
+      positiveText: "Sí",
+      onPositiveClick: async () => {
+        loading.value = true;
+        sale.value.order = orderStore.orderId;
+        sale.value.sale_details = saleStore.toSale.map(detail => ({
+          ...detail,
+          igv_tax: detail.igv_tax.toFixed(2),
+          price_base: detail.price_base.toFixed(2)
+        }));
+        sale.value.discount = totalDSCT.value;
+
+        try {
+          const response = await createSale(sale.value);
+          if (response.status === 201) {
+            const res = await retrieveSale(response.data?.id);
+            pdfData.value = res.data;
+            pdfData.value.original_sale_details = sale.value.sale_details;
+
+            if (settingsStore.business_settings.printer.print_html) {
+              showPdf.value = true;
+              if (!ticketPreview.value) {
+                setTimeout(() => previewDrawer.value.generate(), 250);
+              }
+            } else {
+              await VoucherPrint({
+                data: res.data,
+                businessStore,
+                saleStore,
+                changing: changing.value,
+                show: true
+              });
+              await router.push({ name: "TableHome" });
+            }
+
+            if (settingsStore.businessSettings.sale.auto_send && response.data?.['invoiceType'] !== "80") {
+              try {
+                const sendResponse = await sendSale(response.data.id);
+                if (sendResponse.status === 200) message.success("Enviado!");
+              } catch (error) {
+                console.error(error);
+              }
+            }
+            message.success("Venta realizada correctamente!");
+          }
+        } catch (error) {
+          console.error(error);
+        } finally {
+          loading.value = false;
+        }
+      }
+    });
+  });
+};
+
+const obtainSaleNumber = async () => {
+  if (!sale.value.serie) {
+    return;
+  }
+  loading.value = true;
+  try {
+    const response = await getSaleNumber(sale.value.serie);
+    if (response.status === 200) {
+      const newNumber = Number(response.data.number) + 1;
+      sale.value.number = newNumber;
+    }
+  } catch (error) {
+    console.log(error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const createAddressesOptions = (customer) => {
+  whatsappNumber.value = customer?.phone || "";
+  if (customer) {
+    addressesOptions.value = customer.addresses.map(address => ({
+      value: address.id,
+      label: `${address.ubigeo} - ${address.description}`,
+    }));
+    if (addressesOptions.value.length) {
+      sale.value.address = addressesOptions.value[0].value;
+    }
+  }
+};
+
+const handleCustomerSelected = (customer) => {
+  createAddressesOptions(customer);
+};
+
+const handleCustomerCleared = () => {
+  sale.value.address = null;
+  whatsappNumber.value = '';
+  addressesOptions.value = [];
+};
+
+const createPayment = () => ({ payment_method: null, amount: "0" });
+
+const doMultiplePayment = () => {
+  sale.value.payments = [{ payment_method: sale.value.payment_method, amount: String(sale.value.amount) }];
+  showPayments.value = true;
+};
+
+const filteredMethods = computed(() => saleStore.getPaymentMethodsOptions.map(option => ({
+  ...option,
+  disabled: sale.value.payments?.some(pay => pay.payment_method === option.value) || false,
+})));
+
+const normalizePaymentAmount = (value) => {
+  const amount = parseFloat(value);
+  return Number.isFinite(amount) ? amount : 0;
+};
+
+const evalPayments = computed(() => {
+  if (!sale.value.payments?.length) return true;
+  const totalAmount = Number(sale.value.amount);
+  const totalPayments = sale.value.payments.reduce((acc, payment) => {
+    const amount = normalizePaymentAmount(payment.amount);
+    return Math.round((acc + amount) * 100) / 100;
+  }, 0);
+  return totalPayments !== totalAmount;
+});
+
+const currentPaymentsAmount = computed(() => {
+  if (!sale.value.payments) return "0.00";
+  const sum = sale.value.payments.reduce((acc, val) => acc + normalizePaymentAmount(val.amount), 0);
+  return Number.isFinite(sum) ? sum.toFixed(2) : "0.00";
+});
+
+const openSeparatePaymentsModal = () => {
+  separatePayments.value = cloneDeep(sale.value);
+  separatePayments.value.order = cloneDeep(orderStore.orderId);
+  separatePayments.value.sale_details = cloneDeep(saleStore.toSale);
+  separatePayments.value.sale_details.forEach(detail => detail.max = detail.quantity);
+  showSeparateModal.value = true;
+};
+
+watch(() => sale.value.serie, (newSerie, oldSerie) => {
+  if (newSerie && newSerie !== oldSerie) {
+    obtainSaleNumber();
+  }
+});
+
+// Watcher para cuando el store se hidrate y tengamos series disponibles
+watch(() => saleStore.series, (newSeries) => {
+  if (newSeries.length > 0 && !sale.value.serie) {
     const defaultInvoiceType = settingsStore.businessSettings.sale?.enable_invoices
       ? settingsStore.businessSettings.sale.default_invoice : 80;
-
-    const defaultSerieId = saleStore.getFirstOption(defaultInvoiceType);
-
-    const sale = ref({
-      serie: defaultSerieId,
-      number: "",
-      date_sale: format(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss"),
-      count: 0,
-      amount: "0.00",
-      given_amount: Number(0).toFixed(2),
-      invoice_type: defaultInvoiceType,
-      payment_method: 1,
-      payment_condition: 1,
-      expiration_sale: null,
-      customer_name: "",
-      customer: null,
-      address: null,
-      discount: "0.00",
-      icbper: 0,
-      other_charges: "0.00",
-      observations: "",
-      by_consumption: false,
-      sale_details: [],
-      ask_for: "",
-      payments: null,
-      do_update: true,
-      is_change: true,
-      taxed_amount: 0,
-      exempt_amount: 0,
-      free_amount: 0,
-      igv_amount: 0,
-      total_igv: "0.00",
-    });
-
-    const totals = computed(() => {
-      const toSale = saleStore.toSale;
-
-      return {
-        GRV: toSale.reduce(
-          (acc, cur) =>
-            cur.product_affectation === 10
-              ? acc + parseFloat(cur.price_sale - cur.igv_tax) * cur.quantity
-              : acc,
-          0
-        ),
-        EXN: toSale.reduce(
-          (acc, cur) =>
-            cur.product_affectation === 20
-              ? acc + parseFloat(cur.price_sale) * cur.quantity
-              : acc,
-          0
-        ),
-        GRT: toSale.reduce(
-          (acc, cur) =>
-            cur.product_affectation === 21
-              ? acc + parseFloat(cur.price_sale) * cur.quantity
-              : acc,
-          0
-        ),
-        IGV: toSale.reduce((acc, cur) => acc + cur.igv_tax * cur.quantity, 0),
-        DSCT: toSale.some((d) => Number(d.discount) > 0)
-          ? toSale.reduce((acc, cur) => acc + Number(cur.discount), 0)
-          : parseFloat(sale.value.discount),
-      };
-    });
-
-    const totalGRV = computed(() => totals.value.GRV);
-    const totalEXN = computed(() => totals.value.EXN);
-    const totalGRT = computed(() => totals.value.GRT);
-    const totalIGV = computed(() => totals.value.IGV);
-    const totalDSCT = computed(() => totals.value.DSCT);
-
-    const subTotal = computed(() =>
-      saleStore.toSale.reduce(
-        (acc, cur) =>
-          cur.product_affectation === 21 ? acc : acc + cur.price_sale * cur.quantity,
-        0
-      )
-    );
-
-    const products_count = computed(() =>
-      saleStore.toSale.reduce((acc, cur) => acc + cur.quantity, 0)
-    );
-
-    const total = computed(() => {
-      let cal = parseFloat(
-        subTotal.value - parseFloat(totalDSCT.value) + icbper.value + parseFloat(sale.value.other_charges)
-      );
-      if (sale.value.delivery_info) {
-        cal += parseFloat(sale.value.delivery_info.amount);
-      }
-      return cal.toFixed(2);
-    });
-
-    const icbper = computed(() =>
-      orderStore.orderList.reduce(
-        (acc, curVal) => acc + (curVal.icbper ? curVal.icbper_amount : 0),
-        0
-      )
-    );
-
-    const otherCharges = computed(() => {
-      const parsed = parseFloat(sale.value.other_charges);
-      return Number.isFinite(parsed) ? parsed : 0;
-    });
-
-    const discountBaseAmount = computed(
-      () => subTotal.value + icbper.value + otherCharges.value
-    );
-
-    const discountInputMax = computed(() => {
-      if (discountBaseAmount.value <= 0) {
-        return 0;
-      }
-      const capped = discountBaseAmount.value - 0.01;
-      return Math.max(Math.round(capped * 100) / 100, 0);
-    });
-
-    const discountValidationThreshold = computed(
-      () => Math.round(discountBaseAmount.value * 100) / 100
-    );
-
-    const changing = computed(() =>
-      sale.value.given_amount > total.value
-        ? (sale.value.given_amount - total.value).toFixed(2)
-        : 0.0
-    );
-
-    const paymentTotalsItems = computed(() => {
-      return [
-        { label: "SUBTOTAL", value: subTotal.value, editable: false },
-        { label: "OP. GRAVADAS", value: totalGRV.value, editable: false },
-        { label: "OP. EXONERADAS", value: totalEXN.value, editable: false, alwaysShow: false },
-        { label: "OP. GRATUITAS", value: totalGRT.value, editable: false, alwaysShow: false },
-        { label: "IGV", value: totalIGV.value, editable: false },
-        { label: "ICBPER", value: icbper.value, editable: false, alwaysShow: false },
-        {
-          label: "DSCT",
-          value: totalDSCT.value,
-          editable: !settingsStore.business_settings.sale?.show_discount_label,
-          field: "discount",
-          step: 0.5,
-          disabled: saleStore.toSale.some(d => Number(d.discount) > 0),
-          max: discountInputMax.value
-        },
-        {
-          label: "OTROS",
-          value: sale.value.other_charges || 0,
-          editable: true,
-          field: "other_charges",
-          step: 0.5,
-          disabled: false
-        }
-      ];
-    });
-
-    watch(
-      [
-        total,
-        icbper,
-        totalGRV,
-        totalEXN,
-        totalGRT,
-        totalIGV,
-        totalDSCT,
-        () => saleStore.toSale,
-        () => orderStore.orderList.length,
-      ],
-      () => {
-        const productCount = saleStore.toSale.reduce(
-          (acc, curVal) => acc + curVal.quantity,
-          0
-        );
-        Object.assign(sale.value, {
-          count: productCount,
-          amount: total.value,
-          icbper: icbper.value,
-          taxed_amount: totalGRV.value,
-          exempt_amount: totalEXN.value,
-          free_amount: totalGRT.value,
-          igv_amount: totalIGV.value,
-          total_igv: parseFloat(totalIGV.value || 0).toFixed(2),
-        });
-
-        if (sale.value.payment_condition === 1) {
-          const newGivenAmount = total.value > 0 ? total.value : parseFloat(0).toFixed(2);
-          if (sale.value.given_amount !== newGivenAmount) {
-            sale.value.given_amount = newGivenAmount;
-          }
-        }
-      },
-      { immediate: true, deep: true }
-    );
-
-    watch(
-      () => sale.value.payment_condition,
-      (condition) => {
-        if (Number(condition) !== 2) {
-          sale.value.expiration_sale = null;
-        }
-      }
-    );
-
-    const expirationMinDate = computed(() => {
-      const saleDate = sale.value.date_sale;
-      if (!saleDate) {
-        return null;
-      }
-      try {
-        const parsedDate = parse(saleDate, "dd/MM/yyyy HH:mm:ss", new Date());
-        return startOfDay(parsedDate).getTime();
-      } catch {
-        return null;
-      }
-    });
-
-    const isExpirationDateDisabled = (ts) => {
-      const limit = expirationMinDate.value;
-      if (limit === null) {
-        return false;
-      }
-      return ts <= limit;
-    };
-
-    const isCredit = computed(() => Number(sale.value.payment_condition) === 2);
-
-    const formRules = computed(() => {
-      const rules = {
-        customer: {
-          ...saleRules.customer,
-          required: !(
-            sale.value.invoice_type !== 1 &&
-            sale.value.payment_condition === 1 &&
-            sale.value.given_amount <= 699
-          ),
-        },
-      };
-      if (isCredit.value) {
-        rules.expiration_sale = {
-          validator(rule, value) {
-            if (!value) {
-              return new Error("Debe ingresar la fecha de vencimiento para ventas al credito.");
-            }
-            return true;
-          },
-          trigger: ["blur", "change"],
-        };
-      }
-      return rules;
-    });
-
-    const changeCondition = (v) => {
-      sale.value.given_amount = v === 1 ? total.value : parseFloat("0").toFixed(2);
-      if (v !== 2) {
-        sale.value.expiration_sale = null;
-      }
-    };
-
-    const changeSerie = (v) => {
-      if (v === 1) {
-        sale.value.customer_name = "";
-        sale.value.customer = null;
-        sale.value.address = null;
-      }
-      const newSerie = saleStore.getFirstOption(v);
+    const newSerie = saleStore.getFirstOption(defaultInvoiceType);
+    if (newSerie) {
       sale.value.serie = newSerie;
-    };
+    }
+  }
+}, { immediate: true });
 
-    const handleSerieUpdate = (newSerie) => {
-      if (!newSerie) {
-        return;
-      }
-      sale.value.serie = newSerie;
-    };
-
-    const handleSerieChanged = () => {
-      obtainSaleNumber();
-    };
-
-    // Handlers para PaymentTotals
-    const handleValueChange = ({ field, value }) => {
-      if (field === 'discount') {
-        sale.value.discount = parseFloat(value) || 0;
-      } else if (field === 'other_charges') {
-        sale.value.other_charges = parseFloat(value) || 0;
-      }
-    };
-
-    const handlePaymentChange = (value) => {
-      sale.value.given_amount = parseFloat(value) || 0;
-    };
-
-    const performCreateSale = () => {
-      saleForm.value.validate((errors) => {
-        if (errors) {
-          if (formRules.value.customer.required) {
-            const msg = sale.value.invoice_type === 1
-              ? "Debes agregar un cliente cuando la venta es con factura"
-              : "Debes agregar un cliente porque la venta es mayor a S/ 699";
-            message.warning(msg);
-          }
-          message.error("Datos Incorrectos");
-          return;
-        }
-
-        const currentDiscount = Math.round((parseFloat(totalDSCT.value) || 0) * 100) / 100;
-        const maxAllowedDiscount = discountValidationThreshold.value;
-        if (maxAllowedDiscount > 0 && currentDiscount >= maxAllowedDiscount) {
-          message.warning("El descuento no puede ser 100%. Debe cambiar a operacion gratuita.");
-          return;
-        }
-
-        dialog.success({
-          closable: false,
-          title: "Venta",
-          content: "Realizar venta?",
-          positiveText: "Sí",
-          onPositiveClick: async () => {
-            loading.value = true;
-            sale.value.order = orderStore.orderId;
-            sale.value.sale_details = saleStore.toSale.map(detail => ({
-              ...detail,
-              igv_tax: detail.igv_tax.toFixed(2),
-              price_base: detail.price_base.toFixed(2)
-            }));
-            sale.value.discount = totalDSCT.value;
-
-            try {
-              const response = await createSale(sale.value);
-              if (response.status === 201) {
-                const res = await retrieveSale(response.data?.id);
-                pdfData.value = res.data;
-                pdfData.value.original_sale_details = sale.value.sale_details;
-
-                if (settingsStore.business_settings.printer.print_html) {
-                  showPdf.value = true;
-                  if (!ticketPreview.value) {
-                    setTimeout(() => previewDrawer.value.generate(), 250);
-                  }
-                } else {
-                  await VoucherPrint({
-                    data: res.data,
-                    businessStore,
-                    saleStore,
-                    changing: changing.value,
-                    show: true
-                  });
-                  await router.push({ name: "TableHome" });
-                }
-
-                if (settingsStore.businessSettings.sale.auto_send && response.data?.['invoiceType'] !== "80") {
-                  try {
-                    const sendResponse = await sendSale(response.data.id);
-                    if (sendResponse.status === 200) message.success("Enviado!");
-                  } catch (error) {
-                    console.error(error);
-                  }
-                }
-                message.success("Venta realizada correctamente!");
-              }
-            } catch (error) {
-              console.error(error);
-            } finally {
-              loading.value = false;
-            }
-          }
-        });
-      });
-    };
-
-    const obtainSaleNumber = async () => {
-      if (!sale.value.serie) {
-        return;
-      }
-      loading.value = true;
-      try {
-        const response = await getSaleNumber(sale.value.serie);
-        if (response.status === 200) {
-          const newNumber = Number(response.data.number) + 1;
-          sale.value.number = newNumber;
-        }
-      } catch (error) {
-        console.log(error);
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    const createAddressesOptions = (customer) => {
-      whatsappNumber.value = customer?.phone || "";
-      if (customer) {
-        addressesOptions.value = customer.addresses.map(address => ({
-          value: address.id,
-          label: `${address.ubigeo} - ${address.description}`,
-        }));
-        if (addressesOptions.value.length) {
-          sale.value.address = addressesOptions.value[0].value;
-        }
-      }
-    };
-
-    const handleCustomerSelected = (customer) => {
-      createAddressesOptions(customer);
-    };
-
-    const handleCustomerCleared = () => {
-      sale.value.address = null;
-      whatsappNumber.value = '';
-      addressesOptions.value = [];
-    };
-
-    const createPayment = () => ({ payment_method: null, amount: "0" });
-
-    const doMultiplePayment = () => {
-      sale.value.payments = [{ payment_method: sale.value.payment_method, amount: String(sale.value.amount) }];
-      showPayments.value = true;
-    };
-
-    const filteredMethods = computed(() => saleStore.getPaymentMethodsOptions.map(option => ({
-      ...option,
-      disabled: sale.value.payments?.some(pay => pay.payment_method === option.value) || false,
-    })));
-
-    const normalizePaymentAmount = (value) => {
-      const amount = parseFloat(value);
-      return Number.isFinite(amount) ? amount : 0;
-    };
-
-    const evalPayments = computed(() => {
-      if (!sale.value.payments?.length) return true;
-      const totalAmount = Number(sale.value.amount);
-      const totalPayments = sale.value.payments.reduce((acc, payment) => {
-        const amount = normalizePaymentAmount(payment.amount);
-        return Math.round((acc + amount) * 100) / 100;
-      }, 0);
-      return totalPayments !== totalAmount;
-    });
-
-    const currentPaymentsAmount = computed(() => {
-      if (!sale.value.payments) return "0.00";
-      const sum = sale.value.payments.reduce((acc, val) => acc + normalizePaymentAmount(val.amount), 0);
-      return Number.isFinite(sum) ? sum.toFixed(2) : "0.00";
-    });
-
-    const openSeparatePaymentsModal = () => {
-      separatePayments.value = cloneDeep(sale.value);
-      separatePayments.value.order = cloneDeep(orderStore.orderId);
-      separatePayments.value.sale_details = cloneDeep(saleStore.toSale);
-      separatePayments.value.sale_details.forEach(detail => detail.max = detail.quantity);
-      showSeparateModal.value = true;
-    };
-
-    watch(() => sale.value.serie, (newSerie, oldSerie) => {
-      if (newSerie && newSerie !== oldSerie) {
-        obtainSaleNumber();
-      }
-    });
-
-    // Watcher para cuando el store se hidrate y tengamos series disponibles
-    watch(() => saleStore.series, (newSeries) => {
-      if (newSeries.length > 0 && !sale.value.serie) {
-        const defaultInvoiceType = settingsStore.businessSettings.sale?.enable_invoices
-          ? settingsStore.businessSettings.sale.default_invoice : 80;
-        const newSerie = saleStore.getFirstOption(defaultInvoiceType);
-        if (newSerie) {
-          sale.value.serie = newSerie;
-        }
-      }
-    }, { immediate: true });
-
-    onMounted(async () => {
-      if (sale.value.serie) {
-        await obtainSaleNumber();
-      }
-    });
-
-    return {
-      userStore, saleStore, orderStore, settingsStore, sale,
-      loading, saleForm, formRules, handleCustomerSelected, handleCustomerCleared,
-      changing, subTotal, changeCondition, changeSerie, handleSerieUpdate, handleSerieChanged,
-      showObservations, performCreateSale,
-      addressesOptions, createAddressesOptions, genericsStore,
-      icbper, isMultiple, showPayments, createPayment, doMultiplePayment, filteredMethods,
-      evalPayments, currentPaymentsAmount, openSeparatePaymentsModal,
-      closeSeparatePaymentsModal: () => { }, successSeparatePaymentsModal: obtainSaleNumber,
-      separatePayments, showSeparateModal, totalIGV, totalGRV,
-      totalEXN, totalGRT, totalDSCT, whatsappNumber, ticketPreview, previewDrawer, showPdf,
-      pdfData, paymentTotalsItems, handleValueChange, handlePaymentChange, isCredit, isExpirationDateDisabled,
-    };
-  },
+onMounted(async () => {
+  if (sale.value.serie) {
+    await obtainSaleNumber();
+  }
 });
+
+//     return {
+//       userStore, saleStore, orderStore, settingsStore, sale,
+//       loading, saleForm, formRules, handleCustomerSelected, handleCustomerCleared,
+//       changing, subTotal, changeCondition, changeSerie, handleSerieUpdate, handleSerieChanged,
+//       showObservations, performCreateSale,
+//       addressesOptions, createAddressesOptions, genericsStore,
+//       icbper, isMultiple, showPayments, createPayment, doMultiplePayment, filteredMethods,
+//       evalPayments, currentPaymentsAmount, openSeparatePaymentsModal,
+//       closeSeparatePaymentsModal: () => { }, successSeparatePaymentsModal: obtainSaleNumber,
+//       separatePayments, showSeparateModal, totalIGV, totalGRV,
+//       totalEXN, totalGRT, totalDSCT, whatsappNumber, ticketPreview, previewDrawer, showPdf,
+//       pdfData, paymentTotalsItems, handleValueChange, handlePaymentChange, isCredit, isExpirationDateDisabled,
+//     };
+//   },
+// });
 </script>

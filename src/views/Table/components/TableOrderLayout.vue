@@ -139,7 +139,6 @@ const activeUsersStore = useActiveUsersStore();
 const tableStore = useTableStore();
 const settingsStore = useSettingsStore();
 const genericsStore = useGenericsStore();
-// const productStore = useProductStore();
 const orderStore = useOrderStore();
 const saleStore = useSaleStore();
 
