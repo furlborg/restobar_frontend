@@ -168,9 +168,8 @@
   </n-modal>
 </template>
 
-<script>
+<script setup>
 import {
-  defineComponent,
   ref,
   toRefs,
   computed,
@@ -193,55 +192,221 @@ import { useSettingsStore } from "@/store/modules/settings";
 import { useUserStore } from "@/store/modules/user";
 import { NButton, useMessage } from "naive-ui";
 import { productRules } from "@/utils/constants";
-import { isNumber, isDecimal } from "@/utils";
+import { isNumber } from "@/utils";
 import { getBranchs } from "@/api/modules/business";
 import SuppliesModal from "../../Supplies/components/SuppliesModal.vue";
 
-export default defineComponent({
-  name: "ProductModal",
-  components: {
-    SuppliesModal,
+const props = defineProps({
+  show: {
+    type: Boolean,
+    default: false,
   },
-  emits: ["update:show", "on-success"],
-  props: {
-    show: {
-      type: Boolean,
-      default: false,
-    },
-    idProduct: {
-      type: Number,
-      default: 0,
-    },
+  idProduct: {
+    type: Number,
+    default: 0,
   },
-  setup(props, { emit }) {
-    const message = useMessage();
-    const showModal = ref(false);
-    const isLoadingData = ref(false);
-    const productStore = useProductStore();
-    const genericsStore = useGenericsStore();
-    const settingsStore = useSettingsStore();
-    const userStore = useUserStore();
-    const { idProduct, show } = toRefs(props);
-    const uploadRef = ref(null);
-    const imageFileList = ref([]);
-    const onImageChange = ({ file, fileList }) => {
-      if (file?.file) {
-        product.value.image = file.file;
+});
+const emit = defineEmits(["update:show", "on-success"]);
+
+const showModal = ref(false);
+const isLoadingData = ref(false);
+
+const genericsStore = useGenericsStore();
+const productStore = useProductStore();
+const settingsStore = useSettingsStore();
+const userStore = useUserStore();
+const message = useMessage();
+
+const { idProduct, show } = toRefs(props);
+const uploadRef = ref(null);
+const imageFileList = ref([]);
+const onImageChange = ({ file, fileList }) => {
+  if (file?.file) {
+    product.value.image = file.file;
+  }
+  imageFileList.value = fileList.slice(0, 1);
+};
+const modalTitle = ref("Registrar Producto");
+const productRef = ref(null);
+const items = reactive({});
+const optionsSupplie = ref([]);
+const optionsEstablishment = ref([]);
+const optionsUND = ref([]);
+const supplieItem = ref({
+  supplie: null,
+  stock: null,
+  supplie_des: null,
+});
+const product = ref({
+  code: null,
+  name: null,
+  description: null,
+  prices: null,
+  purchase_price: 0,
+  measure_unit: 1,
+  control_stock: false,
+  stock: "",
+  icbper: false,
+  number_points: null,
+  redeem_points: null,
+  category: null,
+  preparation_place: null,
+  control_supplie: false,
+  branchoffice: null,
+  quick_indications: null,
+  area_print: false,
+  supplies: [],
+  affectation: settingsStore.businessSettings.sale?.default_affectation,
+  igv_tax: 0,
+});
+
+const igv_percentage = computed({
+  get: () => Math.round(Number(product.value.igv_tax) * 100),
+  set: (v) => (product.value.igv_tax = v / 100),
+});
+
+const allowZeroAffectationId = 21;
+
+const productRulesLocal = computed(() => ({
+  ...productRules,
+  prices: {
+    ...productRules.prices,
+    validator(rule, value) {
+      const numericValue = Number(value);
+
+      if (value === null || value === "" || Number.isNaN(numericValue)) {
+        return new Error("Precio de Venta requerido");
       }
-      imageFileList.value = fileList.slice(0, 1);
-    };
-    const modalTitle = ref("Registrar Producto");
-    const productRef = ref(null);
-    const items = reactive({});
-    const optionsSupplie = ref([]);
-    const optionsEstablishment = ref([]);
-    const optionsUND = ref([]);
-    const supplieItem = ref({
-      supplie: null,
-      stock: null,
-      supplie_des: null,
+
+      if (numericValue > 0) {
+        return true;
+      }
+
+      if (
+        numericValue === 0 &&
+        product.value.affectation === allowZeroAffectationId
+      ) {
+        return true;
+      }
+
+      return new Error("Precio de Venta requerido");
+    },
+  },
+}));
+
+const categoriesOptions = computed(() => {
+  return productStore.categories.map((categorie) => ({
+    label: categorie.description,
+    value: categorie.id,
+  }));
+});
+
+const queuePricesValidation = async () => {
+  await nextTick();
+  if (productRef.value?.validateField) {
+    productRef.value.validateField("prices");
+  }
+};
+
+const onAffectationChange = () => {
+  queuePricesValidation();
+};
+
+watch(
+  () => product.value.affectation,
+  () => {
+    queuePricesValidation();
+  }
+);
+const placesOptions = computed(() => {
+  return productStore.places.map((place) => ({
+    label: place.description,
+    value: place.id,
+  }));
+});
+
+const supplieSearch = async (search) => {
+  getSupplies(`supplies/search/?search=${search}`)
+    .then((response) => {
+      optionsSupplie.value = response.data.map((v) => ({
+        label: v.name,
+        value: v.id,
+      }));
+    })
+    .catch(() => {
+      message.error("Algo salió mal...");
     });
-    const product = ref({
+};
+supplieSearch("");
+
+const getEstablishment = async () => {
+  getBranchs()
+    .then((response) => {
+      optionsEstablishment.value = [];
+      response.data.map((v) => {
+        if (
+          userStore.user.branchoffice === null ||
+          userStore.user.role === "ADMINISTRADOR"
+        ) {
+          optionsEstablishment.value.push({
+            label: v.description,
+            value: v.id,
+          });
+        } else {
+          if (userStore.user.branchoffice === v.id) {
+            optionsEstablishment.value.push({
+              label: v.description,
+              value: v.id,
+            });
+          }
+        }
+      });
+    })
+    .catch(() => {
+      message.error("Algo salió mal...");
+    });
+};
+getEstablishment();
+
+const getUND = async () => {
+  getMeasureUnit()
+    .then((response) => {
+      optionsUND.value = response.data.map((v) => ({
+        label: v.description,
+        value: v.id,
+      }));
+    })
+    .catch(() => {
+      message.error("Algo salió mal...");
+    });
+};
+getUND();
+
+watch(show, () => {
+  if (show.value === true && idProduct.value !== 0) {
+    modalTitle.value = "Modificar Producto";
+    isLoadingData.value = true;
+    retrieveProduct(idProduct.value)
+      .then((response) => {
+        product.value = response.data;
+        product.value.branchoffice = optionsEstablishment.value[0].value;
+        product.value.image = null; // limpiar selección de nueva imagen
+        imageFileList.value = [];
+        // Si el backend devuelve image como url, normalizar
+        if (response.data.image) {
+          product.value.image_url = response.data.image;
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+        message.error("Algo salio mal...");
+      })
+      .finally(() => {
+        isLoadingData.value = false;
+      });
+  } else if (show.value === true && idProduct.value === 0) {
+    modalTitle.value = "Registrar Producto";
+    product.value = {
       code: null,
       name: null,
       description: null,
@@ -256,440 +421,210 @@ export default defineComponent({
       category: null,
       preparation_place: null,
       control_supplie: false,
-      branchoffice: null,
       quick_indications: null,
-      area_print: false,
+      branchoffice: optionsEstablishment.value[0].value,
       supplies: [],
       affectation: settingsStore.businessSettings.sale?.default_affectation,
       igv_tax: 0,
-    });
-
-    const igv_percentage = computed({
-      get: () => Math.round(Number(product.value.igv_tax) * 100),
-      set: (v) => (product.value.igv_tax = v / 100),
-    });
-
-    const allowZeroAffectationId = 21;
-
-    const productRulesLocal = computed(() => ({
-      ...productRules,
-      prices: {
-        ...productRules.prices,
-        validator(rule, value) {
-          const numericValue = Number(value);
-
-          if (value === null || value === "" || Number.isNaN(numericValue)) {
-            return new Error("Precio de Venta requerido");
-          }
-
-          if (numericValue > 0) {
-            return true;
-          }
-
-          if (
-            numericValue === 0 &&
-            product.value.affectation === allowZeroAffectationId
-          ) {
-            return true;
-          }
-
-          return new Error("Precio de Venta requerido");
-        },
-      },
-    }));
-
-    const categoriesOptions = computed(() => {
-      return productStore.categories.map((categorie) => ({
-        label: categorie.description,
-        value: categorie.id,
-      }));
-    });
-
-    const queuePricesValidation = async () => {
-      await nextTick();
-      if (productRef.value?.validateField) {
-        productRef.value.validateField("prices");
-      }
     };
+    imageFileList.value = [];
+    product.value.image = null;
+  }
+});
 
-    const onAffectationChange = () => {
-      product.value.prices = null;
-      queuePricesValidation();
-    };
-
-    watch(
-      () => product.value.affectation,
-      () => {
-        queuePricesValidation();
-      }
-    );
-    const placesOptions = computed(() => {
-      return productStore.places.map((place) => ({
-        label: place.description,
-        value: place.id,
-      }));
-    });
-
-    const supplieSearch = async (search) => {
-      getSupplies(`supplies/search/?search=${search}`)
-        .then((response) => {
-          optionsSupplie.value = response.data.map((v) => ({
-            label: v.name,
-            value: v.id,
-          }));
-        })
-        .catch(() => {
-          message.error("Algo salió mal...");
-        });
-    };
-    supplieSearch("");
-
-    const getEstablishment = async () => {
-      getBranchs()
-        .then((response) => {
-          optionsEstablishment.value = [];
-          response.data.map((v) => {
-            if (
-              userStore.user.branchoffice === null ||
-              userStore.user.role === "ADMINISTRADOR"
-            ) {
-              optionsEstablishment.value.push({
-                label: v.description,
-                value: v.id,
-              });
-            } else {
-              if (userStore.user.branchoffice === v.id) {
-                optionsEstablishment.value.push({
-                  label: v.description,
-                  value: v.id,
-                });
-              }
-            }
-          });
-        })
-        .catch(() => {
-          message.error("Algo salió mal...");
-        });
-    };
-    getEstablishment();
-
-    const getUND = async () => {
-      getMeasureUnit()
-        .then((response) => {
-          optionsUND.value = response.data.map((v) => ({
-            label: v.description,
-            value: v.id,
-          }));
-        })
-        .catch(() => {
-          message.error("Algo salió mal...");
-        });
-    };
-    getUND();
-
-    watch(show, () => {
-      if (show.value === true && idProduct.value !== 0) {
-        modalTitle.value = "Modificar Producto";
+const performCreate = (e) => {
+  e.preventDefault();
+  productRef.value.validate((errors) => {
+    if (!errors) {
+      if (
+        product.value.control_supplie &&
+        product.value.supplies.length < 1
+      ) {
+        message.warning("Necesitas agregar insumos.");
+      } else if (
+        (product.value.control_stock && product.value.stock === "") ||
+        parseInt(product.value.stock) <= 0
+      ) {
+        message.warning("La cantidad debe ser mayor a 0.");
+      } else {
         isLoadingData.value = true;
-        retrieveProduct(idProduct.value)
+        createProduct(product.value)
           .then((response) => {
-            product.value = response.data;
-            product.value.branchoffice = optionsEstablishment.value[0].value;
-            product.value.image = null; // limpiar selección de nueva imagen
-            imageFileList.value = [];
-            // Si el backend devuelve image como url, normalizar
-            if (response.data.image) {
-              product.value.image_url = response.data.image;
+            if (response.status === 201) {
+              message.success("Producto registrado!");
+              emit("on-success");
             }
           })
           .catch((error) => {
-            console.error(error);
-            message.error("Algo salio mal...");
+            console.error(error.response.data);
+            message.error("Algo salió mal...");
           })
           .finally(() => {
             isLoadingData.value = false;
           });
-      } else if (show.value === true && idProduct.value === 0) {
-        modalTitle.value = "Registrar Producto";
-        product.value = {
-          code: null,
-          name: null,
-          description: null,
-          prices: null,
-          purchase_price: 0,
-          measure_unit: 1,
-          control_stock: false,
-          stock: "",
-          icbper: false,
-          number_points: null,
-          redeem_points: null,
-          category: null,
-          preparation_place: null,
-          control_supplie: false,
-          quick_indications: null,
-          branchoffice: optionsEstablishment.value[0].value,
-          supplies: [],
-          affectation: settingsStore.businessSettings.sale?.default_affectation,
-          igv_tax: 0,
-        };
-        imageFileList.value = [];
-        product.value.image = null;
       }
-    });
+    } else {
+      console.error(errors);
+      message.error("Datos incorrectos");
+    }
+  });
+};
 
-    const performCreate = (e) => {
-      e.preventDefault();
-      productRef.value.validate((errors) => {
-        if (!errors) {
-          if (
-            product.value.control_supplie &&
-            product.value.supplies.length < 1
-          ) {
-            message.warning("Necesitas agregar insumos.");
-          } else if (
-            (product.value.control_stock && product.value.stock === "") ||
-            parseInt(product.value.stock) <= 0
-          ) {
-            message.warning("La cantidad debe ser mayor a 0.");
-          } else {
-            isLoadingData.value = true;
-            createProduct(product.value)
-              .then((response) => {
-                if (response.status === 201) {
-                  message.success("Producto registrado!");
-                  emit("on-success");
-                }
-              })
-              .catch((error) => {
-                console.error(error.response.data);
-                message.error("Algo salió mal...");
-              })
-              .finally(() => {
-                isLoadingData.value = false;
-              });
-          }
-        } else {
-          console.error(errors);
-          message.error("Datos incorrectos");
-        }
-      });
-    };
-
-    const performUpdate = (e) => {
-      e.preventDefault();
-      productRef.value.validate((errors) => {
-        if (!errors) {
-          if (
-            product.value.control_supplie &&
-            product.value.supplies.length < 1
-          ) {
-            message.warning("Necesitas agregar insumos.");
-          } else {
-            isLoadingData.value = true;
-            updateProduct(idProduct.value, product.value)
-              .then((response) => {
-                if (response.status === 202) {
-                  message.success("Producto actualizado!");
-                  emit("on-success");
-                }
-              })
-              .catch((error) => {
-                console.error(error.response.data);
-                message.error("Algo salió mal...");
-              })
-              .finally(() => {
-                isLoadingData.value = false;
-              });
-          }
-        } else {
-          console.error(errors);
-          message.error("Datos Incorrectos");
-        }
-      });
-    };
-
-    const categoryForm = ref(false);
-    const categorie = ref({
-      id: null,
-      description: null,
-    });
-
-    const performCreateProductCategory = () => {
-      createProductCategory(categorie.value.description, false)
-        .then((response) => {
-          if (response.status === 201) {
-            productStore.refreshCategories().then(() => {
-              product.value.category = productStore.getCategorieID(
-                categorie.value.description
-              );
-            });
-          }
-        })
-        .catch((error) => {
-          console.error(error);
-          message.error("Algo salió mal...");
-        })
-        .finally(() => {
-          categoryForm.value = false;
-        });
-    };
-
-    const performUpdateProductCategory = () => {
-      updateProductCategory(categorie.value.id, categorie.value.description, false)
-        .then((response) => {
-          if (response.status === 202) {
-            productStore.refreshCategories();
-          }
-        })
-        .catch((error) => {
-          console.error(error);
-          message.error("Algo salió mal...");
-        })
-        .finally(() => {
-          categoryForm.value = false;
-        });
-    };
-
-    const addSupplie = (data) => {
-      let verify = false;
-      product.value.supplies.map((v) => {
-        if (v?.supplie === data.supplie) {
-          verify = true;
-        }
-      });
-      if (verify) {
-        message.warning("El insumo ya fue agregado.");
+const performUpdate = (e) => {
+  e.preventDefault();
+  productRef.value.validate((errors) => {
+    if (!errors) {
+      if (
+        product.value.control_supplie &&
+        product.value.supplies.length < 1
+      ) {
+        message.warning("Necesitas agregar insumos.");
       } else {
-        let name = "";
-        optionsSupplie.value.map((v) => {
-          if (v?.value === data.supplie) {
-            name = v?.label;
-          }
-        });
-
-        product.value.supplies.push({
-          supplie: data.supplie,
-          amount: data.stock,
-          supplie_des: name,
-        });
-        supplieItem.value.supplie = null;
-        supplieItem.value.stock = null;
-        supplieItem.value.supplie_des = null;
+        isLoadingData.value = true;
+        updateProduct(idProduct.value, product.value)
+          .then((response) => {
+            if (response.status === 202) {
+              message.success("Producto actualizado!");
+              emit("on-success");
+            }
+          })
+          .catch((error) => {
+            console.error(error.response.data);
+            message.error("Algo salió mal...");
+          })
+          .finally(() => {
+            isLoadingData.value = false;
+          });
       }
-    };
+    } else {
+      console.error(errors);
+      message.error("Datos Incorrectos");
+    }
+  });
+};
 
-    const deleteSupplie = (value) => {
-      let data = [];
-      product.value.supplies.map((v) => {
-        if (value !== v?.supplie) {
-          data.push(v);
-        }
-      });
-      product.value.supplies = data;
-    };
-
-    const newSupplies = () => {
-      (showModal.value = true),
-        (items.id = undefined),
-        (items.name = undefined),
-        (items.purchase_price = undefined),
-        (items.measureunit = 1),
-        (items.branchoffice = undefined),
-        (items.amount = undefined);
-    };
-
-    const refreshSupplie = (value) => {
-      supplieSearch("");
-      supplieItem.value.supplie = value.id;
-    };
-
-    //Crear columnas
-    const columnsSupplie = ref([
-      {
-        title: "",
-        width: 5,
-        render(row, index) {
-          return index + 1;
-        },
-      },
-      {
-        title: "Insumo",
-        key: "supplie_des",
-        width: 150,
-      },
-      {
-        title: "Cantidad",
-        key: "amount",
-        width: 50,
-      },
-      {
-        title: "",
-        width: 5,
-        render(row) {
-          return h(
-            NButton,
-            {
-              type: "error",
-              size: "small",
-              onClick: () => {
-                deleteSupplie(row.supplie);
-              },
-            },
-            () => "Quitar"
-          );
-        },
-      },
-    ]);
-
-    return {
-      genericsStore,
-      settingsStore,
-      isLoadingData,
-      categoryForm,
-      uploadRef,
-      modalTitle,
-      categoriesOptions,
-      placesOptions,
-      productStore,
-      userStore,
-      product,
-      productRef,
-      productRules,
-      productRulesLocal,
-      onAffectationChange,
-      categorie,
-      performCreate,
-      performUpdate,
-      performUpdateProductCategory,
-      performCreateProductCategory,
-      isNumber,
-      isDecimal,
-      optionsSupplie,
-      supplieSearch,
-      addSupplie,
-      supplieItem,
-      columnsSupplie,
-      deleteSupplie,
-      optionsEstablishment,
-      optionsUND,
-      showModal,
-      newSupplies,
-      items,
-      igv_percentage,
-      refreshSupplie,
-      restrictDecimal(value) {
-        let data = value.match(/^\d+\.?\d{0,3}/);
-        if (data) {
-          return data[0];
-        } else {
-          return null;
-        }
-      },
-      onImageChange,
-      imageFileList,
-    };
-  },
+const categoryForm = ref(false);
+const categorie = ref({
+  id: null,
+  description: null,
 });
+
+const performCreateProductCategory = () => {
+  createProductCategory(categorie.value.description, false)
+    .then((response) => {
+      if (response.status === 201) {
+        productStore.refreshCategories().then(() => {
+          product.value.category = productStore.getCategorieID(
+            categorie.value.description
+          );
+        });
+      }
+    })
+    .catch((error) => {
+      console.error(error);
+      message.error("Algo salió mal...");
+    })
+    .finally(() => {
+      categoryForm.value = false;
+    });
+};
+
+const performUpdateProductCategory = () => {
+  updateProductCategory(categorie.value.id, categorie.value.description, false)
+    .then((response) => {
+      if (response.status === 202) {
+        productStore.refreshCategories();
+      }
+    })
+    .catch((error) => {
+      console.error(error);
+      message.error("Algo salió mal...");
+    })
+    .finally(() => {
+      categoryForm.value = false;
+    });
+};
+
+const addSupplie = (data) => {
+  const exists = product.value.supplies.some(v => v.supplie === data.supplie);
+  if (exists) {
+    message.warning("El insumo ya fue agregado.");
+    return;
+  }
+  const found = optionsSupplie.value.find(v => v.value === data.supplie);
+  const name = found ? found.label : "";
+
+  product.value.supplies.push({
+    supplie: data.supplie,
+    amount: data.stock,
+    supplie_des: name,
+  });
+  supplieItem.value = { supplie: null, stock: null, supplie_des: null };
+};
+
+const deleteSupplie = (value) => {
+  product.value.supplies = product.value.supplies.filter(v => v.supplie !== value);
+};
+
+const newSupplies = () => {
+  showModal.value = true
+  items.id = undefined
+  items.name = undefined
+  items.purchase_price = undefined
+  items.measureunit = 1
+  items.branchoffice = undefined
+  items.amount = undefined
+};
+
+const refreshSupplie = async (value) => {
+  await supplieSearch("");
+  supplieItem.value.supplie = value.id;
+};
+
+//Crear columnas
+const columnsSupplie = [
+  {
+    title: "",
+    width: 5,
+    render(row, index) {
+      return index + 1;
+    },
+  },
+  {
+    title: "Insumo",
+    key: "supplie_des",
+    width: 150,
+  },
+  {
+    title: "Cantidad",
+    key: "amount",
+    width: 50,
+  },
+  {
+    title: "",
+    width: 5,
+    render(row) {
+      return h(
+        NButton,
+        {
+          type: "error",
+          size: "small",
+          onClick: () => {
+            deleteSupplie(row.supplie);
+          },
+        },
+        () => "Quitar"
+      );
+    },
+  },
+];
+
+const restrictDecimal = (value) => {
+  if (value === null || value === undefined) return null;
+  const str = String(value);
+  const match = str.match(/^\d+\.?\d{0,3}/);
+  return match ? match[0] : null;
+};
 </script>
 
 <style lang="scss">

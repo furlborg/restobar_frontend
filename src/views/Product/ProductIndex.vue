@@ -56,7 +56,7 @@
                     <n-space>
                       <n-tag>{{
                         productStore.getCategorieDescription(product.category)
-                      }}</n-tag>
+                        }}</n-tag>
                     </n-space>
                     <div v-if="product.amount.length > 0">
                       <div v-if="product.amount.length === 1">
@@ -141,7 +141,6 @@ import { ref, onMounted, reactive, computed } from "vue";
 import { useMessage, useDialog } from "naive-ui";
 import defaultFoodImage from "@/assets/images/default-food-image.jpg";
 import { renderIcon } from "@/utils";
-// import { useDebounce } from "@/composables/useDebounce";
 import ProductModal from "./components/ProductModal";
 import SalesReportModal from "./components/SalesReportModal";
 import { useProductStore } from "@/store/modules/product";
@@ -160,6 +159,7 @@ const productStore = useProductStore();
 const userStore = useUserStore();
 const message = useMessage();
 const dialog = useDialog();
+
 const listType = ref("list");
 const showModal = ref(false);
 const showSalesReportModal = ref(false);
