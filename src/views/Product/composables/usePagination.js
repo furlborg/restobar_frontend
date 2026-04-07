@@ -9,6 +9,7 @@ export function usePagination(fetchFn, initialPageSize = 10) {
   const total = ref(0);
   const offset = ref(0);
   const loading = ref(false);
+  const items = ref([]);
 
   // Calcula el número total de páginas.
   const pageCount = computed(() => {
@@ -30,8 +31,8 @@ export function usePagination(fetchFn, initialPageSize = 10) {
       });
 
       total.value = response.data.count;
-      offset.value = (page.value - 1) * pageSize.value;
-      return response.data.results;
+      items.value = response.data.results;
+      return items.value;
     } catch (error) {
       console.error("Error fetching data:", error);
       throw error;
@@ -43,16 +44,14 @@ export function usePagination(fetchFn, initialPageSize = 10) {
   // Función para cambiar de página.
   const onChange = async (newPage) => {
     page.value = newPage;
-    const results = await fetchData();
-    return results;
+    await fetchData();
   };
 
   // Función para cambiar el tamaño de página.
   const onPageSizeChange = async (newPageSize) => {
     pageSize.value = newPageSize;
     page.value = 1;
-    const results = await fetchData();
-    return results;
+    await fetchData();
   };
 
   const setTotal = (newTotal) => {
@@ -78,8 +77,8 @@ export function usePagination(fetchFn, initialPageSize = 10) {
 
   // Método para cargar los datos manualmente.
   const loadData = async () => {
-    const results = await fetchData();
-    return results;
+    await fetchData();
+    return items.value;
   };
 
   const pagination = {
@@ -114,6 +113,7 @@ export function usePagination(fetchFn, initialPageSize = 10) {
     total,
     offset,
     loading,
+    items,
     pageCount,
     // Mètodos
     setSearchParams,

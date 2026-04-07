@@ -1,31 +1,18 @@
 <template>
-  <!-- @close="() => $emit('update:show')" -->
-  <n-modal
-          :class="{
-      'w-100': genericsStore.device === 'mobile',
-      'w-75': genericsStore.device === 'tablet',
-      'w-75 ': genericsStore.device === 'desktop',
-    }"
-    id="SaleUpdate"
-    preset="card"
-    title="Editar Venta"
-    :show="show"
-    :mask-closable="false"
-    @close="() => $emit('update:sale')"
-  >
+  <n-modal :class="{
+    'w-100': genericsStore.device === 'mobile',
+    'w-75': genericsStore.device === 'tablet',
+    'w-75 ': genericsStore.device === 'desktop',
+  }" id="SaleUpdate" preset="card" title="Editar Venta" :show="show" :mask-closable="false"
+    @close="() => $emit('update:sale')">
     <n-spin :show="loading">
-      <SaleForm
-        :id="sale"
-        :data="data"
-        @on-success="() => $emit('on-success')"
-      />
+      <SaleForm :id="sale" :data="data" @on-success="() => $emit('on-success')" />
     </n-spin>
   </n-modal>
 </template>
 
 <script>
 import { defineComponent, toRefs, ref, watch } from "vue";
-import { useMessage } from "naive-ui";
 import { useGenericsStore } from "@/store/modules/generics";
 import { retrieveSale } from "@/api/modules/sales";
 import SaleForm from "./SaleForm";
@@ -45,7 +32,7 @@ export default defineComponent({
   setup(props) {
     const genericsStore = useGenericsStore();
     const { sale } = toRefs(props);
-    const message = useMessage();
+
 
     const data = ref({});
 
@@ -64,7 +51,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          
+
         })
         .finally(() => {
           loading.value = false;

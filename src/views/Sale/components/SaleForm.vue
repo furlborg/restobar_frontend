@@ -1,17 +1,6 @@
 <template>
-  <n-form
-    id="SaleForm"
-    ref="saleForm"
-    :model="sale"
-    :rules="rules"
-    :disabled="loading"
-  >
-    <n-alert
-      v-if="recoveryInfo"
-      type="info"
-      class="mb-3"
-      title="Canje registrado"
-    >
+  <n-form id="SaleForm" ref="saleForm" :model="sale" :rules="rules" :disabled="loading">
+    <n-alert v-if="recoveryInfo" type="info" class="mb-3" title="Canje registrado">
       <n-space vertical size="4">
         <n-text>
           {{
@@ -27,90 +16,38 @@
     </n-alert>
     <n-grid responsive="screen" cols="6 s:6 m:24 l:24 xl:24 2xl:24" :x-gap="12">
       <n-form-item-gi :span="3" label="Serie">
-        <n-select
-          placeholder=""
-          :options="saleStore.getDocumentSeriesOptions(sale.invoice_type)"
-          v-model:value="sale.serie"
-        />
+        <n-select placeholder="" :options="saleStore.getDocumentSeriesOptions(sale.invoice_type)"
+          v-model:value="sale.serie" />
       </n-form-item-gi>
       <n-form-item-gi :span="3" label="Número">
-        <n-input-number
-          placeholder=""
-          v-model:value="sale.number"
-          disabled
-          :min="0.0005"
-          :show-button="false"
-        />
+        <n-input-number placeholder="" v-model:value="sale.number" disabled :min="0.0005" :show-button="false" />
       </n-form-item-gi>
       <n-form-item-gi :span="4" label="Tipo documento">
-        <n-select
-          placeholder=""
-          :options="invoiceOptions"
-          v-model:value="sale.invoice_type"
-          @update:value="changeSerie"
-        />
+        <n-select placeholder="" :options="invoiceOptions" v-model:value="sale.invoice_type"
+          @update:value="changeSerie" />
       </n-form-item-gi>
       <n-form-item-gi :span="4" label="Método de pago">
-        <n-select
-          placeholder=""
-          :options="saleStore.getPaymentMethodsOptions"
-          v-model:value="sale.payment_method"
-        />
+        <n-select placeholder="" :options="saleStore.getPaymentMethodsOptions" v-model:value="sale.payment_method" />
       </n-form-item-gi>
       <n-form-item-gi :span="4" label="Condición de pago">
-        <n-select
-          placeholder=""
-          :options="paymentConditionOptions"
-          v-model:value="sale.payment_condition"
-        />
+        <n-select placeholder="" :options="paymentConditionOptions" v-model:value="sale.payment_condition" />
       </n-form-item-gi>
       <n-form-item-gi :span="6" label="Fecha">
-        <n-date-picker
-          class="w-100"
-          v-model:formatted-value="sale.date_sale"
-          type="datetime"
-        />
+        <n-date-picker class="w-100" v-model:formatted-value="sale.date_sale" type="datetime" />
       </n-form-item-gi>
-      <n-form-item-gi
-        v-if="isCredit"
-        :span="4"
-        label="Fecha de vencimiento"
-        path="expiration_sale"
-      >
-        <n-date-picker
-          class="w-100"
-          v-model:formatted-value="sale.expiration_sale"
-          type="date"
-          format="dd/MM/yyyy"
-          value-format="dd/MM/yyyy"
-          :is-date-disabled="disableExpirationDate"
-        />
+      <n-form-item-gi v-if="isCredit" :span="4" label="Fecha de vencimiento" path="expiration_sale">
+        <n-date-picker class="w-100" v-model:formatted-value="sale.expiration_sale" type="date" format="dd/MM/yyyy"
+          value-format="dd/MM/yyyy" :is-date-disabled="disableExpirationDate" />
       </n-form-item-gi>
       <n-form-item-gi :span="4">
-        <n-checkbox
-          placeholder=""
-          v-model:checked="sale.by_consumption"
-          :disabled="isCredit"
-          >Por consumo</n-checkbox
-        >
+        <n-checkbox placeholder="" v-model:checked="sale.by_consumption" :disabled="isCredit">Por consumo</n-checkbox>
       </n-form-item-gi>
-      <n-form-item-gi
-        :span="10"
-        label="Cliente"
-        :show-require-mark="rules.customer.required"
-        path="customer"
-      >
+      <n-form-item-gi :span="10" label="Cliente" :show-require-mark="rules.customer.required" path="customer">
         <n-input-group>
-          <n-auto-complete
-            blur-after-select
-            :input-props="{
-              autocomplete: 'disabled',
-            }"
-            v-model:value="sale.customer_name"
-            :options="customerOptions"
-            :get-show="showCustomerOptions"
-            :loading="searchingCustomer"
-            @update:value="
+          <n-auto-complete blur-after-select :input-props="{
+            autocomplete: 'disabled',
+          }" v-model:value="sale.customer_name" :options="customerOptions" :get-show="showCustomerOptions"
+            :loading="searchingCustomer" @update:value="
               (v) => {
                 !v
                   ? ((sale.customer = null),
@@ -118,71 +55,38 @@
                     (addressesOptions = []))
                   : null;
               }
-            "
-            @select="
+            " @select="
               (value) => {
                 sale.customer = value;
                 sale.address = null;
                 createAddressesOptions();
               }
-            "
-            placeholder=""
-            clearable
-          />
+            " placeholder="" clearable />
           <n-button type="info" @click="showCustomerModal = true">
             <v-icon name="md-add-round" />
           </n-button>
         </n-input-group>
       </n-form-item-gi>
       <n-form-item-gi :span="10" label="Dirección">
-        <n-select
-          v-model:value="sale.address"
-          :options="addressesOptions"
-          :disabled="!sale.customer"
-          placeholder=""
-          clearable
-        />
+        <n-select v-model:value="sale.address" :options="addressesOptions" :disabled="!sale.customer" placeholder=""
+          clearable />
       </n-form-item-gi>
     </n-grid>
     <n-space justify="end">
-      <n-button
-        type="info"
-        secondary
-        :loading="loading"
-        :disabled="loading"
-        @click="validateSale"
-        >Guardar</n-button
-      >
+      <n-button type="info" secondary :loading="loading" :disabled="loading" @click="validateSale">Guardar</n-button>
     </n-space>
     <!-- Customer Modal -->
-    <CustomerModal
-      v-model:show="showCustomerModal"
-      @update:show="onCloseModal"
-      :doc_type="sale.invoice_type === '1' ? '6' : null"
-      @on-success="onSuccess"
-    />
-    <n-modal
-      :class="{
-        'w-100': genericsStore.device === 'mobile',
-        'w-50': genericsStore.device === 'tablet',
-        'w-25': genericsStore.device === 'desktop',
-      }"
-      preset="card"
-      v-model:show="showConfirm"
-      title="¿Desea editar la venta?"
-      :mask-closable="false"
-      closable
-    >
-            <template #action>
+    <CustomerModal v-model:show="showCustomerModal" @update:show="onCloseModal"
+      :doc_type="sale.invoice_type === '1' ? '6' : null" @on-success="onSuccess" />
+    <n-modal :class="{
+      'w-100': genericsStore.device === 'mobile',
+      'w-50': genericsStore.device === 'tablet',
+      'w-25': genericsStore.device === 'desktop',
+    }" preset="card" v-model:show="showConfirm" title="¿Desea editar la venta?" :mask-closable="false" closable>
+      <template #action>
         <n-space justify="end">
-          <n-button
-            type="success"
-            :loading="loading"
-            :disabled="loading"
-            secondary
-            @click.prevent="peformCreateSale"
-            >Confirmar</n-button
-          >
+          <n-button type="success" :loading="loading" :disabled="loading" secondary
+            @click.prevent="peformCreateSale">Confirmar</n-button>
         </n-space>
       </template>
     </n-modal>
@@ -248,7 +152,7 @@ export default defineComponent({
 
     sale.payment_condition =
       typeof sale.payment_condition === "undefined" ||
-      sale.payment_condition === null
+        sale.payment_condition === null
         ? 1
         : normalizePaymentCondition(sale.payment_condition);
     if (sale.payment_condition === 2) {
@@ -354,7 +258,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          
+
         });
     };
 
@@ -406,7 +310,7 @@ export default defineComponent({
             })
             .catch((error) => {
               console.error(error);
-              
+
             })
             .finally(() => {
               searchingCustomer.value = false;
@@ -421,7 +325,7 @@ export default defineComponent({
             })
             .catch((error) => {
               console.error(error);
-              
+
             })
             .finally(() => {
               searchingCustomer.value = false;
@@ -463,7 +367,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          
+
         })
         .finally(() => {
           loading.value = false;
@@ -476,7 +380,7 @@ export default defineComponent({
       await obtainSaleNumber();
     });
 
-    const onCloseModal = () => {};
+    const onCloseModal = () => { };
 
     const onSuccess = (customer) => {
       if (sale.invoice_type === 1 && customer.doc_type === "6") {
@@ -511,7 +415,7 @@ export default defineComponent({
           showConfirm.value = true;
         } else {
           console.error(errors);
-          
+
         }
       });
     };
@@ -549,7 +453,7 @@ export default defineComponent({
                     message.error(error.response.data);
                   } else {
                     console.error(error);
-                    
+
                   }
                 });
             }
@@ -557,7 +461,7 @@ export default defineComponent({
         })
         .catch((error) => {
           console.error(error);
-          
+
         })
         .finally(() => {
           loading.value = false;

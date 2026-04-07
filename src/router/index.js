@@ -51,7 +51,7 @@ export const routes = [
         meta: {
           requiredPerm: "view_sale",
         },
-        component: () => import("@/views/Sale/index.vue"),
+        component: () => import("@/views/Sale/SaleIndex.vue"),
       },
       {
         path: "/menus",

@@ -166,7 +166,7 @@ const showSalesReportModal = ref(false);
 const showModalMovement = ref(false);
 const idProduct = ref(0);
 const type = ref(0);
-const products = ref([]);
+// const products = ref([]);
 const itemsMovement = reactive({});
 const productOptions = [
   {
@@ -206,6 +206,7 @@ const {
   search,
   pagination,
   loadData,
+  items: products,
   setTotal,
   reset,
   loading: isLoadingData,
@@ -213,9 +214,7 @@ const {
   category,
 } = usePagination(searchProductWrapper, 10);
 
-const { performSearch, debouncedPerformSearch } = useProductFilters(loadData, (results) => {
-  products.value = results
-})
+const { performSearch, debouncedPerformSearch } = useProductFilters(loadData)
 
 const loadProductsData = async () => {
   isLoadingData.value = true;
@@ -266,7 +265,8 @@ const performDisableProduct = (id, disabled) => {
 };
 
 onMounted(async () => {
-  await loadProductsData();
+  // await loadProductsData();
+  await performSearch();
 });
 
 const onCloseModal = () => {

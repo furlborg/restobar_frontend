@@ -13,7 +13,11 @@ import "@/style/naive-ui-overrides.css";
 import "vfonts/Lato.css";
 import VueCookies from "vue-cookies";
 import { addIcons } from "oh-vue-icons";
-import { MdCalculateRound, MdMonetizationonRound } from "oh-vue-icons/icons";
+import {
+  MdCalculateRound,
+  MdMonetizationonRound,
+  MdSendRound,
+} from "oh-vue-icons/icons";
 
 const app = createApp(App);
 
@@ -27,7 +31,7 @@ VueCookies.config("1d");
 
 setupNumericOnlyGuards();
 
-addIcons(MdMonetizationonRound, MdCalculateRound);
+addIcons(MdMonetizationonRound, MdCalculateRound, MdSendRound);
 
 app.component("v-icon", OhVueIcon);
 app.directive("numeric-only", numericOnlyDirective);
