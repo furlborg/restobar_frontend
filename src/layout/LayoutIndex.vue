@@ -36,9 +36,9 @@
   </n-config-provider>
 </template>
 
-<script>
-import { computed, defineComponent, onMounted, ref } from "vue";
-import { createTheme, inputDark, datePickerDark, darkTheme } from "naive-ui";
+<script setup>
+import { computed, ref } from "vue";
+import { darkTheme } from "naive-ui";
 import { commonEsPE, dateEsPE } from "@/locale";
 import { useUserStore, useActiveUsersStore } from "@/store/modules/user";
 import { useBusinessStore } from "@/store/modules/business";
@@ -49,120 +49,82 @@ import { useProductStore } from "@/store/modules/product";
 import { useTableStore } from "@/store/modules/table";
 import { useTillStore } from "@/store/modules/till";
 import { useSaleStore } from "@/store/modules/sale";
-import AppProvider from "@/components/Application";
 import Logo from "@/layout/Logo";
 import AsideMenu from "@/layout/AsideMenu";
 import PageHeader from "@/layout/PageHeader";
 import { useDesignSettingStore } from "@/store/modules/designSetting";
 import { lighten } from "@/utils";
 
-export default defineComponent({
-  name: "TsiLayout",
-  components: {
-    AppProvider,
-    Logo,
-    AsideMenu,
-    PageHeader,
-  },
-  setup() {
-    const collapsed = ref(false);
 
-    const userStore = useUserStore();
+const collapsed = ref(false);
 
-    const activeUsersStore = useActiveUsersStore();
+const userStore = useUserStore();
 
-    activeUsersStore.initializeStore();
+const activeUsersStore = useActiveUsersStore();
 
-    const designStore = useDesignSettingStore();
+activeUsersStore.initializeStore();
 
-    designStore.initializeStore();
+const designStore = useDesignSettingStore();
 
-    const businessStore = useBusinessStore();
+designStore.initializeStore();
 
-    businessStore.initializeStore();
+const businessStore = useBusinessStore();
 
-    const settingsStore = useSettingsStore();
+businessStore.initializeStore();
 
-    settingsStore.initializeStore();
+const settingsStore = useSettingsStore();
 
-    const customerStore = useCustomerStore();
+settingsStore.initializeStore();
 
-    customerStore.initializeStore();
+const customerStore = useCustomerStore();
 
-    const tableStore = useTableStore();
+customerStore.initializeStore();
 
-    tableStore.initializeStore();
+const tableStore = useTableStore();
 
-    const productStore = useProductStore();
+tableStore.initializeStore();
 
-    productStore.initializeStore();
+const productStore = useProductStore();
 
-    const tillStore = useTillStore();
+productStore.initializeStore();
 
-    tillStore.initializeStore();
+const tillStore = useTillStore();
 
-    const saleStore = useSaleStore();
+tillStore.initializeStore();
 
-    saleStore.initializeStore();
+const saleStore = useSaleStore();
 
-    const genericsStore = useGenericsStore();
+saleStore.initializeStore();
 
-    genericsStore.initializeStore();
+const genericsStore = useGenericsStore();
 
-    // const watchWidth = () => {
-    //   const Width = document.body.clientWidth;
-    //   collapsed.value = Width <= 1280 && genericsStore.device !== "mobile";
-    //   genericsStore.updateDevice();
-    // };
+genericsStore.initializeStore();
 
-    onMounted(() => {
-      // window.addEventListener("resize", watchWidth);
-      // cookieStore.onchange = watchCookies;
-      // window['$loading'] = useLoadingBar()
-      // window['$loading'].finish()
-    });
 
-    /* const watchCookies = ({ deleted }) => {
-      if (deleted.some((item) => item.name === "token")) {
-        userStore.updateToken();
-      }
-    }; */
 
-    const getThemeOverrides = computed(() => {
-      const appTheme = designStore.appTheme;
-      const lightenStr = lighten(designStore.appTheme, 6);
-      return {
-        common: {
-          primaryColor: appTheme,
-          primaryColorHover: lightenStr,
-          primaryColorPressed: lightenStr,
-        },
-        DataTable: {
-          thPaddingTiny: "2px 2px 6px 6px",
-          tdPaddingTiny: "2px 2px 6px 6px",
-        },
-        LoadingBar: {
-          colorLoading: appTheme,
-        },
-      };
-    });
-
-    const getDarkTheme = computed(() =>
-      designStore.darkTheme ? darkTheme : undefined
-    );
-
-    return {
-      commonEsPE,
-      dateEsPE,
-      getThemeOverrides,
-      getDarkTheme,
-      darkTheme: createTheme([inputDark, datePickerDark]),
-      collapsed,
-      userStore,
-      genericsStore,
-    };
-  },
+const getThemeOverrides = computed(() => {
+  const appTheme = designStore.appTheme;
+  const lightenStr = lighten(designStore.appTheme, 6);
+  return {
+    common: {
+      primaryColor: appTheme,
+      primaryColorHover: lightenStr,
+      primaryColorPressed: lightenStr,
+    },
+    DataTable: {
+      thPaddingTiny: "2px 2px 6px 6px",
+      tdPaddingTiny: "2px 2px 6px 6px",
+    },
+    LoadingBar: {
+      colorLoading: appTheme,
+    },
+  };
 });
+
+const getDarkTheme = computed(() =>
+  designStore.darkTheme ? darkTheme : undefined
+);
+
 </script>
 <style lang="scss">
 .layout {

@@ -10,8 +10,8 @@
     <n-card class="d-none d-lg-flex">
       <n-grid responsive="screen" cols="1 xs:1 s:1 m:5 l:5 xl:5 2xl:5" :x-gap="12">
         <n-gi :span="3">
-          <transition name="mode-fade" mode="out-in">
-            <OrderTaking v-if="selectProducts" :loading="loading" :sale="sale" :show-observations="showObservations"
+          <transition v-if="ui.selectProducts" name="mode-fade" mode="out-in">
+            <OrderTaking :loading="ui.loading" :sale="sale" :show-observations="showObservations"
               :addresses-options="addressesOptions" :customer-options="customerOptions"
               :searching-customer="searchingCustomer" :whatsapp-number="whatsappNumber" :changing="changing"
               :sub-total="subTotal" :total-grv="totalGRV" :total-exn="totalEXN" :total-grt="totalGRT"
@@ -21,68 +21,71 @@
               @update:ticket-preview="ticketPreview = $event" @select-serie="selectSerie" @change-serie="changeSerie"
               @change-condition="changeCondition" @auto-create-customer="autoCreateCustomer"
               @create-addresses-options="createAddressesOptions" @change-address="changeAddress"
-              @handle-delivery="handleDelivery" @show-customer-modal="showCustomerModal = true"
+              @handle-delivery="handleDelivery" @show-customer-modal="ui.showCustomerModal = true"
               @perform-take-away="performTakeAway" @do-multiple-payment="doMultiplePayment" />
-            <div v-else>
-              <router-view />
-            </div>
           </transition>
+          <div v-else>
+            <router-view v-slot="{ Component }">
+              <component :is="Component" />
+            </router-view>
+          </div>
         </n-gi>
         <n-gi span="2">
-          <PaymentSummary :select-products="selectProducts" :product-search="productSearch" :show-modal="showModal"
-            :item-index="itemIndex" @update:select-products="selectProducts = $event"
-            @update:product-search="productSearch = $event" @update:show-modal="showModal = $event"
-            @update:item-index="itemIndex = $event" />
+          <PaymentSummary :select-products="ui.selectProducts" :product-search="ui.productSearch"
+            :show-modal="ui.showModal" :item-index="ui.itemIndex" @update:select-products="ui.selectProducts = $event"
+            @update:product-search="ui.productSearch = $event" @update:show-modal="ui.showModal = $event"
+            @update:item-index="ui.itemIndex = $event" />
         </n-gi>
       </n-grid>
     </n-card>
-    <n-tabs class="d-lg-none" tab-style="background: #fff;" v-model:value="activeTab" type="segment" animated>
+    <n-tabs class="d-lg-none" tab-style="background: #fff;" v-model:value="ui.activeTab" type="segment" animated>
       <n-tab-pane name="main" tab="Tomar pedido">
         <n-card>
           <transition name="mode-fade" mode="out-in">
-            <OrderTaking v-if="selectProducts" :loading="loading" :sale="sale" :show-observations="showObservations"
-              :addresses-options="addressesOptions" :customer-options="customerOptions"
-              :searching-customer="searchingCustomer" :whatsapp-number="whatsappNumber" :changing="changing"
-              :sub-total="subTotal" :total-grv="totalGRV" :total-exn="totalEXN" :total-grt="totalGRT"
-              :total-igv="totalIGV" :icbper="icbper" :total-dsct="totalDSCT" :is-multiple="isMultiple"
-              :ticket-preview="ticketPreview" @update:sale="(newSale) => Object.assign(sale, newSale)"
+            <OrderTaking v-if="ui.selectProducts" :loading="ui.loading" :sale="sale"
+              :show-observations="showObservations" :addresses-options="addressesOptions"
+              :customer-options="customerOptions" :searching-customer="searchingCustomer"
+              :whatsapp-number="whatsappNumber" :changing="changing" :sub-total="subTotal" :total-grv="totalGRV"
+              :total-exn="totalEXN" :total-grt="totalGRT" :total-igv="totalIGV" :icbper="icbper" :total-dsct="totalDSCT"
+              :is-multiple="isMultiple" :ticket-preview="ticketPreview"
+              @update:sale="(newSale) => Object.assign(sale, newSale)"
               @update:show-observations="showObservations = $event" @update:is-multiple="isMultiple = $event"
               @update:ticket-preview="ticketPreview = $event" @select-serie="selectSerie" @change-serie="changeSerie"
               @change-condition="changeCondition" @show-customer-options="showCustomerOptions"
               @auto-create-customer="autoCreateCustomer" @create-addresses-options="createAddressesOptions"
               @change-address="changeAddress" @handle-delivery="handleDelivery"
-              @show-customer-modal="showCustomerModal = true" @perform-take-away="performTakeAway"
+              @show-customer-modal="ui.showCustomerModal = true" @perform-take-away="performTakeAway"
               @do-multiple-payment="doMultiplePayment" @goToFirstTab="goToFirstTab" />
             <CategoriesList v-else />
           </transition>
         </n-card>
       </n-tab-pane>
       <n-tab-pane name="payment" tab="Resumen">
-        <PaymentSummary :select-products="selectProducts" :product-search="productSearch" :show-modal="showModal"
-          :item-index="itemIndex" @update:select-products="
+        <PaymentSummary :select-products="ui.selectProducts" :product-search="ui.productSearch"
+          :show-modal="ui.showModal" :item-index="ui.itemIndex" @update:select-products="
             (value) => {
-              selectProducts = value;
+              ui.selectProducts = value;
               goToFirstTab();
             }
-          " @update:product-search="productSearch = $event" @update:show-modal="showModal = $event"
-          @update:item-index="itemIndex = $event" @go-to-first-tab="goToFirstTab" />
+          " @update:product-search="ui.productSearch = $event" @update:show-modal="ui.showModal = $event"
+          @update:item-index="ui.itemIndex = $event" @go-to-first-tab="goToFirstTab" />
       </n-tab-pane>
     </n-tabs>
-    <n-modal :class="getModalClass" preset="card" v-model:show="showConfirm" title="Registrar pedido"
+    <n-modal :class="getModalClass" preset="card" v-model:show="ui.showConfirm" title="Registrar pedido"
       :mask-closable="false" closable>
       <n-form-item label="Ingrese código de usuario">
-        <n-input type="password" v-model:value="userConfirm" placeholder="" />
+        <n-input type="password" v-model:value="ui.userConfirm" placeholder="" />
       </n-form-item>
       <template #action>
         <n-space justify="end">
-          <n-button type="success" :loading="loading" :disabled="!userConfirm || loading" secondary
+          <n-button type="success" :loading="ui.loading" :disabled="!ui.userConfirm || ui.loading" secondary
             @click.prevent="performCreateOrder">
             Confirmar
           </n-button>
         </n-space>
       </template>
     </n-modal>
-    <n-modal :class="getModalClass" preset="card" v-model:show="showPayments" title="Realizar venta"
+    <n-modal :class="getModalClass" preset="card" v-model:show="ui.showPayments" title="Realizar venta"
       :mask-closable="false" closable @close="sale.payments = null">
       <n-space justify="space-between">
         <n-tag type="info">Total: S/. {{ showPayments ? sale.amount : null }}</n-tag>
@@ -100,8 +103,8 @@
         <n-dynamic-input v-model:value="sale.payments" :min="1" @create="createPayment">
           <template #default="{ value }">
             <div style="display: flex; align-items: center; width: 100%">
-              <n-select v-model:value="value.payment_method" :disabled="loading" :options="filteredMethods" />
-              <n-input class="ms-2" v-model:value="value.amount" placeholder="" :disabled="loading" v-numeric-only />
+              <n-select v-model:value="value.payment_method" :disabled="ui.loading" :options="filteredMethods" />
+              <n-input class="ms-2" v-model:value="value.amount" placeholder="" :disabled="ui.loading" v-numeric-only />
             </div>
           </template>
         </n-dynamic-input>
@@ -110,30 +113,30 @@
         <n-button type="success" :disabled="evalPayments ||
           sale.payments?.some((p) => p.payment_method === null) ||
           sale.payments?.some((p) => Number(p.amount) <= 0) ||
-          loading
-          " :loading="loading" secondary @click="performTakeAway">
+          ui.loading
+          " :loading="ui.loading" secondary @click="performTakeAway">
           Confirmar
         </n-button>
       </n-space>
     </n-modal>
 
-    <OrderIndications v-model:show="showModal" preset="card" title="Indicaciones"
-      :order="orderStore.orderList[itemIndex]" @success="showModal = false" />
-    <customer-modal v-model:show="showCustomerModal" :id-customer="sale.customer" :document="customerDocument"
+    <OrderIndications v-model:show="ui.showModal" preset="card" title="Indicaciones"
+      :order="orderStore.orderList[ui.itemIndex]" @success="ui.showModal = false" />
+    <customer-modal v-model:show="ui.showCustomerModal" :id-customer="sale.customer" :document="customerDocument"
       :doc_type="sale.invoice_type === 1 ? '6' : null" @update:show="onCloseModal" @on-success="onSuccess" />
-    <ticket-preview ref="ticketPreviewRef" v-model:show="showPdf" :data="pdfData" :hidden="true" :isUpdate="false" />
-    <preview-drawer ref="voucherDrawer" v-model:show="showVoucher" :data="voucherData" :previewOnly="!ticketPreview"
-      @printed="() => $router.push({ name: 'TableHome' })" @canceled="() => $router.push({ name: 'TableHome' })" />
+    <TicketPreview ref="ticketPreviewRef" v-model:show="ui.showPdf" :data="pdfData" :hidden="true" :isUpdate="false" />
+    <PreviewDrawer ref="voucherDrawer" v-model:show="ui.showVoucher" :data="voucherData"
+      :previewOnly="!ui.isTicketPreview" @printed="() => $router.push({ name: 'TableHome' })"
+      @canceled="() => $router.push({ name: 'TableHome' })" />
 
   </div>
 </template>
 
-<script>
-import { defineComponent, ref, computed, watch, onMounted } from "vue";
+<script setup>
+import { ref, computed, watch, onMounted, nextTick, reactive, defineAsyncComponent } from "vue";
 import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router";
 import { useMessage, useDialog } from "naive-ui";
 import { getSaleNumber } from "@/api/modules/sales";
-import { takeAwayOrder } from "@/api/modules/orders";
 import { searchCustomerByName, searchRucCustomer } from "@/api/modules/customer";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
@@ -141,484 +144,418 @@ import { useSettingsStore } from "@/store/modules/settings";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useUserStore } from "@/store/modules/user";
 import { useSaleTotals } from "@/composables/useSaleTotals";
-//import { useBreakpoint } from "vooks";
+import { useOrderProcessing } from "@/composables/useOrderProcessing";
 import OrderTaking from "./OrderTaking.vue";
 import PaymentSummary from "./PaymentSummary.vue";
 import CategoriesList from "./CategoriesList.vue";
-import OrderIndications from "./OrderIndications.vue";
-import CustomerModal from "@/views/Customer/components/CustomerModal.vue";
-import TicketPreview from "@/views/Order/components/TicketPreview.vue";
-import PreviewDrawer from "@/views/Sale/components/PreviewDrawer.vue";
+const OrderIndications = defineAsyncComponent(() => import("./OrderIndications.vue"));
+const CustomerModal = defineAsyncComponent(() => import("@/views/Customer/components/CustomerModal.vue"));
+const TicketPreview = defineAsyncComponent(() => import("@/views/Order/components/TicketPreview.vue"));
+const PreviewDrawer = defineAsyncComponent(() => import("@/views/Sale/components/PreviewDrawer.vue"));
 import format from "date-fns/format";
 
-export default defineComponent({
-  name: "TakeOrderLayout",
-  components: {
-    OrderTaking,
-    PaymentSummary,
-    CategoriesList,
-    OrderIndications,
-    CustomerModal,
-    TicketPreview,
-    PreviewDrawer,
-  },
-  setup() {
-    //const breakpointRef = useBreakpoint();
-    const orderStore = useOrderStore();
-    const message = useMessage();
-    const dialog = useDialog();
-    const genericsStore = useGenericsStore();
-    const saleStore = useSaleStore();
-    const settingsStore = useSettingsStore();
-    const userStore = useUserStore();
-    const route = useRoute();
-    const router = useRouter();
-    const { grandTotal, taxBreakdown, summary, menuTotal } = useSaleTotals();
 
-    const loading = ref(false);
-    const selectProducts = ref(false);
-    const showObservations = ref(false);
-    const isMultiple = ref(false);
-    const ticketPreview = ref(settingsStore.businessSettings?.sale?.show_preview ?? true);
-    const activeTab = ref("main");
-    const showModal = ref(false);
-    const showConfirm = ref(false);
-    const showPayments = ref(false);
-    const showCustomerModal = ref(false);
-    const showPdf = ref(false);
-    const showVoucher = ref(false);
-    const ticketPreviewRef = ref(null);
-    const voucherDrawer = ref(null);
-    const itemIndex = ref(null);
-    const userConfirm = ref("");
-    const productSearch = ref("");
+const orderStore = useOrderStore();
+const message = useMessage();
+const dialog = useDialog();
+const genericsStore = useGenericsStore();
+const saleStore = useSaleStore();
+const settingsStore = useSettingsStore();
+const userStore = useUserStore();
+const route = useRoute();
+const router = useRouter();
+const { grandTotal, taxBreakdown, summary, menuTotal } = useSaleTotals();
+const { processTakeAwayOrder, processCreateOrder } = useOrderProcessing();
 
-    const pdfData = ref(null);
-    const voucherData = ref(null);
-    const addressesOptions = ref([]);
-    const customerOptions = ref([]);
-    const customerResults = ref([]);
-    const searchingCustomer = ref(false);
-    const whatsappNumber = ref("");
-    const customerDocument = ref("");
-
-    // Usar el composable para obtener los totales correctos incluyendo menús
-    const subTotal = computed(() => summary.value.subtotal);
-    const icbper = computed(() => taxBreakdown.value.icbper);
-    const totalGRV = computed(() => taxBreakdown.value.taxed);
-    const totalEXN = computed(() => taxBreakdown.value.exempt + menuTotal.value);
-    const totalGRT = computed(() => taxBreakdown.value.free);
-    const totalIGV = computed(() => taxBreakdown.value.igv);
-
-    const totalDSCT = computed(() =>
-      saleStore.toSale.some(detail => Number(detail.discount) > 0)
-        ? saleStore.toSale.reduce((acc, curVal) => acc + Number(curVal.discount), 0)
-        : Number(sale.value.discount));
-
-    const changing = computed(() =>
-      sale.value.given_amount > grandTotal.value ? (sale.value.given_amount - grandTotal.value).toFixed(2) : 0.0);
-
-
-    const getModalClass = computed(() => ({
-      "w-100": genericsStore.device === "mobile",
-      "w-50": genericsStore.device === "tablet",
-      "w-25": genericsStore.device === "desktop",
-    }));
-
-    const defaultInvoiceType = settingsStore.businessSettings.sale?.enable_invoices
-      ? settingsStore.businessSettings.sale?.default_invoice
-      : 80;
-    const defaultSerieId = saleStore.getFirstOption(defaultInvoiceType);
-
-    const sale = ref({
-      serie: defaultSerieId,
-      number: "",
-      date_sale: format(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss"),
-      count: 0,
-      amount: "0.00",
-      given_amount: Number(0).toFixed(2),
-      invoice_type: defaultInvoiceType,
-      payment_method: 1,
-      payment_condition: 1,
-      customer_name: "",
-      customer: null,
-      address: null,
-      discount: "0.00",
-      icbper: 0,
-      other_charges: "0.00",
-      observations: "",
-      by_consumption: false,
-      sale_details: [],
-      ask_for: "",
-      delivery_info: !(route.query.delivery === undefined) && route.query.delivery === "true"
-        ? { person: "", address: "", phone: "", deliveryman: "", amount: parseFloat(0).toFixed(2) }
-        : null,
-      payments: null,
-      do_update: true,
-      is_change: true,
-      taxed_amount: 0,
-      exempt_amount: 0,
-      free_amount: 0,
-      igv_amount: 0,
-      total_igv: "0.00",
-    });
-
-    // Watcher combinado que usa useSaleTotals para menús y para productos regulares
-    watch([grandTotal, icbper, totalGRV, totalEXN, totalGRT, totalIGV, totalDSCT, () => saleStore.toSale, () => orderStore.orderList.length], () => {
-      // Calcular la cantidad de productos directamente (incluyendo menús)
-      const productCount = saleStore.toSale.reduce((acc, curVal) => acc + curVal.quantity, 0);
-      const menuCount = (saleStore.salePayload.sale_product_sets || []).reduce((acc, curVal) => acc + curVal.quantity, 0);
-
-      Object.assign(sale.value, {
-        count: productCount + menuCount,
-        amount: grandTotal.value,
-        icbper: icbper.value,
-        taxed_amount: totalGRV.value,
-        exempt_amount: totalEXN.value,
-        free_amount: totalGRT.value,
-        igv_amount: totalIGV.value,
-        total_igv: parseFloat(totalIGV.value || 0).toFixed(2),
-      });
-
-
-      // Actualizar el monto dado cuando cambia el total (para contado)
-      if (sale.value.payment_condition === 1) {
-        const newGivenAmount = grandTotal.value > 0 ? grandTotal.value : parseFloat(0).toFixed(2);
-        if (sale.value.given_amount !== newGivenAmount) {
-          sale.value.given_amount = newGivenAmount;
-          console.log("TakeOrderLayout - Monto de pago actualizado a:", newGivenAmount);
-        }
-      }
-    });
-
-    const obtainSaleNumber = async () => {
-      if (!sale.value.serie) return;
-      loading.value = true;
-      try {
-        const response = await getSaleNumber(sale.value.serie);
-        if (response.status === 200) {
-          sale.value.number = Number(response.data.number) + 1;
-        } else {
-          message.warning("No se pudo obtener el número de venta");
-        }
-      } catch (error) {
-        message.error("Algo salió mal al obtener el número de venta");
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    watch(
-      () => sale.value.serie,
-      async (newValue) => {
-        if (newValue !== undefined && newValue !== null) await obtainSaleNumber();
-      }
-    );
-
-    onMounted(async () => {
-      console.log('Componente montado, obteniendo número de venta inicial');
-      await obtainSaleNumber();
-    });
-
-    const selectSerie = (serieId) => {
-      if (serieId !== undefined && serieId !== null) sale.value.serie = serieId;
-    };
-
-    const changeSerie = (v) => {
-      const serieMap = { 1: 1, 3: 3, 80: 80 };
-      const nuevaSerie = saleStore.getFirstOption(serieMap[v] || 80);
-      if (nuevaSerie !== undefined && nuevaSerie !== null) sale.value.serie = nuevaSerie;
-    };
-
-    const changeCondition = (v) => {
-      sale.value.given_amount = v === 1 ? sale.value.amount : parseFloat(0).toFixed(2);
-    };
-
-    const goToFirstTab = () => activeTab.value = "main";
-
-    const performTakeAway = () => {
-      if (userStore.user.role === "MOZO") {
-        showConfirm.value = true;
-        return;
-      }
-      dialog.success({
-        closable: false,
-        title: "Confirmar pedido",
-        content: "¿Realizar pedido?",
-        positiveText: "Sí",
-        onPositiveClick: async () => {
-          loading.value = true;
-          try {
-            sale.value.sale_details = saleStore.toSale.map(detail => ({
-              ...detail,
-              igv_tax: typeof detail.igv_tax === "number" ? detail.igv_tax.toFixed(2) : detail.igv_tax,
-              price_base: typeof detail.price_base === "number" ? detail.price_base.toFixed(2) : detail.price_base,
-            }));
-            const igvValue = parseFloat(sale.value.total_igv || sale.value.igv_amount || 0);
-            sale.value.total_igv = igvValue.toFixed(2);
-            const saleClone = JSON.parse(JSON.stringify(sale.value));
-
-            // Obtener el payload completo que incluye sale_product_sets (menús)
-            const salePayload = saleStore.salePayload;
-            console.log("TakeOrderLayout - enviando orden con menús:", salePayload.sale_product_sets?.length || 0);
-
-            const response = await takeAwayOrder(orderStore.orderList, saleClone, userConfirm.value, salePayload);
-            if (response.status === 201) {
-              checkState.value = true;
-              cleanupOrderStore();
-              if (settingsStore.businessSettings.printer.print_html) {
-                voucherData.value = response.data.sale;
-                showVoucher.value = true;
-                if (!ticketPreview.value) {
-                  setTimeout(() => voucherDrawer.value.generate(), 250);
-                }
-              }
-              router.push({ name: "TableHome" });
-            }
-          } catch (error) {
-            message.error("Ha ocurrido un error al procesar la venta");
-          } finally {
-            loading.value = false;
-          }
-        },
-      });
-    };
-
-    const doMultiplePayment = () => {
-      sale.value.payments = [
-        { payment_method: sale.value.payment_method, amount: String(sale.value.amount) },
-      ];
-      showPayments.value = true;
-    };
-
-    const normalizePaymentAmount = (value) => {
-      const amount = parseFloat(value);
-      return Number.isFinite(amount) ? amount : 0;
-    };
-
-    const evalPayments = computed(() => {
-      if (sale.value.payments) {
-        const sum = sale.value.payments.reduce(
-          (acc, val) => acc + normalizePaymentAmount(val.amount),
-          0
-        );
-        return sum !== Number(sale.value.amount);
-      }
-      return true;
-    });
-
-    const currentPaymentsAmount = computed(() => {
-      if (sale.value.payments) {
-        const sum = sale.value.payments.reduce((acc, val) => acc + normalizePaymentAmount(val.amount), 0);
-        return Number.isFinite(sum) ? sum.toFixed(2) : "0.00";
-      }
-      return "0.00";
-    });
-
-    const filteredMethods = computed(() => saleStore.getPaymentMethodsOptions.map(option => ({
-      ...option,
-      disabled: sale.value.payments?.some(pay => pay.payment_method === option.value)
-    })));
-
-    const showCustomerOptions = async (value) => {
-      if (value.length >= 3 && value.length <= 11) {
-        searchingCustomer.value = true;
-        try {
-          const searchFunc = sale.value.invoice_type === 1 ? searchRucCustomer : searchCustomerByName;
-          const response = await searchFunc(value);
-          if (response.status === 200) {
-            customerResults.value = response.data;
-            customerOptions.value = response.data.map(customer => ({
-              value: customer.id,
-              label: `${customer.doc_num} - ${customer.names}`,
-              disabled: customer.is_disabled
-            }));
-          }
-        } catch (error) {
-          console.error(error);
-          message.error("Algo salió mal...");
-        } finally {
-          searchingCustomer.value = false;
-        }
-        return true;
-      } else {
-        customerResults.value = [];
-        customerOptions.value = [];
-        return false;
-      }
-    };
-
-    const autoCreateCustomer = () => {
-      if (!searchingCustomer.value && !customerResults.value.length) {
-        const name = sale.value.customer_name;
-        if (!isNaN(name) && ((name.length === 8 && sale.value.invoice_type !== 1) || name.length === 11)) {
-          showCustomerModal.value = true;
-          customerDocument.value = name;
-        }
-      }
-    };
-
-    const createAddressesOptions = () => {
-      console.info("si llega a crear las opciones de dirección, cliente seleccionado:", sale.value.customer?.id);
-
-      const customer = sale.value.customer;
-      sale.value.customer = customer.id;
-      whatsappNumber.value = customer?.phone || "";
-      if (customer) {
-        console.info("Direcciones del cliente:", customer.addresses);
-        addressesOptions.value = customer.addresses.map(address => ({
-          value: address.id,
-          label: `${address.ubigeo} - ${address.description}`
-        }));
-        if (addressesOptions.value.length) {
-          sale.value.address = addressesOptions.value[0].value;
-        }
-        if (sale.value.delivery_info) {
-          sale.value.delivery_info.person = customer.names;
-          sale.value.delivery_info.phone = customer.phone;
-          sale.value.delivery_info.address = customer.addresses.length ? customer.addresses[0].description : "";
-        }
-      }
-    };
-
-    const changeAddress = (v, o) => {
-      if (sale.value.delivery_info && o?.label) {
-        sale.value.delivery_info.address = o.label.split(" - ")[1];
-      }
-    };
-
-    const handleDelivery = (v) => {
-      sale.value.delivery_info = v ? {
-        person: "",
-        address: "",
-        phone: "",
-        deliveryman: "",
-        amount: parseFloat(0).toFixed(2)
-      } : null;
-      if (v) sale.value.ask_for = "";
-    };
-
-    const performCreateOrder = async () => {
-      loading.value = true;
-      try {
-        sale.value.sale_details = saleStore.toSale.map(detail => ({
-          ...detail,
-          igv_tax: detail.igv_tax.toFixed(2),
-          price_base: detail.price_base.toFixed(2)
-        }));
-        sale.value.discount = totalDSCT.value;
-
-        const response = await takeAwayOrder(orderStore.orderList, sale.value, userConfirm.value);
-        if (response.status === 201) {
-          message.success("Venta realizada correctamente!");
-          checkState.value = true;
-          cleanupOrderStore();
-          if (settingsStore.businessSettings.printer.print_html) {
-            voucherData.value = response.data.sale;
-            showVoucher.value = true;
-            if (!ticketPreview.value) {
-              setTimeout(() => voucherDrawer.value.generate(), 250);
-            }
-          }
-          router.push({ name: "TableHome" });
-        }
-      } catch (error) {
-        console.error(error);
-        message.error("Algo salió mal...");
-      } finally {
-        loading.value = false;
-        showConfirm.value = false;
-        userConfirm.value = "";
-      }
-    };
-
-    const createPayment = () => ({ payment_method: null, amount: "0" });
-
-    const onCloseModal = () => {
-      showCustomerModal.value = false;
-    };
-
-    const onSuccess = (customer) => {
-      if ((sale.value.invoice_type === 1 && customer.doc_type === "6") || sale.value.invoice_type !== 1) {
-        customerResults.value.push(customer);
-        sale.value.customer_name = `${customer.doc_num} - ${customer.names}`;
-        sale.value.customer = customer.id;
-        createAddressesOptions();
-      }
-      showCustomerModal.value = false;
-      onCloseModal();
-    };
-
-    const checkState = ref(false);
-    const hasUnsavedChanges = computed(() => orderStore.orderList.length > 0 && !checkState.value);
-
-    const handleRouteGuard = (to, isLeave = false) => {
-      if (!hasUnsavedChanges.value) {
-        cleanupOrderStore();
-        return;
-      }
-
-      const config = {
-        title: "Pedido sin procesar",
-        content: "¿Salir sin procesar el pedido?",
-        positiveText: "Sí",
-        onPositiveClick: () => {
-          checkState.value = true;
-          cleanupOrderStore();
-          router.push(to);
-        },
-        ...(isLeave ? {} : { negativeText: "No" }),
-        closable: !isLeave
-      };
-
-      dialog.error(config);
-      return false;
-    };
-
-    const cleanupOrderStore = () => {
-      orderStore.orders = [];
-      orderStore.orderList.splice(0);
-      saleStore.toSale.splice(0);
-      orderStore.clearNewOrders();
-    };
-
-    onBeforeRouteLeave((to) => handleRouteGuard(to, true));
-
-    return {
-      // Estados
-      loading, selectProducts, showObservations, isMultiple, ticketPreview, activeTab,
-      showModal, showConfirm, showPayments, showCustomerModal, showPdf, showVoucher,
-      // Referencias
-      ticketPreviewRef, voucherDrawer, itemIndex, userConfirm, productSearch,
-      // Datos
-      sale, pdfData, voucherData, addressesOptions, customerOptions,
-      searchingCustomer, whatsappNumber, customerDocument,
-      // Computados
-      changing, subTotal, totalGRV, totalEXN, totalGRT, totalIGV, totalDSCT, icbper,
-      getModalClass, evalPayments, currentPaymentsAmount, filteredMethods,
-      // Stores
-      orderStore,
-      // Métodos
-      selectSerie,
-      changeSerie,
-      changeCondition,
-      showCustomerOptions,
-      autoCreateCustomer,
-      createAddressesOptions,
-      changeAddress,
-      handleDelivery,
-      performTakeAway,
-      doMultiplePayment,
-      performCreateOrder,
-      createPayment,
-      onCloseModal,
-      onSuccess,
-      goToFirstTab,
-      checkState,
-      hasUnsavedChanges,
-    };
-  },
+// Estado UI agrupado en objeto reactivo para mejor organización
+const ui = reactive({
+  loading: false,
+  selectProducts: false,
+  showObservations: false,
+  isMultiple: false,
+  isTicketPreview: settingsStore.businessSettings?.sale?.show_preview ?? true,
+  activeTab: "main",
+  showModal: false,
+  showConfirm: false,
+  showPayments: false,
+  showCustomerModal: false,
+  showPdf: false,
+  showVoucher: false,
+  ticketPreviewRef: null,
+  voucherDrawer: null,
+  itemIndex: null,
+  userConfirm: "",
+  productSearch: "",
 });
+
+const pdfData = ref(null);
+const voucherData = ref(null);
+const addressesOptions = ref([]);
+const customerOptions = ref([]);
+const customerResults = ref([]);
+const searchingCustomer = ref(false);
+const whatsappNumber = ref("");
+const customerDocument = ref("");
+
+// Usar el composable para obtener los totales correctos incluyendo menús
+const subTotal = computed(() => summary.value.subtotal);
+const icbper = computed(() => taxBreakdown.value.icbper);
+const totalGRV = computed(() => taxBreakdown.value.taxed);
+const totalEXN = computed(() => taxBreakdown.value.exempt + menuTotal.value);
+const totalGRT = computed(() => taxBreakdown.value.free);
+const totalIGV = computed(() => taxBreakdown.value.igv);
+
+const totalDSCT = computed(() =>
+  saleStore.toSale.some(detail => Number(detail.discount) > 0)
+    ? saleStore.toSale.reduce((acc, curVal) => acc + Number(curVal.discount), 0)
+    : Number(sale.value.discount));
+
+const changing = computed(() =>
+  sale.value.given_amount > grandTotal.value ? (sale.value.given_amount - grandTotal.value).toFixed(2) : 0.0);
+
+const saleItemQuantity = computed(() =>
+  saleStore.toSale.reduce((acc, curVal) => acc + curVal.quantity, 0)
+);
+
+const menuItemQuantity = computed(() =>
+  (saleStore.salePayload.sale_product_sets || []).reduce((acc, curVal) => acc + curVal.quantity, 0)
+);
+
+const saleItemCount = computed(() => saleItemQuantity.value + menuItemQuantity.value);
+
+const getModalClass = computed(() => ({
+  "w-100": genericsStore.device === "mobile",
+  "w-50": genericsStore.device === "tablet",
+  "w-25": genericsStore.device === "desktop",
+}));
+
+const defaultInvoiceType = settingsStore.businessSettings.sale?.enable_invoices
+  ? settingsStore.businessSettings.sale?.default_invoice
+  : 80;
+const defaultSerieId = saleStore.getFirstOption(defaultInvoiceType);
+
+const sale = ref({
+  serie: defaultSerieId,
+  number: "",
+  date_sale: format(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss"),
+  count: 0,
+  amount: "0.00",
+  given_amount: Number(0).toFixed(2),
+  invoice_type: defaultInvoiceType,
+  payment_method: 1,
+  payment_condition: 1,
+  customer_name: "",
+  customer: null,
+  address: null,
+  discount: "0.00",
+  icbper: 0,
+  other_charges: "0.00",
+  observations: "",
+  by_consumption: false,
+  sale_details: [],
+  ask_for: "",
+  delivery_info: !(route.query.delivery === undefined) && route.query.delivery === "true"
+    ? { person: "", address: "", phone: "", deliveryman: "", amount: parseFloat(0).toFixed(2) }
+    : null,
+  payments: null,
+  do_update: true,
+  is_change: true,
+  taxed_amount: 0,
+  exempt_amount: 0,
+  free_amount: 0,
+  igv_amount: 0,
+  total_igv: "0.00",
+});
+
+// Sincroniza los totales del objeto sale con los cálculos de useSaleTotals
+const syncSaleTotals = () => {
+  Object.assign(sale.value, {
+    amount: grandTotal.value,
+    icbper: icbper.value,
+    taxed_amount: totalGRV.value,
+    exempt_amount: totalEXN.value,
+    free_amount: totalGRT.value,
+    igv_amount: totalIGV.value,
+    total_igv: parseFloat(totalIGV.value || 0).toFixed(2),
+  });
+};
+
+watch([grandTotal, icbper, totalGRV, totalEXN, totalGRT, totalIGV], syncSaleTotals, {
+  immediate: true,
+});
+
+// Sincroniza la cantidad total de líneas de pedido y menús
+watch(saleItemCount, (count) => {
+  sale.value.count = count;
+}, {
+  immediate: true,
+});
+
+// Ajusta el monto entregado cuando el cliente elige contado
+watch([
+  () => sale.value.payment_condition,
+  grandTotal,
+], ([paymentCondition, total]) => {
+  if (paymentCondition === 1) {
+    const newGivenAmount = total > 0 ? total : parseFloat(0).toFixed(2);
+    if (sale.value.given_amount !== newGivenAmount) {
+      sale.value.given_amount = newGivenAmount;
+    }
+  }
+}, {
+  immediate: true,
+});
+
+const obtainSaleNumber = async () => {
+  if (!sale.value.serie) return;
+  ui.loading = true;
+  try {
+    const response = await getSaleNumber(sale.value.serie);
+    if (response.status === 200) {
+      sale.value.number = Number(response.data.number) + 1;
+    } else {
+      message.warning("No se pudo obtener el número de venta");
+    }
+  } catch (error) {
+    message.error("Algo salió mal al obtener el número de venta");
+  } finally {
+    ui.loading = false;
+  }
+};
+
+watch(
+  () => sale.value.serie,
+  async (newValue) => {
+    if (newValue !== undefined && newValue !== null) await obtainSaleNumber();
+  }
+);
+
+onMounted(async () => {
+  console.log('Componente montado, obteniendo número de venta inicial');
+  await obtainSaleNumber();
+});
+
+const selectSerie = (serieId) => {
+  if (serieId !== undefined && serieId !== null) sale.value.serie = serieId;
+};
+
+const changeSerie = (v) => {
+  const serieMap = { 1: 1, 3: 3, 80: 80 };
+  const nuevaSerie = saleStore.getFirstOption(serieMap[v] || 80);
+  if (nuevaSerie !== undefined && nuevaSerie !== null) sale.value.serie = nuevaSerie;
+};
+
+const changeCondition = (v) => {
+  sale.value.given_amount = v === 1 ? sale.value.amount : parseFloat(0).toFixed(2);
+};
+
+const goToFirstTab = () => ui.activeTab = "main";
+
+const performTakeAway = async () => {
+  if (userStore.user.role === "MOZO") {
+    ui.showConfirm = true;
+    return;
+  }
+  dialog.success({
+    closable: false,
+    title: "Confirmar pedido",
+    content: "¿Realizar pedido?",
+    positiveText: "Sí",
+    onPositiveClick: async () => {
+      const result = await processTakeAwayOrder(sale, ui, showAndGenerateTicket, cleanupOrderStore);
+      if (result.success) {
+        checkState.value = true;
+      }
+    },
+  });
+};
+
+const doMultiplePayment = () => {
+  sale.value.payments = [
+    { payment_method: sale.value.payment_method, amount: String(sale.value.amount) },
+  ];
+  ui.showPayments = true;
+};
+
+const normalizePaymentAmount = (value) => {
+  const amount = parseFloat(value);
+  return Number.isFinite(amount) ? amount : 0;
+};
+
+const evalPayments = computed(() => {
+  if (sale.value.payments) {
+    const sum = sale.value.payments.reduce(
+      (acc, val) => acc + normalizePaymentAmount(val.amount),
+      0
+    );
+    return sum !== Number(sale.value.amount);
+  }
+  return true;
+});
+
+const currentPaymentsAmount = computed(() => {
+  if (sale.value.payments) {
+    const sum = sale.value.payments.reduce((acc, val) => acc + normalizePaymentAmount(val.amount), 0);
+    return Number.isFinite(sum) ? sum.toFixed(2) : "0.00";
+  }
+  return "0.00";
+});
+
+const filteredMethods = computed(() => saleStore.getPaymentMethodsOptions.map(option => ({
+  ...option,
+  disabled: sale.value.payments?.some(pay => pay.payment_method === option.value)
+})));
+
+const showCustomerOptions = async (value) => {
+  if (value.length >= 3 && value.length <= 11) {
+    searchingCustomer.value = true;
+    try {
+      const searchFunc = sale.value.invoice_type === 1 ? searchRucCustomer : searchCustomerByName;
+      const response = await searchFunc(value);
+      if (response.status === 200) {
+        customerResults.value = response.data;
+        customerOptions.value = response.data.map(customer => ({
+          value: customer.id,
+          label: `${customer.doc_num} - ${customer.names}`,
+          disabled: customer.is_disabled
+        }));
+      }
+    } catch (error) {
+      console.error(error);
+      message.error("Algo salió mal...");
+    } finally {
+      searchingCustomer.value = false;
+    }
+    return true;
+  } else {
+    customerResults.value = [];
+    customerOptions.value = [];
+    return false;
+  }
+};
+
+const autoCreateCustomer = () => {
+  if (!searchingCustomer.value && !customerResults.value.length) {
+    const name = sale.value.customer_name;
+    if (!isNaN(name) && ((name.length === 8 && sale.value.invoice_type !== 1) || name.length === 11)) {
+      ui.showCustomerModal = true;
+      customerDocument.value = name;
+    }
+  }
+};
+
+const createAddressesOptions = () => {
+  console.info("si llega a crear las opciones de dirección, cliente seleccionado:", sale.value.customer?.id);
+
+  const customer = sale.value.customer;
+  sale.value.customer = customer.id;
+  whatsappNumber.value = customer?.phone || "";
+  if (customer) {
+    console.info("Direcciones del cliente:", customer.addresses);
+    addressesOptions.value = customer.addresses.map(address => ({
+      value: address.id,
+      label: `${address.ubigeo} - ${address.description}`
+    }));
+    if (addressesOptions.value.length) {
+      sale.value.address = addressesOptions.value[0].value;
+    }
+    if (sale.value.delivery_info) {
+      sale.value.delivery_info.person = customer.names;
+      sale.value.delivery_info.phone = customer.phone;
+      sale.value.delivery_info.address = customer.addresses.length ? customer.addresses[0].description : "";
+    }
+  }
+};
+
+const changeAddress = (v, o) => {
+  if (sale.value.delivery_info && o?.label) {
+    sale.value.delivery_info.address = o.label.split(" - ")[1];
+  }
+};
+
+const handleDelivery = (v) => {
+  sale.value.delivery_info = v ? {
+    person: "",
+    address: "",
+    phone: "",
+    deliveryman: "",
+    amount: parseFloat(0).toFixed(2)
+  } : null;
+  if (v) sale.value.ask_for = "";
+};
+
+const performCreateOrder = async () => {
+  const result = await processCreateOrder(sale, ui, showAndGenerateTicket, cleanupOrderStore);
+  if (result.success) {
+    checkState.value = true;
+  }
+};
+
+const showAndGenerateTicket = async (voucherDataValue, shouldGenerate = true) => {
+  voucherData.value = voucherDataValue;
+  ui.showVoucher = true;
+  if (shouldGenerate && ui.isTicketPreview) {
+    await nextTick();
+    if (ui.voucherDrawer && typeof ui.voucherDrawer.generate === 'function') {
+      await ui.voucherDrawer.generate();
+    } else {
+      console.warn('voucherDrawer no disponible o sin generate');
+    }
+  }
+};
+
+const createPayment = () => ({ payment_method: null, amount: "0" });
+
+const onCloseModal = () => {
+  ui.showCustomerModal = false;
+};
+
+const onSuccess = (customer) => {
+  if ((sale.value.invoice_type === 1 && customer.doc_type === "6") || sale.value.invoice_type !== 1) {
+    customerResults.value.push(customer);
+    sale.value.customer_name = `${customer.doc_num} - ${customer.names}`;
+    sale.value.customer = customer.id;
+    createAddressesOptions();
+  }
+  ui.showCustomerModal = false;
+  onCloseModal();
+};
+
+const checkState = ref(false);
+const hasUnsavedChanges = computed(() => orderStore.orderList.length > 0 && !checkState.value);
+
+const handleRouteGuard = (to, isLeave = false) => {
+  if (!hasUnsavedChanges.value) {
+    cleanupOrderStore();
+    return;
+  }
+
+  const config = {
+    title: "Pedido sin procesar",
+    content: "¿Salir sin procesar el pedido?",
+    positiveText: "Sí",
+    onPositiveClick: () => {
+      checkState.value = true;
+      cleanupOrderStore();
+      router.push(to);
+    },
+    ...(isLeave ? {} : { negativeText: "No" }),
+    closable: !isLeave
+  };
+
+  dialog.error(config);
+  return false;
+};
+
+const cleanupOrderStore = () => {
+  orderStore.orders = [];
+  orderStore.orderList.splice(0);
+  saleStore.toSale.splice(0);
+  orderStore.clearNewOrders();
+};
+
+onBeforeRouteLeave((to) => handleRouteGuard(to, true));
+
 </script>
 
 <style lang="scss" scoped>

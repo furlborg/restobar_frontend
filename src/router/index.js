@@ -9,7 +9,7 @@ export const routes = [
     path: "",
     name: "App",
     redirect: { name: "Dashboard" },
-    component: () => import("@/layout/index.vue"),
+    component: () => import("@/layout/LayoutIndex.vue"),
     meta: {
       requiresAuth: true,
     },
@@ -17,7 +17,7 @@ export const routes = [
       {
         path: "dashboard",
         name: "Dashboard",
-        component: () => import("@/views/Dashboard/index.vue"),
+        component: () => import("@/views/Dashboard/DashboardIndex.vue"),
       },
       {
         path: "/customer",
@@ -209,7 +209,7 @@ export const routes = [
           },
           {
             name: "TakeOrder",
-            path: "/take-order",
+            path: "take-order",
             meta: { requiredPerm: "take_away_order" },
             redirect: { name: "CategoriesOrder" },
             component: () =>
@@ -474,6 +474,9 @@ router.beforeEach(async (to, from, next) => {
   const genericsStore = useGenericsStore();
   genericsStore.updateDevice();
   await userStore.checkAuthentication();
+
+  console.log("Navigating to:", to.name);
+  console.log("User authenticated:", userStore.user);
 
   // Original authentication logic
   if (to.matched.some((record) => record.meta.requiresAuth)) {

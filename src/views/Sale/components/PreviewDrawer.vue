@@ -1,85 +1,46 @@
 <template>
-    <n-drawer
-            id="PreviewDrawer"
-            :show="show"
-            @update:show="(v) => $emit('update:show', v)"
-            placement="right"
-            width="272px"
-            :on-after-leave="() => (send = false)"
-            :mask-closable="false"
-            :on-esc="() => ($emit('update:show', false), $emit('canceled'))"
-            :z-index="!previewOnly ? undefined : -1000000"
-    >
-        <n-drawer-content
-                body-content-style="padding: 0;"
-                footer-style="padding: 0; height: auto; display: flex; flex-direction: column;"
-                :native-scrollbar="false"
-        >
+    <n-drawer id="PreviewDrawer" :show="show" @update:show="(v) => $emit('update:show', v)" placement="right"
+        width="272px" :on-after-leave="() => (send = false)" :mask-closable="false"
+        :on-esc="() => ($emit('update:show', false), $emit('canceled'))" :z-index="!previewOnly ? undefined : -1000000">
+        <n-drawer-content body-content-style="padding: 0;"
+            footer-style="padding: 0; height: auto; display: flex; flex-direction: column;" :native-scrollbar="false">
             <template #header>
-                <n-page-header
-                        title="Previsualización"
-                        @back="() => ($emit('update:show', false), $emit('canceled'))"
-                ></n-page-header>
+                <n-page-header title="Previsualización"
+                    @back="() => ($emit('update:show', false), $emit('canceled'))"></n-page-header>
             </template>
-            <default-preset v-if="!preVoucher" ref="ticket" :data="data" :isPrintMode="isPrintMode"/>
-            <preview-preset v-else ref="ticket" :data="data" :isPrintMode="isPrintMode"/>
+            <default-preset v-if="!preVoucher" ref="ticket" :data="data" :isPrintMode="isPrintMode" />
+            <preview-preset v-else ref="ticket" :data="data" :isPrintMode="isPrintMode" />
             <template v-if="!previewOnly" #footer>
                 <n-button class="fs-4" type="info" secondary block @click="generate">
                     Imprimir
                 </n-button>
                 <div style="width: 100%; display: flex">
                     <n-button-group>
-                        <n-button
-                                style="width: 90px"
-                                type="success"
-                                tertiary
-                                @click="dataModalWhatsApp()"
-                                :disabled="data.status === 'A'"
-                        >
-                            <v-icon name="bi-whatsapp"/>
+                        <n-button style="width: 90px" type="success" tertiary @click="dataModalWhatsApp()"
+                            :disabled="data.status === 'A'">
+                            <v-icon name="bi-whatsapp" />
                         </n-button>
                         <n-button style="width: 90px" type="info" tertiary disabled>
-                            <v-icon name="md-outgoingmail"/>
+                            <v-icon name="md-outgoingmail" />
                         </n-button>
-                        <n-button
-                                style="width: 90px"
-                                type="warning"
-                                tertiary
-                                @click="generate(true)"
-                        >
-                            <v-icon name="fa-download"/>
+                        <n-button style="width: 90px" type="warning" tertiary @click="generate(true)">
+                            <v-icon name="fa-download" />
                         </n-button>
                     </n-button-group>
-                    <n-drawer
-                            v-model:show="send"
-                            placement="bottom"
-                            to="#PreviewDrawer"
-                            height="69"
-                    >
+                    <n-drawer v-model:show="send" placement="bottom" to="#PreviewDrawer" height="69">
                         <n-drawer-content body-content-style="padding: 0;">
-                            <n-input
-                                    v-model:value="phoneNumber"
-                                    placeholder=""
-                                    @keypress="isNumber"
-                                    :show-count="true"
-                                    :maxlength="9"
-                            />
-                            <n-button
-                                    type="success"
-                                    secondary
-                                    block
-                                    :loading="loading"
-                                    :disabled="phoneNumber.length < 9 || loading"
-                                    @click="sendToWhatsapp"
-                            >
-                                <v-icon name="bi-whatsapp"/>
+                            <n-input v-model:value="phoneNumber" placeholder="" @keypress="isNumber" :show-count="true"
+                                :maxlength="9" />
+                            <n-button type="success" secondary block :loading="loading"
+                                :disabled="phoneNumber.length < 9 || loading" @click="sendToWhatsapp">
+                                <v-icon name="bi-whatsapp" />
                                 Enviar
                             </n-button>
                         </n-drawer-content>
                     </n-drawer>
                 </div>
             </template>
-            <send-to-whats-app-mervin-gay :data-message="data" :data-modal="putaOscar"/>
+            <send-to-whats-app-mervin-gay :data-message="data" :data-modal="putaOscar" />
         </n-drawer-content>
     </n-drawer>
 </template>
@@ -107,7 +68,7 @@ export default defineComponent({
         DefaultPreset,
         PreviewPreset
     },
-    emits: [ "update:show", "printed", "canceled" ],
+    emits: ["update:show", "printed", "canceled"],
     props: {
         show: {
             type: Boolean
@@ -131,8 +92,6 @@ export default defineComponent({
         const totalEnterPulse = ref(0);
         const businessStore = useBusinessStore();
         const isPrintMode = ref(false);
-        // eslint-disable-next-line no-undef
-        // const apiUrl = import.meta.env.VITE_APP_URL.replace(/^https?:\/\//, ''); // Elimina 'http://' o 'https://'
         let socket = null;
 
         const showModalWhatsApp = ref(false);
@@ -169,7 +128,7 @@ export default defineComponent({
                 if (totalEnterPulse.value >= 3 && totalEnterPulse.value <= 4) {
                     generate();
                     message.success(
-                        `"Total de pulsaciones: ", ${ totalEnterPulse.value }, "si no se imprime es porque el qz esta mal configurado..."`);
+                        `"Total de pulsaciones: ", ${totalEnterPulse.value}, "si no se imprime es porque el qz esta mal configurado..."`);
                 }
             }
         });
@@ -185,7 +144,7 @@ export default defineComponent({
             }
         );
 
-        const generate = async(save = false) => {
+        const generate = async (save = false) => {
             // Activar modo impresión para usar dimensiones correctas
             isPrintMode.value = true;
 
@@ -197,8 +156,8 @@ export default defineComponent({
                     const el = ticket.value?.$el;
                     if (!el) throw new Error("Ticket DOM no disponible");
                     const canvas = await html2canvas(el, {
-                        scale: 2,            
-                        useCORS: true,       
+                        scale: 2,
+                        useCORS: true,
                         logging: false,
                         backgroundColor: '#ffffff'
                     });
@@ -215,7 +174,7 @@ export default defineComponent({
                     });
 
                     doc.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH, undefined, 'FAST');
-                    doc.save(`${ saleStore.getSerieDescription(props.data.serie) }-${ props.data.number }`);
+                    doc.save(`${saleStore.getSerieDescription(props.data.serie)}-${props.data.number}`);
                 } catch (e) {
                     console.error(e);
                 } finally {
@@ -340,22 +299,22 @@ export default defineComponent({
                     };
 
                     // Verifica el estado del WebSocket y maneja la conexión
-                    if ( !socket || socket.readyState === WebSocket.CLOSED) {
+                    if (!socket || socket.readyState === WebSocket.CLOSED) {
                         // eslint-disable-next-line no-undef
                         const apiUrl = import.meta.env.VITE_APP_URL.replace(/^https?:\/\//, "");
-                        socket = new WebSocket(`${ window.location.protocol === "https:" ? "wss" : "ws" }://${ apiUrl }/ws/print/`);
+                        socket = new WebSocket(`${window.location.protocol === "https:" ? "wss" : "ws"}://${apiUrl}/ws/print/`);
 
-                        socket.onopen = function() {
+                        socket.onopen = function () {
                             console.log("Conexión WebSocket abierta");
                             sendTicketData();
                         };
 
-                        socket.onerror = function(error) {
+                        socket.onerror = function (error) {
                             console.log("Error en WebSocket", error);
                             message.error(error);
                         };
 
-                        socket.onmessage = function(event) {
+                        socket.onmessage = function (event) {
                             if (event.data.includes("success")) {
                                 console.log("Mensaje recibido del servidor", JSON.parse(event.data).success);
                                 message.success(JSON.parse(event.data).success);
@@ -363,7 +322,7 @@ export default defineComponent({
                             }
                         };
 
-                        socket.onclose = function(event) {
+                        socket.onclose = function (event) {
                             console.log("Conexión WebSocket cerrada", event);
                         };
                     } else if (socket.readyState === WebSocket.OPEN) {
@@ -371,10 +330,10 @@ export default defineComponent({
                         sendTicketData();
                     }
                 } else {
-                    const gordoPuto = async() => {
+                    const gordoPuto = async () => {
                         try {
                             // eslint-disable-next-line no-undef
-                            const response = await http.post(`${ import.meta.env.VITE_APP_URL }/api/v1/sales/${ props.data.id }/print/`);
+                            const response = await http.post(`${import.meta.env.VITE_APP_URL}/api/v1/sales/${props.data.id}/print/`);
                             if (response.status === 200) {
                                 return response.data;
                             }
@@ -391,59 +350,19 @@ export default defineComponent({
                         const jsonTicket = {
                             ...voucherData,
                             printer_name: voucherData.printer_name
-                                          ? voucherData.printer_name
-                                          : settingsStore.business_settings.sale.printer_name
+                                ? voucherData.printer_name
+                                : settingsStore.business_settings.sale.printer_name
                         };
                         socket?.send(JSON.stringify(jsonTicket));
                     };
 
-                    // if(!socket || socket.readyState === WebSocket.CLOSED) {
-                    //     // eslint-disable-next-line no-undef
-                    //     const apiUrl = import.meta.env.VITE_APP_URL.replace(/^https?:\/\//, "");
-                    //     socket = new WebSocket(`${window.location.protocol === "https:" ? "wss" : "ws"}://${apiUrl}/ws/print/`);
-                    //
-                    //     socket.onopen = function() {
-                    //         console.log("Conexión WebSocket abierta");
-                    //         sendTicketData();
-                    //     };
-                    //
-                    //     socket.onerror = function(error) {
-                    //         console.log("Error en WebSocket", error);
-                    //         message.error(error);
-                    //     };
-                    //
-                    //     socket.onmessage = function(event) {
-                    //         if(event.data.includes("success")) {
-                    //             console.log("Mensaje recibido del servidor", JSON.parse(event.data).success);
-                    //             message.success(JSON.parse(event.data).success);
-                    //             socket.close()
-                    //         }
-                    //     };
-                    //
-                    //     socket.onclose = function(event) {
-                    //         console.log("Conexión WebSocket cerrada", event);
-                    //     };
-                    // } else 
-                    //     if(socket.readyState === WebSocket.OPEN) {
                     sendTicketData();
-                    // }
-
-                    // const printDataVoucher = await gordoPuto()
-                    // console.log(printDataVoucher);
-                    // doc.autoPrint();
-                    // const hiddeFrame = document.createElement("iframe");
-                    // hiddeFrame.style.position = "fixed";
-                    // hiddeFrame.style.width = "1px";
-                    // hiddeFrame.style.height = "1px";
-                    // hiddeFrame.style.opacity = "0.01";
-                    // hiddeFrame.src = doc.output("bloburl");
-                    // document.body.appendChild(hiddeFrame);
                 }
             }
-            
+
             // Desactivar modo impresión después de generar el PDF
             isPrintMode.value = false;
-            
+
             emit("printed");
             emit("update:show", false);
         };
@@ -452,14 +371,14 @@ export default defineComponent({
             loading.value = true;
             sendWhatsapp(
                 props.data.id,
-                [ props.data.serie, props.data.number ],
+                [props.data.serie, props.data.number],
                 phoneNumber.value
             ).then((response) => {
                 if (response.status === 200)
                     window.open(response.data.data.url, "_blank");
             }).catch((error) => {
                 console.error(error);
-                
+
             }).finally(() => {
                 phoneNumber.value = "";
                 loading.value = false;
