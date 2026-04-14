@@ -128,6 +128,7 @@ import {
   MdEventavailableRound,
   BiBank,
   MdTablechart,
+  MdUploadfile
 } from "oh-vue-icons/icons";
 
 addIcons(
@@ -258,7 +259,8 @@ addIcons(
   MdCreditcardTwotone,
   MdDeleteRound,
   CoBirthdayCake,
-  MdCancelpresentationTwotone
+  MdCancelpresentationTwotone,
+  MdUploadfile
 );
 
 export { OhVueIcon };
