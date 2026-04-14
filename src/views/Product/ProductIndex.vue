@@ -3,6 +3,10 @@
     <n-card title="Productos" :segmented="{ content: 'hard' }">
       <template #header-extra>
         <n-space justify="space-around">
+          <n-button v-if="userStore.hasPermission('add_product')" type="info" @click="showImportModal = true" secondary>
+            <template #icon><n-icon><v-icon name="md-uploadfile" /></n-icon></template>
+            Importar Excel
+          </n-button>
           <n-button type="primary" @click="showSalesReportModal = true" secondary>
             <template #icon><n-icon><v-icon name="md-equalizer-twotone" /></n-icon></template>
             Registro de ventas
@@ -131,6 +135,9 @@
     <product-modal v-model:show="showModal" :id-product="idProduct" @update:show="onCloseModal"
       @on-success="onSuccess" />
 
+    <!-- Product Excel Import Modal -->
+    <product-import-modal v-model:show="showImportModal" @on-success="onSuccess" />
+
     <!-- Sales Report Modal -->
     <sales-report-modal v-model:show="showSalesReportModal" @update:show="onCloseSalesReportModal" />
 
@@ -144,6 +151,7 @@ import { useMessage, useDialog } from "naive-ui";
 import defaultFoodImage from "@/assets/images/default-food-image.jpg";
 import { renderIcon } from "@/utils";
 import ProductModal from "./components/ProductModal";
+import ProductImportModal from "./components/ProductImportModal.vue";
 import SalesReportModal from "./components/SalesReportModal";
 import { useProductStore } from "@/store/modules/product";
 import { useUserStore } from "@/store/modules/user";
@@ -164,6 +172,7 @@ const dialog = useDialog();
 
 const listType = ref("list");
 const showModal = ref(false);
+const showImportModal = ref(false);
 const showSalesReportModal = ref(false);
 const showModalMovement = ref(false);
 const idProduct = ref(0);
