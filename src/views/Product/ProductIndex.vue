@@ -34,7 +34,9 @@
         </n-input-group>
         <n-select v-model:value="category" :options="categoriesOptions" placeholder="Seleccione una categoria"
           @update:value="debouncedPerformSearch" filterable style="min-width: 200px" />
-        <n-checkbox v-model:checked="show_disabled">Mostrar deshabilitados</n-checkbox>
+        <n-checkbox v-model:checked="show_disabled" @update:checked="debouncedPerformSearch">
+          Mostrar deshabilitados
+        </n-checkbox>
       </n-space>
 
       <n-spin class="mt-2" :show="isLoadingData">
@@ -210,7 +212,7 @@ const {
   setTotal,
   reset,
   loading: isLoadingData,
-  showDisabled: show_disabled,
+  show_disabled,
   category,
 } = usePagination(searchProductWrapper, 10);
 
