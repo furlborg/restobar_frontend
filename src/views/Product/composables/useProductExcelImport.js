@@ -2,7 +2,7 @@ import { computed, ref } from "vue";
 import ExcelJS from "exceljs";
 import saveAs from "file-saver";
 import { useMessage } from "naive-ui";
-import { createProduct } from "@/api/modules/products";
+import { createProduct, createProductCategory } from "@/api/modules/products";
 import { getBranchs } from "@/api/modules/business";
 import { getMeasureUnit } from "@/api/modules/supplies";
 import { useProductStore } from "@/store/modules/product";
@@ -167,6 +167,97 @@ const normalizeSourceRows = (worksheet, headerMap) => {
   return rows;
 };
 
+const formatFieldLabel = (field) => {
+  const labels = {
+    code: "Código",
+    name: "Nombre",
+    prices: "Precio de venta",
+    purchase_price: "Precio de compra",
+    category: "Categoría",
+    preparation_place: "Lugar de preparación",
+    measure_unit: "Unidad de medida",
+    affectation: "Afectación",
+    igv_tax: "IGV",
+    stock: "Stock",
+    control_stock: "Control de stock",
+    quick_indications: "Indicaciones rápidas",
+  };
+
+  return labels[field] || field;
+};
+
+const normalizeApiErrorValue = (value) => {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => normalizeApiErrorValue(item))
+      .filter(Boolean)
+      .join(" | ");
+  }
+
+  if (value && typeof value === "object") {
+    if (typeof value.detail === "string") {
+      return value.detail;
+    }
+
+    return Object.entries(value)
+      .map(([nestedField, nestedValue]) => {
+        const nestedMessage = normalizeApiErrorValue(nestedValue);
+        if (!nestedMessage) {
+          return "";
+        }
+
+        return `${formatFieldLabel(nestedField)}: ${nestedMessage}`;
+      })
+      .filter(Boolean)
+      .join(" | ");
+  }
+
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  return String(value);
+};
+
+const extractApiErrorMessage = (errorOrData) => {
+  const data = errorOrData?.response?.data ?? errorOrData;
+
+  if (!data) {
+    return "No se pudo crear el producto";
+  }
+
+  if (typeof data === "string") {
+    return data;
+  }
+
+  if (Array.isArray(data)) {
+    const message = normalizeApiErrorValue(data);
+    return message || "No se pudo crear el producto";
+  }
+
+  if (typeof data === "object") {
+    if (typeof data.detail === "string") {
+      return data.detail;
+    }
+
+    const fieldMessages = Object.entries(data)
+      .map(([field, value]) => {
+        const normalizedValue = normalizeApiErrorValue(value);
+        if (!normalizedValue) {
+          return "";
+        }
+
+        return `${formatFieldLabel(field)}: ${normalizedValue}`;
+      })
+      .filter(Boolean)
+      .join(" | ");
+
+    return fieldMessages || "No se pudo crear el producto";
+  }
+
+  return "No se pudo crear el producto";
+};
+
 const buildProductPayload = ({ source, productStore, measureUnits }) => {
   const errors = [];
 
@@ -174,7 +265,8 @@ const buildProductPayload = ({ source, productStore, measureUnits }) => {
   const name = getCellText(source.name);
   const prices = parseDecimal(source.prices);
   const purchasePrice = parseDecimal(source.purchase_price) ?? 0;
-  const category = resolveByIdOrLabel(productStore.categories, source.category);
+  const categoryName = getCellText(source.category);
+  const category = resolveByIdOrLabel(productStore.categories, categoryName);
   const preparationPlace = resolveByIdOrLabel(productStore.places, source.preparation_place);
   const measureUnit = resolveByIdOrLabel(measureUnits, source.measure_unit);
   const affectation = resolveByIdOrLabel(productStore.affectations, source.affectation);
@@ -186,7 +278,7 @@ const buildProductPayload = ({ source, productStore, measureUnits }) => {
   if (!code) errors.push("Código requerido");
   if (!name) errors.push("Nombre requerido");
   if (prices === null) errors.push("Precio de venta inválido");
-  if (category === null) errors.push("Categoría no encontrada");
+  if (!categoryName) errors.push("Categoría requerida");
   if (measureUnit === null) errors.push("Unidad de medida no encontrada");
   if (affectation === null) errors.push("Afectación no encontrada");
 
@@ -211,6 +303,7 @@ const buildProductPayload = ({ source, productStore, measureUnits }) => {
       prices,
       purchase_price: purchasePrice,
       category,
+      category_name: categoryName,
       preparation_place: preparationPlace,
       measure_unit: measureUnit,
       affectation,
@@ -300,6 +393,115 @@ export function useProductExcelImport() {
       details: [],
     };
     progress.value = 0;
+  };
+
+  const rebuildParsedRows = () => {
+    parsedRows.value = parsedRows.value.map(({ rowNumber, source }) => {
+      const result = buildProductPayload({
+        source,
+        productStore,
+        measureUnits: measureUnits.value,
+      });
+
+      return {
+        rowNumber,
+        source,
+        ...result,
+      };
+    });
+
+    importResults.value = {
+      ...importResults.value,
+      total: parsedRows.value.length,
+      valid: validRows.value.length,
+      skipped: invalidRows.value.length,
+    };
+  };
+
+  const createMissingCategories = async () => {
+    const missingCategories = [];
+    const seen = new Set();
+
+    parsedRows.value.forEach((row) => {
+      const categoryName = getCellText(row?.source?.category);
+      if (!categoryName) {
+        return;
+      }
+
+      const existingCategoryId = resolveByIdOrLabel(
+        productStore.categories,
+        categoryName,
+      );
+      if (existingCategoryId !== null) {
+        return;
+      }
+
+      const normalizedCategory = normalizeText(categoryName);
+      if (!normalizedCategory || seen.has(normalizedCategory)) {
+        return;
+      }
+
+      seen.add(normalizedCategory);
+      missingCategories.push(categoryName.trim());
+    });
+
+    if (!missingCategories.length) {
+      return { created: 0, failed: 0 };
+    }
+
+    let created = 0;
+    let failed = 0;
+
+    for (const categoryName of missingCategories) {
+      try {
+        const response = await createProductCategory(categoryName, false);
+
+        if (response.status === 201) {
+          created += 1;
+        } else {
+          failed += 1;
+        }
+      } catch (error) {
+        failed += 1;
+        console.error(error);
+      }
+    }
+
+    await productStore.refreshCategories();
+    rebuildParsedRows();
+
+    return { created, failed };
+  };
+
+  const resolveCategoryIdForRow = async (row) => {
+    if (row?.payload?.category !== null && row?.payload?.category !== undefined) {
+      return row.payload.category;
+    }
+
+    const rawCategoryName = getCellText(row?.source?.category);
+    if (!rawCategoryName) {
+      return null;
+    }
+
+    let categoryId = resolveByIdOrLabel(productStore.categories, rawCategoryName);
+    if (categoryId !== null) {
+      row.payload.category = categoryId;
+      return categoryId;
+    }
+
+    try {
+      await createProductCategory(rawCategoryName, false);
+    } catch (error) {
+      console.error(error);
+    }
+
+    await productStore.refreshCategories();
+    categoryId = resolveByIdOrLabel(productStore.categories, rawCategoryName);
+    if (categoryId !== null) {
+      row.payload.category = categoryId;
+    }
+
+    return categoryId;
   };
 
   const downloadTemplate = async () => {
@@ -421,6 +623,18 @@ export function useProductExcelImport() {
       return { success: false };
     }
 
+    const categoryCreationResult = await createMissingCategories();
+    if (categoryCreationResult.created > 0) {
+      message.success(
+        `Se crearon ${categoryCreationResult.created} categor\u00eda(s) autom\u00e1ticamente.`,
+      );
+    }
+    if (categoryCreationResult.failed > 0) {
+      message.warning(
+        `No se pudieron crear ${categoryCreationResult.failed} categor\u00eda(s).`,
+      );
+    }
+
     if (!validRows.value.length) {
       message.warning("No hay filas válidas para procesar.");
       return { success: false };
@@ -436,8 +650,21 @@ export function useProductExcelImport() {
       for (let index = 0; index < validRows.value.length; index += 1) {
         const row = validRows.value[index];
         try {
+          const resolvedCategory = await resolveCategoryIdForRow(row);
+          if (resolvedCategory === null) {
+            failed += 1;
+            details.push({
+              rowNumber: row.rowNumber,
+              status: "error",
+              message: "No se pudo resolver la categoría automáticamente",
+            });
+            progress.value = Math.round(((index + 1) / validRows.value.length) * 100);
+            continue;
+          }
+
           const response = await createProduct({
             ...row.payload,
+            category: resolvedCategory,
             branchoffice: selectedBranchOffice.value,
           });
 
@@ -453,7 +680,9 @@ export function useProductExcelImport() {
             details.push({
               rowNumber: row.rowNumber,
               status: "error",
-              message: `Respuesta inesperada (${response.status})`,
+              message:
+                extractApiErrorMessage(response?.data) ||
+                `Respuesta inesperada (${response.status})`,
             });
           }
         } catch (error) {
@@ -461,7 +690,7 @@ export function useProductExcelImport() {
           details.push({
             rowNumber: row.rowNumber,
             status: "error",
-            message: error?.response?.data?.detail || "No se pudo crear el producto",
+            message: extractApiErrorMessage(error),
           });
         }
 
