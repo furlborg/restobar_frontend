@@ -6,16 +6,9 @@
   }" preset="card" title="Cierre de Caja" :show="show" :on-close="() => $emit('update:show')">
     <n-spin :show="isLoading">
       <n-form ref="formRef" :model="till" :rules="rules">
-        <n-form-item
-          v-if="settingsStore.business_settings.till.closure_cash_total"
-          path="closure_cash_total"
-          label="Monto"
-        >
-          <n-input
-            v-model:value="till.closure_cash_total"
-            placeholder=""
-            v-numeric-only
-          />
+        <n-form-item v-if="settingsStore.business_settings.till.closure_cash_total" path="closure_cash_total"
+          label="Monto">
+          <n-input v-model:value="till.closure_cash_total" placeholder="" v-numeric-only />
         </n-form-item>
         <n-form-item label="Observaciones">
           <n-input v-model:value="till.closing_observations" type="textarea" @keypress="isLetterOrNumber($event)"
@@ -54,7 +47,7 @@ export default defineComponent({
     },
   },
   setup(props, { emit }) {
-    const { show, idTill } = toRefs(props);
+    const { idTill } = toRefs(props);
     const settingsStore = useSettingsStore();
     const genericsStore = useGenericsStore();
     const tillStore = useTillStore();
@@ -101,7 +94,7 @@ export default defineComponent({
                     message.success("Envío exitoso!");
                   }
                 })
-                .catch((error) => {                  
+                .catch((error) => {
                   console.error(error);
                 });
             }
@@ -117,7 +110,7 @@ export default defineComponent({
               );
             }
           } else {
-            console.error(error);            
+            console.error(error);
           }
         })
         .finally(() => {
@@ -140,6 +133,4 @@ export default defineComponent({
 });
 </script>
 
-<style>
-
-</style>
+<style></style>

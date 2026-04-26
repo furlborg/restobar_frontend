@@ -1,11 +1,6 @@
 <template>
-  <n-modal
-    v-model:show="modalVisible"
-    preset="card"
-    title="Configurar Cambios - Kardex"
-    :style="{ width: '90%', maxWidth: '800px' }"
-    :segmented="{ content: 'hard' }"
-  >
+  <n-modal v-model:show="modalVisible" preset="card" title="Configurar Cambios - Kardex"
+    :style="{ width: '90%', maxWidth: '800px' }" :segmented="{ content: 'hard' }">
     <n-spin :show="isLoading">
       <n-space vertical size="large">
         <!-- Información del item -->
@@ -18,7 +13,7 @@
           </n-text>
           <br>
           <n-text depth="3" style="font-size: 13px; margin-top: 8px">
-            Por defecto, se descontará del inventario del mismo producto. 
+            Por defecto, se descontará del inventario del mismo producto.
             Aquí puedes configurar un producto alternativo si deseas que el descuento se haga de otro producto.
           </n-text>
         </n-alert>
@@ -34,22 +29,18 @@
             <n-alert v-if="!useCustomKardex" type="success">
               Se descontará automáticamente:
               <br>
-              <strong>{{ item?.quantity }}</strong> unidades del producto 
+              <strong>{{ item?.quantity }}</strong> unidades del producto
               <strong>{{ item?.product_name }}</strong> (ID: {{ item?.product_id }})
             </n-alert>
 
             <!-- Si usa kardex personalizado -->
             <div v-if="useCustomKardex">
               <n-divider />
-              
+
               <!-- Buscador de producto -->
               <n-form-item label="Buscar producto para descontar">
-                <n-input
-                  v-model:value="productSearch"
-                  placeholder="Buscar producto alternativo..."
-                  clearable
-                  @input="handleProductSearch"
-                >
+                <n-input v-model:value="productSearch" placeholder="Buscar producto alternativo..." clearable
+                  @input="handleProductSearch">
                   <template #prefix>
                     <v-icon name="md-search-round" />
                   </template>
@@ -58,11 +49,7 @@
 
               <!-- Resultados de búsqueda -->
               <n-list v-if="searchResults.length > 0" hoverable clickable bordered size="small">
-                <n-list-item
-                  v-for="product in searchResults"
-                  :key="product.id"
-                  @click="selectProduct(product)"
-                >
+                <n-list-item v-for="product in searchResults" :key="product.id" @click="selectProduct(product)">
                   <n-thing>
                     <template #header>
                       {{ product.name }}
@@ -105,13 +92,8 @@
 
                   <!-- Cantidad a descontar -->
                   <n-form-item label="Cantidad a descontar del inventario">
-                    <n-input-number
-                      v-model:value="kardexQuantity"
-                      :min="0.01"
-                      :precision="4"
-                      :step="0.1"
-                      style="width: 100%"
-                    >
+                    <n-input-number v-model:value="kardexQuantity" :min="0.01" :precision="4" :step="0.1"
+                      style="width: 100%">
                       <template #prefix>
                         Cant:
                       </template>
@@ -119,7 +101,7 @@
                   </n-form-item>
 
                   <n-alert type="warning" :bordered="false">
-                    Al vender este combo, se descontarán <strong>{{ kardexQuantity }}</strong> unidades 
+                    Al vender este combo, se descontarán <strong>{{ kardexQuantity }}</strong> unidades
                     del producto <strong>{{ selectedProduct.name }}</strong>
                   </n-alert>
                 </n-space>
@@ -162,9 +144,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useDebounce } from '@/composables/useDebounce'
-import { useMessage } from 'naive-ui'
 import { searchProducts, getProductById } from '@/api/modules/products'
 
 const props = defineProps({
@@ -179,8 +160,6 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:show', 'update'])
-
-const message = useMessage()
 
 // Reactive state
 const modalVisible = computed({

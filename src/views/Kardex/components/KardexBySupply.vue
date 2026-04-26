@@ -3,42 +3,23 @@
     <n-gi :span="3">
       <n-card :bordered="false" embedded>
         <n-space class="mb-2">
-          <n-radio
-            key="1"
-            value="product"
-            :checked="checkedValue == 'product'"
-            @change="
-              () => {
-                checkedValue = 'product';
-              }
-            "
-            @update:checked="listProducts()"
-            >Productos</n-radio
-          >
-          <n-radio
-            key="2"
-            value="supplie"
-            :checked="checkedValue == 'supplie'"
-            @change="
-              () => {
-                checkedValue = 'supplie';
-              }
-            "
-            @update:checked="listSupplies()"
-            >Insumos</n-radio
-          >
+          <n-radio key="1" value="product" :checked="checkedValue == 'product'" @change="
+            () => {
+              checkedValue = 'product';
+            }
+          " @update:checked="listProducts()">Productos</n-radio>
+          <n-radio key="2" value="supplie" :checked="checkedValue == 'supplie'" @change="
+            () => {
+              checkedValue = 'supplie';
+            }
+          " @update:checked="listSupplies()">Insumos</n-radio>
         </n-space>
         <n-form>
           <n-input-group>
-            <n-input
-              placeholder="Buscar..."
-              v-model:value="textSearch"
-              @keyup.enter="debouncedSearchItem(textSearch)"
-            >
+            <n-input placeholder="Buscar..." v-model:value="textSearch" @keyup.enter="debouncedSearchItem(textSearch)">
               <template #prefix>
                 <n-icon style="margin-top: -4px">
-                  <v-icon name="md-search-round"
-                /></n-icon>
+                  <v-icon name="md-search-round" /></n-icon>
               </template>
             </n-input>
             <!-- <n-button type="info">
@@ -49,11 +30,7 @@
         <n-spin size="small" :show="loadingList">
           <n-scrollbar class="mt-2 pe-3 listItems" style="height: 625px">
             <n-list class="mt-0">
-              <n-list-item
-                v-for="(item, index) in dataList"
-                :key="index"
-                @click="selectKardex(item.id, item.name)"
-              >
+              <n-list-item v-for="(item, index) in dataList" :key="index" @click="selectKardex(item.id, item.name)">
                 <template #prefix>
                   <n-text>{{ index + 1 }}</n-text>
                 </template>
@@ -67,36 +44,20 @@
     <n-gi :span="7">
       <n-card :title="ProductInstance.product">
         <template #header-extra>
-          <n-date-picker
-            type="datetimerange"
-            size="small"
-            value-format="yyyy-MM-dd HH:mm:ss"
-            v-model:formatted-value="dateSearch"
-            clearable
-          />
-          <n-button
-            :disabled="ProductInstance.id ? false : true"
-            class="ms-2"
-            type="info"
-            size="small"
-            @click="
-              selectKardex(
-                ProductInstance.id,
-                ProductInstance.product,
-                dateSearch
-              )
-            "
-          >
+          <n-date-picker type="datetimerange" size="small" value-format="yyyy-MM-dd HH:mm:ss"
+            v-model:formatted-value="dateSearch" clearable />
+          <n-button :disabled="ProductInstance.id ? false : true" class="ms-2" type="info" size="small" @click="
+            selectKardex(
+              ProductInstance.id,
+              ProductInstance.product,
+              dateSearch
+            )
+            ">
             <v-icon name="md-search-round" />
             Buscar
           </n-button>
 
-          <n-button
-            :disabled="ProductInstance.id ? false : true"
-            class="ms-2"
-            size="small"
-            @click="generateReport"
-          >
+          <n-button :disabled="ProductInstance.id ? false : true" class="ms-2" size="small" @click="generateReport">
             <v-icon name="vi-file-type-excel" />
           </n-button>
           <!-- <n-dropdown trigger="click" :options="options" placement="bottom-end" :show-arrow="true">
@@ -131,22 +92,15 @@
             </div>
           </n-gi>
         </n-grid>
-        <n-data-table
-          class="mt-2"
-          style="height: 618px"
-          size="tiny"
-          :columns="columns"
-          :data="dataKardex"
-          :loading="loadingData"
-          flex-height
-        />
+        <n-data-table class="mt-2" style="height: 618px" size="tiny" :columns="columns" :data="dataKardex"
+          :loading="loadingData" flex-height />
       </n-card>
     </n-gi>
   </n-grid>
 </template>
 
-<script>
-import { defineComponent, ref, onMounted } from "vue";
+<script setup>
+import { ref, onMounted } from "vue";
 import { useDebounce } from "@/composables/useDebounce";
 import { createKardexBySupplyColumns } from "@/utils/constants";
 import { renderIcon } from "@/utils";
@@ -157,247 +111,220 @@ import { useMessage } from "naive-ui";
 import { getExcelReport } from "@/api/modules/tills";
 import format from "date-fns/format";
 
-export default defineComponent({
-  name: "KardexBySupply",
-  setup() {
-    const checkedValue = ref("product");
-    const message = useMessage();
-    const dataList = ref([]);
-    const dataKardex = ref([]);
-    const textSearch = ref("");
-    const dateSearch = ref(null);
-    const loadingList = ref(false);
-    const loadingData = ref(false);
-    const ProductInstance = ref({
-      product: "PRODUCTO",
-      id: null,
-    });
-    const total = ref({
-      ingress: 0,
-      egress: 0,
-      total: 0,
-    });
-
-    // Variable para detectar si el control de stock está desactivado
-    const isStockControlDisabled = ref(false);
-
-    onMounted(() => {
-      listProducts();
-    });
-
-    const listProducts = () => {
-      loadingList.value = true;
-      getProducts()
-        .then((response) => {
-          dataList.value = response.data.results;
-        })
-        .catch((error) => {
-          
-        })
-        .finally(() => {
-          loadingList.value = false;
-        });
-    };
-
-    const listSupplies = (search) => {
-      loadingList.value = true;
-      let filter = "supplies/";
-      if (search) {
-        filter = "supplies/" + search;
-      }
-      getSupplies(filter)
-        .then((response) => {
-          dataList.value = response.data.results;
-        })
-        .catch((error) => {
-          
-        })
-        .finally(() => {
-          loadingList.value = false;
-        });
-    };
-
-    const selectKardex = (id, prod, date) => {
-      loadingData.value = true;
-      total.value.ingress = 0;
-      total.value.egress = 0;
-      total.value.total = 0;
-      isStockControlDisabled.value = false; // Reset del estado
-      ProductInstance.value.id = id;
-      ProductInstance.value.product = prod;
-
-      if (checkedValue.value == "product") {
-        let filter = `?product=${id}`;
-        if (date) {
-          filter += `&dfrom=${date[0]}&dto=${date[1]}`;
-        }
-        getProductKardex(filter)
-          .then((response) => {
-            const rows = Array.isArray(response.data) ? response.data : [];
-            dataKardex.value = [...rows].reverse();
-            const toNumber = (val) => {
-              if (val === null || val === undefined) return 0;
-              if (typeof val === "string" && val.trim() === "") return 0;
-              const num = Number(val);
-              return Number.isFinite(num) ? num : 0;
-            };
-            const hasNumericMovement = rows.some((v) => {
-              if (v?.ingress === null || v?.ingress === undefined) {
-                return (
-                  v?.egress !== null &&
-                  v?.egress !== undefined &&
-                  Number.isFinite(Number(v.egress))
-                );
-              }
-              if (typeof v.ingress === "string" && v.ingress.trim() === "") return false;
-              return Number.isFinite(Number(v.ingress)) || Number.isFinite(Number(v.egress));
-            });
-            const lastBalance = rows.length ? toNumber(rows[rows.length - 1]?.balance) : 0;
-
-            rows.map(function (v) {
-              total.value.ingress =
-                v.type == "0" ? total.value.ingress + 1 : total.value.ingress;
-              total.value.egress =
-                v.type == "1" ? total.value.egress + 1 : total.value.egress;
-            });
-            total.value.total = lastBalance;
-
-            if (!hasNumericMovement && !Number.isFinite(lastBalance)) {
-              isStockControlDisabled.value = true;
-            }
-          })
-          .catch((error) => {
-            message.error("Algo salió mal...");
-          });
-      } else {
-        let filter = `?supplie=${id}`;
-        if (date) {
-          filter += `&dfrom=${date[0]}&dto=${date[1]}`;
-        }
-        getSuplieKardex(filter)
-          .then((response) => {
-            const rows = Array.isArray(response.data) ? response.data : [];
-            dataKardex.value = [...rows].reverse();
-            const toNumber = (val) => {
-              if (val === null || val === undefined) return 0;
-              if (typeof val === "string" && val.trim() === "") return 0;
-              const num = Number(val);
-              return Number.isFinite(num) ? num : 0;
-            };
-            const hasNumericMovement = rows.some((v) => {
-              if (v?.ingress === null || v?.ingress === undefined) {
-                return (
-                  v?.egress !== null &&
-                  v?.egress !== undefined &&
-                  Number.isFinite(Number(v.egress))
-                );
-              }
-              if (typeof v.ingress === "string" && v.ingress.trim() === "") return false;
-              return Number.isFinite(Number(v.ingress)) || Number.isFinite(Number(v.egress));
-            });
-            const lastBalance = rows.length ? toNumber(rows[rows.length - 1]?.balance) : 0;
-
-            rows.map(function (v) {
-              total.value.ingress =
-                v.type == "0" ? total.value.ingress + 1 : total.value.ingress;
-              total.value.egress =
-                v.type == "1" ? total.value.egress + 1 : total.value.egress;
-            });
-            total.value.total = lastBalance;
-
-            if (!hasNumericMovement && !Number.isFinite(lastBalance)) {
-              isStockControlDisabled.value = true;
-            }
-          })
-          .catch((error) => {
-            message.error("Algo salió mal...");
-          });
-      }
-      setTimeout(() => (loadingData.value = false), 250);
-    };
-
-    const searchItem = (filter) => {
-      if (checkedValue.value == "product") {
-        loadingList.value = true;
-        searchProduct(filter)
-          .then((response) => {
-            dataList.value = response.data.results;
-          })
-          .catch((error) => {
-            message.error("Algo salió mal...");
-          })
-          .finally(() => {
-            loadingList.value = false;
-          });
-      } else {
-        let search = `?search=${filter}`;
-        listSupplies(search);
-      }
-    };
-
-    const { debounced: debouncedSearchItem } = useDebounce(searchItem, 300);
-
-    const options = ref([
-      {
-        label: "PDF",
-        key: "PDF",
-        icon: renderIcon("vi-file-type-pdf2"),
-      },
-      {
-        label: "Excel",
-        key: "Excel",
-        icon: renderIcon("vi-file-type-excel"),
-      },
-    ]);
-
-    const generateReport = async () => {
-      await getExcelReport(ProductInstance.value.id, "product_movements", {
-        date_range: dateSearch.value,
-      })
-        .then((response) => {
-          if (response.status === 200) {
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement("a");
-            link.href = url;
-            link.setAttribute(
-              "download",
-              `Reporte Kardex Producto ${format(
-                new Date(Date.now()),
-                "yyyy-MM-dd"
-              )}.xlsx`
-            );
-            document.body.appendChild(link);
-            link.click();
-          }
-        })
-        .catch((error) => {
-          console.error(error);
-          message.error("Algo salió mal");
-        });
-    };
-
-    return {
-      options,
-      dataList,
-      dataKardex,
-      checkedValue,
-      searchItem,
-      debouncedSearchItem,
-      loadingData,
-      total,
-      textSearch,
-      dateSearch,
-      selectKardex,
-      listProducts,
-      ProductInstance,
-      listSupplies,
-      loadingList,
-      isStockControlDisabled,
-      columns: createKardexBySupplyColumns(),
-      generateReport,
-    };
-  },
+const checkedValue = ref("product");
+const message = useMessage();
+const dataList = ref([]);
+const dataKardex = ref([]);
+const textSearch = ref("");
+const dateSearch = ref(null);
+const loadingList = ref(false);
+const loadingData = ref(false);
+const ProductInstance = ref({
+  product: "PRODUCTO",
+  id: null,
 });
+const total = ref({
+  ingress: 0,
+  egress: 0,
+  total: 0,
+});
+
+// Variable para detectar si el control de stock está desactivado
+const isStockControlDisabled = ref(false);
+
+onMounted(() => {
+  listProducts();
+});
+
+const listProducts = () => {
+  loadingList.value = true;
+  getProducts()
+    .then((response) => {
+      dataList.value = response.data.results;
+    })
+    .finally(() => {
+      loadingList.value = false;
+    });
+};
+
+const listSupplies = (search) => {
+  loadingList.value = true;
+  let filter = "supplies/";
+  if (search) {
+    filter = "supplies/" + search;
+  }
+  getSupplies(filter)
+    .then((response) => {
+      dataList.value = response.data.results;
+    })
+    .finally(() => {
+      loadingList.value = false;
+    });
+};
+
+const selectKardex = (id, prod, date) => {
+  loadingData.value = true;
+  total.value.ingress = 0;
+  total.value.egress = 0;
+  total.value.total = 0;
+  isStockControlDisabled.value = false; // Reset del estado
+  ProductInstance.value.id = id;
+  ProductInstance.value.product = prod;
+
+  if (checkedValue.value == "product") {
+    let filter = `?product=${id}`;
+    if (date) {
+      filter += `&dfrom=${date[0]}&dto=${date[1]}`;
+    }
+    getProductKardex(filter)
+      .then((response) => {
+        const rows = Array.isArray(response.data) ? response.data : [];
+        dataKardex.value = [...rows].reverse();
+        const toNumber = (val) => {
+          if (val === null || val === undefined) return 0;
+          if (typeof val === "string" && val.trim() === "") return 0;
+          const num = Number(val);
+          return Number.isFinite(num) ? num : 0;
+        };
+        const hasNumericMovement = rows.some((v) => {
+          if (v?.ingress === null || v?.ingress === undefined) {
+            return (
+              v?.egress !== null &&
+              v?.egress !== undefined &&
+              Number.isFinite(Number(v.egress))
+            );
+          }
+          if (typeof v.ingress === "string" && v.ingress.trim() === "") return false;
+          return Number.isFinite(Number(v.ingress)) || Number.isFinite(Number(v.egress));
+        });
+        const lastBalance = rows.length ? toNumber(rows[rows.length - 1]?.balance) : 0;
+
+        rows.map(function (v) {
+          total.value.ingress =
+            v.type == "0" ? total.value.ingress + 1 : total.value.ingress;
+          total.value.egress =
+            v.type == "1" ? total.value.egress + 1 : total.value.egress;
+        });
+        total.value.total = lastBalance;
+
+        if (!hasNumericMovement && !Number.isFinite(lastBalance)) {
+          isStockControlDisabled.value = true;
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+        message.error("Algo salió mal...");
+      });
+  } else {
+    let filter = `?supplie=${id}`;
+    if (date) {
+      filter += `&dfrom=${date[0]}&dto=${date[1]}`;
+    }
+    getSuplieKardex(filter)
+      .then((response) => {
+        const rows = Array.isArray(response.data) ? response.data : [];
+        dataKardex.value = [...rows].reverse();
+        const toNumber = (val) => {
+          if (val === null || val === undefined) return 0;
+          if (typeof val === "string" && val.trim() === "") return 0;
+          const num = Number(val);
+          return Number.isFinite(num) ? num : 0;
+        };
+        const hasNumericMovement = rows.some((v) => {
+          if (v?.ingress === null || v?.ingress === undefined) {
+            return (
+              v?.egress !== null &&
+              v?.egress !== undefined &&
+              Number.isFinite(Number(v.egress))
+            );
+          }
+          if (typeof v.ingress === "string" && v.ingress.trim() === "") return false;
+          return Number.isFinite(Number(v.ingress)) || Number.isFinite(Number(v.egress));
+        });
+        const lastBalance = rows.length ? toNumber(rows[rows.length - 1]?.balance) : 0;
+
+        rows.map(function (v) {
+          total.value.ingress =
+            v.type == "0" ? total.value.ingress + 1 : total.value.ingress;
+          total.value.egress =
+            v.type == "1" ? total.value.egress + 1 : total.value.egress;
+        });
+        total.value.total = lastBalance;
+
+        if (!hasNumericMovement && !Number.isFinite(lastBalance)) {
+          isStockControlDisabled.value = true;
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+        message.error("Algo salió mal...");
+      });
+  }
+  setTimeout(() => (loadingData.value = false), 250);
+};
+
+const searchItem = (filter) => {
+  if (checkedValue.value == "product") {
+    loadingList.value = true;
+    searchProduct(filter)
+      .then((response) => {
+        dataList.value = response.data.results;
+      })
+      .catch((error) => {
+        console.error(error);
+        message.error("Algo salió mal...");
+      })
+      .finally(() => {
+        loadingList.value = false;
+      });
+  } else {
+    let search = `?search=${filter}`;
+    listSupplies(search);
+  }
+};
+
+const { debounced: debouncedSearchItem } = useDebounce(searchItem, 300);
+
+// const options = ref([
+//   {
+//     label: "PDF",
+//     key: "PDF",
+//     icon: renderIcon("vi-file-type-pdf2"),
+//   },
+//   {
+//     label: "Excel",
+//     key: "Excel",
+//     icon: renderIcon("vi-file-type-excel"),
+//   },
+// ]);
+
+const generateReport = async () => {
+  await getExcelReport(ProductInstance.value.id, "product_movements", {
+    date_range: dateSearch.value,
+  })
+    .then((response) => {
+      if (response.status === 200) {
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute(
+          "download",
+          `Reporte Kardex Producto ${format(
+            new Date(Date.now()),
+            "yyyy-MM-dd"
+          )}.xlsx`
+        );
+        document.body.appendChild(link);
+        link.click();
+      }
+    })
+    .catch((error) => {
+      console.error(error);
+      message.error("Algo salió mal");
+    });
+};
+
+const columns = createKardexBySupplyColumns();
 </script>
 
 <style>

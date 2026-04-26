@@ -26,10 +26,10 @@
         </n-form-item>
         <n-space vertical>
           <n-button type="info" secondary block :disabled="!movement.amount"
-            @click="movement.concept_type = '0', showConfirm=true">Ingreso
+            @click="movement.concept_type = '0', showConfirm = true">Ingreso
           </n-button>
-          <n-button type="error" secondary block :disabled="!movement.amount || !Number(modalData.amount)>0"
-            @click="movement.concept_type = '1', showConfirm=true">Egreso
+          <n-button type="error" secondary block :disabled="!movement.amount || !Number(modalData.amount) > 0"
+            @click="movement.concept_type = '1', showConfirm = true">Egreso
           </n-button>
         </n-space>
         <n-drawer v-model:show="showConfirm" to="#drawer-content" placement="bottom" height="75">
@@ -46,245 +46,224 @@
   </div>
 </template>
 
-<script>
-import { defineComponent, onMounted, ref, computed } from "vue";
+<script setup>
+import { onMounted, ref, computed } from "vue";
 import { useMessage } from "naive-ui";
 import { useRoute, useRouter } from "vue-router";
 import { createProductKardexColumns } from "@/utils/constants";
 import { useGenericsStore } from "@/store/modules/generics";
 import { listKardexBy, listKardexByPage, updateKardexBy } from "@/api/modules/kardex";
 
-export default defineComponent({
-  name: "KardexList",
-  setup() {
-    const route = useRoute()
-    const router = useRouter()
-    const message = useMessage()
-    const list = computed(() => route.params.list)
-    const genericsStore = useGenericsStore();
+const route = useRoute()
+const router = useRouter()
+const message = useMessage()
+const list = computed(() => route.params.list)
+const genericsStore = useGenericsStore();
 
-    const loading = ref(false)
-    const data = ref([])
-    const search = ref('')
-    const modalData = ref(null)
+const loading = ref(false)
+const data = ref([])
+const search = ref('')
+const modalData = ref(null)
 
-    const pagination = ref({
-      search: null,
-      total: 0,
-      page: 1,
-      pageCount: 1,
-      pageSize: 20,
-      showSizePicker: true,
-      pageSizes: [20, 50, 100],
-      onChange: async (page) => {
-        loading.value = true;
-        pagination.value.page = page;
-        await listKardexByPage(
-          list.value,
-          pagination.value.search,
-          pagination.value.page,
-          pagination.value.pageSize
-        )
-          .then((response) => {
-            pagination.value.total = response.data.count;
-            pagination.value.pageCount = Math.trunc(
-              Number(response.data.count) / pagination.value.pageSize
-            );
-            if (
-              Number(response.data.count) % pagination.value.pageSize !== 0 ||
-              pagination.value.pageCount === 0
-            ) {
-              ++pagination.value.pageCount;
-            }
-            data.value = response.data.results;
-          })
-          .catch((error) => {
-            console.error(error);
-          })
-          .finally(() => {
-            loading.value = false;
-          });
-      },
-      onPageSizeChange: async (pageSize) => {
-        loading.value = true;
-        pagination.value.pageSize = pageSize;
-        await listKardexByPage(
-          list.value,
-          pagination.value.search,
-          pagination.value.page,
-          pagination.value.pageSize
-        )
-          .then((response) => {
-            pagination.value.total = response.data.count;
-            pagination.value.pageCount = Math.trunc(
-              Number(response.data.count) / pagination.value.pageSize
-            );
-            if (
-              Number(response.data.count) % pagination.value.pageSize !== 0 ||
-              pagination.value.pageCount === 0
-            ) {
-              ++pagination.value.pageCount;
-            }
-            data.value = response.data.results;
-          })
-          .catch((error) => {
-            console.error(error);
-          })
-          .finally(() => {
-            loading.value = false;
-          });
-      },
-    });
-
-    onMounted(async () => {
-      await loadItems()
-    })
-
-    const loadItems = async () => {
-      loading.value = true
-      await listKardexBy(list.value)
-        .then(response => {
-          if (response.status === 200) {
-            pagination.value.total = response.data.count;
-            pagination.value.pageCount = Math.trunc(
-              Number(response.data.count) / pagination.value.pageSize
-            );
-            if (
-              Number(response.data.count) % pagination.value.pageSize !== 0 ||
-              pagination.value.pageCount === 0
-            ) {
-              ++pagination.value.pageCount;
-            }
-            data.value = response.data.results
-          }
-        })
-        .catch(error => {
-          console.error(error)
-        })
-        .finally(() => {
-          loading.value = false
-        })
-    }
-
-    const refreshTable = async () => {
-      search.value = ''
-      pagination.value.search = ''
-      await loadItems()
-    }
-
-    const performSearch = async () => {
-      loading.value = true;
-      pagination.value.search = search.value
-      pagination.value.page = 1
-      await listKardexByPage(
-        list.value,
-        pagination.value.search,
-        pagination.value.page,
-        pagination.value.pageSize
-      )
-        .then((response) => {
-          pagination.value.total = response.data.count;
-          pagination.value.pageCount = Math.trunc(
-            Number(response.data.count) / pagination.value.pageSize
-          );
-          if (
-            Number(response.data.count) % pagination.value.pageSize !== 0 ||
-            pagination.value.pageCount === 0
-          ) {
-            ++pagination.value.pageCount;
-          }
-          data.value = response.data.results;
-        })
-        .catch((error) => {
-          console.error(error);
-          
-        })
-        .finally(() => {
-          loading.value = false;
-        });
-    }
-
-    const rowClick = (row) => {
-      return {
-        style: {
-          cursor: 'pointer',
-        },
-        onClick: () => {
-          modalData.value = row;
-          showConfirm.value = false
-          movement.value = {
-            amount: 0,
-            concept_type: undefined,
-          }
+const pagination = ref({
+  search: null,
+  total: 0,
+  page: 1,
+  pageCount: 1,
+  pageSize: 20,
+  showSizePicker: true,
+  pageSizes: [20, 50, 100],
+  onChange: async (page) => {
+    loading.value = true;
+    pagination.value.page = page;
+    await listKardexByPage(
+      list.value,
+      pagination.value.search,
+      pagination.value.page,
+      pagination.value.pageSize
+    )
+      .then((response) => {
+        pagination.value.total = response.data.count;
+        pagination.value.pageCount = Math.trunc(
+          Number(response.data.count) / pagination.value.pageSize
+        );
+        if (
+          Number(response.data.count) % pagination.value.pageSize !== 0 ||
+          pagination.value.pageCount === 0
+        ) {
+          ++pagination.value.pageCount;
         }
+        data.value = response.data.results;
+      })
+      .catch((error) => {
+        console.error(error);
+      })
+      .finally(() => {
+        loading.value = false;
+      });
+  },
+  onPageSizeChange: async (pageSize) => {
+    loading.value = true;
+    pagination.value.pageSize = pageSize;
+    await listKardexByPage(
+      list.value,
+      pagination.value.search,
+      pagination.value.page,
+      pagination.value.pageSize
+    )
+      .then((response) => {
+        pagination.value.total = response.data.count;
+        pagination.value.pageCount = Math.trunc(
+          Number(response.data.count) / pagination.value.pageSize
+        );
+        if (
+          Number(response.data.count) % pagination.value.pageSize !== 0 ||
+          pagination.value.pageCount === 0
+        ) {
+          ++pagination.value.pageCount;
+        }
+        data.value = response.data.results;
+      })
+      .catch((error) => {
+        console.error(error);
+      })
+      .finally(() => {
+        loading.value = false;
+      });
+  },
+});
+
+onMounted(async () => {
+  await loadItems()
+})
+
+const loadItems = async () => {
+  loading.value = true
+  await listKardexBy(list.value)
+    .then(response => {
+      if (response.status === 200) {
+        pagination.value.total = response.data.count;
+        pagination.value.pageCount = Math.trunc(
+          Number(response.data.count) / pagination.value.pageSize
+        );
+        if (
+          Number(response.data.count) % pagination.value.pageSize !== 0 ||
+          pagination.value.pageCount === 0
+        ) {
+          ++pagination.value.pageCount;
+        }
+        data.value = response.data.results
       }
-    }
-
-    const showConfirm = ref(false)
-
-    const movement = ref({
-      amount: 0,
-      concept_type: undefined,
     })
+    .catch(error => {
+      console.error(error)
+    })
+    .finally(() => {
+      loading.value = false
+    })
+}
 
-    const performUpdateKardex = async () => {
-      loading.value = true
-      await updateKardexBy(list.value, modalData.value.id, movement.value)
-        .then(response => {
-          if (response.status === 202) {
-            message.success('Registro exitoso!')
-            performSearch()
-          }
-          showConfirm.value = false
-          modalData.value = null
-        })
-        .catch(error => {
-          if (error.response.status === 400) {
-            for (const value in error.response.data) {
-              message.error(`Cantidad: ${error.response.data[`${value}`][0]}`);
-            }
-          } else {
-            console.error(error);
-            
-          }
-          loading.value = false;
-        })
-    }
+const refreshTable = async () => {
+  search.value = ''
+  pagination.value.search = ''
+  await loadItems()
+}
 
-    const handleList = async (v) => {
-      modalData.value = null
+const performSearch = async () => {
+  loading.value = true;
+  pagination.value.search = search.value
+  pagination.value.page = 1
+  await listKardexByPage(
+    list.value,
+    pagination.value.search,
+    pagination.value.page,
+    pagination.value.pageSize
+  )
+    .then((response) => {
+      pagination.value.total = response.data.count;
+      pagination.value.pageCount = Math.trunc(
+        Number(response.data.count) / pagination.value.pageSize
+      );
+      if (
+        Number(response.data.count) % pagination.value.pageSize !== 0 ||
+        pagination.value.pageCount === 0
+      ) {
+        ++pagination.value.pageCount;
+      }
+      data.value = response.data.results;
+    })
+    .catch((error) => {
+      console.error(error);
+
+    })
+    .finally(() => {
+      loading.value = false;
+    });
+}
+
+const rowClick = (row) => {
+  return {
+    style: {
+      cursor: 'pointer',
+    },
+    onClick: () => {
+      modalData.value = row;
+      showConfirm.value = false
       movement.value = {
         amount: 0,
         concept_type: undefined,
       }
-      await router.push({ name: 'KardexList', params: { list: v } })
-      loadItems()
     }
+  }
+}
 
-    const handleRow = (row) => {
-      return !!modalData.value && row.id === modalData.value.id ? 'current-row' : undefined
-    }
+const showConfirm = ref(false)
 
-    return {
-      genericsStore,
-      showConfirm,
-      modalData,
-      rowClick,
-      search,
-      pagination,
-      loading,
-      data,
-      movement,
-      loadItems,
-      handleRow,
-      handleList,
-      refreshTable,
-      performSearch,
-      performUpdateKardex,
-      columns: createProductKardexColumns(),
-    };
-  },
-});
+const movement = ref({
+  amount: 0,
+  concept_type: undefined,
+})
+
+const performUpdateKardex = async () => {
+  loading.value = true
+  await updateKardexBy(list.value, modalData.value.id, movement.value)
+    .then(response => {
+      if (response.status === 202) {
+        message.success('Registro exitoso!')
+        performSearch()
+      }
+      showConfirm.value = false
+      modalData.value = null
+    })
+    .catch(error => {
+      if (error.response.status === 400) {
+        for (const value in error.response.data) {
+          message.error(`Cantidad: ${error.response.data[`${value}`][0]}`);
+        }
+      } else {
+        console.error(error);
+
+      }
+      loading.value = false;
+    })
+}
+
+const handleList = async (v) => {
+  modalData.value = null
+  movement.value = {
+    amount: 0,
+    concept_type: undefined,
+  }
+  await router.push({ name: 'KardexList', params: { list: v } })
+  loadItems()
+}
+
+const handleRow = (row) => {
+  return !!modalData.value && row.id === modalData.value.id ? 'current-row' : undefined
+}
+
+const columns = createProductKardexColumns()
+
 </script>
 
 <style lang="scss">

@@ -231,7 +231,7 @@
                 <n-space v-if="formData.products.length > 0" justify="space-between">
                   <n-text>Total de items: <n-text strong>{{ formData.products.length }}</n-text></n-text>
                   <n-text>Precio total: <n-text strong type="success">S/ {{ computedPrice.toFixed(2)
-                  }}</n-text></n-text>
+                      }}</n-text></n-text>
                 </n-space>
               </n-card>
             </n-space>
@@ -265,7 +265,6 @@
         </n-button>
       </n-space>
     </template>
-
     <!-- Modal Configurar Cambios (Kardex) -->
     <KardexConfigModal v-model:show="showKardexModal" :item="selectedItem" @update="handleKardexUpdate" />
   </n-modal>

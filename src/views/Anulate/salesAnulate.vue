@@ -1,3 +1,59 @@
+<template>
+    <div>
+        <n-space justify="space-between">
+            <n-button type="info" text @click="showFilters = !showFilters">
+                <v-icon name="md-filteralt-round" />
+                {{ showFilters ? "Ocultar Filtros" : "Mostrar filtros" }}
+            </n-button>
+            <div class="d-flex gap-2">
+                <n-button type="info" @click="getDataForReport" :disabled="isTableLoading" :loading="isTableLoading">
+                    Reporte ventas anuladas
+                </n-button>
+                <n-button type="info" text @click="refreshTable">
+                    <v-icon name="hi-solid-refresh" />
+                    Recargar
+                </n-button>
+            </div>
+        </n-space>
+        <n-collapse-transition class="mt-2" :show="showFilters">
+            <n-form>
+                <n-grid responsive="screen" cols="6 s:6 m:12 l:12 xl:24 2xl:24" :x-gap="12">
+                    <n-form-item-gi label="Cliente" :span="4">
+                        <n-input v-model:value="filterParams.customer" placeholder="" @keyup="isLetter($event)" />
+                    </n-form-item-gi>
+                    <n-form-item-gi label="Cliente" :span="4">
+                        <n-select v-if="!userStore.user.branchoffice" class="ps-2" v-model:value="filterParams.branch"
+                            :options="businessStore.branchSelectOptions" @update:value="refreshTable" />
+                    </n-form-item-gi>
+
+                    <n-form-item-gi label="Serie" :span="2">
+                        <n-select v-model:value="filterParams.serie" :options="saleStore.getSeriesOptions"
+                            placeholder="" clearable />
+                    </n-form-item-gi>
+                    <n-form-item-gi label="Número" :span="2">
+                        <n-input v-model:value="filterParams.number" placeholder="" @keyup="isNumber($event)" />
+                    </n-form-item-gi>
+                    <n-form-item-gi label="Método Pago" :span="3">
+                        <n-select v-model:value="filterParams.payment_method"
+                            :options="saleStore.getPaymentMethodsOptions" placeholder="" clearable />
+                    </n-form-item-gi>
+                    <n-form-item-gi label="Fecha" :span="2">
+                        <n-date-picker type="daterange" v-model:formatted-value="filterParams.date_sale"
+                            format="dd/MM/yyyy" clearable />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="5">
+                        <n-button type="info" secondary @click="performFilter">Buscar
+                        </n-button>
+                    </n-form-item-gi>
+                </n-grid>
+            </n-form>
+        </n-collapse-transition>
+        <n-data-table class="mt-2" style="font-size: 13px !important;" size="tiny" striped :single-line="false"
+            :scroll-x="1100" :columns="columns" :data="sales" :loading="isTableLoading" :pagination="pagination" remote
+            max-height="calc(100vh - 350px)" />
+        <modal-anulate-sale :data="dataDetailsModal" />
+    </div>
+</template>
 <script setup>
 import { h, onMounted, ref } from "vue";
 import { NButton, NPopover, NTag, useMessage } from "naive-ui";
@@ -31,7 +87,7 @@ const filterParams = ref({
     status: "A"
 });
 
-const refreshTable = async() => {
+const refreshTable = async () => {
     filterParams.value.customer = "";
     filterParams.value.serie = null;
     filterParams.value.number = "";
@@ -51,7 +107,7 @@ const pagination = ref({
     pageSize: 20,
     showSizePicker: true,
     pageSizes: [20, 50, 100],
-    onChange: async(page) => {
+    onChange: async (page) => {
         isTableLoading.value = true;
         pagination.value.page = page;
         await listSalesByPage(
@@ -63,7 +119,7 @@ const pagination = ref({
             pagination.value.pageCount = Math.trunc(
                 Number(response.data.count) / pagination.value.pageSize
             );
-            if(
+            if (
                 Number(response.data.count) % pagination.value.pageSize !== 0 ||
                 pagination.value.pageCount === 0
             ) {
@@ -76,7 +132,7 @@ const pagination = ref({
             isTableLoading.value = false;
         });
     },
-    onPageSizeChange: async(pageSize) => {
+    onPageSizeChange: async (pageSize) => {
         isTableLoading.value = true;
         pagination.value.pageSize = pageSize;
         await listSalesByPage(
@@ -88,7 +144,7 @@ const pagination = ref({
             pagination.value.pageCount = Math.trunc(
                 Number(response.data.count) / pagination.value.pageSize
             );
-            if(
+            if (
                 Number(response.data.count) % pagination.value.pageSize !== 0 ||
                 pagination.value.pageCount === 0
             ) {
@@ -97,14 +153,14 @@ const pagination = ref({
             sales.value = response.data.results;
         }).catch((error) => {
             console.error(error);
-            
+
         }).finally(() => {
             isTableLoading.value = false;
         });
     }
 });
 
-const performFilter = async() => {
+const performFilter = async () => {
     isTableLoading.value = true;
     pagination.value.pageSearchParams = filterParams.value;
     pagination.value.page = 1;
@@ -117,7 +173,7 @@ const performFilter = async() => {
         pagination.value.pageCount = Math.trunc(
             Number(response.data.count) / pagination.value.pageSize
         );
-        if(
+        if (
             Number(response.data.count) % pagination.value.pageSize !== 0 ||
             pagination.value.pageCount === 0
         ) {
@@ -126,13 +182,13 @@ const performFilter = async() => {
         sales.value = response.data.results;
     }).catch((error) => {
         console.error(error);
-        
+
     }).finally(() => {
         isTableLoading.value = false;
     });
 };
 
-onMounted(async() => {
+onMounted(async () => {
     await performFilter();
     const fetch = new Date();
     const dd = fetch.getDate();
@@ -197,7 +253,7 @@ const columns = [
     }
 ];
 
-const getDataForReport = async() => {
+const getDataForReport = async () => {
     isTableLoading.value = true;
     pagination.value.pageSearchParams = filterParams.value;
     pagination.value.page = 1;
@@ -206,7 +262,7 @@ const getDataForReport = async() => {
         1,
         99999
     ).then((response) => {
-        if(response.data.results.length === 0) {
+        if (response.data.results.length === 0) {
             message.info("No hay resultados para imprimir");
         } else {
             message.success("Reporte generado con éxito");
@@ -217,65 +273,10 @@ const getDataForReport = async() => {
         }
     }).catch((error) => {
         console.error(error);
-        
+
     }).finally(() => {
         isTableLoading.value = false;
     });
 };
 
 </script>
-
-<template>
-    <div>
-        <n-space justify="space-between">
-            <n-button type="info" text @click="showFilters = !showFilters">
-                <v-icon name="md-filteralt-round"/>
-                {{ showFilters ? "Ocultar Filtros" : "Mostrar filtros" }}
-            </n-button>
-            <div class="d-flex gap-2">
-                <n-button type="info" @click="getDataForReport" :disabled="isTableLoading" :loading="isTableLoading">
-                    Reporte ventas anuladas
-                </n-button>
-                <n-button type="info" text @click="refreshTable">
-                    <v-icon name="hi-solid-refresh"/>
-                    Recargar
-                </n-button>
-            </div>
-        </n-space>
-        <n-collapse-transition class="mt-2" :show="showFilters">
-            <n-form>
-                <n-grid responsive="screen" cols="6 s:6 m:12 l:12 xl:24 2xl:24" :x-gap="12">
-                    <n-form-item-gi label="Cliente" :span="4">
-                        <n-input v-model:value="filterParams.customer" placeholder="" @keyup="isLetter($event)"/>
-                    </n-form-item-gi>
-                    <n-form-item-gi label="Cliente" :span="4">
-                        <n-select v-if="!userStore.user.branchoffice" class="ps-2" v-model:value="filterParams.branch"
-                                  :options="businessStore.branchSelectOptions" @update:value="refreshTable"/>
-                    </n-form-item-gi>
-
-                    <n-form-item-gi label="Serie" :span="2">
-                        <n-select v-model:value="filterParams.serie" :options="saleStore.getSeriesOptions" placeholder="" clearable/>
-                    </n-form-item-gi>
-                    <n-form-item-gi label="Número" :span="2">
-                        <n-input v-model:value="filterParams.number" placeholder="" @keyup="isNumber($event)"/>
-                    </n-form-item-gi>
-                    <n-form-item-gi label="Método Pago" :span="3">
-                        <n-select v-model:value="filterParams.payment_method" :options="saleStore.getPaymentMethodsOptions" placeholder=""
-                                  clearable/>
-                    </n-form-item-gi>
-                    <n-form-item-gi label="Fecha" :span="2">
-                        <n-date-picker type="daterange" v-model:formatted-value="filterParams.date_sale" format="dd/MM/yyyy" clearable/>
-                    </n-form-item-gi>
-                    <n-form-item-gi :span="5">
-                        <n-button type="info" secondary @click="performFilter">Buscar
-                        </n-button>
-                    </n-form-item-gi>
-                </n-grid>
-            </n-form>
-        </n-collapse-transition>
-        <n-data-table class="mt-2" style="font-size: 13px !important;" size="tiny" striped :single-line="false" :scroll-x="1100"
-                      :columns="columns" :data="sales"
-                      :loading="isTableLoading" :pagination="pagination" remote max-height="calc(100vh - 350px)"/>
-        <modal-anulate-sale :data="dataDetailsModal"/>
-    </div>
-</template>

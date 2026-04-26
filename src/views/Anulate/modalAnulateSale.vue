@@ -1,13 +1,22 @@
+<template>
+    <n-modal :show="props.data?.show" :mask-closable="false" preset="card" title="Vista de ventas anuladas"
+        :class="{ 'w-100': genericsStore.device === 'mobile', 'w-75': genericsStore.device === 'tablet', 'w-50': genericsStore.device === 'desktop' }"
+        @esc="closeModal()" @close="closeModal()">
+        <n-data-table :columns="tableColumns" :data="dataTable" striped max-height="calc(100vh - 350px)" scroll-x="100%"
+            size="small" />
+    </n-modal>
+</template>
 <script setup>
 import { watch, ref } from "vue";
 import { useGenericsStore } from "@/store/modules/generics";
 
 const props = defineProps({ data: { type: Object, default: () => { } } });
+const emit = defineEmits(['update:show']);
 const dataTable = ref([]);
 const genericsStore = useGenericsStore();
 
 watch(props, () => {
-    if(props.data?.show) {
+    if (props.data?.show) {
         dataTable.value = JSON.parse(props.data.details.json_sale).items;
     }
 });
@@ -20,15 +29,7 @@ const tableColumns = [
 ];
 
 const closeModal = () => {
-    props.data.show = false;
+    emit('update:show', false);
 }
 
 </script>
-
-<template>
-    <n-modal :show="props.data?.show" :mask-closable="false" preset="card" title="Vista de ventas anuladas"
-             :class="{ 'w-100': genericsStore.device === 'mobile', 'w-75': genericsStore.device === 'tablet', 'w-50': genericsStore.device === 'desktop'}"
-             @esc="closeModal()" @close="closeModal()">
-        <n-data-table :columns="tableColumns" :data="dataTable" striped max-height="calc(100vh - 350px)" scroll-x="100%" size="small"/>
-    </n-modal>
-</template>

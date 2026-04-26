@@ -25,12 +25,12 @@ export const routes = [
         meta: {
           requiredPerm: "view_customer",
         },
-        component: () => import("@/views/Customer/index.vue"),
+        component: () => import("@/views/Customer/CustomerIndex.vue"),
       },
       {
         path: "/birthday",
         name: "Cums",
-        component: () => import("@/views/Cums/index.vue"),
+        component: () => import("@/views/Cums/CumsIndex.vue"),
       },
       {
         path: "/anulate",
@@ -43,7 +43,7 @@ export const routes = [
         meta: {
           requiredPerm: "view_order",
         },
-        component: () => import("@/views/Order/index.vue"),
+        component: () => import("@/views/Order/OrderIndex.vue"),
       },
       {
         path: "/sales",
@@ -59,7 +59,7 @@ export const routes = [
         meta: {
           requiredPerm: "view_menu",
         },
-        component: () => import("@/views/Menu/index.vue"),
+        component: () => import("@/views/Menu/MenuIndex.vue"),
       },
       {
         path: "/combos",
@@ -75,7 +75,7 @@ export const routes = [
         meta: {
           requiredPerm: "view_sale", // ajustar si existe un permiso específico de reportes
         },
-        component: () => import("@/views/Reports/index.vue"),
+        component: () => import("@/views/Reports/ReportsIndex.vue"),
         children: [
           {
             path: "products-sold",
@@ -123,7 +123,7 @@ export const routes = [
         path: "/till",
         name: "Till",
         redirect: { name: "CurrentTill" },
-        component: () => import("@/views/Till/index.vue"),
+        component: () => import("@/views/Till/CurrentTillIndex.vue"),
         children: [
           {
             path: "",
@@ -272,7 +272,7 @@ export const routes = [
       {
         path: "/shopping",
         name: "Shopping",
-        component: () => import("@/views/Shopping/index.vue"),
+        component: () => import("@/views/Shopping/ShoppingIndex.vue"),
       },
       {
         path: "/supplier",
@@ -280,7 +280,7 @@ export const routes = [
         meta: {
           requiredPerm: "view_supplier",
         },
-        component: () => import("@/views/Supplier/index.vue"),
+        component: () => import("@/views/Supplier/SupplierIndex.vue"),
       },
       {
         path: "/supplies",
@@ -288,7 +288,7 @@ export const routes = [
         meta: {
           requiredPerm: "view_supplies",
         },
-        component: () => import("@/views/Supplies/index.vue"),
+        component: () => import("@/views/Supplies/SuppliesIndex.vue"),
       },
       {
         path: "/kardex",
@@ -297,7 +297,7 @@ export const routes = [
         meta: {
           requiredPerm: "view_kardex",
         },
-        component: () => import("@/views/Kardex/index.vue"),
+        component: () => import("@/views/Kardex/KardexIndex.vue"),
         children: [
           {
             path: "",
@@ -380,7 +380,7 @@ export const routes = [
   {
     path: "/login",
     name: "Login",
-    component: () => import("@/views/login/index.vue"),
+    component: () => import("@/views/login/LoginIndex.vue"),
     beforeEnter: async (to, from, next) => {
       const userStore = useUserStore();
       await userStore.checkAuthentication();
@@ -394,7 +394,7 @@ export const routes = [
   {
     path: "/initial-setup",
     name: "InitialSetup",
-    component: () => import("@/InitialSetup/index.vue"),
+    component: () => import("@/InitialSetup/InitialSetupIndex.vue"),
     meta: {
       requiresAuth: true,
     },
@@ -403,7 +403,7 @@ export const routes = [
     path: "/waiter-mode",
     name: "WaiterMode",
     redirect: { name: "WHome" },
-    component: () => import("@/WaiterMode/index.vue"),
+    component: () => import("@/WaiterMode/WaiterModeIndex.vue"),
     meta: {
       requiresAuth: true,
       onlyWaiter: true,
@@ -412,13 +412,13 @@ export const routes = [
       {
         name: "WHome",
         path: "",
-        component: () => import("@/WaiterMode/views/Home.vue"),
+        component: () => import("@/WaiterMode/views/WaiterHome.vue"),
       },
       {
         name: "WOrder",
         path: ":table",
         redirect: { name: "WCategories" },
-        component: () => import("@/WaiterMode/views/Order.vue"),
+        component: () => import("@/WaiterMode/views/WaiterOrder.vue"),
         children: [
           {
             name: "WCategories",
@@ -428,7 +428,7 @@ export const routes = [
           {
             name: "WCombos",
             path: "combos",
-            component: () => import("@/WaiterMode/views/Combos.vue"),
+            component: () => import("@/WaiterMode/views/WaiterCombos.vue"),
           },
           {
             name: "WProducts",

@@ -1,3 +1,61 @@
+<template>
+    <div>
+        <n-space justify="space-between">
+            <n-button type="info" text @click="showFilters = !showFilters">
+                <v-icon name="md-filteralt-round" />
+                {{ showFilters ? "Ocultar Filtros" : "Mostrar filtros" }}
+            </n-button>
+            <div class="d-flex gap-2">
+                <n-button type="info" @click="getDataPrintOrder('P')">
+                    Reporte orden parcial
+                </n-button>
+                <n-button type="info" @click="getDataPrintOrder('T')">
+                    Reporte orden total
+                </n-button>
+                <!--                <n-button type="info" text @click="">-->
+                <!--                    <v-icon name="hi-solid-refresh"/>-->
+                <!--                    Recargar-->
+                <!--                </n-button>-->
+            </div>
+        </n-space>
+
+        <n-collapse-transition class="mt-4" :show="showFilters">
+            <n-form>
+                <n-grid responsive="screen" cols="6 s:6 m:12 l:12 xl:24 2xl:24" :x-gap="12">
+                    <n-form-item-gi label="Fecha Desde" :span="2">
+                        <n-date-picker type="date" v-model:formatted-value="filterParams.date_after" format="dd/MM/yyyy"
+                            clearable />
+                    </n-form-item-gi>
+                    <n-form-item-gi label="Fecha Hasta" :span="2">
+                        <n-date-picker type="date" v-model:formatted-value="filterParams.date_before"
+                            format="dd/MM/yyyy" clearable />
+                    </n-form-item-gi>
+                    <n-form-item-gi label="T. de Anulación" :span="2">
+                        <n-select :options="typeCancellation" v-model:value="filterParams.canceled_type" clearable />
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="4">
+                        <n-button type="info" secondary @click="performFilter">Buscar
+                        </n-button>
+                    </n-form-item-gi>
+                </n-grid>
+            </n-form>
+        </n-collapse-transition>
+
+        <n-data-table size="tiny" :data="orders" :columns="columns" :pagination="pagination" :single-line="false"
+            :loading="isTableLoading" class="mt-2" scroll-x="1100px" striped max-height="calc(100vh - 350px)" remote
+            style="font-size: 13px !important;" />
+
+        <n-modal :style="{ width: '90%', maxWidth: '85%' }" preset="card" title="Detalle de pedido"
+            v-model:show="showModalAnulate" @close="() => ({ showModalAnulate: false, dataAnulateItems: [] })">
+
+            <n-data-table size="tiny" :columns="columnsDataAnulate" :data="dataAnulateItems" scroll-x="1150px" striped
+                max-height="calc(100vh - 350px)">
+
+            </n-data-table>
+        </n-modal>
+        <details-modal v-model:show="showDetailsModal" :id-order="idOrder" @update:show="onCloseModal" />
+    </div>
+</template>
 <script setup>
 import { h, onMounted, ref } from "vue";
 import { listOrdersByPage, searchOrdersAnulate } from "@/api/modules/orders";
@@ -41,7 +99,7 @@ const pagination = ref({
     page: 1,
     pageCount: 1,
     pageSize: 20,
-    onChange: async(page) => {
+    onChange: async (page) => {
         isTableLoading.value = true;
         pagination.value.page = page;
         await listOrdersByPage(
@@ -69,7 +127,7 @@ const pagination = ref({
     }
 });
 
-const performFilter = async() => {
+const performFilter = async () => {
     isTableLoading.value = true;
 
     pagination.value.page = 1;
@@ -93,7 +151,7 @@ const performFilter = async() => {
     });
 };
 
-onMounted(async() => {
+onMounted(async () => {
     await performFilter();
 });
 
@@ -103,7 +161,7 @@ const columns = [
     { title: "Usuario", key: "username", align: "center", width: 200 },
     {
         title: "Monto", align: "center", width: 100, render(row) {
-            return `S/. ${ parseFloat(row?.["initial_amount"]).toFixed(2) }`;
+            return `S/. ${parseFloat(row?.["initial_amount"]).toFixed(2)}`;
         }
     },
     { title: "Fecha", key: "created", align: "center", width: 120 },
@@ -164,7 +222,7 @@ const columns = [
             return h(
                 NTag,
                 { size: "small", type: "error", round: true },
-                { default: () => `ANULADO ${ row?.["canceled_type_description"] }` }
+                { default: () => `ANULADO ${row?.["canceled_type_description"]}` }
             );
         }
     },
@@ -202,7 +260,7 @@ const onCloseModal = () => {
     delivery.value = null;
 };
 
-const getDataPrintOrder = async(type = String) => {
+const getDataPrintOrder = async (type = String) => {
 
     const response = await http.get(`orders/canceled_list/`, { params: { ...filterParams.value, canceled_type: type } });
 
@@ -217,59 +275,3 @@ const getDataPrintOrder = async(type = String) => {
 };
 
 </script>
-
-<template>
-    <div>
-        <n-space justify="space-between">
-            <n-button type="info" text @click="showFilters = !showFilters">
-                <v-icon name="md-filteralt-round"/>
-                {{ showFilters ? "Ocultar Filtros" : "Mostrar filtros" }}
-            </n-button>
-            <div class="d-flex gap-2">
-                <n-button type="info" @click="getDataPrintOrder('P')">
-                    Reporte orden parcial
-                </n-button>
-                <n-button type="info" @click="getDataPrintOrder('T')">
-                    Reporte orden total
-                </n-button>
-                <!--                <n-button type="info" text @click="">-->
-                <!--                    <v-icon name="hi-solid-refresh"/>-->
-                <!--                    Recargar-->
-                <!--                </n-button>-->
-            </div>
-        </n-space>
-
-        <n-collapse-transition class="mt-4" :show="showFilters">
-            <n-form>
-                <n-grid responsive="screen" cols="6 s:6 m:12 l:12 xl:24 2xl:24" :x-gap="12">
-                    <n-form-item-gi label="Fecha Desde" :span="2">
-                        <n-date-picker type="date" v-model:formatted-value="filterParams.date_after" format="dd/MM/yyyy" clearable/>
-                    </n-form-item-gi>
-                    <n-form-item-gi label="Fecha Hasta" :span="2">
-                        <n-date-picker type="date" v-model:formatted-value="filterParams.date_before" format="dd/MM/yyyy" clearable/>
-                    </n-form-item-gi>
-                    <n-form-item-gi label="T. de Anulación" :span="2">
-                        <n-select :options="typeCancellation" v-model:value="filterParams.canceled_type" clearable/>
-                    </n-form-item-gi>
-                    <n-form-item-gi :span="4">
-                        <n-button type="info" secondary @click="performFilter">Buscar
-                        </n-button>
-                    </n-form-item-gi>
-                </n-grid>
-            </n-form>
-        </n-collapse-transition>
-
-        <n-data-table size="tiny" :data="orders" :columns="columns" :pagination="pagination" :single-line="false" :loading="isTableLoading"
-                      class="mt-2" scroll-x="1100px" striped max-height="calc(100vh - 350px)" remote style="font-size: 13px !important;"/>
-
-        <n-modal :style="{ width: '90%', maxWidth: '85%' }" preset="card" title="Detalle de pedido"
-                 v-model:show="showModalAnulate" @close="() => ({ showModalAnulate: false, dataAnulateItems: []})">
-
-            <n-data-table size="tiny" :columns="columnsDataAnulate" :data="dataAnulateItems" scroll-x="1150px" striped
-                          max-height="calc(100vh - 350px)">
-
-            </n-data-table>
-        </n-modal>
-        <details-modal v-model:show="showDetailsModal" :id-order="idOrder" @update:show="onCloseModal"/>
-    </div>
-</template>

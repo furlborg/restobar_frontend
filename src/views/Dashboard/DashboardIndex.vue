@@ -330,7 +330,7 @@
                 <n-text depth="3" style="font-size: 12px;">Total</n-text>
                 <n-text strong style="font-size: 20px;">S/ {{ formatMoney(dashboardData.canal_venta?.salones?.total ||
                   0)
-                }}</n-text>
+                  }}</n-text>
               </n-space>
               <n-space vertical :size="0" align="center">
                 <n-text depth="3" style="font-size: 12px;">N° de venta</n-text>
@@ -349,7 +349,7 @@
               <n-space vertical :size="0" align="center">
                 <n-text depth="3" style="font-size: 12px;">Total</n-text>
                 <n-text strong style="font-size: 20px;">S/ {{ formatMoney(dashboardData.canal_venta?.llevar?.total || 0)
-                }}</n-text>
+                  }}</n-text>
               </n-space>
               <n-space vertical :size="0" align="center">
                 <n-text depth="3" style="font-size: 12px;">N° de venta</n-text>
@@ -369,12 +369,12 @@
                 <n-text depth="3" style="font-size: 12px;">Total</n-text>
                 <n-text strong style="font-size: 20px;">S/ {{ formatMoney(dashboardData.canal_venta?.delivery?.total ||
                   0)
-                }}</n-text>
+                  }}</n-text>
               </n-space>
               <n-space vertical :size="0" align="center">
                 <n-text depth="3" style="font-size: 12px;">N° de venta</n-text>
                 <n-text strong style="font-size: 18px;">{{ dashboardData.canal_venta?.delivery?.cantidad || 0
-                }}</n-text>
+                  }}</n-text>
               </n-space>
             </n-space>
           </n-card>
@@ -421,7 +421,6 @@
     </n-card>
   </div>
 </template>
-
 <script setup>
 import { ref, onMounted } from "vue";
 import { useMessage } from "naive-ui";

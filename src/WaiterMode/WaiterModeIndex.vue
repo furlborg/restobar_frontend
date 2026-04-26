@@ -10,27 +10,14 @@
             {{ tableStore.getTableByID($route.params.table)?.description }}
           </div>
         </div>
-        <div
-          class="menuBtn"
-          :class="{ act: active === true }"
-          @click="active = !active"
-        >
+        <div class="menuBtn" :class="{ act: active === true }" @click="active = !active">
           <span class="lines"></span>
         </div>
-        <v-icon
-          class="position-absolute top-0 end-0 me-1"
-          name="fa-circle"
-          scale="0.75"
-          :color="isConnected ? 'green' : 'red'"
-          :animation="isConnected ? undefined : 'flash'"
-        />
+        <v-icon class="position-absolute top-0 end-0 me-1" name="fa-circle" scale="0.75"
+          :color="isConnected ? 'green' : 'red'" :animation="isConnected ? undefined : 'flash'" />
       </n-space>
     </n-layout-header>
-    <n-layout-content
-      position="absolute"
-      style="top: 48px"
-      :native-scrollbar="false"
-    >
+    <n-layout-content position="absolute" style="top: 48px" :native-scrollbar="false">
       <router-view v-slot="{ Component }">
         <transition name="zoom-fade" mode="out-in" appear>
           <component :is="Component" />
@@ -39,30 +26,11 @@
     </n-layout-content>
     <div class="mainMenu" :class="{ act: active === true }">
       <ul>
-        <!-- <li>
-          <a
-            v-if="$route.name === 'WHome'"
-            @click="
-              waiterStore.groupMode = true;
-              active = false;
-            "
-            >Unir Mesas</a
-          >
-        </li>
-        <li>
-          <a href="#">Services</a>
-        </li>
-        <li>
-          <a href="#">Team</a>
-        </li> -->
         <li v-if="$route.name === 'WHome'">
-          <a
-            @click="
-              waiterStore.changeTable = true;
-              active = false;
-            "
-            >Mover Mesa</a
-          >
+          <a @click="
+            waiterStore.changeTable = true;
+          active = false;
+          ">Mover Mesa</a>
         </li>
         <li v-if="userStore.user.role !== 'MOZO'">
           <a @click="$router.push({ name: 'Dashboard' })">Volver</a>
@@ -75,8 +43,8 @@
   </n-layout>
 </template>
 
-<script>
-import { defineComponent, ref } from "vue";
+<script setup>
+import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useDialog } from "naive-ui";
 import { retrieveCurrentTill } from "@/api/modules/tills";
@@ -89,76 +57,61 @@ import { useWaiterStore } from "@/store/modules/waiter";
 import { useUserStore } from "@/store/modules/user";
 import { useTillStore } from "@/store/modules/till";
 
-export default defineComponent({
-  name: "WaiterMode",
-  setup() {
-    const active = ref(false);
-    const dialog = useDialog();
-    const router = useRouter();
-    const businessStore = useBusinessStore();
-    const waiterStore = useWaiterStore();
-    const printerStore = usePrinterStore();
-    const settingsStore = useSettingsStore();
-    const tableStore = useTableStore();
-    const tillStore = useTillStore();
-    const productStore = useProductStore();
-    const userStore = useUserStore();
-    businessStore.initializeStore();
-    tableStore.initializeStore();
-    settingsStore.initializeStore().then(() => productStore.initializeStore());
+const active = ref(false);
+const dialog = useDialog();
+const router = useRouter();
+const businessStore = useBusinessStore();
+const waiterStore = useWaiterStore();
+const printerStore = usePrinterStore();
+const settingsStore = useSettingsStore();
+const tableStore = useTableStore();
+const tillStore = useTillStore();
+const productStore = useProductStore();
+const userStore = useUserStore();
+businessStore.initializeStore();
+tableStore.initializeStore();
+settingsStore.initializeStore().then(() => productStore.initializeStore());
 
-    const isConnected = ref(false);
+const isConnected = ref(false);
 
-    setInterval(() => {
-      isConnected.value = printerStore.qz.websocket.isActive();
-    }, 1000);
+setInterval(() => {
+  isConnected.value = printerStore.qz.websocket.isActive();
+}, 1000);
 
-    const checkTill = () => {
-      retrieveCurrentTill()
-        .then((response) => {
-          if (response.status === 200) {
-            tillStore.currentTillID = response.data.id;
-            tillStore.currentTillOrders = response.data.orders_count;
-          }
-        })
-        .catch((error) => {
-          if (error.response.status === 404) {
-            tillStore.currentTillID = null;
-            tillStore.currentTillOrders = 0;
-          }
-        });
-    };
-    checkTill();
+const checkTill = () => {
+  retrieveCurrentTill()
+    .then((response) => {
+      if (response.status === 200) {
+        tillStore.currentTillID = response.data.id;
+        tillStore.currentTillOrders = response.data.orders_count;
+      }
+    })
+    .catch((error) => {
+      if (error.response.status === 404) {
+        tillStore.currentTillID = null;
+        tillStore.currentTillOrders = 0;
+      }
+    });
+};
+checkTill();
 
-    const doLogout = () => {
-      dialog.error({
-        title: "Cerrar sesión",
-        content: "¿Desea cerrar sesión?",
-        positiveText: "Si",
-        negativeText: "No",
-        onPositiveClick: async () => {
-          await userStore.blacklistToken().then((v) => {
-            if (v) {
-              printerStore.endConnection();
-              router.push({ name: "Login" });
-            }
-          });
-        },
-        onNegativeClick: () => {},
+const doLogout = () => {
+  dialog.error({
+    title: "Cerrar sesión",
+    content: "¿Desea cerrar sesión?",
+    positiveText: "Si",
+    negativeText: "No",
+    onPositiveClick: async () => {
+      await userStore.blacklistToken().then((v) => {
+        if (v) {
+          printerStore.endConnection();
+          router.push({ name: "Login" });
+        }
       });
-    };
-
-    return {
-      printerStore,
-      waiterStore,
-      tableStore,
-      userStore,
-      doLogout,
-      active,
-      isConnected,
-    };
-  },
-});
+    },
+    onNegativeClick: () => { },
+  });
+};
 </script>
 
 <style lang="scss" scoped>
@@ -166,15 +119,18 @@ export default defineComponent({
   margin: 0;
   padding: 0;
 }
+
 *,
 *:after,
 *:before {
   box-sizing: border-box;
 }
+
 ol,
 ul {
   list-style: none;
 }
+
 a {
   color: #000;
   text-decoration: none;
@@ -186,6 +142,7 @@ header {
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
   height: 50px;
 }
+
 .logo {
   color: #000;
   font-size: 20px;
@@ -193,6 +150,7 @@ header {
   padding: 0 0 0 20px;
   text-transform: capitalize;
 }
+
 /* menu button */
 .menuBtn {
   height: 30px;
@@ -202,7 +160,8 @@ header {
   right: 20px;
   top: 10px;
   z-index: 101;
-  > span {
+
+  >span {
     background-color: #000;
     border-radius: 1px;
     height: 2px;
@@ -212,6 +171,7 @@ header {
     top: 50%;
     margin: -1px 0 0 -15px;
     transition: height 100ms;
+
     &:after,
     &:before {
       content: "";
@@ -224,30 +184,37 @@ header {
       margin-left: -15px;
       transition: all 200ms;
     }
+
     &:after {
       top: -7px;
     }
+
     &:before {
       bottom: -7px;
     }
   }
+
   &.act {
-    > span {
+    >span {
       height: 0;
+
       &:after,
       &:before {
         background-color: #008877;
         top: 1px;
       }
+
       &:after {
         transform: rotate(45deg);
       }
+
       &:before {
         transform: rotate(-45deg);
       }
     }
   }
 }
+
 /* main menu block */
 .mainMenu {
   background-color: #fff;
@@ -262,41 +229,51 @@ header {
   opacity: 0;
   transition: all 500ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
   transform: scale(0);
+
   &.act {
     opacity: 1;
     transform: scale(1);
+
     ul li {
       opacity: 1;
       transform: translateX(0);
     }
   }
+
   ul {
     display: table-cell;
     vertical-align: middle;
   }
+
   li {
     padding: 8px 0;
     transition: all 400ms 510ms;
     opacity: 0;
+
     &:nth-child(odd) {
       transform: translateX(30%);
     }
+
     &:nth-child(even) {
       transform: translateX(-30%);
     }
+
     &:last-child {
       transform: none;
     }
   }
+
   a {
     color: #19b698;
     display: inline-block;
     font-size: 18px;
+
     &.suBtn {
       color: #fff;
     }
   }
 }
+
 /* sign up button */
 .suBtn {
   background-color: #19b698;

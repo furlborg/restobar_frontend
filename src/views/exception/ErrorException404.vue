@@ -10,22 +10,10 @@
         Es posible que la página que está buscando haya sido eliminada debido a
         un cambio de nombre o no esté disponible temporalmente.
       </p>
-      <n-button type="warning" secondary @click="$router.back()"
-        >volver</n-button
-      >
+      <n-button type="warning" secondary @click="$router.back()">volver</n-button>
     </div>
   </div>
 </template>
-
-<script>
-import { defineComponent } from "vue";
-export default defineComponent({
-  name: "404",
-  setup() {
-    return {};
-  },
-});
-</script>
 
 <style lang="scss" scoped>
 * {
@@ -66,7 +54,7 @@ body {
   margin: 0px auto 50px;
 }
 
-.notfound .notfound-404 > div:first-child {
+.notfound .notfound-404>div:first-child {
   position: absolute;
   left: 0;
   right: 0;
@@ -80,7 +68,7 @@ body {
   border-radius: 5px;
 }
 
-.notfound .notfound-404 > div:first-child:before {
+.notfound .notfound-404>div:first-child:before {
   content: "";
   position: absolute;
   left: -5px;
