@@ -56,7 +56,7 @@
                         <n-statistic label="Serie">
                             <span style="color: #0958d9; font-weight: bold; font-size: 1.5rem;">{{
                                 validationData.summary.serie
-                            }}</span>
+                                }}</span>
                         </n-statistic>
                     </n-card>
                 </n-gi>
