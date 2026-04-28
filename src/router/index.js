@@ -373,6 +373,12 @@ export const routes = [
             component: () =>
               import("@/views/Settings/components/UserSettings.vue"),
           },
+          {
+            name: "ConsultationSunat",
+            path: "consultation-sunat",
+            component: () =>
+              import("@/views/Settings/components/consultationsunat.vue"),
+          },
         ],
       },
     ],
