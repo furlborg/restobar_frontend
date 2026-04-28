@@ -93,7 +93,7 @@
           <n-space justify="space-between">
             <n-tag type="info">Total: S/. {{ showPayments ? sale.amount : null }}</n-tag>
             <n-tag :type="evalPayments ? 'error' : 'success'">Monto: S/. {{ showPayments ? currentPaymentsAmount : null
-              }}</n-tag>
+            }}</n-tag>
             <n-tag :type="evalPayments ? 'error' : 'warning'">
               Faltante: S/. {{ showPayments ? parseFloat(sale.amount - currentPaymentsAmount).toFixed(2) : null }}
             </n-tag>
@@ -138,7 +138,6 @@ import { useSettingsStore } from "@/store/modules/settings";
 import { useRouter } from "vue-router";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
-//import { useUserStore } from "@/store/modules/user";
 import { useGenericsStore } from "@/store/modules/generics";
 import { saleRules } from "@/utils/constants";
 import { cloneDeep } from "@/utils";
@@ -150,21 +149,10 @@ import { useBusinessStore } from "@/store/modules/business";
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 import { createSale, getSaleNumber, retrieveSale, sendSale } from "@/api/modules/sales";
 
-// export default defineComponent({
-//   name: "TablePayment",
-//   components: {
-//     SeparatePaymentsModal,
-//     PreviewDrawer,
-//     ClientSelectInput,
-//     SaleSerieSelector,
-//     PaymentTotals,
-//     ProductTable
-//   },
-//   setup() {
+
 const router = useRouter();
 const orderStore = useOrderStore();
 const saleStore = useSaleStore();
-//const userStore = useUserStore();
 const settingsStore = useSettingsStore();
 const genericsStore = useGenericsStore();
 const businessStore = useBusinessStore();
@@ -267,9 +255,9 @@ const subTotal = computed(() =>
   )
 );
 
-const products_count = computed(() =>
-  saleStore.toSale.reduce((acc, cur) => acc + cur.quantity, 0)
-);
+// const products_count = computed(() =>
+//   saleStore.toSale.reduce((acc, cur) => acc + cur.quantity, 0)
+// );
 
 const total = computed(() => {
   let cal = parseFloat(
