@@ -36,10 +36,10 @@
                 </n-grid>
 
                 <n-space justify="end" style="margin-top: 16px;">
-                    <n-button @click="HandleReset" :disabled="loading">
+                    <n-button @click="handleReset" :disabled="loading">
                         Limpiar
                     </n-button>
-                    <n-button type="info" @click="HandleValidate" :loading="loading">
+                    <n-button type="info" @click="handleValidate" :loading="loading">
                         <template #icon>
                             <v-icon name="md-search-round" />
                         </template>
@@ -237,13 +237,13 @@ const columns = [
         title: 'Estado Sistema',
         key: 'system_status',
         width: 130,
-        render: (row) => h(NTag, { type: GetSystemStatusType(row.system_status) }, () => row.system_status),
+        render: (row) => h(NTag, { type: getSystemStatusType(row.system_status) }, () => row.system_status),
     },
     {
         title: 'Estado SUNAT',
         key: 'sunat_status',
         width: 130,
-        render: (row) => h(NTag, { type: GetSunatStatusType(row.sunat_status) }, () => row.sunat_status),
+        render: (row) => h(NTag, { type: getSunatStatusType(row.sunat_status) }, () => row.sunat_status),
     },
     {
         title: 'Respuesta SUNAT',
@@ -302,7 +302,7 @@ const columns = [
 
 ];
 
-const LoadSeries = async () => {
+const loadSeries = async () => {
     try {
         loadingSeries.value = true;
         const response = await http.get('series/', { params: { active: true } });
@@ -333,7 +333,7 @@ const LoadSeries = async () => {
     }
 };
 
-const HandleValidate = async () => {
+const handleValidate = async () => {
     try {
         await formRef.value?.validate();
 
@@ -367,7 +367,7 @@ const HandleValidate = async () => {
     }
 };
 
-const HandleReset = () => {
+const handleReset = () => {
     formData.value = {
         serie: null,
         numero_inicio: null,
@@ -378,10 +378,10 @@ const HandleReset = () => {
 };
 
 onMounted(() => {
-    LoadSeries();
+    loadSeries();
 });
 
-const GetSystemStatusType = (status) => {
+const getSystemStatusType = (status) => {
     const statusMap = {
         'Enviado': 'success',
         'Nuevo': 'info',
@@ -393,7 +393,7 @@ const GetSystemStatusType = (status) => {
     return statusMap[status] || 'default';
 };
 
-const GetSunatStatusType = (status) => {
+const getSunatStatusType = (status) => {
     const statusMap = {
         'Aceptado': 'success',
         'Autorizado': 'success',
