@@ -377,7 +377,7 @@ export const routes = [
             name: "ConsultationSunat",
             path: "consultation-sunat",
             component: () =>
-              import("@/views/Settings/components/consultationsunat.vue"),
+              import("@/views/Settings/components/ConsultationSunat.vue"),
           },
         ],
       },
