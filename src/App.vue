@@ -4,17 +4,6 @@
   </AppProvider>
 </template>
 
-<script>
-import { defineComponent } from "vue";
-import AppProvider from "@/components/Application";
-
-export default defineComponent({
-  name: "App",
-  components: {
-    AppProvider,
-  },
-  setup() {
-    return {};
-  },
-});
+<script setup>
+import AppProvider from "@/components/Application/TsiIndex.vue";
 </script>

@@ -447,9 +447,9 @@ export const routes = [
   },
   {
     path: "/chef-mode",
-    name: "ChefMode",
+    name: "CMode",
     redirect: { name: "CHome" },
-    component: () => import("@/ChefMode/index.vue"),
+    component: () => import("@/ChefMode/ChefIndex.vue"),
     meta: {
       requiresAuth: true,
       onlyWaiter: true,
@@ -458,7 +458,7 @@ export const routes = [
       {
         name: "CHome",
         path: "",
-        component: () => import("@/ChefMode/views/Home.vue"),
+        component: () => import("@/ChefMode/views/ChefHome.vue"),
       },
     ],
   },

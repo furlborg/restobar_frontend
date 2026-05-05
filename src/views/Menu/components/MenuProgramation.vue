@@ -1,21 +1,17 @@
 <template>
   <n-modal v-model:show="localShow" preset="card" style="width: 90vw; max-width: 1400px">
     <template #header>Programar Menú</template>
-    <n-alert
-      v-if="!canViewProductPhaseAvailableDay || !canViewProductPhase"
-      type="warning"
-      :bordered="false"
-      style="margin-bottom: 12px;"
-    >
+    <n-alert v-if="!canViewProductPhaseAvailableDay || !canViewProductPhase" type="warning" :bordered="false"
+      style="margin-bottom: 12px;">
       No tienes permisos para ver la programación semanal de fases de producto.
     </n-alert>
     <n-grid cols="12" x-gap="12">
       <n-gi :span="4">
-        <div >
+        <div>
           <h3>Productos asignados a tu menú</h3>
           <n-grid cols="2" x-gap="12">
             <n-gi>
-          <n-input v-model:value="search" placeholder="Buscar producto" class="mb-1"/>
+              <n-input v-model:value="search" placeholder="Buscar producto" class="mb-1" />
             </n-gi>
             <n-gi>
               <n-select v-model:value="selectedPhase" :options="phaseOptions" class="mb-1" />
@@ -28,7 +24,7 @@
                   <span class="product-name">{{ prod.product_name }} ({{ prod.phase_name }})</span>
                   <n-button text size="tiny" :disabled="!canEditProductPhaseAvailableDay" @click="openAssignDays(prod)">
                     <template #icon>
-                      <v-icon name="md-add-round"/>
+                      <v-icon name="md-add-round" />
                     </template>
                   </n-button>
                   <div class="product-days-legend">
@@ -50,19 +46,13 @@
           <div class="week-grid">
             <div v-for="day in days" :key="day" class="day-col">
               <h4>{{ day }}</h4>
-              <n-tag
-                v-for="item in scheduleByDay(day)"
-                :key="item.id + '-' + day"
-                type="info"
-                :closable="canEditProductPhaseAvailableDay"
-                @close="removeDay(item, day)"
-                class="mb-1"
-                style="height: 50px;"
-              >
+              <n-tag v-for="item in scheduleByDay(day)" :key="item.id + '-' + day" type="info"
+                :closable="canEditProductPhaseAvailableDay" @close="removeDay(item, day)" class="mb-1"
+                style="height: 50px;">
                 <div class="phase-block">
                   <span>
                     <small style="display:block; font-size: 0.95em; color: #555;">{{ item.phase_name }}</small>
-                      {{ item.product_name }}
+                    {{ item.product_name }}
                   </span>
                 </div>
               </n-tag>
@@ -76,24 +66,21 @@
     <template #action>
       <n-space justify="end">
         <n-button @click="localShow = false">Cancelar</n-button>
-        <n-button type="primary" :disabled="!canEditProductPhaseAvailableDay" @click="saveProgramation">Guardar programación</n-button>
+        <n-button type="primary" :disabled="!canEditProductPhaseAvailableDay" @click="saveProgramation">Guardar
+          programación</n-button>
       </n-space>
     </template>
 
     <!-- Modal secundario -->
-    <AssignDaysModal
-      v-model:show="showAssignDays"
-      :product="selectedProduct"
-      :initial-days="getProductDays(selectedProduct)"
-      @save="handleAssignDays"
-    />
+    <AssignDaysModal v-model:show="showAssignDays" :product="selectedProduct"
+      :initial-days="getProductDays(selectedProduct)" @save="handleAssignDays" />
   </n-modal>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
 import AssignDaysModal from './AssignDaysModal.vue'
-import { getMenuPhases, getMenuProductPhases, getMenuWeeklyAvailability, saveMenuScheduleBulk, saveMenuWeeklyAvailability } from '@/api/modules/menu'
+import { getMenuPhases, getMenuProductPhases, getMenuWeeklyAvailability, saveMenuWeeklyAvailability } from '@/api/modules/menu'
 import { useUserStore } from '@/store/modules/user'
 
 const props = defineProps({ show: Boolean, menuId: Number })
@@ -250,6 +237,7 @@ watch([() => props.menuId, localShow], ([menuId, show]) => {
   grid-template-columns: repeat(7, 120px);
   gap: 8px;
 }
+
 .day-col {
   background: #f9f9f9;
   border: 1px solid #ddd;
@@ -259,22 +247,26 @@ watch([() => props.menuId, localShow], ([menuId, show]) => {
   font-size: 0.84em;
   overflow-x: hidden;
 }
+
 .day-col h4 {
   font-size: 0.95em;
   text-align: center;
   margin-bottom: 4px;
 }
+
 .day-col .n-tag {
   font-size: 0.88em;
   margin-bottom: 4px;
   white-space: normal;
   word-wrap: break-word;
 }
+
 .product-list-scroll {
   max-height: 500px;
   overflow-y: auto;
   font-size: 0.85em;
 }
+
 .product-item .product-name {
   font-size: 0.85em;
 }

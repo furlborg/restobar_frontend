@@ -10,19 +10,9 @@
   </n-dialog-provider>
 </template>
 
-<script>
-import { defineComponent } from "vue";
+<script setup>
 import MessageContent from "@/components/MessageContent";
 import DialogContent from "@/components/DialogContent";
 
-export default defineComponent({
-  name: "TsiApplication",
-  components: {
-    DialogContent,
-    MessageContent,
-  },
-  setup() {
-    return {};
-  },
-});
+
 </script>

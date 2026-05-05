@@ -8,9 +8,9 @@ import { CreatePdfFile } from "./CreatePdfFile";
 const SettingsStore = useSettingsStore();
 
 export const printPdf = async (objOrArry) => {
-  let format = SettingsStore.business_settings.printer.kitchen_printer_format;
+  // let format = SettingsStore.business_settings.printer.kitchen_printer_format;
 
-  if (!!objOrArry.formatTemp) format = objOrArry.formatTemp;
+  // if (objOrArry.formatTemp) format = objOrArry.formatTemp;
 
   qz.security.setCertificatePromise(function (resolve) {
     resolve(SettingsStore.business_settings.qz_config.certificate);
@@ -50,21 +50,21 @@ export const printPdf = async (objOrArry) => {
       return qz.printers.find();
     })
     .then((printers) => {
-      if (!!printers) {
+      if (printers) {
         objOrArry.map(async (props) => {
           let dataPdf = await CreatePdfFile(props, props.formatTemp);
 
           let printerFindResult = printers.find(
-            (printer) => printer === props.printerName
+            (printer) => printer === props.printerName,
           );
 
-          if (!!printerFindResult) {
+          if (printerFindResult) {
             let config = qz.configs.create(printerFindResult, {
               scaleContent: true,
               size: {
                 width: props.formatTemp,
                 height:
-                  !!props.lengthOfData && props.lengthOfData > props.formatTemp
+                  props.lengthOfData && props.lengthOfData > props.formatTemp
                     ? Math.round(props.lengthOfData)
                     : props.formatTemp,
               },
@@ -81,13 +81,16 @@ export const printPdf = async (objOrArry) => {
             ]).then(() => {
               // Mantener conexión abierta por 30 segundos para reutilización
               setTimeout(() => {
-                if (qz.websocket && typeof qz.websocket.isActive === 'function') {
+                if (
+                  qz.websocket &&
+                  typeof qz.websocket.isActive === "function"
+                ) {
                   try {
                     if (qz.websocket.isActive()) {
                       qz.websocket.disconnect();
                     }
                   } catch (e) {
-                    console.warn('Error disconnecting websocket:', e);
+                    console.warn("Error disconnecting websocket:", e);
                   }
                 }
               }, 30000);
@@ -102,14 +105,14 @@ export const printPdf = async (objOrArry) => {
     })
     .catch((error) => {
       console.error(error);
-      
-      if (qz.websocket && typeof qz.websocket.isActive === 'function') {
+
+      if (qz.websocket && typeof qz.websocket.isActive === "function") {
         try {
           if (qz.websocket.isActive()) {
             qz.websocket.disconnect();
           }
         } catch (e) {
-          console.warn('Error disconnecting websocket:', e);
+          console.warn("Error disconnecting websocket:", e);
         }
       }
     });
@@ -157,7 +160,7 @@ export const printPDFDoc = (pdf, hDoc) => {
         height: hDoc,
       },
       units: "mm",
-    }
+    },
   );
 
   qz.print(config, [
@@ -168,44 +171,4 @@ export const printPDFDoc = (pdf, hDoc) => {
       data: pdf,
     },
   ]);
-
-  // qz.websocket
-  //   .connect(props)
-  //   .then(() => {
-  //     return qz.printers.find();
-  //   })
-  //   .then(async (printers) => {
-  //     if (!!printers) {
-  //       let printerFindResult = await qz.printers.getDefault();
-
-  //       if (!!printerFindResult) {
-  //         let config = qz.configs.create(printerFindResult, {
-  //           scaleContent: true,
-  //           size: {
-  //             width: 70,
-  //             height: hDoc,
-  //           },
-  //           units: "mm",
-  //         });
-
-  //         qz.print(config, [
-  //           {
-  //             type: "pixel",
-  //             format: "pdf",
-  //             flavor: "base64",
-  //             data: pdf,
-  //           },
-  //         ]).then(() => {
-  //           qz.websocket.disconnect();
-  //         });
-  //       } else {
-  //         console.error("La impresora especificada no se a encontrado");
-  //       }
-  //     } else {
-  //       console.error("no hay impresoras instalada");
-  //     }
-  //   })
-  //   .catch((error) => {
-  //     console.error(error);
-  //   });
 };

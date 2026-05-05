@@ -1,18 +1,13 @@
 <template>
-  <n-modal
-    :show="show"
-    preset="card"
-    title="Importar productos desde Excel"
-    :on-close="handleClose"
-    :class="{
-      'w-100': genericsStore.device === 'mobile',
-      'w-75': genericsStore.device === 'tablet',
-      'w-50': genericsStore.device === 'desktop',
-    }"
-  >
+  <n-modal :show="show" preset="card" title="Importar productos desde Excel" :on-close="handleClose" :class="{
+    'w-100': genericsStore.device === 'mobile',
+    'w-75': genericsStore.device === 'tablet',
+    'w-50': genericsStore.device === 'desktop',
+  }">
     <n-space vertical size="large">
       <n-alert type="info" title="Flujo de importación">
-        Carga un archivo Excel con las columnas definidas, revisa la vista previa y luego procesa solo las filas válidas.
+        Carga un archivo Excel con las columnas definidas, revisa la vista previa y luego procesa solo las filas
+        válidas.
       </n-alert>
 
       <n-grid responsive="screen" cols="24" :x-gap="12" :y-gap="12">
@@ -22,37 +17,21 @@
               Descargar plantilla
             </n-button>
 
-            <n-select
-              v-model:value="selectedBranchOffice"
-              :options="branchOptions"
-              placeholder="Selecciona sucursal destino"
-              style="min-width: 260px"
-              @update:value="onSelectBranchOffice"
-            />
+            <n-select v-model:value="selectedBranchOffice" :options="branchOptions"
+              placeholder="Selecciona sucursal destino" style="min-width: 260px" @update:value="onSelectBranchOffice" />
           </n-space>
         </n-gi>
 
         <n-gi :span="24">
-          <n-upload
-            :show-file-list="true"
-            :max="1"
-            accept=".xlsx,.xls"
-            list-type="text"
-            :default-upload="false"
-            :file-list="fileList"
-            :on-change="onFileChange"
-          >
+          <n-upload :show-file-list="true" :max="1" accept=".xlsx,.xls" list-type="text" :default-upload="false"
+            :file-list="fileList" :on-change="onFileChange">
             <n-button type="info" secondary>Seleccionar Excel</n-button>
           </n-upload>
         </n-gi>
 
         <n-gi :span="24" v-if="isParsing || isImporting">
           <n-spin :show="isParsing || isImporting">
-            <n-progress
-              :percentage="progress"
-              :show-indicator="true"
-              type="line"
-            />
+            <n-progress :percentage="progress" :show-indicator="true" type="line" />
           </n-spin>
         </n-gi>
 
@@ -65,14 +44,8 @@
         </n-gi>
 
         <n-gi :span="24">
-          <n-data-table
-            size="small"
-            :columns="previewColumns"
-            :data="parsedRows"
-            :pagination="false"
-            :bordered="false"
-            striped
-          />
+          <n-data-table size="small" :columns="previewColumns" :data="parsedRows" :pagination="false" :bordered="false"
+            striped />
         </n-gi>
 
         <n-gi v-if="invalidRows.length" :span="24">
@@ -117,13 +90,8 @@
         <n-button tertiary @click="resetImportState" :disabled="isImporting">
           Limpiar
         </n-button>
-        <n-button
-          type="primary"
-          secondary
-          :disabled="!validRows.length || isParsing || isImporting"
-          :loading="isImporting"
-          @click="handleImport"
-        >
+        <n-button type="primary" secondary :disabled="!validRows.length || isParsing || isImporting"
+          :loading="isImporting" @click="handleImport">
           Importar válidos
         </n-button>
       </n-space>
@@ -132,7 +100,7 @@
 </template>
 
 <script setup>
-import { computed, watch } from "vue";
+import { watch } from "vue";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useProductExcelImport } from "../composables/useProductExcelImport";
 

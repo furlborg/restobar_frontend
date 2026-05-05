@@ -25,7 +25,7 @@
                                 </n-button>
                             </n-input-group>
                             <n-tag>{{ `S/. ${Number(orderItem.quantity) * parseFloat(orderItem.price).toFixed(2)}`
-                            }}</n-tag>
+                                }}</n-tag>
                         </n-space>
                     </n-thing>
                     <template #suffix>
