@@ -11,8 +11,6 @@
 </template>
 
 <script setup>
-import MessageContent from "@/components/MessageContent";
-import DialogContent from "@/components/DialogContent";
-
-
+import MessageContent from "@/components/MessageContent.vue";
+import DialogContent from "@/components/DialogContent.vue";
 </script>
