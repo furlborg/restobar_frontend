@@ -242,10 +242,8 @@ const performSearchByDoc = async () => {
             message.success("Éxito");
             if (customer.value.doc_num.length === 8) {
               customer.value.names = response.data.nombre_completo;
-              customer.value.birthdate = response.data.fecha_nacimiento ? format(
-                new Date(response.data.fecha_nacimiento),
-                "dd/MM/yyyy"
-              ) : null;
+              const fecha_nacimiento = response.data.fecha_nacimiento.replace(/-/g, "/");
+              customer.value.birthdate = format(new Date(fecha_nacimiento), "dd/MM/yyyy");
               if (response.data.sexo === "FEMENINO") {
                 customer.value.gender = "F";
               } else if (response.data.sexo === "MASCULINO") {
