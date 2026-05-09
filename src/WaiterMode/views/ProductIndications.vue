@@ -1,23 +1,23 @@
 <template>
     <n-modal preset="card" title="Indicaciones" :show="show" :on-close="() => $emit('update:show')">
         <n-list>
-            <n-list-item v-for="(indication, index) in indications" class="p-2" :class="{ 'bg-selected': selectedIndication === index }"
-                         :key="index" @click="selectIndication(index)">
+            <n-list-item v-for="(indication, index) in indications" class="p-2"
+                :class="{ 'bg-selected': selectedIndication === index }" :key="index" @click="selectIndication(index)">
                 <template #prefix>
                     <v-icon :name="!indication.takeAway ? 'io-bag' : 'io-bag-check'"
-                            @click="indication.takeAway ? (indication.takeAway = false) : (indication.takeAway = true)"
-                            :fill="!indication.takeAway ? null : 'green'" @click.stop/>
+                        @click="indication.takeAway ? (indication.takeAway = false) : (indication.takeAway = true)"
+                        :fill="!indication.takeAway ? null : 'green'" @click.stop />
                 </template>
-                <n-thing :title="product.product_name" :title-extra="`S/. ${product.price}`"/>
+                <n-thing :title="product.product_name" :title-extra="`S/. ${product.price}`" />
                 <n-collapse-transition :show="selectedIndication === index">
                     <n-tag v-for="(quick, index) in quickIndications" :key="index" class="mx-1" checkable @click.stop
-                           :checked="indication.quick_indications.some((ind) => ind === quick)"
-                           @update:checked="() => handleIndications(indication, quick)">
+                        :checked="indication.quick_indications.some((ind) => ind === quick)"
+                        @update:checked="() => handleIndications(indication, quick)">
                         {{ quick }}
                     </n-tag>
                     <n-form>
                         <n-form-item v-if="selectedIndication !== null" :span="12" label="Indicaciones">
-                            <n-input @click.stop type="textarea" v-model:value="indication.description"/>
+                            <n-input @click.stop type="textarea" v-model:value="indication.description" />
                         </n-form-item>
                     </n-form>
                 </n-collapse-transition>
@@ -38,7 +38,7 @@ import { useGenericsStore } from "@/store/modules/generics";
 
 export default defineComponent({
     name: "OrderIndications",
-    emits: [ "update:show", "success" ],
+    emits: ["update:show", "success"],
     props: {
         show: {
             type: Boolean,
@@ -73,7 +73,7 @@ export default defineComponent({
         };
 
         watch(show, (val) => {
-            if ( !val) return;
+            if (!val) return;
 
             const qty = Number(product.value.quantity) || 1;
             const current = cloneDeep(product.value.indication || []);
@@ -88,7 +88,7 @@ export default defineComponent({
         const selectedIndication = ref(null);
 
         const selectIndication = (indication) => {
-            if ( !selectedIndication.value) {
+            if (!selectedIndication.value) {
                 selectedIndication.value = indication;
             } else {
                 if (selectedIndication.value === indication) {
@@ -120,6 +120,6 @@ export default defineComponent({
 
 <style lang="scss">
 .bg-selected {
-  background-color: AliceBlue;
+    background-color: AliceBlue;
 }
 </style>

@@ -5,7 +5,6 @@ import { takeAwayOrder } from "@/api/modules/orders";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { useSettingsStore } from "@/store/modules/settings";
-//import { useUserStore } from "@/store/modules/user";
 
 /**
  * Composable para manejar la lógica de procesamiento de pedidos

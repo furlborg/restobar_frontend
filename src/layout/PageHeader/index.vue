@@ -1,11 +1,8 @@
 <template>
   <div class="layout-header">
     <div class="layout-header-left">
-      <div
-        v-if="userStore.user.role !== 'MOZO'"
-        class="layout-header-trigger layout-header-trigger-min"
-        @click="() => $emit('update:collapsed', !collapsed)"
-      >
+      <div v-if="userStore.user.role !== 'MOZO'" class="layout-header-trigger layout-header-trigger-min"
+        @click="() => $emit('update:collapsed', !collapsed)">
         <n-icon size="18" v-if="collapsed">
           <v-icon name="oi-sidebar-expand" flip="horizontal" />
         </n-icon>
@@ -28,18 +25,13 @@
       <n-space align="end" vertical :size="0">
         <n-text v-if="userStore.user.names" class="fw-bold">{{
           userStore.user.names
-        }}</n-text>
+          }}</n-text>
         <n-text v-if="userStore.user.branchoffice_des">{{
           userStore.user.branchoffice_des
-        }}</n-text>
+          }}</n-text>
       </n-space>
       <div class="layout-header-trigger layout-header-trigger-min">
-        <n-dropdown
-          trigger="hover"
-          placement="bottom-end"
-          :options="avatarOptions"
-          @select="avatarSelect"
-        >
+        <n-dropdown trigger="hover" placement="bottom-end" :options="avatarOptions" @select="avatarSelect">
           <div class="avatar">
             <n-avatar>
               <v-icon name="hi-user" />
@@ -52,8 +44,8 @@
   </div>
 </template>
 
-<script>
-import { defineComponent, reactive, ref, computed, toRefs } from "vue";
+<script setup>
+import { reactive, ref, computed } from "vue";
 import { useDialog } from "naive-ui";
 import { useRouter } from "vue-router";
 import { useUserStore } from "@/store/modules/user";
@@ -64,145 +56,147 @@ import { useBusinessStore } from "@/store/modules/business";
 import ProjectSetting from "./ProjectSetting";
 import { renderIcon } from "@/utils";
 
-export default defineComponent({
-  name: "PageHeader",
-  components: {
-    ProjectSetting,
-  },
-  props: {
-    collapsed: {
-      type: Boolean,
-    },
-  },
-  setup() {
-    const router = useRouter();
-    const dialog = useDialog();
-    const drawerSetting = ref();
-    const userStore = useUserStore();
-    const printerStore = usePrinterStore();
-    const businessStore = useBusinessStore();
-    const tillStore = useTillStore();
-
-    const state = reactive({
-      fullscreenIcon: "bi-fullscreen",
-    });
-
-    const toggleFullscreenIcon = () =>
-      (state.fullscreenIcon =
-        document.fullscreenElement !== null
-          ? "bi-fullscreen-exit"
-          : "bi-fullscreen");
-
-    document.addEventListener("fullscreenchange", toggleFullscreenIcon);
-
-    const toggleFullScreen = () => {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen();
-      } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        }
-      }
-    };
-
-    const avatarOptions = computed(() => {
-      const options = [
-        {
-          label: "Cambiar de Sucursal",
-          key: "branchs",
-          children: businessStore.branchOptions,
-        },
-        {
-          label: "Modo Mozo",
-          key: 1,
-        },
-        // {
-        //   label: "Modo Chef",
-        //   key: 0,
-        // },
-        {
-          label: "Desconectar",
-          key: -1,
-          icon: renderIcon("md-logout-round"),
-        },
-      ];
-      if (userStore.user.branchoffice) {
-        return options.filter((option) => option.key !== "branchs");
-      }
-      return options;
-    });
-
-    const performRetrieveCurrentTill = () => {
-      retrieveCurrentTill()
-        .then((response) => {
-          if (response.status === 200) {
-            tillStore.currentTillID = response.data.id;
-            tillStore.currentTillOrders = response.data.orders_count;
-          }
-        })
-        .catch((error) => {
-          if (error.response.status === 404) {
-            tillStore.currentTillID = null;
-            tillStore.currentTillOrders = 0;
-          }
-        });
-    };
-
-    const avatarSelect = (key) => {
-      switch (key) {
-        case 1:
-          router.push({ name: "WaiterMode" });
-          break;
-        case 0:
-          router.push({ name: "ChefMode" });
-          break;
-        case -1:
-          doLogout();
-          break;
-        default:
-          if (key > 0) {
-            businessStore.currentBranch = key;
-            performRetrieveCurrentTill();
-            router.push({ name: "Dashboard" });
-          }
-      }
-    };
-
-    const doLogout = () => {
-      dialog.error({
-        title: "Cerrar sesión",
-        content: "¿Desea cerrar sesión?",
-        positiveText: "Si",
-        negativeText: "No",
-        onPositiveClick: async () => {
-          await userStore.blacklistToken().then((v) => {
-            if (v) {
-              printerStore.endConnection();
-              router.push({ name: "Login" });
-            }
-          });
-        },
-        onNegativeClick: () => {},
-      });
-    };
-
-    function openSetting() {
-      const { openDrawer } = drawerSetting.value;
-      openDrawer();
-    }
-
-    return {
-      ...toRefs(state),
-      userStore,
-      toggleFullScreen,
-      doLogout,
-      avatarOptions,
-      avatarSelect,
-      drawerSetting,
-      openSetting,
-    };
-  },
+// export default defineComponent({
+//   name: "PageHeader",
+//   components: {
+//     ProjectSetting,
+//   },
+//   props: {
+//     collapsed: {
+//       type: Boolean,
+//     },
+//   },
+//   setup() {
+defineProps({
+  collapsed: Boolean,
 });
+defineOptions({
+  name: "PageHeader",
+});
+const router = useRouter();
+const dialog = useDialog();
+const drawerSetting = ref();
+const userStore = useUserStore();
+const printerStore = usePrinterStore();
+const businessStore = useBusinessStore();
+const tillStore = useTillStore();
+
+const state = reactive({
+  fullscreenIcon: "bi-fullscreen",
+});
+
+const toggleFullscreenIcon = () =>
+(state.fullscreenIcon =
+  document.fullscreenElement !== null
+    ? "bi-fullscreen-exit"
+    : "bi-fullscreen");
+
+document.addEventListener("fullscreenchange", toggleFullscreenIcon);
+
+const toggleFullScreen = () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen();
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  }
+};
+
+const avatarOptions = computed(() => {
+  const options = [
+    {
+      label: "Cambiar de Sucursal",
+      key: "branchs",
+      children: businessStore.branchOptions,
+    },
+    {
+      label: "Modo Mozo",
+      key: 1,
+    },
+    {
+      label: "Desconectar",
+      key: -1,
+      icon: renderIcon("md-logout-round"),
+    },
+  ];
+  if (userStore.user.branchoffice) {
+    return options.filter((option) => option.key !== "branchs");
+  }
+  return options;
+});
+
+const performRetrieveCurrentTill = () => {
+  retrieveCurrentTill()
+    .then((response) => {
+      if (response.status === 200) {
+        tillStore.currentTillID = response.data.id;
+        tillStore.currentTillOrders = response.data.orders_count;
+      }
+    })
+    .catch((error) => {
+      if (error.response.status === 404) {
+        tillStore.currentTillID = null;
+        tillStore.currentTillOrders = 0;
+      }
+    });
+};
+
+const avatarSelect = (key) => {
+  switch (key) {
+    case 1:
+      router.push({ name: "WaiterMode" });
+      break;
+    case 0:
+      router.push({ name: "ChefMode" });
+      break;
+    case -1:
+      doLogout();
+      break;
+    default:
+      if (key > 0) {
+        businessStore.currentBranch = key;
+        performRetrieveCurrentTill();
+        router.push({ name: "Dashboard" });
+      }
+  }
+};
+
+const doLogout = () => {
+  dialog.error({
+    title: "Cerrar sesión",
+    content: "¿Desea cerrar sesión?",
+    positiveText: "Si",
+    negativeText: "No",
+    onPositiveClick: async () => {
+      await userStore.blacklistToken().then((v) => {
+        if (v) {
+          printerStore.endConnection();
+          router.push({ name: "Login" });
+        }
+      });
+    },
+    onNegativeClick: () => { },
+  });
+};
+
+// function openSetting() {
+//   const { openDrawer } = drawerSetting.value;
+//   openDrawer();
+// }
+
+//     return {
+//       ...toRefs(state),
+//       userStore,
+//       toggleFullScreen,
+//       doLogout,
+//       avatarOptions,
+//       avatarSelect,
+//       drawerSetting,
+//       openSetting,
+//     };
+//   },
+// });
 </script>
 
 <style lang="scss" scoped>
@@ -233,7 +227,7 @@ export default defineComponent({
       height: 64px;
     }
 
-    > * {
+    >* {
       cursor: pointer;
     }
   }
@@ -278,9 +272,7 @@ export default defineComponent({
   }
 
   .layout-header-left {
-    ::v-deep(.n-breadcrumb
-        .n-breadcrumb-item:last-child
-        .n-breadcrumb-item__link) {
+    ::v-deep(.n-breadcrumb .n-breadcrumb-item:last-child .n-breadcrumb-item__link) {
       color: #515a6e;
     }
   }
@@ -299,5 +291,4 @@ export default defineComponent({
   left: 200px;
   z-index: 11;
 }
-
 </style>

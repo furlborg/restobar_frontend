@@ -4,35 +4,28 @@
   </div>
 </template>
 
-<script>
-import { defineComponent, ref } from "vue";
+<script setup>
+import { ref } from "vue";
 import logo from "@/assets/images/logo.png";
 import axios from "axios";
 
-export default defineComponent({
-  name: "Logo",
-  props: {
-    collapsed: {
-      type: Boolean,
-    },
-  },
-  setup() {
-    const image = ref(null);
-    axios
-      .get(`${import.meta.env.VITE_APP_URL}/media/business/logo.png`)
-      .then((response) => {
-        if (response.status === 200) {
-          image.value = `${import.meta.env.VITE_APP_URL}/media/business/logo.png`;
-        } else {
-          image.value = logo;
-        }
-      })
-      .catch((e) => (image.value = logo));
-    return {
-      image,
-    };
-  },
+defineProps({
+  collapsed: Boolean,
 });
+defineOptions({
+  name: "WLogo",
+});
+const image = ref(null);
+axios
+  .get(`${import.meta.env.VITE_APP_URL}/media/business/logo.png`)
+  .then((response) => {
+    if (response.status === 200) {
+      image.value = `${import.meta.env.VITE_APP_URL}/media/business/logo.png`;
+    } else {
+      image.value = logo;
+    }
+  })
+  .catch(() => (image.value = logo));
 </script>
 
 <style lang="scss" scoped>

@@ -53,10 +53,10 @@
     <n-data-table class="mt-2" :columns="tableColumns" :data="customers" :pagination="pagination"
       :loading="isTableLoading" :scroll-x="900" remote />
     <!-- Customer Modal -->
-    <customer-modal v-model:show="showModal" :id-customer="idCustomer" @update:show="onCloseModal"
+    <CustomerModal v-model:show="showModal" :id-customer="idCustomer" @update:show="onCloseModal"
       @on-success="onSuccess" />
     <!-- Customer Credits Drawer -->
-    <customer-credits-drawer v-model:show="showCredits" :id="idCustomer" @update:show="onCloseModal"
+    <CustomerCreditsDrawer v-model:show="showCredits" :id="idCustomer" @update:show="onCloseModal"
       @on-success="onSuccess" />
   </n-card>
 </template>
@@ -72,8 +72,8 @@ import {
   disableCustomer,
 } from "@/api/modules/customer";
 import { useUserStore } from "@/store/modules/user";
-import CustomerModal from "./components/CustomerModal";
-import CustomerCreditsDrawer from "./components/CustomerCreditsDrawer";
+import CustomerModal from "./components/CustomerModal.vue";
+import CustomerCreditsDrawer from "./components/CustomerCreditsDrawer.vue";
 
 const message = useMessage();
 const dialog = useDialog();
@@ -290,5 +290,3 @@ const tableColumns = createCustomerColumns({
   },
 });
 </script>
-
-<style lang="scss" scoped></style>

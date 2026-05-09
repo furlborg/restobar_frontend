@@ -7,7 +7,8 @@
         <div class="drawer-setting-item justify-center dark-switch">
           <n-tooltip placement="bottom">
             <template #trigger>
-              <n-switch size="large" v-model:value="designStore.darkTheme" @on-update:value="designStore.toggleDarkTheme()">
+              <n-switch size="large" v-model:value="designStore.darkTheme"
+                @on-update:value="designStore.toggleDarkTheme()">
                 <template #checked>
                   <v-icon name="md-darkmode-twotone" />
                 </template>
@@ -23,13 +24,8 @@
         <n-divider title-placement="center">Tema del Sistema</n-divider>
 
         <div class="drawer-setting-item align-items-top">
-          <span
-            class="theme-item"
-            v-for="(item, index) in appThemeList"
-            :key="index"
-            :style="{ 'background-color': item }"
-            @click="designStore.setAppTheme(item)"
-          >
+          <span class="theme-item" v-for="(item, index) in appThemeList" :key="index"
+            :style="{ 'background-color': item }" @click="designStore.setAppTheme(item)">
             <v-icon name="bi-check2" inverse v-if="item === designStore.appTheme" />
           </span>
         </div>
@@ -38,93 +34,98 @@
   </n-drawer>
 </template>
 
-<script>
-  import { defineComponent, reactive, toRefs } from 'vue'
-  import { useDesignSettingStore } from '@/store/modules/designSetting'
-  import { darkTheme } from 'naive-ui'
+<script setup>
+import { defineOptions, reactive, toRefs } from 'vue'
+import { useDesignSettingStore } from '@/store/modules/designSetting'
+//import { darkTheme } from 'naive-ui'
 
-  export default defineComponent({
-    name: 'ProjectSetting',
-    setup() {
-      const designStore = useDesignSettingStore()
-      const state = reactive({
-        isDrawer: false,
-        appThemeList: designStore.appThemeList,
-      })
+// export default defineComponent({
+//   name: 'ProjectSetting',
+//   setup() {
+defineOptions({
+  name: 'ProjectSetting',
+})
+const designStore = useDesignSettingStore()
+const state = reactive({
+  isDrawer: false,
+  appThemeList: designStore.appThemeList,
+})
 
-      function openDrawer() {
-        state.isDrawer = true
-      }
+toRefs(state)
 
-      function closeDrawer() {
-        state.isDrawer = false
-      }
+// function openDrawer() {
+//   state.isDrawer = true
+// }
 
-      return {
-        ...toRefs(state),
-        designStore,
-        darkTheme,
-        openDrawer,
-        closeDrawer,
-      }
-    },
-  })
+// function closeDrawer() {
+//   state.isDrawer = false
+// }
+
+//     return {
+//       ...toRefs(state),
+//       designStore,
+//       darkTheme,
+//       openDrawer,
+//       closeDrawer,
+//     }
+//   },
+// })
 </script>
 
 <style lang="scss" scoped>
-  .drawer {
-    .n-divider:not(.n-divider--vertical) {
-      margin: 10px 0;
+.drawer {
+  .n-divider:not(.n-divider--vertical) {
+    margin: 10px 0;
+  }
+
+  &-setting-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    flex-wrap: wrap;
+
+    &-style {
+      display: inline-block;
+      position: relative;
+      margin-right: 16px;
+      cursor: pointer;
+      text-align: center;
     }
 
-    &-setting-item {
-      display: flex;
-      align-items: center;
-      padding: 12px 0;
-      flex-wrap: wrap;
-
-      &-style {
-        display: inline-block;
-        position: relative;
-        margin-right: 16px;
-        cursor: pointer;
-        text-align: center;
-      }
-
-      &-title {
-        flex: 1 1;
-        font-size: 14px;
-      }
-
-      &-action {
-        flex: 0 0 auto;
-      }
-
-      .theme-item {
-        width: 20px;
-        min-width: 20px;
-        height: 20px;
-        cursor: pointer;
-        border: 1px solid #eee;
-        border-radius: 2px;
-        margin: 0 5px 5px 0;
-        text-align: center;
-      }
+    &-title {
+      flex: 1 1;
+      font-size: 14px;
     }
 
-    .align-items-top {
-      align-items: flex-start;
-      padding: 2px 0;
+    &-action {
+      flex: 0 0 auto;
     }
 
-    .justify-center {
-      justify-content: center;
-    }
-
-    .dark-switch .n-switch--active {
-      ::v-deep(.n-switch__rail) {
-        background-color: #000e1c;
-      }
+    .theme-item {
+      width: 20px;
+      min-width: 20px;
+      height: 20px;
+      cursor: pointer;
+      border: 1px solid #eee;
+      border-radius: 2px;
+      margin: 0 5px 5px 0;
+      text-align: center;
     }
   }
+
+  .align-items-top {
+    align-items: flex-start;
+    padding: 2px 0;
+  }
+
+  .justify-center {
+    justify-content: center;
+  }
+
+  .dark-switch .n-switch--active {
+    ::v-deep(.n-switch__rail) {
+      background-color: #000e1c;
+    }
+  }
+}
 </style>
