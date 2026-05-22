@@ -25,10 +25,10 @@
       <n-space align="end" vertical :size="0">
         <n-text v-if="userStore.user.names" class="fw-bold">{{
           userStore.user.names
-          }}</n-text>
+        }}</n-text>
         <n-text v-if="userStore.user.branchoffice_des">{{
           userStore.user.branchoffice_des
-          }}</n-text>
+        }}</n-text>
       </n-space>
       <div class="layout-header-trigger layout-header-trigger-min">
         <n-dropdown trigger="hover" placement="bottom-end" :options="avatarOptions" @select="avatarSelect">
@@ -56,17 +56,7 @@ import { useBusinessStore } from "@/store/modules/business";
 import ProjectSetting from "./ProjectSetting";
 import { renderIcon } from "@/utils";
 
-// export default defineComponent({
-//   name: "PageHeader",
-//   components: {
-//     ProjectSetting,
-//   },
-//   props: {
-//     collapsed: {
-//       type: Boolean,
-//     },
-//   },
-//   setup() {
+
 defineProps({
   collapsed: Boolean,
 });
@@ -180,23 +170,6 @@ const doLogout = () => {
   });
 };
 
-// function openSetting() {
-//   const { openDrawer } = drawerSetting.value;
-//   openDrawer();
-// }
-
-//     return {
-//       ...toRefs(state),
-//       userStore,
-//       toggleFullScreen,
-//       doLogout,
-//       avatarOptions,
-//       avatarSelect,
-//       drawerSetting,
-//       openSetting,
-//     };
-//   },
-// });
 </script>
 
 <style lang="scss" scoped>

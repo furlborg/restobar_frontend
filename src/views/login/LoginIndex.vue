@@ -45,9 +45,6 @@ import { useGenericsStore } from "@/store/modules/generics";
 import logo from "@/assets/images/account-logo.png";
 import axios from "axios";
 
-// export default defineComponent({
-//   name: "login",
-//   setup() {
 const userStore = useUserStore();
 const genericsStore = useGenericsStore();
 const formRef = ref();
@@ -63,17 +60,19 @@ axios
       image.value = logo;
     }
   })
-  .catch((e) => (image.value = logo));
+  .catch(() => (image.value = logo));
 
 const router = useRouter();
 
 userStore.initializeStore();
 
+// Creamos el formulario reactivo para el inicio de sesión.
 const formInline = reactive({
   username: "",
   password: "",
 });
 
+// Reglas de validación para el formulario.
 const rules = {
   username: {
     required: true,
@@ -125,16 +124,6 @@ const handleSubmit = () => {
   });
 };
 
-//     return {
-//       formRef,
-//       loading,
-//       rules,
-//       formInline,
-//       handleSubmit,
-//       image,
-//     };
-//   },
-// });
 </script>
 
 <style lang="scss">

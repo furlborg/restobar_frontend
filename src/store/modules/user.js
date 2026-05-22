@@ -1,7 +1,22 @@
 import { defineStore } from "pinia";
 import { refreshToken, logout, getActiveUsers } from "@/api/modules/users";
-
+import { permissions } from "@/store/modules/permissions";
 import useCookie from "vue-cookies";
+
+/**
+ * Calcula los segundos restantes de vida de un JWT
+ */
+const getTokenDuration = (token) => {
+  try {
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const payload = JSON.parse(window.atob(base64));
+    const now = Math.floor(Date.now() / 1000);
+    return payload.exp ? payload.exp - now : null;
+  } catch (e) {
+    return null;
+  }
+};
 
 export const useUserStore = defineStore("user", {
   state: () => ({
@@ -28,21 +43,45 @@ export const useUserStore = defineStore("user", {
       }
     },
     async login(data) {
+      console.info("Login successful:", data);
       this.saveTokens(data.token, data.refresh);
-      this.saveUserInfo(data.user);
+      this.saveUserInfo(data.token);
       this.saveAuthentication();
     },
     saveTokens(token, refresh) {
-      useCookie.set("token", token, 60 * 30);
+      const accessDuration = getTokenDuration(token) || 60 * 30;
+      const refreshDuration = getTokenDuration(refresh) || "1d";
+
+      useCookie.set("token", token, accessDuration);
       this.token = token;
-      useCookie.set("refresh", refresh, "1d");
+      useCookie.set("refresh", refresh, refreshDuration);
       this.refresh = refresh;
     },
-    saveUserInfo(user) {
-      localStorage.setItem("perms", JSON.stringify(user.user_permissions));
-      delete user.user_permissions;
-      useCookie.set("user-info", user, "");
-      this.user = user;
+    saveUserInfo(token) {
+      try {
+        const base64Url = token.split(".")[1];
+        const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+        const payload = JSON.parse(window.atob(base64));
+        console.info("Decoded token payload:", payload);
+
+        const user = {
+          id: payload.user_id,
+          username: payload.username,
+          names: payload.names,
+          role: payload.role,
+          branchoffice: payload.branchoffice,
+          branchoffice_des: payload.branchoffice_des,
+          user_permissions: permissions[payload.role] || [], // Cargar permisos según el rol del usuario
+        };
+
+        console.info("User info extracted from token:", user);
+        useCookie.set("user-info", user, "");
+        this.user = user;
+        localStorage.setItem("perms", JSON.stringify(user.user_permissions));
+        delete user.user_permissions;
+      } catch (e) {
+        console.error("Error decoding token:", e);
+      }
     },
     saveAuthentication() {
       this.isAuthenticated = true;
@@ -77,8 +116,13 @@ export const useUserStore = defineStore("user", {
     async updateToken() {
       await refreshToken(this.refresh)
         .then((response) => {
-          useCookie.set("token", response.data.access, 60 * 30);
-          useCookie.set("refresh", response.data.refresh, "1d");
+          const accessDuration =
+            getTokenDuration(response.data.access) || 60 * 30;
+          const refreshDuration =
+            getTokenDuration(response.data.refresh) || "1d";
+
+          useCookie.set("token", response.data.access, accessDuration);
+          useCookie.set("refresh", response.data.refresh, refreshDuration);
           this.token = useCookie.get("token");
           this.refresh = useCookie.get("refresh");
         })
@@ -117,7 +161,7 @@ export const useUserStore = defineStore("user", {
       localStorage.setItem("isAuthenticated", this.isAuthenticated);
     },
     hasPermission(permission) {
-      if (this.user.is_superuser) {
+      if (this.user.role === "ADMINISTRADOR") {
         return true;
       }
       return this.user.user_permissions.some((perm) => perm === permission);

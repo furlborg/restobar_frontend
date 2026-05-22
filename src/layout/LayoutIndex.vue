@@ -100,8 +100,6 @@ const genericsStore = useGenericsStore();
 
 genericsStore.initializeStore();
 
-
-
 const getThemeOverrides = computed(() => {
   const appTheme = designStore.appTheme;
   const lightenStr = lighten(designStore.appTheme, 6);

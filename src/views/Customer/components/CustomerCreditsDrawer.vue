@@ -1,35 +1,24 @@
 <template>
-  <n-drawer
-    :show="show"
-    @update:show="(v) => $emit('update:show', v)"
-    placement="right"
-    style="width: 100%; min-width: 320px; max-width: 1024px"
-  >
+  <n-drawer :show="show" @update:show="(v) => $emit('update:show', v)" placement="right"
+    style="width: 100%; min-width: 320px; max-width: 1024px">
     <CustomerCredits :id="id" />
   </n-drawer>
 </template>
 
-<script>
-import { defineComponent } from "vue";
+<script setup>
+import { defineProps, defineEmits } from "vue";
 import CustomerCredits from "./CustomerCredits.vue";
-export default defineComponent({
+
+defineOptions({
   name: "CustomerCreditsDrawer",
-  components: {
-    CustomerCredits,
-  },
-  emits: ["update:show"],
-  props: {
-    show: {
-      type: Boolean,
-    },
-    id: {
-      type: Number,
-    },
-  },
-  setup() {
-    return {};
-  },
 });
+
+defineProps({
+  show: Boolean,
+  id: Number,
+});
+
+defineEmits(["update:show"]);
 </script>
 
 <style lang="scss"></style>

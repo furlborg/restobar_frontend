@@ -344,12 +344,7 @@ export const productRules = {
   },
 };
 
-export const createUserColumns = ({
-  editUser,
-  changePermissions,
-  deleteUser,
-  changePassword,
-}) => {
+export const createUserColumns = ({ editUser, deleteUser, changePassword }) => {
   return [
     {
       title: "#",
@@ -426,19 +421,19 @@ export const createUserColumns = ({
               },
               renderIcon("la-user-edit-solid"),
             ),
-          userStore.hasPermission("change_permissions") &&
-            h(
-              NButton,
-              {
-                class: "me-2",
-                size: "small",
-                color: "#8a2be2",
-                type: "primary",
-                secondary: true,
-                onClick: () => changePermissions(row),
-              },
-              renderIcon("md-factcheck-twotone"),
-            ),
+          // userStore.hasPermission("change_permissions") &&
+          //   h(
+          //     NButton,
+          //     {
+          //       class: "me-2",
+          //       size: "small",
+          //       color: "#8a2be2",
+          //       type: "primary",
+          //       secondary: true,
+          //       onClick: () => changePermissions(row),
+          //     },
+          //     renderIcon("md-factcheck-twotone"),
+          //   ),
           userStore.hasPermission("change_passwords") &&
             h(
               NButton,

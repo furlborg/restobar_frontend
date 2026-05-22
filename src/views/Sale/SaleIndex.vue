@@ -333,8 +333,6 @@ const performNullifySale = async (id, info) => {
         if (response.status === 202) {
             message.success("Anulado");
             showConfirm.value = { show: false, saleId: null };
-            // deleteId.value = null;
-            // passConfirm.value = "";
             isLoading.value = false;
         }
     }).catch((error) => {
@@ -459,7 +457,6 @@ const tableColumns = createSaleColumns({
         });
     },
     nullifySale(row) {
-        // deleteId.value = row.id;
         showConfirm.value = { show: true, saleId: row.id, permission: "cancel_sale", loadSales, performNullifySale };
     },
     changeStatus

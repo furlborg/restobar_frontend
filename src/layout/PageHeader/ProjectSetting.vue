@@ -35,13 +35,9 @@
 </template>
 
 <script setup>
-import { defineOptions, reactive, toRefs } from 'vue'
+import { reactive, toRefs } from 'vue'
 import { useDesignSettingStore } from '@/store/modules/designSetting'
-//import { darkTheme } from 'naive-ui'
 
-// export default defineComponent({
-//   name: 'ProjectSetting',
-//   setup() {
 defineOptions({
   name: 'ProjectSetting',
 })
@@ -53,23 +49,7 @@ const state = reactive({
 
 toRefs(state)
 
-// function openDrawer() {
-//   state.isDrawer = true
-// }
 
-// function closeDrawer() {
-//   state.isDrawer = false
-// }
-
-//     return {
-//       ...toRefs(state),
-//       designStore,
-//       darkTheme,
-//       openDrawer,
-//       closeDrawer,
-//     }
-//   },
-// })
 </script>
 
 <style lang="scss" scoped>
