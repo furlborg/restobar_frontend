@@ -117,6 +117,14 @@ export default defineComponent({
             const response = JSON.parse(event.data);
             console.info(logPrefix, "WS message:", response);
             if(response.id) {
+                if (tableStore.processedMessages.has(response.id)) {
+                    return;
+                }
+                tableStore.processedMessages.add(response.id);
+                setTimeout(() => {
+                    tableStore.processedMessages.delete(response.id);
+                }, 10000);
+
                 if(response.success) {
                     message.success(response.success);
                 } else {
