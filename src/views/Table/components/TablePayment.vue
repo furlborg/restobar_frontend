@@ -62,7 +62,7 @@
                 </n-gi>
               </n-grid>
             </n-form>
-            <ProductTable :sale="sale" :sale-details="saleStore.toSale" @update-detail="saleStore.updateDetail" />
+            <ProductTable :sale="sale" :sale-details="saleStore.toSale" :sale-menu-sets="saleStore.salePayload.sale_product_sets" @update-detail="saleStore.updateDetail" />
 
             <PaymentTotals :items="paymentTotalsItems" :total-amount="sale.amount" :payment-amount="sale.given_amount"
               :change-amount="changing" :payment-max="sale.payment_condition === 2 ? sale.amount - 0.1 : null"
@@ -77,7 +77,7 @@
                 <n-checkbox v-model:checked="ticketPreview">Previsualizar ticket</n-checkbox>
               </n-gi>
             </n-grid>
-            <n-button class="fs-1 py-5 mt-2" type="success" :disabled="!saleStore.toSale.filter(d => !!d.quantity).length ||
+            <n-button class="fs-1 py-5 mt-2" type="success" :disabled="!hasItems ||
               (sale.payment_condition === 1 ? sale.given_amount < sale.amount : !(sale.given_amount < sale.amount))"
               secondary block @click.prevent="isMultiple ? doMultiplePayment() : performCreateSale()">
               <v-icon class="me-2" name="fa-coins" scale="2" />Cobrar
@@ -148,6 +148,7 @@ import startOfDay from "date-fns/startOfDay";
 import { useBusinessStore } from "@/store/modules/business";
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 import { createSale, getSaleNumber, retrieveSale, sendSale } from "@/api/modules/sales";
+import { useSaleTotals } from "@/composables/useSaleTotals";
 
 
 const router = useRouter();
@@ -209,51 +210,18 @@ const sale = ref({
   total_igv: "0.00",
 });
 
-const totals = computed(() => {
-  const toSale = saleStore.toSale;
+const { taxBreakdown, productTotal, menuTotal, hasItems } = useSaleTotals();
 
-  return {
-    GRV: toSale.reduce(
-      (acc, cur) =>
-        cur.product_affectation === 10
-          ? acc + parseFloat(cur.price_sale - cur.igv_tax) * cur.quantity
-          : acc,
-      0
-    ),
-    EXN: toSale.reduce(
-      (acc, cur) =>
-        cur.product_affectation === 20
-          ? acc + parseFloat(cur.price_sale) * cur.quantity
-          : acc,
-      0
-    ),
-    GRT: toSale.reduce(
-      (acc, cur) =>
-        cur.product_affectation === 21
-          ? acc + parseFloat(cur.price_sale) * cur.quantity
-          : acc,
-      0
-    ),
-    IGV: toSale.reduce((acc, cur) => acc + cur.igv_tax * cur.quantity, 0),
-    DSCT: toSale.some((d) => Number(d.discount) > 0)
-      ? toSale.reduce((acc, cur) => acc + Number(cur.discount), 0)
-      : parseFloat(sale.value.discount),
-  };
-});
-
-const totalGRV = computed(() => totals.value.GRV);
-const totalEXN = computed(() => totals.value.EXN);
-const totalGRT = computed(() => totals.value.GRT);
-const totalIGV = computed(() => totals.value.IGV);
-const totalDSCT = computed(() => totals.value.DSCT);
-
-const subTotal = computed(() =>
-  saleStore.toSale.reduce(
-    (acc, cur) =>
-      cur.product_affectation === 21 ? acc : acc + cur.price_sale * cur.quantity,
-    0
-  )
+const totalGRV = computed(() => taxBreakdown.value.taxed);
+const totalEXN = computed(() => taxBreakdown.value.exempt);
+const totalGRT = computed(() => taxBreakdown.value.free);
+const totalIGV = computed(() => taxBreakdown.value.igv);
+const totalDSCT = computed(() => saleStore.toSale.some((d) => Number(d.discount) > 0)
+  ? saleStore.toSale.reduce((acc, cur) => acc + Number(cur.discount), 0)
+  : parseFloat(sale.value.discount)
 );
+
+const subTotal = computed(() => productTotal.value + menuTotal.value - taxBreakdown.value.free);
 
 // const products_count = computed(() =>
 //   saleStore.toSale.reduce((acc, cur) => acc + cur.quantity, 0)
@@ -269,12 +237,7 @@ const total = computed(() => {
   return cal.toFixed(2);
 });
 
-const icbper = computed(() =>
-  orderStore.orderList.reduce(
-    (acc, curVal) => acc + (curVal.icbper ? curVal.icbper_amount : 0),
-    0
-  )
-);
+const icbper = computed(() => taxBreakdown.value.icbper);
 
 const otherCharges = computed(() => {
   const parsed = parseFloat(sale.value.other_charges);
@@ -500,6 +463,9 @@ const performCreateSale = () => {
           igv_tax: detail.igv_tax.toFixed(2),
           price_base: detail.price_base.toFixed(2)
         }));
+        // Use buildSalePayload to get both arrays
+        const payload = saleStore.buildSalePayload();
+        sale.value.sale_product_sets = payload.sale_product_sets;
         sale.value.discount = totalDSCT.value;
 
         try {
@@ -623,6 +589,8 @@ const openSeparatePaymentsModal = () => {
   separatePayments.value = cloneDeep(sale.value);
   separatePayments.value.order = cloneDeep(orderStore.orderId);
   separatePayments.value.sale_details = cloneDeep(saleStore.toSale);
+  const payload = saleStore.buildSalePayload();
+  separatePayments.value.product_sets = cloneDeep(payload.sale_product_sets);
   separatePayments.value.sale_details.forEach(detail => detail.max = detail.quantity);
   showSeparateModal.value = true;
 };

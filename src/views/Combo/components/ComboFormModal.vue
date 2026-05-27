@@ -632,7 +632,20 @@ const handleSubmit = async () => {
     if (error?.message?.includes('validate')) {
       message.error('Por favor completa todos los campos requeridos')
     } else {
-      message.error('Error al guardar: ' + (error.response?.data?.message || error.message))
+      let errorMsg = error.message;
+      if (error.response?.data) {
+        if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        } else if (typeof error.response.data === 'object') {
+          // Flatten DRF error dictionary
+          const errors = [];
+          for (const key in error.response.data) {
+            errors.push(`${key}: ${error.response.data[key]}`);
+          }
+          errorMsg = errors.join(', ');
+        }
+      }
+      message.error('Error al guardar: ' + errorMsg);
     }
   } finally {
     isSaving.value = false

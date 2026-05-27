@@ -127,6 +127,10 @@ export function buildTableOrderPayload(orders = [], context = {}) {
         set_type: "COMBO",
         price: Number(order.price || 0),
         quantity: Number(order.quantity || 1),
+        //agregamos el pricing_mode, el fixed_price y el combo_category_id
+        pricing_mode: order.pricing_mode,
+        fixed_price: order.fixed_price,
+        combo_category_id: order.combo_category_id,
         // Include items array con combo_product_id
         items: (order.items || []).map((item) => ({
           combo_product_id: item.combo_product_id, // FK a ComboProduct

@@ -142,10 +142,12 @@ const handleAddCombo = () => {
     pricing_mode: props.combo.pricing_mode || 'FIXED',
     fixed_price: props.combo.fixed_price || null,
     combo_category_id: props.combo.combo_category_id || props.combo.combo_category?.id || null,
-    items: (props.combo.combo_products || []).map(comboProduct => ({
-      combo_product_id: comboProduct.id, // ID del ComboProduct
-      product_id: comboProduct.product_id || comboProduct.product?.id,
-      product_name: comboProduct.product_name || comboProduct.product?.name,
+    //CORRECCIÓN: AGREGAR EL PRICING_MODE, EL FIXED_PRICE Y EL COMBO_CATEGORY_ID
+    items: (props.combo.products || []).map(comboProduct => ({
+      combo_product_id: null,
+      product_id: comboProduct.id,
+      product_name: comboProduct.name,
+
       quantity: comboProduct.quantity,
       kardex_map: comboProduct.kardex_map || null,
       indication: ''

@@ -452,7 +452,9 @@ export async function createCombo(combo) {
   if (combo.image && combo.image instanceof File) {
     form.append("image", combo.image);
   }
-  form.append("fixed_price", combo.fixed_price);
+  if (combo.fixed_price !== undefined && combo.fixed_price !== null) {
+    form.append("fixed_price", combo.fixed_price);
+  }
 
   if (combo.products && Array.isArray(combo.products)) {
     form.append("products", JSON.stringify(combo.products));
