@@ -35,6 +35,33 @@
                     </template>
                 </n-list-item>
             </n-list>
+            <template v-if="orderStore.orderList.length">
+                <n-divider>Carrito</n-divider>
+                <n-list>
+                    <n-list-item v-for="(orderItem, index) in orderStore.orderList" :key="index">
+                        <n-thing>
+                            <template #header>
+                                <n-space align="center">
+                                    <n-tag>{{ orderItem.quantity }}</n-tag>
+                                    <n-text class="fs-5">
+                                        {{ orderItem.product_name || orderItem.name }}
+                                    </n-text>
+                                </n-space>
+                            </template>
+                            <template #header-extra>
+                                <n-text>
+                                    S/. {{ (Number(orderItem.quantity || 0) * parseFloat(orderItem.price || 0)).toFixed(2) }}
+                                </n-text>
+                            </template>
+                        </n-thing>
+                        <template #suffix>
+                            <n-button type="error" text @click.stop="orderStore.orders.splice(index, 1)">
+                                <v-icon name="md-disabledbydefault-round" scale="1.25" />
+                            </n-button>
+                        </template>
+                    </n-list-item>
+                </n-list>
+            </template>
             <n-modal preset="card" title="Nombre de Cliente" v-model:show="showAskFor" :segmented="{ content: 'hard' }">
                 <n-input placeholder="" v-model:value="ask_for" />
                 <template #action>
@@ -48,8 +75,12 @@
             <ProductIndications v-model:show="showModal" preset="card" title="Indicaciones"
                 :product="waiterStore.preOrderList[orderItemIndex]" @success="showModal = false" />
             <template #footer>
-                <n-button class="h-100 fs-4" type="info" secondary
-                    :disabled="!waiterStore.preOrderList.length || loading" :loading="loading" block
+                <n-button v-if="waiterStore.preOrderList.length" class="h-100 fs-4" type="success" secondary
+                    :disabled="loading" :loading="loading" block @click="addPendingProductsToOrder">
+                    <v-icon class="me-1" name="md-add-round" /> Agregar
+                </n-button>
+                <n-button v-else-if="orderStore.orderList.length" class="h-100 fs-4" type="info" secondary
+                    :disabled="loading" :loading="loading" block
                     @click=" orderStore.orderId ? performUpdateTableOrder() : settingsStore.business_settings.order?.['order_customer_name'] ? (showAskFor = true) : performCreateTableOrder()">
                     {{ orderStore.orderId ? "Añadir" : "Realizar" }} pedido
                 </n-button>
@@ -319,7 +350,11 @@ const performCreateTableOrder = () => {
             if (response.status === 201) {
                 message.success("Orden creada correctamente");
                 syncOrderFromResponse(response.data);
+                orderStore.clearNewOrders();
+                saleStore.order_initial = cloneDeep(orderStore.fullOrderList);
                 waiterStore.preOrderList = [];
+                showAskFor.value = false;
+                ask_for.value = "";
                 emit("update:show", false);
                 await tableStore.refreshData();
                 router.push({ name: "WHome" });
@@ -348,7 +383,12 @@ const performUpdateTableOrder = async () => {
             );
             if (response.status === 202) {
                 message.success("Orden actualizada correctamente");
+                syncOrderFromResponse(response.data);
+                orderStore.clearNewOrders();
+                saleStore.order_initial = cloneDeep(orderStore.fullOrderList);
                 waiterStore.preOrderList = [];
+                showAskFor.value = false;
+                ask_for.value = "";
                 emit("update:show", false);
                 await tableStore.refreshData();
                 router.push({ name: "WHome" });
@@ -398,6 +438,12 @@ const addToList = () => {
             });
         }
     });
+};
+
+const addPendingProductsToOrder = () => {
+    if (!waiterStore.preOrderList.length) return;
+    addToList();
+    waiterStore.preOrderList = [];
 };
 
 const showAskFor = ref(false);
