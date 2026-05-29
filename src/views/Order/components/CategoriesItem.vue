@@ -47,6 +47,9 @@
                         <template #description>
                             <n-space align="center" size="small">
                                 <n-text type="success">S/. {{ parseFloat(product.prices).toFixed(2) }}</n-text>
+                                <n-tag v-if="product.control_stock" type="primary" size="small" round>
+                                    Stock: {{ formatStock(product.stock) }}
+                                </n-tag>
                                 <n-tag v-if="!product.has_stock" type="error" size="small" round>Sin stock</n-tag>
                                 <n-tag v-else-if="!product.has_supplies" type="warning" size="small" round>Sin
                                     insumos</n-tag>
@@ -123,6 +126,8 @@ const clearSelectedCategory = () => {
     search.value = "";
     loadProducts(selectedCategory.value.id)
 };
+
+const formatStock = (stock) => Number(stock ?? 0);
 
 const loadProducts = async (category_id) => {
     search.value = "";
