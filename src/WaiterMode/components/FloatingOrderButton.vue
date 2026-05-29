@@ -175,7 +175,7 @@
 <script>
 import { defineComponent, ref, inject, computed } from 'vue'
 import { useMessage } from 'naive-ui'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useOrderStore } from '@/store/modules/order'
 import { useTableStore } from '@/store/modules/table'
 import { useSettingsStore } from '@/store/modules/settings'
@@ -189,6 +189,7 @@ export default defineComponent({
   setup() {
     const message = useMessage()
     const route = useRoute()
+    const router = useRouter()
     const orderStore = useOrderStore()
     const tableStore = useTableStore()
     const settingsStore = useSettingsStore()
@@ -276,9 +277,9 @@ export default defineComponent({
           
           // Limpiar completamente el carrito después de enviar
           orderStore.clearNewOrders()
-          tableStore.refreshData()
-          
-          // Recargar los pedidos guardados desde el backend para actualizar la pestaña
+          await tableStore.refreshData()
+
+          // Recargar los pedidos guardados desde el backend para mantener el store consistente
           try {
             const { retrieveTableOrder } = await import('@/api/modules/tables')
             const orderResponse = await retrieveTableOrder(route.params.table)
@@ -323,7 +324,7 @@ export default defineComponent({
                 }
                 return null
               }).filter(Boolean)
-              
+
               orderStore.setSavedOrders(transformedOrders)
               // Actualizar orderId para habilitar la pestaña de pedidos
               orderStore.orderId = orderResponse.data.order.id
@@ -335,6 +336,7 @@ export default defineComponent({
           // Limpiar modal
           showAskFor.value = false
           ask_for.value = ''
+          await router.push({ name: 'WHome' })
         }
       } catch (error) {
         message.error('Error al procesar la orden')
