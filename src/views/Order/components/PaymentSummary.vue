@@ -4,7 +4,8 @@
       <n-button
         type="info"
         secondary
-        :disabled="orderStore.orderList.length === 0"
+        :disabled="orderStore.orderList.length === 0 || isValidatingStock"
+        :loading="isValidatingStock"
         @click="handleButtonClick"
       >
         {{ buttonText }}
@@ -128,8 +129,9 @@ import { useProductStore } from "@/store/modules/product";
 import { useSaleTotals } from "@/composables/useSaleTotals";
 import { useDebounce } from "@/composables/useDebounce";
 import { useMessage } from "naive-ui";
-import { searchProductByName, searchProductPrice } from "@/api/modules/products";
+import { retrieveProduct, searchProductByName, searchProductPrice } from "@/api/modules/products";
 import ProductSearchLabel from "@/views/Product/components/ProductSearchLabel.vue";
+import { getInsufficientStockItems } from "@/utils/orderStockValidation";
 
 export default defineComponent({
   name: "PaymentSummary",
@@ -172,6 +174,7 @@ export default defineComponent({
 
     const products = ref([]);
     const searching = ref(false);
+    const isValidatingStock = ref(false);
 
     // Variable local para el buscador de productos
     const localProductSearch = computed({
@@ -301,8 +304,66 @@ export default defineComponent({
       }
     };
 
-    const handleButtonClick = () => {
+    const refreshCurrentStock = async () => {
+      const productIds = [
+        ...new Set(orderStore.productLines.map((item) => item.product).filter(Boolean)),
+      ];
+
+      if (!productIds.length) return;
+
+      const responses = await Promise.all(productIds.map((productId) => retrieveProduct(productId)));
+      const productsById = new Map(
+        responses
+          .map((response) => response.data)
+          .filter(Boolean)
+          .map((product) => [String(product.id), product]),
+      );
+
+      orderStore.productLines.forEach((line) => {
+        const product = productsById.get(String(line.product));
+        if (!product) return;
+
+        line.stock = product.stock;
+        line.control_stock = product.control_stock;
+        line.has_stock = product.has_stock;
+        line.has_supplies = product.has_supplies;
+      });
+    };
+
+    const showInsufficientStockMessage = (items) => {
+      const details = items
+        .map((item) => `${item.productName}: solicitado ${item.requested}, disponible ${item.available}`)
+        .join("; ");
+      message.error(
+        `Stock insuficiente. ${details}.`,
+        { duration: 7000 },
+      );
+    };
+
+    const validateStockBeforeCheckout = async () => {
+      isValidatingStock.value = true;
       try {
+        await refreshCurrentStock();
+
+        const insufficientItems = getInsufficientStockItems(orderStore.orderList);
+        if (!insufficientItems.length) return true;
+
+        showInsufficientStockMessage(insufficientItems);
+        return false;
+      } catch (error) {
+        console.error("Error validando stock:", error);
+        message.error("No se pudo validar el stock actual. Intenta nuevamente.");
+        return false;
+      } finally {
+        isValidatingStock.value = false;
+      }
+    };
+
+    const handleButtonClick = async () => {
+      try {
+        const shouldOpenCheckout = !props.selectProducts;
+        if (shouldOpenCheckout && !(await validateStockBeforeCheckout())) return;
+
         emit('update:selectProducts', !props.selectProducts);
       } catch (error) {
         console.error('Error en handleButtonClick:', error);
@@ -327,6 +388,7 @@ export default defineComponent({
       renderLabel,
       formatPrice,
       handleButtonClick,
+      isValidatingStock,
       ...props
     };
   }
