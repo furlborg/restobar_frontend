@@ -30,7 +30,7 @@
                     {{ combo.pricing_mode === 'FIXED' ? 'Precio Fijo' : 'Precio Variable' }}
                   </n-tag>
                   <n-tag size="small" type="default">
-                    {{ combo.combo_products?.length || 0 }} productos
+                    {{ combo.products?.length || 0 }} productos
                   </n-tag>
                   <n-tag size="small" :type="combo.combo_category_details ? 'info' : 'default'">
                     {{ combo.combo_category_details?.description || 'Sin categoría' }}
@@ -42,13 +42,13 @@
                   <div class="mt-2" style="padding-left: 8px; border-left: 3px solid #f0a020;">
                     <n-text class="fs-7" type="warning" strong>Productos incluidos:</n-text>
                     <n-list class="mt-1" size="small">
-                      <n-list-item v-for="(product, idx) in combo.combo_products" :key="idx" style="padding: 4px 0;">
+                      <n-list-item v-for="(product, idx) in combo.products" :key="idx" style="padding: 4px 0;">
                         <n-space size="small" align="center">
                           <n-tag size="tiny" type="warning">{{ product.quantity }}x</n-tag>
-                          <n-text class="fs-7">{{ product.product_name || 'Producto' }}</n-text>
-                          <n-tag v-if="product.product?.stock !== undefined" size="tiny"
-                            :type="product.product.stock > 0 ? 'success' : 'error'">
-                            Stock: {{ product.product.stock }}
+                          <n-text class="fs-7">{{ product.name || 'Producto' }}</n-text>
+                          <n-tag v-if="product.stock !== undefined" size="tiny"
+                            :type="product.stock > 0 ? 'success' : 'error'">
+                            Stock: {{ product.stock }}
                           </n-tag>
                         </n-space>
                       </n-list-item>
@@ -65,7 +65,7 @@
               </n-space>
               <div style="display: inline-flex; flex-direction: column; align-items: flex-end;">
                 <n-text class="fs-5" type="warning" strong>
-                  S/. {{ parseFloat(combo.computed_price || combo.fixed_price || 0).toFixed(2) }}
+                  S/. {{ parseFloat(combo.price || 0).toFixed(2) }}
                 </n-text>
               </div>
             </n-space>
@@ -196,8 +196,8 @@ const filteredCombos = computed(() => {
 
   return combos.value.filter((combo) => {
     if (isPrice) {
-      // Búsqueda por precio: usar computed_price o fixed_price
-      const comboPrice = parseFloat(combo.computed_price || combo.fixed_price || 0).toFixed(2);
+      // Búsqueda por precio
+      const comboPrice = parseFloat(combo.price || 0).toFixed(2);
       return comboPrice.includes(searchTerm) || comboPrice.startsWith(searchTerm);
     } else {
       // Búsqueda por nombre (comportamiento original)
@@ -247,11 +247,11 @@ const addToOrderStore = () => {
 
   combosToAdd.forEach((combo) => {
     // Mapear productos del combo para la estructura items
-    const comboItems = (combo.combo_products || []).map(cp => {
+    const comboItems = (combo.products || []).map(cp => {
       const item = {
-        combo_product_id: cp.id,
-        product_id: cp.product?.id || cp.product,  // ✅ Asegurar que product_id esté presente
-        product_name: cp.product_name || cp.product?.name || 'Producto',
+        combo_product_id: null,
+        product_id: cp.id,
+        product_name: cp.name || 'Producto',
         quantity: cp.quantity
       };
 
@@ -268,13 +268,13 @@ const addToOrderStore = () => {
       from_combo: true,
       order_detail_id: null,
       combo_id: combo.id,
-      product_set_id: combo.id,
+      product_set_id: null,
       name: combo.name,
       set_type: 'COMBO',
       pricing_mode: combo.pricing_mode,
       fixed_price: combo.fixed_price,
-      computed_price: combo.computed_price,
-      price: combo.fixed_price || combo.computed_price || 0,
+      computed_price: combo.price, // Mantenemos el campo por compatibilidad
+      price: combo.price || 0,
       quantity: combo.quantity,
       items: comboItems,
       selected_extras: combo.selected_extras || [],

@@ -15,6 +15,7 @@ export const usePrinterStore = defineStore("printer", {
     printers: [],
     managedPrinters: [],
     message: null,
+    isListening: false,
   }),
   getters: {
     getPrintersOptions() {
@@ -77,6 +78,9 @@ export const usePrinterStore = defineStore("printer", {
       this.printers = await this.qz.printers.find();
     },
     startListeningPrinters() {
+      if (this.isListening) return;
+      this.isListening = true;
+      
       this.qz.printers.setPrinterCallbacks((info) => {
         if (
           this.managedPrinters.some((printer) => printer === info.printerName)
@@ -185,6 +189,7 @@ export const usePrinterStore = defineStore("printer", {
     },
     stopListeningPrinters() {
       this.qz.printers.stopListening();
+      this.isListening = false;
     },
     async printTicket(pdf, format, job_name, place = null) {
       // this.startConnection();
