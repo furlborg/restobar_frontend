@@ -6,7 +6,7 @@ import { createDiscreteApi } from "naive-ui";
 
 const businessStore = useBusinessStore();
 const userStore = useUserStore();
-const { message } = createDiscreteApi(["message"]);
+const { message, notification } = createDiscreteApi(["message", "notification"]);
 
 export const useTableStore = defineStore("table", {
   state: () => ({
@@ -175,7 +175,10 @@ export const useTableStore = defineStore("table", {
               }
 
               this.refreshData().then(() => {
-                message.info(`Mesa ${data.table_id}: ${data.status_text}`);
+                notification.info({
+                  content: `Mesa ${data.table_id}: ${data.status_text}`,
+                  duration: 4000
+                });
               });
             }
 

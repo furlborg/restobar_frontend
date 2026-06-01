@@ -103,7 +103,7 @@
                                                             0).toFixed(2) }}
                                                     </n-text>
                                                     <n-text depth="3" style="font-size: 12px">
-                                                        {{ combo.combo_products ? combo.products.length : 0 }}
+                                                        {{ combo.products ? combo.products.length : 0 }}
                                                         productos incluidos
                                                     </n-text>
                                                 </n-space>
