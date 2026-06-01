@@ -158,14 +158,14 @@ const openIndications = (order, index) => {
 
 onBeforeRouteUpdate((to) => {
     if (to.name !== "WCategories" && to.name !== "WProducts") {
-        if (waiterStore.preOrderList.length) {
+        if (orderStore.orders.length) {
             dialog.error({
                 title: "Cambios sin guardar",
                 content: "¿Salir de todos modos?",
                 positiveText: "Sí",
                 negativeText: "No",
                 onPositiveClick: () => {
-                    waiterStore.preOrderList = [];
+                    orderStore.clearNewOrders();
                     router.push(to);
                 }
             });
@@ -176,13 +176,13 @@ onBeforeRouteUpdate((to) => {
 
 onBeforeRouteLeave((to) => {
     if (to.name !== "WCategories" && to.name !== "WProducts") {
-        if (waiterStore.preOrderList.length) {
+        if (orderStore.orders.length) {
             dialog.error({
                 content: "¿Salir de todos modos?",
                 positiveText: "Sí",
                 title: "Cambios sin guardar",
                 onPositiveClick: () => {
-                    waiterStore.preOrderList = [];
+                    orderStore.clearNewOrders();
                     router.push(to);
                 }
             });
@@ -303,7 +303,7 @@ function setTabStyle() {
 }
 
 onMounted(() => {
-    // waiterStore.preOrderList = []; // Comentado temporalmente
+    orderStore.clearNewOrders(); // Limpiar carrito de la sesión anterior
     performRetrieveTableOrder();
     setTabStyle();
 });

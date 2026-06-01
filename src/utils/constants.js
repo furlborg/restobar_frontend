@@ -1418,6 +1418,7 @@ export const createSaleColumns = ({
   sendSale,
   nullifySale,
   changeStatus,
+  downloadXML,
 }) => {
   return [
     {
@@ -1602,7 +1603,7 @@ export const createSaleColumns = ({
     {
       title: "Acciones",
       key: "actions",
-      width: 110,
+      width: 160,
       render(row) {
         return [
           userStore.hasPermission("send_sale") && row.invoice_type !== "80"
@@ -1660,6 +1661,22 @@ export const createSaleColumns = ({
               onClick: () => printSale(row),
             },
             renderIcon("md-print-round"),
+          ),
+          // Boton XML
+          h(
+            NButton,
+            {
+              class: "ms-2",
+              size: "small",
+              type: "primary",
+              secondary: true,
+              // Solo mostrar para comprobantes electronicos (no nota de venta)
+              disabled: row.invoice_type === "80",
+              onClick: () => {
+                if (downloadXML) downloadXML(row);
+              },
+            },
+            () => "XML",
           ),
         ];
       },

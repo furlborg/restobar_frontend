@@ -413,6 +413,13 @@ const performStatusChange = async (row, newStatus, fromLabel, toLabel) => {
         isTableLoading.value = false;
     }
 };
+//Api del facture para descargar el xml de un comprobante
+const downloadXML = (row) => {
+    const baseUrl = import.meta.env.VITE_FACTURADOR_URL || 'https://faqtureapi.tsifactur.com';
+    const tenant = import.meta.env.VITE_FACTURADOR_TENANT || 'demo';
+    const url = `${baseUrl}/documents/${tenant}/xml/?serie=${row.serie}&number=${row.number}`;
+    window.open(url, '_blank');
+};
 
 const tableColumns = createSaleColumns({
     updateSale(row) {
@@ -459,7 +466,8 @@ const tableColumns = createSaleColumns({
     nullifySale(row) {
         showConfirm.value = { show: true, saleId: row.id, permission: "cancel_sale", loadSales, performNullifySale };
     },
-    changeStatus
+    changeStatus,
+    downloadXML
 })
 </script>
 
