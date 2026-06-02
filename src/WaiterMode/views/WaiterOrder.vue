@@ -88,17 +88,18 @@
             </n-card>
             <ProductIndications v-model:show="showModal" preset="card" title="Indicaciones"
                 :product="currentOrderList[itemIndex]" @success="showModal = false" />
-            <preview-drawer ref="previewDrawer" v-model:show="showPreview" :data="previewData" :preVoucher="true"
+            <PreviewDrawer ref="previewDrawer" v-model:show="showPreview" :data="previewData" :preVoucher="true"
                 :previewOnly="true" />
         </n-tab-pane>
     </n-tabs>
 </template>
 
 <script setup>
-import { ref, onUpdated, onMounted, provide, computed } from "vue";
+import { ref, onUpdated, onMounted, provide, computed, nextTick } from "vue";
 import ProductsDrawer from "../components/ProductsDrawer";
 import WaiterMenus from "./WaiterMenus.vue";
 import WaiterCombos from "./WaiterCombos.vue";
+import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 import { useMessage, useDialog } from "naive-ui";
 import {
     useRoute,
@@ -264,18 +265,26 @@ const performRetrieveTableOrder = () => {
 };
 
 const printOrderPrebill = async () => {
-    await retrieveTableOrder(route.params.table).then((response) => {
+    await retrieveTableOrder(route.params.table).then(async (response) => {
         if (response.status === 200) {
+            const order = response.data.order;
             if (settingsStore.business_settings.printer.print_html) {
-                previewData.value = response.data;
+                previewData.value = order;
                 showPreview.value = true;
-                setTimeout(() => previewDrawer.value.generate(), 250);
+                await nextTick();
+                if (typeof previewDrawer.value?.generate === "function") {
+                    await previewDrawer.value.generate();
+                } else {
+                    console.warn("previewDrawer no disponible o sin generate");
+                    message.error("No se pudo generar la preboleta");
+                }
             } else {
                 VoucherPrint({
-                    data: response.data,
+                    data: order,
                     businessStore,
                     prePayment: true,
-                    auto: true
+                    auto: true,
+                    show: false
                 });
             }
         }
