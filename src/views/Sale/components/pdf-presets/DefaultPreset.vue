@@ -221,7 +221,17 @@
                   {{ sale.totales.total_venta.toFixed(2) }}
                 </td>
               </tr>
-              <tr>
+              <template v-if="hasMultiplePayments">
+                <tr v-for="payment in multiplePayments" :key="payment.method">
+                  <td align="right" :colspan="!!hasDiscounts ? 4 : 3">
+                    {{ payment.method }} :
+                  </td>
+                  <td align="right">
+                    {{ payment.amount.toFixed(2) }}
+                  </td>
+                </tr>
+              </template>
+              <tr v-else>
                 <td align="right" :colspan="!!hasDiscounts ? 4 : 3">
                   EFECTIVO :
                 </td>
@@ -243,6 +253,7 @@
               </tr>
               <tr
                 v-if="
+                  !hasMultiplePayments &&
                   data.payment_condition === 1 &&
                   parseFloat(data.given_amount - data.amount)
                 "
@@ -526,15 +537,34 @@ export default defineComponent({
 
     const info = sale.informacion_adicional.split("|");
 
-    // Computed para métodos de pago
+    const normalizePayments = (payments = []) =>
+      payments
+        .filter((payment) => payment && Number(payment.amount) > 0)
+        .map((payment) => ({
+          method:
+            payment.payment_method ||
+            payment.method ||
+            payment.description ||
+            payment.payment_method_name ||
+            "N/A",
+          amount: Number(payment.amount),
+        }));
+
+    const multiplePayments = computed(() => {
+      const jsonPayments = normalizePayments(sale.payments);
+      if (jsonPayments.length) return jsonPayments;
+      return normalizePayments(props.data.payments);
+    });
+
+    const hasMultiplePayments = computed(() => multiplePayments.value.length > 1);
+
     const paymentMethods = computed(() => {
-      if (sale.payments && Array.isArray(sale.payments) && sale.payments.length > 0) {
-        // Si hay pagos múltiples, construir cadena con todos los métodos
-        return sale.payments.map(p => `${p.payment_method}`).join(' | ');
-      } else {
-        // Pago único desde info[2]
-        return info[2];
+      if (hasMultiplePayments.value) {
+        return multiplePayments.value
+          .map((payment) => `${payment.method} S/. ${payment.amount.toFixed(2)}`)
+          .join(" | ");
       }
+      return info[2];
     });
 
     const amountText = numeroALetras(
@@ -562,6 +592,8 @@ export default defineComponent({
       title,
       info,
       paymentMethods,
+      multiplePayments,
+      hasMultiplePayments,
       generateQR,
       amountText,
       hasDiscounts,
