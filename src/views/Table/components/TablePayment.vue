@@ -474,6 +474,9 @@ const performCreateSale = () => {
             const res = await retrieveSale(response.data?.id);
             pdfData.value = res.data;
             pdfData.value.original_sale_details = sale.value.sale_details;
+            if (sale.value.payments?.length) {
+              pdfData.value.payments = normalizePaymentsForTicket(sale.value.payments);
+            }
 
             if (settingsStore.business_settings.printer.print_html) {
               showPdf.value = true;
@@ -584,6 +587,13 @@ const currentPaymentsAmount = computed(() => {
   const sum = sale.value.payments.reduce((acc, val) => acc + normalizePaymentAmount(val.amount), 0);
   return Number.isFinite(sum) ? sum.toFixed(2) : "0.00";
 });
+
+const normalizePaymentsForTicket = (payments = []) =>
+  payments.map(payment => ({
+    payment_method: saleStore.getPaymentMethodDescription(payment.payment_method) || payment.payment_method,
+    description: saleStore.getPaymentMethodDescription(payment.payment_method) || payment.payment_method,
+    amount: normalizePaymentAmount(payment.amount),
+  }));
 
 const openSeparatePaymentsModal = () => {
   separatePayments.value = cloneDeep(sale.value);
