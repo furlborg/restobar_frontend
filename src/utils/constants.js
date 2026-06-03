@@ -1670,8 +1670,8 @@ export const createSaleColumns = ({
               size: "small",
               type: "primary",
               secondary: true,
-              // Solo mostrar para comprobantes electronicos (no nota de venta)
-              disabled: row.invoice_type === "80",
+              // Solo mostrar para comprobantes electrónicos (no nota de venta) Y que ya hayan sido enviados con éxito a la SUNAT (estado 'E')
+              disabled: row.invoice_type === "80" || row.status !== "E",
               onClick: () => {
                 if (downloadXML) downloadXML(row);
               },
