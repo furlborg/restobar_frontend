@@ -134,6 +134,8 @@ const showModal = ref(false);
 const itemIndex = ref(null);
 const activeTab = ref("menu"); // Controlar pestaña activa
 
+const ALLOWED_ROUTES = ["WCategories", "WProducts"];
+
 // Provide function para que WMenus pueda cambiar la pestaña
 const switchToOrderTab = () => {
     activeTab.value = "order";
@@ -157,7 +159,7 @@ const openIndications = (order, index) => {
 };
 
 onBeforeRouteUpdate((to) => {
-    if (to.name !== "WCategories" && to.name !== "WProducts") {
+    if (!ALLOWED_ROUTES.includes(to.name)) {
         if (orderStore.orders.length) {
             dialog.error({
                 title: "Cambios sin guardar",
@@ -175,7 +177,7 @@ onBeforeRouteUpdate((to) => {
 });
 
 onBeforeRouteLeave((to) => {
-    if (to.name !== "WCategories" && to.name !== "WProducts") {
+    if (!ALLOWED_ROUTES.includes(to.name)) {
         if (orderStore.orders.length) {
             dialog.error({
                 content: "¿Salir de todos modos?",
