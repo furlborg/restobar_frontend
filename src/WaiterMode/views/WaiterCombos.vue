@@ -331,7 +331,7 @@ const performUpdateTableOrder = () => {
     !ask_for.value ? undefined : ask_for.value
   )
     .then((response) => {
-      if (response.status === 200) {
+      if ([200, 202].includes(response.status)) {
         message.success("Orden actualizada correctamente");
         tableStore.refreshData();
         orderStore.clearNewOrders();

@@ -70,6 +70,11 @@ export function useOrderProcessing() {
       );
 
       if (response.status === 201) {
+        if (sale.value.delivery_info) {
+          message.success("¡Delivery realizado!");
+        } else {
+          message.success("¡Pago realizado!");
+        }
         cleanupOrderStore();
         if (settingsStore.businessSettings.printer.print_html) {
           await showAndGenerateTicket(response.data.sale, true);

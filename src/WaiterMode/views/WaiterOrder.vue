@@ -134,6 +134,8 @@ const showModal = ref(false);
 const itemIndex = ref(null);
 const activeTab = ref("menu"); // Controlar pestaña activa
 
+const ALLOWED_ROUTES = ["WCategories", "WProducts"];
+
 // Provide function para que WMenus pueda cambiar la pestaña
 const switchToOrderTab = () => {
     activeTab.value = "order";
@@ -157,15 +159,15 @@ const openIndications = (order, index) => {
 };
 
 onBeforeRouteUpdate((to) => {
-    if (to.name !== "WCategories" && to.name !== "WProducts") {
-        if (waiterStore.preOrderList.length) {
+    if (!ALLOWED_ROUTES.includes(to.name)) {
+        if (orderStore.orders.length) {
             dialog.error({
                 title: "Cambios sin guardar",
                 content: "¿Salir de todos modos?",
                 positiveText: "Sí",
                 negativeText: "No",
                 onPositiveClick: () => {
-                    waiterStore.preOrderList = [];
+                    orderStore.clearNewOrders();
                     router.push(to);
                 }
             });
@@ -175,14 +177,14 @@ onBeforeRouteUpdate((to) => {
 });
 
 onBeforeRouteLeave((to) => {
-    if (to.name !== "WCategories" && to.name !== "WProducts") {
-        if (waiterStore.preOrderList.length) {
+    if (!ALLOWED_ROUTES.includes(to.name)) {
+        if (orderStore.orders.length) {
             dialog.error({
                 content: "¿Salir de todos modos?",
                 positiveText: "Sí",
                 title: "Cambios sin guardar",
                 onPositiveClick: () => {
-                    waiterStore.preOrderList = [];
+                    orderStore.clearNewOrders();
                     router.push(to);
                 }
             });
@@ -303,7 +305,7 @@ function setTabStyle() {
 }
 
 onMounted(() => {
-    // waiterStore.preOrderList = []; // Comentado temporalmente
+    orderStore.clearNewOrders(); // Limpiar carrito de la sesión anterior
     performRetrieveTableOrder();
     setTabStyle();
 });
