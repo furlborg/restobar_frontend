@@ -122,10 +122,10 @@
                       <template #description>
                         <n-space vertical size="small">
                           <n-text type="success" class="fs-6">
-                            S/. {{ parseFloat(combo.computed_price || combo.fixed_price || 0).toFixed(2) }}
+                            S/. {{ parseFloat(combo.price || 0).toFixed(2) }}
                           </n-text>
                           <n-text depth="3" style="font-size: 12px">
-                            {{ combo.combo_products ? combo.combo_products.length : 0 }} productos incluidos
+                            {{ combo.products ? combo.products.length : 0 }} productos incluidos
                           </n-text>
                         </n-space>
                       </template>
@@ -260,7 +260,7 @@ export default defineComponent({
     };
 
     const getCombosForCategory = (categoryId) =>
-      combos.value.filter((combo) => combo.combo_category === categoryId);
+      combos.value.filter((combo) => combo.category?.id === categoryId);
 
     const loadCombos = async () => {
       loadingCombos.value = true;

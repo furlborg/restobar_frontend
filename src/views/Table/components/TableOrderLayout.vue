@@ -369,6 +369,7 @@ const performUpdateTableOrder = async () => {
     try {
         const response = await updateTableOrder(table, orderStore.orderId, orderStore.orderList, orderUser.value, ask_for.value);
         if (response.status === 202) {
+            message.success("¡Pedido actualizado correctamente!");
             handleOrderSuccess(response);
         }
     } catch (error) {
