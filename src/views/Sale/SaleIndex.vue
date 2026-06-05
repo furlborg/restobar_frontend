@@ -413,12 +413,15 @@ const performStatusChange = async (row, newStatus, fromLabel, toLabel) => {
         isTableLoading.value = false;
     }
 };
-//Api del facture para descargar el xml de un comprobante
 const downloadXML = (row) => {
-    const baseUrl = import.meta.env.VITE_FACTURADOR_URL || 'https://faqtureapi.tsifactur.com';
-    const tenant = import.meta.env.VITE_FACTURADOR_TENANT || 'demo';
-    const url = `${baseUrl}/documents/${tenant}/xml/?serie=${row.serie}&number=${row.number}`;
-    window.open(url, '_blank');
+    const apiUrl = businessStore.business.api_url;
+    if (apiUrl) {
+        // apiUrl ya incluye el tenant, ej: https://faqtureapi.tsifactur.com/documents/demo
+        const url = `${apiUrl}/xml/?serie=${row.serie}&number=${row.number}`;
+        window.open(url, '_blank');
+    } else {
+        message.error("La URL de facturación no está configurada en los datos de la Empresa.");
+    }
 };
 
 const tableColumns = createSaleColumns({
