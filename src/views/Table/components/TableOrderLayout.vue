@@ -174,8 +174,20 @@ const requireUserPass = computed(() => settingsStore.businessSettings.sale?.requ
 const requireGeneralPass = computed(() => settingsStore.businessSettings.sale.require_general_pass_to_null);
 const showConfigMessage = computed(() => userStore.hasPermission('cancel_orderdetail') && !requireUserPass.value && !requireGeneralPass.value);
 
+const getImportantData = (orders) => {
+    if (!orders) return [];
+    return orders.map(o => ({
+        product: o.product,
+        quantity: o.quantity,
+        is_delta: !!o.is_delta,
+        customer_id: o.customer?.id || null,
+        indication: o.indication || [],
+        quick_indications: o.quick_indications || []
+    }));
+};
+
 const hasUnsavedChanges = computed(() => {
-    const ordersChanged = JSON.stringify(saleStore.order_initial) !== JSON.stringify(orderStore.orderList);
+    const ordersChanged = JSON.stringify(getImportantData(saleStore.order_initial)) !== JSON.stringify(getImportantData(orderStore.orderList));
     const userChanged = orderUser_initial.value !== orderUser.value;
 
     // Si no hay pedido aún y solo cambió el usuario → no lo consideres un cambio importante
@@ -209,18 +221,28 @@ const handleRouteGuard = (to, isLeave = false) => {
         });
         return false;
     }
+
+    // Si está saliendo de la ruta por completo (no es una navegación interna como ir a cobrar)
+    // limpiamos el store para evitar dejar datos fantasmas
+    if (isLeave) {
+        cleanupOrderStore();
+    }
 };
 
 const cleanupOrderStore = () => {
     orderStore.orderId = null;
     orderStore.orders = [];
+    orderStore.savedOrders = [];
     saleStore.order_initial = [];
+    saleStore.toSale = [];
 };
 
 const resetStores = () => {
     orderStore.orderId = null;
     orderStore.orders = [];
+    orderStore.savedOrders = [];
     saleStore.order_initial = [];
+    saleStore.toSale = [];
     customerIdCounter.value = 1;
 };
 
@@ -493,7 +515,7 @@ const goHome = () => {
 
 onMounted(() => performRetrieveTableOrder());
 
-onBeforeRouteUpdate(handleRouteGuard);
+onBeforeRouteUpdate((to) => handleRouteGuard(to, false));
 onBeforeRouteLeave((to) => handleRouteGuard(to, true));
 
 provide("customers", customers);
