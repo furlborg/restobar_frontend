@@ -72,6 +72,7 @@ export function buildSalePayload(orders = [], options = {}) {
         quantity: quantity,
         icbper: Number(order.icbper_amount || 0),
         customer: order.customer || null,
+        is_delta: order.is_delta || false,
       };
 
       if (order.indication) detail.indication = order.indication;
