@@ -12,7 +12,6 @@ import { useSettingsStore } from "./settings";
 
 const businessStore = useBusinessStore();
 const userStore = useUserStore();
-const settingsStore = useSettingsStore();
 //const orderStore = useOrderStore();
 
 export const useSaleStore = defineStore("sale", {
@@ -201,6 +200,8 @@ export const useSaleStore = defineStore("sale", {
     },
     updateDetail(detail) {
       const settingsStore = useSettingsStore();
+      const orderStore = useOrderStore();
+      
       detail.product_igv = !Number(detail.product_igv)
         ? settingsStore.businessSettings.sale.igv_tax
         : Number(detail.product_igv);
@@ -234,6 +235,14 @@ export const useSaleStore = defineStore("sale", {
           console.error("Afectación inválida");
           break;
       }
+
+      // Sincronizar el cambio de precio con el store de órdenes
+      orderStore.updateOrderPrice(
+        detail.product, 
+        detail.customer, 
+        detail.is_delta, 
+        detail.price_sale
+      );
     },
   },
 });

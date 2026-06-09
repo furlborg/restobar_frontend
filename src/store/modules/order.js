@@ -257,6 +257,34 @@ export const useOrderStore = defineStore("order", {
     setSavedOrders(savedOrders) {
       this.savedOrders = savedOrders;
     },
+    updateOrderPrice(product_id, customer, is_delta, newPrice) {
+      const customerId = customer?.id ?? null;
+      const matchesCustomer = (order) =>
+        customerId !== null
+          ? order?.customer?.id === customerId
+          : !order?.customer;
+
+      const targetOrder = this.orders.find(
+        (order) =>
+          !!order.is_delta === !!is_delta &&
+          order?.product === product_id &&
+          matchesCustomer(order)
+      );
+
+      if (targetOrder && targetOrder.price !== newPrice) {
+        targetOrder.price = newPrice;
+      } else {
+        // En caso de que sea un savedOrder (cuando se edita una orden ya enviada a cocina pero no cobrada)
+        const savedOrder = this.savedOrders.find(
+          (order) =>
+            order?.product === product_id &&
+            matchesCustomer(order)
+        );
+        if (savedOrder && savedOrder.price !== newPrice) {
+          savedOrder.price = newPrice;
+        }
+      }
+    },
     clearNewOrders() {
       this.orders = [];
     },
