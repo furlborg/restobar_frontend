@@ -358,6 +358,12 @@ export const routes = [
               import("@/views/Settings/components/BusinessSettings.vue"),
           },
           {
+            name: "DocumentCounters",
+            path: "document-counters",
+            component: () =>
+              import("@/views/Settings/components/DocumentCounters.vue"),
+          },
+          {
             name: "AdvancedSettings",
             path: "advanced-settings",
 
