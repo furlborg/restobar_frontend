@@ -6,7 +6,11 @@
     :show="show"
     @update:show="(v) => $emit('update:show', v)"
   >
-    <FreeSaleProductForm @success="(v) => $emit('success', v)" />
+    <FreeSaleProductForm
+      v-if="show"
+      :initial-deduct-stock="initialDeductStock"
+      @success="(v) => $emit('success', v)"
+    />
   </n-modal>
 </template>
 
@@ -21,6 +25,10 @@ export default defineComponent({
   },
   props: {
     show: {
+      type: Boolean,
+      default: false,
+    },
+    initialDeductStock: {
       type: Boolean,
       default: false,
     },
