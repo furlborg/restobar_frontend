@@ -372,5 +372,38 @@ export async function getSalesReportByProduct(productId, dateFrom = null, dateTo
  * @returns {Promise} Respuesta con estadísticas del proceso de reenvío
  */
 export async function resendPendingVouchers() {
-  return await http.post("sales/resend-pending/");
+    return await http.post("sales/resend-pending/");
+}
+
+export async function downloadHistoricalSalesTemplate() {
+    return await http.get("sales/historical-template/", {
+        responseType: "blob",
+    });
+}
+
+export async function exportHistoricalSales(params) {
+    return await http.get("sales/historical-export/", {
+        params,
+        responseType: "blob",
+    });
+}
+
+export async function createHistoricalSaleImportJob({ file, start_date, end_date, branch_office }) {
+    const form = new FormData();
+    form.append("file", file);
+    if (start_date) {
+        form.append("start_date", start_date);
+    }
+    if (end_date) {
+        form.append("end_date", end_date);
+    }
+    form.append("branch_office", branch_office);
+
+    return await http.post("sale-import-jobs/", form, {
+        headers: { "Content-Type": "multipart/form-data" },
+    });
+}
+
+export async function retrieveHistoricalSaleImportJob(id) {
+    return await http.get(`sale-import-jobs/${id}/`);
 }

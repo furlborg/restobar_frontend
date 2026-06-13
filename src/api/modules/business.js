@@ -91,6 +91,16 @@ export async function getDocumentSeries() {
   return await http.get("series/");
 }
 
+export async function getDocumentSeriesCounters() {
+  return await http.get("series/counters/");
+}
+
+export async function updateDocumentSeriesCounter(idSerie, nextNumber) {
+  return await http.patch(`series/${idSerie}/counter/`, {
+    next_number: nextNumber,
+  });
+}
+
 export async function getDocumentSerie(idSerie) {
   return await http.get(`series/${idSerie}/`);
 }
