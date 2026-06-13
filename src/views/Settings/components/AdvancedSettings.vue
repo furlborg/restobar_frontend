@@ -276,6 +276,11 @@
                         <n-checkbox v-model:checked="businessSettings.sale.free_sale">Venta libre
                         </n-checkbox>
                     </n-form-item-gi>
+                    <n-form-item-gi :span="4">
+                        <n-checkbox v-model:checked="businessSettings.sale.free_sale_deduct_stock_default">Descontar
+                            stock en ventas libres por defecto
+                        </n-checkbox>
+                    </n-form-item-gi>
                     <n-form-item-gi v-if="businessSettings.order" :span="4">
                         <n-checkbox v-model:checked="businessSettings.order.fast_sale_format">Formato "Venta Rápida"
                         </n-checkbox>
