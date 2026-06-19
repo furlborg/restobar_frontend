@@ -258,11 +258,14 @@ export const useOrderStore = defineStore("order", {
       this.savedOrders = savedOrders;
     },
     updateOrderPrice(product_id, customer, is_delta, newPrice) {
-      const customerId = customer?.id ?? null;
-      const matchesCustomer = (order) =>
-        customerId !== null
-          ? order?.customer?.id === customerId
-          : !order?.customer;
+      const customerId = typeof customer === 'object' && customer !== null ? customer.id : customer ?? null;
+      const matchesCustomer = (order) => {
+        if (customerId === null || customerId === undefined) {
+          return !order?.customer;
+        }
+        const orderCustomerId = typeof order?.customer === 'object' && order?.customer !== null ? order?.customer?.id : order?.customer;
+        return orderCustomerId == customerId;
+      };
 
       const targetOrder = this.orders.find(
         (order) =>

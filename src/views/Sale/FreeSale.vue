@@ -817,7 +817,7 @@ export default defineComponent({
                     if (
                       settingsStore.businessSettings.sale.free_sale_send_doc &&
                       settingsStore.businessSettings.sale.auto_send &&
-                      response.data.invoice_type !== "80"
+                      String(sale.value.invoice_type) !== "80"
                     ) {
                       sendSale(response.data.id)
                         .then((response) => {

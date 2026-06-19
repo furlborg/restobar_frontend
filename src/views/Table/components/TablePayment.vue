@@ -118,7 +118,7 @@
           </n-space>
         </n-modal>
         <separate-payments-modal v-model:show="showSeparateModal" :data="separatePayments"
-          :on-close="closeSeparatePaymentsModal" @success="successSeparatePaymentsModal" />
+          @success="obtainSaleNumber" />
         <PreviewDrawer ref="previewDrawer" v-model:show="showPdf" :data="pdfData" :previewOnly="!ticketPreview"
           @printed="$router.push({ name: 'TableHome' })" @canceled="$router.push({ name: 'TableHome' })" />
       </div>
@@ -494,7 +494,7 @@ const performCreateSale = () => {
               await router.push({ name: "TableHome" });
             }
 
-            if (settingsStore.businessSettings.sale.auto_send && response.data?.['invoiceType'] !== "80") {
+            if (settingsStore.businessSettings.sale.auto_send && String(sale.value.invoice_type) !== "80") {
               try {
                 const sendResponse = await sendSale(response.data.id);
                 if (sendResponse.status === 200) message.success("Enviado!");
@@ -602,6 +602,9 @@ const openSeparatePaymentsModal = () => {
   const payload = saleStore.buildSalePayload();
   separatePayments.value.product_sets = cloneDeep(payload.sale_product_sets);
   separatePayments.value.sale_details.forEach(detail => detail.max = detail.quantity);
+  if (separatePayments.value.product_sets) {
+    separatePayments.value.product_sets.forEach(set => set.max = set.quantity);
+  }
   showSeparateModal.value = true;
 };
 

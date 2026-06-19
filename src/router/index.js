@@ -189,7 +189,7 @@ export const routes = [
               }
             })
             .catch((error) => {
-              if (error.response.status === 404) {
+              if (error.response && error.response.status === 404) {
                 tillStore.currentTillID = null;
                 tillStore.currentTillOrders = 0;
               }

@@ -21,15 +21,16 @@ export const generateVoucherPDF = async(data, infoHeader, dataOrder) => {
     const byConsumption = Boolean(dataOrder?.by_consumption);
 
     const title = () => {
-        switch (data?.["codigo_tipo_documento"]) {
+        switch (String(data?.["codigo_tipo_documento"])) {
             case "01":
                 return "FACTURA ELECTRÓNICA";
             case "03":
                 return "BOLETA  DE VENTA ELECTRÓNICA";
             case "80":
+            case "080":
                 return "NOTA DE VENTA";
             default:
-                console.error("tipo de documento inválido");
+                console.error("tipo de documento inválido", data?.["codigo_tipo_documento"]);
                 return "";
         }
     };

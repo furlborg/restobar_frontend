@@ -522,15 +522,16 @@ export default defineComponent({
     const sale = parseSale();
 
     const title = () => {
-      switch (sale.codigo_tipo_documento) {
+      switch (String(sale.codigo_tipo_documento)) {
         case "01":
           return "FACTURA ELECTRÓNICA";
         case "03":
           return "BOLETA  DE VENTA ELECTRÓNICA";
         case "80":
+        case "080":
           return "NOTA DE VENTA";
         default:
-          console.error("tipo de documento inválido");
+          console.error("tipo de documento inválido", sale.codigo_tipo_documento);
           return "";
       }
     };

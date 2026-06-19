@@ -47,7 +47,7 @@ const state = reactive({
   appThemeList: designStore.appThemeList,
 })
 
-toRefs(state)
+const { isDrawer, appThemeList } = toRefs(state)
 
 
 </script>

@@ -168,7 +168,7 @@ const activeTab = ref('main')
 
 const isMobile = computed(() => ['xs', 's'].includes(breakpointRef.value));
 const shouldShowCustomerMode = computed(() => orderStore.orderId ? orderStore.orderList.some(order => order.customer) : settingsStore.businessSettings?.order?.order_by_customer);
-const selectedCustomer = computed(() => customers.value.find(c => c.id === selectedCustomerId.value) || null);
+const selectedCustomer = computed(() => customers.value.find(c => String(c.id) === String(selectedCustomerId.value)) || null);
 const modalClass = computed(() => ({ 'w-100': genericsStore.device === 'mobile', 'w-50': genericsStore.device === 'tablet', 'w-25': genericsStore.device === 'desktop' }));
 const requireUserPass = computed(() => settingsStore.businessSettings.sale?.require_user_pass_to_null);
 const requireGeneralPass = computed(() => settingsStore.businessSettings.sale.require_general_pass_to_null);
@@ -234,7 +234,6 @@ const cleanupOrderStore = () => {
     orderStore.orders = [];
     orderStore.savedOrders = [];
     saleStore.order_initial = [];
-    saleStore.toSale = [];
 };
 
 const resetStores = () => {
@@ -242,7 +241,6 @@ const resetStores = () => {
     orderStore.orders = [];
     orderStore.savedOrders = [];
     saleStore.order_initial = [];
-    saleStore.toSale = [];
     customerIdCounter.value = 1;
 };
 
@@ -282,7 +280,7 @@ const performRetrieveTableOrder = async () => {
                         price: parseFloat(detail.product_set.price || detail.product_set.fixed_price || detail.product_set.computed_price || 0),
                         fixed_price: detail.product_set.fixed_price,
                         pricing_mode: detail.product_set.pricing_mode,
-                        quantity: detail.product_set.quantity,
+                        quantity: detail.quantity ?? detail.product_set.quantity ?? 1,
                         items: Array.isArray(detail.product_set.items)
                             ? detail.product_set.items.map(item => ({
                                 id: item.id,
@@ -520,7 +518,21 @@ onBeforeRouteLeave((to) => handleRouteGuard(to, true));
 
 provide("customers", customers);
 provide("selectedCustomer", selectedCustomer);
+provide("selectedCustomerId", selectedCustomerId);
 provide("shouldShowCustomerMode", shouldShowCustomerMode);
 provide("handleProductClick", handleProductClick);
+
+const addOrderToCustomer = (orderItem, customerId) => {
+    const customer = customers.value.find(c => String(c.id) === String(customerId)) || null;
+    if (orderItem.from_combo) {
+        orderStore.addComboOrder({...orderItem, customer});
+    } else if (orderItem.from_menu) {
+        orderStore.addMenuOrder({...orderItem, customer});
+    } else {
+        orderStore.addOrder(orderItem, customer);
+    }
+};
+provide("addOrderToCustomer", addOrderToCustomer);
+
 
 </script>
