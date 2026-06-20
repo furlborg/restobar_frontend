@@ -3,7 +3,7 @@
     <n-page-header class="border-bottom border-2 border-warning p-2">
       <template #title>
         <n-space align="center">
-          <v-icon name="md-localoffertwotone" style="color: #f0a020;" scale="1.3" />
+          <v-icon name="bi-tag" style="color: #f0a020;" scale="1.3" />
           <n-text class="fs-4">Combos Disponibles</n-text>
         </n-space>
       </template>
@@ -119,7 +119,7 @@
                 ? performUpdateTableOrder()
                 : performCreateTableOrder()
             " :disabled="loadingOrder" :loading="loadingOrder">
-            <v-icon class="me-1" name="md-fastfood-round" />
+            <v-icon class="me-1" name="md-fastfood-twotone" />
             {{ orderStore.orderId ? "Añadir" : "Realizar" }} pedido
           </n-button>
         </transition>
@@ -243,6 +243,14 @@ const handleExtrasSelected = ({ selected_extras, indication }) => {
 };
 
 const addToOrderStore = () => {
+  const isCustomerMode = settingsStore.businessSettings?.order?.order_by_customer;
+  const selectedCustomer = orderStore.getWaiterSelectedCustomer;
+
+  if (isCustomerMode && !selectedCustomer) {
+    message.warning("Seleccione un cliente primero");
+    return;
+  }
+
   const combosToAdd = combos.value.filter((combo) => combo.quantity > 0);
 
   combosToAdd.forEach((combo) => {
@@ -283,6 +291,7 @@ const addToOrderStore = () => {
       product_affectation: combo.affectation || 20,
       product_igv: combo.igv_tax || settingsStore.businessSettings.sale.igv_tax,
       icbper: false,
+      customer: isCustomerMode ? selectedCustomer : null,
     });
 
     // Reset combo quantity

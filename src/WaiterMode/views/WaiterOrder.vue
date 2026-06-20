@@ -33,6 +33,9 @@
                                     <n-tag>{{ order.quantity }}</n-tag>
                                     <!-- Caso producto normal -->
                                     <n-text v-if="order.product_name" class="ms-2">
+                                        <n-tag v-if="order.customer" size="small" type="success" class="me-1">
+                                            {{ order.customer.name }}
+                                        </n-tag>
                                         {{ order.product_name }}
                                     </n-text>
                                     <!-- Caso menú -->
@@ -40,6 +43,9 @@
                                         <n-icon color="#18a058" class="me-1">
                                             <v-icon name="md-restaurant-round" />
                                         </n-icon>
+                                        <n-tag v-if="order.customer" size="small" type="success" class="me-1">
+                                            {{ order.customer.name }}
+                                        </n-tag>
                                         {{ order.name }}
                                     </n-text>
                                     <!-- Caso combo -->
@@ -47,6 +53,9 @@
                                         <n-icon color="#f0a020" class="me-1">
                                             <v-icon name="gi-hot-meal" />
                                         </n-icon>
+                                        <n-tag v-if="order.customer" size="small" type="success" class="me-1">
+                                            {{ order.customer.name }}
+                                        </n-tag>
                                         {{ order.name }}
                                     </n-text>
                                 </template>
@@ -219,7 +228,8 @@ const performRetrieveTableOrder = () => {
                             quantity: item.quantity,
                             product_name: item.product_name,
                             phase_name: item.product_phase?.phase_name
-                        })) || []
+                        })) || [],
+                        customer: detail.customer || null
                     };
                 } else if (detail.product) {
                     // Es un producto regular
@@ -233,13 +243,15 @@ const performRetrieveTableOrder = () => {
                         quick_indications: detail.quick_indications || "",
                         icbper: detail.icbper,
                         product_affectation: detail.product_affectation,
-                        product_igv: detail.product_igv
+                        product_igv: detail.product_igv,
+                        customer: detail.customer || null
                     };
                 }
                 return null;
             }).filter(Boolean);
 
             orderStore.setSavedOrders(transformedOrders);
+            orderStore.extractWaiterCustomers(transformedOrders);
             saleStore.order_initial = cloneDeep(orderStore.fullOrderList);
             orderStore.orderId = response.data.order.id;
         }
@@ -258,6 +270,7 @@ const performRetrieveTableOrder = () => {
             router.push({ name: 'WHome' });
         } else if (error.response && error.response.status === 404) {
             orderStore.setSavedOrders([]);
+            orderStore.extractWaiterCustomers([]);
             saleStore.order_initial = [];
             orderStore.orderId = null;
         } else {

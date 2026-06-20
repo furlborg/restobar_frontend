@@ -126,7 +126,7 @@
               :loading="loading"
               @click="performOrder"
             >
-              <v-icon class="me-1" name="md-fastfood-round" />
+              <v-icon class="me-1" name="md-fastfood-twotone" />
               {{ orderStore.orderId ? 'Añadir' : 'Realizar' }} pedido
             </n-button>
           </n-space>

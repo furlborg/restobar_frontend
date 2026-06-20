@@ -61,15 +61,15 @@
         </transition>
         <!-- Botón para realizar pedido solo si hay productos no menús -->
         <transition name="slide-fade">
-          <n-button v-if="orderStore.orderList.filter(order => !order.from_menu).length > 0" type="warning" round
-            @click="
-              settingsStore.business_settings.order.order_customer_name
-                ? (showAskFor = true)
-                : orderStore.orderId
-                  ? performUpdateTableOrder()
-                  : performCreateTableOrder()
-              " :disabled="loading" :loading="loading"><v-icon class="me-1" name="md-fastfood-round" />{{
-                orderStore.orderId ? "Añadir" : "Realizar" }} pedido</n-button>
+          <n-button v-if="orderStore.orderList.length > 0" type="warning" round @click="
+            settingsStore.business_settings.order.order_customer_name
+              ? (showAskFor = true)
+              : orderStore.orderId
+                ? performUpdateTableOrder()
+                : performCreateTableOrder()
+            " :disabled="loading" :loading="loading">
+            <v-icon class="me-1" name="md-fastfood-twotone" />
+            {{ orderStore.orderId ? "Añadir" : "Realizar" }} pedido</n-button>
         </transition>
       </n-space>
     </teleport>
@@ -346,6 +346,14 @@ onUnmounted(() => {
 });
 
 const addToOrderStore = () => {
+  const isCustomerMode = settingsStore.businessSettings?.order?.order_by_customer;
+  const selectedCustomer = orderStore.getWaiterSelectedCustomer;
+
+  if (isCustomerMode && !selectedCustomer) {
+    message.warning("Seleccione un cliente primero");
+    return;
+  }
+
   filteredProducts.value.forEach((product) => {
     if (product.quantity > 0) {
       // Crear nueva orden usando addOrderItem del orderStore
@@ -358,7 +366,8 @@ const addToOrderStore = () => {
         quick_indications: product.quick_indications,
         icbper: product.icbper || false,
         affectation: product.affectation || '10',
-        igv_tax: product.igv_tax || 0
+        igv_tax: product.igv_tax || 0,
+        customer: isCustomerMode ? selectedCustomer : null
       };
       orderStore.addOrderItem(productOrder);
     }

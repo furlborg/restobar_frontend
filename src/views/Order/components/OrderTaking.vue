@@ -478,7 +478,8 @@ const paymentTotalsItems = computed(() => {
 });
 
 const totalAmount = computed(() => {
-  return grandTotal.value || props.sale.amount || 0;
+  const result = grandTotal.value + Number(props.sale.other_charges || 0) - Number(props.totalDsct || 0);
+  return Math.max(0, result);
 });
 // Watcher para actualizar automáticamente el campo de pago y amount cuando cambie el total
 watch(totalAmount, (newTotal) => {

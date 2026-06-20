@@ -269,8 +269,12 @@ const sale = ref({
 
 // Sincroniza los totales del objeto sale con los cálculos de useSaleTotals
 const syncSaleTotals = () => {
+  const dsct = parseFloat(totalDSCT.value) || 0;
+  const others = parseFloat(sale.value.other_charges) || 0;
+  const calculatedAmount = Math.max(0, grandTotal.value + others - dsct);
+
   Object.assign(sale.value, {
-    amount: grandTotal.value,
+    amount: calculatedAmount.toFixed(2),
     icbper: icbper.value,
     taxed_amount: totalGRV.value,
     exempt_amount: totalEXN.value,
@@ -280,7 +284,7 @@ const syncSaleTotals = () => {
   });
 };
 
-watch([grandTotal, icbper, totalGRV, totalEXN, totalGRT, totalIGV], syncSaleTotals, {
+watch([grandTotal, icbper, totalGRV, totalEXN, totalGRT, totalIGV, totalDSCT, () => sale.value.other_charges], syncSaleTotals, {
   immediate: true,
 });
 
@@ -294,10 +298,11 @@ watch(saleItemCount, (count) => {
 // Ajusta el monto entregado cuando el cliente elige contado
 watch([
   () => sale.value.payment_condition,
-  grandTotal,
+  () => sale.value.amount,
 ], ([paymentCondition, total]) => {
   if (paymentCondition === 1) {
-    const newGivenAmount = total > 0 ? total : parseFloat(0).toFixed(2);
+    const parsedTotal = parseFloat(total);
+    const newGivenAmount = parsedTotal > 0 ? parsedTotal.toFixed(2) : parseFloat(0).toFixed(2);
     if (sale.value.given_amount !== newGivenAmount) {
       sale.value.given_amount = newGivenAmount;
     }

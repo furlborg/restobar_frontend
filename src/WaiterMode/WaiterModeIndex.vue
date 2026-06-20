@@ -18,12 +18,45 @@
       </n-space>
     </n-layout-header>
     <n-layout-content position="absolute" style="top: 48px" :native-scrollbar="false">
-      <router-view v-slot="{ Component }">
-        <transition name="zoom-fade" mode="out-in" appear>
-          <component :is="Component" />
-        </transition>
-      </router-view>
+      <!-- Selector de clientes para Modo Mozo -->
+      <div v-if="shouldShowCustomerMode && $route.params.table" class="bg-white px-2 py-2 border-bottom shadow-sm z-3 position-relative">
+        <n-space justify="start" align="center" style="overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px;">
+          <n-button dashed type="primary" size="small" class="shrink-0" @click="showAddCustomerModal = true">
+            <template #icon>
+              <v-icon name="md-add-round" />
+            </template>
+            Añadir
+          </n-button>
+          <n-radio-group :value="orderStore.waiterSelectedCustomerId" @update:value="orderStore.waiterSelectedCustomerId = $event" name="customer-selector" class="d-flex flex-nowrap" style="gap: 8px;">
+            <n-radio-button v-for="(customer, index) in orderStore.waiterCustomers" :key="customer.id" :value="customer.id" size="small" class="shrink-0">
+              {{ customer.name }}
+              <n-button v-if="index !== 0" size="tiny" text type="error" class="ms-2" @click.stop="orderStore.removeWaiterCustomer(customer.id)">
+                <v-icon name="md-close-round" />
+              </n-button>
+            </n-radio-button>
+          </n-radio-group>
+        </n-space>
+      </div>
+      <div :style="shouldShowCustomerMode && $route.params.table ? 'height: calc(100% - 48px)' : 'height: 100%'">
+        <router-view v-slot="{ Component }">
+          <transition name="zoom-fade" mode="out-in" appear>
+            <component :is="Component" />
+          </transition>
+        </router-view>
+      </div>
     </n-layout-content>
+    
+    <!-- Modal para Añadir Cliente -->
+    <n-modal v-model:show="showAddCustomerModal" preset="card" title="Nombre del Cliente" class="w-75">
+      <n-input v-model:value="newCustomerName" placeholder="Ej: Juan, Pedro..." @keyup.enter="handleAddCustomer" />
+      <template #action>
+        <n-space justify="end">
+          <n-button type="success" secondary @click="handleAddCustomer" :disabled="!newCustomerName.trim()">
+            Guardar
+          </n-button>
+        </n-space>
+      </template>
+    </n-modal>
     <div class="mainMenu" :class="{ act: active === true }">
       <ul>
         <li v-if="$route.name === 'WHome'">
@@ -44,7 +77,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useDialog } from "naive-ui";
 import { retrieveCurrentTill } from "@/api/modules/tills";
@@ -56,8 +89,11 @@ import { useProductStore } from "@/store/modules/product";
 import { useWaiterStore } from "@/store/modules/waiter";
 import { useUserStore } from "@/store/modules/user";
 import { useTillStore } from "@/store/modules/till";
+import { useOrderStore } from "@/store/modules/order";
 
 const active = ref(false);
+const showAddCustomerModal = ref(false);
+const newCustomerName = ref("");
 const dialog = useDialog();
 const router = useRouter();
 const businessStore = useBusinessStore();
@@ -68,9 +104,20 @@ const tableStore = useTableStore();
 const tillStore = useTillStore();
 const productStore = useProductStore();
 const userStore = useUserStore();
+const orderStore = useOrderStore();
 businessStore.initializeStore();
 tableStore.initializeStore();
 settingsStore.initializeStore().then(() => productStore.initializeStore());
+
+const shouldShowCustomerMode = computed(() => settingsStore.businessSettings?.order?.order_by_customer);
+
+const handleAddCustomer = () => {
+  if (newCustomerName.value.trim()) {
+    orderStore.addWaiterCustomer(newCustomerName.value);
+    showAddCustomerModal.value = false;
+    newCustomerName.value = "";
+  }
+};
 
 const isConnected = ref(false);
 

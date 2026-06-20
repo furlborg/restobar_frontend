@@ -6,6 +6,9 @@ export const useOrderStore = defineStore("order", {
     orderId: null,
     orders: [], // Solo items nuevos (carrito)
     savedOrders: [], // Items ya guardados en el backend
+    waiterCustomers: [],
+    waiterSelectedCustomerId: null,
+    waiterCustomerCounter: 1,
   }),
   getters: {
     // Para el carrito (FloatingOrderButton) - solo items nuevos
@@ -88,6 +91,10 @@ export const useOrderStore = defineStore("order", {
         product_igv: order.igv_tax,
       }));
     },
+    getWaiterSelectedCustomer(state) {
+      if (!state.waiterSelectedCustomerId) return null;
+      return state.waiterCustomers.find(c => String(c.id) === String(state.waiterSelectedCustomerId)) || null;
+    }
   },
   actions: {
     initializeStore() {
@@ -291,5 +298,47 @@ export const useOrderStore = defineStore("order", {
     clearNewOrders() {
       this.orders = [];
     },
+    // Nuevas acciones para el Modo Mozo (Pedidos por Cliente)
+    extractWaiterCustomers(orderDetails) {
+      const detectedCustomers = [];
+      const seenIds = new Set();
+      orderDetails.forEach(item => {
+        const cid = item.customer?.id;
+        if (cid && !seenIds.has(cid)) {
+          seenIds.add(cid);
+          detectedCustomers.push(item.customer);
+        }
+      });
+      this.waiterCustomers = detectedCustomers;
+      if (detectedCustomers.length > 0) {
+        this.waiterSelectedCustomerId = detectedCustomers[0].id;
+        this.waiterCustomerCounter = detectedCustomers.length + 1;
+      } else {
+        this.waiterSelectedCustomerId = null;
+        this.waiterCustomerCounter = 1;
+      }
+    },
+    addWaiterCustomer(name) {
+      if (!name?.trim()) return;
+      const newCustomer = { id: `temp_${this.waiterCustomerCounter}`, name: name.trim() };
+      this.waiterCustomers.push(newCustomer);
+      this.waiterSelectedCustomerId = newCustomer.id;
+      this.waiterCustomerCounter++;
+    },
+    removeWaiterCustomer(customerId) {
+      this.waiterCustomers = this.waiterCustomers.filter(c => c.id !== customerId);
+      // Opcional: remover los pedidos que le pertenecían o dejarlos huérfanos. 
+      // Por ahora, imitando TableOrderLayout, los quitamos del carrito de pendientes.
+      this.orders = this.orders.filter(order => !order.customer || order.customer.id !== customerId);
+      
+      if (this.waiterSelectedCustomerId === customerId) {
+        this.waiterSelectedCustomerId = this.waiterCustomers.length > 0 ? this.waiterCustomers[0].id : null;
+      }
+    },
+    resetWaiterCustomers() {
+      this.waiterCustomers = [];
+      this.waiterSelectedCustomerId = null;
+      this.waiterCustomerCounter = 1;
+    }
   },
 });
