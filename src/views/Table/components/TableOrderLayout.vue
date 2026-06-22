@@ -145,6 +145,7 @@ const saleStore = useSaleStore();
 const table = route.params.table;
 const rules = { username: { required: true, trigger: ["blur", "input"], message: "" }, pass: { required: true, trigger: ["blur", "input"], message: "" } };
 
+const formRef = ref(null);
 const dataAnulate = ref({ username: "", pass: "" });
 const loading = ref(false);
 const ask_for = ref(undefined);
@@ -429,25 +430,52 @@ const resetDeleteState = () => {
 };
 
 const performDeleteDetail = async () => {
-    try {
-        const response = await performDeleteOrderDetail(table, removingItem.value.id, dataAnulate.value, deleteQuantity.value);
-        if (response.status === 204) {
-            orderStore.orderList.splice(removingItem.value.ind, 1);
-            saleStore.order_initial.splice(removingItem.value.ind, 1);
-            await nullifyTableOrder();
-            message.success("Comanda eliminada");
-        } else if (response.status === 202) {
-            const { ind } = removingItem.value;
-            const { quantity } = response.data;
-            orderStore.orderList[ind].quantity -= quantity;
-            saleStore.order_initial[ind].quantity -= quantity;
-            saleStore.order_initial[ind].subTotal = saleStore.order_initial[ind].quantity * saleStore.order_initial[ind].price;
-            message.success("Comanda actualizada correctamente");
+    if (formRef.value) {
+        formRef.value.validate(async (errors) => {
+            if (!errors) {
+                try {
+                    const response = await performDeleteOrderDetail(table, removingItem.value.id, dataAnulate.value, deleteQuantity.value);
+                    if (response.status === 204) {
+                        orderStore.orderList.splice(removingItem.value.ind, 1);
+                        saleStore.order_initial.splice(removingItem.value.ind, 1);
+                        await nullifyTableOrder();
+                        message.success("Comanda eliminada");
+                    } else if (response.status === 202) {
+                        const { ind } = removingItem.value;
+                        const { quantity } = response.data;
+                        orderStore.orderList[ind].quantity -= quantity;
+                        saleStore.order_initial[ind].quantity -= quantity;
+                        saleStore.order_initial[ind].subTotal = saleStore.order_initial[ind].quantity * saleStore.order_initial[ind].price;
+                        message.success("Comanda actualizada correctamente");
+                    }
+                    resetDeleteState();
+                } catch (error) {
+                    console.error(error);
+                    message.error("Error al anular, verifique sus datos...");
+                }
+            }
+        }).catch(() => {});
+    } else {
+        try {
+            const response = await performDeleteOrderDetail(table, removingItem.value.id, dataAnulate.value, deleteQuantity.value);
+            if (response.status === 204) {
+                orderStore.orderList.splice(removingItem.value.ind, 1);
+                saleStore.order_initial.splice(removingItem.value.ind, 1);
+                await nullifyTableOrder();
+                message.success("Comanda eliminada");
+            } else if (response.status === 202) {
+                const { ind } = removingItem.value;
+                const { quantity } = response.data;
+                orderStore.orderList[ind].quantity -= quantity;
+                saleStore.order_initial[ind].quantity -= quantity;
+                saleStore.order_initial[ind].subTotal = saleStore.order_initial[ind].quantity * saleStore.order_initial[ind].price;
+                message.success("Comanda actualizada correctamente");
+            }
+            resetDeleteState();
+        } catch (error) {
+            console.error(error);
+            message.error("Error al anular, verifique sus datos...");
         }
-        resetDeleteState();
-    } catch (error) {
-        console.error(error);
-        message.error("Error al anular, verifique sus datos...");
     }
 };
 

@@ -1014,7 +1014,11 @@ export default defineComponent({
 
         const showPayments = ref(false);
 
-        const createPayment = () => ({ payment_method: null, amount: "0" });
+        const createPayment = () => {
+            const currentTotal = sale.value.payments ? sale.value.payments.reduce((acc, val) => acc + (parseFloat(val.amount) || 0), 0) : 0;
+            const remaining = Math.max(0, parseFloat(sale.value.amount) - currentTotal);
+            return { payment_method: null, amount: remaining > 0 ? remaining.toFixed(2) : "0" };
+        };
 
         const doMultiplePayment = () => {
             sale.value.payments = [{ payment_method: sale.value.payment_method, amount: String(total.value) }];

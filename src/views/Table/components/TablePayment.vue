@@ -104,7 +104,7 @@
                 <div style="display: flex; align-items: center; width: 100%">
                   <n-select v-model:value="value.payment_method" :options="filteredMethods" :disabled="loading" />
                   <n-input class="ms-2" v-model:value="value.amount" placeholder="" :disabled="loading"
-                    v-numeric-only />
+                    @keypress="isDecimal($event)" />
                 </div>
               </template>
             </n-dynamic-input>
@@ -140,7 +140,7 @@ import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { useGenericsStore } from "@/store/modules/generics";
 import { saleRules } from "@/utils/constants";
-import { cloneDeep } from "@/utils";
+import { cloneDeep, isDecimal } from "@/utils";
 import { useDialog, useMessage } from "naive-ui";
 import format from "date-fns/format";
 import parse from "date-fns/parse";
@@ -511,7 +511,7 @@ const performCreateSale = () => {
         }
       }
     });
-  });
+  }).catch(() => {});
 };
 
 const obtainSaleNumber = async () => {
@@ -555,7 +555,11 @@ const handleCustomerCleared = () => {
   addressesOptions.value = [];
 };
 
-const createPayment = () => ({ payment_method: null, amount: "0" });
+const createPayment = () => {
+  const currentTotal = sale.value.payments ? sale.value.payments.reduce((acc, val) => acc + (parseFloat(val.amount) || 0), 0) : 0;
+  const remaining = Math.max(0, parseFloat(sale.value.amount) - currentTotal);
+  return { payment_method: null, amount: remaining > 0 ? remaining.toFixed(2) : "0" };
+};
 
 const doMultiplePayment = () => {
   sale.value.payments = [{ payment_method: sale.value.payment_method, amount: String(sale.value.amount) }];

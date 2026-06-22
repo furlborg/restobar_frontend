@@ -52,7 +52,7 @@
             'w-50': genericsStore.device === 'tablet',
             'w-25': genericsStore.device === 'desktop',
         }" preset="card" v-model:show="showConfirm" title="Anular pedido" :mask-closable="false" closable
-            @after-hide="closeNullModal" @close="closeNullModal">
+            @after-leave="closeNullModal" @close="closeNullModal">
             <!--      <n-form-item label="Ingrese clave de seguridad" required v-if="settingsStore.business_settings.order.required_null_reason">-->
             <!--        <n-input type="password" v-model:value="passConfirm" placeholder="" />-->
             <!--      </n-form-item>-->
@@ -503,7 +503,7 @@ const performNullifyTableOrder = async () => {
                 isLoading.value = false;
                 message.warning("Llene todos los campos");
             }
-        });
+        }).catch(() => {});
 
     }
 };
@@ -524,10 +524,9 @@ const paymentsTotal = ref(null);
 const showPayments = ref(false);
 
 const createPayment = () => {
-    return {
-        payment_method: null,
-        amount: "0"
-    };
+  const currentTotal = payments.value ? payments.value.reduce((acc, val) => acc + (parseFloat(val.amount) || 0), 0) : 0;
+  const remaining = Math.max(0, parseFloat(paymentsTotal.value) - currentTotal);
+  return { payment_method: null, amount: remaining > 0 ? remaining.toFixed(2) : "0" };
 };
 
 const filteredMethods = computed(() => {
@@ -617,7 +616,7 @@ const tableColumns = createOrderColumns({
             !settingsStore.business_settings.till.delivery_affects_till &&
             row.order_type === "D"
         ) {
-            paymentsTotal.value -= parseFloat(row.delivery_info.amount);
+            paymentsTotal.value -= parseFloat(row.delivery_info?.amount || 0);
         }
         currentOrder.value.order_id = row.id;
         currentOrder.value.sale_id = row.sale_id;

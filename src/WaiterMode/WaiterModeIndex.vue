@@ -19,25 +19,31 @@
     </n-layout-header>
     <n-layout-content position="absolute" style="top: 48px" :native-scrollbar="false">
       <!-- Selector de clientes para Modo Mozo -->
-      <div v-if="shouldShowCustomerMode && $route.params.table" class="bg-white px-2 py-2 border-bottom shadow-sm z-3 position-relative">
-        <n-space justify="start" align="center" style="overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px;">
-          <n-button dashed type="primary" size="small" class="shrink-0" @click="showAddCustomerModal = true">
-            <template #icon>
-              <v-icon name="md-add-round" />
-            </template>
-            Añadir
-          </n-button>
-          <n-radio-group :value="orderStore.waiterSelectedCustomerId" @update:value="orderStore.waiterSelectedCustomerId = $event" name="customer-selector" class="d-flex flex-nowrap" style="gap: 8px;">
-            <n-radio-button v-for="(customer, index) in orderStore.waiterCustomers" :key="customer.id" :value="customer.id" size="small" class="shrink-0">
-              {{ customer.name }}
-              <n-button v-if="index !== 0" size="tiny" text type="error" class="ms-2" @click.stop="orderStore.removeWaiterCustomer(customer.id)">
-                <v-icon name="md-close-round" />
-              </n-button>
-            </n-radio-button>
-          </n-radio-group>
-        </n-space>
+      <div v-if="shouldShowCustomerMode && $route.params.table" class="customer-bar-premium">
+        <n-button circle class="add-customer-btn shrink-0" @click="showAddCustomerModal = true">
+          <template #icon>
+            <v-icon name="md-personadd-round" scale="1.1" />
+          </template>
+        </n-button>
+        <div class="customer-scroll-container">
+          <div 
+            v-for="(customer, index) in orderStore.waiterCustomers" 
+            :key="customer.id" 
+            class="customer-chip"
+            :class="{ 'active': orderStore.waiterSelectedCustomerId === customer.id }"
+            @click="orderStore.waiterSelectedCustomerId = customer.id"
+          >
+            <div class="customer-avatar">
+              <span class="customer-initial">{{ customer.name.charAt(0).toUpperCase() }}</span>
+            </div>
+            <span class="customer-name">{{ customer.name }}</span>
+            <div v-if="index !== 0" class="customer-close" @click.stop="orderStore.removeWaiterCustomer(customer.id)">
+              <v-icon name="md-close-round" scale="0.65" />
+            </div>
+          </div>
+        </div>
       </div>
-      <div :style="shouldShowCustomerMode && $route.params.table ? 'height: calc(100% - 48px)' : 'height: 100%'">
+      <div :style="shouldShowCustomerMode && $route.params.table ? 'height: calc(100% - 110px); margin-top: 62px;' : 'height: 100%'">
         <router-view v-slot="{ Component }">
           <transition name="zoom-fade" mode="out-in" appear>
             <component :is="Component" />
@@ -342,5 +348,143 @@ header {
 .zoom-fade-leave-to {
   opacity: 0;
   transform: scale(1.03);
+}
+
+/* Custom Customer Chips Styles - Premium Redesign */
+.customer-bar-premium {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  gap: 12px;
+}
+
+.add-customer-btn {
+  background: linear-gradient(135deg, #19b698 0%, #129a80 100%) !important;
+  color: white !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(25, 182, 152, 0.35) !important;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.add-customer-btn:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 16px rgba(25, 182, 152, 0.45) !important;
+}
+
+.add-customer-btn:active {
+  transform: scale(0.95);
+}
+
+.customer-scroll-container {
+  display: flex;
+  overflow-x: auto;
+  gap: 10px;
+  flex-wrap: nowrap;
+  padding: 4px 2px;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  scroll-behavior: smooth;
+}
+
+.customer-scroll-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+.customer-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 16px 6px 6px;
+  background-color: #f8f9fa;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #4a5568;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 1px solid #edf2f7;
+  flex-shrink: 0;
+  user-select: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.customer-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+  color: #718096;
+  font-weight: 700;
+  font-size: 13px;
+  transition: all 0.3s ease;
+}
+
+.customer-chip:hover {
+  background-color: #edf2f7;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.04);
+}
+
+.customer-chip.active {
+  background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 6px 12px rgba(26, 32, 44, 0.25);
+  transform: translateY(-2px);
+}
+
+.customer-chip.active .customer-avatar {
+  background-color: #19b698;
+  color: white;
+  box-shadow: 0 2px 6px rgba(25, 182, 152, 0.4);
+}
+
+.customer-name {
+  white-space: nowrap;
+  text-transform: capitalize;
+  letter-spacing: 0.3px;
+}
+
+.customer-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 10px;
+  margin-right: -4px;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  background-color: rgba(0, 0, 0, 0.06);
+  color: #a0aec0;
+  transition: all 0.2s ease;
+}
+
+.customer-close:hover {
+  background-color: #fc8181;
+  color: white;
+  transform: scale(1.1) rotate(90deg);
+}
+
+.customer-chip.active .customer-close {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.customer-chip.active .customer-close:hover {
+  background-color: #fc8181;
+  color: white;
 }
 </style>

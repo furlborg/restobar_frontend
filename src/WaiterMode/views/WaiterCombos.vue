@@ -58,7 +58,7 @@
 
                 <!-- Botón para ver/ocultar productos -->
                 <n-button text size="tiny" type="info" @click.stop="combo.showDetails = !combo.showDetails">
-                  <v-icon :name="combo.showDetails ? 'md-keyboardarrowup-round' : 'md-keyboardarrowdown-round'"
+                  <v-icon :name="combo.showDetails ? 'md-arrowdropup-round' : 'md-arrowdropdown-round'"
                     scale="0.9" />
                   {{ combo.showDetails ? 'Ocultar productos' : 'Ver productos' }}
                 </n-button>

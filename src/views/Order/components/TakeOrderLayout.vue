@@ -11,14 +11,14 @@
       <n-grid responsive="screen" cols="1 xs:1 s:1 m:5 l:5 xl:5 2xl:5" :x-gap="12">
         <n-gi :span="3">
           <transition v-if="ui.selectProducts" name="mode-fade" mode="out-in">
-            <OrderTaking :loading="ui.loading" :sale="sale" :show-observations="showObservations"
+            <OrderTaking :loading="ui.loading" :sale="sale" :show-observations="ui.showObservations"
               :addresses-options="addressesOptions" :customer-options="customerOptions"
               :searching-customer="searchingCustomer" :whatsapp-number="whatsappNumber" :changing="changing"
               :sub-total="subTotal" :total-grv="totalGRV" :total-exn="totalEXN" :total-grt="totalGRT"
-              :total-igv="totalIGV" :icbper="icbper" :total-dsct="totalDSCT" :is-multiple="isMultiple"
-              :ticket-preview="ticketPreview" @update:sale="(newSale) => Object.assign(sale, newSale)"
-              @update:show-observations="showObservations = $event" @update:is-multiple="isMultiple = $event"
-              @update:ticket-preview="ticketPreview = $event" @select-serie="selectSerie" @change-serie="changeSerie"
+              :total-igv="totalIGV" :icbper="icbper" :total-dsct="totalDSCT" :is-multiple="ui.isMultiple"
+              :ticket-preview="ui.isTicketPreview" @update:sale="(newSale) => Object.assign(sale, newSale)"
+              @update:show-observations="ui.showObservations = $event" @update:is-multiple="ui.isMultiple = $event"
+              @update:ticket-preview="ui.isTicketPreview = $event" @select-serie="selectSerie" @change-serie="changeSerie"
               @change-condition="changeCondition" @auto-create-customer="autoCreateCustomer"
               @create-addresses-options="createAddressesOptions" @change-address="changeAddress"
               @handle-delivery="handleDelivery" @show-customer-modal="ui.showCustomerModal = true"
@@ -32,7 +32,9 @@
         </n-gi>
         <n-gi span="2">
           <PaymentSummary :select-products="ui.selectProducts" :product-search="ui.productSearch"
-            :show-modal="ui.showModal" :item-index="ui.itemIndex" @update:select-products="ui.selectProducts = $event"
+            :show-modal="ui.showModal" :item-index="ui.itemIndex" :total-amount="sale.amount"
+            :discount="totalDSCT" :other-charges="sale.other_charges"
+            @update:select-products="ui.selectProducts = $event"
             @update:product-search="ui.productSearch = $event" @update:show-modal="ui.showModal = $event"
             @update:item-index="ui.itemIndex = $event" />
         </n-gi>
@@ -43,14 +45,14 @@
         <n-card>
           <transition name="mode-fade" mode="out-in">
             <OrderTaking v-if="ui.selectProducts" :loading="ui.loading" :sale="sale"
-              :show-observations="showObservations" :addresses-options="addressesOptions"
+              :show-observations="ui.showObservations" :addresses-options="addressesOptions"
               :customer-options="customerOptions" :searching-customer="searchingCustomer"
               :whatsapp-number="whatsappNumber" :changing="changing" :sub-total="subTotal" :total-grv="totalGRV"
               :total-exn="totalEXN" :total-grt="totalGRT" :total-igv="totalIGV" :icbper="icbper" :total-dsct="totalDSCT"
-              :is-multiple="isMultiple" :ticket-preview="ticketPreview"
+              :is-multiple="ui.isMultiple" :ticket-preview="ui.isTicketPreview"
               @update:sale="(newSale) => Object.assign(sale, newSale)"
-              @update:show-observations="showObservations = $event" @update:is-multiple="isMultiple = $event"
-              @update:ticket-preview="ticketPreview = $event" @select-serie="selectSerie" @change-serie="changeSerie"
+              @update:show-observations="ui.showObservations = $event" @update:is-multiple="ui.isMultiple = $event"
+              @update:ticket-preview="ui.isTicketPreview = $event" @select-serie="selectSerie" @change-serie="changeSerie"
               @change-condition="changeCondition" @show-customer-options="showCustomerOptions"
               @auto-create-customer="autoCreateCustomer" @create-addresses-options="createAddressesOptions"
               @change-address="changeAddress" @handle-delivery="handleDelivery"
@@ -62,7 +64,9 @@
       </n-tab-pane>
       <n-tab-pane name="payment" tab="Resumen">
         <PaymentSummary :select-products="ui.selectProducts" :product-search="ui.productSearch"
-          :show-modal="ui.showModal" :item-index="ui.itemIndex" @update:select-products="
+          :show-modal="ui.showModal" :item-index="ui.itemIndex" :total-amount="sale.amount"
+          :discount="totalDSCT" :other-charges="sale.other_charges"
+          @update:select-products="
             (value) => {
               ui.selectProducts = value;
               goToFirstTab();
@@ -88,13 +92,13 @@
     <n-modal :class="getModalClass" preset="card" v-model:show="ui.showPayments" title="Realizar venta"
       :mask-closable="false" closable @close="sale.payments = null">
       <n-space justify="space-between">
-        <n-tag type="info">Total: S/. {{ showPayments ? sale.amount : null }}</n-tag>
+        <n-tag type="info">Total: S/. {{ ui.showPayments ? sale.amount : null }}</n-tag>
         <n-tag :type="evalPayments ? 'error' : 'success'">
-          Monto: S/. {{ showPayments ? currentPaymentsAmount : null }}
+          Monto: S/. {{ ui.showPayments ? currentPaymentsAmount : null }}
         </n-tag>
         <n-tag :type="evalPayments ? 'error' : 'warning'">Faltante: S/.
           {{
-            showPayments
+            ui.showPayments
               ? (parseFloat(sale.amount) - currentPaymentsAmount).toFixed(2)
               : null
           }}</n-tag>
@@ -104,7 +108,7 @@
           <template #default="{ value }">
             <div style="display: flex; align-items: center; width: 100%">
               <n-select v-model:value="value.payment_method" :disabled="ui.loading" :options="filteredMethods" />
-              <n-input class="ms-2" v-model:value="value.amount" placeholder="" :disabled="ui.loading" v-numeric-only />
+              <n-input class="ms-2" v-model:value="value.amount" placeholder="" :disabled="ui.loading" @keypress="isDecimal($event)" />
             </div>
           </template>
         </n-dynamic-input>
@@ -124,8 +128,8 @@
       :order="orderStore.orderList[ui.itemIndex]" @success="ui.showModal = false" />
     <customer-modal v-model:show="ui.showCustomerModal" :id-customer="sale.customer" :document="customerDocument"
       :doc_type="sale.invoice_type === 1 ? '6' : null" @update:show="onCloseModal" @on-success="onSuccess" />
-    <TicketPreview ref="ticketPreviewRef" v-model:show="ui.showPdf" :data="pdfData" :hidden="true" :isUpdate="false" />
-    <PreviewDrawer ref="voucherDrawer" v-model:show="ui.showVoucher" :data="voucherData"
+    <TicketPreview :ref="(el) => ui.ticketPreviewRef = el" v-model:show="ui.showPdf" :data="pdfData" :hidden="true" :isUpdate="false" />
+    <PreviewDrawer :ref="(el) => ui.voucherDrawer = el" v-model:show="ui.showVoucher" :data="voucherData"
       :previewOnly="!ui.isTicketPreview" @printed="() => $router.push({ name: 'TableHome' })"
       @canceled="() => $router.push({ name: 'TableHome' })" />
 
@@ -153,8 +157,7 @@ const CustomerModal = defineAsyncComponent(() => import("@/views/Customer/compon
 const TicketPreview = defineAsyncComponent(() => import("@/views/Order/components/TicketPreview.vue"));
 const PreviewDrawer = defineAsyncComponent(() => import("@/views/Sale/components/PreviewDrawer.vue"));
 import format from "date-fns/format";
-
-
+import { isDecimal } from "@/utils";
 const orderStore = useOrderStore();
 const message = useMessage();
 const dialog = useDialog();
@@ -509,7 +512,11 @@ const showAndGenerateTicket = async (voucherDataValue, shouldGenerate = true) =>
   }
 };
 
-const createPayment = () => ({ payment_method: null, amount: "0" });
+const createPayment = () => {
+  const currentTotal = sale.value.payments ? sale.value.payments.reduce((acc, val) => acc + (parseFloat(val.amount) || 0), 0) : 0;
+  const remaining = Math.max(0, parseFloat(sale.value.amount) - currentTotal);
+  return { payment_method: null, amount: remaining > 0 ? remaining.toFixed(2) : "0" };
+};
 
 const onCloseModal = () => {
   ui.showCustomerModal = false;
