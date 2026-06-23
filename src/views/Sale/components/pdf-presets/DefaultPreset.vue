@@ -381,7 +381,7 @@ import { useBusinessStore } from "@/store/modules/business";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useTableStore } from "@/store/modules/table";
 import { numeroALetras } from "@/hooks/numberText.js";
-import { expandMenusInSaleData } from "@/utils/menuExpander.js";
+
 import qr from "qrcode";
 export default defineComponent({
   name: "DefaultPreset",
@@ -451,7 +451,7 @@ export default defineComponent({
         // Crear items expandidos manualmente ya que el JSON de venta no los incluye
         const expandedItems = [];
         
-        saleData.items?.forEach((saleItem, saleIndex) => {
+        saleData.items?.forEach((saleItem) => {
           // Buscar si existe un menú correspondiente
           const menuDetail = orderDetails.find(orderDetail => 
             orderDetail.product_set && 
