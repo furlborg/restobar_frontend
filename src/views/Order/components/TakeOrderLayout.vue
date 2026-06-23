@@ -204,7 +204,7 @@ const customerDocument = ref("");
 const subTotal = computed(() => summary.value.subtotal);
 const icbper = computed(() => taxBreakdown.value.icbper);
 const totalGRV = computed(() => taxBreakdown.value.taxed);
-const totalEXN = computed(() => taxBreakdown.value.exempt + menuTotal.value);
+const totalEXN = computed(() => taxBreakdown.value.exempt);
 const totalGRT = computed(() => taxBreakdown.value.free);
 const totalIGV = computed(() => taxBreakdown.value.igv);
 

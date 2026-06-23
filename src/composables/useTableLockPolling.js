@@ -4,9 +4,8 @@
  * Sistema simple basado en REST API sin WebSockets
  */
 
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onUnmounted } from 'vue'
 import { useMessage } from 'naive-ui'
-import { useUserStore } from '@/store/modules/user'
 import { 
   lockTable as apiLockTable,
   unlockTable as apiUnlockTable,
@@ -21,7 +20,6 @@ const isPolling = ref(false)
 
 export function useTableLockPolling() {
   const message = useMessage()
-  const userStore = useUserStore()
 
   // Computed
   const lockedTables = computed(() => Array.from(lockedTablesMap.value.values()))

@@ -473,7 +473,10 @@ const performCreateSale = () => {
           if (response.status === 201) {
             const res = await retrieveSale(response.data?.id);
             pdfData.value = res.data;
-            pdfData.value.original_sale_details = sale.value.sale_details;
+            pdfData.value.original_sale_details = [
+              ...sale.value.sale_details, 
+              ...(sale.value.sale_product_sets || [])
+            ];
             if (sale.value.payments?.length) {
               pdfData.value.payments = normalizePaymentsForTicket(sale.value.payments);
             }

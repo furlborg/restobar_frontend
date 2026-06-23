@@ -404,11 +404,9 @@ export default defineComponent({
     );
 
     // Detectar si es modo clientes
-    const isCustomerMode = computed(() =>(
-      props.data.order_by_customer === 'order_by_customer' ||
-      (props.data.original_sale_details &&
-      props.data.original_sale_details.some(detail => !!detail.customer))
-    ));
+    // Modificado por petición: El Boucher (Ticket final) NO debe separar por clientes.
+    // Solo la pre-cuenta (PreviewPreset) debe hacerlo.
+    const isCustomerMode = computed(() => false);
 
     // Agrupar items por cliente para modo clientes
     const groupedByCustomer = computed(() => {

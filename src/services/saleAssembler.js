@@ -46,8 +46,11 @@ export function buildSalePayload(orders = [], options = {}) {
       };
 
       if (order.id) productSet.id = order.id;
-      if (order.product_set_id)
+      if (order.product_set_id) {
         productSet.product_set_id = order.product_set_id;
+      } else if (order.product_set && order.product_set.id) {
+        productSet.product_set_id = order.product_set.id;
+      }
       if (order.menu_id) productSet.menu_id = order.menu_id;
       if (order.combo_id) productSet.combo_id = order.combo_id;
       if (order.set_type) productSet.set_type = order.set_type;

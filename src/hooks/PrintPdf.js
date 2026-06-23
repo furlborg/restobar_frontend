@@ -143,13 +143,9 @@ export const printPDFDoc = (pdf, hDoc) => {
     };
   });
 
-  const android = /(android)/i.test(navigator.userAgent);
 
-  let props = {
-    host: SettingsStore.business_settings.qz_config.host,
-  };
 
-  if (android) props = { ...props, usingSecure: false };
+
 
   let config = qz.configs.create(
     SettingsStore.business_settings.sale.printer_name,

@@ -3,8 +3,7 @@ import { createDiscreteApi } from "naive-ui";
 import qz from "qz-tray";
 import rs from "jsrsasign";
 
-const { message, notification } = createDiscreteApi([
-  "message",
+const { notification } = createDiscreteApi([
   "notification",
 ]);
 
