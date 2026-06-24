@@ -60,11 +60,15 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useMessage } from 'naive-ui'
+import { useSettingsStore } from '@/store/modules/settings'
+import { useOrderStore } from '@/store/modules/order'
 import { getMenuToday } from '@/api/modules/products'
 import MenuProductModal from '@/WaiterMode/components/MenuProductModal.vue'
 import FloatingOrderButton from '@/WaiterMode/components/FloatingOrderButton.vue'
 
 const message = useMessage()
+const settingsStore = useSettingsStore()
+const orderStore = useOrderStore()
 const loading = ref(false)
 const scheduledMenus = ref([])
 const showMenuModal = ref(false)
@@ -99,6 +103,14 @@ const getAvailableItemsCount = (items = []) => {
 }
 
 const openMenuModal = (menu) => {
+  const isCustomerMode = settingsStore.businessSettings?.order?.order_by_customer;
+  const selectedCustomer = orderStore.getWaiterSelectedCustomer;
+
+  if (isCustomerMode && !selectedCustomer) {
+    message.warning("Seleccione un cliente primero");
+    return;
+  }
+
   // Solo abrir el modal si hay al menos un item con stock
   if (getAvailableItemsCount(menu.items) === 0) {
     message.warning('Este menú no tiene productos con stock disponible')

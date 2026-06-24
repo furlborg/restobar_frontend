@@ -38,7 +38,6 @@ export function setupInterceptors(instance) {
     async function (error) {
       const userStore = useUserStore();
       const originalRequest = error.config;
-      console.log(error);
       if (
         error.response.status === 401 &&
         error.response.data.code === "token_not_valid"
@@ -48,10 +47,6 @@ export function setupInterceptors(instance) {
 
         return http(originalRequest);
       } else {
-        console.log(
-          !error?.config?.url.includes("tables") &&
-            error.response.status !== 404,
-        );
         if (error.response.status !== 404) {
           if (
             error.response?.data &&
@@ -60,8 +55,6 @@ export function setupInterceptors(instance) {
           ) {
             await handleServerError(error.response?.data);
           }
-        } else {
-          console.log("Error en la petición: " + error);
         }
 
         return Promise.reject(error);

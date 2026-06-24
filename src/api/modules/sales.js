@@ -174,7 +174,7 @@ export async function createSale(sale, pass = null) {
             by_consumption: sale.by_consumption,
             observations: sale.observations,
             sale_details: sale.sale_details.filter((detail) => detail.quantity > 0),
-            product_sets: sale.sale_product_sets || [], // Support for menu sets
+            product_sets: sale.sale_product_sets || sale.product_sets || [], // Support for menu sets
             payments: sale.payments,
             till: tillStore.currentTillID,
             do_update: sale.do_update,
@@ -211,7 +211,7 @@ export async function createSale(sale, pass = null) {
             by_consumption: sale.by_consumption,
             observations: sale.observations,
             sale_details: sale.sale_details.filter((detail) => detail.quantity > 0),
-            product_sets: sale.sale_product_sets || [], // Support for menu sets
+            product_sets: sale.sale_product_sets || sale.product_sets || [], // Support for menu sets
             payments: sale.payments,
             till: tillStore.currentTillID,
             do_update: sale.do_update,

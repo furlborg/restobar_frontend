@@ -157,7 +157,7 @@ export async function getProductCategories() {
 export async function getMenuToday(menu_id = null) {
   const params = {};
   if (menu_id) params.menu_id = menu_id;
-  return await http.get("menus/today", { params });
+  return await http.get("menus/today/", { params });
 }
 
 export async function getProductsByCategory(categoryId) {

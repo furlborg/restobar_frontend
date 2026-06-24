@@ -55,8 +55,8 @@
               @update:value="handleAskForChange" />
           </n-form-item-gi>
 
-          <n-form-item-gi v-if="$route.query.delivery === undefined" :span="2">
-            <n-checkbox @update:checked="$emit('handleDelivery', $event)">
+          <n-form-item-gi v-if="showDeliveryCheckbox" :span="2" label=" ">
+            <n-checkbox :checked="!!sale.delivery_info" @update:checked="$emit('handleDelivery', $event)">
               Delivery
             </n-checkbox>
           </n-form-item-gi>
@@ -138,6 +138,7 @@ import { ref, computed, watch, onMounted } from "vue";
 import { useSaleStore } from "@/store/modules/sale";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useUserStore } from "@/store/modules/user";
+import { useMessage } from "naive-ui";
 import { useSaleTotals } from "@/composables/useSaleTotals";
 import ProductTable from "./ProductTable.vue";
 import PaymentTotals from "./PaymentTotals.vue";
@@ -189,6 +190,7 @@ const saleStore = useSaleStore();
 const settingsStore = useSettingsStore();
 const userStore = useUserStore();
 const { grandTotal } = useSaleTotals();
+const message = useMessage();
 
 const saleForm = ref();
 
@@ -203,7 +205,14 @@ const localObservations = ref(props.sale.observations);
 const localDeliveryInfo = ref(props.sale.delivery_info ? { ...props.sale.delivery_info } : {});
 const localIsMultiple = ref(props.isMultiple);
 const localTicketPreview = ref(props.ticketPreview);
-const forceDelivery = computed(() => route.query.delivery !== undefined);
+const hasDeliveryQuery = computed(() => {
+  return route.query.delivery !== undefined && route.query.delivery !== null && route.query.delivery !== "";
+});
+const forceDelivery = computed(() => route.query.delivery === "true");
+
+const showDeliveryCheckbox = computed(() => {
+  return !settingsStore.business_settings?.order?.divide_delivery_takeaway;
+});
 
 const showDeliverySection = computed(() => {
   return forceDelivery.value || !!props.sale.delivery_info;
@@ -298,10 +307,12 @@ const handleCustomerSelected = (customer) => {
   updatedSale.customer = customer;
   updatedSale.customer_name = localCustomerName.value;
   updatedSale.addresses = customer.addresses.length > 0 ? customer.addresses : null;
-  localDeliveryInfo.value.person = customer.names;
-  localDeliveryInfo.value.phone = customer.phone;
-  localDeliveryInfo.value.address = customer.addresses.length > 0 ? customer.addresses[0].description : null;
-  updatedSale.delivery_info = { ...localDeliveryInfo.value };
+  if (props.sale.delivery_info) {
+    localDeliveryInfo.value.person = customer.names;
+    localDeliveryInfo.value.phone = customer.phone;
+    localDeliveryInfo.value.address = customer.addresses.length > 0 ? customer.addresses[0].description : null;
+    updatedSale.delivery_info = { ...localDeliveryInfo.value };
+  }
   emit('update:sale', updatedSale);
   emit('createAddressesOptions', customer);
 };
@@ -418,15 +429,21 @@ const handleTicketPreviewChange = (value) => {
 };
 
 const handleMainAction = () => {
-  if (userStore.user.role !== "MOZO") {
-    if (props.isMultiple) {
-      emit('doMultiplePayment');
+  saleForm.value?.validate((errors) => {
+    if (!errors) {
+      if (userStore.user.role !== "MOZO") {
+        if (props.isMultiple) {
+          emit('doMultiplePayment');
+        } else {
+          emit('performTakeAway');
+        }
+      } else {
+        emit('performTakeAway');
+      }
     } else {
-      emit('performTakeAway');
+      message.error("Por favor complete los campos requeridos");
     }
-  } else {
-    emit('performTakeAway');
-  }
+  }).catch(() => {});
 };
 
 const parsedOtherCharges = computed(() => {
@@ -478,7 +495,8 @@ const paymentTotalsItems = computed(() => {
 });
 
 const totalAmount = computed(() => {
-  return grandTotal.value || props.sale.amount || 0;
+  const result = grandTotal.value + Number(props.sale.other_charges || 0) - Number(props.totalDsct || 0);
+  return Math.max(0, result);
 });
 // Watcher para actualizar automáticamente el campo de pago y amount cuando cambie el total
 watch(totalAmount, (newTotal) => {

@@ -817,7 +817,7 @@ export default defineComponent({
                     if (
                       settingsStore.businessSettings.sale.free_sale_send_doc &&
                       settingsStore.businessSettings.sale.auto_send &&
-                      response.data.invoice_type !== "80"
+                      String(sale.value.invoice_type) !== "80"
                     ) {
                       sendSale(response.data.id)
                         .then((response) => {
@@ -1018,10 +1018,9 @@ export default defineComponent({
     const showPayments = ref(false);
 
     const createPayment = () => {
-      return {
-        payment_method: null,
-        amount: "0",
-      };
+      const currentTotal = sale.value.payments ? sale.value.payments.reduce((acc, val) => acc + (parseFloat(val.amount) || 0), 0) : 0;
+      const remaining = Math.max(0, parseFloat(sale.value.amount) - currentTotal);
+      return { payment_method: null, amount: remaining > 0 ? remaining.toFixed(2) : "0" };
     };
 
     const doMultiplePayment = () => {

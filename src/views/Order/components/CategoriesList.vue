@@ -207,9 +207,7 @@ export default defineComponent({
       ...(settingsStore.business_settings?.category || {}),
     }));
 
-    const canUsePrograms = computed(
-      () => !settingsStore.businessSettings?.order?.order_by_customer,
-    );
+    const canUsePrograms = computed(() => true);
 
     const itemsList = computed(() => {
       const list = products.value.filter((product) => {

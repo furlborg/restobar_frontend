@@ -1,9 +1,9 @@
 import jspdf from "jspdf";
-import autoTable from "jspdf-autotable";
+
 
 import { useBusinessStore } from "@/store/modules/business";
 
-export const generatePrint = (structure) => {
+export const generatePrint = (structure, addImages = false) => {
   const doc = new jspdf({
     orientation: "p",
     unit: "mm",
@@ -51,7 +51,7 @@ export const generatePrint = (structure) => {
       theme: "plain",
       pageBreak: "auto",
       margin: { left: 3, right: 3 },
-      columns: !!val.col ? val.col : null,
+      columns: val.col ? val.col : null,
       styles: {
         cellPadding: 0.7,
       },

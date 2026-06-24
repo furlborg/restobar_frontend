@@ -45,7 +45,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed } from "vue";
+import { reactive, ref, computed, toRefs } from "vue";
 import { useDialog } from "naive-ui";
 import { useRouter } from "vue-router";
 import { useUserStore } from "@/store/modules/user";
@@ -74,6 +74,7 @@ const tillStore = useTillStore();
 const state = reactive({
   fullscreenIcon: "bi-fullscreen",
 });
+const { fullscreenIcon } = toRefs(state);
 
 const toggleFullscreenIcon = () =>
 (state.fullscreenIcon =

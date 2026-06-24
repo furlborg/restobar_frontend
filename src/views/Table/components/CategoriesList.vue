@@ -165,8 +165,7 @@ const category_settings = computed(() => ({
 }));
 
 const canUsePrograms = computed(() => {
-    const orderSettings = settingsStore.businessSettings?.order;
-    return !(orderSettings && orderSettings.order_by_customer);
+    return true;
 });
 
 const getCategoryImage = (category) => {

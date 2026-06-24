@@ -9,7 +9,7 @@
         <!-- Fin de encabezado de la configuración avandada -->
 
 
-        <n-card>
+        <n-card v-if="businessSettings && businessSettings.qz_config">
             <n-form class="mt-2" :disabled="!editMode">
                 <!-- Inicio de sección de impresiones   -->
                 <n-text class="fs-4">Impresiones</n-text>
@@ -357,13 +357,13 @@
                         </n-checkbox>
                     </n-form-item-gi>
                     <n-form-item-gi :span="4" label="Tamaño de letra para Categorias">
-                        <n-input v-model:value="businessSettings.category.area_text_size" placeholder="21" />
+                        <n-input-number v-model:value="businessSettings.category.area_text_size" placeholder="21" />
                     </n-form-item-gi>
                     <n-form-item-gi :span="4" label="Ancho de imagen para productos">
-                        <n-input v-model:value="businessSettings.category.width_image_product" placeholder="21" />
+                        <n-input-number v-model:value="businessSettings.category.width_image_product" placeholder="21" />
                     </n-form-item-gi>
                     <n-form-item-gi :span="4" label="Alto de imagen para productos">
-                        <n-input v-model:value="businessSettings.category.height_image_product" placeholder="21" />
+                        <n-input-number v-model:value="businessSettings.category.height_image_product" placeholder="21" />
                     </n-form-item-gi>
                 </n-grid>
                 <!-- Fin de sección de categorias/pedidos -->

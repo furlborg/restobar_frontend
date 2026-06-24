@@ -53,7 +53,7 @@ export const CreatePdfFile = async(props, format) => {
 
     //Creación del Documento
     props.data.map((val, index) => {
-        if ( !!val) {
+        if ( val) {
             console.log(doc);
             let finalY = doc.lastAutoTable?.finalY || 3;
 
@@ -140,7 +140,7 @@ export const CreatePdfFile = async(props, format) => {
         }
     });
 
-    if ( !!props.show) {
+    if ( props.show) {
         doc.autoPrint();
 
         const hiddFrame = document.createElement("iframe");

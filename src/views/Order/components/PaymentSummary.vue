@@ -108,10 +108,25 @@
           </template>
         </tbody>
         <tfoot>
+          <tr v-if="Number(discount) > 0">
+            <td colspan="3"></td>
+            <td align="right" class="fs-7">Descuento:</td>
+            <td class="fs-7" style="color: #d97706">
+              - S/. {{ formatPrice(discount) }}
+            </td>
+          </tr>
+          <tr v-if="Number(otherCharges) > 0">
+            <td colspan="3"></td>
+            <td align="right" class="fs-7">Otros cargos:</td>
+            <td class="fs-7" style="color: #7c3aed">
+              + S/. {{ formatPrice(otherCharges) }}
+            </td>
+          </tr>
           <tr>
             <td colspan="3"></td>
-            <td colspan="2" class="fs-6 fw-bold">
-              S/. {{ formattedTotals.grandTotal }}
+            <td align="right" class="fs-6 fw-bold">TOTAL:</td>
+            <td class="fs-6 fw-bold">
+              S/. {{ totalAmount !== null ? formatPrice(totalAmount) : formattedTotals.grandTotal }}
             </td>
           </tr>
         </tfoot>
@@ -122,7 +137,7 @@
 
 <script>
 
-import { defineComponent, computed, ref, h } from "vue";
+import { defineComponent, computed, ref, h, toRefs } from "vue";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { useProductStore } from "@/store/modules/product";
@@ -154,6 +169,18 @@ export default defineComponent({
     itemIndex: {
       type: [Number, null],
       default: null
+    },
+    totalAmount: {
+      type: [Number, String],
+      default: null
+    },
+    discount: {
+      type: [Number, String],
+      default: 0
+    },
+    otherCharges: {
+      type: [Number, String],
+      default: 0
     }
   },
   emits: [
@@ -389,7 +416,7 @@ export default defineComponent({
       formatPrice,
       handleButtonClick,
       isValidatingStock,
-      ...props
+      ...toRefs(props)
     };
   }
 });
