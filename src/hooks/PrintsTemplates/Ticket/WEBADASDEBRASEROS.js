@@ -191,7 +191,7 @@ const printWEBADASDEBRASEROS = (props) => {
       ],
     });
 
-    if (!!props.data.username) {
+    if (props.data.username) {
       structure.push({
         dat: [
           [
@@ -212,21 +212,21 @@ const printWEBADASDEBRASEROS = (props) => {
     );
 
     info.map((val) => {
-      if (!!val.preparation_place) {
+      if (val.preparation_place) {
         let ind = "";
 
         lengthData += 10;
         val.indication.map((v) => {
           let desc = "";
-          if (!!v.quick_indications.length) {
+          if (v.quick_indications.length) {
             v.quick_indications.forEach((ind) => {
               desc += `${ind}, `;
             });
           }
-          v.description = !!v.description
+          v.description = v.description
             ? desc + v.description
             : desc.slice(0, -2);
-          if (!!v.description) {
+          if (v.description) {
             ind += `${createNewText(`*** ${v.description}`)}`;
 
             if (v.takeAway) {

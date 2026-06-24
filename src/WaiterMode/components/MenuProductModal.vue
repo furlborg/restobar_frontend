@@ -64,6 +64,7 @@
 <script>
 import { defineComponent, computed, ref } from 'vue'
 import { useOrderStore } from '@/store/modules/order'
+import { useSettingsStore } from '@/store/modules/settings'
 import { useMessage } from 'naive-ui'
 
 export default defineComponent({
@@ -77,6 +78,7 @@ export default defineComponent({
   emits: ['close', 'success'],
   setup(props, { emit }) {
     const orderStore = useOrderStore()
+    const settingsStore = useSettingsStore()
     const message = useMessage()
     const quantities = ref({})
 
@@ -258,6 +260,9 @@ export default defineComponent({
           quantity: quantities.value[item.product_id]
         }));
 
+      const isCustomerMode = settingsStore.businessSettings?.order?.order_by_customer;
+      const selectedCustomer = orderStore.getWaiterSelectedCustomer;
+
       const menuOrder = {
         from_menu: true,
         order_detail_id: null,
@@ -265,7 +270,8 @@ export default defineComponent({
         name: props.menu.menu_name || props.menu.menu.name,
         price: props.menu.menu.price,
         quantity: totalMenus,
-        items: selectedItems
+        items: selectedItems,
+        customer: isCustomerMode ? selectedCustomer : null
       };
 
       // Usar el método addMenuOrder del orderStore

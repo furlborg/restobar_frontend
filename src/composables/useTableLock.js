@@ -48,12 +48,12 @@ const connectLockWebSocket = () => {
     }
   };
 
-  lockSocket.onclose = (event) => {
+  lockSocket.onclose = () => {
     lockSocketConnected.value = false;
     reconnectTimeout = setTimeout(connectLockWebSocket, 3000);
   };
 
-  lockSocket.onerror = (e) => {
+  lockSocket.onerror = () => {
     lockSocket.close();
   };
 
@@ -107,6 +107,7 @@ const connectLockWebSocket = () => {
         }
       }
     } catch (err) {
+      console.warn("WebSocket message parse error:", err);
     }
   };
 };
@@ -214,7 +215,8 @@ const unlockTableHTTP = async (tableId) => {
       { withCredentials: true }
     );
 
-    const { [tableId]: removed, ...rest } = tableStore.lockedTables;
+    const rest = { ...tableStore.lockedTables };
+    delete rest[tableId];
     tableStore.lockedTables = rest;
 
     return { success: true };
@@ -314,6 +316,7 @@ export function useTableLock() {
     try {
       await getMyLocks();
     } catch (error) {
+      console.warn("Error refreshing locks:", error);
     } finally {
       isRefreshing.value = false;
     }

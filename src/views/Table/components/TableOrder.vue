@@ -69,46 +69,48 @@
                             <!-- Menús y Combos -->
                             <template v-for="(menuSet, menuIndex) in orderStore.menuSets"
                                 :key="`menu-set-table-${menuIndex}`">
-                                <!-- Fila principal del Menú o Combo -->
-                                <tr :style="{ backgroundColor: menuSet.from_combo ? '#f0f9ff' : '#f8f8f8' }">
-                                    <td>
-                                        <n-button :type="menuSet.from_combo ? 'success' : 'warning'" text>
-                                            <v-icon
-                                                :name="menuSet.from_combo ? 'gi-hot-meal' : 'md-restaurant-round'" />
-                                        </n-button>
-                                    </td>
-                                    <td>
-                                        <b>{{ menuSet.from_combo ? 'Combo' : 'Menú' }}: {{ menuSet.name }}</b>
-                                        <br>
-                                        <n-tag v-if="menuSet.from_combo" size="small" type="success"
-                                            style="margin-top: 4px;">
-                                            {{ menuSet.items?.length || 0 }} productos incluidos
-                                        </n-tag>
-                                    </td>
-                                    <td>
-                                        <n-tag size="small" type="info">{{ menuSet.quantity }}x</n-tag>
-                                    </td>
-                                    <td>S/. {{ formatPrice(menuSet.price * menuSet.quantity) }}</td>
-                                    <td>
-                                        <n-button v-if="!isPaymentRoute" type="error" text
-                                            @click.stop="handleRemoveMenuSet(menuIndex)">
-                                            <v-icon name="md-disabledbydefault-round" />
-                                        </n-button>
-                                    </td>
-                                </tr>
-                                <!-- Items del menú o combo -->
-                                <tr v-for="item in menuSet.items"
-                                    :key="`menu-set-item-table-${item.product_id || item.id}`"
-                                    :style="{ backgroundColor: menuSet.from_combo ? '#fafeff' : '#fafafa' }">
-                                    <td></td>
-                                    <td style="padding-left: 20px;">
-                                        {{ item.product_name }}
-                                        <small v-if="item.phase_name">({{ item.phase_name }})</small>
-                                    </td>
-                                    <td>{{ item.quantity }}</td>
-                                    <td></td>
-                                    <td></td>
-                                </tr>
+                                <template v-if="menuSet.quantity > 0">
+                                    <!-- Fila principal del Menú o Combo -->
+                                    <tr :style="{ backgroundColor: menuSet.from_combo ? '#f0f9ff' : '#f8f8f8' }">
+                                        <td>
+                                            <n-button :type="menuSet.from_combo ? 'success' : 'warning'" text>
+                                                <v-icon
+                                                    :name="menuSet.from_combo ? 'gi-hot-meal' : 'md-restaurant-round'" />
+                                            </n-button>
+                                        </td>
+                                        <td>
+                                            <b>{{ menuSet.from_combo ? 'Combo' : 'Menú' }}: {{ menuSet.name }}</b>
+                                            <br>
+                                            <n-tag v-if="menuSet.from_combo" size="small" type="success"
+                                                style="margin-top: 4px;">
+                                                {{ menuSet.items?.length || 0 }} productos incluidos
+                                            </n-tag>
+                                        </td>
+                                        <td>
+                                            <n-tag size="small" type="info">{{ menuSet.quantity }}x</n-tag>
+                                        </td>
+                                        <td>S/. {{ formatPrice(menuSet.price * menuSet.quantity) }}</td>
+                                        <td>
+                                            <n-button v-if="!isPaymentRoute" type="error" text
+                                                @click.stop="handleRemoveMenuSet(menuIndex)">
+                                                <v-icon name="md-disabledbydefault-round" />
+                                            </n-button>
+                                        </td>
+                                    </tr>
+                                    <!-- Items del menú o combo -->
+                                    <tr v-for="item in menuSet.items"
+                                        :key="`menu-set-item-table-${item.product_id || item.id}`"
+                                        :style="{ backgroundColor: menuSet.from_combo ? '#fafeff' : '#fafafa' }">
+                                        <td></td>
+                                        <td style="padding-left: 20px;">
+                                            {{ item.product_name }}
+                                            <small v-if="item.phase_name">({{ item.phase_name }})</small>
+                                        </td>
+                                        <td>{{ item.quantity }}</td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                </template>
                             </template>
 
                             <!-- Productos individuales -->
@@ -191,36 +193,82 @@
                                     <tbody>
                                         <template v-for="(order, orderIndex) in getCustomerOrders(customer.id)"
                                             :key="orderIndex">
-                                            <tr v-if="order.quantity > 0" style="cursor: pointer"
-                                                @click="openOrderModal(order)">
-                                                <td>
-                                                    <n-button v-if="!($route.name === 'TablePayment')" type="info" text>
-                                                        <v-icon name="md-listalt-round" />
-                                                    </n-button>
-                                                </td>
-                                                <td>
-                                                    <span>{{ order.product_name }}</span><br>
-                                                    <span style="color: #15151c; font-size: 12px;">
-                                                        {{ order.modified }}
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <n-input-number v-if="!($route.name === 'TablePayment')"
-                                                        class="border-top-0" size="small"
-                                                        :min="order.id ? saleStore.getOrderQuantity(order.id) : 1"
-                                                        v-model:value="order.quantity" @click.stop />
-                                                    <template v-else>
-                                                        {{ order.quantity }}
-                                                    </template>
-                                                </td>
-                                                <td>S/. {{ formatPrice(order.subTotal) }}</td>
-                                                <td>
-                                                    <n-button v-if="!($route.name === 'TablePayment')" type="error" text
-                                                        @click.stop="handleRemoveProductLine(orderIndex)">
-                                                        <v-icon name="md-disabledbydefault-round" />
-                                                    </n-button>
-                                                </td>
-                                            </tr>
+                                            
+                                            <!-- Si es menú o combo -->
+                                            <template v-if="order.from_menu || order.from_combo">
+                                                <tr :style="{ backgroundColor: order.from_combo ? '#f0f9ff' : '#f8f8f8' }">
+                                                    <td>
+                                                        <n-button :type="order.from_combo ? 'success' : 'warning'" text>
+                                                            <v-icon :name="order.from_combo ? 'gi-hot-meal' : 'md-restaurant-round'" />
+                                                        </n-button>
+                                                    </td>
+                                                    <td>
+                                                        <b>{{ order.from_combo ? 'Combo' : 'Menú' }}: {{ order.name }}</b>
+                                                        <br>
+                                                        <n-tag v-if="order.from_combo" size="small" type="success" style="margin-top: 4px;">
+                                                            {{ order.items?.length || 0 }} productos incluidos
+                                                        </n-tag>
+                                                    </td>
+                                                    <td>
+                                                        <n-tag size="small" type="info">{{ order.quantity }}x</n-tag>
+                                                    </td>
+                                                    <td>S/. {{ formatPrice(order.subTotal) }}</td>
+                                                    <td>
+                                                        <n-button v-if="!($route.name === 'TablePayment')" type="error" text
+                                                            @click.stop="handleRemoveOrderGlobal(order)">
+                                                            <v-icon name="md-disabledbydefault-round" />
+                                                        </n-button>
+                                                    </td>
+                                                </tr>
+                                                <!-- Items del menú o combo -->
+                                                <tr v-for="item in order.items"
+                                                    :key="`customer-menu-item-${item.product_id || item.id}`"
+                                                    :style="{ backgroundColor: order.from_combo ? '#fafeff' : '#fafafa' }">
+                                                    <td></td>
+                                                    <td style="padding-left: 20px;">
+                                                        {{ item.product_name || item.name }}
+                                                        <small v-if="item.phase_name">({{ item.phase_name }})</small>
+                                                    </td>
+                                                    <td>{{ item.quantity }}</td>
+                                                    <td></td>
+                                                    <td></td>
+                                                </tr>
+                                            </template>
+
+                                            <!-- Si es un producto individual -->
+                                            <template v-else>
+                                                <tr v-if="order.quantity > 0" style="cursor: pointer"
+                                                    @click="openOrderModal(order)">
+                                                    <td>
+                                                        <n-button v-if="!($route.name === 'TablePayment')" type="info" text>
+                                                            <v-icon name="md-listalt-round" />
+                                                        </n-button>
+                                                    </td>
+                                                    <td>
+                                                        <span>{{ order.product_name }}</span><br>
+                                                        <span style="color: #15151c; font-size: 12px;">
+                                                            {{ order.modified }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <n-input-number v-if="!($route.name === 'TablePayment')"
+                                                            class="border-top-0" size="small"
+                                                            :min="order.id ? saleStore.getOrderQuantity(order.id) : 1"
+                                                            v-model:value="order.quantity" @click.stop />
+                                                        <template v-else>
+                                                            {{ order.quantity }}
+                                                        </template>
+                                                    </td>
+                                                    <td>S/. {{ formatPrice(order.subTotal) }}</td>
+                                                    <td>
+                                                        <n-button v-if="!($route.name === 'TablePayment')" type="error" text
+                                                            @click.stop="handleRemoveOrderGlobal(order)">
+                                                            <v-icon name="md-disabledbydefault-round" />
+                                                        </n-button>
+                                                    </td>
+                                                </tr>
+                                            </template>
+
                                         </template>
                                     </tbody>
                                 </n-table>
@@ -235,7 +283,7 @@
                                 <n-space vertical>
                                     <n-space justify="space-between" align="center">
                                         <n-text class="fs-5 fw-bold">
-                                            Total General: S/. {{ formatPrice(getTotalAmount()) }}
+                                            Total General: S/. {{ formatPrice(orderStore.orderTotal) }}
                                         </n-text>
                                         <n-text type="info">
                                             {{ customers.length }} cliente(s)
@@ -358,7 +406,6 @@ const productOptions = computed(() => products.value.map((product) => ({
     stock: product.stock,
     price: parseFloat(product.prices).toFixed(2),
 })));
-const getTotalAmount = computed(() => orderStore.orderTotal);
 const orderButtonDisabled = computed(() => !props.hasUnsavedChanges);
 
 // Controla si se debe desbloquear al salir
@@ -449,7 +496,7 @@ const confirmRemoveCustomer = (customerIndex, customerName) => {
 };
 
 const getCustomerOrders = (customerId) =>
-    orderStore.orderList.filter(order => order.customer?.id === customerId && order.quantity > 0);
+    orderStore.orderList.filter(order => order.customer && String(order.customer.id) === String(customerId) && order.quantity > 0);
 const getCustomerTotal = (customerId) =>
     getCustomerOrders(customerId).reduce((total, order) => total + Number(order.subTotal || 0), 0);
 
@@ -461,31 +508,27 @@ const handleRemoveMenuSet = (menuIndex) => {
     const menuSetToRemove = menuSetItems[menuIndex];
     if (!menuSetToRemove) return;
 
-    const orderIndex = orderStore.orderList.findIndex(item => item === menuSetToRemove);
+    handleRemoveOrderGlobal(menuSetToRemove);
+};
+
+const handleRemoveOrderGlobal = (orderToRemove) => {
+    if (!orderToRemove) return;
+    const orderIndex = orderStore.orderList.findIndex(item => item === orderToRemove);
     if (orderIndex === -1) return;
 
-    if (!menuSetToRemove.id) {
+    if (!orderToRemove.id) {
         orderStore.orderList.splice(orderIndex, 1);
     } else {
-        deleteOrderDetail(orderIndex, menuSetToRemove.id);
+        deleteOrderDetail(orderIndex, orderToRemove.id);
     }
     updateSaleStore();
 };
 
 const handleRemoveProductLine = (productIndex) => {
-    const productItems = orderStore.orderList.filter(item => !item.from_menu);
-    const productToRemove = productItems[productIndex];
+    const productToRemove = orderStore.productLines[productIndex];
     if (!productToRemove) return;
 
-    const orderIndex = orderStore.orderList.findIndex(item => item === productToRemove);
-    if (orderIndex === -1) return;
-
-    if (!productToRemove.id) {
-        orderStore.orderList.splice(orderIndex, 1);
-    } else {
-        deleteOrderDetail(orderIndex, productToRemove.id);
-    }
-    updateSaleStore();
+    handleRemoveOrderGlobal(productToRemove);
 };
 
 const updateSaleStore = () => {

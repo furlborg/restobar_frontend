@@ -112,9 +112,9 @@ const printOrderTicket = (props) => {
         dat: [
           [
             {
-              content: !!props.table
+              content: props.table
                 ? `${tableStore.getTableByID(props.table).description}`
-                : !!props.saleInf.delivery_info
+                : props.saleInf.delivery_info
                 ? "DELIVERY"
                 : "PARA LLEVAR",
               styles: {
@@ -133,22 +133,22 @@ const printOrderTicket = (props) => {
     );
 
     info.map((val) => {
-      if (!!val.preparation_place) {
+      if (val.preparation_place) {
         let ind = "";
 
         lengthData += 10;
 
         val.indication.map((v) => {
           let desc = "";
-          if (!!v.quick_indications.length) {
+          if (v.quick_indications.length) {
             v.quick_indications.forEach((ind) => {
               desc += `${ind}, `;
             });
           }
-          v.description = !!v.description
+          v.description = v.description
             ? desc + v.description
             : desc.slice(0, -2);
-          if (!!v.description) {
+          if (v.description) {
             ind = createNewText(v.description);
 
             if (v.takeAway) {
@@ -169,7 +169,7 @@ const printOrderTicket = (props) => {
           lengthData += 10;
         });
 
-        let prodDetail = !!val.product_description
+        let prodDetail = val.product_description
           ? val.product_description.split(",")
           : val.product_description;
 
@@ -288,7 +288,7 @@ const printOrderTicket = (props) => {
       ],
     });
 
-    if (!!props.data.username) {
+    if (props.data.username) {
       lengthData += 10;
       structure.push({
         dat: [

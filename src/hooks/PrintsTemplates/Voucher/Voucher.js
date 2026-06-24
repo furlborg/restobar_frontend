@@ -65,15 +65,15 @@ const VoucherPrint = (props) => {
           "IGV(18%)": dataForPrint.totales.total_igv.toFixed("2"),
           ICPER:
             dataForPrint.totales.total_impuestos_bolsa_plastica.toFixed("2"),
-          DESCUENTOS: !!props.data.discount
+          DESCUENTOS: props.data.discount
             ? parseFloat(props.data.discount).toFixed("2")
             : "0.00",
-          DELIVERY: !!dataForPrint.totales.total_delivery
+          DELIVERY: dataForPrint.totales.total_delivery
             ? dataForPrint.totales.total_delivery.toFixed("2")
             : "0.00",
           "IMPORTE TOTAL": dataForPrint.totales.total_venta.toFixed("2"),
           EFECTIVO: props.data.given_amount,
-          VUELTO: !!props.changing
+          VUELTO: props.changing
             ? props.changing.toFixed("2")
             : parseFloat(
                 props.data.given_amount - dataForPrint.totales.total_venta
@@ -84,7 +84,7 @@ const VoucherPrint = (props) => {
           ICPER:
             dataForPrint.totales.total_impuestos_bolsa_plastica.toFixed("2"),
           EFECTIVO: props.data.given_amount,
-          VUELTO: !!props.changing
+          VUELTO: props.changing
             ? props.changing.toFixed("2")
             : parseFloat(
                 props.data.given_amount - dataForPrint.totales.total_venta
@@ -92,7 +92,7 @@ const VoucherPrint = (props) => {
         });
 
     for (let i in newTotal) {
-      if (!!parseFloat(newTotal[i])) {
+      if (parseFloat(newTotal[i])) {
         datTotals.push({
           tittle: i,
           twoPoints: ":",
@@ -296,7 +296,7 @@ const VoucherPrint = (props) => {
         {
           tittle: "DIRECCION",
           twoPoints: ":",
-          cont: !!props.data.customer_address
+          cont: props.data.customer_address
             ? props.data.customer_address
             : dataForPrint.datos_del_cliente_o_receptor.direccion,
         },
@@ -347,7 +347,7 @@ const VoucherPrint = (props) => {
   const orderDetails = props.data?.order_details || [];
   const hasCustomers = orderDetails.some((detail) => !!detail?.customer);
 
-  if (!!props.prePayment) {
+  if (props.prePayment) {
     if (hasCustomers) {
       const groups = [];
       const index = new Map();
@@ -522,7 +522,7 @@ const VoucherPrint = (props) => {
       ],
     });
 
-  if (!!props.prePayment) {
+  if (props.prePayment) {
     lengthData += 40;
     structure.push(
       !!totalProdSum && {
@@ -588,7 +588,7 @@ const VoucherPrint = (props) => {
       });
       
       // Agregar cada método de pago con su monto
-      props.data.payments.forEach((payment, index) => {
+      props.data.payments.forEach((payment) => {
         // payment_method puede venir como string directo o dentro de payment_method_name
         const methodName = payment.payment_method || payment.payment_method_name || 'N/A';
         paymentInfo.push({
