@@ -263,6 +263,7 @@ onMounted(() => {
 const formRules = computed(() => {
   const rules = {
     customer: {
+      type: "any",
       required: !(props.sale.invoice_type !== 1 && props.sale.payment_condition === 1 && parseFloat(props.sale.given_amount) < 699),
       trigger: ["blur", "input"],
       message: "Campo requerido"
