@@ -617,9 +617,9 @@ export default defineComponent({
                           return res.data;
                       };
                       await dataPrint();
+                    showPdf.value = true;
                     if (settingsStore.business_settings.printer.print_html) {
                       // pdfData.value = response.data;
-                      showPdf.value = true;
                       if (!ticketPreview.value) {
                         setTimeout(() => previewDrawer.value.generate(), 250);
                       }
@@ -630,7 +630,7 @@ export default defineComponent({
                           changing: changing.value,
                           show: true,
                       });
-                      handlePdfFinish();
+                      // Removed handlePdfFinish() here so drawer STAYS open until manually closed
                     }
 
                     if (

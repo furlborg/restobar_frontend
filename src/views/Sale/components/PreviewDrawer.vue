@@ -362,9 +362,6 @@ export default defineComponent({
 
             // Desactivar modo impresión después de generar el PDF
             isPrintMode.value = false;
-
-            emit("printed");
-            emit("update:show", false);
         };
 
         const sendToWhatsapp = () => {
