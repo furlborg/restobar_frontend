@@ -797,9 +797,9 @@ export default defineComponent({
                       return res.data;
                     };
                     await dataPrint();
+                    showPdf.value = true;
                     if (settingsStore.business_settings.printer.print_html) {
                       // pdfData.value = response.data;
-                      showPdf.value = true;
                       if (!ticketPreview.value) {
                         setTimeout(() => previewDrawer.value.generate(), 250);
                       }
@@ -811,7 +811,6 @@ export default defineComponent({
                         changing: changing.value,
                         show: true,
                       });
-                      await router.push({ name: "TableHome" });
                     }
 
                     if (
