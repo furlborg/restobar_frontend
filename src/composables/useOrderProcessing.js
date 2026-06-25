@@ -76,9 +76,10 @@ export function useOrderProcessing() {
           message.success("¡Pago realizado!");
         }
         cleanupOrderStore();
-        if (settingsStore.businessSettings.printer.print_html) {
-          await showAndGenerateTicket(response.data.sale, true);
-        }
+        await showAndGenerateTicket(
+          response.data.sale, 
+          settingsStore.businessSettings.printer.print_html
+        );
         return { success: true, data: response.data };
       }
     } catch (error) {
@@ -132,9 +133,10 @@ export function useOrderProcessing() {
       if (response.status === 201) {
         message.success("Venta realizada correctamente!");
         cleanupOrderStore();
-        if (settingsStore.businessSettings.printer.print_html) {
-          await showAndGenerateTicket(response.data.sale, true);
-        }
+        await showAndGenerateTicket(
+          response.data.sale, 
+          settingsStore.businessSettings.printer.print_html
+        );
         return { success: true, data: response.data };
       }
     } catch (error) {

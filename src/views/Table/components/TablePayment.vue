@@ -481,8 +481,8 @@ const performCreateSale = () => {
               pdfData.value.payments = normalizePaymentsForTicket(sale.value.payments);
             }
 
+            showPdf.value = true;
             if (settingsStore.business_settings.printer.print_html) {
-              showPdf.value = true;
               if (!ticketPreview.value) {
                 setTimeout(() => previewDrawer.value.generate(), 250);
               }
@@ -494,7 +494,6 @@ const performCreateSale = () => {
                 changing: changing.value,
                 show: true
               });
-              await router.push({ name: "TableHome" });
             }
 
             if (settingsStore.businessSettings.sale.auto_send && String(sale.value.invoice_type) !== "80") {

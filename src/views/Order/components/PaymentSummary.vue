@@ -109,23 +109,20 @@
         </tbody>
         <tfoot>
           <tr v-if="Number(discount) > 0">
-            <td colspan="3"></td>
-            <td align="right" class="fs-7">Descuento:</td>
-            <td class="fs-7" style="color: #d97706">
+            <td colspan="3" align="right" class="fs-7">Descuento:</td>
+            <td colspan="2" class="fs-7" style="color: #d97706; white-space: nowrap;">
               - S/. {{ formatPrice(discount) }}
             </td>
           </tr>
           <tr v-if="Number(otherCharges) > 0">
-            <td colspan="3"></td>
-            <td align="right" class="fs-7">Otros cargos:</td>
-            <td class="fs-7" style="color: #7c3aed">
+            <td colspan="3" align="right" class="fs-7">Otros cargos:</td>
+            <td colspan="2" class="fs-7" style="color: #7c3aed; white-space: nowrap;">
               + S/. {{ formatPrice(otherCharges) }}
             </td>
           </tr>
           <tr>
-            <td colspan="3"></td>
-            <td align="right" class="fs-6 fw-bold">TOTAL:</td>
-            <td class="fs-6 fw-bold">
+            <td colspan="3" align="right" class="fs-6 fw-bold">TOTAL:</td>
+            <td colspan="2" class="fs-6 fw-bold" style="white-space: nowrap;">
               S/. {{ totalAmount !== null ? formatPrice(totalAmount) : formattedTotals.grandTotal }}
             </td>
           </tr>
