@@ -3,7 +3,7 @@ import { http } from "@/api";
 // -----------------------------
 // MENUS
 // -----------------------------
-export async function getMenus({ search, active, page = 1, page_size = 20 } = {}) {
+export async function getMenus({ search, page = 1, page_size = 20 } = {}) {
   const params = { page, page_size };
   if (search) params.search = search;
   params.active = true;

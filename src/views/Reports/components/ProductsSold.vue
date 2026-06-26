@@ -24,7 +24,19 @@
             clearable
             placeholder="Todos"
             :virtual-scroll="false"
-            style="min-width: 400px"
+            style="min-width: 250px"
+          />
+        </n-form-item>
+
+        <n-form-item label="Categoría">
+          <n-select
+            v-model:value="filters.category"
+            :options="categoryOptions"
+            filterable
+            clearable
+            placeholder="Todas"
+            :virtual-scroll="false"
+            style="min-width: 250px"
           />
         </n-form-item>
 
@@ -54,9 +66,11 @@
 import { ref, onMounted, computed } from 'vue'
 import { NCard, NForm, NFormItem, NButton, NDatePicker, NSelect, NDataTable } from 'naive-ui'
 import { getProductsAll, downloadProductsSoldReport, getProductsSold } from '@/api/modules/products'
+import { useProductStore } from '@/store/modules/product'
 
+const productStore = useProductStore()
 const range = ref(null) // [timestampStart, timestampEnd]
-const filters = ref({ date_from: '', date_to: '', product: undefined })
+const filters = ref({ date_from: '', date_to: '', product: undefined, category: undefined })
 const loading = ref(false)
 const downloading = ref(false)
 
@@ -64,6 +78,10 @@ const products = ref([])
 const productOptions = computed(() => {
   const items = Array.isArray(products.value?.results) ? products.value.results : products.value
   return (items || []).map(p => ({ label: `${p.code} - ${p.name}`, value: p.id }))
+})
+
+const categoryOptions = computed(() => {
+  return productStore.categories.map(c => ({ label: c.description, value: c.id }))
 })
 
 const columns = [
@@ -78,6 +96,9 @@ const rows = ref([])
 onMounted(async () => {
   const { data } = await getProductsAll(false)
   products.value = data
+  if (productStore.categories.length === 0) {
+    productStore.refreshCategories()
+  }
 })
 
 function toYYYYMMDD(ts) {
@@ -110,6 +131,7 @@ async function fetchData() {
       date_from: filters.value.date_from,
       date_to: filters.value.date_to,
       product: filters.value.product,
+      category: filters.value.category,
       ordering: '-counter'
     })
     // Si la API retorna results/pagination, normalizamos
@@ -126,6 +148,7 @@ async function onDownload() {
       date_from: filters.value.date_from,
       date_to: filters.value.date_to,
       product: filters.value.product,
+      category: filters.value.category,
     })
 
     const blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })

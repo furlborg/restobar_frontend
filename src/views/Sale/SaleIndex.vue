@@ -14,6 +14,11 @@
                         @click="showReport = true">
                         Reporte
                     </n-button>
+                    <n-button v-if="userStore.hasPermission('import_historical_sale')" type="info" tertiary
+                        @click="showHistoricalMigration = true">
+                        <v-icon name="md-uploadfile" class="me-1" />
+                        Históricos
+                    </n-button>
                     <n-button v-if="settingsStore.businessSettings.sale?.enable_invoices" type="warning" tertiary
                         :loading="resendingVouchers" @click="handleResendPendingVouchers">
                         <v-icon name="md-send-round" class="me-1" />
@@ -73,6 +78,7 @@
         </n-card>
         <SaleUpdate v-model:sale="saleId" @update:sale="onCloseUpdate" @on-success="updateSuccess" />
         <sale-report-modal v-model:show="showReport" />
+        <sale-historical-migration-modal v-model:show="showHistoricalMigration" @on-success="refreshTable" />
         <preview-drawer v-model:show="showPdf" :data="saleData" />
         <modal-anulate-sale :data-modal="showConfirm" />
     </div>
@@ -99,6 +105,7 @@ import { useUserStore } from "@/store/modules/user";
 import { isNumber, isLetter } from "@/utils";
 import SaleUpdate from "./components/SaleUpdate";
 import SaleReportModal from "./components/SaleReportModal";
+import SaleHistoricalMigrationModal from "./components/SaleHistoricalMigrationModal.vue";
 import PreviewDrawer from "./components/PreviewDrawer";
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 import ModalAnulateSale from "@/views/Sale/modalAnulateSale.vue";
@@ -292,6 +299,10 @@ const statusOptions = [
     {
         value: "A",
         label: "ANULADO"
+    },
+    {
+        value: "B",
+        label: "HISTÓRICO"
     }
 ];
 
@@ -322,6 +333,7 @@ const updateSuccess = () => {
 };
 
 const showReport = ref(false);
+const showHistoricalMigration = ref(false);
 
 const isLoading = ref(false);
 
@@ -413,6 +425,16 @@ const performStatusChange = async (row, newStatus, fromLabel, toLabel) => {
         isTableLoading.value = false;
     }
 };
+const downloadXML = (row) => {
+    const apiUrl = businessStore.business.api_url;
+    if (apiUrl) {
+        // apiUrl ya incluye el tenant, ej: https://faqtureapi.tsifactur.com/documents/demo
+        const url = `${apiUrl}/xml/?serie=${row.serie}&number=${row.number}`;
+        window.open(url, '_blank');
+    } else {
+        message.error("La URL de facturación no está configurada en los datos de la Empresa.");
+    }
+};
 
 const tableColumns = createSaleColumns({
     updateSale(row) {
@@ -459,7 +481,8 @@ const tableColumns = createSaleColumns({
     nullifySale(row) {
         showConfirm.value = { show: true, saleId: row.id, permission: "cancel_sale", loadSales, performNullifySale };
     },
-    changeStatus
+    changeStatus,
+    downloadXML
 })
 </script>
 

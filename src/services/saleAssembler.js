@@ -25,12 +25,15 @@ export function buildSalePayload(orders = [], options = {}) {
 
   orders.forEach((order) => {
     if (order.from_menu || order.from_combo) {
+      const quantity = Number(order.quantity ?? 1);
+      if (!includeZeroQty && quantity <= 0) return;
+
       // Menu set or Combo
       const productSet = {
         name: order.name || (order.from_combo ? "Combo" : "Menu"),
         price: Number(order.price || 0),
-        quantity: Number(order.quantity || 1),
-        customer: order.customer || null,
+        quantity: quantity,
+        customer: order.customer?.id || order.customer || null,
         items: (order.items || []).map((item) => ({
           product_id: item.product_id,
           product_phase_id: item.product_phase_id,
@@ -43,8 +46,11 @@ export function buildSalePayload(orders = [], options = {}) {
       };
 
       if (order.id) productSet.id = order.id;
-      if (order.product_set_id)
+      if (order.product_set_id) {
         productSet.product_set_id = order.product_set_id;
+      } else if (order.product_set && order.product_set.id) {
+        productSet.product_set_id = order.product_set.id;
+      }
       if (order.menu_id) productSet.menu_id = order.menu_id;
       if (order.combo_id) productSet.combo_id = order.combo_id;
       if (order.set_type) productSet.set_type = order.set_type;
@@ -71,9 +77,11 @@ export function buildSalePayload(orders = [], options = {}) {
         price_sale: Number(order.price || 0),
         quantity: quantity,
         icbper: Number(order.icbper_amount || 0),
-        customer: order.customer || null,
+        customer: order.customer?.id || order.customer || null,
+        is_delta: order.is_delta || false,
       };
 
+      if (order.id) detail.id = order.id;
       if (order.indication) detail.indication = order.indication;
       if (order.quick_indications)
         detail.quick_indications = order.quick_indications;
@@ -105,6 +113,7 @@ export function buildTableOrderPayload(orders = [], context = {}) {
         menu_name: order.name,
         price: Number(order.price || 0),
         quantity: Number(order.quantity || 1),
+        customer: order.customer || null,
         items: (order.items || []).map((item) => ({
           product_phase_id: item.product_phase_id,
           product_id: item.product_id,
@@ -127,6 +136,7 @@ export function buildTableOrderPayload(orders = [], context = {}) {
         set_type: "COMBO",
         price: Number(order.price || 0),
         quantity: Number(order.quantity || 1),
+        customer: order.customer || null,
         //agregamos el pricing_mode, el fixed_price y el combo_category_id
         pricing_mode: order.pricing_mode,
         fixed_price: order.fixed_price,

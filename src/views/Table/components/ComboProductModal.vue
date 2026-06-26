@@ -97,14 +97,14 @@ const orderStore = useOrderStore();
 const settingsStore = useSettingsStore();
 
 const quantity = ref(1);
-const selectedCustomerId = ref(null);
+const selectedCustomerId = inject('selectedCustomerId', ref(null));
 
 // Inyectar funciones del componente padre si están disponibles
 const addOrderToCustomer = inject('addOrderToCustomer', null);
 const customers = inject('customers', ref([]));
 
 const shouldShowCustomerSelector = computed(() =>
-  settingsStore.businessSettings?.order?.order_by_customer && customers.value.length > 0
+  customers.value.length > 0
 );
 
 const customerOptions = computed(() =>

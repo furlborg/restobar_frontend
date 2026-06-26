@@ -35,7 +35,7 @@ export const generateExcel = (header, columns, data) => {
   // worksheet.getCell("G6").value = "Stock Actual : " + header.total;
 
   //Tabla de datos
-  columns.forEach(function (c, i) {
+  columns.forEach(function (c) {
     //Pintar columnas
     worksheet.getCell(c["col"] + 8).value = c["header"];
     worksheet.getCell(c["col"] + 8).fill = {

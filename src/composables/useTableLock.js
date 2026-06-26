@@ -12,6 +12,7 @@ let pendingMessages = [];
 import { useBusinessStore } from '@/store/modules/business';
 import { useUserStore } from '@/store/modules/user';
 import { useTableStore } from '@/store/modules/table';
+import useCookie from "vue-cookies";
 const businessStore = useBusinessStore();
 const userStore = useUserStore();
 const tableStore = useTableStore();
@@ -20,7 +21,16 @@ const connectLockWebSocket = () => {
   const branchId = userStore.user.branchoffice || businessStore.currentBranch || 1;
   const apiUrl = import.meta.env.VITE_APP_URL.replace(/^https?:\/\//, '');
   const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-  const wsUrl = `${wsProtocol}://${apiUrl}/ws/tables/${branchId}/`;
+  const currentToken = useCookie.get("token") || userStore.token;
+  
+  // Si no hay token (sesión expirada), no intentar conectar para evitar bucle 403
+  if (!currentToken) {
+    lockSocketConnected.value = false;
+    return;
+  }
+
+  const tokenQuery = `?token=${currentToken}`;
+  const wsUrl = `${wsProtocol}://${apiUrl}/ws/tables/${branchId}/${tokenQuery}`;
 
     if (lockSocket && lockSocket.readyState !== WebSocket.CLOSED) {
       return;
@@ -38,12 +48,12 @@ const connectLockWebSocket = () => {
     }
   };
 
-  lockSocket.onclose = (event) => {
+  lockSocket.onclose = () => {
     lockSocketConnected.value = false;
     reconnectTimeout = setTimeout(connectLockWebSocket, 3000);
   };
 
-  lockSocket.onerror = (e) => {
+  lockSocket.onerror = () => {
     lockSocket.close();
   };
 
@@ -97,6 +107,7 @@ const connectLockWebSocket = () => {
         }
       }
     } catch (err) {
+      console.warn("WebSocket message parse error:", err);
     }
   };
 };
@@ -204,7 +215,8 @@ const unlockTableHTTP = async (tableId) => {
       { withCredentials: true }
     );
 
-    const { [tableId]: removed, ...rest } = tableStore.lockedTables;
+    const rest = { ...tableStore.lockedTables };
+    delete rest[tableId];
     tableStore.lockedTables = rest;
 
     return { success: true };
@@ -304,6 +316,7 @@ export function useTableLock() {
     try {
       await getMyLocks();
     } catch (error) {
+      console.warn("Error refreshing locks:", error);
     } finally {
       isRefreshing.value = false;
     }

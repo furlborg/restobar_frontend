@@ -33,6 +33,9 @@
                                     <n-tag>{{ order.quantity }}</n-tag>
                                     <!-- Caso producto normal -->
                                     <n-text v-if="order.product_name" class="ms-2">
+                                        <n-tag v-if="order.customer" size="small" type="success" class="me-1">
+                                            {{ order.customer.name }}
+                                        </n-tag>
                                         {{ order.product_name }}
                                     </n-text>
                                     <!-- Caso menú -->
@@ -40,6 +43,9 @@
                                         <n-icon color="#18a058" class="me-1">
                                             <v-icon name="md-restaurant-round" />
                                         </n-icon>
+                                        <n-tag v-if="order.customer" size="small" type="success" class="me-1">
+                                            {{ order.customer.name }}
+                                        </n-tag>
                                         {{ order.name }}
                                     </n-text>
                                     <!-- Caso combo -->
@@ -47,6 +53,9 @@
                                         <n-icon color="#f0a020" class="me-1">
                                             <v-icon name="gi-hot-meal" />
                                         </n-icon>
+                                        <n-tag v-if="order.customer" size="small" type="success" class="me-1">
+                                            {{ order.customer.name }}
+                                        </n-tag>
                                         {{ order.name }}
                                     </n-text>
                                 </template>
@@ -88,17 +97,18 @@
             </n-card>
             <ProductIndications v-model:show="showModal" preset="card" title="Indicaciones"
                 :product="currentOrderList[itemIndex]" @success="showModal = false" />
-            <preview-drawer ref="previewDrawer" v-model:show="showPreview" :data="previewData" :preVoucher="true"
+            <PreviewDrawer ref="previewDrawer" v-model:show="showPreview" :data="previewData" :preVoucher="true"
                 :previewOnly="true" />
         </n-tab-pane>
     </n-tabs>
 </template>
 
 <script setup>
-import { ref, onUpdated, onMounted, provide, computed } from "vue";
+import { ref, onUpdated, onMounted, provide, computed, nextTick } from "vue";
 import ProductsDrawer from "../components/ProductsDrawer";
 import WaiterMenus from "./WaiterMenus.vue";
 import WaiterCombos from "./WaiterCombos.vue";
+import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 import { useMessage, useDialog } from "naive-ui";
 import {
     useRoute,
@@ -133,6 +143,8 @@ const showModal = ref(false);
 const itemIndex = ref(null);
 const activeTab = ref("menu"); // Controlar pestaña activa
 
+const ALLOWED_ROUTES = ["WCategories", "WProducts"];
+
 // Provide function para que WMenus pueda cambiar la pestaña
 const switchToOrderTab = () => {
     activeTab.value = "order";
@@ -156,15 +168,15 @@ const openIndications = (order, index) => {
 };
 
 onBeforeRouteUpdate((to) => {
-    if (to.name !== "WCategories" && to.name !== "WProducts") {
-        if (waiterStore.preOrderList.length) {
+    if (!ALLOWED_ROUTES.includes(to.name)) {
+        if (orderStore.orders.length) {
             dialog.error({
                 title: "Cambios sin guardar",
                 content: "¿Salir de todos modos?",
                 positiveText: "Sí",
                 negativeText: "No",
                 onPositiveClick: () => {
-                    waiterStore.preOrderList = [];
+                    orderStore.clearNewOrders();
                     router.push(to);
                 }
             });
@@ -174,14 +186,14 @@ onBeforeRouteUpdate((to) => {
 });
 
 onBeforeRouteLeave((to) => {
-    if (to.name !== "WCategories" && to.name !== "WProducts") {
-        if (waiterStore.preOrderList.length) {
+    if (!ALLOWED_ROUTES.includes(to.name)) {
+        if (orderStore.orders.length) {
             dialog.error({
                 content: "¿Salir de todos modos?",
                 positiveText: "Sí",
                 title: "Cambios sin guardar",
                 onPositiveClick: () => {
-                    waiterStore.preOrderList = [];
+                    orderStore.clearNewOrders();
                     router.push(to);
                 }
             });
@@ -216,7 +228,8 @@ const performRetrieveTableOrder = () => {
                             quantity: item.quantity,
                             product_name: item.product_name,
                             phase_name: item.product_phase?.phase_name
-                        })) || []
+                        })) || [],
+                        customer: detail.customer || null
                     };
                 } else if (detail.product) {
                     // Es un producto regular
@@ -230,13 +243,15 @@ const performRetrieveTableOrder = () => {
                         quick_indications: detail.quick_indications || "",
                         icbper: detail.icbper,
                         product_affectation: detail.product_affectation,
-                        product_igv: detail.product_igv
+                        product_igv: detail.product_igv,
+                        customer: detail.customer || null
                     };
                 }
                 return null;
             }).filter(Boolean);
 
             orderStore.setSavedOrders(transformedOrders);
+            orderStore.extractWaiterCustomers(transformedOrders);
             saleStore.order_initial = cloneDeep(orderStore.fullOrderList);
             orderStore.orderId = response.data.order.id;
         }
@@ -255,6 +270,7 @@ const performRetrieveTableOrder = () => {
             router.push({ name: 'WHome' });
         } else if (error.response && error.response.status === 404) {
             orderStore.setSavedOrders([]);
+            orderStore.extractWaiterCustomers([]);
             saleStore.order_initial = [];
             orderStore.orderId = null;
         } else {
@@ -264,18 +280,26 @@ const performRetrieveTableOrder = () => {
 };
 
 const printOrderPrebill = async () => {
-    await retrieveTableOrder(route.params.table).then((response) => {
+    await retrieveTableOrder(route.params.table).then(async (response) => {
         if (response.status === 200) {
+            const order = response.data.order;
             if (settingsStore.business_settings.printer.print_html) {
-                previewData.value = response.data;
+                previewData.value = order;
                 showPreview.value = true;
-                setTimeout(() => previewDrawer.value.generate(), 250);
+                await nextTick();
+                if (typeof previewDrawer.value?.generate === "function") {
+                    await previewDrawer.value.generate();
+                } else {
+                    console.warn("previewDrawer no disponible o sin generate");
+                    message.error("No se pudo generar la preboleta");
+                }
             } else {
                 VoucherPrint({
-                    data: response.data,
+                    data: order,
                     businessStore,
                     prePayment: true,
-                    auto: true
+                    auto: true,
+                    show: false
                 });
             }
         }
@@ -294,7 +318,7 @@ function setTabStyle() {
 }
 
 onMounted(() => {
-    // waiterStore.preOrderList = []; // Comentado temporalmente
+    orderStore.clearNewOrders(); // Limpiar carrito de la sesión anterior
     performRetrieveTableOrder();
     setTabStyle();
 });

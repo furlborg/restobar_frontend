@@ -1418,6 +1418,7 @@ export const createSaleColumns = ({
   sendSale,
   nullifySale,
   changeStatus,
+  downloadXML,
 }) => {
   return [
     {
@@ -1563,6 +1564,11 @@ export const createSaleColumns = ({
             ? "Click para marcar como NUEVO y reintentar envío"
             : "Documento sin envío electrónico";
           isClickable = isElectronicDocument;
+        } else if (row.status === "B") {
+          type = "default";
+          text = "HISTÓRICO";
+          tooltip = "Venta histórica importada";
+          isClickable = false;
         } else {
           type = "warning";
           text = "-";
@@ -1602,7 +1608,7 @@ export const createSaleColumns = ({
     {
       title: "Acciones",
       key: "actions",
-      width: 110,
+      width: 160,
       render(row) {
         return [
           userStore.hasPermission("send_sale") && row.invoice_type !== "80"
@@ -1613,7 +1619,7 @@ export const createSaleColumns = ({
                   size: "small",
                   type: "info",
                   secondary: true,
-                  disabled: row.status === "E" || row.status === "A",
+                  disabled: row.status === "E" || row.status === "A" || row.status === "B",
                   onClick: () => sendSale(row),
                 },
                 renderIcon("ri-send-plane-fill"),
@@ -1629,8 +1635,8 @@ export const createSaleColumns = ({
                 secondary: true,
                 disabled:
                   row.invoice_type !== "80"
-                    ? row.status !== "E" || verifyDate(row.date_sale)
-                    : row.status === "A",
+                    ? row.status !== "E" || row.status === "B" || verifyDate(row.date_sale)
+                    : row.status === "A" || row.status === "B",
                 onClick: () => nullifySale(row),
               },
               renderIcon("md-cancel-twotone"),
@@ -1660,6 +1666,22 @@ export const createSaleColumns = ({
               onClick: () => printSale(row),
             },
             renderIcon("md-print-round"),
+          ),
+          // Boton XML
+          h(
+            NButton,
+            {
+              class: "ms-2",
+              size: "small",
+              type: "primary",
+              secondary: true,
+              // Solo mostrar para comprobantes electrónicos (no nota de venta) Y que ya hayan sido enviados con éxito a la SUNAT (estado 'E')
+              disabled: row.invoice_type === "80" || row.status !== "E",
+              onClick: () => {
+                if (downloadXML) downloadXML(row);
+              },
+            },
+            () => "XML",
           ),
         ];
       },
@@ -1712,6 +1734,9 @@ export const createTillSalesColumns = () => {
         } else if (row.status === "X") {
           type = "warning";
           text = "¡ERROR!";
+        } else if (row.status === "B") {
+          type = "default";
+          text = "HISTÓRICO";
         } else {
           type = "warning";
           text = "-";
@@ -2361,6 +2386,8 @@ export const permissionsLabels = {
   delete_sale: "Eliminar Ventas",
   view_sale: "Ver Ventas",
   send_sale: "Enviar Ventas",
+  import_historical_sale: "Importar ventas históricas",
+  export_historical_sale: "Exportar ventas históricas",
   add_saledetail: "Agregar Detalles de Venta",
   change_saledetail: "Editar Detalles de Venta",
   delete_saledetail: "Eliminar Detalles de Venta",

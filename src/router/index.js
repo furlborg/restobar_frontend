@@ -189,7 +189,7 @@ export const routes = [
               }
             })
             .catch((error) => {
-              if (error.response.status === 404) {
+              if (error.response && error.response.status === 404) {
                 tillStore.currentTillID = null;
                 tillStore.currentTillOrders = 0;
               }
@@ -356,6 +356,12 @@ export const routes = [
             },
             component: () =>
               import("@/views/Settings/components/BusinessSettings.vue"),
+          },
+          {
+            name: "DocumentCounters",
+            path: "document-counters",
+            component: () =>
+              import("@/views/Settings/components/DocumentCounters.vue"),
           },
           {
             name: "AdvancedSettings",

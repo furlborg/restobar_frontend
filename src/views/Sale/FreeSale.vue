@@ -101,51 +101,75 @@
         <n-table class="fs-6 m-auto text-center" :bordered="false">
           <thead>
             <tr>
-              <th v-if="settingsStore.businessSettings.sale.manage_affectations">
-                #
-              </th>
               <th>Producto</th>
+              <th>
+                <n-checkbox
+                  :checked="stockMasterChecked"
+                  :indeterminate="stockMasterIndeterminate"
+                  @update:checked="toggleAllStock"
+                >
+                  Stock
+                </n-checkbox>
+              </th>
               <th>Cantidad</th>
               <th>Precio Unitario</th>
               <th>Precio Total</th>
+              <th v-if="settingsStore.businessSettings.sale.manage_affectations">
+                #
+              </th>
               <th></th>
             </tr>
           </thead>
           <tbody>
-            <template v-for="(detail, index) in saleStore.toSale">
+            <template v-for="(detail, index) in freeSaleDetails">
               <tr v-if="detail.quantity > 0" :key="index">
+                <td>
+                  <n-auto-complete
+                    v-model:value="detail.product_name"
+                    :options="detail._product_options || []"
+                    :loading="!!detail._searching_products"
+                    placeholder="Buscar producto o escribir ítem manual"
+                    clearable
+                    @update:value="(value) => handleDetailProductInput(detail, value)"
+                    @select="(value, option) => handleDetailProductSelect(detail, value, option)"
+                  />
+                </td>
+                <td align="center">
+                  <n-checkbox
+                    v-if="detail.product"
+                    v-model:checked="detail.deduct_stock"
+                  />
+                  <n-checkbox v-else disabled :checked="false" />
+                </td>
+                <td align="center">
+                  <n-input-number
+                    v-model:value="detail.quantity"
+                    style="width: 100px"
+                    :min="1"
+                    @update:value="() => updateDetailValues(detail)"
+                  />
+                </td>
+                <td>
+                  S/.
+                  <input class="custom-input" type="number" min="0" step=".5" v-model="detail.price_sale" @input="() => (
+                    updateDetailValues(detail),
+                    (detail.discount = parseFloat(0).toFixed(2))
+                  )" v-autowidth @click="$event.target.select()" />
+                </td>
+                <td>
+                  {{ detailLineTotal(detail) }}
+                </td>
                 <td v-if="settingsStore.businessSettings.sale.manage_affectations">
                   <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation"
                     :disabled="!userStore.hasPermission('change_product_affectation')"
-                    :options="productStore.affectationsOptions" @update:value="() => saleStore.updateDetail(detail)">
+                    :options="productStore.affectationsOptions" @update:value="() => updateDetailValues(detail)">
                     <n-tag size="small" :color="getAfcColor(detail.product_affectation)">
                       {{ getAfcShort(detail.product_affectation) }}
                     </n-tag>
                   </n-popselect>
                 </td>
                 <td>
-                  <input class="custom-input" v-model="detail.product_name" v-autowidth
-                    @click="$event.target.select()" />
-                </td>
-                <td align="center">
-                  <n-input-number v-model:value="detail.quantity" style="width: 100px" :min="1" />
-                </td>
-                <td>
-                  S/.
-                  <input class="custom-input" type="number" min="0" step=".5" v-model="detail.price_sale" @input="() => (
-                    saleStore.updateDetail(detail),
-                    (detail.discount = parseFloat(0).toFixed(2))
-                  )" v-autowidth @click="$event.target.select()" />
-                </td>
-                <td>
-                  {{
-                    detail.product_affectation === 21
-                      ? '0.00'
-                      : parseFloat(detail.quantity * detail.price_sale - detail.discount).toFixed(2)
-                  }}
-                </td>
-                <td>
-                  <n-button type="error" text @click="saleStore.toSale.splice(index, 1)">
+                  <n-button type="error" text @click="saleStore.sale_details.splice(index, 1)">
                     <v-icon name="md-disabledbydefault-round" />
                   </n-button>
                 </td>
@@ -180,7 +204,7 @@
           <n-checkbox v-model:checked="ticketPreview">Previsualizar ticket</n-checkbox>
         </n-gi>
       </n-grid>
-      <n-button class="fs-1 py-5 mt-2" type="success" :disabled="!saleStore.toSale.filter((detail) => !!detail.quantity).length ||
+      <n-button class="fs-1 py-5 mt-2" type="success" :disabled="!freeSaleDetails.filter((detail) => !!detail.quantity).length ||
         (sale.payment_condition === 1 && sale.given_amount < sale.amount)
         " secondary block @click.prevent="isMultiple ? doMultiplePayment() : performCreateSale()">
         <v-icon class="me-2" name="fa-coins" scale="2" />Cobrar
@@ -227,7 +251,11 @@
       @on-success="onSuccess" />
     <preview-drawer ref="previewDrawer" v-model:show="showPdf" :data="pdfData" :previewOnly="!ticketPreview"
       @printed="() => $router.push({ name: 'TableHome' })" @canceled="() => $router.push({ name: 'TableHome' })" />
-    <FreeSaleProductModal v-model:show="showProductModal" @success="addProduct" />
+    <FreeSaleProductModal
+      v-model:show="showProductModal"
+      :initial-deduct-stock="settingsStore.businessSettings.sale.free_sale_deduct_stock_default"
+      @success="addProduct"
+    />
   </div>
 </template>
 
@@ -246,6 +274,7 @@ import {
   searchCustomerByName,
   searchRucCustomer,
 } from "@/api/modules/customer";
+import { searchProductByName } from "@/api/modules/products";
 import { createSale, getSaleNumber, retrieveSale, sendSale } from "@/api/modules/sales";
 import { useDialog, useMessage } from "naive-ui";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
@@ -290,18 +319,142 @@ export default defineComponent({
         ? total.value - sale.value.given_amount
         : 0.0;
     });
+    const freeSaleDetails = computed(() => saleStore.sale_details);
+    const stockToggleDetails = computed(() => freeSaleDetails.value.filter((detail) => !!detail.product));
+    const stockMasterChecked = computed(() => {
+      return stockToggleDetails.value.length > 0 && stockToggleDetails.value.every((detail) => !!detail.deduct_stock);
+    });
+    const stockMasterIndeterminate = computed(() => {
+      return stockToggleDetails.value.some((detail) => !!detail.deduct_stock) && !stockMasterChecked.value;
+    });
+
+    const detailIcbperAmount = (detail) => {
+      const icbperUnit = Number(detail.icbper_unit || 0);
+      return icbperUnit * Number(detail.quantity || 0);
+    };
+
+    const updateDetailIcbper = (detail) => {
+      detail.icbper = detailIcbperAmount(detail);
+    };
+
+    const updateDetailValues = (detail) => {
+      updateDetailIcbper(detail);
+      saleStore.updateDetail(detail);
+    };
+
+    const productOptionLabel = (item) => `${item.code || item.id} - ${item.name}`;
+
+    const findDetailProductOption = (detail, value, option = null) => {
+      if (option?.product) return option;
+      const text = String(value || "");
+      return (detail._product_options || []).find((item) => {
+        return String(item.value) === text
+          || item.label === text
+          || item.product?.name === text
+          || productOptionLabel(item.product) === text;
+      });
+    };
+
+    const isDetailProductText = (detail, value) => {
+      if (!detail._selected_product) return false;
+      const text = String(value || "");
+      return text === detail._selected_product.name
+        || text === productOptionLabel(detail._selected_product);
+    };
+
+    const resetDetailProduct = (detail) => {
+      detail._selected_product = null;
+      detail.product = null;
+      detail.deduct_stock = false;
+      detail.product_igv = 0;
+      detail.icbper_unit = 0;
+      detail.applies_icbper = false;
+      detail._product_options = [];
+      updateDetailValues(detail);
+    };
+
+    const handleDetailProductInput = async (detail, value) => {
+      if (!value) {
+        resetDetailProduct(detail);
+        return;
+      }
+
+      if (detail.product && !detail._selected_product) {
+        detail._selected_product = {
+          id: detail.product,
+          name: detail.product_name,
+          code: detail.product_code || detail.product,
+        };
+      }
+
+      if (detail._selected_product) {
+        if (isDetailProductText(detail, value)) {
+          detail._product_options = [];
+          detail.product_name = detail._selected_product.name;
+          return;
+        }
+        resetDetailProduct(detail);
+      }
+
+      if (value.length < 2) {
+        detail._product_options = [];
+        return;
+      }
+
+      detail._searching_products = true;
+      try {
+        const response = await searchProductByName(value);
+        detail._product_options = (response.data || []).map((item) => ({
+          label: productOptionLabel(item),
+          value: item.name,
+          product: item,
+        }));
+      } catch (error) {
+        console.error(error);
+        detail._product_options = [];
+      } finally {
+        detail._searching_products = false;
+      }
+    };
+
+    const handleDetailProductSelect = (detail, value, option) => {
+      const selectedOption = findDetailProductOption(detail, value, option);
+      if (!selectedOption?.product) return;
+
+      const item = selectedOption.product;
+      const icbperUnit = item.icbper ? Number(settingsStore.businessSettings.sale.icbper_tax || 0) : 0;
+      detail._selected_product = item;
+      detail.product = item.id;
+      detail.product_name = item.name;
+      detail.price_sale = Number(item.prices || 0);
+      detail.product_affectation = Number(item.affectation || settingsStore.businessSettings.sale.default_affectation);
+      detail.product_igv = Number(item.igv_tax || 0);
+      detail.icbper_unit = icbperUnit;
+      detail.applies_icbper = !!item.icbper;
+      detail.deduct_stock = !!settingsStore.businessSettings.sale.free_sale_deduct_stock_default;
+      detail._product_options = [];
+      updateDetailValues(detail);
+    };
+
+    const detailLineTotal = (detail) => {
+      if (detail.product_affectation === 21) return "0.00";
+      return parseFloat(detail.quantity * detail.price_sale - detail.discount).toFixed(2);
+    };
+
+    const toggleAllStock = (checked) => {
+      stockToggleDetails.value.forEach((detail) => {
+        detail.deduct_stock = checked;
+      });
+    };
 
     const icbper = computed(() => {
-      return orderStore.orderList.reduce((acc, curVal) => {
-        if (curVal.icbper) {
-          return (acc += curVal.icbper_amount);
-        }
-        return (acc += 0);
+      return freeSaleDetails.value.reduce((acc, curVal) => {
+        return (acc += detailIcbperAmount(curVal));
       }, 0);
     });
 
     const totalGRV = computed(() => {
-      return saleStore.toSale.reduce((acc, curVal) => {
+      return freeSaleDetails.value.reduce((acc, curVal) => {
         return curVal.product_affectation === 10
           ? (acc += parseFloat(curVal.price_base) * curVal.quantity)
           : acc;
@@ -309,7 +462,7 @@ export default defineComponent({
     });
 
     const totalEXN = computed(() => {
-      return saleStore.toSale.reduce((acc, curVal) => {
+      return freeSaleDetails.value.reduce((acc, curVal) => {
         return curVal.product_affectation === 20
           ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
           : acc;
@@ -317,7 +470,7 @@ export default defineComponent({
     });
 
     const totalGRT = computed(() => {
-      return saleStore.toSale.reduce((acc, curVal) => {
+      return freeSaleDetails.value.reduce((acc, curVal) => {
         return curVal.product_affectation === 21
           ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
           : acc;
@@ -325,25 +478,25 @@ export default defineComponent({
     });
 
     const totalIGV = computed(() => {
-      return saleStore.toSale.reduce((acc, curVal) => {
+      return freeSaleDetails.value.reduce((acc, curVal) => {
         return (acc += curVal.igv_tax * curVal.quantity);
       }, 0);
     });
 
     const totalDSCT = computed({
       get: () => {
-        if (saleStore.toSale.some((detail) => Number(detail.discount) > 0)) {
-          return saleStore.toSale.reduce((acc, curVal) => {
+        if (freeSaleDetails.value.some((detail) => Number(detail.discount) > 0)) {
+          return freeSaleDetails.value.reduce((acc, curVal) => {
             return (acc += Number(curVal.discount));
           }, 0);
         }
         return sale.value.discount;
       },
       set: (v) => {
-        if (!saleStore.toSale.some((detail) => Number(detail.discount) > 0)) {
+        if (!freeSaleDetails.value.some((detail) => Number(detail.discount) > 0)) {
           sale.value.discount = v;
         } else {
-          sale.value.discount = saleStore.toSale.reduce((acc, curVal) => {
+          sale.value.discount = freeSaleDetails.value.reduce((acc, curVal) => {
             return (acc += Number(curVal.discount));
           }, 0);
         }
@@ -353,7 +506,7 @@ export default defineComponent({
     const showObservations = ref(false);
 
     const subTotal = computed(() => {
-      return saleStore.toSale.reduce((acc, curVal) => {
+      return freeSaleDetails.value.reduce((acc, curVal) => {
         return curVal.product_affectation === 21
           ? (acc += 0)
           : (acc += curVal.price_sale * curVal.quantity);
@@ -361,7 +514,7 @@ export default defineComponent({
     });
 
     const products_count = computed(() => {
-      return saleStore.toSale.reduce((acc, curVal) => {
+      return freeSaleDetails.value.reduce((acc, curVal) => {
         return (acc += curVal.quantity);
       }, 0);
     });
@@ -457,10 +610,10 @@ export default defineComponent({
         totalGRT,
         totalIGV,
         totalDSCT,
-        () => saleStore.toSale,
+        freeSaleDetails,
       ],
       () => {
-        const productCount = saleStore.toSale.reduce(
+        const productCount = freeSaleDetails.value.reduce(
           (acc, curVal) => acc + curVal.quantity,
           0
         );
@@ -529,7 +682,7 @@ export default defineComponent({
           editable: !settingsStore.businessSettings.sale?.show_discount_label,
           field: "discount",
           step: 0.5,
-          disabled: saleStore.toSale.some(d => Number(d.discount) > 0),
+          disabled: freeSaleDetails.value.some(d => Number(d.discount) > 0),
           max: discountInputMax.value
         },
         {
@@ -597,6 +750,20 @@ export default defineComponent({
 
     const businessStore = useBusinessStore();
 
+    const normalizeSaleDetailForPayload = (detail) => ({
+      product: detail.product || null,
+      product_name: detail.product_name,
+      product_affectation: detail.product_affectation,
+      product_igv: detail.product_igv,
+      igv_tax: Number(detail.igv_tax || 0).toFixed(2),
+      price_sale: detail.price_sale,
+      discount: detail.discount,
+      price_base: Number(detail.price_base || 0).toFixed(2),
+      quantity: detail.quantity,
+      icbper: Number(detailIcbperAmount(detail)).toFixed(2),
+      deduct_stock: !!detail.product && !!detail.deduct_stock,
+    });
+
     const performCreateSale = () => {
       saleForm.value.validate((errors) => {
         if (!errors) {
@@ -619,11 +786,7 @@ export default defineComponent({
                 sale.value.due_date = null;
               }
               sale.value.order = orderStore.orderId;
-              sale.value.sale_details = saleStore.toSale.map((detail) => ({
-                ...detail,
-                igv_tax: detail.igv_tax.toFixed(2),
-                price_base: detail.price_base.toFixed(2),
-              }));
+              sale.value.sale_details = freeSaleDetails.value.map(normalizeSaleDetailForPayload);
               sale.value.discount = totalDSCT.value;
               await createSale(sale.value)
                 .then(async (response) => {
@@ -634,9 +797,9 @@ export default defineComponent({
                       return res.data;
                     };
                     await dataPrint();
+                    showPdf.value = true;
                     if (settingsStore.business_settings.printer.print_html) {
                       // pdfData.value = response.data;
-                      showPdf.value = true;
                       if (!ticketPreview.value) {
                         setTimeout(() => previewDrawer.value.generate(), 250);
                       }
@@ -648,13 +811,12 @@ export default defineComponent({
                         changing: changing.value,
                         show: true,
                       });
-                      await router.push({ name: "TableHome" });
                     }
 
                     if (
                       settingsStore.businessSettings.sale.free_sale_send_doc &&
                       settingsStore.businessSettings.sale.auto_send &&
-                      response.data.invoice_type !== "80"
+                      String(sale.value.invoice_type) !== "80"
                     ) {
                       sendSale(response.data.id)
                         .then((response) => {
@@ -855,10 +1017,9 @@ export default defineComponent({
     const showPayments = ref(false);
 
     const createPayment = () => {
-      return {
-        payment_method: null,
-        amount: "0",
-      };
+      const currentTotal = sale.value.payments ? sale.value.payments.reduce((acc, val) => acc + (parseFloat(val.amount) || 0), 0) : 0;
+      const remaining = Math.max(0, parseFloat(sale.value.amount) - currentTotal);
+      return { payment_method: null, amount: remaining > 0 ? remaining.toFixed(2) : "0" };
     };
 
     const doMultiplePayment = () => {
@@ -1011,6 +1172,15 @@ export default defineComponent({
       customerDocument,
       searching,
       changing,
+      freeSaleDetails,
+      stockToggleDetails,
+      stockMasterChecked,
+      stockMasterIndeterminate,
+      toggleAllStock,
+      handleDetailProductInput,
+      handleDetailProductSelect,
+      updateDetailValues,
+      detailLineTotal,
       payment_amount,
       subTotal,
       selectSerie,

@@ -6,7 +6,7 @@ import { createDiscreteApi } from "naive-ui";
 
 const businessStore = useBusinessStore();
 const userStore = useUserStore();
-const { message, notification } = createDiscreteApi(["message", "notification"]);
+const { notification } = createDiscreteApi(["notification"]);
 
 export const useTableStore = defineStore("table", {
   state: () => ({
@@ -107,14 +107,14 @@ export const useTableStore = defineStore("table", {
           this.areas = this.sanitizeAreas(response.data);
           return this.areas;
         })
-        .catch(() => {});
+        .catch(() => { });
     },
     async refreshData() {
       return await getAreasTables()
         .then((response) => {
           this.areas = this.sanitizeAreas(response.data);
         })
-        .catch(() => {});
+        .catch(() => { });
     },
     getAreaByID(id) {
       let area = this.areas.find((area) => area.id === id);
@@ -214,11 +214,14 @@ export const useTableStore = defineStore("table", {
             }
 
             if (data.type === 'table_unlocked') {
-              const { [data.table_id]: removed, ...rest } = this.lockedTables;
+              const rest = { ...this.lockedTables };
+              delete rest[data.table_id];
               this.lockedTables = rest;
             }
 
-          } catch (error) {}
+          } catch (error) {
+            console.warn("WebSocket message parse error:", error);
+          }
         };
 
         this.socket.onerror = () => {

@@ -3,8 +3,7 @@ import { useSettingsStore } from "@/store/modules/settings";
 import { useBusinessStore } from "@/store/modules/business";
 import { useTillStore } from "@/store/modules/till";
 import { useUserStore } from "@/store/modules/user";
-import { buildTakeawayOrderPayload } from "@/services/saleAssembler";
-import { round2 } from "@/utils/money";
+
 
 export async function listOrders(filterParams) {
   return await http.get("orders/", {
@@ -101,16 +100,19 @@ export async function takeAwayOrder(order_details, sale_data, user, salePayload 
   const settingsStore = useSettingsStore();
   const tillStore = useTillStore();
   const userStore = useUserStore();
-  let details = order_details.map((order) => ({
-    product: order.product,
-    quantity: order.quantity,
-    initial_quantity: order.quantity,
-    indication: order.indication || [],
-    quick_indications: order.quick_indications || [],
-  }));
+  let details = order_details
+    .filter(order => order.product)
+    .map((order) => ({
+      product: order.product,
+      quantity: order.quantity,
+      initial_quantity: order.quantity,
+      indication: order.indication || [],
+      quick_indications: order.quick_indications || [],
+    }));
   let order = {
     till: tillStore.currentTillID,
     order_details: details,
+    product_sets: salePayload ? salePayload.sale_product_sets : [],
     order_type: sale_data.delivery_info ? "D" : "P",
     delivery_info: sale_data.delivery_info,
     ask_for: sale_data.ask_for,
@@ -150,6 +152,7 @@ export async function takeAwayOrder(order_details, sale_data, user, salePayload 
     other_charges: parseFloat(sale_data.other_charges).toFixed(2),
     observations: sale_data.observations,
     sale_details: sale_data.sale_details,
+    product_sets: salePayload ? salePayload.sale_product_sets : [],
     till: tillStore.currentTillID,
     payments: sale_data.payments,
     do_update: sale_data.do_update,

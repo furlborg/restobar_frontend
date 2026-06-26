@@ -232,10 +232,10 @@
             <n-checkbox v-model:checked="ticketPreview">Previsualizar ticket</n-checkbox>
           </n-gi>
         </n-grid>
-        <n-button class="fs-1 py-5 mt-2" type="success" :disabled="!saleStore.toSale.filter((detail) => !!detail.quantity).length ||
+        <n-button class="fs-1 py-5 mt-2" type="success" :loading="loading" :disabled="loading || (!saleStore.toSale.filter((detail) => !!detail.quantity).length ||
       sale.payment_condition === 1
       ? sale.given_amount < sale.amount
-      : !(sale.given_amount < sale.amount)
+      : !(sale.given_amount < sale.amount))
       " secondary block @click.prevent="
       isMultiple ? doMultiplePayment() : performCreateSale()
       ">
@@ -564,14 +564,16 @@ export default defineComponent({
                           sale.value.discount = totalDSCT.value;
                           await createSale(sale.value).then(async(response) => {
                               if(response.status === 201) {
+                                  // Vaciar carrito inmediatamente para evitar doble cobro
+                                  saleStore.toSale.splice(0);
                                   const dataPrint = async() => {
                                       const res = await retrieveSale(response.data?.id);
                                       pdfData.value = res.data;
                                       return res.data;
                                   };
                                     await dataPrint();
+                                  showPdf.value = true;
                                   if(settingsStore.business_settings.printer.print_html) {
-                                      showPdf.value = true;
                                       if(!ticketPreview.value) {
                                           setTimeout(() => previewDrawer.value.generate(), 250);
                                       }
@@ -583,57 +585,22 @@ export default defineComponent({
                                           changing: changing.value,
                                           show: true
                                       });
-                                      await router.push({ name: "TableHome" });
                                   }
 
                                   if(
                                       settingsStore.businessSettings.sale.auto_send &&
-                                      response.data?.['invoiceType'] !== "80"
+                                      String(sale.value.invoice_type) !== "80"
                                   ) {
                                       sendSale(response.data.id).then((response) => {
                                           if(response.status === 200) {
                                               message.success("Enviado!");
-                                              // if (whatsappNumber.value.length >= 9) {
-                                              //   sendWhatsapp(
-                                              //     sale.id,
-                                              //     [sale.serie, sale.number],
-                                              //     whatsappNumber.value
-                                              //   )
-                                              //     .then((response) => {
-                                              //       if (response.status === 200)
-                                              //         window.open(
-                                              //           response.data.data.url,
-                                              //           "_blank"
-                                              //         );
-                                              //     })
-                                              //     .catch((error) => {
-                                              //       console.error(error);
-                                              //     });
-                                              // }
                                           }
                                       }).catch((error) => {
                                           console.error(error);
                                           message.error("Algo salió mal...");
                                       });
                                   }
-                                  // else {
-                                  //   if (whatsappNumber.value.length >= 9) {
-                                  //     sendWhatsapp(
-                                  //       response.data.id,
-                                  //       [response.data.serie, response.data.number],
-                                  //       whatsappNumber.value
-                                  //     )
-                                  //       .then((response) => {
-                                  //         if (response.status === 200)
-                                  //           window.open(response.data.data.url, "_blank");
-                                  //       })
-                                  //       .catch((error) => {
-                                  //         console.error(error);
-                                  //       });
-                                  //   }
-                                  // }
                                   message.success("Venta realizada correctamente!");
-                                  // router.push({ name: "TableHome" });
                               }
                           }).catch((error) => {
                               console.error(error);
@@ -788,10 +755,9 @@ export default defineComponent({
     const showPayments = ref(false);
 
     const createPayment = () => {
-      return {
-        payment_method: null,
-        amount: "0",
-      };
+      const currentTotal = sale.value.payments ? sale.value.payments.reduce((acc, val) => acc + (parseFloat(val.amount) || 0), 0) : 0;
+      const remaining = Math.max(0, parseFloat(sale.value.amount) - currentTotal);
+      return { payment_method: null, amount: remaining > 0 ? remaining.toFixed(2) : "0" };
     };
 
     const doMultiplePayment = () => {

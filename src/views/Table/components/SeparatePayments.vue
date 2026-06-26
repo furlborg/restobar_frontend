@@ -21,12 +21,16 @@
               :key="3">BOLETA</n-radio-button>
             <n-radio-button :value="80" :key="80">N. VENTA</n-radio-button>
           </n-radio-group>
-          <n-radio-group v-model:value="sale.payment_condition" name="saleType" size="small" :disabled="!(settingsStore.businessSettings?.sale?.enable_credits === true)
-      ">
+          <n-radio-group v-model:value="sale.payment_condition" name="saleType" size="small" :disabled="!(settingsStore.businessSettings?.sale?.enable_credits === true)">
             <n-radio-button :value="1" :key="1">CONTADO</n-radio-button>
             <n-radio-button :value="2" :key="2">CRÉDITO</n-radio-button>
           </n-radio-group>
         </n-space>
+        
+        <n-space class="mb-2" v-if="orderCustomersOptions.length > 0">
+          <n-select v-model:value="selectedOrderCustomer" :options="orderCustomersOptions" placeholder="Separar por persona (auto-filtrar)" clearable @update:value="filterByCustomer" style="width: 250px" />
+        </n-space>
+
         <n-form class="mb-2" ref="saleForm" :model="sale" :rules="formRules">
           <n-grid responsive="screen" cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12" :x-gap="12">
             <n-form-item-gi :span="9" label="Cliente" :show-require-mark="formRules.customer.required" path="customer">
@@ -99,6 +103,37 @@
               </tr>
             </thead>
             <tbody>
+              <!-- Product Sets (Combos/Menus) -->
+              <template v-for="(set, index) in sale.product_sets" :key="'set-'+index">
+                <tr v-if="set.quantity > 0" style="background-color: #f8f8f8;">
+                  <td v-if="settingsStore.businessSettings.sale.manage_affectations">
+                    <n-tag size="small" type="warning">{{ set.from_combo ? 'COMBO' : 'MENÚ' }}</n-tag>
+                  </td>
+                  <td align="center">
+                    <n-input-number v-model:value="set.quantity" style="width: 100px" :min="1" :max="set.max" />
+                  </td>
+                  <td>
+                    <input class="custom-input" v-model="set.name" v-autowidth readonly style="font-weight: bold;" />
+                  </td>
+                  <td>
+                    S/.
+                    <input class="custom-input" type="number" min="0" step=".01" v-model="set.price" readonly v-autowidth />
+                  </td>
+                  <td>
+                    S/. <input class="custom-input" type="number" value="0.00" disabled v-autowidth />
+                  </td>
+                  <td>
+                    {{ parseFloat(set.quantity * set.price).toFixed(2) }}
+                  </td>
+                  <td>
+                    <n-button type="error" text @click="sale.product_sets.splice(index, 1)">
+                      <v-icon name="md-disabledbydefault-round" />
+                    </n-button>
+                  </td>
+                </tr>
+              </template>
+
+              <!-- Sale Details -->
               <template v-for="(detail, index) in sale.sale_details">
                 <tr v-if="detail.quantity > 0" :key="index">
                   <td v-if="settingsStore.businessSettings.sale.manage_affectations
@@ -118,11 +153,11 @@
                   </td>
                   <td>
                     S/.
-                    <input class="custom-input" type="number" min="0" step=".01" v-model="detail.price_sale" @input="(v) => (
-      saleStore.updateDetail(detail),
-      (detail.discount = parseFloat(0).toFixed(2))
-    )
-      " v-autowidth @click="$event.target.select()" />
+                    <input class="custom-input" type="number" min="0" step=".01" v-model="detail.price_sale" @input="(v) => {
+      saleStore.updateDetail(detail);
+      detail.discount = parseFloat(0).toFixed(2);
+      sale.value.sale_details = [...sale.value.sale_details];
+    }" v-autowidth @click="$event.target.select()" />
                   </td>
                   <td>
                     S/.
@@ -241,12 +276,7 @@
             <n-checkbox v-model:checked="ticketPreview">Previsualizar ticket</n-checkbox>
           </n-gi>
         </n-grid>
-        <n-button class="fs-1 py-5 mt-2" type="success" :disabled="list.length < count
-      ? !list.length || sale.given_amount < sale.amount
-      : !list.some((detail) => detail.quantity < detail.max)
-        ? true
-        : !list.length || sale.given_amount < sale.amount
-      " secondary block @click.prevent="
+        <n-button class="fs-1 py-5 mt-2" type="success" :disabled="!list.length || sale.given_amount < sale.amount" secondary block @click.prevent="
       isMultiple ? doMultiplePayment() : performCreateSale()
       ">
           <v-icon class="me-2" name="fa-coins" scale="2" />Cobrar
@@ -293,7 +323,7 @@
     <customer-modal v-model:show="showModal" :doc_type="sale.invoice_type === 1 ? '6' : null"
       @update:show="onCloseModal" @on-success="onSuccess" />
     <preview-drawer ref="previewDrawer" v-model:show="showPdf" :data="pdfData" :previewOnly="!ticketPreview"
-      @printed="() => $emit('success')" @canceled="() => $emit('success')" />
+      @printed="handlePdfFinish" @canceled="handlePdfFinish" />
   </div>
 </template>
 
@@ -331,6 +361,7 @@ import { directive as VueInputAutowidth } from "vue-input-autowidth";
 import { lighten } from "@/utils";
 import { useBusinessStore } from "@/store/modules/business";
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
+import { useRouter } from "vue-router";
 
 export default defineComponent({
   name: "SeparatePayments",
@@ -344,7 +375,7 @@ export default defineComponent({
       type: Object,
     },
   },
-  emits: ["success"],
+  emits: ["success", "update:show"],
   setup(props, { emit }) {
     const sale = toRef(props, "data");
     const dateNow = ref(null);
@@ -360,18 +391,21 @@ export default defineComponent({
     const ticketPreview = ref(settingsStore.businessSettings.sale.show_preview);
     const payment_amount = ref(parseFloat(0).toFixed(2));
     const saleForm = ref();
+    const router = useRouter();
+    const wasFullPayment = ref(false);
     const changing = computed(() => {
       return sale.value.given_amount > total.value
         ? total.value - sale.value.given_amount
         : 0.0;
     });
 
-    const count = props.data.sale_details.filter(
-      (detail) => !!detail.quantity
-    ).length;
+    const count = props.data.sale_details.filter((detail) => !!detail.quantity).length + 
+                  (props.data.product_sets ? props.data.product_sets.filter((set) => !!set.quantity).length : 0);
 
     const list = computed(() => {
-      return sale.value.sale_details.filter((detail) => !!detail.quantity);
+      const details = sale.value.sale_details.filter((detail) => !!detail.quantity);
+      const sets = (sale.value.product_sets || []).filter((set) => !!set.quantity);
+      return [...details, ...sets];
     });
 
     const icbper = computed(() => {
@@ -384,19 +418,24 @@ export default defineComponent({
     });
 
     const totalGRV = computed(() => {
-      return sale.value.sale_details.reduce((acc, curVal) => {
+      let total = sale.value.sale_details.reduce((acc, curVal) => {
         return curVal.product_affectation === 10
           ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
           : acc;
       }, 0);
+      return total;
     });
 
     const totalEXN = computed(() => {
-      return sale.value.sale_details.reduce((acc, curVal) => {
+      let total = sale.value.sale_details.reduce((acc, curVal) => {
         return curVal.product_affectation === 20
           ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
           : acc;
       }, 0);
+      if (sale.value.product_sets) {
+        total += sale.value.product_sets.reduce((acc, curVal) => acc + parseFloat(curVal.price) * curVal.quantity, 0);
+      }
+      return total;
     });
 
     const totalGRT = computed(() => {
@@ -443,17 +482,23 @@ export default defineComponent({
     const showObservations = ref(false);
 
     const subTotal = computed(() => {
-      return sale.value.sale_details.reduce((acc, curVal) => {
+      let total = sale.value.sale_details.reduce((acc, curVal) => {
         return curVal.product_affectation === 21
           ? (acc += 0)
-          : (acc += curVal.price_sale * curVal.quantity);
+          : (acc += parseFloat(curVal.price_sale || 0) * curVal.quantity);
       }, 0);
+      if (sale.value.product_sets) {
+        total += sale.value.product_sets.reduce((acc, curVal) => acc + parseFloat(curVal.price || 0) * curVal.quantity, 0);
+      }
+      return total;
     });
 
     const products_count = computed(() => {
-      return sale.value.sale_details.reduce((acc, curVal) => {
-        return (acc += curVal.quantity);
-      }, 0);
+      let total = sale.value.sale_details.reduce((acc, curVal) => acc + curVal.quantity, 0);
+      if (sale.value.product_sets) {
+        total += sale.value.product_sets.reduce((acc, curVal) => acc + curVal.quantity, 0);
+      }
+      return total;
     });
 
     const total = computed(() => {
@@ -541,19 +586,29 @@ export default defineComponent({
             positiveText: "Sí",
             onPositiveClick: async () => {
               loading.value = true;
-              sale.value.taxed_amount = totalGRV;
-              sale.value.exempt_amount = totalEXN;
-              sale.value.free_amount = totalGRT;
-              sale.value.igv_amount = totalIGV;
-              sale.value.sale_details = sale.value.sale_details.map(
-                (detail) => ({
-                  ...detail,
-                  igv_tax: detail.igv_tax.toFixed(2),
-                  price_base: detail.price_base.toFixed(2),
-                })
-              );
-              sale.value.discount = totalDSCT.value;
-              await createSale(sale.value)
+              const salePayload = {
+                ...sale.value,
+                taxed_amount: totalGRV.value,
+                exempt_amount: totalEXN.value,
+                free_amount: totalGRT.value,
+                igv_amount: totalIGV.value,
+                discount: totalDSCT.value,
+                sale_details: sale.value.sale_details
+                  .filter(d => d.quantity > 0)
+                  .map(detail => ({
+                    ...detail,
+                    igv_tax: detail.igv_tax.toFixed(2),
+                    price_base: detail.price_base.toFixed(2),
+                  })),
+                product_sets: sale.value.product_sets 
+                  ? sale.value.product_sets.filter(s => s.quantity > 0)
+                  : [],
+                do_update: (list.value.length === count && !list.value.some((d) => d.quantity < d.max))
+              };
+
+              wasFullPayment.value = salePayload.do_update;
+
+              await createSale(salePayload)
                 .then(async (response) => {
                   if (response.status === 201) {
                       const dataPrint = async() => {
@@ -562,9 +617,9 @@ export default defineComponent({
                           return res.data;
                       };
                       await dataPrint();
+                    showPdf.value = true;
                     if (settingsStore.business_settings.printer.print_html) {
                       // pdfData.value = response.data;
-                      showPdf.value = true;
                       if (!ticketPreview.value) {
                         setTimeout(() => previewDrawer.value.generate(), 250);
                       }
@@ -575,12 +630,12 @@ export default defineComponent({
                           changing: changing.value,
                           show: true,
                       });
-                      emit("success");
+                      // Removed handlePdfFinish() here so drawer STAYS open until manually closed
                     }
 
                     if (
                       settingsStore.businessSettings.sale.auto_send &&
-                      response.data.invoice_type !== "80"
+                      [1, 3].includes(Number(sale.value.invoice_type))
                     ) {
                       sendSale(response.data.id)
                         .then((response) => {
@@ -624,7 +679,42 @@ export default defineComponent({
                     retrieveOrder(orderStore.orderId)
                       .then((response) => {
                         if (response.status === 200) {
-                          orderStore.orders = response.data.order_details;
+                          const mappedOrderDetails = response.data.order_details.map(detail => {
+                              if (detail.product_set) {
+                                  const isCombo = detail.product_set.set_type === 'COMBO';
+                                  const isMenu = detail.product_set.set_type === 'MENU';
+
+                                  return {
+                                      from_menu: isMenu,
+                                      from_combo: isCombo,
+                                      product_set_id: detail.product_set.id,
+                                      order_detail_id: detail.id,
+                                      combo_id: detail.product_set?.combo || null,
+                                      name: detail.product_set.menu_name || detail.product_set.name,
+                                      set_type: detail.product_set.set_type,
+                                      price: parseFloat(detail.product_set.price || detail.product_set.fixed_price || detail.product_set.computed_price || 0),
+                                      fixed_price: detail.product_set.fixed_price,
+                                      pricing_mode: detail.product_set.pricing_mode,
+                                      quantity: detail.quantity ?? detail.product_set.quantity ?? 1,
+                                      items: Array.isArray(detail.product_set.items)
+                                          ? detail.product_set.items.map(item => ({
+                                              id: item.id,
+                                              combo_product_id: item.combo_product?.id || item.combo_product_id,
+                                              product_phase_id: item.product_phase?.id,
+                                              product_id: item.product?.id,
+                                              product_name: item.product_name,
+                                              phase_name: item.product_phase?.phase_name,
+                                              quantity: item.quantity,
+                                              kardex_map: item.kardex_map,
+                                          }))
+                                          : [],
+                                      ...(detail.id ? { id: detail.id } : {}),
+                                      ...(detail.customer ? { customer: detail.customer } : {}),
+                                  }
+                              }
+                              return detail;
+                          });
+                          orderStore.orders = mappedOrderDetails;
                           saleStore.order_initial = cloneDeep(
                             orderStore.orderList
                           );
@@ -793,11 +883,59 @@ export default defineComponent({
 
     const showPayments = ref(false);
 
+    const orderCustomers = computed(() => {
+      const customersMap = new Map();
+      orderStore.orderList.forEach(order => {
+        if (order.customer && order.customer.id && order.quantity > 0) {
+          customersMap.set(order.customer.id, order.customer);
+        }
+      });
+      return Array.from(customersMap.values());
+    });
+
+    const orderCustomersOptions = computed(() => {
+      return orderCustomers.value.map(c => ({
+        label: c.names || c.name || 'Cliente sin nombre',
+        value: c.id
+      }));
+    });
+
+    const selectedOrderCustomer = ref(null);
+
+    const filterByCustomer = (customerId) => {
+      if (!customerId) {
+        sale.value.sale_details.forEach(detail => {
+          detail.quantity = detail.max || detail.quantity;
+        });
+        if (sale.value.product_sets) {
+          sale.value.product_sets.forEach(set => {
+            set.quantity = set.max || set.quantity;
+          });
+        }
+      } else {
+        sale.value.sale_details.forEach(detail => {
+          if (detail.customer && String(detail.customer) === String(customerId)) {
+            detail.quantity = detail.max || detail.quantity;
+          } else {
+            detail.quantity = 0;
+          }
+        });
+        if (sale.value.product_sets) {
+          sale.value.product_sets.forEach(set => {
+            if (set.customer && String(set.customer) === String(customerId)) {
+              set.quantity = set.max || set.quantity;
+            } else {
+              set.quantity = 0;
+            }
+          });
+        }
+      }
+    };
+
     const createPayment = () => {
-      return {
-        payment_method: null,
-        amount: "0",
-      };
+      const currentTotal = sale.value.payments ? sale.value.payments.reduce((acc, val) => acc + (parseFloat(val.amount) || 0), 0) : 0;
+      const remaining = Math.max(0, parseFloat(sale.value.amount) - currentTotal);
+      return { payment_method: null, amount: remaining > 0 ? remaining.toFixed(2) : "0" };
     };
 
     const doMultiplePayment = () => {
@@ -845,6 +983,14 @@ export default defineComponent({
 
     const dateDisabled = (ts) => {
       return ts > new Date(Date.now());
+    };
+
+    const handlePdfFinish = () => {
+      emit("success");
+      emit("update:show", false);
+      if (wasFullPayment.value) {
+        router.push({ name: "TableHome" });
+      }
     };
 
     function getAfcColor(afc) {
@@ -947,8 +1093,12 @@ export default defineComponent({
       whatsappNumber,
       ticketPreview,
       showPdf,
-      previewDrawer,
       pdfData,
+      previewDrawer,
+      orderCustomersOptions,
+      selectedOrderCustomer,
+      filterByCustomer,
+      handlePdfFinish
     };
   },
 });

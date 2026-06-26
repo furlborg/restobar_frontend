@@ -175,7 +175,7 @@ function decenas(decena, unidad) {
     "OCHENTA",
     "NOVENTA"
   );
-  var veinte = "";
+
 
   if (decena == 0 && unidad == 0) {
     return "";
@@ -195,9 +195,9 @@ function decenas(decena, unidad) {
     if (unidad == 0) {
       return decenas[decena - 1];
     } else if (unidad == 1) {
-      return (veinte = "VEINTE Y" + "UNO");
+      return "VEINTE Y" + "UNO";
     } else {
-      return (veinte = "VEINTE" + unidades(unidad));
+      return "VEINTE" + unidades(unidad);
     }
   } else {
     if (unidad == 0) {

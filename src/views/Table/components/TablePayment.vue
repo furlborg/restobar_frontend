@@ -104,7 +104,7 @@
                 <div style="display: flex; align-items: center; width: 100%">
                   <n-select v-model:value="value.payment_method" :options="filteredMethods" :disabled="loading" />
                   <n-input class="ms-2" v-model:value="value.amount" placeholder="" :disabled="loading"
-                    v-numeric-only />
+                    @keypress="isDecimal($event)" />
                 </div>
               </template>
             </n-dynamic-input>
@@ -118,7 +118,7 @@
           </n-space>
         </n-modal>
         <separate-payments-modal v-model:show="showSeparateModal" :data="separatePayments"
-          :on-close="closeSeparatePaymentsModal" @success="successSeparatePaymentsModal" />
+          @success="obtainSaleNumber" />
         <PreviewDrawer ref="previewDrawer" v-model:show="showPdf" :data="pdfData" :previewOnly="!ticketPreview"
           @printed="$router.push({ name: 'TableHome' })" @canceled="$router.push({ name: 'TableHome' })" />
       </div>
@@ -140,7 +140,7 @@ import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { useGenericsStore } from "@/store/modules/generics";
 import { saleRules } from "@/utils/constants";
-import { cloneDeep } from "@/utils";
+import { cloneDeep, isDecimal } from "@/utils";
 import { useDialog, useMessage } from "naive-ui";
 import format from "date-fns/format";
 import parse from "date-fns/parse";
@@ -473,10 +473,16 @@ const performCreateSale = () => {
           if (response.status === 201) {
             const res = await retrieveSale(response.data?.id);
             pdfData.value = res.data;
-            pdfData.value.original_sale_details = sale.value.sale_details;
+            pdfData.value.original_sale_details = [
+              ...sale.value.sale_details, 
+              ...(sale.value.sale_product_sets || [])
+            ];
+            if (sale.value.payments?.length) {
+              pdfData.value.payments = normalizePaymentsForTicket(sale.value.payments);
+            }
 
+            showPdf.value = true;
             if (settingsStore.business_settings.printer.print_html) {
-              showPdf.value = true;
               if (!ticketPreview.value) {
                 setTimeout(() => previewDrawer.value.generate(), 250);
               }
@@ -488,10 +494,9 @@ const performCreateSale = () => {
                 changing: changing.value,
                 show: true
               });
-              await router.push({ name: "TableHome" });
             }
 
-            if (settingsStore.businessSettings.sale.auto_send && response.data?.['invoiceType'] !== "80") {
+            if (settingsStore.businessSettings.sale.auto_send && String(sale.value.invoice_type) !== "80") {
               try {
                 const sendResponse = await sendSale(response.data.id);
                 if (sendResponse.status === 200) message.success("Enviado!");
@@ -508,7 +513,7 @@ const performCreateSale = () => {
         }
       }
     });
-  });
+  }).catch(() => {});
 };
 
 const obtainSaleNumber = async () => {
@@ -552,7 +557,11 @@ const handleCustomerCleared = () => {
   addressesOptions.value = [];
 };
 
-const createPayment = () => ({ payment_method: null, amount: "0" });
+const createPayment = () => {
+  const currentTotal = sale.value.payments ? sale.value.payments.reduce((acc, val) => acc + (parseFloat(val.amount) || 0), 0) : 0;
+  const remaining = Math.max(0, parseFloat(sale.value.amount) - currentTotal);
+  return { payment_method: null, amount: remaining > 0 ? remaining.toFixed(2) : "0" };
+};
 
 const doMultiplePayment = () => {
   sale.value.payments = [{ payment_method: sale.value.payment_method, amount: String(sale.value.amount) }];
@@ -585,6 +594,13 @@ const currentPaymentsAmount = computed(() => {
   return Number.isFinite(sum) ? sum.toFixed(2) : "0.00";
 });
 
+const normalizePaymentsForTicket = (payments = []) =>
+  payments.map(payment => ({
+    payment_method: saleStore.getPaymentMethodDescription(payment.payment_method) || payment.payment_method,
+    description: saleStore.getPaymentMethodDescription(payment.payment_method) || payment.payment_method,
+    amount: normalizePaymentAmount(payment.amount),
+  }));
+
 const openSeparatePaymentsModal = () => {
   separatePayments.value = cloneDeep(sale.value);
   separatePayments.value.order = cloneDeep(orderStore.orderId);
@@ -592,6 +608,9 @@ const openSeparatePaymentsModal = () => {
   const payload = saleStore.buildSalePayload();
   separatePayments.value.product_sets = cloneDeep(payload.sale_product_sets);
   separatePayments.value.sale_details.forEach(detail => detail.max = detail.quantity);
+  if (separatePayments.value.product_sets) {
+    separatePayments.value.product_sets.forEach(set => set.max = set.quantity);
+  }
   showSeparateModal.value = true;
 };
 

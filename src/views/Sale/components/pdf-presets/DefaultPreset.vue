@@ -221,7 +221,17 @@
                   {{ sale.totales.total_venta.toFixed(2) }}
                 </td>
               </tr>
-              <tr>
+              <template v-if="hasMultiplePayments">
+                <tr v-for="payment in multiplePayments" :key="payment.method">
+                  <td align="right" :colspan="!!hasDiscounts ? 4 : 3">
+                    {{ payment.method }} :
+                  </td>
+                  <td align="right">
+                    {{ payment.amount.toFixed(2) }}
+                  </td>
+                </tr>
+              </template>
+              <tr v-else>
                 <td align="right" :colspan="!!hasDiscounts ? 4 : 3">
                   EFECTIVO :
                 </td>
@@ -243,6 +253,7 @@
               </tr>
               <tr
                 v-if="
+                  !hasMultiplePayments &&
                   data.payment_condition === 1 &&
                   parseFloat(data.given_amount - data.amount)
                 "
@@ -370,7 +381,7 @@ import { useBusinessStore } from "@/store/modules/business";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useTableStore } from "@/store/modules/table";
 import { numeroALetras } from "@/hooks/numberText.js";
-import { expandMenusInSaleData } from "@/utils/menuExpander.js";
+
 import qr from "qrcode";
 export default defineComponent({
   name: "DefaultPreset",
@@ -393,11 +404,9 @@ export default defineComponent({
     );
 
     // Detectar si es modo clientes
-    const isCustomerMode = computed(() =>(
-      props.data.order_by_customer === 'order_by_customer' ||
-      (props.data.original_sale_details &&
-      props.data.original_sale_details.some(detail => !!detail.customer))
-    ));
+    // Modificado por petición: El Boucher (Ticket final) NO debe separar por clientes.
+    // Solo la pre-cuenta (PreviewPreset) debe hacerlo.
+    const isCustomerMode = computed(() => false);
 
     // Agrupar items por cliente para modo clientes
     const groupedByCustomer = computed(() => {
@@ -442,7 +451,7 @@ export default defineComponent({
         // Crear items expandidos manualmente ya que el JSON de venta no los incluye
         const expandedItems = [];
         
-        saleData.items?.forEach((saleItem, saleIndex) => {
+        saleData.items?.forEach((saleItem) => {
           // Buscar si existe un menú correspondiente
           const menuDetail = orderDetails.find(orderDetail => 
             orderDetail.product_set && 
@@ -511,30 +520,50 @@ export default defineComponent({
     const sale = parseSale();
 
     const title = () => {
-      switch (sale.codigo_tipo_documento) {
+      switch (String(sale.codigo_tipo_documento)) {
         case "01":
           return "FACTURA ELECTRÓNICA";
         case "03":
           return "BOLETA  DE VENTA ELECTRÓNICA";
         case "80":
+        case "080":
           return "NOTA DE VENTA";
         default:
-          console.error("tipo de documento inválido");
+          console.error("tipo de documento inválido", sale.codigo_tipo_documento);
           return "";
       }
     };
 
     const info = sale.informacion_adicional.split("|");
 
-    // Computed para métodos de pago
+    const normalizePayments = (payments = []) =>
+      payments
+        .filter((payment) => payment && Number(payment.amount) > 0)
+        .map((payment) => ({
+          method:
+            payment.payment_method ||
+            payment.method ||
+            payment.description ||
+            payment.payment_method_name ||
+            "N/A",
+          amount: Number(payment.amount),
+        }));
+
+    const multiplePayments = computed(() => {
+      const jsonPayments = normalizePayments(sale.payments);
+      if (jsonPayments.length) return jsonPayments;
+      return normalizePayments(props.data.payments);
+    });
+
+    const hasMultiplePayments = computed(() => multiplePayments.value.length > 1);
+
     const paymentMethods = computed(() => {
-      if (sale.payments && Array.isArray(sale.payments) && sale.payments.length > 0) {
-        // Si hay pagos múltiples, construir cadena con todos los métodos
-        return sale.payments.map(p => `${p.payment_method}`).join(' | ');
-      } else {
-        // Pago único desde info[2]
-        return info[2];
+      if (hasMultiplePayments.value) {
+        return multiplePayments.value
+          .map((payment) => `${payment.method} S/. ${payment.amount.toFixed(2)}`)
+          .join(" | ");
       }
+      return info[2];
     });
 
     const amountText = numeroALetras(
@@ -562,6 +591,8 @@ export default defineComponent({
       title,
       info,
       paymentMethods,
+      multiplePayments,
+      hasMultiplePayments,
       generateQR,
       amountText,
       hasDiscounts,

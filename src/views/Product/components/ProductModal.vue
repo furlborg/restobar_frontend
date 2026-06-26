@@ -83,10 +83,13 @@
               :options="productStore.affectationsOptions" :disabled="!settingsStore.businessSettings.sale.manage_affectations
                 " @update:value="onAffectationChange" />
           </n-form-item-gi>
+          <!-- El campo IGV fue ocultado por solicitud, el sistema usará el IGV global por defecto -->
+          <!-- 
           <n-form-item-gi label="IGV(%)" :span="4">
             <n-input-number v-model:value="igv_percentage" placeholder="" :min="0" :max="100" :show-button="false"
               @keydown="isNumber($event)" />
-          </n-form-item-gi>
+          </n-form-item-gi> 
+          -->
           <n-form-item-gi v-if="!product.id" label="Stock Inicial" path="stock" :span="4">
             <n-input type="number" v-model:value="product.stock" @input="product.stock = restrictDecimal(product.stock)"
               placeholder="0.0" :disabled="!product.control_stock" />
