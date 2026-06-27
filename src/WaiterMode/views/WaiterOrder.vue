@@ -9,10 +9,10 @@
         <n-tab-pane class="p-0" name="menu" tab="Carta">
             <router-view></router-view>
         </n-tab-pane>
-        <n-tab-pane class="p-0" name="menus" tab="Menús">
+        <n-tab-pane v-if="userStore.hasPermission('use_combos_menus')" class="p-0" name="menus" tab="Menús">
             <WaiterMenus />
         </n-tab-pane>
-        <n-tab-pane class="p-0" name="combos" tab="Combos">
+        <n-tab-pane v-if="userStore.hasPermission('use_combos_menus')" class="p-0" name="combos" tab="Combos">
             <WaiterCombos />
         </n-tab-pane>
         <n-tab-pane id="OrderPane" name="order" tab="Pedido"

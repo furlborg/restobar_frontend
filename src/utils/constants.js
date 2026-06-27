@@ -2436,4 +2436,5 @@ export const permissionsLabels = {
   change_passwords: "Cambiar contraseñas de Usuarios",
   change_permissions: "Cambiar permisos de Usuarios",
   change_product_affectation: "Cambiar afectación de producto en venta",
+  use_combos_menus: "Usar Combos y Menús en Mesas",
 };

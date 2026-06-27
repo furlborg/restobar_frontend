@@ -165,6 +165,7 @@ import {
   getMenuToday,
 } from "@/api/modules/products";
 import { useSettingsStore } from "@/store/modules/settings";
+import { useUserStore } from "@/store/modules/user";
 import ComboProductModal from "@/views/Table/components/ComboProductModal.vue";
 import MenuProductModal from "@/views/Table/components/MenuProductModal.vue";
 import { useRoute, useRouter } from "vue-router";
@@ -179,6 +180,7 @@ export default defineComponent({
     const message = useMessage();
     const productStore = useProductStore();
     const settingsStore = useSettingsStore();
+    const userStore = useUserStore();
 
     const isLoading = ref(false);
     const isLoadingCategories = ref(false);
@@ -207,7 +209,7 @@ export default defineComponent({
       ...(settingsStore.business_settings?.category || {}),
     }));
 
-    const canUsePrograms = computed(() => true);
+    const canUsePrograms = computed(() => userStore.hasPermission('use_combos_menus'));
 
     const itemsList = computed(() => {
       const list = products.value.filter((product) => {

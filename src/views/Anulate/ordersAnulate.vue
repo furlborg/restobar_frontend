@@ -46,7 +46,7 @@
             style="font-size: 13px !important;" />
 
         <n-modal :style="{ width: '90%', maxWidth: '85%' }" preset="card" title="Detalle de pedido"
-            v-model:show="showModalAnulate" @close="() => ({ showModalAnulate: false, dataAnulateItems: [] })">
+            v-model:show="showModalAnulate" @close="() => { showModalAnulate = false; dataAnulateItems = []; }">
 
             <n-data-table size="tiny" :columns="columnsDataAnulate" :data="dataAnulateItems" scroll-x="1150px" striped
                 max-height="calc(100vh - 350px)">
