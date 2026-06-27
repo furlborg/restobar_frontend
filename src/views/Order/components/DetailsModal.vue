@@ -23,13 +23,13 @@
         <tbody>
           <tr v-for="(detail, index) in details" :key="index">
             <td>
-                <span>{{ detail.product_name }}</span><br>
+                <span>{{ detail.product_name || detail.product_set?.name }}</span><br>
                 <span v-if="order?.indication.length > 0">
                       {{ order.indication.map(dt => dt?.description.split(", ")).flat().join(", ") }}
                 </span> <br v-if="order?.indication.length > 0">
             </td>
             <td>
-              {{ detail.initial_quantity }}
+              {{ detail.quantity || detail.product_set?.quantity || 1 }}
             </td>
             <td>S/. {{ detail.subTotal.toFixed(2) }}</td>
           </tr>
@@ -73,10 +73,11 @@ export default defineComponent({
             if (response.status === 200) {
               details.value = response.data;
               details.value.forEach(
-                (detail) =>
-                  (detail.subTotal =
-                    Number(detail.initial_quantity) *
-                    parseFloat(detail.price).toFixed(2))
+                (detail) => {
+                  const qty = Number(detail.quantity || detail.product_set?.quantity || detail.initial_quantity || 1);
+                  const price = parseFloat(detail.price || detail.product_set?.computed_price || detail.product_set?.price || 0);
+                  detail.subTotal = qty * price;
+                }
               );
             }
           })
