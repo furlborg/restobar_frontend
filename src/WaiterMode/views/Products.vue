@@ -272,43 +272,14 @@ const loadProducts = () => {
 
 const dateNow = ref(null);
 
-// Table lock composable (solo para enviar mensajes WS)
-const { wsLockTable, wsUnlockTable } = useTableLock();
-
-// Controla si se debe desbloquear al salir
-const shouldUnlock = ref(false);
-// Guardamos el tableId al montar para usarlo en unmount (cuando la ruta ya cambió)
-const capturedTableId = ref(null);
-
 // ID de la mesa desde la ruta
 const tableId = computed(() => {
   const param = route.params.table;
   return typeof param === 'string' ? parseInt(param) : param;
 });
 
-// Función para desbloquear mesa (usada en múltiples lugares)
-const unlockCurrentTable = () => {
-  const idToUnlock = capturedTableId.value || tableId.value;
-  console.log('[WaiterProducts] 🔍 unlockCurrentTable llamado - shouldUnlock:', shouldUnlock.value, 'capturedTableId:', capturedTableId.value, 'tableId:', tableId.value);
-  if (shouldUnlock.value && idToUnlock) {
-    console.log('[WaiterProducts] 🔓 Desbloqueando mesa', idToUnlock);
-    wsUnlockTable(idToUnlock);
-    shouldUnlock.value = false;
-  } else {
-    console.log('[WaiterProducts] ⚠️ No se desbloqueará - shouldUnlock:', shouldUnlock.value, 'idToUnlock:', idToUnlock);
-  }
-};
-
-// Handler para cierre brusco de ventana/pestaña
-const handleBeforeUnload = () => {
-  console.log('[WaiterProducts] 🚪 beforeunload disparado');
-  unlockCurrentTable();
-};
-
 onMounted(async () => {
-  // Capturar el tableId inmediatamente
-  capturedTableId.value = tableId.value;
-  console.log('[WaiterProducts] 🟢 Componente montado - Mesa:', capturedTableId.value);
+  console.log('[WaiterProducts] 🟢 Componente montado');
 
   loadProducts();
 
@@ -319,31 +290,8 @@ onMounted(async () => {
   const hh = fetch.getHours();
   const msms = fetch.getMinutes();
   dateNow.value = `${dd}/${mm + 1}/${yy} ${hh}:${msms}`;
-
-  // Bloquear mesa si tiene ID de mesa
-  if (capturedTableId.value) {
-    const lockInfo = tableStore.lockedTables[capturedTableId.value];
-    const isMyLock = lockInfo && lockInfo.user_id === userStore.user.id;
-
-    if (!lockInfo || isMyLock) {
-      console.log('[WaiterProducts] 🔒 Bloqueando mesa', capturedTableId.value);
-      wsLockTable(capturedTableId.value, 15);
-      shouldUnlock.value = true;
-
-      // Agregar listener para cierre brusco
-      window.addEventListener('beforeunload', handleBeforeUnload);
-    }
-  }
 });
 
-// Desbloquear mesa al salir - SIEMPRE desbloquear
-// El backend manejará la expiración automática para cierres bruscos
-onUnmounted(() => {
-  // Remover listener
-  window.removeEventListener('beforeunload', handleBeforeUnload);
-  // Desbloquear
-  unlockCurrentTable();
-});
 
 const addToOrderStore = () => {
   const isCustomerMode = settingsStore.businessSettings?.order?.order_by_customer;

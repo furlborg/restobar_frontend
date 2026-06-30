@@ -47,7 +47,7 @@ export function setupInterceptors(instance) {
 
         return http(originalRequest);
       } else {
-        if (error.response.status !== 404) {
+        if (error.response.status !== 404 && error.response.status !== 423) {
           if (
             error.response?.data &&
             error.response.headers["content-type"] !==

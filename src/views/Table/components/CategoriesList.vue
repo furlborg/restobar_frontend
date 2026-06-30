@@ -139,6 +139,7 @@ import { ref, onMounted, computed } from "vue";
 import { useProductStore } from "@/store/modules/product";
 import { useSettingsStore } from "@/store/modules/settings";
 import { getMenuToday, getComboCategories, getCombos } from "@/api/modules/products";
+import { useUserStore } from "@/store/modules/user";
 import MenuProductModal from "./MenuProductModal.vue";
 import ComboProductModal from "./ComboProductModal.vue";
 import categoryFallback from "@/assets/images/category-bg.jpg";
@@ -164,8 +165,10 @@ const category_settings = computed(() => ({
     ...(settingsStore.business_settings?.category || {}),
 }));
 
+const userStore = useUserStore();
+
 const canUsePrograms = computed(() => {
-    return true;
+    return userStore.hasPermission('use_combos_menus');
 });
 
 const getCategoryImage = (category) => {
