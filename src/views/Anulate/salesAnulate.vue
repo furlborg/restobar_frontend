@@ -51,7 +51,7 @@
         <n-data-table class="mt-2" style="font-size: 13px !important;" size="tiny" striped :single-line="false"
             :scroll-x="1100" :columns="columns" :data="sales" :loading="isTableLoading" :pagination="pagination" remote
             max-height="calc(100vh - 350px)" />
-        <modal-anulate-sale :data="dataDetailsModal" />
+        <modal-anulate-sale :data="dataDetailsModal" @update:show="(val) => dataDetailsModal.show = val" />
     </div>
 </template>
 <script setup>

@@ -9,10 +9,10 @@
         <n-tab-pane class="p-0" name="menu" tab="Carta">
             <router-view></router-view>
         </n-tab-pane>
-        <n-tab-pane class="p-0" name="menus" tab="Menús">
+        <n-tab-pane v-if="userStore.hasPermission('use_combos_menus')" class="p-0" name="menus" tab="Menús">
             <WaiterMenus />
         </n-tab-pane>
-        <n-tab-pane class="p-0" name="combos" tab="Combos">
+        <n-tab-pane v-if="userStore.hasPermission('use_combos_menus')" class="p-0" name="combos" tab="Combos">
             <WaiterCombos />
         </n-tab-pane>
         <n-tab-pane id="OrderPane" name="order" tab="Pedido"
@@ -104,7 +104,7 @@
 </template>
 
 <script setup>
-import { ref, onUpdated, onMounted, provide, computed, nextTick } from "vue";
+import { ref, onUpdated, onMounted, onUnmounted, provide, computed, nextTick } from "vue";
 import ProductsDrawer from "../components/ProductsDrawer";
 import WaiterMenus from "./WaiterMenus.vue";
 import WaiterCombos from "./WaiterCombos.vue";
@@ -126,7 +126,8 @@ import { useSaleStore } from "@/store/modules/sale";
 import { retrieveTableOrder } from "@/api/modules/tables";
 import { cloneDeep } from "@/utils";
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
-
+import { useTableLock } from "@/composables/useTableLock";
+import { useTableStore } from "@/store/modules/table";
 
 const settingsStore = useSettingsStore();
 const businessStore = useBusinessStore();
@@ -134,6 +135,8 @@ const waiterStore = useWaiterStore();
 const orderStore = useOrderStore();
 const saleStore = useSaleStore();
 const userStore = useUserStore();
+const tableStore = useTableStore();
+const { wsLockTable, wsUnlockTable } = useTableLock();
 const message = useMessage();
 const dialog = useDialog();
 const route = useRoute();
@@ -321,6 +324,26 @@ onMounted(() => {
     orderStore.clearNewOrders(); // Limpiar carrito de la sesión anterior
     performRetrieveTableOrder();
     setTabStyle();
+
+    // Lógica de bloqueo de mesa
+    const tableId = typeof route.params.table === 'string' ? parseInt(route.params.table) : route.params.table;
+    capturedTableId.value = tableId;
+
+    const lockInfo = tableStore.lockedTables[capturedTableId.value];
+    const isMyLock = lockInfo && lockInfo.user_id === userStore.user.id;
+
+    if (!lockInfo || isMyLock) {
+        console.log('[WaiterOrder] 🔒 Bloqueando mesa', capturedTableId.value);
+        wsLockTable(capturedTableId.value, 15);
+        shouldUnlock.value = true;
+        window.addEventListener('beforeunload', handleBeforeUnload);
+    }
+});
+
+onUnmounted(() => {
+    console.log('[WaiterOrder] 🔴 Componente desmontado - Mesa:', capturedTableId.value);
+    window.removeEventListener('beforeunload', handleBeforeUnload);
+    unlockCurrentTable();
 });
 
 onUpdated(() => {
@@ -332,6 +355,23 @@ const previewDrawer = ref(null);
 const showPreview = ref(false);
 
 const previewData = ref(null);
+
+const shouldUnlock = ref(false);
+const capturedTableId = ref(null);
+
+const unlockCurrentTable = () => {
+    const idToUnlock = capturedTableId.value;
+    console.log('[WaiterOrder] 🔍 unlockCurrentTable llamado - shouldUnlock:', shouldUnlock.value, 'capturedTableId:', capturedTableId.value);
+    if (shouldUnlock.value && idToUnlock) {
+        console.log('[WaiterOrder] 🔓 Desbloqueando mesa', idToUnlock);
+        wsUnlockTable(idToUnlock);
+        shouldUnlock.value = false;
+    }
+};
+
+const handleBeforeUnload = () => {
+    unlockCurrentTable();
+};
 
 </script>
 
