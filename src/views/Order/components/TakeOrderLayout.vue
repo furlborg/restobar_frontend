@@ -502,7 +502,7 @@ const performCreateOrder = async () => {
 const showAndGenerateTicket = async (voucherDataValue, shouldGenerate = true) => {
   voucherData.value = voucherDataValue;
   ui.showVoucher = true;
-  if (shouldGenerate && ui.isTicketPreview) {
+  if (shouldGenerate && !ui.isTicketPreview) {
     await nextTick();
     if (ui.voucherDrawer && typeof ui.voucherDrawer.generate === 'function') {
       await ui.voucherDrawer.generate();
