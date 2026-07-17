@@ -220,8 +220,7 @@ const tableStore = useTableStore();
 const userStore = useUserStore();
 const businessStore = useBusinessStore();
 
-// Composable de table lock (para enviar mensajes WS)
-const { connectLockWebSocket } = useTableLock();
+const { connectLockWebSocket, lockSocketConnected } = useTableLock();
 
 /**
  * Verifica si una mesa está bloqueada usando el store (fuente de verdad global)
@@ -239,10 +238,10 @@ const isTableBlocked = (table) => {
     }
 
     // Luego verificar lock_info de la API
-    if (table.lock_info && table.lock_info.is_locked && !table.lock_info.locked_by_me) {
+    if (table.lock_info && table.lock_info.is_active && !table.lock_info.is_locked_by_me) {
         return {
             blocked: true,
-            username: table.lock_info.locked_by_username,
+            username: table.lock_info.username,
             remaining: table.lock_info.remaining_minutes
         };
     }

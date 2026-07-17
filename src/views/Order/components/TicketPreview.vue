@@ -33,6 +33,33 @@
                     DELIVERY
                 </n-button>
             </template>
+            <template v-if="data.order_canceleddetails && data.order_canceleddetails.length">
+                <div style="margin-top: 20px; padding: 15px; border-top: 1px dashed #ccc; text-align: center; color: #666; font-size: 12px;">
+                    
+                    <div style="font-weight: bold; font-size: 14px; margin-bottom: 10px; color: #000;">
+                        ANULADOS
+                    </div>
+                    
+                    <table style="width: 100%; text-align: left; border-top: 1px dashed #ccc; border-bottom: 1px dashed #ccc; margin-bottom: 15px;">
+                        <thead>
+                            <tr>
+                                <th style="width: 25%; text-align: center; border-bottom: 1px dotted #ccc; padding: 4px 0;">CANT</th>
+                                <th style="width: 75%; border-bottom: 1px dotted #ccc; padding: 4px 0;">PRODUCTO</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(detail, idx) in data.order_canceleddetails" :key="'canc-'+idx" style="text-decoration: line-through;">
+                                <td style="text-align: center; padding: 4px 0; border-bottom: 1px dotted #eee;">{{ detail.quantity }}</td>
+                                <td style="padding: 4px 0; border-bottom: 1px dotted #eee;">
+                                    {{ detail.product_name || detail.product_set?.name }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <div>-- HISTORIAL DE CAMBIOS / REGISTRO DE AUDITORÍA --</div>
+                </div>
+            </template>
         </n-drawer-content>
     </n-drawer>
 </template>
@@ -46,6 +73,7 @@ import { useProductStore } from "@/store/modules/product";
 import { jsPDF } from "jspdf";
 import { useMessage } from "naive-ui";
 import { useTableStore } from "@/store/modules/table";
+import { http } from "@/api";
 
 export default defineComponent({
     name: "TicketPreview",
@@ -135,38 +163,12 @@ export default defineComponent({
             }
         };
 
-        // Inicializar el WebSocket y asignar la función de mensaje globalmente
-        const openWebSocket = (callback) => {
-            if(!socket || socket.readyState === WebSocket.CLOSED) {
-                // eslint-disable-next-line no-undef
-                const apiUrl = import.meta.env.VITE_APP_URL.replace(/^https?:\/\//, "");
-                const socketUrl = `${window.location.protocol === "https:" ? "wss" : "ws"}://${apiUrl}/ws/print/`;
-                console.info(logPrefix, "Opening WS:", socketUrl);
-                socket = new WebSocket(socketUrl);
-
-                socket.onopen = (e) => {
-                    console.info(logPrefix, "WS open", e);
-                    if(callback) callback();
-                };
-                socket.onerror = (e) => {
-                    console.error(logPrefix, "WS error", e);
-                };
-                socket.onclose = (e) => {
-                    console.warn(logPrefix, "WS closed", e);
-                };
-
-                socket.onmessage = handleSocketMessage;  // Manejamos el mensaje globalmente aquí
-            } else if(socket.readyState === WebSocket.OPEN) {
-                if(callback) callback();
-            } else {
-                console.warn(logPrefix, "WS not open yet:", socket?.readyState);
-            }
-        };
+        // WebSocket logic removed in favor of HTTP proxy
 
         const printDelivery = async(send) => {
             return new Promise((resolve) => {
 
-                const sendTicketData = () => {
+                const sendTicketData = async () => {
                     const jsonTicket = {
                         "printer_name": settingsStore.businessSettings.sale.printer_name,
                         "ticket_type": "DELIVERY",
@@ -219,42 +221,24 @@ export default defineComponent({
                     };
 
                     if (send===true) {
-                        if (!socket || socket.readyState !== WebSocket.OPEN) {
-                            console.error(logPrefix, "WS not open for delivery print", {
-                                readyState: socket?.readyState,
-                                send
-                            });
-                        } else {
-                            console.info(logPrefix, "Sending DELIVERY ticket", {
-                                printer: jsonTicket.printer_name,
-                                contentCount: jsonTicket.ticket_content?.length
-                            });
-                            socket.send(JSON.stringify(jsonTicket));
+                        try {
+                            const response = await http.post('orders/print-proxy/', jsonTicket);
+                            if (response.status === 200) {
+                                message.success(response.data.success || 'Ticket enviado a imprimir');
+                            }
+                        } catch (error) {
+                            console.error("Error enviando ticket", error);
+                            message.error("Error de conexión con el servidor");
+                            message.error("Iniciando impresión manual");
+                            startManualPrint();
                         }
                     }
-
-                    // socket.send(JSON.stringify(jsonTicket));
-                    socket.onmessage = function(event) {
-                        if(event.data.includes("id")) {
-                            if(JSON.parse(event.data).id !== "") {
-                                if(event.data.includes("success")) {
-                                    message.success(JSON.parse(event.data).success);
-                                    socket.close();
-                                }
-                            } else {
-                                message.error("No se pudo establecer conexión con el servidor de impresiones");
-                                message.error("Iniciando impresión manual");
-
-                                startManualPrint();
-                            }
-                        }
-                    };
                     resolve();
                 };
                 if(settingsStore.business_settings.printer.native_printing) {
                     startManualPrint();
                 } else {
-                    openWebSocket(sendTicketData);
+                    sendTicketData();
                 }
             });
         };
@@ -263,7 +247,7 @@ export default defineComponent({
             // console.log(place);
             // console.log(props.data);
             return new Promise((resolve) => {
-                const sendTicketData = () => {
+                const sendTicketData = async () => {
                     let printerNameToPrint;
 
                     if(!props.data.table && props.data.delivery_info) {
@@ -397,65 +381,47 @@ export default defineComponent({
                     }
 
                     if (send===true) {
-                        if (!socket || socket.readyState !== WebSocket.OPEN) {
-                            console.error(logPrefix, "WS not open for ORDER print", {
-                                readyState: socket?.readyState,
-                                send
+                        try {
+                            const response = await http.post('orders/print-proxy/', jsonTicket);
+                            if (response.status === 200) {
+                                message.success(response.data.success || 'Ticket enviado a imprimir');
+                            }
+                        } catch (error) {
+                            console.error("Error enviando ticket", error);
+                            message.error("Error de conexión con el servidor");
+                            message.error("Iniciando impresión manual");
+
+                            const ticket = tickets.value[i];
+                            nextTick(() => {
+                                if(ticket && ticket.$el) {
+                                    const format = [ticket.$el.clientWidth, ticket.$el.clientHeight + 30];
+                                    const doc = new jsPDF({
+                                        unit: "px",
+                                        format: format,
+                                        orientation: "m",
+                                        hotfixes: ["px_scaling"]
+                                    });
+                                    doc.html(ticket.$el.innerHTML, {
+                                        callback: async function(doc) {
+                                            doc.autoPrint();
+                                            const hiddeFrame = document.createElement("iframe");
+                                            hiddeFrame.style.position = "fixed";
+                                            hiddeFrame.style.width = "1px";
+                                            hiddeFrame.style.height = "1px";
+                                            hiddeFrame.style.opacity = "0.01";
+                                            hiddeFrame.src = doc.output("bloburl");
+                                            document.body.appendChild(hiddeFrame);
+                                        }
+                                    });
+                                } else {
+                                    console.error("No se pudo encontrar el elemento del ticket.");
+                                }
                             });
-                        } else {
-                            console.info(logPrefix, "Sending ORDER ticket", {
-                                printer: jsonTicket.printer_name,
-                                contentCount: jsonTicket.ticket_content?.length
-                            });
-                            socket.send(JSON.stringify(jsonTicket));
                         }
                     }
-
-                    // socket.send(JSON.stringify(jsonTicket));
-                    socket.onmessage = function(event) {
-                        if(event.data.includes("id")) {
-                            if(JSON.parse(event.data).id !== "") {
-                                if(event.data.includes("success")) {
-                                    message.success(JSON.parse(event.data).success);
-                                    socket.close();
-                                }
-                            } else {
-                                console.error(logPrefix, "WS response without id/success", event.data);
-                                message.error("No se pudo establecer conexión con el servidor de impresiones");
-                                message.error("Iniciando impresión manual");
-
-                                const ticket = tickets.value[i];
-                                nextTick(() => {
-                                    if(ticket && ticket.$el) {
-                                        const format = [ticket.$el.clientWidth, ticket.$el.clientHeight + 30];
-                                        const doc = new jsPDF({
-                                            unit: "px",
-                                            format: format,
-                                            orientation: "m",
-                                            hotfixes: ["px_scaling"]
-                                        });
-                                        doc.html(ticket.$el.innerHTML, {
-                                            callback: async function(doc) {
-                                                doc.autoPrint();
-                                                const hiddeFrame = document.createElement("iframe");
-                                                hiddeFrame.style.position = "fixed";
-                                                hiddeFrame.style.width = "1px";
-                                                hiddeFrame.style.height = "1px";
-                                                hiddeFrame.style.opacity = "0.01";
-                                                hiddeFrame.src = doc.output("bloburl");
-                                                document.body.appendChild(hiddeFrame);
-                                            }
-                                        });
-                                    } else {
-                                        console.error("No se pudo encontrar el elemento del ticket.");
-                                    }
-                                });
-                            }
-                        }
-                    };
                     resolve();
                 };
-                openWebSocket(sendTicketData);
+                sendTicketData();
             });
         };
 

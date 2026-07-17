@@ -64,17 +64,20 @@ const connectLockWebSocket = () => {
       switch (data.type) {
         case 'table_locked': {
           const lock = data.lock_data || data;
-          if (lock && lock.table_id) {
+          const tableId = lock.table_id || lock.table;
+          const userId = lock.user_id || lock.user;
+          if (lock && tableId) {
             const newMap = new Map(lockedTables.value);
-            newMap.set(lock.table_id, {
-              table_id: lock.table_id,
-              user_id: lock.user_id,
+            newMap.set(tableId, {
+              table_id: tableId,
+              user_id: userId,
               username: lock.username,
               locked_at: lock.locked_at,
               expires_at: lock.expires_at,
               remaining_seconds: lock.remaining_seconds
             });
             lockedTables.value = newMap;
+            tableStore.lockedTables = Object.fromEntries(newMap);
           }
           break;
         }
@@ -84,15 +87,31 @@ const connectLockWebSocket = () => {
             const newMap = new Map(lockedTables.value);
             newMap.delete(unlock.table_id);
             lockedTables.value = newMap;
+            tableStore.lockedTables = Object.fromEntries(newMap);
+            
+            // ELIMINAR EL LOCK FANTASMA CACHEADO DE LA API REST
+            // Si no lo limpiamos, la UI usará los datos viejos de la última carga de página
+            const table = tableStore.getTableByID(unlock.table_id);
+            if (table && table.lock_info) {
+                table.lock_info.is_active = false;
+            }
           }
           break;
         }
         case 'lock_renewed': {
           const renewData = data.lock_data || data;
-          if (renewData && renewData.table_id) {
+          const tableId = renewData.table_id || renewData.table;
+          if (renewData && tableId) {
             const newMap = new Map(lockedTables.value);
-            newMap.set(renewData.table_id, renewData);
+            // Asegurarnos de mantener table_id y user_id con los nombres correctos
+            const renewEntry = {
+              ...renewData,
+              table_id: tableId,
+              user_id: renewData.user_id || renewData.user
+            };
+            newMap.set(tableId, renewEntry);
             lockedTables.value = newMap;
+            tableStore.lockedTables = Object.fromEntries(newMap);
           }
           break;
         }

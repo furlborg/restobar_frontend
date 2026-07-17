@@ -208,47 +208,6 @@
                     </template>
                 </template>
 
-                <template v-if="groupedCancellations.length">
-                    <div class="ticket-customer" style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; margin-top: 15px; margin-bottom: 10px;">
-                        ANULADOS
-                    </div>
-                    <template v-if="settingsStore.business_settings.printer.kitchen_ticket_format === 4">
-                        <table style="width: 100%">
-                            <thead>
-                                <tr>
-                                    <th width="20%">CANT</th>
-                                    <th :width="!settingsStore.business_settings.printer.show_product_price ? '80%' : '60%'">PRODUCTO</th>
-                                    <th v-if="settingsStore.business_settings.printer.show_product_price" width="20%">PRC</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(detail, idx) in groupedCancellations" :key="'canc-'+idx" style="text-decoration: line-through;">
-                                    <td align="center">{{ detail.quantity }}</td>
-                                    <td>
-                                        {{ getPrefix(detail.product_category, detail.product_set) }}
-                                        {{ detail.product_name || detail.product_set?.name }}
-                                    </td>
-                                    <td v-if="settingsStore.business_settings.printer.show_product_price">
-                                        {{ (detail.price || detail.product_set?.price || 0).toFixed(2) }}
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </template>
-                    <template v-else>
-                        <template v-for="(detail, idx) in groupedCancellations" :key="'canc-'+idx">
-                            <div class="ticket-body-item" style="text-decoration: line-through;">
-                                <div>
-                                    {{ getPrefix(detail.product_category, detail.product_set) }}
-                                    {{ settingsStore.business_settings.printer.kitchen_ticket_format !== 1 ? `${detail.quantity} x ` : '' }}{{ detail.product_name || detail.product_set?.name }}
-                                </div>
-                                <div v-if="settingsStore.business_settings.printer.kitchen_ticket_format === 1">
-                                    CANT: {{ detail.quantity }}
-                                </div>
-                            </div>
-                        </template>
-                    </template>
-                </template>
             </div>
             <div class="ticket-footer" :style="{
                 fontSize: `${settingsStore.business_settings.printer.footer_font_size}px`,
@@ -260,6 +219,7 @@
                     <div>{{ info.username }}</div>
                 </template>
             </div>
+
         </div>
     </div>
 </template>
@@ -411,10 +371,6 @@ export default defineComponent({
             return groups;
         })
 
-        const groupedCancellations = computed(() => {
-            return info.value?.order_canceleddetails || [];
-        });
-
         const generateFittingData = () => {
             let data = {
                 ...props.data,
@@ -501,8 +457,7 @@ export default defineComponent({
             generateIndication,
             settingsStore,
             indicationTakeAways,
-            groupedDetails,
-            groupedCancellations
+            groupedDetails
         };
     }
 });

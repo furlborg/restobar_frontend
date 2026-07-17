@@ -57,7 +57,7 @@
                 </n-card>
             </n-tab-pane>
 
-            <n-tab-pane v-if="canUsePrograms" name="menu" tab="Menú">
+            <n-tab-pane v-if="canUseMenus" name="menu" tab="Menú del Día">
                 <n-card title="Menú Programado" :bordered="false" class="h-100" content-class="overflow-auto">
                     <n-list v-if="scheduledMenus.length">
                         <n-list-item v-for="menu in scheduledMenus" :key="menu.id" @click="handleOpenMenuModal(menu)"
@@ -75,7 +75,7 @@
                 </n-card>
             </n-tab-pane>
 
-            <n-tab-pane v-if="canUsePrograms" name="combos" tab="Combos">
+            <n-tab-pane v-if="canUseCombos" name="combos" tab="Combos">
                 <n-card title="Combos Disponibles" :bordered="false" class="h-100" content-class="overflow-auto">
                     <n-spin :show="loadingCombos">
                         <n-space vertical size="large">
@@ -167,8 +167,14 @@ const category_settings = computed(() => ({
 
 const userStore = useUserStore();
 
-const canUsePrograms = computed(() => {
-    return userStore.hasPermission('use_combos_menus');
+const canUseMenus = computed(() => {
+    const showMenus = settingsStore.business_settings?.modules?.show_menus ?? true;
+    return showMenus && userStore.hasPermission('use_combos_menus');
+});
+
+const canUseCombos = computed(() => {
+    const showCombos = settingsStore.business_settings?.modules?.show_combos ?? true;
+    return showCombos && userStore.hasPermission('use_combos_menus');
 });
 
 const getCategoryImage = (category) => {
