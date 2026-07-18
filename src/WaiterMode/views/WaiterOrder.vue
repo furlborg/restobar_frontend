@@ -9,10 +9,10 @@
         <n-tab-pane class="p-0" name="menu" tab="Carta">
             <router-view></router-view>
         </n-tab-pane>
-        <n-tab-pane v-if="userStore.hasPermission('use_combos_menus')" class="p-0" name="menus" tab="Menús">
+        <n-tab-pane v-if="canUseMenus" class="p-0" name="menus" tab="Menús">
             <WaiterMenus />
         </n-tab-pane>
-        <n-tab-pane v-if="userStore.hasPermission('use_combos_menus')" class="p-0" name="combos" tab="Combos">
+        <n-tab-pane v-if="canUseCombos" class="p-0" name="combos" tab="Combos">
             <WaiterCombos />
         </n-tab-pane>
         <n-tab-pane id="OrderPane" name="order" tab="Pedido"
@@ -136,6 +136,17 @@ const orderStore = useOrderStore();
 const saleStore = useSaleStore();
 const userStore = useUserStore();
 const tableStore = useTableStore();
+
+const canUseMenus = computed(() => {
+    const showMenus = settingsStore.business_settings?.modules?.show_menus ?? true;
+    return showMenus && userStore.hasPermission('use_combos_menus');
+});
+
+const canUseCombos = computed(() => {
+    const showCombos = settingsStore.business_settings?.modules?.show_combos ?? true;
+    return showCombos && userStore.hasPermission('use_combos_menus');
+});
+
 const { wsLockTable, wsUnlockTable } = useTableLock();
 const message = useMessage();
 const dialog = useDialog();

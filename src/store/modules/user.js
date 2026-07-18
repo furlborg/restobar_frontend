@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { refreshToken, logout, getActiveUsers } from "@/api/modules/users";
-import { permissions } from "@/store/modules/permissions";
+
 import useCookie from "vue-cookies";
 
 /**
@@ -71,7 +71,7 @@ export const useUserStore = defineStore("user", {
           role: payload.role,
           branchoffice: payload.branchoffice,
           branchoffice_des: payload.branchoffice_des,
-          user_permissions: permissions[payload.role] || [], // Cargar permisos según el rol del usuario
+          user_permissions: payload.user_permissions || [],
         };
 
         console.info("User info extracted from token:", user);
@@ -159,6 +159,11 @@ export const useUserStore = defineStore("user", {
       this.isAuthenticated = false;
       localStorage.removeItem("perms");
       localStorage.setItem("isAuthenticated", this.isAuthenticated);
+      
+      // Realizar una recarga completa para limpiar memoria (Singletons, WebSockets)
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     },
     hasPermission(permission) {
       if (this.user.role === "ADMINISTRADOR") {

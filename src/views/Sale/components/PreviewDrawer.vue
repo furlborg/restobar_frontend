@@ -184,7 +184,7 @@ export default defineComponent({
             } else {
                 if (props.preVoucher) {
                     const business = businessStore.business;
-                    const sendTicketData = () => {
+                    const sendTicketData = async () => {
 
                         const orderDetails = props.data.order_details || [];
 
@@ -295,40 +295,18 @@ export default defineComponent({
                                 "username": props.data.username
                             }
                         };
-                        socket.send(JSON.stringify(jsonTicket));
+                        try {
+                            const response = await http.post('orders/print-proxy/', jsonTicket);
+                            if (response.status === 200) {
+                                message.success(response.data.success || 'Pre-cuenta enviada a imprimir');
+                            }
+                        } catch (error) {
+                            console.error("Error enviando pre-cuenta", error);
+                            message.error("Error de conexión con el servidor");
+                        }
                     };
 
-                    // Verifica el estado del WebSocket y maneja la conexión
-                    if (!socket || socket.readyState === WebSocket.CLOSED) {
-                        // eslint-disable-next-line no-undef
-                        const apiUrl = import.meta.env.VITE_APP_URL.replace(/^https?:\/\//, "");
-                        socket = new WebSocket(`${window.location.protocol === "https:" ? "wss" : "ws"}://${apiUrl}/ws/print/`);
-
-                        socket.onopen = function () {
-                            console.log("Conexión WebSocket abierta");
-                            sendTicketData();
-                        };
-
-                        socket.onerror = function (error) {
-                            console.log("Error en WebSocket", error);
-                            message.error(error);
-                        };
-
-                        socket.onmessage = function (event) {
-                            if (event.data.includes("success")) {
-                                console.log("Mensaje recibido del servidor", JSON.parse(event.data).success);
-                                message.success(JSON.parse(event.data).success);
-                                socket.close();
-                            }
-                        };
-
-                        socket.onclose = function (event) {
-                            console.log("Conexión WebSocket cerrada", event);
-                        };
-                    } else if (socket.readyState === WebSocket.OPEN) {
-                        // Si el WebSocket ya está abierto, envía el mensaje directamente
-                        sendTicketData();
-                    }
+                    sendTicketData();
                 } else {
                     const gordoPuto = async () => {
                         try {
@@ -345,7 +323,7 @@ export default defineComponent({
 
                     const voucherData = await gordoPuto();
 
-                    const sendTicketData = () => {
+                    const sendTicketData = async () => {
                         console.log(voucherData);
                         const jsonTicket = {
                             ...voucherData,
@@ -353,10 +331,18 @@ export default defineComponent({
                                 ? voucherData.printer_name
                                 : settingsStore.business_settings.sale.printer_name
                         };
-                        socket?.send(JSON.stringify(jsonTicket));
+                        try {
+                            const response = await http.post('orders/print-proxy/', jsonTicket);
+                            if (response.status === 200) {
+                                message.success('Voucher enviado a imprimir');
+                            }
+                        } catch (error) {
+                            console.error("Error enviando voucher", error);
+                            message.error("Error de conexión con el servidor");
+                        }
                     };
 
-                    sendTicketData();
+                    await sendTicketData();
                 }
             }
 
