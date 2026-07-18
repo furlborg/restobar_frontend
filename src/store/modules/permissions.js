@@ -106,6 +106,10 @@ export const permissions = {
     "make_outcome_details",
     "null_tilldetails",
     "view_tilldetails",
+    "take_away_order",
+    "charge_order",
+    "null_orders",
+    "cancel_orderdetail",
   ],
   COCINERO: [
     "add_menuscheduledday",

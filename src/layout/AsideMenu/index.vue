@@ -8,6 +8,7 @@ import { h, computed } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import { useUserStore } from "@/store/modules/user";
 import { useTillStore } from "@/store/modules/till";
+import { useSettingsStore } from "@/store/modules/settings";
 import { renderIcon } from "@/utils";
 
 defineProps({
@@ -18,6 +19,7 @@ defineOptions({
 });
 const userStore = useUserStore();
 const tillStore = useTillStore();
+const settingsStore = useSettingsStore();
 const currentRoute = useRoute();
 
 const openKey = computed(() => {
@@ -28,99 +30,63 @@ const openKey = computed(() => {
 });
 
 const menuOptions = computed(() => {
-  return [
+  const options = [
     {
-      label: () =>
-        h(
-          RouterLink,
-          {
-            to: { name: "Dashboard" },
-          },
-          () => h("span", "Dashboard")
-        ),
+      label: () => h(RouterLink, { to: { name: "Dashboard" } }, () => h("span", "Dashboard")),
       key: "Dashboard",
       icon: renderIcon("md-spacedashboard-twotone"),
-    },
-    {
-      label: () =>
-        h(
-          RouterLink,
-          {
-            to: { name: "Till" },
-          },
-          () => h("span", "Caja")
-        ),
+    }
+  ];
+
+  if (userStore.hasPermission("view_till")) {
+    options.push({
+      label: () => h(RouterLink, { to: { name: "Till" } }, () => h("span", "Caja")),
       key: "Till",
       icon: renderIcon("md-pointofsale-twotone"),
-      disabled: !userStore.hasPermission("view_till"),
-    },
-    {
-      label: () =>
-        h(
-          RouterLink,
-          {
-            to: { name: "Table" },
-          },
-          () => h("span", "Mesas")
-        ),
+    });
+  }
+
+  if (userStore.hasPermission("view_table")) {
+    options.push({
+      label: () => h(RouterLink, { to: { name: "Table" } }, () => h("span", "Mesas")),
       key: "Table",
       icon: renderIcon("md-dining-twotone"),
-      disabled: !userStore.hasPermission("view_table")
-        ? true
-        : !tillStore.currentTillID,
-    },
-    {
-      label: () =>
-        h(
-          RouterLink,
-          {
-            to: { name: "Orders" },
-          },
-          () => h("span", "Pedidos")
-        ),
+      disabled: !tillStore.currentTillID,
+    });
+  }
+
+  if (userStore.hasPermission("view_order")) {
+    options.push({
+      label: () => h(RouterLink, { to: { name: "Orders" } }, () => h("span", "Pedidos")),
       key: "Orders",
       icon: renderIcon("md-pendingactions-twotone"),
-      disabled: !userStore.hasPermission("view_order"),
-    },
-    {
-      label: () =>
-        h(
-          RouterLink,
-          {
-            to: { name: "Sales" },
-          },
-          () => h("span", "Ventas")
-        ),
+    });
+  }
+
+  if (userStore.hasPermission("view_sale")) {
+    options.push({
+      label: () => h(RouterLink, { to: { name: "Sales" } }, () => h("span", "Ventas")),
       key: "Sales",
       icon: renderIcon("md-description-twotone"),
-      disabled: !userStore.hasPermission("view_sale"),
-    },
-    {
-      label: () =>
-        h(
-          RouterLink,
-          {
-            to: { name: "Anulate" },
-          },
-          () => h("span", "Anulaciones")
-        ),
-      key: "Anulate",
-      icon: renderIcon("md-cancelpresentation-twotone"),
-    },
-    {
-      label: () =>
-        h(
-          RouterLink,
-          {
-            to: { name: "Product" },
-          },
-          () => h("span", "Productos")
-        ),
+    });
+  }
+
+  options.push({
+    label: () => h(RouterLink, { to: { name: "Anulate" } }, () => h("span", "Anulaciones")),
+    key: "Anulate",
+    icon: renderIcon("md-cancelpresentation-twotone"),
+  });
+
+  if (userStore.hasPermission("view_product")) {
+    options.push({
+      label: () => h(RouterLink, { to: { name: "Product" } }, () => h("span", "Productos")),
       key: "Product",
       icon: renderIcon("md-fastfood-twotone"),
-      disabled: !userStore.hasPermission("view_product"),
-    },
-    {
+    });
+  }
+
+  if ((settingsStore.business_settings?.modules?.show_menus ?? true) && userStore.hasPermission('view_menu')) {
+    options.push({
       label: () => h(
         RouterLink,
         { to: { name: 'Menu' } },
@@ -128,9 +94,11 @@ const menuOptions = computed(() => {
       ),
       key: 'Menu',
       icon: renderIcon('md-fastfood-twotone'),
-      disabled: !userStore.hasPermission('view_menu'),
-    },
-    {
+    });
+  }
+
+  if ((settingsStore.business_settings?.modules?.show_combos ?? true) && userStore.hasPermission('view_combo')) {
+    options.push({
       label: () =>
         h(
           RouterLink,
@@ -141,97 +109,65 @@ const menuOptions = computed(() => {
         ),
       key: "Combo",
       icon: renderIcon("md-fastfood-twotone"),
-      disabled: !userStore.hasPermission("view_combo"),
-    },
-    {
-      label: () =>
-        h(
-          RouterLink,
-          {
-            to: { name: "Supplier" },
-          },
-          () => h("span", "Proveedores")
-        ),
+    });
+  }
+
+  if (userStore.hasPermission("view_supplier")) {
+    options.push({
+      label: () => h(RouterLink, { to: { name: "Supplier" } }, () => h("span", "Proveedores")),
       key: "Supplier",
       icon: renderIcon("md-villa-twotone"),
-      disabled: !userStore.hasPermission("view_supplier"),
-    },
-    {
-      label: () =>
-        h(
-          RouterLink,
-          {
-            to: { name: "Supplies" },
-          },
-          () => h("span", "Insumos")
-        ),
+    });
+  }
+
+  if (userStore.hasPermission("view_supplies")) {
+    options.push({
+      label: () => h(RouterLink, { to: { name: "Supplies" } }, () => h("span", "Insumos")),
       key: "Supplies",
       icon: renderIcon("md-kitchen-twotone"),
-      disabled: !userStore.hasPermission("view_supplies"),
-    },
-    {
-      label: () =>
-        h(
-          RouterLink,
-          {
-            to: { name: "Kardex" },
-          },
-          () => h("span", "Kardex")
-        ),
+    });
+  }
+
+  if (userStore.hasPermission("view_kardex")) {
+    options.push({
+      label: () => h(RouterLink, { to: { name: "Kardex" } }, () => h("span", "Kardex")),
       key: "Kardex",
       icon: renderIcon("md-equalizer-twotone"),
-      disabled: !userStore.hasPermission("view_kardex"),
-    },
-    {
-      label: () =>
-        h(
-          RouterLink,
-          {
-            to: { name: "Customer" },
-          },
-          () => h("span", "Clientes")
-        ),
+    });
+  }
+
+  if (userStore.hasPermission("view_customer")) {
+    options.push({
+      label: () => h(RouterLink, { to: { name: "Customer" } }, () => h("span", "Clientes")),
       key: "Customer",
       icon: renderIcon("md-supervisedusercircle-twotone"),
-      disabled: !userStore.hasPermission("view_customer"),
-    },
-    {
-      label: () =>
-        h(
-          RouterLink,
-          {
-            to: { name: "Cums" },
-          },
-          () => h("span", "Cumpleaños")
-        ),
+    });
+    
+    // Cumpleaños is tied to customer view permission natively
+    options.push({
+      label: () => h(RouterLink, { to: { name: "Cums" } }, () => h("span", "Cumpleaños")),
       key: "Cums",
-      icon: renderIcon('co-birthday-cake'),
-      // disabled: !userStore.hasPermission("view_customer"),
-    },
-    {
-      label: () => h(
-        RouterLink,
-        { to: { name: 'Reports' } },
-        () => h('span', 'Reportes')
-      ),
-      key: 'Reports',
-      icon: renderIcon('md-insertchart-outlined'),
-      disabled: !userStore.hasPermission('view_sale'),
-    },
-    {
-      label: () =>
-        h(
-          RouterLink,
-          {
-            to: { name: "Settings" },
-          },
-          () => h("span", "Configuración")
-        ),
+      icon: renderIcon("co-birthday-cake"),
+    });
+  }
+
+  if (userStore.hasPermission("view_sale")) {
+    options.push({
+      label: () => h(RouterLink, { to: { name: "Reports" } }, () => h("span", "Reportes")),
+      key: "Reports",
+      icon: renderIcon("md-insertchart-outlined"),
+    });
+  }
+
+  if (userStore.hasPermission("view_business")) {
+    options.push({
+      label: () => h(RouterLink, { to: { name: "Settings" } }, () => h("span", "Configuración")),
       key: "Settings",
       icon: renderIcon("md-settings-twotone"),
-      disabled: !userStore.user.role === "ADMINISTRADOR",
-    },
-  ];
+    });
+  }
+
+  return options;
 });
 </script>
 

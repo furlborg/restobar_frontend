@@ -104,8 +104,11 @@
                     </n-form-item-gi>
                     <n-form-item-gi :span="3">
                         <n-checkbox v-model:checked="businessSettings.printer.print_delivery_ticket">Imprimir ticket
-                            delivery
-                        </n-checkbox>
+                            de
+                            envío</n-checkbox>
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3">
+                        <n-checkbox v-model:checked="businessSettings.printer.auto_print_cancellation">Imprimir anulación en cocina</n-checkbox>
                     </n-form-item-gi>
                     <n-form-item-gi :span="3">
                         <n-checkbox v-model:checked="businessSettings.printer.detail_items">Items detallados
@@ -203,6 +206,22 @@
                     </n-form-item-gi>
                 </n-grid>
                 <!-- Fin de sección de pedidos -->
+
+                <n-divider />
+
+                <!-- Inicio de sección de módulos -->
+                <n-text class="fs-4">Módulos</n-text>
+                <n-grid class="mt-2" responsive="screen" cols="6 s:6 m:12 l:12 xl:24 2xl:24" x-gap="12">
+                    <n-form-item-gi :span="3">
+                        <n-checkbox v-model:checked="businessSettings.modules.show_menus">Mostrar Menús
+                        </n-checkbox>
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="3">
+                        <n-checkbox v-model:checked="businessSettings.modules.show_combos">Mostrar Combos
+                        </n-checkbox>
+                    </n-form-item-gi>
+                </n-grid>
+                <!-- Fin de sección de módulos -->
 
                 <n-divider />
 
@@ -403,6 +422,27 @@ export default defineComponent({
         const settingsStore = useSettingsStore();
         const message = useMessage();
         const businessSettings = ref(cloneDeep(settingsStore.businessSettings));
+        
+        const initModules = (settings) => {
+            if (settings && !settings.modules) {
+                settings.modules = {
+                    show_menus: true,
+                    show_combos: true
+                };
+            }
+        };
+
+        initModules(businessSettings.value);
+
+        import('vue').then(({ watch }) => {
+            watch(() => settingsStore.businessSettings, (newVal) => {
+                if (newVal && Object.keys(newVal).length > 0 && !editMode.value) {
+                    businessSettings.value = cloneDeep(newVal);
+                    initModules(businessSettings.value);
+                }
+            }, { deep: true });
+        });
+
         const editMode = ref(false);
 
         const igv_percentage = computed({
