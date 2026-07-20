@@ -49,7 +49,7 @@ export default defineComponent({
     expose({ savePermissions });
 
     async function savePermissions() {
-      const perms = permissions.value.filter((perm) => !isNaN(perm));
+      const perms = permissions.value;
       return await updateUserPermissions(props.user, perms);
     }
 

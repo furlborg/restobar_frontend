@@ -40,17 +40,17 @@
                         ANULADOS
                     </div>
                     
-                    <table style="width: 100%; text-align: left; border-top: 1px dashed #ccc; border-bottom: 1px dashed #ccc; margin-bottom: 15px;">
+                    <table style="width: 100%; text-align: left; border-top: 1px dashed #ccc; border-bottom: 1px dashed #ccc; margin-bottom: 15px; border-collapse: collapse;">
                         <thead>
                             <tr>
-                                <th style="width: 25%; text-align: center; border-bottom: 1px dotted #ccc; padding: 4px 0;">CANT</th>
-                                <th style="width: 75%; border-bottom: 1px dotted #ccc; padding: 4px 0;">PRODUCTO</th>
+                                <th style="width: 25%; text-align: center; border-bottom: 1px dotted #ccc; padding: 4px 0; vertical-align: bottom;">CANT</th>
+                                <th style="width: 75%; border-bottom: 1px dotted #ccc; padding: 4px 0; vertical-align: bottom;">PRODUCTO</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="(detail, idx) in data.order_canceleddetails" :key="'canc-'+idx" style="text-decoration: line-through;">
-                                <td style="text-align: center; padding: 4px 0; border-bottom: 1px dotted #eee;">{{ detail.quantity }}</td>
-                                <td style="padding: 4px 0; border-bottom: 1px dotted #eee;">
+                                <td style="text-align: center; padding: 4px 0; border-bottom: 1px dotted #eee; vertical-align: top;">{{ detail.quantity }}</td>
+                                <td style="padding: 4px 0; border-bottom: 1px dotted #eee; vertical-align: top;">
                                     {{ detail.product_name || detail.product_set?.name }}
                                 </td>
                             </tr>
