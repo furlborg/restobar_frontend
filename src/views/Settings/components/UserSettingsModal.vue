@@ -8,80 +8,103 @@
   >
     <n-spin :show="isLoadingData">
       <n-form v-model:model="formitem" :rules="rules" ref="formRef">
-        <n-grid cols="12 100:1 450:12" :x-gap="12">
-          <n-form-item-gi label="Nombres" :span="4" path="names">
-            <n-input
-              v-model:value="formitem.names"
-              placeholder="Nombres"
-              :maxlength="150"
-              @input="formitem.names = $event.toUpperCase()"
-            />
-          </n-form-item-gi>
-          <n-form-item-gi label="Sucursal" :span="4" path="branchoffice">
-            <n-select
-              v-model:value="formitem.branchoffice"
-              placeholder="Seleccione"
-              :options="optionsBranch"
-            />
-          </n-form-item-gi>
-          <n-form-item-gi label="Perfil" :span="4" path="profile">
-            <n-select
-              v-model:value="formitem.profile"
-              placeholder="Seleccione"
-              :options="optionsProfile"
-            />
-          </n-form-item-gi>
-        </n-grid>
-        <n-grid cols="12 100:1 450:12" :x-gap="12">
-          <n-form-item-gi label="N° DOCUMENTO" :span="4" path="dni">
-            <n-input
-              v-model:value="formitem.dni"
-              placeholder="DOCUMENTO"
-              :maxlength="8"
-            />
-          </n-form-item-gi>
-          <n-form-item-gi label="Corrreo Electrónico" :span="8">
-            <n-input
-              v-model:value="formitem.email"
-              placeholder="Correo@ejemplo.com"
-              :maxlength="150"
-            />
-          </n-form-item-gi>
-        </n-grid>
-        <n-grid cols="12 100:1 450:12" :x-gap="12">
-          <n-form-item-gi label="Usuario" :span="4" path="username">
-            <n-input
-              v-model:value="formitem.username"
-              placeholder="Usuario"
-              :maxlength="11"
-              @input="formitem.username = $event.toUpperCase()"
-            />
-          </n-form-item-gi>
-          <n-form-item-gi v-if="!items.id" label="Contraseña" :span="4">
-            <n-input
-              type="password"
-              v-model:value="formitem.password"
-              :maxlength="15"
-              show-password-on="click"
-              placeholder="Contraseña"
-            />
-          </n-form-item-gi>
-          <n-form-item-gi
-            v-if="!items.id"
-            label="Confirmar Contraseña"
-            :span="4"
-          >
-            <n-input
-              type="password"
-              v-model:value="confirmPass"
-              :maxlength="15"
-              show-password-on="click"
-              placeholder="Confirmar contraseña"
-            />
-          </n-form-item-gi>
-        </n-grid>
+        <n-tabs type="line" animated>
+          <!-- Pestaña de Datos Generales -->
+          <n-tab-pane name="general" tab="Datos Generales">
+            <n-grid cols="12 100:1 450:12" :x-gap="12">
+              <n-form-item-gi label="Nombres" :span="6" path="names">
+                <n-input
+                  v-model:value="formitem.names"
+                  placeholder="Nombres"
+                  :maxlength="150"
+                  @input="formitem.names = $event.toUpperCase()"
+                />
+              </n-form-item-gi>
+              <n-form-item-gi label="Sucursal" :span="6" path="branchoffice">
+                <n-select
+                  v-model:value="formitem.branchoffice"
+                  placeholder="Seleccione"
+                  :options="optionsBranch"
+                />
+              </n-form-item-gi>
+            </n-grid>
+            <n-grid cols="12 100:1 450:12" :x-gap="12">
+              <n-form-item-gi label="N° DOCUMENTO" :span="4" path="dni">
+                <n-input
+                  v-model:value="formitem.dni"
+                  placeholder="DOCUMENTO"
+                  :maxlength="8"
+                />
+              </n-form-item-gi>
+              <n-form-item-gi label="Corrreo Electrónico" :span="8">
+                <n-input
+                  v-model:value="formitem.email"
+                  placeholder="Correo@ejemplo.com"
+                  :maxlength="150"
+                />
+              </n-form-item-gi>
+            </n-grid>
+            <n-grid cols="12 100:1 450:12" :x-gap="12">
+              <n-form-item-gi label="Usuario" :span="4" path="username">
+                <n-input
+                  v-model:value="formitem.username"
+                  placeholder="Usuario"
+                  :maxlength="11"
+                  @input="formitem.username = $event.toUpperCase()"
+                />
+              </n-form-item-gi>
+              <n-form-item-gi v-if="!items.id" label="Contraseña" :span="4">
+                <n-input
+                  type="password"
+                  v-model:value="formitem.password"
+                  :maxlength="15"
+                  show-password-on="click"
+                  placeholder="Contraseña"
+                />
+              </n-form-item-gi>
+              <n-form-item-gi
+                v-if="!items.id"
+                label="Confirmar Contraseña"
+                :span="4"
+              >
+                <n-input
+                  type="password"
+                  v-model:value="confirmPass"
+                  :maxlength="15"
+                  show-password-on="click"
+                  placeholder="Confirmar contraseña"
+                />
+              </n-form-item-gi>
+            </n-grid>
+          </n-tab-pane>
+
+          <!-- Pestaña de Roles y Permisos -->
+          <n-tab-pane name="roles" tab="Roles y Permisos">
+            <n-form-item label="Perfil (Rol Base)" path="profile">
+              <n-select
+                v-model:value="formitem.profile"
+                placeholder="Seleccione"
+                :options="optionsProfile"
+                @update:value="onProfileChange"
+              />
+            </n-form-item>
+            
+            <n-divider>Permisos Personalizados</n-divider>
+            
+            <div style="max-height: 400px; overflow-y: auto;">
+              <n-tree
+                v-model:checked-keys="formitem.user_permission"
+                :data="optionsPermissions"
+                :selectable="false"
+                accordion
+                block-line
+                cascade
+                checkable
+              />
+            </div>
+          </n-tab-pane>
+        </n-tabs>
       </n-form>
-      <!-- <pre>{{  JSON.stringify(formitem, 0, 2) }}</pre> -->
     </n-spin>
     <template #action>
       <n-space justify="end">
@@ -98,7 +121,8 @@
 import { defineComponent, onMounted, onUpdated, ref, toRefs } from "vue";
 import { useMessage } from "naive-ui";
 import { getBranchs } from "@/api/modules/business";
-import { listGroups, createUsers, updateUsers } from "@/api/modules/users";
+import { listGroups, createUsers, updateUsers, listPermissions } from "@/api/modules/users";
+import { permissionsLabels } from "@/utils/constants";
 
 export default defineComponent({
   name: "UserSettingsModal",
@@ -117,12 +141,15 @@ export default defineComponent({
     const confirmPass = ref("");
     const optionsBranch = ref([]);
     const optionsProfile = ref([]);
+    const optionsPermissions = ref([]);
+    const rolesData = ref([]);
     const formRef = ref(null);
     const message = useMessage();
 
     onUpdated(() => {
       if (show.value == true) {
         formitem.value = props.items;
+        if (!formitem.value.user_permission) formitem.value.user_permission = [];
       }
     });
 
@@ -147,6 +174,7 @@ export default defineComponent({
 
       listGroups()
         .then((response) => {
+          rolesData.value = response.data;
           optionsProfile.value = response.data.map((v) => ({
             label: v.name,
             value: v.id,
@@ -155,6 +183,36 @@ export default defineComponent({
         .catch((error) => {
           message.error("Algo salió mal...");
         });
+    };
+
+    const getPermissions = () => {
+      listPermissions()
+        .then((response) => {
+          response.data.forEach((option) => {
+            option.key = option.label;
+            option.label = permissionsLabels[`${option.label}`] || option.label;
+            option.children.forEach((child) => {
+              child.label = permissionsLabels[`${child.label}`] || child.label;
+            });
+          });
+          optionsPermissions.value = response.data;
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    };
+
+    onMounted(() => {
+      getPermissions();
+    });
+
+    const onProfileChange = (val) => {
+      const selectedRole = rolesData.value.find((r) => r.id === val);
+      if (selectedRole && selectedRole.permissions) {
+        formitem.value.user_permission = [...selectedRole.permissions];
+      } else {
+        formitem.value.user_permission = [];
+      }
     };
 
     const closeModal = () => {
@@ -228,6 +286,8 @@ export default defineComponent({
       isLoadingData,
       optionsBranch,
       optionsProfile,
+      optionsPermissions,
+      onProfileChange,
       save,
       confirmPass,
       rules: {

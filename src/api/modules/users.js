@@ -21,7 +21,7 @@ export async function createUsers(user) {
     email: user.email,
     dni: user.dni,
     user_permission: user.user_permission,
-    groups: [user.profile],
+    custom_role: user.profile,
   });
 }
 
@@ -33,7 +33,7 @@ export async function updateUsers(id, user) {
     email: user.email,
     dni: user.dni,
     user_permission: user.user_permission,
-    groups: [user.profile],
+    custom_role: user.profile,
   });
 }
 
