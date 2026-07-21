@@ -48,9 +48,9 @@ const menuOptions = computed(() => {
 
   if (userStore.hasPermission("view_table")) {
     options.push({
-      label: () => h(RouterLink, { to: { name: "Table" } }, () => h("span", "Mesas")),
+      label: () => h(RouterLink, { to: { name: "Table" } }, () => h("span", "Punto de Venta")),
       key: "Table",
-      icon: renderIcon("md-dining-twotone"),
+      icon: renderIcon("md-foodbank-round"),
       disabled: !tillStore.currentTillID,
     });
   }
