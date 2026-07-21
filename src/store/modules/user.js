@@ -9,7 +9,10 @@ import useCookie from "vue-cookies";
 const getTokenDuration = (token) => {
   try {
     const base64Url = token.split(".")[1];
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    let base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    while (base64.length % 4) {
+      base64 += "=";
+    }
     const payload = JSON.parse(window.atob(base64));
     const now = Math.floor(Date.now() / 1000);
     return payload.exp ? payload.exp - now : null;
@@ -60,7 +63,10 @@ export const useUserStore = defineStore("user", {
     saveUserInfo(token) {
       try {
         const base64Url = token.split(".")[1];
-        const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+        let base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+        while (base64.length % 4) {
+          base64 += "=";
+        }
         const payload = JSON.parse(window.atob(base64));
         console.info("Decoded token payload:", payload);
 

@@ -56,9 +56,9 @@ export default defineComponent({
         .then((response) => {
           response.data.forEach((option) => {
             option.key = option.label;
-            option.label = permissionsLabels[`${option.label}`];
+            option.label = permissionsLabels[`${option.label}`] || option.label;
             option.children.forEach((child) => {
-              child.label = permissionsLabels[`${child.label}`];
+              child.label = permissionsLabels[`${child.label}`] || child.label;
             });
           });
           options.value = response.data;

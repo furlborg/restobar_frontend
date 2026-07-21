@@ -67,7 +67,6 @@
         </n-space>
       </template>
     </n-modal>
-    <permission-modal v-model:show="showPermissions" :user="userPermission" />
   </div>
 </template>
 
@@ -78,7 +77,6 @@ import { useMessage, useDialog } from "naive-ui";
 import { createUserColumns } from "@/utils/constants";
 import UserSettingsModal from "./UserSettingsModal";
 import UserPassword from "./UserPassword";
-import PermissionModal from "./PermissionModal";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useUserStore } from "@/store/modules/user";
 import { updateGeneralPass } from "@/api/modules/business";
@@ -124,6 +122,7 @@ const newUser = () => {
     (items.password = undefined),
     (items.branchoffice = undefined),
     (items.profile = undefined),
+    (items.user_permission = undefined),
     (items.is_active = undefined);
 };
 
@@ -136,6 +135,7 @@ const editUser = (data) => {
     (items.password = data.password),
     (items.branchoffice = data.branchoffice),
     (items.profile = data.role_id),
+    (items.user_permission = data.user_permission),
     (items.is_active = data.is_active);
 };
 
@@ -315,10 +315,6 @@ const onCloseSecurity = () => {
   securityPass.value.rePass = "";
 };
 
-const showPermissions = ref(false);
-
-const userPermission = ref(null);
-
 const tableColumns = createUserColumns({
   editUser(data) {
     editUser(data);
@@ -339,5 +335,5 @@ const tableColumns = createUserColumns({
     };
     showModalPass.value = true;
   },
-})
+});
 </script>
