@@ -1,5 +1,5 @@
 <template>
-    <n-card title="Mesas" :bordered="false" :segmented="{ content: 'hard' }">
+    <n-card title="Punto de Venta" :bordered="false" :segmented="{ content: 'hard' }">
         <template #header-extra>
             <n-space v-if="tillStore.currentTillID" align="end">
                 <n-tooltip>
@@ -82,9 +82,8 @@
                                 tableGroups.some((g) => g.some((t) => t.id === table.id))
                             " class="position-absolute top-50 start-50 translate-middle fs-4" name="ri-forbid-line"
                                 scale="8" fill="#FA8072" />
-                            <n-space justify="center">
-                                <img draggable="false" src="~@/assets/images/default-table.png" alt="" width="128"
-                                    height="128" />
+                            <n-space justify="center" style="margin: 16px 0;">
+                                <v-icon name="fa-users" scale="5" fill="#d3d3d3" />
                             </n-space>
 
                             <n-drawer :show="groupMode
