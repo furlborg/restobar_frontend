@@ -111,7 +111,7 @@
                                                     <n-form-item-gi label="Teléfono" :span="6"
                                                         path="delivery_info.phone">
                                                         <n-input v-model:value="sale.delivery_info.phone"
-                                                            placeholder="" />
+                                                            placeholder="" maxlength="15" />
                                                     </n-form-item-gi>
                                                     <n-form-item-gi label="Repartidor" :span="6">
                                                         <n-input v-model:value="sale.delivery_info.deliveryman"

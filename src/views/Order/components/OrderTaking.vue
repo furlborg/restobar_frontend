@@ -89,7 +89,7 @@
                 </n-form-item-gi>
                 <n-form-item-gi label="Teléfono" :span="6" path="delivery_info.phone">
                   <n-input v-model:value="localDeliveryInfo.phone" @update:value="handleDeliveryPhoneChange"
-                    placeholder="" />
+                    placeholder="" maxlength="15" />
                 </n-form-item-gi>
                 <n-form-item-gi label="Repartidor" :span="6">
                   <n-input v-model:value="localDeliveryInfo.deliveryman" @update:value="handleDeliverymanChange"
