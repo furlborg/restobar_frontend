@@ -116,7 +116,6 @@ const handleSubmit = () => {
         .catch((error) => {
           console.error(error);
           loading.value = false;
-          message.error("Error de inicio de sesión");
         });
     } else {
       message.error("Complete la información requerida.");

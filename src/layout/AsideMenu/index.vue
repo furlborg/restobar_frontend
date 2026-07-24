@@ -30,15 +30,16 @@ const openKey = computed(() => {
 });
 
 const menuOptions = computed(() => {
-  const options = [
-    {
-      label: () => h(RouterLink, { to: { name: "Dashboard" } }, () => h("span", "Dashboard")),
-      key: "Dashboard",
-      icon: renderIcon("md-spacedashboard-twotone"),
-    }
-  ];
+  const options = [];
+  // if (settingsStore.business_settings?.modules?.show_dashboard ?? true) {
+  options.push({
+    label: () => h(RouterLink, { to: { name: "Dashboard" } }, () => h("span", "Dashboard")),
+    key: "Dashboard",
+    icon: renderIcon("md-spacedashboard-twotone"),
+  });
+  // }
 
-  if (userStore.hasPermission("view_till")) {
+  if ((settingsStore.business_settings?.modules?.show_till ?? true) && userStore.hasPermission("view_till")) {
     options.push({
       label: () => h(RouterLink, { to: { name: "Till" } }, () => h("span", "Caja")),
       key: "Till",
@@ -46,7 +47,7 @@ const menuOptions = computed(() => {
     });
   }
 
-  if (userStore.hasPermission("view_table")) {
+  if ((settingsStore.business_settings?.modules?.show_tables ?? true) && userStore.hasPermission("view_table")) {
     options.push({
       label: () => h(RouterLink, { to: { name: "Table" } }, () => h("span", "Mesas")),
       key: "Table",
@@ -55,7 +56,7 @@ const menuOptions = computed(() => {
     });
   }
 
-  if (userStore.hasPermission("view_order")) {
+  if ((settingsStore.business_settings?.modules?.show_orders ?? true) && userStore.hasPermission("view_order")) {
     options.push({
       label: () => h(RouterLink, { to: { name: "Orders" } }, () => h("span", "Pedidos")),
       key: "Orders",
@@ -63,7 +64,7 @@ const menuOptions = computed(() => {
     });
   }
 
-  if (userStore.hasPermission("view_sale")) {
+  if ((settingsStore.business_settings?.modules?.show_sales ?? true) && userStore.hasPermission("view_sale")) {
     options.push({
       label: () => h(RouterLink, { to: { name: "Sales" } }, () => h("span", "Ventas")),
       key: "Sales",
@@ -71,13 +72,15 @@ const menuOptions = computed(() => {
     });
   }
 
-  options.push({
-    label: () => h(RouterLink, { to: { name: "Anulate" } }, () => h("span", "Anulaciones")),
-    key: "Anulate",
-    icon: renderIcon("md-cancelpresentation-twotone"),
-  });
+  if (settingsStore.business_settings?.modules?.show_anulates ?? true) {
+    options.push({
+      label: () => h(RouterLink, { to: { name: "Anulate" } }, () => h("span", "Anulaciones")),
+      key: "Anulate",
+      icon: renderIcon("md-cancelpresentation-twotone"),
+    });
+  }
 
-  if (userStore.hasPermission("view_product")) {
+  if ((settingsStore.business_settings?.modules?.show_products ?? true) && userStore.hasPermission("view_product")) {
     options.push({
       label: () => h(RouterLink, { to: { name: "Product" } }, () => h("span", "Productos")),
       key: "Product",
@@ -112,7 +115,7 @@ const menuOptions = computed(() => {
     });
   }
 
-  if (userStore.hasPermission("view_supplier")) {
+  if ((settingsStore.business_settings?.modules?.show_suppliers ?? true) && userStore.hasPermission("view_supplier")) {
     options.push({
       label: () => h(RouterLink, { to: { name: "Supplier" } }, () => h("span", "Proveedores")),
       key: "Supplier",
@@ -120,7 +123,7 @@ const menuOptions = computed(() => {
     });
   }
 
-  if (userStore.hasPermission("view_supplies")) {
+  if ((settingsStore.business_settings?.modules?.show_supplies ?? true) && userStore.hasPermission("view_supplies")) {
     options.push({
       label: () => h(RouterLink, { to: { name: "Supplies" } }, () => h("span", "Insumos")),
       key: "Supplies",
@@ -128,7 +131,7 @@ const menuOptions = computed(() => {
     });
   }
 
-  if (userStore.hasPermission("view_kardex")) {
+  if ((settingsStore.business_settings?.modules?.show_kardex ?? true) && userStore.hasPermission("view_kardex")) {
     options.push({
       label: () => h(RouterLink, { to: { name: "Kardex" } }, () => h("span", "Kardex")),
       key: "Kardex",
@@ -136,7 +139,7 @@ const menuOptions = computed(() => {
     });
   }
 
-  if (userStore.hasPermission("view_customer")) {
+  if ((settingsStore.business_settings?.modules?.show_customers ?? true) && userStore.hasPermission("view_customer")) {
     options.push({
       label: () => h(RouterLink, { to: { name: "Customer" } }, () => h("span", "Clientes")),
       key: "Customer",
@@ -144,14 +147,16 @@ const menuOptions = computed(() => {
     });
     
     // Cumpleaños is tied to customer view permission natively
-    options.push({
-      label: () => h(RouterLink, { to: { name: "Cums" } }, () => h("span", "Cumpleaños")),
-      key: "Cums",
-      icon: renderIcon("co-birthday-cake"),
-    });
+    if (settingsStore.business_settings?.modules?.show_birthdays ?? true) {
+      options.push({
+        label: () => h(RouterLink, { to: { name: "Cums" } }, () => h("span", "Cumpleaños")),
+        key: "Cums",
+        icon: renderIcon("co-birthday-cake"),
+      });
+    }
   }
 
-  if (userStore.hasPermission("view_sale")) {
+  if ((settingsStore.business_settings?.modules?.show_reports ?? true) && userStore.hasPermission("view_sale")) {
     options.push({
       label: () => h(RouterLink, { to: { name: "Reports" } }, () => h("span", "Reportes")),
       key: "Reports",
@@ -159,6 +164,7 @@ const menuOptions = computed(() => {
     });
   }
 
+  // if ((settingsStore.business_settings?.modules?.show_settings ?? true) && userStore.hasPermission("view_business")) {
   if (userStore.hasPermission("view_business")) {
     options.push({
       label: () => h(RouterLink, { to: { name: "Settings" } }, () => h("span", "Configuración")),
@@ -166,6 +172,7 @@ const menuOptions = computed(() => {
       icon: renderIcon("md-settings-twotone"),
     });
   }
+  // }
 
   return options;
 });

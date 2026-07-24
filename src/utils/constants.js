@@ -2437,4 +2437,12 @@ export const permissionsLabels = {
   change_permissions: "Cambiar permisos de Usuarios",
   change_product_affectation: "Cambiar afectación de producto en venta",
   use_combos_menus: "Usar Combos y Menús en Mesas",
+  add_role: "Agregar Roles",
+  change_role: "Editar Roles",
+  delete_role: "Eliminar Roles",
+  view_role: "Ver Roles",
+  add_historicalsaleimportjob: "Agregar Importación Histórica",
+  change_historicalsaleimportjob: "Editar Importación Histórica",
+  delete_historicalsaleimportjob: "Eliminar Importación Histórica",
+  view_historicalsaleimportjob: "Ver Importación Histórica",
 };
