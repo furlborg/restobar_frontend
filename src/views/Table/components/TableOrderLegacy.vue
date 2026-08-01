@@ -69,7 +69,7 @@
                                             label="Mozo"
                                         >
                                             <n-select
-                                                :options="activeUsersStore.usersOptions"
+                                                :options="waiterUsersOptions"
                                                 v-model:value="orderUser"
                                                 placeholder="Seleccione un mozo"
                                                 filterable
@@ -526,7 +526,17 @@ export default defineComponent({
 
         const shouldEnterCustomerName = computed(() => settingsStore.businessSettings?.order?.order_customer_name && !shouldShowCustomerMode.value);
 
-        const shouldSelectOrderUser = computed(() => settingsStore.businessSettings?.order?.select_order_user && userStore.user.role !== 'MOZO');
+        const shouldSelectOrderUser = computed(() => settingsStore.businessSettings?.order?.select_order_user && (settingsStore.businessSettings?.order?.waiter_auth_mode || 'auto') !== 'code_on_confirm');
+        const waiterUsersOptions = computed(() => {
+            const allUsers = activeUsersStore.users || [];
+            const currentLoggedId = userStore.user?.id;
+            const currentOrderUserId = orderUser.value;
+            const filtered = allUsers.filter(u => u.role === 'MOZO' || u.id === currentLoggedId || u.id === currentOrderUserId);
+            return filtered.map(user => ({
+                value: user.id,
+                label: user.names || user.username
+            }));
+        });
 
         const shouldShowCustomerForm = computed(() => {
             return shouldShowCustomerMode.value && route.name !== 'TablePayment';
@@ -1086,6 +1096,7 @@ export default defineComponent({
             saleStore,
             shouldEnterCustomerName,
             shouldSelectOrderUser,
+            waiterUsersOptions,
             handleBack,
             renderLabel,
             performCreateTableOrder,

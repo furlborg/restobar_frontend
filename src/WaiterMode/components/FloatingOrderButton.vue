@@ -170,6 +170,12 @@
     :product="currentOrder"
     @success="showModal = false"
   />
+
+  <WaiterAuthModal
+    v-model:show="showWaiterAuth"
+    :mode="authMode"
+    @success="handleAuthSuccess"
+  />
 </template>
 
 <script>
@@ -182,10 +188,11 @@ import { useSettingsStore } from '@/store/modules/settings'
 import { useUserStore } from '@/store/modules/user'
 import { createTableOrder, updateTableOrder } from '@/api/modules/tables'
 import ProductIndications from '../views/ProductIndications'
+import WaiterAuthModal from './WaiterAuthModal.vue'
 
 export default defineComponent({
   name: 'FloatingOrderButton',
-  components: { ProductIndications },
+  components: { ProductIndications, WaiterAuthModal },
   setup() {
     const message = useMessage()
     const route = useRoute()
@@ -242,7 +249,22 @@ export default defineComponent({
       message.info('Producto eliminado del pedido')
     }
     
+    const showWaiterAuth = ref(false)
+    const authMode = ref('default')
+    const confirmedWaiterId = ref(null)
+
     const performOrder = () => {
+      const mode = settingsStore.business_settings.order?.waiter_auth_mode || 'default';
+      if (mode === 'select' || mode === 'pin') {
+          authMode.value = mode;
+          showWaiterAuth.value = true;
+      } else {
+          handleAuthSuccess(null); // Usará el userId por defecto
+      }
+    }
+
+    const handleAuthSuccess = (waiterId) => {
+      confirmedWaiterId.value = waiterId;
       if (settingsStore.business_settings?.order?.order_customer_name) {
         showAskFor.value = true
       } else {
@@ -260,13 +282,13 @@ export default defineComponent({
               route.params.table,
               orderStore.orderId,
               orderStore.fullOrderList,
-              userStore.user?.id ?? null,
+              confirmedWaiterId.value ?? userStore.user?.id ?? null,
               ask_for.value || undefined
             )
           : await createTableOrder(
               route.params.table,
               orderStore.orderList,
-              userStore.user?.id ?? null,
+              confirmedWaiterId.value ?? userStore.user?.id ?? null,
               ask_for.value || undefined
             )
             
@@ -365,7 +387,10 @@ export default defineComponent({
       openIndications,
       performOrder,
       executeOrder,
-      goToOrderTab
+      goToOrderTab,
+      showWaiterAuth,
+      authMode,
+      handleAuthSuccess
     }
   }
 })

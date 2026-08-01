@@ -1,79 +1,103 @@
 <template>
-    <n-card title="Mesas" :bordered="false" :segmented="{ content: 'hard' }">
-        <template #header-extra>
-            <n-space v-if="tillStore.currentTillID" align="end">
-                <n-tooltip>
-                    <template #trigger>
-                        <v-icon name="fa-circle" scale="0.75" :color="tableStore.wsConnected ? 'green' : 'red'"
-                            :animation="tableStore.wsConnected ? undefined : 'flash'" />
+    <n-card :bordered="false" :segmented="{ content: 'hard' }" class="h-100" content-class="overflow-auto" :content-style="genericsStore.device === 'mobile' ? 'padding-bottom: 25px !important;' : ''">
+        <template #header>
+            <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 10px; flex-wrap: wrap;">
+                <!-- Título y Selector (Crecen para llenar el espacio) -->
+                <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+                    <span style="white-space: nowrap;">Mesas</span>
+                    <n-select v-if="isWaiterModeView" v-model:value="selectedAreaId" :options="areaOptions" clearable placeholder="Cambiar de sucursal" style="flex: 1; min-width: 120px;" />
+                </div>
+                
+                <!-- Botones Extras (Alineados a la derecha) -->
+                <n-space v-if="tillStore.currentTillID" align="center" item-style="display: flex; align-items: center;" :wrap="false">
+                    <n-tooltip>
+                        <template #trigger>
+                            <v-icon name="fa-circle" scale="0.75" :color="tableStore.wsConnected ? 'green' : 'red'"
+                                :animation="tableStore.wsConnected ? undefined : 'flash'" style="margin-right: 5px;" />
+                        </template>
+                        {{ tableStore.wsConnected ? 'WebSocket conectado' : 'WebSocket desconectado' }}
+                    </n-tooltip>
+                    <n-button type="info" text @click="refreshData">
+                        <v-icon name="hi-solid-refresh" />
+                        <span v-if="genericsStore.device !== 'mobile'" class="ms-1">Recargar</span>
+                    </n-button>
+                    <template v-if="settingsStore.business_settings?.order?.divide_delivery_takeaway">
+                        <n-button v-if="userStore.hasPermission('take_away_order') && userStore.user.role !== 'MOZO'" type="info" secondary
+                            @click="$router.push({ name: 'TakeOrder', query: { delivery: true } })">
+                            Delivery
+                        </n-button>
+                        <n-button v-if="userStore.hasPermission('take_away_order') && userStore.user.role !== 'MOZO'" type="info" secondary
+                            @click="$router.push({ name: 'TakeOrder', query: { delivery: false } })">
+                            {{ settingsStore.business_settings.order?.fast_sale_format ? "Venta Rápida" : "Para llevar" }}
+                        </n-button>
                     </template>
-                    {{ tableStore.wsConnected ? 'WebSocket conectado' : 'WebSocket desconectado' }}
-                </n-tooltip>
-                <n-button type="info" text @click="refreshData">
-                    <v-icon name="hi-solid-refresh" />
-                    Recargar
-                </n-button>
-                <template v-if="settingsStore.business_settings?.order?.divide_delivery_takeaway">
-                    <n-button v-if="userStore.hasPermission('take_away_order')" type="info" secondary
-                        @click="$router.push({ name: 'TakeOrder', query: { delivery: true } })">
-                        Delivery
-                    </n-button>
-                    <n-button v-if="userStore.hasPermission('take_away_order')" type="info" secondary
-                        @click="$router.push({ name: 'TakeOrder', query: { delivery: false } })">
-                        {{ settingsStore.business_settings.order?.fast_sale_format ? "Venta Rápida" : "Para llevar" }}
-                    </n-button>
-                </template>
-                <template v-else>
-                    <n-button v-if="userStore.hasPermission('take_away_order')" type="info" secondary
-                        @click="$router.push({ name: 'TakeOrder' })">
-                        {{ settingsStore.business_settings.order?.fast_sale_format ? "Venta Rápida" : "Para llevar" }} /
-                        Delivery
-                    </n-button>
-                </template>
-            </n-space>
+                    <template v-else>
+                        <n-button v-if="userStore.hasPermission('take_away_order') && userStore.user.role !== 'MOZO'" type="info" secondary
+                            @click="$router.push({ name: 'TakeOrder' })">
+                            {{ settingsStore.business_settings.order?.fast_sale_format ? "Venta Rápida" : "Para llevar" }} /
+                            Delivery
+                        </n-button>
+                    </template>
+                </n-space>
+            </div>
         </template>
         <n-spin v-if="tillStore.currentTillID" :show="isLoading">
-            <n-card class="my-2" v-for="area in tableStore.branch_table_Areas" :key="area.id" :title="area.description"
-                embedded>
-                <n-grid responsive="screen" cols="3 xs:3 s:12 m:12 l:15 xl:21 2xl:21" :x-gap="12" :y-gap="12">
-                    <n-gi v-for="table in area.tables.filter(dt => !dt?.is_disabled)" :key="table.id" :span="3">
+            <n-card class="my-2" v-for="area in filteredAreas" :key="area.id" :title="area.description"
+                :embedded="genericsStore.device !== 'mobile'"
+                :bordered="genericsStore.device !== 'mobile'"
+                :content-style="genericsStore.device === 'mobile' ? 'padding: 4px 2px;' : ''"
+                :header-style="genericsStore.device === 'mobile' ? 'padding: 6px 8px; font-size: 1.15rem; font-weight: bold;' : ''">
+                <n-grid responsive="screen" cols="6 xs:6 s:12 m:15 l:18 xl:24 2xl:30" :x-gap="12" :y-gap="12">
+                    <n-gi v-for="table in area.tables.filter(dt => !dt?.is_disabled)" :key="table.id" span="2 xs:2 s:3 m:3 l:3 xl:3 2xl:3">
                         <n-card :id="`table-${table.id}`" class="overflow-hidden position-relative rounded-3"
                             :class="getTableBackgroundClass(table)" :style="{
                                 borderLeft: `6px solid ${getTableColor(table)}`,
                                 borderRight: `6px solid ${getTableColor(table)}`
-                            }" size="small" @click="handleTableClick(table)" style="cursor: pointer">
+                            }" size="small" :content-style="genericsStore.device === 'mobile' ? 'padding: 4px;' : ''" @click="handleTableClick(table)" style="cursor: pointer">
                             <n-checkbox v-if="groupMode" :checked="currentGroup.some((t) => t.id === table.id)"
                                 :disabled="tableGroups.some((g) => g.some((t) => t.id === table.id)) ||
                                     currentTableGrouping === table.id
                                     " size="large" class="top-0 m-2 position-absolute start-0" />
-                            <div class="text-center text-wrap position-absolute top-50 start-50 translate-middle"
+                            <div class="text-center position-absolute start-50 translate-middle-x d-flex align-items-center justify-content-center"
+                                :style="{
+                                    top: genericsStore.device === 'mobile' ? (table?.order_amount !== '' ? '25%' : '50%') : (table?.order_amount !== '' ? '33%' : '50%'),
+                                    transform: 'translate(-50%, -50%)',
+                                    width: '92%',
+                                    zIndex: 2,
+                                    wordBreak: genericsStore.device === 'mobile' ? 'normal' : 'break-word',
+                                    whiteSpace: genericsStore.device === 'mobile' ? 'nowrap' : 'normal',
+                                    overflow: genericsStore.device === 'mobile' ? 'hidden' : 'visible',
+                                    textOverflow: genericsStore.device === 'mobile' ? 'ellipsis' : 'clip'
+                                }"
                                 :class="{
                                     'fs-alt': table.description.length <= 3,
                                     'fs-4':
                                         table.description.length > 3 &&
-                                        table.description.length <= 15,
-                                    'fs-6': table.description.length > 15,
+                                        table.description.length <= 15 && genericsStore.device !== 'mobile',
+                                    'fs-6': (table.description.length > 15) || (genericsStore.device === 'mobile' && table.description.length > 3),
                                 }">
                                 {{ table.description }}
                             </div>
                             <div class="text-center position-absolute start-50 translate-middle-x"
                                 style="bottom: 35px; font-size: 13px; left: 50%; color: #e31414; font-weight: 900 !important; width: 100%;"
-                                v-if="table?.order_amount !== ''">
+                                v-if="table?.order_amount !== '' && genericsStore.device !== 'mobile'">
                                 Ult. Pedido:
                             </div>
                             <div class="text-center position-absolute start-50 translate-middle-x"
                                 style="bottom: 20px; font-size: 13px; left: 50%; color: #e31414; font-weight: 900 !important; width: 100%;"
-                                v-if="table?.order_amount !== ''">
+                                v-if="table?.order_amount !== '' && genericsStore.device !== 'mobile'">
                                 {{ table.modified }}
                             </div>
                             <n-button v-if="
                                 table.order_amount !== '' &&
                                 settingsStore.business_settings?.order?.table_order_total
-                            " class="bottom-0 text-center position-absolute start-50 translate-middle-x fs-5 fw-bolder"
+                            " class="bottom-0 text-center position-absolute start-50 translate-middle-x fw-bolder"
+                                :class="genericsStore.device === 'mobile' ? 'fs-6' : 'fs-5'"
+                                :style="genericsStore.device === 'mobile' ? 'bottom: 2px !important; z-index: 2;' : ''"
                                 color="#901E00" text>
                                 S/. {{ (Number(table?.order_amount) || 0).toFixed(2) }}
                             </n-button>
-                            <n-button @click.stop="openOptions.push(table.id)" class="top-0 position-absolute end-0"
+                            <n-button v-if="genericsStore.device !== 'mobile'" @click.stop="openOptions.push(table.id)" class="top-0 position-absolute end-0"
                                 quaternary size="small">
                                 <v-icon name="bi-three-dots-vertical" />
                             </n-button>
@@ -82,9 +106,8 @@
                                 tableGroups.some((g) => g.some((t) => t.id === table.id))
                             " class="position-absolute top-50 start-50 translate-middle fs-4" name="ri-forbid-line"
                                 scale="8" fill="#FA8072" />
-                            <n-space justify="center">
-                                <img draggable="false" src="~@/assets/images/default-table.png" alt="" width="128"
-                                    height="128" />
+                            <n-space justify="center" align="center" :style="genericsStore.device === 'mobile' ? 'min-height: 80px; display: flex;' : 'min-height: 155px; display: flex;'">
+                                <img draggable="false" src="~@/assets/images/default-table.png" alt="" class="table-bg-img" :style="genericsStore.device === 'mobile' ? 'max-height: 55px; width: 55px; opacity: 0.65;' : ''" />
                             </n-space>
 
                             <n-drawer :show="groupMode
@@ -127,7 +150,7 @@
                                         ">
                                         Cambiar mesa
                                     </n-button>
-                                    <n-button v-if="userStore.hasPermission('null_orders')" class="mb-1" type="error"
+                                    <n-button v-if="userStore.hasPermission('null_orders') || userStore.user.role === 'MOZO'" class="mb-1" type="error"
                                         size="small" block secondary :disabled="table.status === '1'" @click="
                                             openOptions.splice(
                                                 openOptions.findIndex((i) => i === table.id),
@@ -201,7 +224,7 @@ import { useBusinessStore } from "@/store/modules/business";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 import ModalAnulateSale from "@/views/Sale/modalAnulateSale.vue";
 import { useTableLock } from "@/composables/useTableLock";
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher";
 
 
@@ -209,6 +232,7 @@ const groupMode = ref(false);
 const isLoading = ref(false);
 const message = useMessage();
 const router = useRouter();
+const route = useRoute();
 const openOptions = ref([]);
 const tableGroups = ref([]);
 const currentTableGrouping = ref(null);
@@ -219,6 +243,22 @@ const tillStore = useTillStore();
 const tableStore = useTableStore();
 const userStore = useUserStore();
 const businessStore = useBusinessStore();
+
+const isWaiterModeView = computed(() => userStore.user?.role === 'MOZO' || route.matched.some(r => r.name === 'WaiterMode'));
+
+const selectedAreaId = ref(null);
+
+const areaOptions = computed(() => {
+    return tableStore.branch_table_Areas.map(a => ({
+        label: a.description,
+        value: a.id
+    }));
+});
+
+const filteredAreas = computed(() => {
+    if (!selectedAreaId.value) return tableStore.branch_table_Areas;
+    return tableStore.branch_table_Areas.filter(a => a.id === selectedAreaId.value);
+});
 
 const { connectLockWebSocket, lockSocketConnected } = useTableLock();
 
@@ -237,7 +277,12 @@ const isTableBlocked = (table) => {
         };
     }
 
-    // Luego verificar lock_info de la API
+    // Si los sockets están activos y la mesa NO está en lockedTables, confiamos en el WebSocket en tiempo real
+    if (tableStore.wsConnected || lockSocketConnected.value) {
+        return { blocked: false };
+    }
+
+    // Luego verificar lock_info de la API (solo como fallback si los sockets están desconectados)
     if (table.lock_info && table.lock_info.is_active && !table.lock_info.is_locked_by_me) {
         return {
             blocked: true,
@@ -316,9 +361,11 @@ const handleTableClick = (table) => {
             return;
         }
 
-        console.log('✅ Permitiendo navegación a la mesa');
+        const isWaiterMode = route.matched.some(r => r.name === 'WaiterMode');
+        const targetRouteName = (userStore.user?.role === 'MOZO' || genericsStore.device === 'mobile' || isWaiterMode) ? 'WOrder' : 'TableOrder';
+        console.log(`✅ Permitiendo navegación a la mesa (${targetRouteName})`);
         router.push({
-            name: 'TableOrder',
+            name: targetRouteName,
             params: { table: table.id }
         });
     }
@@ -487,8 +534,17 @@ const previewData = ref(null);
 }
 
 .fs-alt {
-    font-size: 3rem;
+    font-size: clamp(1.3rem, 4.2vw, 2.6rem);
     font-weight: bold;
+    line-height: 1.1;
+    text-shadow: 0 1px 3px rgba(255, 255, 255, 0.85);
+}
+
+.table-bg-img {
+    width: clamp(64px, 15vw, 128px);
+    height: auto;
+    max-height: 128px;
+    opacity: 0.85;
 }
 
 .black-outline {

@@ -3,7 +3,7 @@
     <n-space class="mb-2" align="end" justify="space-between">
       <n-breadcrumb separator="⏵">
         <n-breadcrumb-item>
-          <router-link :to="{ name: 'ProductCategories' }">
+          <router-link :to="{ name: $route.name.startsWith('W') ? 'WProductCategories' : 'ProductCategories' }">
             <n-text class="fs-4">Categorías</n-text>
           </router-link>
         </n-breadcrumb-item>
@@ -58,6 +58,9 @@
               <n-text>{{ product.description }}</n-text>
             </n-space>
           </n-thing>
+          <template #suffix>
+            <!-- Suffix removed as we are using a toast message now -->
+          </template>
         </n-list-item>
       </n-list>
     </n-scrollbar>
@@ -94,6 +97,12 @@ export default defineComponent({
       (product) => {
         if (product?.has_stock && product?.has_supplies) {
           orderStore.addOrder(product);
+          if (window.$message) {
+            window.$message.success(`+1 ${product.name}`, {
+              duration: 1500,
+              keepAliveOnHover: true
+            });
+          }
         }
       }
     );
@@ -166,3 +175,6 @@ export default defineComponent({
   },
 });
 </script>
+
+<style scoped>
+</style>

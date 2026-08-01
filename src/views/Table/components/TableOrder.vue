@@ -21,7 +21,7 @@
                         <n-grid cols="2" x-gap="12">
                             <!-- Mozo -->
                             <n-form-item-gi v-if="shouldSelectOrderUser" :span="2" label="Mozo">
-                                <n-select :options="activeUsersStore.usersOptions" v-model:value="localOrderUser"
+                                <n-select :options="waiterUsersOptions" v-model:value="localOrderUser"
                                     placeholder="Seleccione un mozo" filterable />
                             </n-form-item-gi>
                             <n-form-item-gi v-if="shouldShowCustomerMode"
@@ -316,7 +316,6 @@
 import OrderIndications from "./OrderIndications";
 import ProductSearchLabel from "@/views/Product/components/ProductSearchLabel.vue";
 import { ref, computed, h, watch, onMounted, onUnmounted, toRefs } from "vue";
-import { useTableLock } from '@/composables/useTableLock';
 
 import { useRoute, useRouter } from "vue-router";
 import { useMessage, useDialog } from "naive-ui";
@@ -367,8 +366,6 @@ const saleStore = useSaleStore();
 const { formattedTotals } = useSaleTotals();
 
 
-// Table lock composable (solo para enviar mensajes WS)
-const { wsLockTable, wsUnlockTable } = useTableLock();
 
 // Para acceder a props reactivamente
 const { customers, shouldShowCustomerMode, selectedCustomerId, orderUser } = toRefs(props)
@@ -392,8 +389,18 @@ const localSelectedCustomerId = computed({
     set: (value) => emit('update:selectedCustomerId', value)
 });
 const isWaiter = computed(() => userStore.user.role === 'MOZO');
-const isPaymentRoute = computed(() => route.name === 'TablePayment');
-const shouldSelectOrderUser = computed(() => settingsStore.businessSettings?.order?.select_order_user && !isWaiter.value);
+const isPaymentRoute = computed(() => route.name === 'TablePayment' || route.name === 'WTablePayment');
+const shouldSelectOrderUser = computed(() => settingsStore.businessSettings?.order?.waiter_auth_mode === 'select');
+const waiterUsersOptions = computed(() => {
+    const allUsers = activeUsersStore.users || [];
+    const currentLoggedId = userStore.user?.id;
+    const currentOrderUserId = localOrderUser.value;
+    const filtered = allUsers.filter(u => u.role === 'MOZO' || u.id === currentLoggedId || u.id === currentOrderUserId);
+    return filtered.map(user => ({
+        value: user.id,
+        label: user.names || user.username
+    }));
+});
 const currentOrder = computed(() => {
     const index = itemIndex.value;
     return typeof index === 'number' && index >= 0 ? orderStore.orderList[index] : null;
@@ -408,29 +415,6 @@ const productOptions = computed(() => products.value.map((product) => ({
 })));
 const orderButtonDisabled = computed(() => !props.hasUnsavedChanges);
 
-// Controla si se debe desbloquear al salir
-const shouldUnlock = ref(false);
-// Guardamos el tableId al montar para usarlo en unmount (cuando la ruta ya cambió)
-const capturedTableId = ref(null);
-
-// Función para desbloquear mesa (usada en múltiples lugares)
-const unlockCurrentTable = () => {
-    const idToUnlock = capturedTableId.value || tableId.value;
-    console.log('[TableOrder] 🔍 unlockCurrentTable llamado - shouldUnlock:', shouldUnlock.value, 'capturedTableId:', capturedTableId.value, 'tableId:', tableId.value);
-    if (shouldUnlock.value && idToUnlock) {
-        console.log('[TableOrder] 🔓 Desbloqueando mesa', idToUnlock);
-        wsUnlockTable(idToUnlock);
-        shouldUnlock.value = false;
-    } else {
-        console.log('[TableOrder] ⚠️ No se desbloqueará - shouldUnlock:', shouldUnlock.value, 'idToUnlock:', idToUnlock);
-    }
-};
-
-// Handler para cierre brusco de ventana/pestaña
-const handleBeforeUnload = () => {
-    console.log('[TableOrder] 🚪 beforeunload disparado');
-    unlockCurrentTable();
-};
 
 const selectProduct = product => emit('productSelect', product);
 
@@ -585,44 +569,15 @@ const renderLabel = (option) => {
 
 const navigateToPayment = () => {
     emit('goToFirstTab');
-    router.push({ name: 'TablePayment', params: { table: route.params.table } });
+    const dest = route.matched.some(r => r.name === 'WaiterMode') ? 'WTablePayment' : 'TablePayment';
+    router.push({ name: dest, params: { table: route.params.table } });
 };
 
 const navigateToTakeOrder = () => {
     emit('goToFirstTab');
-    router.push({ name: 'ProductCategories', params: { table: route.params.table } });
+    const dest = route.matched.some(r => r.name === 'WaiterMode') ? 'WProductCategories' : 'ProductCategories';
+    router.push({ name: dest, params: { table: route.params.table } });
 };
 
-// Al montar: intentar bloquear la mesa si está libre
-onMounted(() => {
-    // Capturar el tableId inmediatamente para usarlo en unmount
-    capturedTableId.value = tableId.value;
-    console.log('[TableOrder] 🟢 Componente montado - Mesa:', capturedTableId.value);
-
-    // Si la mesa no está bloqueada por mí, intentar lockear
-    const lockInfo = tableStore.lockedTables[capturedTableId.value];
-    const isMyLock = lockInfo && lockInfo.user_id === userStore.user.id;
-
-    if (!lockInfo || isMyLock) {
-        console.log('[TableOrder] 🔒 Bloqueando mesa', capturedTableId.value);
-        wsLockTable(capturedTableId.value, 15); // 15 minutos de bloqueo
-        shouldUnlock.value = true;
-
-        // Agregar listener para cierre brusco
-        window.addEventListener('beforeunload', handleBeforeUnload);
-    } else {
-        console.log('[TableOrder] ⚠️ Mesa ya bloqueada por otro usuario:', lockInfo.username);
-    }
-});
-
-// Al desmontar: SIEMPRE desbloquear la mesa
-// El backend manejará la expiración automática para cierres bruscos
-onUnmounted(() => {
-    console.log('[TableOrder] 🔴 Componente desmontado - Mesa:', tableId.value);
-    // Remover listener
-    window.removeEventListener('beforeunload', handleBeforeUnload);
-    // Desbloquear
-    unlockCurrentTable();
-});
 
 </script>

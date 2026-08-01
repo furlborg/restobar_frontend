@@ -1,7 +1,7 @@
 <template>
     <div>
         <!-- inicio de navegación hacia las mesas -->
-        <n-page-header class="mb-2 px-4" @back="() => $router.push({ name: 'TableHome' })">
+        <n-page-header v-if="!isWaiterModeView" class="mb-2 px-4" @back="() => $router.push({ name: 'TableHome' })">
             <template #title>
                 <n-text class="fs-2">{{ tableStore.getTableByID(table)?.description }}</n-text>
             </template>
@@ -12,10 +12,10 @@
         <!-- es desktop -->
         <n-card v-if="!isMobile">
             <n-grid responsive="screen" cols="1 m:10">
-                <n-gi :span="!shouldShowCustomerMode ? '6' : '5 xl:6'" style="height: calc(100vh - 165px);">
+                <n-gi :span="!shouldShowCustomerMode ? '6' : '5 xl:6'" :style="isWaiterModeView ? 'height: calc(100vh - 120px);' : 'height: calc(100vh - 165px);'">
                     <router-view />
                 </n-gi>
-                <n-gi :span="!shouldShowCustomerMode ? '4' : '5 xl:4'" style="height: calc(100vh - 165px);">
+                <n-gi :span="!shouldShowCustomerMode ? '4' : '5 xl:4'" :style="isWaiterModeView ? 'height: calc(100vh - 120px);' : 'height: calc(100vh - 165px);'">
                     <TableOrder :ask_for="ask_for" :orderUser="orderUser" :loading="loading"
                         :hasUnsavedChanges="hasUnsavedChanges" :customers="customers"
                         :selectedCustomerId="selectedCustomerId" :shouldShowCustomerMode="shouldShowCustomerMode"
@@ -52,18 +52,22 @@
             <template #action>
                 <n-space justify="end">
                     <n-button type="success" :loading="loading" :disabled="!userConfirm || loading" secondary
-                        @click.prevent="orderStore.orderId ? performUpdateTableOrder() : performCreateTableOrder()">Confirmar</n-button>
+                        @click.prevent="verifyWaiterAndSend()">Confirmar</n-button>
                 </n-space>
             </template>
         </n-modal>
 
         <n-modal :class="modalClass" preset="card" v-model:show="showConfirm" title="Eliminando comanda"
             :mask-closable="false" closable @close="resetAnulateData">
-            <div v-if="!userStore.hasPermission('cancel_orderdetail')">
+            <div v-if="!userStore.hasPermission('cancel_orderdetail') && userStore.user.role !== 'MOZO'">
                 <n-form ref="formRef" :model="dataAnulate" :rules="rules">
                     <n-form-item label="Cantidad">
                         <n-input-number v-model:value="deleteQuantity" :min="1" :max="maxQuantity"
                             style="width: 100%" />
+                    </n-form-item>
+                    <n-form-item label="Motivo de anulación"
+                        :path="settingsStore.businessSettings.sale?.required_null_reason ? 'nullReason' : ''">
+                        <n-input v-model:value="dataAnulate.nullReason" placeholder="" />
                     </n-form-item>
                 </n-form>
             </div>
@@ -80,9 +84,13 @@
                             <n-input-number v-model:value="deleteQuantity" :min="1" :max="maxQuantity"
                                 style="width: 100%" />
                         </n-form-item>
+                        <n-form-item label="Motivo de anulación"
+                            :path="settingsStore.businessSettings.sale?.required_null_reason ? 'nullReason' : ''">
+                            <n-input v-model:value="dataAnulate.nullReason" placeholder="" />
+                        </n-form-item>
                     </n-form>
                 </div>
-                <div v-else-if="requireGeneralPass">
+                <div v-else-if="requireGeneralPass || userStore.user.role === 'MOZO'">
                     <n-form ref="formRef" :model="dataAnulate" :rules="rules">
                         <n-form-item label="Ingrese la contraseña" path="pass">
                             <n-input type="password" v-model:value="dataAnulate.pass" />
@@ -90,6 +98,10 @@
                         <n-form-item label="Cantidad">
                             <n-input-number v-model:value="deleteQuantity" :min="1" :max="maxQuantity"
                                 style="width: 100%" />
+                        </n-form-item>
+                        <n-form-item label="Motivo de anulación"
+                            :path="settingsStore.businessSettings.sale?.required_null_reason ? 'nullReason' : ''">
+                            <n-input v-model:value="dataAnulate.nullReason" placeholder="" />
                         </n-form-item>
                     </n-form>
                 </div>
@@ -115,8 +127,9 @@
 <script setup>
 import TableOrder from "./TableOrder.vue";
 import TicketPreview from "@/views/Order/components/TicketPreview";
-import { ref, computed, onMounted, provide } from 'vue';
+import { ref, computed, onMounted, onUnmounted, provide } from 'vue';
 import { useRoute, useRouter, onBeforeRouteLeave, onBeforeRouteUpdate } from "vue-router";
+import { useTableLock } from "@/composables/useTableLock";
 import { useDialog, useMessage } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useUserStore, useActiveUsersStore } from "@/store/modules/user";
@@ -125,6 +138,7 @@ import { useTableStore } from "@/store/modules/table";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { retrieveTableOrder, createTableOrder, updateTableOrder, cancelTableOrder, performDeleteOrderDetail } from "@/api/modules/tables";
+import { verifyWaiterCode } from "@/api/modules/users";
 import { cloneDeep } from "@/utils";
 import { useBreakpoint } from 'vooks';
 
@@ -141,6 +155,26 @@ const settingsStore = useSettingsStore();
 const genericsStore = useGenericsStore();
 const orderStore = useOrderStore();
 const saleStore = useSaleStore();
+
+const { wsLockTable, wsUnlockTable } = useTableLock();
+const shouldUnlock = ref(false);
+const capturedTableId = ref(null);
+
+const unlockCurrentTable = () => {
+    const idToUnlock = capturedTableId.value || route.params.table;
+    console.log('[TableOrderLayout] 🔍 unlockCurrentTable llamado - shouldUnlock:', shouldUnlock.value, 'idToUnlock:', idToUnlock);
+    if (shouldUnlock.value && idToUnlock) {
+        const idNum = typeof idToUnlock === 'string' ? parseInt(idToUnlock) : idToUnlock;
+        console.log('[TableOrderLayout] 🔓 Desbloqueando mesa', idNum);
+        wsUnlockTable(idNum);
+        shouldUnlock.value = false;
+    }
+};
+
+const handleBeforeUnload = () => {
+    console.log('[TableOrderLayout] 🚪 beforeunload disparado');
+    unlockCurrentTable();
+};
 
 const table = route.params.table;
 const rules = { username: { required: true, trigger: ["blur", "input"], message: "" }, pass: { required: true, trigger: ["blur", "input"], message: "" } };
@@ -166,6 +200,9 @@ const showPdf = ref(false);
 const pdfData = ref(null);
 const ticketPreview = ref(null);
 const activeTab = ref('main')
+
+const isWaiterModeView = computed(() => route.matched.some(r => r.name === 'WaiterMode'));
+const homeRouteName = computed(() => isWaiterModeView.value ? 'WHome' : 'TableHome');
 
 const isMobile = computed(() => ['xs', 's'].includes(breakpointRef.value));
 const shouldShowCustomerMode = computed(() => orderStore.orderId ? orderStore.orderList.some(order => order.customer) : settingsStore.businessSettings?.order?.order_by_customer);
@@ -206,7 +243,7 @@ const hasUnsavedChanges = computed(() => {
 const goToFirstTab = () => activeTab.value = 'main';
 
 const handleRouteGuard = (to, isLeave = false) => {
-    if (["ProductCategories", "CategoriesItems"].includes(to.name)) return;
+    if (["ProductCategories", "CategoriesItems", "WProductCategories", "WCategoriesItems"].includes(to.name)) return;
 
     if (hasUnsavedChanges.value) {
         dialog.error({
@@ -226,6 +263,7 @@ const handleRouteGuard = (to, isLeave = false) => {
     // Si está saliendo de la ruta por completo (no es una navegación interna como ir a cobrar)
     // limpiamos el store para evitar dejar datos fantasmas
     if (isLeave) {
+        unlockCurrentTable();
         cleanupOrderStore();
     }
 };
@@ -324,7 +362,7 @@ const performRetrieveTableOrder = async () => {
             );
 
             // Redirigir al listado de mesas
-            router.push({ name: 'TableHome' });
+            router.push({ name: homeRouteName.value });
             return;
         }
 
@@ -370,7 +408,7 @@ const resetConfirmState = () => {
 
 const handleOrderSuccess = () => {
     cleanupOrderStore();
-    router.push({ name: "TableHome" });
+    router.push({ name: homeRouteName.value });
 };
 
 const performCreateTableOrder = async () => {
@@ -407,7 +445,7 @@ const performNullifyTableOrder = async () => {
         if (response.status === 202) {
             message.success("Pedido anulado correctamente!");
             cleanupOrderStore();
-            router.push({ name: "TableHome" });
+            router.push({ name: homeRouteName.value });
         }
     } catch (error) {
         console.error(error);
@@ -434,7 +472,8 @@ const performDeleteDetail = async () => {
         formRef.value.validate(async (errors) => {
             if (!errors) {
                 try {
-                    const response = await performDeleteOrderDetail(table, removingItem.value.id, dataAnulate.value, deleteQuantity.value);
+                    const payload = { ...dataAnulate.value, reason: dataAnulate.value.nullReason };
+                    const response = await performDeleteOrderDetail(table, removingItem.value.id, payload, deleteQuantity.value);
                     if (response.status === 204) {
                         orderStore.orderList.splice(removingItem.value.ind, 1);
                         saleStore.order_initial.splice(removingItem.value.ind, 1);
@@ -457,7 +496,8 @@ const performDeleteDetail = async () => {
         }).catch(() => {});
     } else {
         try {
-            const response = await performDeleteOrderDetail(table, removingItem.value.id, dataAnulate.value, deleteQuantity.value);
+            const payload = { ...dataAnulate.value, reason: dataAnulate.value.nullReason };
+            const response = await performDeleteOrderDetail(table, removingItem.value.id, payload, deleteQuantity.value);
             if (response.status === 204) {
                 orderStore.orderList.splice(removingItem.value.ind, 1);
                 saleStore.order_initial.splice(removingItem.value.ind, 1);
@@ -487,12 +527,37 @@ const addCustomer = (name) => {
 };
 
 const validateSend = () => {
-    if (userStore.user.role === "MOZO") {
+    const authMode = settingsStore.businessSettings?.order?.waiter_auth_mode || 'auto';
+    if (authMode === 'pin' || authMode === 'code_on_confirm') {
         showUserConfirm.value = true;
     } else {
         orderStore.orderId ? performUpdateTableOrder() : performCreateTableOrder();
     }
     orderUser_initial.value = orderUser.value;
+};
+
+const verifyWaiterAndSend = async () => {
+    if (!userConfirm.value) return;
+    loading.value = true;
+    try {
+        const targetUserId = orderUser.value || userStore.user?.id;
+        const resp = await verifyWaiterCode(targetUserId, userConfirm.value);
+        if (resp.status === 200 && resp.data?.success) {
+            if (resp.data.user?.id && !orderUser.value) {
+                orderUser.value = resp.data.user.id;
+            }
+            showUserConfirm.value = false;
+            userConfirm.value = "";
+            orderStore.orderId ? performUpdateTableOrder() : performCreateTableOrder();
+        } else {
+            message.error("Código o contraseña incorrecta");
+            loading.value = false;
+        }
+    } catch (error) {
+        console.error(error);
+        message.error(error.response?.data?.error || "Código o contraseña incorrecta");
+        loading.value = false;
+    }
 };
 
 const removeCustomer = (customerIndex) => {
@@ -535,11 +600,33 @@ const resetAnulateData = () => {
 };
 
 const goHome = () => {
+    unlockCurrentTable();
     cleanupOrderStore();
-    router.push({ name: "TableHome" });
+    router.push({ name: homeRouteName.value });
 };
 
-onMounted(() => performRetrieveTableOrder());
+onMounted(() => {
+    const tableParam = route.params.table;
+    const tableIdNum = typeof tableParam === 'string' ? parseInt(tableParam) : tableParam;
+    capturedTableId.value = tableIdNum;
+    console.log('[TableOrderLayout] 🟢 Componente montado - Mesa:', capturedTableId.value);
+
+    const lockInfo = tableStore.lockedTables[capturedTableId.value];
+    const isMyLock = lockInfo && lockInfo.user_id === userStore.user.id;
+    if (!lockInfo || isMyLock) {
+        console.log('[TableOrderLayout] 🔒 Bloqueando mesa', capturedTableId.value);
+        wsLockTable(capturedTableId.value, 15);
+        shouldUnlock.value = true;
+        window.addEventListener('beforeunload', handleBeforeUnload);
+    }
+    performRetrieveTableOrder();
+});
+
+onUnmounted(() => {
+    console.log('[TableOrderLayout] 🔴 Componente desmontado - Mesa:', capturedTableId.value);
+    window.removeEventListener('beforeunload', handleBeforeUnload);
+    unlockCurrentTable();
+});
 
 onBeforeRouteUpdate((to) => handleRouteGuard(to, false));
 onBeforeRouteLeave((to) => handleRouteGuard(to, true));

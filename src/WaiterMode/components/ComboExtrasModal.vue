@@ -29,7 +29,7 @@
             <n-list-item v-for="item in combo?.items" :key="item.id">
               <n-thing>
                 <template #header>
-                  <n-text>{{ item.product?.name || item.product_name }}</n-text>
+                  <n-text>{{ item.name || item.product?.name || item.product_name || 'Producto' }}</n-text>
                 </template>
                 <template #description>
                   <n-space size="small">

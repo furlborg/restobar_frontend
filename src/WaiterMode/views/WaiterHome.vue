@@ -8,33 +8,52 @@
         <v-icon name="hi-solid-refresh" />
       </n-button>
     </n-input-group>
-    <n-grid v-if="tillStore.currentTillID" class="mt-3" cols="3" :x-gap="6" :y-gap="6">
-      <n-gi v-for="table in tables" :key="table.id">
-        <n-card @click="handleTableClick(table)" class="position-relative" :class="getTableBackgroundClass(table)"
+    <n-grid v-if="tillStore.currentTillID" class="mt-3" responsive="screen" cols="6 xs:6 s:12 m:15 l:18 xl:24 2xl:30" :x-gap="12" :y-gap="12">
+      <n-gi v-for="table in tables" :key="table.id" span="2 xs:2 s:3 m:3 l:3 xl:3 2xl:3">
+        <n-card @click="handleTableClick(table)" class="position-relative overflow-hidden rounded-3" :class="getTableBackgroundClass(table)"
           :style="{
-            borderLeft: `4px solid ${getTableColor(table)}`,
-            borderRight: `4px solid ${getTableColor(table)}`
-          }" style="cursor: pointer">
+            borderLeft: `6px solid ${getTableColor(table)}`,
+            borderRight: `6px solid ${getTableColor(table)}`
+          }" size="small" :content-style="genericsStore.device === 'mobile' ? 'padding: 4px;' : ''" style="cursor: pointer">
           <n-checkbox v-if="waiterStore.groupMode" :checked="currentGroup.some((t) => t.id === table.id)" :disabled="tableGroups.some((g) => g.some((t) => t.id === table.id)) ||
             currentTableGrouping === table.id
-            " size="small" class="position-absolute top-0 start-0 m-2" />
-          <v-icon v-if="
-            waiterStore.groupMode === true &&
-            tableGroups.some((g) => g.some((t) => t.id === table.id))
-          " class="position-absolute top-50 start-50 translate-middle fs-4" name="ri-forbid-line" scale="6"
-            fill="#FA8072" />
-          <n-space align="center" :size="0" vertical>
-            <img src="~@/assets/images/default-table.png" alt="" width="64" height="64" />
-          </n-space>
-          <n-text class="black-outline position-absolute top-50 start-50 translate-middle">{{ table.description
-          }}</n-text>
+            " size="large" class="position-absolute top-0 start-0 m-2" />
+          <div class="text-center position-absolute start-50 translate-middle-x d-flex align-items-center justify-content-center"
+              :style="{
+                  top: genericsStore.device === 'mobile' ? (table?.order_amount !== '' ? '25%' : '50%') : (table?.order_amount !== '' ? '33%' : '50%'),
+                  transform: 'translate(-50%, -50%)',
+                  width: '92%',
+                  zIndex: 2,
+                  wordBreak: genericsStore.device === 'mobile' ? 'normal' : 'break-word',
+                  whiteSpace: genericsStore.device === 'mobile' ? 'nowrap' : 'normal',
+                  overflow: genericsStore.device === 'mobile' ? 'hidden' : 'visible',
+                  textOverflow: genericsStore.device === 'mobile' ? 'ellipsis' : 'clip'
+              }"
+              :class="{
+                  'fs-alt': table.description.length <= 3,
+                  'fs-4':
+                      table.description.length > 3 &&
+                      table.description.length <= 15 && genericsStore.device !== 'mobile',
+                  'fs-6': (table.description.length > 15) || (genericsStore.device === 'mobile' && table.description.length > 3),
+              }">
+              {{ table.description }}
+          </div>
           <n-button v-if="
             table.order_amount &&
             settingsStore.business_settings.order.table_order_total
-          " class="text-center position-absolute bottom-0 start-50 translate-middle-x fs-5 fw-bolder" color="#901E00"
-            text>
+          " class="bottom-0 text-center position-absolute start-50 translate-middle-x fw-bolder"
+            :class="genericsStore.device === 'mobile' ? 'fs-6' : 'fs-5'"
+            :style="genericsStore.device === 'mobile' ? 'bottom: 2px !important; z-index: 2;' : ''"
+            color="#901E00" text>
             S/. {{ (Number(table?.order_amount) || 0)?.toFixed(2) }}
           </n-button>
+          <v-icon v-if="
+            waiterStore.groupMode === true &&
+            tableGroups.some((g) => g.some((t) => t.id === table.id))
+          " class="position-absolute top-50 start-50 translate-middle fs-4" name="ri-forbid-line" scale="8" fill="#FA8072" />
+          <n-space justify="center" align="center" :style="genericsStore.device === 'mobile' ? 'min-height: 80px; display: flex;' : 'min-height: 155px; display: flex;'">
+              <img draggable="false" src="~@/assets/images/default-table.png" alt="" class="table-bg-img" :style="genericsStore.device === 'mobile' ? 'max-height: 55px; width: 55px; opacity: 0.65;' : ''" />
+          </n-space>
         </n-card>
       </n-gi>
     </n-grid>
@@ -87,6 +106,7 @@ import { useTableStore } from "@/store/modules/table";
 import { useWaiterStore } from "@/store/modules/waiter";
 import { useTillStore } from "@/store/modules/till";
 import { useUserStore } from "@/store/modules/user";
+import { useGenericsStore } from "@/store/modules/generics";
 import { changeOrderTable } from "@/api/modules/tables";
 import { useMessage } from "naive-ui";
 import { cloneDeep } from "@/utils";
@@ -95,6 +115,7 @@ import { useRouter } from 'vue-router';
 
 const router = useRouter();
 const settingsStore = useSettingsStore();
+const genericsStore = useGenericsStore();
 const waiterStore = useWaiterStore();
 const tableStore = useTableStore();
 const tillStore = useTillStore();
@@ -125,10 +146,10 @@ const isTableBlocked = (table) => {
   }
 
   // Luego verificar lock_info de la API
-  if (table.lock_info && table.lock_info.is_locked && !table.lock_info.locked_by_me) {
+  if (table.lock_info && table.lock_info.is_active && !table.lock_info.is_locked_by_me) {
     return {
       blocked: true,
-      username: table.lock_info.locked_by_username,
+      username: table.lock_info.username,
       remaining: table.lock_info.remaining_minutes
     };
   }

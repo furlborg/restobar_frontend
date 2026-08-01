@@ -98,12 +98,7 @@ const handleSubmit = () => {
           loading.value = false;
           switch (userStore.user.role) {
             case "MOZO":
-              router.push({
-                name:
-                  genericsStore.device === "desktop"
-                    ? "TableHome"
-                    : "WaiterMode",
-              });
+              router.push({ name: "WaiterMode" });
               break;
             case "COCINERO":
               router.push({ name: "ChefMode" });

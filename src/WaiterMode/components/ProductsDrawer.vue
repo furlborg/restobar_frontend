@@ -81,13 +81,18 @@
                 </n-button>
                 <n-button v-else-if="orderStore.orderList.length" class="h-100 fs-4" type="info" secondary
                     :disabled="loading" :loading="loading" block
-                    @click=" orderStore.orderId ? performUpdateTableOrder() : settingsStore.business_settings.order?.['order_customer_name'] ? (showAskFor = true) : performCreateTableOrder()">
+                    @click="handlePreOrder">
                     {{ orderStore.orderId ? "Añadir" : "Realizar" }} pedido
                 </n-button>
             </template>
             <TicketPreview ref="ticketPreview" v-model:show="showPdf" :data="pdfData" :hidden="true"
                 :isUpdate="!!orderStore.orderId" @printed="() => $router.push({ name: 'WHome' })"
                 @canceled="() => $router.push({ name: 'WHome' })" />
+            <WaiterAuthModal
+                v-model:show="showWaiterAuth"
+                :mode="authMode"
+                @success="handleAuthSuccess"
+            />
         </n-drawer-content>
     </n-drawer>
 </template>
@@ -95,9 +100,14 @@
 <script setup>
 import ProductIndications from "../views/ProductIndications";
 import TicketPreview from "@/views/Order/components/TicketPreview.vue";
+import WaiterAuthModal from "./WaiterAuthModal.vue";
 import { h, ref, computed } from "vue";
 import { NThing, NTag, NSpace, NText, useMessage, useDialog } from "naive-ui";
 import { createTableOrder, updateTableOrder } from "@/api/modules/tables";
+
+const showWaiterAuth = ref(false);
+const authMode = ref('default');
+const confirmedWaiterId = ref(null);
 import { searchProductByName, searchProductPrice } from "@/api/modules/products";
 import { useDebounce } from "@/composables/useDebounce";
 import { useSettingsStore } from "@/store/modules/settings";
@@ -336,6 +346,27 @@ const syncOrderFromResponse = (data) => {
     saleStore.order_initial = cloneDeep(orderStore.fullOrderList);
 };
 
+const handlePreOrder = () => {
+    const mode = settingsStore.business_settings.order?.waiter_auth_mode || 'default';
+    if (mode === 'select' || mode === 'pin') {
+        authMode.value = mode;
+        showWaiterAuth.value = true;
+    } else {
+        handleAuthSuccess(null); // Usará el userId por defecto en la función final
+    }
+};
+
+const handleAuthSuccess = (waiterId) => {
+    confirmedWaiterId.value = waiterId;
+    if (orderStore.orderId) {
+        performUpdateTableOrder();
+    } else if (settingsStore.business_settings.order?.['order_customer_name']) {
+        showAskFor.value = true;
+    } else {
+        performCreateTableOrder();
+    }
+};
+
 const performCreateTableOrder = () => {
     dialog.info({
         title: "¿Realizar pedido?",
@@ -346,7 +377,7 @@ const performCreateTableOrder = () => {
             addToList();
             loading.value = true;
             console.log(orderStore.orderList);
-            const response = await createTableOrder(route.params.table, orderStore.orderList, userStore.user?.id ?? null, !ask_for.value ? undefined : ask_for.value);
+            const response = await createTableOrder(route.params.table, orderStore.orderList, confirmedWaiterId.value ?? userStore.user?.id ?? null, !ask_for.value ? undefined : ask_for.value);
             if (response.status === 201) {
                 message.success("Orden creada correctamente");
                 syncOrderFromResponse(response.data);
@@ -378,7 +409,7 @@ const performUpdateTableOrder = async () => {
                 route.params.table,
                 orderStore.orderId,
                 orderStore.fullOrderList,
-                userStore.user?.id ?? null,
+                confirmedWaiterId.value ?? userStore.user?.id ?? null,
                 !ask_for.value ? undefined : ask_for.value
             );
             if (response.status === 202) {

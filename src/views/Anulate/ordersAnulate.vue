@@ -252,7 +252,13 @@ const columnsDataAnulate = [
     { key: "product_name", title: "Producto", width: 100 },
     { key: "product_category", title: "Categoría de Producto", width: 50 },
     { key: "price", title: "Precio", width: 15 },
-    { key: "sub_total", title: "Sub Total", width: 15 }
+    { key: "sub_total", title: "Sub Total", width: 15 },
+    { key: "created", title: "F. Anulación", width: 50, render(row) {
+        if (!row.created) return "-";
+        const d = new Date(row.created);
+        return `${d.toLocaleDateString('es-ES')} ${d.toLocaleTimeString('es-ES')}`;
+    }},
+    { key: "null_reason", title: "Motivo", width: 60 }
 ];
 
 const onCloseModal = () => {
