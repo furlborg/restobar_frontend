@@ -75,7 +75,7 @@ const availableStock = computed(() => {
   const stockMap = {};
 
   // Obtener menús ya agregados en el store para este menú específico
-  const existingMenuOrders = orderStore.salePayload?.sale_product_sets || [];
+  const existingMenuOrders = orderStore.menuSets || [];
   const currentMenuOrders = existingMenuOrders.filter(ps => ps.menu_id === props.menu.menu.id);
 
   props.menu.items?.forEach((product) => {
@@ -85,7 +85,7 @@ const availableStock = computed(() => {
     currentMenuOrders.forEach(menuOrder => {
       const menuItem = menuOrder.items?.find(item => item.product_id === product.product_id);
       if (menuItem) {
-        usedStock += menuItem.quantity * menuOrder.quantity; // cantidad del item * cantidad de menús
+        usedStock += menuItem.quantity;
       }
     });
 

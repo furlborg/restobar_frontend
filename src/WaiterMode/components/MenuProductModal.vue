@@ -111,7 +111,7 @@ export default defineComponent({
         existingMenuOrders.forEach(menuOrder => {
           const menuItem = menuOrder.items?.find(item => item.product_id === product.product_id);
           if (menuItem) {
-            usedStock += menuItem.quantity * menuOrder.quantity;
+            usedStock += menuItem.quantity;
           }
         });
 
