@@ -8,12 +8,13 @@
         <v-icon name="hi-solid-refresh" />
       </n-button>
     </n-input-group>
-    <n-grid v-if="tillStore.currentTillID" class="mt-3" responsive="screen" cols="6 xs:6 s:12 m:15 l:18 xl:24 2xl:30" :x-gap="12" :y-gap="12">
+    <n-grid v-if="tillStore.currentTillID" class="mt-3" responsive="screen" cols="6 xs:6 s:12 m:15 l:18 xl:18 2xl:24" :x-gap="12" :y-gap="12">
       <n-gi v-for="table in tables" :key="table.id" span="2 xs:2 s:3 m:3 l:3 xl:3 2xl:3">
         <n-card @click="handleTableClick(table)" class="position-relative overflow-hidden rounded-3" :class="getTableBackgroundClass(table)"
           :style="{
             borderLeft: `6px solid ${getTableColor(table)}`,
-            borderRight: `6px solid ${getTableColor(table)}`
+            borderRight: `6px solid ${getTableColor(table)}`,
+            aspectRatio: '1 / 1'
           }" size="small" :content-style="genericsStore.device === 'mobile' ? 'padding: 4px;' : ''" style="cursor: pointer">
           <n-checkbox v-if="waiterStore.groupMode" :checked="currentGroup.some((t) => t.id === table.id)" :disabled="tableGroups.some((g) => g.some((t) => t.id === table.id)) ||
             currentTableGrouping === table.id

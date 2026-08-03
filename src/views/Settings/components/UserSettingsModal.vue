@@ -242,11 +242,12 @@ export default defineComponent({
                   message.success("Usuario editado correctamente.");
                 })
                 .catch((error) => {
-                  if ("username" in error.response.data) {
+                  const errorData = error.response?.data || {};
+                  if ("username" in errorData) {
                     message.warning("El usuario ya existe.");
-                  } else if ("email" in error.response.data) {
+                  } else if ("email" in errorData) {
                     message.warning("El correo ya existe.");
-                  } else if ("dni" in error.response.data) {
+                  } else if ("dni" in errorData) {
                     message.warning("El DNI ya existe.");
                   } else {
                     message.error("Algo salió mal...");
@@ -261,11 +262,12 @@ export default defineComponent({
                   message.success("Usuario registrado correctamente.");
                 })
                 .catch((error) => {
-                  if ("username" in error.response.data) {
+                  const errorData = error.response?.data || {};
+                  if ("username" in errorData) {
                     message.warning("El usuario ya existe.");
-                  } else if ("email" in error.response.data) {
+                  } else if ("email" in errorData) {
                     message.warning("El correo ya existe.");
-                  } else if ("dni" in error.response.data) {
+                  } else if ("dni" in errorData) {
                     message.warning("El DNI ya existe.");
                   } else {
                     message.error("Algo salió mal...");

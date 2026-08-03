@@ -52,7 +52,8 @@
                         <n-card :id="`table-${table.id}`" class="overflow-hidden position-relative rounded-3"
                             :class="getTableBackgroundClass(table)" :style="{
                                 borderLeft: `6px solid ${getTableColor(table)}`,
-                                borderRight: `6px solid ${getTableColor(table)}`
+                                borderRight: `6px solid ${getTableColor(table)}`,
+                                aspectRatio: '1 / 1'
                             }" size="small" :content-style="genericsStore.device === 'mobile' ? 'padding: 4px;' : ''" @click="handleTableClick(table)" style="cursor: pointer">
                             <n-checkbox v-if="groupMode" :checked="currentGroup.some((t) => t.id === table.id)"
                                 :disabled="tableGroups.some((g) => g.some((t) => t.id === table.id)) ||

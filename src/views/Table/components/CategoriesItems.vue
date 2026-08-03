@@ -16,19 +16,25 @@
     <n-scrollbar v-if="products.length > 0" style="max-height: 700px">
       <n-list v-if="listType === 'list'" class="me-2">
         <n-list-item
-          class="w-100 p-0"
+          class="w-100 p-0 transition-colors"
+          :class="getProductCount(product.id) > 0 ? 'bg-success bg-opacity-10' : ''"
           v-for="(product, index) in itemsList"
           :key="index"
           @click="addOrderToCustomer(product)"
-          style="cursor: pointer"
+          style="cursor: pointer; border-radius: 8px; transition: background-color 0.2s;"
         >
           <template #prefix>
-            <img
-              :src="productImage(product)"
-              alt=""
-              :width="category_settings.width_image_product"
-              :height="category_settings.height_image_product"
-            />
+            <div class="ms-2 mt-2 mb-1">
+              <n-badge :value="getProductCount(product.id)" :max="99" type="success">
+                <img
+                  :src="productImage(product)"
+                  alt=""
+                  :width="category_settings.width_image_product"
+                  :height="category_settings.height_image_product"
+                  style="border-radius: 4px;"
+                />
+              </n-badge>
+            </div>
           </template>
           <n-thing>
             <n-space vertical>
@@ -97,12 +103,6 @@ export default defineComponent({
       (product) => {
         if (product?.has_stock && product?.has_supplies) {
           orderStore.addOrder(product);
-          if (window.$message) {
-            window.$message.success(`+1 ${product.name}`, {
-              duration: 1500,
-              keepAliveOnHover: true
-            });
-          }
         }
       }
     );
@@ -114,6 +114,12 @@ export default defineComponent({
       height_image_product: 35,
       ...(settingsStore.business_settings?.category || {}),
     }));
+
+    const getProductCount = (productId) => {
+      return orderStore.orderList
+        .filter((order) => order.product === productId)
+        .reduce((sum, order) => sum + order.quantity, 0);
+    };
 
     const itemsList = computed(() => {
       const list = products.value.filter((product) => {
@@ -171,6 +177,7 @@ export default defineComponent({
       itemsList,
       productImage,
       category_settings,
+      getProductCount,
     };
   },
 });

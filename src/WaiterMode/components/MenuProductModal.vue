@@ -5,7 +5,7 @@
       <n-text class="fs-5 fw-bold" type="success">S/. {{ menu.menu.price }}</n-text>
     </template>
 
-    <n-grid :cols="4" :x-gap="12">
+    <n-grid cols="1 s:2 m:3 l:4" responsive="screen" :x-gap="12" :y-gap="12">
       <n-gi v-for="(products, type) in groupedProducts" :key="type">
         <n-card :title="type.toUpperCase()">
           <n-space vertical>

@@ -1,7 +1,7 @@
 <template>
   <n-modal :show="true" preset="card" :title="menu.name" style="width: 90vw; max-width: 1200px;"
     @close="$emit('close')">
-    <n-grid :cols="4" :x-gap="12">
+    <n-grid cols="1 s:2 m:3 l:4" responsive="screen" :x-gap="12" :y-gap="12">
       <n-gi v-for="(products, type) in groupedProducts" :key="type">
         <n-card :title="type.toUpperCase()">
           <n-space vertical>

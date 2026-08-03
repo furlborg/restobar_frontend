@@ -80,7 +80,12 @@
                                         </td>
                                         <td>
                                             <b>{{ menuSet.from_combo ? 'Combo' : 'Menú' }}: {{ menuSet.name }}</b>
-                                            <br>
+                                            <div style="font-size: 0.85em; color: #555; margin-top: 4px; line-height: 1.2;">
+                                                <div v-for="item in menuSet.items" :key="`menu-set-item-table-${item.product_id || item.id}`" style="margin-bottom: 2px;">
+                                                    <span class="text-muted">- {{ item.quantity }}x {{ item.product_name }}</span>
+                                                    <small v-if="item.phase_name" class="ms-1" style="font-size: 0.9em;">({{ item.phase_name }})</small>
+                                                </div>
+                                            </div>
                                             <n-tag v-if="menuSet.from_combo" size="small" type="success"
                                                 style="margin-top: 4px;">
                                                 {{ menuSet.items?.length || 0 }} productos incluidos
@@ -96,19 +101,6 @@
                                                 <v-icon name="md-disabledbydefault-round" />
                                             </n-button>
                                         </td>
-                                    </tr>
-                                    <!-- Items del menú o combo -->
-                                    <tr v-for="item in menuSet.items"
-                                        :key="`menu-set-item-table-${item.product_id || item.id}`"
-                                        :style="{ backgroundColor: menuSet.from_combo ? '#fafeff' : '#fafafa' }">
-                                        <td></td>
-                                        <td style="padding-left: 20px;">
-                                            {{ item.product_name }}
-                                            <small v-if="item.phase_name">({{ item.phase_name }})</small>
-                                        </td>
-                                        <td>{{ item.quantity }}</td>
-                                        <td></td>
-                                        <td></td>
                                     </tr>
                                 </template>
                             </template>
@@ -204,7 +196,12 @@
                                                     </td>
                                                     <td>
                                                         <b>{{ order.from_combo ? 'Combo' : 'Menú' }}: {{ order.name }}</b>
-                                                        <br>
+                                                        <div style="font-size: 0.85em; color: #555; margin-top: 4px; line-height: 1.2;">
+                                                            <div v-for="item in order.items" :key="`customer-menu-item-${item.product_id || item.id}`" style="margin-bottom: 2px;">
+                                                                <span class="text-muted">- {{ item.quantity }}x {{ item.product_name || item.name }}</span>
+                                                                <small v-if="item.phase_name" class="ms-1" style="font-size: 0.9em;">({{ item.phase_name }})</small>
+                                                            </div>
+                                                        </div>
                                                         <n-tag v-if="order.from_combo" size="small" type="success" style="margin-top: 4px;">
                                                             {{ order.items?.length || 0 }} productos incluidos
                                                         </n-tag>
@@ -219,19 +216,6 @@
                                                             <v-icon name="md-disabledbydefault-round" />
                                                         </n-button>
                                                     </td>
-                                                </tr>
-                                                <!-- Items del menú o combo -->
-                                                <tr v-for="item in order.items"
-                                                    :key="`customer-menu-item-${item.product_id || item.id}`"
-                                                    :style="{ backgroundColor: order.from_combo ? '#fafeff' : '#fafafa' }">
-                                                    <td></td>
-                                                    <td style="padding-left: 20px;">
-                                                        {{ item.product_name || item.name }}
-                                                        <small v-if="item.phase_name">({{ item.phase_name }})</small>
-                                                    </td>
-                                                    <td>{{ item.quantity }}</td>
-                                                    <td></td>
-                                                    <td></td>
                                                 </tr>
                                             </template>
 
