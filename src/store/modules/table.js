@@ -97,7 +97,13 @@ export const useTableStore = defineStore("table", {
         .map((area) => ({
           ...area,
           tables: Array.isArray(area.tables)
-            ? area.tables.filter((table) => !table.is_disabled)
+            ? area.tables.filter((table) => !table.is_disabled).map((table) => {
+                // Sincronizar con lockedTables en tiempo real para que la carga HTTP no resucite bloqueos fantasma
+                if (this.wsConnected && !this.lockedTables[table.id] && table.lock_info) {
+                  table.lock_info.is_active = false;
+                }
+                return table;
+              })
             : []
         }));
     },
@@ -211,12 +217,21 @@ export const useTableStore = defineStore("table", {
                   expires_at: data.expires_at
                 }
               };
+              const t = this.getTableByID(data.table_id);
+              if (t && t.lock_info) {
+                t.lock_info.is_active = true;
+                t.lock_info.username = data.username;
+              }
             }
 
             if (data.type === 'table_unlocked') {
               const rest = { ...this.lockedTables };
               delete rest[data.table_id];
               this.lockedTables = rest;
+              const t = this.getTableByID(data.table_id);
+              if (t && t.lock_info) {
+                t.lock_info.is_active = false;
+              }
             }
 
           } catch (error) {

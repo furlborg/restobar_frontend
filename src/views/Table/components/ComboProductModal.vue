@@ -22,7 +22,7 @@
                 <n-list-item v-for="item in combo.products" :key="item.id">
                   <n-space align="center">
                     <n-tag type="info" size="small">{{ item.quantity }}x</n-tag>
-                    <n-text>{{ item.product_name || item.product?.name }}</n-text>
+                    <n-text>{{ item.name || item.product_name || item.product?.name || 'Producto' }}</n-text>
                     <n-text depth="3" style="font-size: 12px;">
                       (S/. {{ formatPrice(item.unit_price || 0) }} c/u)
                     </n-text>

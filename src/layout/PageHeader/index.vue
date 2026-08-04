@@ -95,7 +95,7 @@ const toggleFullScreen = () => {
 };
 
 const avatarOptions = computed(() => {
-  const options = [
+  let options = [
     {
       label: "Cambiar de Sucursal",
       key: "branchs",
@@ -111,9 +111,15 @@ const avatarOptions = computed(() => {
       icon: renderIcon("md-logout-round"),
     },
   ];
+
   if (userStore.user.branchoffice) {
-    return options.filter((option) => option.key !== "branchs");
+    options = options.filter((option) => option.key !== "branchs");
   }
+  
+  if (userStore.user.role === "MOZO" || !userStore.hasPermission("modo_mozo")) {
+    options = options.filter((option) => option.key !== 1);
+  }
+
   return options;
 });
 

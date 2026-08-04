@@ -243,7 +243,8 @@ export async function changeSaleStatus(id, status) {
 
 export async function nullSale(id, anulate) {
     return await http.post(`sales/${id}/secure_delete/`, {
-        ...anulate
+        ...anulate,
+        null_reason: anulate.nullReason
     });
 }
 

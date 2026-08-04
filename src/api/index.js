@@ -38,20 +38,33 @@ export function setupInterceptors(instance) {
     async function (error) {
       const userStore = useUserStore();
       const originalRequest = error.config;
+
+      // Si no hay respuesta (Servidor caído o error de red)
+      if (!error.response) {
+        showToast("error", "No se pudo conectar con el servidor. Revise su conexión.");
+        return Promise.reject(error);
+      }
+
       if (
         error.response.status === 401 &&
-        error.response.data.code === "token_not_valid"
+        error.response.data?.code === "token_not_valid"
       ) {
         console.log(error.response);
         userStore.logout();
 
         return http(originalRequest);
+      } else if (error.response.status === 500) {
+        // Interceptor específico para Errores 500
+        showToast(
+          "error",
+          "Error 500: Error interno del servidor. Por favor, contacte a soporte técnico."
+        );
+        return Promise.reject(error);
       } else {
         if (error.response.status !== 404 && error.response.status !== 423) {
           if (
             error.response?.data &&
-            error.response.headers["content-type"] !==
-              "text/html; charset=utf-8"
+            !error.response.headers["content-type"]?.includes("text/html")
           ) {
             await handleServerError(error.response?.data);
           }
