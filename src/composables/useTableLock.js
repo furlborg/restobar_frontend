@@ -17,6 +17,15 @@ const businessStore = useBusinessStore();
 const userStore = useUserStore();
 const tableStore = useTableStore();
 
+const getAuthConfig = () => {
+  const token = useCookie.get("token") || userStore.token;
+  const config = { withCredentials: true };
+  if (token) {
+    config.headers = { Authorization: `Bearer ${token}` };
+  }
+  return config;
+};
+
 const connectLockWebSocket = () => {
   const branchId = userStore.user.branchoffice || businessStore.currentBranch || 1;
   const apiUrl = import.meta.env.VITE_APP_URL.replace(/^https?:\/\//, '');
@@ -78,6 +87,14 @@ const connectLockWebSocket = () => {
             });
             lockedTables.value = newMap;
             tableStore.lockedTables = Object.fromEntries(newMap);
+
+            const table = tableStore.getTableByID(tableId);
+            if (table) {
+              if (!table.lock_info) table.lock_info = {};
+              table.lock_info.is_active = true;
+              table.lock_info.username = lock.username;
+              table.lock_info.user_id = userId;
+            }
           }
           break;
         }
@@ -173,6 +190,33 @@ const wsUnlockTable = (tableId) => {
       connectLockWebSocket();
     }
   }
+
+  // FALLBACK HTTP GARANTIZADO:
+  // Enviar siempre una petición REST en segundo plano con Authorization header para asegurar la liberación del bloqueo
+  if (tableId) {
+    const url = `${API_BASE}/api/v1/table-locks/unlock/`;
+    const data = { table_id: tableId };
+    const config = getAuthConfig();
+
+    try {
+      if (typeof fetch === 'function') {
+        fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(config.headers || {})
+          },
+          body: JSON.stringify(data),
+          keepalive: true
+        }).catch(() => {});
+      }
+    } catch (e) {
+      console.warn('[useTableLock] fetch keepalive error:', e);
+    }
+
+    axios.post(url, data, config)
+      .catch(err => console.warn('[useTableLock] Fallback HTTP unlock error:', err));
+  }
 };
 
 const wsRenewLock = (tableId, durationMinutes = 15) => {
@@ -231,7 +275,7 @@ const unlockTableHTTP = async (tableId) => {
     await axios.post(
       `${API_BASE}/api/v1/table-locks/unlock/`,
       { table_id: tableId },
-      { withCredentials: true }
+      getAuthConfig()
     );
 
     const rest = { ...tableStore.lockedTables };
@@ -255,7 +299,7 @@ export function useTableLock() {
     try {
       const response = await axios.get(
         `${API_BASE}/api/v1/table-locks/check/${tableId}/`,
-        { withCredentials: true }
+        getAuthConfig()
       );
       return response.data;
     } catch (error) {
@@ -271,7 +315,7 @@ export function useTableLock() {
           table_id: tableId,
           duration_minutes: durationMinutes
         },
-        { withCredentials: true }
+        getAuthConfig()
       );
 
       if (response.data.lock) {
@@ -309,7 +353,7 @@ export function useTableLock() {
     try {
       const response = await axios.get(
         `${API_BASE}/api/v1/table-locks/my_locks/`,
-        { withCredentials: true }
+        getAuthConfig()
       );
 
       const locks = response.data.locks || [];

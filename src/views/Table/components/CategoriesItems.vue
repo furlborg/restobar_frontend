@@ -3,7 +3,7 @@
     <n-space class="mb-2" align="end" justify="space-between">
       <n-breadcrumb separator="⏵">
         <n-breadcrumb-item>
-          <router-link :to="{ name: 'ProductCategories' }">
+          <router-link :to="{ name: $route.name.startsWith('W') ? 'WProductCategories' : 'ProductCategories' }">
             <n-text class="fs-4">Categorías</n-text>
           </router-link>
         </n-breadcrumb-item>
@@ -16,19 +16,25 @@
     <n-scrollbar v-if="products.length > 0" style="max-height: 700px">
       <n-list v-if="listType === 'list'" class="me-2">
         <n-list-item
-          class="w-100 p-0"
+          class="w-100 p-0 transition-colors"
+          :class="getProductCount(product.id) > 0 ? 'bg-success bg-opacity-10' : ''"
           v-for="(product, index) in itemsList"
           :key="index"
           @click="addOrderToCustomer(product)"
-          style="cursor: pointer"
+          style="cursor: pointer; border-radius: 8px; transition: background-color 0.2s;"
         >
           <template #prefix>
-            <img
-              :src="productImage(product)"
-              alt=""
-              :width="category_settings.width_image_product"
-              :height="category_settings.height_image_product"
-            />
+            <div class="ms-2 mt-2 mb-1">
+              <n-badge :value="getProductCount(product.id)" :max="99" type="success">
+                <img
+                  :src="productImage(product)"
+                  alt=""
+                  :width="category_settings.width_image_product"
+                  :height="category_settings.height_image_product"
+                  style="border-radius: 4px;"
+                />
+              </n-badge>
+            </div>
           </template>
           <n-thing>
             <n-space vertical>
@@ -58,6 +64,9 @@
               <n-text>{{ product.description }}</n-text>
             </n-space>
           </n-thing>
+          <template #suffix>
+            <!-- Suffix removed as we are using a toast message now -->
+          </template>
         </n-list-item>
       </n-list>
     </n-scrollbar>
@@ -105,6 +114,12 @@ export default defineComponent({
       height_image_product: 35,
       ...(settingsStore.business_settings?.category || {}),
     }));
+
+    const getProductCount = (productId) => {
+      return orderStore.orderList
+        .filter((order) => order.product === productId)
+        .reduce((sum, order) => sum + order.quantity, 0);
+    };
 
     const itemsList = computed(() => {
       const list = products.value.filter((product) => {
@@ -162,7 +177,11 @@ export default defineComponent({
       itemsList,
       productImage,
       category_settings,
+      getProductCount,
     };
   },
 });
 </script>
+
+<style scoped>
+</style>

@@ -1,4 +1,4 @@
-<template>
+ <template>
     <n-tabs v-model:value="activeTab" type="line" justify-content="space-around">
         <template #prefix>
             <n-button class="ms-2" :disabled="$route.name !== 'WCategories'" text @click="showDrawer = true">
@@ -61,9 +61,14 @@
                                 </template>
 
                                 <template #header-extra>
-                                    <n-text>
-                                        S/. {{ (order.quantity * order.price).toFixed(2) }}
-                                    </n-text>
+                                    <n-space align="center">
+                                        <n-text>
+                                            S/. {{ (order.quantity * order.price).toFixed(2) }}
+                                        </n-text>
+                                        <n-button type="error" text class="ms-2" @click.stop="handleRemoveRequest(order)">
+                                            <v-icon name="md-disabledbydefault-round" scale="1.2" />
+                                        </n-button>
+                                    </n-space>
                                 </template>
 
                                 <!-- Listar los items si es un menú -->
@@ -99,12 +104,13 @@
                 :product="currentOrderList[itemIndex]" @success="showModal = false" />
             <PreviewDrawer ref="previewDrawer" v-model:show="showPreview" :data="previewData" :preVoucher="true"
                 :previewOnly="true" />
+            <ModalAnulateSale :dataModal="dataAnulateModal" />
         </n-tab-pane>
     </n-tabs>
 </template>
 
 <script setup>
-import { ref, onUpdated, onMounted, onUnmounted, provide, computed, nextTick } from "vue";
+import { ref, onUpdated, onMounted, onUnmounted, provide, computed, nextTick, watch } from "vue";
 import ProductsDrawer from "../components/ProductsDrawer";
 import WaiterMenus from "./WaiterMenus.vue";
 import WaiterCombos from "./WaiterCombos.vue";
@@ -117,13 +123,14 @@ import {
     onBeforeRouteUpdate
 } from "vue-router";
 import ProductIndications from "./ProductIndications";
+import ModalAnulateSale from "@/views/Sale/modalAnulateSale.vue";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useBusinessStore } from "@/store/modules/business";
 import { useWaiterStore } from "@/store/modules/waiter";
 import { useOrderStore } from "@/store/modules/order";
 import { useUserStore } from "@/store/modules/user";
 import { useSaleStore } from "@/store/modules/sale";
-import { retrieveTableOrder } from "@/api/modules/tables";
+import { retrieveTableOrder, performDeleteOrderDetail } from "@/api/modules/tables";
 import { cloneDeep } from "@/utils";
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 import { useTableLock } from "@/composables/useTableLock";
@@ -133,6 +140,52 @@ const settingsStore = useSettingsStore();
 const businessStore = useBusinessStore();
 const waiterStore = useWaiterStore();
 const orderStore = useOrderStore();
+
+const dataAnulateModal = ref({
+    show: false,
+    saleId: null,
+    maxQuantity: 1,
+    permission: 'cancel_orderdetail',
+    performDeleteOrderDetail: async (detailId, dataAnulate) => {
+        try {
+            const orderDetail = orderStore.fullOrderList.find(o => o.id === detailId);
+            const quantity = dataAnulate.quantity || (orderDetail ? orderDetail.quantity : 1);
+
+            const payload = {
+                ...dataAnulate,
+                reason: dataAnulate.nullReason
+            };
+
+            const response = await performDeleteOrderDetail(route.params.table, detailId, payload, quantity);
+            if (response.status === 204 || response.status === 202) {
+                message.success("Producto anulado correctamente");
+                performRetrieveTableOrder();
+            }
+        } catch (error) {
+            console.error(error);
+            message.error("Error al anular, verifique sus datos...");
+        }
+    }
+});
+
+const openDeleteModal = (order) => {
+    dataAnulateModal.value.saleId = order.id;
+    dataAnulateModal.value.maxQuantity = order.quantity;
+    dataAnulateModal.value.show = true;
+};
+
+const handleRemoveRequest = (order) => {
+    if (order.id) {
+        // Si el pedido ya está guardado (enviado), requiere clave y anulación
+        openDeleteModal(order);
+    } else {
+        // Si el pedido está en el carrito local (aún no enviado), se elimina directamente
+        const index = orderStore.orders.findIndex(o => o === order);
+        if (index !== -1) {
+            orderStore.orders.splice(index, 1);
+        }
+    }
+};
 const saleStore = useSaleStore();
 const userStore = useUserStore();
 const tableStore = useTableStore();
@@ -355,6 +408,29 @@ onUnmounted(() => {
     console.log('[WaiterOrder] 🔴 Componente desmontado - Mesa:', capturedTableId.value);
     window.removeEventListener('beforeunload', handleBeforeUnload);
     unlockCurrentTable();
+});
+
+watch(() => route.params.table, (newTable, oldTable) => {
+    if (newTable && newTable !== oldTable) {
+        console.log('[WaiterOrder] 🔄 Cambio de mesa detectado de', oldTable, 'a', newTable);
+        if (oldTable) {
+            const oldId = typeof oldTable === 'string' ? parseInt(oldTable) : oldTable;
+            if (shouldUnlock.value && oldId) {
+                console.log('[WaiterOrder] 🔓 Desbloqueando mesa anterior', oldId);
+                wsUnlockTable(oldId);
+                shouldUnlock.value = false;
+            }
+        }
+        const newId = typeof newTable === 'string' ? parseInt(newTable) : newTable;
+        capturedTableId.value = newId;
+        const lockInfo = tableStore.lockedTables[newId];
+        const isMyLock = lockInfo && lockInfo.user_id === userStore.user.id;
+        if (!lockInfo || isMyLock) {
+            console.log('[WaiterOrder] 🔒 Bloqueando nueva mesa', newId);
+            wsLockTable(newId, 15);
+            shouldUnlock.value = true;
+        }
+    }
 });
 
 onUpdated(() => {

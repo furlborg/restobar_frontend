@@ -45,13 +45,17 @@
             :loading="isTableLoading" class="mt-2" scroll-x="1100px" striped max-height="calc(100vh - 350px)" remote
             style="font-size: 13px !important;" />
 
-        <n-modal :style="{ width: '90%', maxWidth: '85%' }" preset="card" title="Detalle de pedido"
+        <n-modal :style="{ width: '90%', maxWidth: '1000px' }" preset="card" title="Detalle de pedido anulado"
             v-model:show="showModalAnulate" @close="() => { showModalAnulate = false; dataAnulateItems = []; }">
-
-            <n-data-table size="tiny" :columns="columnsDataAnulate" :data="dataAnulateItems" scroll-x="1150px" striped
-                max-height="calc(100vh - 350px)">
-
-            </n-data-table>
+            
+            <n-data-table 
+                size="small" 
+                :columns="columnsDataAnulate" 
+                :data="dataAnulateItems" 
+                striped 
+                max-height="calc(100vh - 200px)" 
+                style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);"
+            />
         </n-modal>
         <details-modal v-model:show="showDetailsModal" :id-order="idOrder" @update:show="onCloseModal" />
     </div>
@@ -246,13 +250,48 @@ const columns = [
 ];
 
 const columnsDataAnulate = [
-    { key: "id", title: "ID", width: 10 },
-    { key: "username", title: "Usuario", width: 30 },
-    { key: "quantity", title: "Cantidad", width: 15 },
-    { key: "product_name", title: "Producto", width: 100 },
-    { key: "product_category", title: "Categoría de Producto", width: 50 },
-    { key: "price", title: "Precio", width: 15 },
-    { key: "sub_total", title: "Sub Total", width: 15 }
+    {
+        title: "Producto Anulado",
+        key: "product_info",
+        render(row) {
+            return h('div', { class: 'd-flex flex-column py-1' }, [
+                h('div', { class: 'fw-bold', style: 'font-size: 13px; color: #333;' }, `${row.quantity}x ${row.product_name}`),
+                h(NTag, { size: "small", bordered: false, style: 'margin-top: 4px; width: fit-content; font-size: 11px;' }, { default: () => row.product_category })
+            ]);
+        }
+    },
+    {
+        title: "Importe",
+        key: "amounts",
+        width: 100,
+        align: "right",
+        render(row) {
+            const calculatedSubTotal = parseFloat(row.sub_total) || (parseFloat(row.price || 0) * parseInt(row.quantity || 1));
+            return h('div', { class: 'd-flex flex-column py-1' }, [
+                h('div', { class: 'fw-bold', style: 'font-size: 13px; color: #d03050;' }, `S/. ${calculatedSubTotal.toFixed(2)}`),
+                h('div', { style: 'font-size: 11px; color: #888;' }, `S/. ${parseFloat(row.price || 0).toFixed(2)} c/u`)
+            ]);
+        }
+    },
+    {
+        title: "Auditoría (Motivo y Usuario)",
+        key: "audit",
+        render(row) {
+            const dateStr = row.created ? `${new Date(row.created).toLocaleDateString('es-ES')} a las ${new Date(row.created).toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'})}` : '';
+            return h('div', { class: 'py-1' }, [
+                h('div', { style: 'font-size: 12.5px; color: #d03050; line-height: 1.3; font-weight: 500;' }, [
+                    h('strong', {}, 'Motivo: '),
+                    row.null_reason || 'Sin motivo'
+                ]),
+                h('div', { class: 'd-flex align-items-center mt-1', style: 'font-size: 11px; color: #666;' }, [
+                    h('strong', { style: 'margin-right: 4px;' }, 'Por: '),
+                    row.username,
+                    h('span', { style: 'margin: 0 6px; color: #ccc;' }, '|'),
+                    dateStr
+                ])
+            ]);
+        }
+    }
 ];
 
 const onCloseModal = () => {

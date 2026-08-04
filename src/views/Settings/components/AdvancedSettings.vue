@@ -229,6 +229,9 @@
                                     <n-form-item-gi label="Filtros por defecto activos" label-placement="top">
                                         <n-select v-model:value="businessSettings.order.default_filters" :options="orderTypeOptions" multiple size="large" />
                                     </n-form-item-gi>
+                                    <n-form-item-gi label="Flujo de Autenticación para Mozos" label-placement="top">
+                                        <n-select v-model:value="businessSettings.order.waiter_auth_mode" :options="waiterAuthModeOptions" size="large" />
+                                    </n-form-item-gi>
                                 </n-grid>
                                 <div class="list-settings">
                                     <div class="list-item" v-if="businessSettings.order"><div class="item-text"><span>Dividir Delivery y Para Llevar</span></div><n-switch :disabled="!editMode" v-model:value="businessSettings.order.divide_delivery_takeaway" /></div>
@@ -495,6 +498,21 @@ export default defineComponent({
             }
         ];
 
+        const waiterAuthModeOptions = [
+            {
+                value: "default",
+                label: "Mozo predeterminado (Quien inició sesión)"
+            },
+            {
+                value: "select",
+                label: "Seleccionar responsable de una lista"
+            },
+            {
+                value: "pin",
+                label: "Ingresar código de usuario del responsable"
+            }
+        ];
+
         return {
             igv_percentage,
             handleBack,
@@ -509,7 +527,8 @@ export default defineComponent({
             resetSettings,
             kitchenPrinterFormatOptions,
             infoLocationOptions,
-            orderTypeOptions
+            orderTypeOptions,
+            waiterAuthModeOptions
         };
     }
 });

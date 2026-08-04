@@ -16,7 +16,7 @@
                                         <n-space vertical>
                                             <n-space align="center">
                                                 <router-link class="text-decoration-none" :to="{
-                                                    name: 'CategoriesItems',
+                                                    name: $route.name.startsWith('W') ? 'WCategoriesItems' : 'CategoriesItems',
                                                     params: { category: category.id },
                                                 }">
                                                     <n-text class="fs-4">{{ category.description }}</n-text>
@@ -34,11 +34,11 @@
                                 </n-list-item>
                             </n-list>
                             <n-grid v-if="listType === 'grid'" responsive="screen"
-                                cols="8 xs:8 s:12 m:12 l:16 xl:20 2xl:20" :x-gap="5" :y-gap="5">
-                                <n-gi :span="4" v-for="(category, index) in productStore.categories" :key="index">
+                                cols="6 xs:6 s:12 m:12 l:16 xl:20 2xl:20" :x-gap="5" :y-gap="5">
+                                <n-gi span="2 xs:2 s:3 m:3 l:4 xl:4 2xl:4" v-for="(category, index) in productStore.categories" :key="index">
                                     <div class="item-zoom">
                                         <router-link class="text-decoration-none"
-                                            :to="{ name: 'CategoriesItems', params: { category: category.id } }">
+                                            :to="{ name: $route.name.startsWith('W') ? 'WCategoriesItems' : 'CategoriesItems', params: { category: category.id } }">
                                             <div class="category-container">
                                                 <img v-if="category_settings.use_image && categoryHasImage(category)"
                                                     :src="category.image || category.image_url" alt="" />
@@ -252,7 +252,8 @@ onMounted(async () => {
 
 .item-zoom img {
     width: 100%;
-    height: 130px;
+    aspect-ratio: 1 / 1;
+    height: auto;
     object-fit: cover;
     transition: all 0.3s ease;
     filter: grayscale(100%);
@@ -266,7 +267,8 @@ onMounted(async () => {
 .category-container {
     position: relative;
     width: 100%;
-    height: 130px;
+    aspect-ratio: 1 / 1;
+    height: auto;
 }
 
 .fallback-box {
@@ -286,11 +288,15 @@ onMounted(async () => {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    width: 100%;
+    padding: 0 8px;
+    box-sizing: border-box;
     font-weight: 900;
     color: #000;
     text-align: center;
     white-space: normal;
-    word-break: keep-all;
+    word-break: break-word;
+    line-height: 1.2;
     pointer-events: none;
 }
 </style>

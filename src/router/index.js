@@ -424,28 +424,28 @@ export const routes = [
       {
         name: "WHome",
         path: "",
-        component: () => import("@/WaiterMode/views/WaiterHome.vue"),
+        component: () => import("@/views/Table/components/TableHome.vue"),
       },
       {
         name: "WOrder",
         path: ":table",
-        redirect: { name: "WCategories" },
-        component: () => import("@/WaiterMode/views/WaiterOrder.vue"),
+        redirect: { name: "WProductCategories" },
+        component: () => import("@/views/Table/components/TableOrderLayout.vue"),
         children: [
           {
-            name: "WCategories",
-            path: "",
-            component: () => import("@/WaiterMode/views/Categories.vue"),
+            name: "WProductCategories",
+            path: "product-categories",
+            component: () => import("@/views/Table/components/CategoriesList.vue"),
           },
           {
-            name: "WCombos",
-            path: "combos",
-            component: () => import("@/WaiterMode/views/WaiterCombos.vue"),
+            name: "WCategoriesItems",
+            path: "product-categories/:category",
+            component: () => import("@/views/Table/components/CategoriesItems.vue"),
           },
           {
-            name: "WProducts",
-            path: ":category",
-            component: () => import("@/WaiterMode/views/Products.vue"),
+            name: "WTablePayment",
+            path: "payment",
+            component: () => import("@/views/Table/components/TablePayment.vue"),
           },
         ],
       },
@@ -501,12 +501,7 @@ router.beforeEach(async (to, from, next) => {
         ) {
           if (!to.matched.some((record) => record.meta.onlyWaiter)) {
             if (userStore.user.role === "MOZO") {
-              next({
-                name:
-                  genericsStore.device === "desktop"
-                    ? "TableHome"
-                    : "WaiterMode",
-              });
+              next({ name: "WaiterMode" });
               return;
             } else if (userStore.user.role === "COCINERO") {
               next({ name: "ChefMode" });
@@ -539,3 +534,5 @@ router.beforeEach(async (to, from, next) => {
 });
 
 export default router;
+
+// Trigger Vite HMR

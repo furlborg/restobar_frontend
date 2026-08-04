@@ -8,6 +8,10 @@ export async function getActiveUsers() {
   return await http.get("users/active_users/");
 }
 
+export async function verifyWaiterCode(userId, password) {
+  return await http.post("users/verify_waiter/", { user_id: userId, password });
+}
+
 export async function retrieveUsers(id) {
   return await http.get(`users/${id}/`);
 }
