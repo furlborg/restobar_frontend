@@ -32,7 +32,7 @@ export function useSaleTotals() {
     
     // Calcular totales de productos regulares por afectación
     const taxed = details.filter(d => d.product_affectation === 10)
-      .reduce((acc, d) => acc + (Number(d.price_sale || 0) * Number(d.quantity || 0)), 0);
+      .reduce((acc, d) => acc + ((Number(d.price_sale || 0) - Number(d.igv_tax || 0)) * Number(d.quantity || 0)), 0);
     
     const exempt = details.filter(d => d.product_affectation === 20)
       .reduce((acc, d) => acc + (Number(d.price_sale || 0) * Number(d.quantity || 0)), 0);
