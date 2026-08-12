@@ -365,7 +365,8 @@ export default defineComponent({
           const totalScaled = saleStore.toSale.reduce((acc, curVal) => {
               if (curVal.product_affectation === 10) {
                   // Multiplica el precio por la cantidad y por la precisión
-                  const value = Math.round(parseFloat(curVal.price_sale) * curVal.quantity * precision);
+                  const priceBase = parseFloat(curVal.price_sale) - parseFloat(curVal.igv_tax || 0);
+                  const value = Math.round(priceBase * curVal.quantity * precision);
                   return acc + value;
               }
               return acc;

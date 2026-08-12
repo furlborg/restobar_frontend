@@ -3,6 +3,7 @@ import { ref, computed } from "vue";
 export function usePagination(fetchFn, initialPageSize = 10) {
   const search = ref("");
   const category = ref(null);
+  const affectation = ref(null);
   const show_disabled = ref(false);
   const page = ref(1);
   const pageSize = ref(initialPageSize);
@@ -25,6 +26,7 @@ export function usePagination(fetchFn, initialPageSize = 10) {
       const response = await fetchFn({
         search: search.value,
         category: category.value,
+        affectation: affectation.value,
         show_disabled: show_disabled.value,
         limit: pageSize.value,
         offset: (page.value - 1) * pageSize.value,
@@ -64,13 +66,15 @@ export function usePagination(fetchFn, initialPageSize = 10) {
     total.value = 0;
     search.value = "";
     category.value = null;
+    affectation.value = null;
     show_disabled.value = false;
   };
 
   // Función para actualizar los parámetros de búsqueda y reiniciar la página.
-  const setSearchParams = (newSearch, newCategory, newShowDisabled) => {
+  const setSearchParams = (newSearch, newCategory, newAffectation, newShowDisabled) => {
     search.value = newSearch;
     category.value = newCategory;
+    affectation.value = newAffectation;
     show_disabled.value = newShowDisabled;
     page.value = 1; // Reinicia a la primera página al cambiar los parámetros.
   };
@@ -107,6 +111,7 @@ export function usePagination(fetchFn, initialPageSize = 10) {
     // Estados
     search,
     category,
+    affectation,
     show_disabled,
     page,
     pageSize,

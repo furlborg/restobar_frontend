@@ -160,7 +160,7 @@
                                         <n-select v-model:value="businessSettings.sale.default_affectation" :options="productStore.affectationsOptions" size="large" />
                                     </n-form-item-gi>
                                     <n-form-item-gi label="Valor IGV (%)">
-                                        <n-input-number v-model:value="igv_percentage" :show-button="false" :min="0" :max="100" size="large" disabled />
+                                        <n-input-number v-model:value="igv_percentage" :show-button="false" :min="0" :max="100" size="large" />
                                     </n-form-item-gi>
                                     <n-form-item-gi label="Valor ICBPER">
                                         <n-input v-model:value="businessSettings.sale.icbper_tax" size="large" />
@@ -191,6 +191,7 @@
                                     <div class="list-item"><div class="item-text"><span>Requerir clave para editar venta</span></div><n-switch :disabled="!editMode" v-model:value="businessSettings.sale.require_pass_recovery" /></div>
                                     <div class="list-item"><div class="item-text"><span>Manejar afectaciones múltiples</span></div><n-switch :disabled="!editMode" v-model:value="businessSettings.sale.manage_affectations" /></div>
                                     <div class="list-item"><div class="item-text"><span>Mostrar previsualización</span></div><n-switch :disabled="!editMode" v-model:value="businessSettings.sale.show_preview" /></div>
+                                    <div class="list-item"><div class="item-text"><span>Imprimir leyenda de bienes en Amazonia</span></div><n-switch :disabled="!editMode" v-model:value="businessSettings.sale.show_amazon_legend" /></div>
                                     <div class="list-item border-none"><div class="item-text"><span>Habilitar boletas/facturas</span></div><n-switch :disabled="!editMode" v-model:value="businessSettings.sale.enable_invoices" /></div>
                                 </div>
                             </n-form>

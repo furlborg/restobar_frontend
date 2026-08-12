@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="table-container">
     <n-scrollbar>
       <n-table class="product-details-table" :bordered="false">
@@ -106,7 +106,7 @@ export default defineComponent({
     const settingsStore = useSettingsStore();
     const userStore = useUserStore();
 
-    const DEFAULT_AFFECTATION = 20;
+    const DEFAULT_AFFECTATION = computed(() => settingsStore.businessSettings.sale?.default_affectation || 20);
 
     // Datos de afectaciÃ³n para colores y etiquetas
     const afcData = {
@@ -203,7 +203,7 @@ export default defineComponent({
       if (price <= 0) {
         applyTransferenciaGratuita(detail);
       } else if (detail.product_affectation === 21) {
-        detail.product_affectation = DEFAULT_AFFECTATION;
+        detail.product_affectation = DEFAULT_AFFECTATION.value;
         detail.price_sale = formatMoney(price);
         storePreviousPrice(detail);
         resetDiscount(detail);

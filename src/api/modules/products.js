@@ -113,6 +113,7 @@ export async function disableProduct(id) {
 export async function searchProduct(
   search,
   category,
+  affectation,
   disabled = false,
   pageLimit,
   pageOffset,
@@ -127,6 +128,10 @@ export async function searchProduct(
   // Solo agregar category si tiene un valor válido
   if (category && category !== false) {
     params.category = category;
+  }
+  
+  if (affectation && affectation !== false) {
+    params.affectation = affectation;
   }
 
   return await http.get("products/", {

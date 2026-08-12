@@ -821,8 +821,11 @@ export default defineComponent({
                       sendSale(response.data.id)
                         .then((response) => {
                           if (response.status === 200) {
-
-                            message.success("Enviado!");
+                            if (response.data?.warning_message) {
+                              message.warning(response.data.warning_message, { duration: 10000 });
+                            } else {
+                              message.success("Enviado!");
+                            }
                             // if (whatsappNumber.value.length >= 9) {
                             //   sendWhatsapp(
                             //     sale.id,

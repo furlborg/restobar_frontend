@@ -81,10 +81,11 @@ export const useUserStore = defineStore("user", {
         };
 
         console.info("User info extracted from token:", user);
-        useCookie.set("user-info", user, "");
+        const userForCookie = { ...user };
+        delete userForCookie.user_permissions;
+        useCookie.set("user-info", userForCookie, "");
         this.user = user;
         localStorage.setItem("perms", JSON.stringify(user.user_permissions));
-        delete user.user_permissions;
       } catch (e) {
         console.error("Error decoding token:", e);
       }
@@ -172,10 +173,23 @@ export const useUserStore = defineStore("user", {
       }
     },
     hasPermission(permission) {
-      if (this.user.role === "ADMINISTRADOR") {
+      if (this.user?.role === "ADMINISTRADOR") {
         return true;
       }
-      return this.user.user_permissions.some((perm) => perm === permission);
+      
+      let perms = this.user?.user_permissions;
+      if (!perms) {
+        try {
+          perms = JSON.parse(localStorage.getItem("perms") || "[]");
+        } catch (e) {
+          perms = [];
+        }
+      }
+      if (!Array.isArray(perms)) {
+        perms = [];
+      }
+      
+      return perms.some((perm) => perm === permission);
     },
   },
 });

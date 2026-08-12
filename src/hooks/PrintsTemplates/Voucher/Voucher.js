@@ -506,19 +506,19 @@ const VoucherPrint = (props) => {
           },
         ],
 
-        [
-          {
-            content:
-              "BIENES TRANSFERIDOS / SERVICIOS PRESTADOS EN LA AMAZONIA PARA SER CONSUMIDOS EN LA MISMA",
-            styles: {
-              fontStyle: "bold",
-              halign: "center",
-              fontSize:
-                settingsStore.business_settings.printer
-                  .pre_account_ticket_font_size,
+        ...(settingsStore.business_settings.sale?.show_amazon_legend ? [[
+            {
+              content:
+                "BIENES TRANSFERIDOS / SERVICIOS PRESTADOS EN LA AMAZONIA PARA SER CONSUMIDOS EN LA MISMA",
+              styles: {
+                fontStyle: "bold",
+                halign: "center",
+                fontSize:
+                  settingsStore.business_settings.printer
+                    .pre_account_ticket_font_size,
+              },
             },
-          },
-        ],
+          ]] : []),
       ],
     });
 
