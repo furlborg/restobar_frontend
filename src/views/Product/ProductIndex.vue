@@ -37,7 +37,9 @@
           </n-button>
         </n-input-group>
         <n-select v-model:value="category" :options="categoriesOptions" placeholder="Seleccione una categoria"
-          @update:value="debouncedPerformSearch" filterable style="min-width: 200px" />
+          @update:value="debouncedPerformSearch" filterable style="min-width: 200px" clearable />
+        <n-select v-model:value="affectation" :options="productStore.affectationsOptions" placeholder="Afectación"
+          @update:value="debouncedPerformSearch" filterable style="min-width: 150px" clearable />
         <n-checkbox v-model:checked="show_disabled" @update:checked="debouncedPerformSearch">
           Mostrar deshabilitados
         </n-checkbox>
@@ -208,21 +210,29 @@ const newMovement = (value) => {
     (itemsMovement.amount = undefined);
 };
 
-const searchProductWrapper = ({ search, category, show_disabled, limit, offset }) => {
-  return searchProduct(search, category, show_disabled, limit, offset);
+const searchProductWrapper = ({ search, category, affectation, show_disabled, limit, offset }) => {
+  return searchProduct(search, category, affectation, show_disabled, limit, offset);
 };
 
 // usar el composable de paginación
 const {
   search,
-  pagination,
-  loadData,
+  page,
+  pageSize,
+  pageCount,
+  total,
   items: products,
+  pageSizes,
+  onChange,
+  onPageSizeChange,
+  loadData,
   setTotal,
   reset,
   loading: isLoadingData,
   show_disabled,
   category,
+  affectation,
+  pagination,
 } = usePagination(searchProductWrapper, 10);
 
 const { performSearch, debouncedPerformSearch } = useProductFilters(loadData)

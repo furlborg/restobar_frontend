@@ -499,7 +499,13 @@ const performCreateSale = () => {
             if (settingsStore.businessSettings.sale.auto_send && String(sale.value.invoice_type) !== "80") {
               try {
                 const sendResponse = await sendSale(response.data.id);
-                if (sendResponse.status === 200) message.success("Enviado!");
+                if (sendResponse.status === 200) {
+                  if (sendResponse.data?.warning_message) {
+                    message.warning(sendResponse.data.warning_message, { duration: 10000 });
+                  } else {
+                    message.success("Enviado!");
+                  }
+                }
               } catch (error) {
                 console.error(error);
               }

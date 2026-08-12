@@ -420,7 +420,7 @@ export default defineComponent({
     const totalGRV = computed(() => {
       let total = sale.value.sale_details.reduce((acc, curVal) => {
         return curVal.product_affectation === 10
-          ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
+          ? (acc += (parseFloat(curVal.price_sale) - parseFloat(curVal.igv_tax || 0)) * curVal.quantity)
           : acc;
       }, 0);
       return total;
@@ -640,7 +640,11 @@ export default defineComponent({
                       sendSale(response.data.id)
                         .then((response) => {
                           if (response.status === 200) {
-                            message.success("Enviado!");
+                            if (response.data?.warning_message) {
+                              message.warning(response.data.warning_message, { duration: 10000 });
+                            } else {
+                              message.success("Enviado!");
+                            }
                           }
                           // if (whatsappNumber.value.length >= 9) {
                           //   sendWhatsapp(

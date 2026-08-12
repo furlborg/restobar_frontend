@@ -312,10 +312,10 @@
           <div class="ticket-footer-url">
             {{ businessStore.business.website }}/buscar
           </div>
-          <div>
-            BIENES CONSUMIDOS/SERVICIOS PRESTADOS EN LA AMAZONIA PARA SER
-            CONSUMIDAS EN LA MISMA
-          </div>
+            <div v-if="settingsStore.business_settings?.sale?.show_amazon_legend">
+              BIENES CONSUMIDOS/SERVICIOS PRESTADOS EN LA AMAZONIA PARA SER
+              CONSUMIDAS EN LA MISMA
+            </div>
         </div>
         <div v-else class="ticket-footer">
           <table>

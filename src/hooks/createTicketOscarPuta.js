@@ -3,8 +3,10 @@ import autoTable from "jspdf-autotable";
 import { numeroALetras } from "@/hooks/numberText";
 import qr from "qrcode";
 import { useTableStore } from "@/store/modules/table";
+import { useSettingsStore } from "@/store/modules/settings";
 
 export const generateVoucherPDF = async(data, infoHeader, dataOrder) => {
+    const settingsStore = useSettingsStore();
 
     const doc = new jsPDF({
         orientation: "portrait",
@@ -258,8 +260,11 @@ export const generateVoucherPDF = async(data, infoHeader, dataOrder) => {
     const footer = [
         "Representación impresa del comprobante electrónico. Puede verificar utilizando su clave SOL o ingresando a:",
         `${ infoHeader.business.website }/buscar`,
-        "BIENES CONSUMIDOS/SERVICIOS PRESTADOS EN LA AMAZONIA PARA SER CONSUMIDAS EN LA MISMA"
     ];
+
+    if (settingsStore.business_settings?.sale?.show_amazon_legend) {
+        footer.push("BIENES CONSUMIDOS/SERVICIOS PRESTADOS EN LA AMAZONIA PARA SER CONSUMIDAS EN LA MISMA");
+    }
 
     if (footer) {
         doc.setFontSize(6);

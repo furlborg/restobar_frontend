@@ -16,8 +16,11 @@
           <n-form-item-gi label="Precio venta" path="prices" :span="4">
             <n-input v-model:value="product.prices" type="number" placeholder=""
               @input="product.prices = restrictDecimal(product.prices)" @blur="
-                () =>
-                  (product.affectation = Number(product.prices) > 0 ? 20 : 21)
+                () => {
+                  if (!product.id) {
+                    product.affectation = Number(product.prices) > 0 ? (settingsStore.businessSettings.sale?.default_affectation || 20) : 21;
+                  }
+                }
               " />
           </n-form-item-gi>
           <n-form-item-gi label="Precio Compra" path="purchase_price" :span="4">
@@ -78,11 +81,14 @@
           <n-form-item-gi label="Unidad de medida" :span="5">
             <n-select v-model:value="product.measure_unit" placeholder="Seleccione" :options="optionsUND" />
           </n-form-item-gi>
+          <!-- El campo Afectación fue ocultado por solicitud -->
+          <!--
           <n-form-item-gi label="Afectación" :span="8">
             <n-select v-model:value="product.affectation" placeholder="Seleccione"
               :options="productStore.affectationsOptions" :disabled="!settingsStore.businessSettings.sale.manage_affectations
                 " @update:value="onAffectationChange" />
           </n-form-item-gi>
+          -->
           <!-- El campo IGV fue ocultado por solicitud, el sistema usará el IGV global por defecto -->
           <!-- 
           <n-form-item-gi label="IGV(%)" :span="4">
