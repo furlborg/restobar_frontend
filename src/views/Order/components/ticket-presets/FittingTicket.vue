@@ -260,9 +260,18 @@ export default defineComponent({
     };
 
     const generateIndication = (ind) => {
+      if (!ind || !Array.isArray(ind)) return "";
       let text = "";
       for (const indication of ind) {
-        text += ` [${indication.description}]`;
+        let desc = (indication?.description || "").trim();
+        if (desc && !desc.includes("[]")) {
+          if (indication.takeAway) {
+            desc += " [LLEVAR]";
+          }
+          text += ` [${desc}]`;
+        } else if (indication?.takeAway) {
+          text += ` [LLEVAR]`;
+        }
       }
       return text;
     };

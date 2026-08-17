@@ -115,7 +115,7 @@
                                     </div>
                                     </template>
                                     <div v-if="info.order_type === 'M' && detail.indication.some((ind) => ind.takeAway)" class="indication-extra">
-                                    PARA LLEVARrr: {{ indicationTakeAways(detail.indication) }}
+                                    PARA LLEVAR: {{ indicationTakeAways(detail.indication) }}
                                     </div>
                                 </div>
                                 </div>
@@ -319,27 +319,74 @@ export default defineComponent({
         const info = ref(generateData());
 
         const groupItems = (items) => {
+            // Desglosar cada item en unidades individuales según su indicación
+            const unitItems = [];
+            for (const item of items) {
+                const totalQty = !!props.isUpdate
+                    ? (item.quantity || 0)
+                    : (item.initial_quantity !== undefined ? item.initial_quantity : (item.quantity || 0));
+
+                const indications = Array.isArray(item.indication) ? item.indication : [];
+
+                if (totalQty <= 0) continue;
+
+                for (let i = 0; i < totalQty; i++) {
+                    const unitInd = indications[i] || null;
+                    const hasValidInd = unitInd && (
+                        (unitInd.description && unitInd.description.trim() !== "" && !unitInd.description.includes("[]")) ||
+                        (unitInd.quick_indications && unitInd.quick_indications.length > 0) ||
+                        unitInd.takeAway
+                    );
+
+                    const unitItem = JSON.parse(JSON.stringify(item));
+                    unitItem.quantity = 1;
+                    unitItem.initial_quantity = 1;
+                    unitItem.indication = hasValidInd ? [unitInd] : [];
+                    unitItems.push(unitItem);
+                }
+            }
+
+            // Agrupar las unidades que coincidan en producto, descripción, set, guarnición e indicación
             const grouped = [];
             const indexMap = new Map();
-            for (const item of items) {
-                const productName = item.product_name || item.product_set?.name || 'Desconocido';
-                const indicationStr = JSON.stringify(item.indication || []);
-                const descStr = item.product_description || '';
-                const key = `${productName}_${indicationStr}_${descStr}`;
-                
+
+            for (const unit of unitItems) {
+                const productName = unit.product_name || unit.product_set?.name || 'Desconocido';
+                const descStr = unit.product_description || '';
+                const setStr = unit.product_set ? JSON.stringify(unit.product_set) : '';
+                const fittingStr = unit.product_fitting ? JSON.stringify(unit.product_fitting) : '';
+
+                // Clave de indicación
+                let indKey = '__NO_IND__';
+                if (unit.indication && unit.indication.length > 0) {
+                    const ind = unit.indication[0];
+                    const indDesc = (ind.description || '').trim();
+                    const takeAway = !!ind.takeAway;
+                    indKey = `${indDesc}__takeAway:${takeAway}`;
+                }
+
+                const key = `${productName}__${descStr}__${setStr}__${fittingStr}__${indKey}`;
+
                 if (indexMap.has(key)) {
                     const existingItem = grouped[indexMap.get(key)];
-                    existingItem.initial_quantity = (existingItem.initial_quantity || existingItem.quantity || 0) + (item.initial_quantity || item.quantity || 0);
-                    existingItem.quantity = (existingItem.quantity || 0) + (item.quantity || 0);
+                    existingItem.initial_quantity = (existingItem.initial_quantity || 0) + 1;
+                    existingItem.quantity = (existingItem.quantity || 0) + 1;
                 } else {
-                    const newItem = JSON.parse(JSON.stringify(item));
-                    if (newItem.initial_quantity === undefined) {
-                        newItem.initial_quantity = newItem.quantity || 0;
-                    }
-                    grouped.push(newItem);
+                    grouped.push(unit);
                     indexMap.set(key, grouped.length - 1);
                 }
             }
+
+            // Ordenar para que dentro del mismo producto las unidades sin indicación salgan primero
+            grouped.sort((a, b) => {
+                const nameA = a.product_name || a.product_set?.name || '';
+                const nameB = b.product_name || b.product_set?.name || '';
+                if (nameA !== nameB) return 0;
+                const hasIndA = a.indication && a.indication.length > 0 ? 1 : 0;
+                const hasIndB = b.indication && b.indication.length > 0 ? 1 : 0;
+                return hasIndA - hasIndB;
+            });
+
             return grouped;
         };
 
@@ -447,9 +494,18 @@ export default defineComponent({
         };
 
         const generateIndication = (ind) => {
+            if (!ind || !Array.isArray(ind)) return "";
             let text = "";
             for (const indication of ind) {
-                if (!indication.description.includes("[]") || indication.quick_indications.length > 0) text += ` [${indication.description}]`;
+                let desc = (indication?.description || "").trim();
+                if (desc && !desc.includes("[]")) {
+                    if (indication.takeAway) {
+                        desc += " [LLEVAR]";
+                    }
+                    text += ` [${desc}]`;
+                } else if (indication?.takeAway) {
+                    text += ` [LLEVAR]`;
+                }
             }
             return text;
         };
