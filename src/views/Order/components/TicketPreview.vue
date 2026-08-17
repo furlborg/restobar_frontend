@@ -271,7 +271,7 @@ export default defineComponent({
                             "username": props.data.username
                         },
                         "ticket_content": (() => {
-                            const details = (!place || place.is_default)
+                            const rawDetails = (!place || place.is_default)
                                 ? (props.data.order_details || [])
                                 : (props.data.order_details || []).filter((pl) =>
                                     settingsStore.business_settings.printer.subticket_mode && place.is_main
@@ -279,6 +279,69 @@ export default defineComponent({
                                         : pl.preparation_place === place.description ||
                                           pl.product_fitting?.preparation_place === place.description
                                 );
+
+                            const groupDetailsByIndication = (items) => {
+                                const unitItems = [];
+                                for (const item of items) {
+                                    const totalQty = Number(item.quantity || 0);
+                                    const indications = Array.isArray(item.indication) ? item.indication : [];
+                                    if (totalQty <= 0) continue;
+
+                                    for (let i = 0; i < totalQty; i++) {
+                                        const unitInd = indications[i] || null;
+                                        const hasValidInd = unitInd && (
+                                            (unitInd.description && unitInd.description.trim() !== "" && !unitInd.description.includes("[]")) ||
+                                            (unitInd.quick_indications && unitInd.quick_indications.length > 0) ||
+                                            unitInd.takeAway
+                                        );
+
+                                        const unitItem = JSON.parse(JSON.stringify(item));
+                                        unitItem.quantity = 1;
+                                        unitItem.initial_quantity = 1;
+                                        unitItem.indication = hasValidInd ? [unitInd] : [];
+                                        unitItems.push(unitItem);
+                                    }
+                                }
+
+                                const grouped = [];
+                                const indexMap = new Map();
+
+                                for (const unit of unitItems) {
+                                    const productName = unit.product_name || unit.product_set?.name || 'Desconocido';
+                                    const descStr = unit.product_description || '';
+                                    const setStr = unit.product_set ? JSON.stringify(unit.product_set) : '';
+                                    const fittingStr = unit.product_fitting ? JSON.stringify(unit.product_fitting) : '';
+
+                                    let indKey = '__NO_IND__';
+                                    if (unit.indication && unit.indication.length > 0) {
+                                        const ind = unit.indication[0];
+                                        const indDesc = (ind.description || '').trim();
+                                        const takeAway = !!ind.takeAway;
+                                        indKey = `${indDesc}__takeAway:${takeAway}`;
+                                    }
+
+                                    const key = `${productName}__${descStr}__${setStr}__${fittingStr}__${indKey}`;
+
+                                    if (indexMap.has(key)) {
+                                        const existingItem = grouped[indexMap.get(key)];
+                                        existingItem.quantity = (existingItem.quantity || 0) + 1;
+                                    } else {
+                                        grouped.push(unit);
+                                        indexMap.set(key, grouped.length - 1);
+                                    }
+                                }
+
+                                grouped.sort((a, b) => {
+                                    const nameA = a.product_name || a.product_set?.name || '';
+                                    const nameB = b.product_name || b.product_set?.name || '';
+                                    if (nameA !== nameB) return 0;
+                                    const hasIndA = a.indication && a.indication.length > 0 ? 1 : 0;
+                                    const hasIndB = b.indication && b.indication.length > 0 ? 1 : 0;
+                                    return hasIndA - hasIndB;
+                                });
+
+                                return grouped;
+                            };
 
                             const mapLine = (it) => ({
                                 "id": it.id,
@@ -293,20 +356,26 @@ export default defineComponent({
                                             indicate.quick_indications.length > 0) &&
                                         indicate.description !== ""
                                     );
-                                }).map(indicate => indicate.description) || ""
+                                }).map(indicate => {
+                                    let desc = indicate.description || "";
+                                    if (indicate.takeAway) {
+                                        desc = desc ? `${desc} [LLEVAR]` : "[LLEVAR]";
+                                    }
+                                    return desc;
+                                }) || ""
                             });
 
                             const orderByCustomer = !!settingsStore.business_settings?.order?.order_by_customer;
-                            const hasCustomers = details.some((detail) => !!detail?.customer);
+                            const hasCustomers = rawDetails.some((detail) => !!detail?.customer);
 
                             if (!orderByCustomer || !hasCustomers) {
-                                return details.map(mapLine);
+                                return groupDetailsByIndication(rawDetails).map(mapLine);
                             }
 
                             const groups = [];
                             const index = new Map();
 
-                            details.forEach((detail) => {
+                            rawDetails.forEach((detail) => {
                                 const customerId = detail.customer?.id ?? "NO_CUSTOMER";
                                 const customerName =
                                     detail.customer?.name ||
@@ -346,7 +415,7 @@ export default defineComponent({
                                     "is_header": true,
                                     "is_table_header": true
                                 });
-                                group.items.forEach((detail) => {
+                                groupDetailsByIndication(group.items).forEach((detail) => {
                                     content.push(mapLine(detail));
                                 });
                             });
