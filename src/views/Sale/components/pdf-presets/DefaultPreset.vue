@@ -492,24 +492,31 @@ export default defineComponent({
         
         // Procesar indicaciones
         orderDetails.forEach((detail) => {
-          detail.indication = detail.indication ? detail.indication : []
-          const indication = detail?.indication.reduce((desc, indication) => {
-            if (indication.quick_indications?.length) {
-              indication.quick_indications.forEach((ind) => {
-                desc += `${ind}, `;
-              });
+          const indications = Array.isArray(detail?.indication) ? detail.indication : [];
+          const validIndications = [];
+
+          indications.forEach((ind) => {
+            let itemDesc = "";
+            if (ind?.quick_indications && ind.quick_indications.length) {
+              itemDesc = ind.quick_indications.join(", ");
             }
-            desc = !indication.description
-              ? ` [${desc.slice(0, -2)}]`
-              : `${desc} [${indication.description}]`;
-            return desc;
-          }, "");
-          
-          if (indication) {
+            if (ind?.description && ind.description.trim() !== "" && !ind.description.includes("[]")) {
+              itemDesc = itemDesc ? `${itemDesc}, ${ind.description.trim()}` : ind.description.trim();
+            }
+            if (ind?.takeAway) {
+              itemDesc = itemDesc ? `${itemDesc} [LLEVAR]` : "[LLEVAR]";
+            }
+            if (itemDesc) {
+              validIndications.push(`[${itemDesc}]`);
+            }
+          });
+
+          if (validIndications.length > 0) {
+            const indicationText = " " + validIndications.join(" ");
             const item = saleData.items.find(
               (i) => i.descripcion === detail.product_name
             );
-            if (item) item.descripcion += indication;
+            if (item) item.descripcion += indicationText;
           }
         });
       }

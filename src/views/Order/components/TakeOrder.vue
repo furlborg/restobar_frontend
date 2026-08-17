@@ -321,10 +321,9 @@
                                         </td>
                                         <td>
                                             <span>{{ order.product_name }}</span><br>
-                                            <span v-if="order?.indication.length > 0">
-                                                {{order.indication.map(dt =>
-                                                    dt?.description.split(", ")).flat().join(",")}}
-                                            </span> <br v-if="order?.indication.length > 0">
+                                            <span v-if="order?.indication?.some(dt => dt?.description && dt.description.trim())">
+                                                {{ order.indication.map(dt => dt?.description?.split(', ') || []).flat().map(s => s.trim()).filter(Boolean).join(', ') }}
+                                            </span> <br v-if="order?.indication?.some(dt => dt?.description && dt.description.trim())">
                                         </td>
                                         <td>
                                             <n-input-number class="border-top-0" size="small" :min="1"

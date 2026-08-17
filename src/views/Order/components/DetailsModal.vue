@@ -24,9 +24,9 @@
           <tr v-for="(detail, index) in details" :key="index">
             <td>
                 <span>{{ detail.product_name || detail.product_set?.name }}</span><br>
-                <span v-if="order?.indication.length > 0">
-                      {{ order.indication.map(dt => dt?.description.split(", ")).flat().join(", ") }}
-                </span> <br v-if="order?.indication.length > 0">
+                <span v-if="order?.indication?.some(dt => dt?.description && dt.description.trim())">
+                      {{ order.indication.map(dt => dt?.description?.split(', ') || []).flat().map(s => s.trim()).filter(Boolean).join(', ') }}
+                </span> <br v-if="order?.indication?.some(dt => dt?.description && dt.description.trim())">
             </td>
             <td>
               {{ detail.quantity || detail.product_set?.quantity || 1 }}
