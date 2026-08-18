@@ -489,36 +489,6 @@ export default defineComponent({
         });
         
         saleData.items = expandedItems;
-        
-        // Procesar indicaciones
-        orderDetails.forEach((detail) => {
-          const indications = Array.isArray(detail?.indication) ? detail.indication : [];
-          const validIndications = [];
-
-          indications.forEach((ind) => {
-            let itemDesc = "";
-            if (ind?.quick_indications && ind.quick_indications.length) {
-              itemDesc = ind.quick_indications.join(", ");
-            }
-            if (ind?.description && ind.description.trim() !== "" && !ind.description.includes("[]")) {
-              itemDesc = itemDesc ? `${itemDesc}, ${ind.description.trim()}` : ind.description.trim();
-            }
-            if (ind?.takeAway) {
-              itemDesc = itemDesc ? `${itemDesc} [LLEVAR]` : "[LLEVAR]";
-            }
-            if (itemDesc) {
-              validIndications.push(`[${itemDesc}]`);
-            }
-          });
-
-          if (validIndications.length > 0) {
-            const indicationText = " " + validIndications.join(" ");
-            const item = saleData.items.find(
-              (i) => i.descripcion === detail.product_name
-            );
-            if (item) item.descripcion += indicationText;
-          }
-        });
       }
       
       return saleData;

@@ -320,10 +320,11 @@
                                             </n-button>
                                         </td>
                                         <td>
-                                            <span>{{ order.product_name }}</span><br>
-                                            <span v-if="order?.indication?.some(dt => dt?.description && dt.description.trim())">
-                                                {{ order.indication.map(dt => dt?.description?.split(', ') || []).flat().map(s => s.trim()).filter(Boolean).join(', ') }}
-                                            </span> <br v-if="order?.indication?.some(dt => dt?.description && dt.description.trim())">
+                                            <span>{{ order.product_name }}</span>
+                                            <template v-if="formatIndications(order.indication)">
+                                                <br>
+                                                <span style="font-size: 0.85em; color: #555;">{{ formatIndications(order.indication) }}</span>
+                                            </template>
                                         </td>
                                         <td>
                                             <n-input-number class="border-top-0" size="small" :min="1"
@@ -1086,6 +1087,27 @@ export default defineComponent({
 
         const voucherData = ref(null);
 
+        const formatIndications = (indications) => {
+            if (!Array.isArray(indications)) return "";
+            const valid = [];
+            indications.forEach((ind) => {
+                let itemDesc = "";
+                if (ind?.quick_indications && ind.quick_indications.length) {
+                    itemDesc = ind.quick_indications.join(", ");
+                }
+                if (ind?.description && ind.description.trim() !== "" && !ind.description.includes("[]")) {
+                    itemDesc = itemDesc ? `${itemDesc}, ${ind.description.trim()}` : ind.description.trim();
+                }
+                if (ind?.takeAway) {
+                    itemDesc = itemDesc ? `${itemDesc} [LLEVAR]` : "[LLEVAR]";
+                }
+                if (itemDesc) {
+                    valid.push(`[${itemDesc}]`);
+                }
+            });
+            return valid.join(" ");
+        };
+
         return {
             loading,
             saleStore,
@@ -1153,7 +1175,8 @@ export default defineComponent({
             pdfData,
             voucherDrawer,
             showVoucher,
-            voucherData
+            voucherData,
+            formatIndications
         };
     }
 });
