@@ -1,25 +1,58 @@
 <template>
     <n-modal preset="card" title="Indicaciones" :show="show" :on-close="() => $emit('update:show')">
         <n-list>
-            <n-list-item v-for="(indication, index) in indications" class="p-2"
-                :class="{ 'bg-selected': selectedIndication === index }" :key="index" @click="selectIndication(index)">
+            <n-list-item v-for="(indication, index) in indications" class="p-2 mb-1"
+                :class="{ 
+                    'bg-selected': selectedIndication === index,
+                    'item-saved': isItemSaved(index),
+                    'item-new': !isItemSaved(index) && savedQuantity > 0
+                }" 
+                :key="index" @click="handleItemClick(index)">
                 <template #prefix>
                     <v-icon :name="!indication.takeAway ? 'io-bag' : 'io-bag-check'"
-                        @click="indication.takeAway ? (indication.takeAway = false) : (indication.takeAway = true)"
-                        :fill="!indication.takeAway ? null : 'green'" @click.stop />
+                        @click.stop="toggleTakeAway(indication, index)"
+                        :fill="!indication.takeAway ? null : 'green'"
+                        :style="{ cursor: isItemSaved(index) ? 'not-allowed' : 'pointer', opacity: isItemSaved(index) ? 0.5 : 1 }" />
                 </template>
-                <n-thing :title="product.product_name" :title-extra="`S/. ${product.price}`" />
-                <n-collapse-transition :show="selectedIndication === index">
-                    <n-tag v-for="(quick, index) in quickIndications" :key="index" class="mx-1" checkable @click.stop
-                        :checked="indication.quick_indications.some((ind) => ind === quick)"
-                        @update:checked="() => handleIndications(indication, quick)">
-                        {{ quick }}
-                    </n-tag>
-                    <n-form>
-                        <n-form-item v-if="selectedIndication !== null" :span="12" label="Indicaciones">
-                            <n-input @click.stop type="textarea" v-model:value="indication.description" />
-                        </n-form-item>
-                    </n-form>
+                <n-thing>
+                    <template #header>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span>{{ product?.product_name }} #{{ index + 1 }}</span>
+                            <div>
+                                <n-tag v-if="isItemSaved(index)" size="tiny" :bordered="false" type="default" style="font-size: 10px; font-weight: 600; margin-left: 6px; padding: 0 4px; height: 18px;">
+                                    YA ENVIADO
+                                </n-tag>
+                                <n-tag v-else-if="savedQuantity > 0" size="tiny" type="success" style="font-size: 10px; font-weight: 600; margin-left: 6px; padding: 0 4px; height: 18px;">
+                                    NUEVO
+                                </n-tag>
+                            </div>
+                        </div>
+                    </template>
+                    <template #header-extra>
+                        <span class="text-muted">S/. {{ product?.price }}</span>
+                    </template>
+                    <template #description v-if="isItemSaved(index)">
+                        <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">
+                            <span v-if="indication.quick_indications?.length || indication.description">
+                                <strong>Indicación:</strong> {{ [ ...(indication.quick_indications || []), indication.description ].filter(Boolean).join(', ') }}
+                            </span>
+                            <span v-else style="font-style: italic;">Sin indicaciones</span>
+                        </div>
+                    </template>
+                </n-thing>
+                <n-collapse-transition :show="selectedIndication === index && !isItemSaved(index)">
+                    <div class="mt-2 pt-2 border-top">
+                        <n-tag v-for="(quick, qIndex) in quickIndications" :key="qIndex" class="mx-1 mb-1" checkable @click.stop
+                            :checked="indication.quick_indications.some((ind) => ind === quick)"
+                            @update:checked="() => handleIndications(indication, quick)">
+                            {{ quick }}
+                        </n-tag>
+                        <n-form class="mt-2">
+                            <n-form-item v-if="selectedIndication !== null" :span="12" label="Indicaciones">
+                                <n-input @click.stop type="textarea" v-model:value="indication.description" placeholder="Escriba especificaciones aquí..." />
+                            </n-form-item>
+                        </n-form>
+                    </div>
                 </n-collapse-transition>
             </n-list-item>
         </n-list>
@@ -35,6 +68,7 @@
 import { defineComponent, ref, computed, toRefs, watch } from "vue";
 import { cloneDeep } from "@/utils";
 import { useGenericsStore } from "@/store/modules/generics";
+import { useSaleStore } from "@/store/modules/sale";
 
 export default defineComponent({
     name: "OrderIndications",
@@ -51,7 +85,18 @@ export default defineComponent({
     setup(props, { emit }) {
         const { show, product } = toRefs(props);
         const genericsStore = useGenericsStore();
+        const saleStore = useSaleStore();
         const indications = ref([]);
+        const selectedIndication = ref(null);
+
+        const savedQuantity = computed(() => {
+            if (!product.value || !product.value.id) return 0;
+            return saleStore.getOrderQuantity(product.value.id) || product.value.initial_quantity || 0;
+        });
+
+        const isItemSaved = (index) => {
+            return index < savedQuantity.value;
+        };
 
         const quickIndications = computed(() => {
             const quicks = product.value?.quick_indications;
@@ -72,37 +117,50 @@ export default defineComponent({
             }
         };
 
+        const toggleTakeAway = (indication, index) => {
+            if (isItemSaved(index)) return;
+            indication.takeAway = !indication.takeAway;
+        };
+
+        const handleItemClick = (index) => {
+            if (isItemSaved(index)) return;
+            selectIndication(index);
+        };
+
         watch(show, (val) => {
             if (!val) return;
 
-            const qty = Number(product.value.quantity) || 1;
-            const current = cloneDeep(product.value.indication || []);
+            const qty = Number(product.value?.quantity) || 1;
+            const current = cloneDeep(product.value?.indication || []);
 
             indications.value = Array.from({ length: qty }, (_, i) => ({
                 takeAway: current[i]?.takeAway || false,
                 description: current[i]?.description || "",
                 quick_indications: Array.isArray(current[i]?.quick_indications) ? current[i].quick_indications : []
             }));
+
+            // Si hay items nuevos, auto-seleccionar el primer item nuevo para facilitar la edición
+            if (savedQuantity.value > 0 && qty > savedQuantity.value) {
+                selectedIndication.value = savedQuantity.value;
+            } else if (savedQuantity.value === 0) {
+                selectedIndication.value = 0;
+            } else {
+                selectedIndication.value = null;
+            }
         });
 
-        const selectedIndication = ref(null);
-
-        const selectIndication = (indication) => {
-            if (!selectedIndication.value) {
-                selectedIndication.value = indication;
+        const selectIndication = (index) => {
+            if (selectedIndication.value === index) {
+                selectedIndication.value = null;
             } else {
-                if (selectedIndication.value === indication) {
-                    selectedIndication.value = null;
-                } else {
-                    selectedIndication.value = indication;
-                }
+                selectedIndication.value = index;
             }
         };
 
         const saveIndications = () => {
             product.value.indication.splice(0, product.value.indication.length, ...cloneDeep(indications.value));
-            console.log(product.value);
             emit("success");
+            emit("update:show", false);
         };
 
         return {
@@ -112,14 +170,30 @@ export default defineComponent({
             selectIndication,
             selectedIndication,
             quickIndications,
-            handleIndications
+            handleIndications,
+            savedQuantity,
+            isItemSaved,
+            toggleTakeAway,
+            handleItemClick
         };
     }
 });
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .bg-selected {
-    background-color: AliceBlue;
+    background-color: #f0f7ff !important;
+    border-left: 4px solid #1890ff !important;
+}
+
+.item-saved {
+    background-color: #f5f5f5 !important;
+    border-left: 4px solid #b0b0b0 !important;
+    opacity: 0.75;
+    cursor: not-allowed !important;
+}
+
+.item-new {
+    border-left: 4px solid #18a058;
 }
 </style>
