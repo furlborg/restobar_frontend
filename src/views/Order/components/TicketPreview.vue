@@ -350,19 +350,21 @@ export default defineComponent({
                                 "product_name": it.product_name || it.product_set?.name || "",
                                 "product_description": it.product_description || "",
                                 "product_category": it.product_category || "",
-                                "indicaciones": (it.indication || []).filter(indicate => {
-                                    return (
-                                        (!indicate.description.includes("[]") || indicate.description.length > 3 ||
-                                            indicate.quick_indications.length > 0) &&
-                                        indicate.description !== ""
-                                    );
-                                }).map(indicate => {
-                                    let desc = indicate.description || "";
+                                "indicaciones": (it.indication || []).map(indicate => {
+                                    if (!indicate) return "";
+                                    let parts = [];
+                                    if (Array.isArray(indicate.quick_indications) && indicate.quick_indications.length > 0) {
+                                        parts.push(...indicate.quick_indications);
+                                    }
+                                    if (indicate.description && indicate.description.trim() !== "" && !indicate.description.includes("[]")) {
+                                        parts.push(indicate.description.trim());
+                                    }
+                                    let desc = parts.join(", ");
                                     if (indicate.takeAway) {
                                         desc = desc ? `${desc} [LLEVAR]` : "[LLEVAR]";
                                     }
                                     return desc;
-                                }) || ""
+                                }).filter(d => d && d.trim() !== "")
                             });
 
                             const orderByCustomer = !!settingsStore.business_settings?.order?.order_by_customer;
