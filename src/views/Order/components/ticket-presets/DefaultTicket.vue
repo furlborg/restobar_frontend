@@ -497,14 +497,18 @@ export default defineComponent({
             if (!ind || !Array.isArray(ind)) return "";
             let text = "";
             for (const indication of ind) {
-                let desc = (indication?.description || "").trim();
-                if (desc && !desc.includes("[]")) {
-                    if (indication.takeAway) {
-                        desc += " [LLEVAR]";
-                    }
-                    text += ` [${desc}]`;
-                } else if (indication?.takeAway) {
-                    text += ` [LLEVAR]`;
+                let itemDesc = "";
+                if (indication?.quick_indications && indication.quick_indications.length) {
+                    itemDesc = indication.quick_indications.join(", ");
+                }
+                if (indication?.description && indication.description.trim() !== "" && !indication.description.includes("[]")) {
+                    itemDesc = itemDesc ? `${itemDesc}, ${indication.description.trim()}` : indication.description.trim();
+                }
+                if (indication?.takeAway) {
+                    itemDesc = itemDesc ? `${itemDesc} [LLEVAR]` : "[LLEVAR]";
+                }
+                if (itemDesc) {
+                    text += ` [${itemDesc}]`;
                 }
             }
             return text;
