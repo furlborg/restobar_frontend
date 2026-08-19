@@ -1,3 +1,7 @@
+<template>
+  <span v-if="false"></span>
+</template>
+
 <script setup>
 import { useMessage } from 'naive-ui'
 

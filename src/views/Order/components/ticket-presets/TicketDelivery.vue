@@ -143,16 +143,28 @@ export default defineComponent({
         saleData.informacion_adicional.split("|");
       if (settingsStore.business_settings.printer.detail_items) {
         props.data.order_details.forEach((detail, index) => {
-          const indication = detail.indication.reduce((desc, indication) => {
-            if (indication.quick_indications.length) {
-              indication.quick_indications.forEach((ind) => {
-                desc += `${ind}, `;
-              });
+          const indications = Array.isArray(detail?.indication) ? detail.indication : [];
+          const validIndications = [];
+
+          indications.forEach((ind) => {
+            let itemDesc = "";
+            if (ind?.quick_indications && ind.quick_indications.length) {
+              itemDesc = ind.quick_indications.join(", ");
             }
-            desc = ` [${desc}${indication.description}]`;
-            return desc;
-          }, "");
-          saleData.items[index].descripcion += indication;
+            if (ind?.description && ind.description.trim() !== "" && !ind.description.includes("[]")) {
+              itemDesc = itemDesc ? `${itemDesc}, ${ind.description.trim()}` : ind.description.trim();
+            }
+            if (ind?.takeAway) {
+              itemDesc = itemDesc ? `${itemDesc} [LLEVAR]` : "[LLEVAR]";
+            }
+            if (itemDesc) {
+              validIndications.push(`[${itemDesc}]`);
+            }
+          });
+
+          if (validIndications.length > 0 && saleData.items[index]) {
+            saleData.items[index].descripcion += " " + validIndications.join(" ");
+          }
         });
       }
       return saleData;

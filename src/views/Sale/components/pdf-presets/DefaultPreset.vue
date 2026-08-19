@@ -489,29 +489,6 @@ export default defineComponent({
         });
         
         saleData.items = expandedItems;
-        
-        // Procesar indicaciones
-        orderDetails.forEach((detail) => {
-          detail.indication = detail.indication ? detail.indication : []
-          const indication = detail?.indication.reduce((desc, indication) => {
-            if (indication.quick_indications?.length) {
-              indication.quick_indications.forEach((ind) => {
-                desc += `${ind}, `;
-              });
-            }
-            desc = !indication.description
-              ? ` [${desc.slice(0, -2)}]`
-              : `${desc} [${indication.description}]`;
-            return desc;
-          }, "");
-          
-          if (indication) {
-            const item = saleData.items.find(
-              (i) => i.descripcion === detail.product_name
-            );
-            if (item) item.descripcion += indication;
-          }
-        });
       }
       
       return saleData;

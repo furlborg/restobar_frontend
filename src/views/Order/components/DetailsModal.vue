@@ -23,10 +23,11 @@
         <tbody>
           <tr v-for="(detail, index) in details" :key="index">
             <td>
-                <span>{{ detail.product_name || detail.product_set?.name }}</span><br>
-                <span v-if="order?.indication.length > 0">
-                      {{ order.indication.map(dt => dt?.description.split(", ")).flat().join(", ") }}
-                </span> <br v-if="order?.indication.length > 0">
+                <span>{{ detail.product_name || detail.product_set?.name }}</span>
+                <template v-if="formatIndications(detail.indication)">
+                  <br>
+                  <span style="font-size: 0.85em; color: #555;">{{ formatIndications(detail.indication) }}</span>
+                </template>
             </td>
             <td>
               {{ detail.quantity || detail.product_set?.quantity || 1 }}
@@ -65,6 +66,27 @@ export default defineComponent({
     const isLoadingData = ref(false);
     const details = ref([]);
 
+    const formatIndications = (indications) => {
+      if (!Array.isArray(indications)) return "";
+      const valid = [];
+      indications.forEach((ind) => {
+        let itemDesc = "";
+        if (ind?.quick_indications && ind.quick_indications.length) {
+          itemDesc = ind.quick_indications.join(", ");
+        }
+        if (ind?.description && ind.description.trim() !== "" && !ind.description.includes("[]")) {
+          itemDesc = itemDesc ? `${itemDesc}, ${ind.description.trim()}` : ind.description.trim();
+        }
+        if (ind?.takeAway) {
+          itemDesc = itemDesc ? `${itemDesc} [LLEVAR]` : "[LLEVAR]";
+        }
+        if (itemDesc) {
+          valid.push(`[${itemDesc}]`);
+        }
+      });
+      return valid.join(" ");
+    };
+
     watch(show, async () => {
       if (show.value === true) {
         isLoadingData.value = true;
@@ -96,6 +118,7 @@ export default defineComponent({
       genericsStore,
       isLoadingData,
       details,
+      formatIndications,
     };
   },
 });
