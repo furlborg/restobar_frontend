@@ -13,7 +13,7 @@
                         <div v-if="props.data?.details?.modified" class="mt-1">
                             <n-text style="color: #cf1322; opacity: 0.8; font-size: 12px;">
                                 <v-icon name="md-accesstime-round" size="14" style="vertical-align: -2px; margin-right: 2px;" />
-                                {{ new Date(props.data.details.modified).toLocaleDateString('es-ES') }} a las {{ new Date(props.data.details.modified).toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'}) }}
+                                {{ formatModifiedDate(props.data.details.modified) }}
                             </n-text>
                         </div>
                     </div>
@@ -40,6 +40,21 @@ const props = defineProps({ data: { type: Object, default: () => { } } });
 const emit = defineEmits(['update:show']);
 const dataTable = ref([]);
 const genericsStore = useGenericsStore();
+
+const formatModifiedDate = (dateVal) => {
+    if (!dateVal) return '';
+    if (typeof dateVal === 'string' && dateVal.includes('/')) {
+        const parts = dateVal.trim().split(' ');
+        if (parts.length === 2) {
+            const timeFormatted = parts[1].substring(0, 5);
+            return `${parts[0]} a las ${timeFormatted}`;
+        }
+        return dateVal;
+    }
+    const parsed = new Date(dateVal);
+    if (isNaN(parsed.getTime())) return String(dateVal);
+    return `${parsed.toLocaleDateString('es-ES')} a las ${parsed.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
+};
 
 watch(props, () => {
     if (props.data?.show) {
