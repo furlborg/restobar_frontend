@@ -24,11 +24,11 @@
                 <n-grid responsive="screen" cols="6 s:6 m:12 l:12 xl:24 2xl:24" :x-gap="12">
                     <n-form-item-gi label="Fecha Desde" :span="2">
                         <n-date-picker type="date" v-model:formatted-value="filterParams.date_after" format="dd/MM/yyyy"
-                            clearable />
+                            value-format="dd/MM/yyyy" clearable />
                     </n-form-item-gi>
                     <n-form-item-gi label="Fecha Hasta" :span="2">
                         <n-date-picker type="date" v-model:formatted-value="filterParams.date_before"
-                            format="dd/MM/yyyy" clearable />
+                            format="dd/MM/yyyy" value-format="dd/MM/yyyy" clearable />
                     </n-form-item-gi>
                     <n-form-item-gi label="T. de Anulación" :span="2">
                         <n-select :options="typeCancellation" v-model:value="filterParams.canceled_type" clearable />
@@ -249,6 +249,21 @@ const columns = [
     }
 ];
 
+const formatCanceledDate = (dateVal) => {
+    if (!dateVal) return '';
+    if (typeof dateVal === 'string' && dateVal.includes('/')) {
+        const parts = dateVal.trim().split(' ');
+        if (parts.length === 2) {
+            const timeFormatted = parts[1].substring(0, 5);
+            return `${parts[0]} a las ${timeFormatted}`;
+        }
+        return dateVal;
+    }
+    const parsed = new Date(dateVal);
+    if (isNaN(parsed.getTime())) return String(dateVal);
+    return `${parsed.toLocaleDateString('es-ES')} a las ${parsed.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
+};
+
 const columnsDataAnulate = [
     {
         title: "Producto Anulado",
@@ -277,7 +292,7 @@ const columnsDataAnulate = [
         title: "Auditoría (Motivo y Usuario)",
         key: "audit",
         render(row) {
-            const dateStr = row.created ? `${new Date(row.created).toLocaleDateString('es-ES')} a las ${new Date(row.created).toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'})}` : '';
+            const dateStr = formatCanceledDate(row.created);
             return h('div', { class: 'py-1' }, [
                 h('div', { style: 'font-size: 12.5px; color: #d03050; line-height: 1.3; font-weight: 500;' }, [
                     h('strong', {}, 'Motivo: '),
