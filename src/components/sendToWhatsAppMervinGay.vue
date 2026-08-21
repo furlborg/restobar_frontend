@@ -1,7 +1,7 @@
 <script setup>
 
 import { ref } from "vue";
-import { generateVoucherPDF } from "@/hooks/createTicketOscarPuta";
+import { generateVoucherA4PDF } from "@/hooks/createVoucherA4PDF";
 import { useBusinessStore } from "@/store/modules/business";
 import { http } from "@/api";
 import { useMessage } from "naive-ui";
@@ -25,30 +25,28 @@ const formValues = ref({
 
 const sentFileToWhatsApp = async(info) => {
     loading.value = true;
-    const pdfBlob = await generateVoucherPDF(JSON.parse(info.json_sale), businessStore, info);
-    const formData = new FormData();
-
-    formData.append("file", pdfBlob, "voucher.pdf");
-    formData.append("phone", `51${ formValues.value.phone }`);
-    formData.append("message", formValues.value.message);
-
     try {
+        const doc = await generateVoucherA4PDF(info, businessStore, info);
+        const pdfBlob = doc.output("blob");
+        const formData = new FormData();
+
+        formData.append("file", pdfBlob, "comprobante.pdf");
+        formData.append("phone", `51${ formValues.value.phone }`);
+        formData.append("message", formValues.value.message);
+
         const data = await http.post(`sales/${ info.id }/send-file/`, formData, {
             headers: {
                 "Content-Type": "multipart/form-data"
             }
         });
         if (data.status === 200) {
-            message.success("Enviado con éxito");
-            // eslint-disable-next-line vue/no-mutating-props
+            message.success("Comprobante A4 enviado con éxito a WhatsApp");
             props.dataModal.show.value = false;
-            console.log("Enviado con éxito:", data);
-            console.log(info.by_consumption);
-            loading.value = false;
-
         }
     } catch (err) {
-        console.error("Error al enviar el archivo:", err);
+        console.error("Error al enviar el comprobante A4 por WhatsApp:", err);
+        message.error("Error al enviar el comprobante por WhatsApp");
+    } finally {
         loading.value = false;
     }
 };

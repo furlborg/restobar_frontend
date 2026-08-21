@@ -18,7 +18,7 @@
               <n-input-number :data-numeric-decimals="item.precision ?? 2" :value="getNumericValue(item.value)"
                 :min="item.min ?? 0" :max="typeof item.max === 'number' ? item.max : undefined" :step="item.step ?? 0.1"
                 :precision="item.precision ?? 2" :disabled="item.disabled" :class="getInputClass(item)"
-                @click="$event.target.select()" @update:value="(value) => handleNumberChange(item, value)"
+                @click="(e) => e.target?.select?.()" @update:value="(value) => handleNumberChange(item, value)"
                 @input="(event) => onItemInput(item, event)" @blur="(event) => onItemBlur(item, event)">
                 <template #prefix>{{ currencySymbol }}</template>
               </n-input-number>
@@ -42,7 +42,7 @@
             <n-text strong class="fs-5">PAGO</n-text>
             <n-input-number ref="paymentInput" data-numeric-decimals="2" :value="localPayment" :min="paymentMin"
               :max="typeof paymentMax === 'number' ? paymentMax : undefined" :precision="2" step="0.1" size="large"
-              class="payment-input" @update:value="(value) => localPayment = value" @click="$event.target.select()"
+              class="payment-input" @update:value="(value) => localPayment = value" @click="(e) => e.target?.select?.()"
               @input="onLocalPaymentInput" @blur="onPaymentBlur">
               <template #prefix>{{ currencySymbol }}</template>
             </n-input-number>
