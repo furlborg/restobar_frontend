@@ -42,7 +42,7 @@ import { useRouter } from "vue-router";
 import { login } from "@/api/modules/users";
 import { useUserStore } from "@/store/modules/user";
 import { useGenericsStore } from "@/store/modules/generics";
-import logo from "@/assets/images/account-logo.png";
+import logo from "@/assets/images/flizzy-logo.png";
 import axios from "axios";
 
 const userStore = useUserStore();
@@ -50,7 +50,7 @@ const genericsStore = useGenericsStore();
 const formRef = ref();
 const message = useMessage();
 const loading = ref(false);
-const image = ref(null);
+const image = ref(logo);
 axios
   .get(`${import.meta.env.VITE_APP_URL}/media/business/logo.png`)
   .then((response) => {
@@ -147,9 +147,17 @@ const handleSubmit = () => {
     }
 
     &-logo {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 20px;
+
       img {
-        max-width: 350px;
-        max-height: 250px;
+        max-width: 190px;
+        max-height: 110px;
+        width: auto;
+        height: auto;
+        object-fit: contain;
       }
     }
   }

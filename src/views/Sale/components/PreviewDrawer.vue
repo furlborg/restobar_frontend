@@ -23,7 +23,7 @@
                         <n-button style="width: 90px" type="info" tertiary disabled>
                             <v-icon name="md-outgoingmail" />
                         </n-button>
-                        <n-button style="width: 90px" type="warning" tertiary @click="generate(true)">
+                        <n-button style="width: 90px" type="warning" tertiary :loading="downloadingA4" @click="downloadA4PDF">
                             <v-icon name="fa-download" />
                         </n-button>
                     </n-button-group>
@@ -60,6 +60,7 @@ import { useBusinessStore } from "@/store/modules/business";
 import { useTableStore } from "@/store/modules/table";
 import { http } from "@/api";
 import SendToWhatsAppMervinGay from "@/components/sendToWhatsAppMervinGay.vue";
+import { generateVoucherA4PDF } from "@/hooks/createVoucherA4PDF";
 
 export default defineComponent({
     name: "PreviewDrawer",
@@ -144,45 +145,37 @@ export default defineComponent({
             }
         );
 
+        const downloadingA4 = ref(false);
+
+        const downloadA4PDF = async () => {
+            if (!props.data) return;
+            downloadingA4.value = true;
+            try {
+                const doc = await generateVoucherA4PDF(props.data, businessStore, props.data);
+                const serieDesc = saleStore.getSerieDescription(props.data?.serie) || props.data?.serie || "COMPROBANTE";
+                const numberVal = props.data?.number || "0";
+                doc.save(`${serieDesc}-${numberVal}.pdf`);
+                message.success("Comprobante A4 descargado con éxito");
+            } catch (e) {
+                console.error("Error al generar PDF A4:", e);
+                message.error("Error al generar el comprobante en formato A4");
+            } finally {
+                downloadingA4.value = false;
+            }
+        };
+
         const generate = async (save = false) => {
+            if (save === true) {
+                return await downloadA4PDF();
+            }
+
             // Activar modo impresión para usar dimensiones correctas
             isPrintMode.value = true;
 
             // Esperar a que Vue actualice el DOM
             await new Promise(resolve => setTimeout(resolve, 100));
 
-            if (save === true) {
-                try {
-                    const el = ticket.value?.$el;
-                    if (!el) throw new Error("Ticket DOM no disponible");
-                    const canvas = await html2canvas(el, {
-                        scale: 2,
-                        useCORS: true,
-                        logging: false,
-                        backgroundColor: '#ffffff'
-                    });
-
-                    const imgData = canvas.toDataURL('image/png');
-                    const pdfW = canvas.width;
-                    const pdfH = canvas.height + 10;
-
-                    const doc = new jsPDF({
-                        unit: 'px',
-                        format: [pdfW, pdfH],
-                        orientation: 'p',
-                        hotfixes: ['px_scaling']
-                    });
-
-                    doc.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH, undefined, 'FAST');
-                    doc.save(`${saleStore.getSerieDescription(props.data.serie)}-${props.data.number}`);
-                } catch (e) {
-                    console.error(e);
-                } finally {
-                    isPrintMode.value = false;
-                }
-                return;
-            } else {
-                if (props.preVoucher) {
+            if (props.preVoucher) {
                     const business = businessStore.business;
                     const sendTicketData = async () => {
 
@@ -344,7 +337,6 @@ export default defineComponent({
 
                     await sendTicketData();
                 }
-            }
 
             // Desactivar modo impresión después de generar el PDF
             isPrintMode.value = false;
@@ -371,6 +363,8 @@ export default defineComponent({
 
         return {
             loading,
+            downloadingA4,
+            downloadA4PDF,
             ticket,
             generate,
             send,
