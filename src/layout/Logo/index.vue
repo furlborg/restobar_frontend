@@ -6,7 +6,7 @@
 
 <script setup>
 import { ref } from "vue";
-import logo from "@/assets/images/logo.png";
+import logo from "@/assets/images/flizzy-logo.png";
 import axios from "axios";
 
 defineProps({
@@ -15,7 +15,7 @@ defineProps({
 defineOptions({
   name: "WLogo",
 });
-const image = ref(null);
+const image = ref(logo);
 axios
   .get(`${import.meta.env.VITE_APP_URL}/media/business/logo.png`)
   .then((response) => {
@@ -33,21 +33,29 @@ axios
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 112px;
+  height: 125px;
+  padding: 10px 8px;
 
   &-collapsed {
     display: flex;
     align-items: center;
     justify-content: center;
     height: 64px;
+    padding: 6px;
 
     img {
-      height: 48px;
+      height: 52px;
+      width: 52px;
+      object-fit: contain;
     }
   }
 
   img {
-    max-height: 96px;
+    max-height: 108px;
+    max-width: 162px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
   }
 }
 

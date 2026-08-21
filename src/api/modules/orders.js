@@ -148,8 +148,8 @@ export async function takeAwayOrder(order_details, sale_data, user, salePayload 
       ? businessStore.currentBranch
       : null,
     discount: sale_data.discount,
-    icbper: parseFloat(sale_data.icbper).toFixed(2),
-    other_charges: parseFloat(sale_data.other_charges).toFixed(2),
+    icbper: parseFloat(sale_data.icbper || 0).toFixed(2),
+    other_charges: parseFloat(sale_data.other_charges || 0).toFixed(2),
     observations: sale_data.observations,
     sale_details: sale_data.sale_details,
     product_sets: salePayload ? salePayload.sale_product_sets : [],
@@ -157,10 +157,10 @@ export async function takeAwayOrder(order_details, sale_data, user, salePayload 
     payments: sale_data.payments,
     do_update: sale_data.do_update,
     is_change: sale_data.is_change,
-    taxed_amount: sale_data.taxed_amount.toFixed(2),
-    exempt_amount: sale_data.exempt_amount.toFixed(2),
-    free_amount: sale_data.free_amount.toFixed(2),
-    igv_amount: sale_data.igv_amount.toFixed(2),
+    taxed_amount: Number(sale_data.taxed_amount || 0).toFixed(2),
+    exempt_amount: Number(sale_data.exempt_amount || 0).toFixed(2),
+    free_amount: Number(sale_data.free_amount || 0).toFixed(2),
+    igv_amount: Number(sale_data.igv_amount || 0).toFixed(2),
     total_igv: safeIgvValue,
   };
   // Asegurar que total_igv esté presente y formateado correctamente
