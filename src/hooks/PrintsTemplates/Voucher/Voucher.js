@@ -54,6 +54,10 @@ const VoucherPrint = (props) => {
       NoNoteSale = false;
     }
 
+    const rawRate = settingsStore.business_settings?.sale?.igv_tax ?? 0.18;
+    const ratePercentage = Number(rawRate) > 1 ? Number(rawRate) : Number(rawRate) * 100;
+    const igvLabel = `IGV (${ratePercentage % 1 === 0 ? ratePercentage.toFixed(0) : ratePercentage.toFixed(1)}%)`;
+
     NoNoteSale
       ? (newTotal = {
           "OP.GRAVADA":
@@ -62,7 +66,7 @@ const VoucherPrint = (props) => {
             dataForPrint.totales.total_operaciones_exoneradas.toFixed("2"),
           "OP.GRATUITAS":
             dataForPrint.totales.total_operaciones_gratuitas.toFixed("2"),
-          "IGV(18%)": dataForPrint.totales.total_igv.toFixed("2"),
+          [igvLabel]: dataForPrint.totales.total_igv.toFixed("2"),
           ICPER:
             dataForPrint.totales.total_impuestos_bolsa_plastica.toFixed("2"),
           DESCUENTOS: props.data.discount
@@ -93,14 +97,6 @@ const VoucherPrint = (props) => {
 
     for (let i in newTotal) {
       if (parseFloat(newTotal[i])) {
-        datTotals.push({
-          tittle: i,
-          twoPoints: ":",
-          cont: newTotal[i],
-        });
-      }
-
-      if (i === "IGV(18%)") {
         datTotals.push({
           tittle: i,
           twoPoints: ":",

@@ -135,7 +135,10 @@ export const useOrderStore = defineStore("order", {
       if (typeof existence !== "undefined") {
         existence.quantity++;
       } else {
-        const resolvedIgv = product?.igv_tax;
+        const rawTenantIgv = settingsStore.businessSettings?.sale?.igv_tax ?? 0.18;
+        const tenantRate = Number(rawTenantIgv) > 1 ? Number(rawTenantIgv) / 100 : Number(rawTenantIgv);
+        const resolvedIgv = Number(product?.igv_tax || 0);
+        const finalIgv = resolvedIgv > 0 ? (resolvedIgv > 1 ? resolvedIgv / 100 : resolvedIgv) : tenantRate;
         let order = {
           product: product.id,
           product_name: product.name,
@@ -144,9 +147,7 @@ export const useOrderStore = defineStore("order", {
           indication: [],
           icbper: product?.icbper,
           product_affectation: product?.affectation,
-          product_igv: !Number(resolvedIgv)
-            ? settingsStore.businessSettings.sale.igv_tax
-            : Number(resolvedIgv),
+          product_igv: finalIgv,
           quick_indications: product?.quick_indications ?? [],
           customer: customer || null,
         };
@@ -197,7 +198,10 @@ export const useOrderStore = defineStore("order", {
           deltaOrder.quantity = Number(deltaOrder.quantity || 0) + qtyToAdd;
           mergeIndications(deltaOrder);
         } else {
-          const resolvedIgv = product?.igv_tax;
+          const rawTenantIgv = settingsStore.businessSettings?.sale?.igv_tax ?? 0.18;
+          const tenantRate = Number(rawTenantIgv) > 1 ? Number(rawTenantIgv) / 100 : Number(rawTenantIgv);
+          const resolvedIgv = Number(product?.igv_tax || 0);
+          const finalIgv = resolvedIgv > 0 ? (resolvedIgv > 1 ? resolvedIgv / 100 : resolvedIgv) : tenantRate;
           this.orders.push({
             product: productId,
             product_name:
@@ -211,10 +215,7 @@ export const useOrderStore = defineStore("order", {
             product_affectation:
               savedOrder.product_affectation ?? product.affectation,
             product_igv:
-              savedOrder.product_igv ??
-              (!Number(resolvedIgv)
-                ? settingsStore.businessSettings.sale.igv_tax
-                : Number(resolvedIgv)),
+              savedOrder.product_igv ?? finalIgv,
             quick_indications:
               savedOrder.quick_indications ?? product.quick_indications,
             customer: savedOrder.customer ?? product.customer ?? null,
@@ -239,7 +240,10 @@ export const useOrderStore = defineStore("order", {
         return;
       }
 
-      const resolvedIgv = product?.igv_tax;
+      const rawTenantIgv = settingsStore.businessSettings?.sale?.igv_tax ?? 0.18;
+      const tenantRate = Number(rawTenantIgv) > 1 ? Number(rawTenantIgv) / 100 : Number(rawTenantIgv);
+      const resolvedIgv = Number(product?.igv_tax || 0);
+      const finalIgv = resolvedIgv > 0 ? (resolvedIgv > 1 ? resolvedIgv / 100 : resolvedIgv) : tenantRate;
       this.orders.push({
         product: productId,
         product_name: product.product_name ?? product.name,
@@ -248,9 +252,7 @@ export const useOrderStore = defineStore("order", {
         indication: Array.isArray(product.indication) ? product.indication : [],
         icbper: product.icbper,
         product_affectation: product.affectation,
-        product_igv: !Number(resolvedIgv)
-          ? settingsStore.businessSettings.sale.igv_tax
-          : Number(resolvedIgv),
+        product_igv: finalIgv,
         quick_indications: product.quick_indications,
         customer: product.customer ?? null,
       });

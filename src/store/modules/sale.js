@@ -202,37 +202,39 @@ export const useSaleStore = defineStore("sale", {
       const settingsStore = useSettingsStore();
       const orderStore = useOrderStore();
       
-      detail.product_igv = !Number(detail.product_igv)
-        ? settingsStore.businessSettings.sale.igv_tax
-        : Number(detail.product_igv);
-      switch (detail.product_affectation) {
-        case 10:
+      const tenantRateRaw = settingsStore.businessSettings?.sale?.igv_tax ?? 0.18;
+      const tenantRate = Number(tenantRateRaw) > 1 ? Number(tenantRateRaw) / 100 : Number(tenantRateRaw);
+
+      let rate = Number(detail.product_igv || 0);
+      if (!rate) {
+        rate = tenantRate;
+      } else if (rate > 1) {
+        rate = rate / 100;
+      }
+      detail.product_igv = rate;
+
+      switch (Number(detail.product_affectation)) {
+        case 10: // Gravado
           detail.price_base =
             Math.round(
-              (Number(detail.price_sale) / parseFloat(detail.product_igv + 1)) *
-                100,
+              (Number(detail.price_sale) / (rate + 1)) * 100,
             ) / 100;
           detail.igv_tax =
             Math.round(
-              (parseFloat(detail.price_sale) - parseFloat(detail.price_base)) *
-                100,
+              (Number(detail.price_sale) - Number(detail.price_base)) * 100,
             ) / 100;
-          console.log("Updated detail:", detail);
           break;
         case 20: // Operación Exonerada
-          detail.price_base = detail.price_sale
-            ? parseFloat(detail.price_sale)
-            : 0;
+          detail.price_base = detail.price_sale ? parseFloat(detail.price_sale) : 0;
           detail.igv_tax = 0;
           break;
         case 21: // Operación Gratuita
-          detail.price_base = detail.price_sale
-            ? parseFloat(detail.price_sale)
-            : 0;
+          detail.price_base = detail.price_sale ? parseFloat(detail.price_sale) : 0;
           detail.igv_tax = 0;
           break;
         default:
-          console.error("Afectación inválida");
+          detail.price_base = detail.price_sale ? parseFloat(detail.price_sale) : 0;
+          detail.igv_tax = 0;
           break;
       }
 
