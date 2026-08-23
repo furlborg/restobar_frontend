@@ -159,8 +159,8 @@
                                     <n-form-item-gi label="Afectación por defecto">
                                         <n-select v-model:value="businessSettings.sale.default_affectation" :options="productStore.affectationsOptions" size="large" />
                                     </n-form-item-gi>
-                                    <n-form-item-gi label="Valor IGV (%)">
-                                        <n-input-number v-model:value="igv_percentage" :show-button="false" :min="0" :max="100" size="large" />
+                                    <n-form-item-gi label="Tasa de IGV">
+                                        <n-select v-model:value="current_igv_tax" :options="igvOptions" size="large" />
                                     </n-form-item-gi>
                                     <n-form-item-gi label="Valor ICBPER">
                                         <n-input v-model:value="businessSettings.sale.icbper_tax" size="large" />
@@ -400,9 +400,21 @@ export default defineComponent({
 
         const editMode = ref(false);
 
-        const igv_percentage = computed({
-            get: () => (Number(businessSettings.value.sale.igv_tax) * 100),
-            set: (v) => (businessSettings.value.sale.igv_tax = v / 100)
+        const igvOptions = [
+            { label: "18% - Régimen General (Costa / Sierra)", value: 0.18 },
+            { label: "10.5% - MYPE Restaurantes (Ley 31556 - 2026)", value: 0.105 },
+            { label: "10% - MYPE Restaurantes (Histórico)", value: 0.10 },
+            { label: "0% - Exonerado / Amazonía (Ley 27037)", value: 0.00 }
+        ];
+
+        const current_igv_tax = computed({
+            get: () => {
+                const val = Number(businessSettings.value.sale?.igv_tax ?? 0.18);
+                return val > 1 ? val / 100 : val;
+            },
+            set: (v) => {
+                businessSettings.value.sale.igv_tax = Number(v);
+            }
         });
 
         const printOptions = [
@@ -515,7 +527,8 @@ export default defineComponent({
         ];
 
         return {
-            igv_percentage,
+            current_igv_tax,
+            igvOptions,
             handleBack,
             printOptions,
             invoiceOptions,

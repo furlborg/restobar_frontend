@@ -544,7 +544,9 @@ export const generateVoucherA4PDF = async (rawData, businessStore, dataOrder = {
         totalsRows.push(["OTROS CARGOS / SERV:", `S/ ${totalCargos.toFixed(2)}`]);
     }
     if (totalIgv > 0) {
-        totalsRows.push(["I.G.V. (18%):", `S/ ${totalIgv.toFixed(2)}`]);
+        const itemWithRate = items.find((i) => i.porcentaje_igv !== undefined && i.porcentaje_igv !== null && Number(i.porcentaje_igv) > 0);
+        const dynamicLabel = itemWithRate ? `I.G.V. (${Number(itemWithRate.porcentaje_igv)}%):` : "I.G.V.:";
+        totalsRows.push([dynamicLabel, `S/ ${totalIgv.toFixed(2)}`]);
     }
     if (totalIcbper > 0) {
         totalsRows.push(["ICBPER:", `S/ ${totalIcbper.toFixed(2)}`]);
