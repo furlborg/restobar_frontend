@@ -440,7 +440,6 @@ const addReason = ref(false);
 const nullReason = ref(undefined);
 
 const closeNullModal = () => {
-    console.log('wea');
     addReason.value = false;
     passConfirm.value = "";
     nullReason.value = undefined;

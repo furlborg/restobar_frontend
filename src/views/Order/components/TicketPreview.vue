@@ -118,8 +118,10 @@ export default defineComponent({
             const matchedPlaces = productStore.places.filter((place) =>
                 details.some(
                     (detail) =>
+                        detail?.product_set ||
                         detail?.preparation_place === place.description ||
-                        detail?.product_fitting?.preparation_place === place.description
+                        detail?.product_fitting?.preparation_place === place.description ||
+                        (!detail?.preparation_place && place.is_main)
                 )
             );
             if (matchedPlaces.length) return matchedPlaces;
@@ -273,17 +275,26 @@ export default defineComponent({
                         "ticket_content": (() => {
                             const rawDetails = (!place || place.is_default)
                                 ? (props.data.order_details || [])
-                                : (props.data.order_details || []).filter((pl) =>
-                                    settingsStore.business_settings.printer.subticket_mode && place.is_main
-                                        ? !!pl.preparation_place
+                                : (props.data.order_details || []).filter((pl) => {
+                                    if (pl.product_set) {
+                                        return true;
+                                    }
+                                    return settingsStore.business_settings?.printer?.subticket_mode && place.is_main
+                                        ? !pl.preparation_place
                                         : pl.preparation_place === place.description ||
-                                          pl.product_fitting?.preparation_place === place.description
-                                );
+                                          pl.product_fitting?.preparation_place === place.description ||
+                                          (!pl.preparation_place && place.is_main);
+                                });
 
                             const groupDetailsByIndication = (items) => {
                                 const unitItems = [];
                                 for (const item of items) {
-                                    const totalQty = Number(item.quantity || 0);
+                                    const totalQty = !!props.isUpdate
+                                        ? Number(item.quantity || 0)
+                                        : (item.initial_quantity !== undefined && item.initial_quantity !== null && Number(item.initial_quantity) > 0
+                                            ? Number(item.initial_quantity)
+                                            : Number(item.quantity || 0));
+
                                     const indications = Array.isArray(item.indication) ? item.indication : [];
                                     if (totalQty <= 0) continue;
 
@@ -343,14 +354,8 @@ export default defineComponent({
                                 return grouped;
                             };
 
-                            const mapLine = (it) => ({
-                                "id": it.id,
-                                "cantidad": it.quantity,
-                                "descripcion": it.product_name || it.product_set?.name || "",
-                                "product_name": it.product_name || it.product_set?.name || "",
-                                "product_description": it.product_description || "",
-                                "product_category": it.product_category || "",
-                                "indicaciones": (it.indication || []).map(indicate => {
+                            const mapLine = (it) => {
+                                const indications = (it.indication || []).map(indicate => {
                                     if (!indicate) return "";
                                     let parts = [];
                                     if (Array.isArray(indicate.quick_indications) && indicate.quick_indications.length > 0) {
@@ -364,8 +369,26 @@ export default defineComponent({
                                         desc = desc ? `${desc} [LLEVAR]` : "[LLEVAR]";
                                     }
                                     return desc;
-                                }).filter(d => d && d.trim() !== "")
-                            });
+                                }).filter(d => d && d.trim() !== "");
+
+                                if (it.product_set && Array.isArray(it.product_set.items) && it.product_set.items.length > 0) {
+                                    it.product_set.items.forEach((sub) => {
+                                        const subName = sub.product_phase?.product_name || sub.product?.name || "Producto";
+                                        const phase = sub.product_phase?.phase_name ? ` (${sub.product_phase.phase_name})` : "";
+                                        indications.push(`• ${sub.quantity || 1}x ${subName}${phase}`);
+                                    });
+                                }
+
+                                return {
+                                    "id": it.id,
+                                    "cantidad": it.quantity,
+                                    "descripcion": it.product_name || it.product_set?.name || "",
+                                    "product_name": it.product_name || it.product_set?.name || "",
+                                    "product_description": it.product_description || "",
+                                    "product_category": it.product_category || "",
+                                    "indicaciones": indications
+                                };
+                            };
 
                             const orderByCustomer = !!settingsStore.business_settings?.order?.order_by_customer;
                             const hasCustomers = rawDetails.some((detail) => !!detail?.customer);
@@ -398,28 +421,31 @@ export default defineComponent({
 
                             const content = [];
                             groups.forEach((group) => {
-                                content.push({
-                                    "cantidad": " ",
-                                    "quantity": " ",
-                                    "descripcion": `CLIENTE: ${group.customerName}`,
-                                    "product_name": `CLIENTE: ${group.customerName}`,
-                                    "product_description": "",
-                                    "product_category": "",
-                                    "is_header": true
-                                });
-                                content.push({
-                                    "cantidad": "CANT",
-                                    "quantity": "CANT",
-                                    "descripcion": "PRODUCTO",
-                                    "product_name": "PRODUCTO",
-                                    "product_description": "",
-                                    "product_category": "",
-                                    "is_header": true,
-                                    "is_table_header": true
-                                });
-                                groupDetailsByIndication(group.items).forEach((detail) => {
-                                    content.push(mapLine(detail));
-                                });
+                                const groupedItems = groupDetailsByIndication(group.items);
+                                if (groupedItems.length > 0) {
+                                    content.push({
+                                        "cantidad": " ",
+                                        "quantity": " ",
+                                        "descripcion": `CLIENTE: ${group.customerName}`,
+                                        "product_name": `CLIENTE: ${group.customerName}`,
+                                        "product_description": "",
+                                        "product_category": "",
+                                        "is_header": true
+                                    });
+                                    content.push({
+                                        "cantidad": "CANT",
+                                        "quantity": "CANT",
+                                        "descripcion": "PRODUCTO",
+                                        "product_name": "PRODUCTO",
+                                        "product_description": "",
+                                        "product_category": "",
+                                        "is_header": true,
+                                        "is_table_header": true
+                                    });
+                                    groupedItems.forEach((detail) => {
+                                        content.push(mapLine(detail));
+                                    });
+                                }
                             });
 
                             return content;
@@ -452,6 +478,11 @@ export default defineComponent({
                     }
 
                     if (send===true) {
+                        if (!jsonTicket.ticket_content || jsonTicket.ticket_content.length === 0) {
+                            console.info(logPrefix, "Omitiendo envío de comanda vacía sin productos:", place?.description);
+                            resolve();
+                            return;
+                        }
                         try {
                             const response = await http.post('orders/print-proxy/', jsonTicket);
                             if (response.status === 200) {
