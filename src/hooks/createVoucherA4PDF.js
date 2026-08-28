@@ -425,6 +425,10 @@ export const generateVoucherA4PDF = async (rawData, businessStore, dataOrder = {
     doc.text(doc.splitTextToSize(totalSaleText, 95), pageMargin + 9, leftY + 2);
     leftY += 8;
 
+    // Dimensiones de Totales y QR
+    const totalsTableX = 124;
+    const totalsTableWidth = 72;
+
     // Código QR
     if (qrBase64) {
         doc.addImage(qrBase64, "PNG", pageMargin, leftY, 28, 28);
@@ -432,7 +436,10 @@ export const generateVoucherA4PDF = async (rawData, businessStore, dataOrder = {
 
     // Datos junto al QR
     const metaQrX = pageMargin + 31;
+    const metaValueX = metaQrX + 29;
+    const metaValueMaxWidth = totalsTableX - metaValueX - 3;
     let metaQrY = leftY + 4;
+    const metaLineHeight = 4.6;
 
     doc.setFontSize(7.5);
     
@@ -440,17 +447,18 @@ export const generateVoucherA4PDF = async (rawData, businessStore, dataOrder = {
     doc.setFont("helvetica", "bold");
     doc.text("CONDICIÓN:", metaQrX, metaQrY);
     doc.setFont("helvetica", "normal");
-    doc.text(paymentCondition, metaQrX + 25, metaQrY);
-    metaQrY += 4.2;
+    doc.text(paymentCondition, metaValueX, metaQrY);
+    metaQrY += metaLineHeight;
 
     // Métodos de Pago
     if (paymentsList.length > 1) {
         doc.setFont("helvetica", "bold");
         doc.text("PAGOS MÚLTIPLES:", metaQrX, metaQrY);
-        metaQrY += 4.2;
+        metaQrY += metaLineHeight;
         doc.setFont("helvetica", "normal");
         paymentsList.forEach(p => {
-            doc.text(`• ${p.name}: S/ ${p.amount}`, metaQrX + 3, metaQrY);
+            doc.text(`• ${p.name}:`, metaQrX + 3, metaQrY);
+            doc.text(`S/ ${p.amount}`, metaValueX, metaQrY);
             metaQrY += 3.8;
         });
     } else {
@@ -458,24 +466,26 @@ export const generateVoucherA4PDF = async (rawData, businessStore, dataOrder = {
         doc.setFont("helvetica", "bold");
         doc.text("MÉTODO DE PAGO:", metaQrX, metaQrY);
         doc.setFont("helvetica", "normal");
-        doc.text(methodDisplay, metaQrX + 25, metaQrY);
-        metaQrY += 4.2;
+        const methodLines = doc.splitTextToSize(methodDisplay, metaValueMaxWidth);
+        doc.text(methodLines[0] || methodDisplay, metaValueX, metaQrY);
+        metaQrY += metaLineHeight;
     }
 
     // Atendido por (Cajero / Mozo)
     doc.setFont("helvetica", "bold");
     doc.text("ATENDIDO POR:", metaQrX, metaQrY);
     doc.setFont("helvetica", "normal");
-    doc.text(cashierUser.toUpperCase(), metaQrX + 25, metaQrY);
-    metaQrY += 4.2;
+    const cashierLines = doc.splitTextToSize(cashierUser.toUpperCase(), metaValueMaxWidth);
+    doc.text(cashierLines[0] || cashierUser.toUpperCase(), metaValueX, metaQrY);
+    metaQrY += metaLineHeight;
 
     // N° Orden
     if (dataOrder?.order_id || data?.order_id || dataOrder?.id) {
         doc.setFont("helvetica", "bold");
         doc.text("N° ORDEN:", metaQrX, metaQrY);
         doc.setFont("helvetica", "normal");
-        doc.text(String(dataOrder?.order_id || data?.order_id || dataOrder?.id), metaQrX + 25, metaQrY);
-        metaQrY += 4.2;
+        doc.text(String(dataOrder?.order_id || data?.order_id || dataOrder?.id), metaValueX, metaQrY);
+        metaQrY += metaLineHeight;
     }
 
     // Servicio / Mesa / Delivery
@@ -492,8 +502,9 @@ export const generateVoucherA4PDF = async (rawData, businessStore, dataOrder = {
         doc.setFont("helvetica", "bold");
         doc.text("SERVICIO / UBIC:", metaQrX, metaQrY);
         doc.setFont("helvetica", "normal");
-        doc.text(doc.splitTextToSize(serviceInfo, 50)[0] || "-", metaQrX + 25, metaQrY);
-        metaQrY += 4.2;
+        const servLines = doc.splitTextToSize(serviceInfo, metaValueMaxWidth);
+        doc.text(servLines[0] || "-", metaValueX, metaQrY);
+        metaQrY += metaLineHeight;
     }
 
     // Observaciones si existen
@@ -502,17 +513,14 @@ export const generateVoucherA4PDF = async (rawData, businessStore, dataOrder = {
         doc.setFont("helvetica", "bold");
         doc.text("OBSERVACIÓN:", metaQrX, metaQrY);
         doc.setFont("helvetica", "normal");
-        const obsLines = doc.splitTextToSize(observaciones, 50);
+        const obsLines = doc.splitTextToSize(observaciones, metaValueMaxWidth);
         obsLines.forEach(line => {
-            doc.text(line, metaQrX + 25, metaQrY);
+            doc.text(line, metaValueX, metaQrY);
             metaQrY += 3.8;
         });
     }
 
     // Lado Derecho: Resumen de Totales
-    const totalsTableX = 124;
-    const totalsTableWidth = 72;
-
     const opGravadas = parseFloat(totales?.total_operaciones_gravadas || 0);
     const opExoneradas = parseFloat(totales?.total_operaciones_exoneradas || 0);
     const opGratuitas = parseFloat(totales?.total_operaciones_gratuitas || 0);
