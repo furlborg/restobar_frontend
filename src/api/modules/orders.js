@@ -204,3 +204,15 @@ export async function updateProductPreparation(id, status) {
     status: status,
   });
 }
+
+export async function dispatchOrderPreparations(orderId) {
+  return await http.post("product-preparation/dispatch_order/", {
+    order_id: orderId,
+  });
+}
+
+export async function startOrderPreparations(orderId) {
+  return await http.post("product-preparation/start_order/", {
+    order_id: orderId,
+  });
+}

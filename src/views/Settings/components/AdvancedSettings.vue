@@ -41,12 +41,6 @@
                 
                 <!-- PESTAÑA: IMPRESIÓN Y FORMATOS -->
                 <n-tab-pane name="impresiones" tab="Impresión y Formatos">
-                    <template #tab>
-                        <div class="tab-label">
-                            <v-icon name="md-print-twotone" scale="1.2" class="mr-2" />
-                            Impresión y Formatos
-                        </div>
-                    </template>
                     <div class="tab-content">
                         <n-h3 class="section-title">Motor de Impresión Kuceta</n-h3>
                         <n-text depth="3" class="section-desc">Configura la conexión con el motor local de WebSockets.</n-text>
@@ -145,12 +139,6 @@
 
                 <!-- PESTAÑA: VENTAS Y CAJA -->
                 <n-tab-pane name="ventas" tab="Ventas y Caja">
-                    <template #tab>
-                        <div class="tab-label">
-                            <v-icon name="md-pointofsale-twotone" scale="1.2" class="mr-2" />
-                            Ventas y Caja
-                        </div>
-                    </template>
                     <div class="tab-content">
                         <n-h3 class="section-title">Parámetros Financieros</n-h3>
                         <n-card class="settings-group-card mt-2" :bordered="true">
@@ -216,12 +204,6 @@
 
                 <!-- PESTAÑA: PEDIDOS Y CATEGORÍAS -->
                 <n-tab-pane name="pedidos" tab="Pedidos y Categorías">
-                    <template #tab>
-                        <div class="tab-label">
-                            <v-icon name="md-restaurantmenu-twotone" scale="1.2" class="mr-2" />
-                            Pedidos y Categorías
-                        </div>
-                    </template>
                     <div class="tab-content">
                         <n-h3 class="section-title">Flujo de Pedidos</n-h3>
                         <n-card class="settings-group-card mt-2" :bordered="true">
@@ -272,12 +254,6 @@
 
                 <!-- PESTAÑA: MÓDULOS -->
                 <n-tab-pane name="modulos" tab="Módulos Activos">
-                    <template #tab>
-                        <div class="tab-label">
-                            <v-icon name="md-widgets-twotone" scale="1.2" class="mr-2" />
-                            Módulos Activos
-                        </div>
-                    </template>
                     <div class="tab-content">
                         <n-h3 class="section-title">Habilitar/Deshabilitar Módulos</n-h3>
                         <n-text depth="3" class="section-desc mb-4 d-block">Controla qué secciones son visibles en la barra de navegación (Sidebar) para todo el negocio.</n-text>
@@ -292,6 +268,7 @@
                                             <div class="list-item"><div class="item-text"><span>Ventas</span></div><n-switch :disabled="!editMode" v-model:value="businessSettings.modules.show_sales" /></div>
                                             <div class="list-item"><div class="item-text"><span>Anulaciones</span></div><n-switch :disabled="!editMode" v-model:value="businessSettings.modules.show_anulates" /></div>
                                             <div class="list-item"><div class="item-text"><span>Productos</span></div><n-switch :disabled="!editMode" v-model:value="businessSettings.modules.show_products" /></div>
+                                            <div class="list-item"><div class="item-text"><span>Pantalla Cocina / KDS</span></div><n-switch :disabled="!editMode" v-model:value="businessSettings.modules.show_kds" /></div>
                                             <div class="list-item border-none"><div class="item-text"><span>Reportes</span></div><n-switch :disabled="!editMode" v-model:value="businessSettings.modules.show_reports" /></div>
                                         </div>
                                     </n-grid-item>
@@ -313,13 +290,7 @@
                 </n-tab-pane>
 
                 <!-- PESTAÑA: INTEGRACIONES -->
-                <n-tab-pane name="integraciones" tab="Integraciones API">
-                    <template #tab>
-                        <div class="tab-label">
-                            <v-icon name="md-api" scale="1.2" class="mr-2" />
-                            Integraciones
-                        </div>
-                    </template>
+                <n-tab-pane name="integraciones" tab="Integraciones">
                     <div class="tab-content">
                         <n-h3 class="section-title">Integración de Clientes</n-h3>
                         <n-card class="settings-group-card mt-2" :bordered="true">
@@ -328,6 +299,77 @@
                                     <n-input type="textarea" v-model:value="businessSettings.customers.api_token" rows="3" placeholder="Inserta aquí tu Bearer Token" />
                                 </n-form-item>
                             </n-form>
+                        </n-card>
+                    </div>
+                </n-tab-pane>
+
+                <!-- PESTAÑA: COCINA / KDS -->
+                <n-tab-pane name="kds" tab="Cocina / KDS">
+                    <div class="tab-content" v-if="businessSettings && businessSettings.kds">
+                        <div class="mb-3">
+                            <n-h3 class="section-title m-0">Sistema de Pantalla de Cocina (KDS)</n-h3>
+                            <n-text depth="3" class="section-desc">Muestra los pedidos de autoservicio, salón y delivery en tiempo real para el equipo de cocina.</n-text>
+                        </div>
+
+                        <!-- ESTADO GENERAL -->
+                        <n-card class="settings-group-card mt-2" :bordered="true">
+                            <div class="list-settings">
+                                <div class="list-item border-none">
+                                    <div class="item-text">
+                                        <span>Habilitar Módulo KDS</span>
+                                        <small class="d-block text-muted">Permite acceder al tablero de cocina y recibir comandas en pantalla.</small>
+                                    </div>
+                                    <n-switch :disabled="!editMode" v-model:value="businessSettings.kds.enabled" @update:value="(val) => { businessSettings.modules.show_kds = val; }" />
+                                </div>
+                            </div>
+                        </n-card>
+
+                        <!-- TIEMPOS DE ALERTA -->
+                        <n-h3 class="section-title mt-4">Tiempos de Alerta de Comandas</n-h3>
+                        <n-card class="settings-group-card mt-2" :bordered="true">
+                            <n-form :disabled="!editMode" label-placement="top">
+                                <n-grid responsive="screen" cols="1 s:2 m:3 l:3" x-gap="24" y-gap="12">
+                                    <n-form-item-gi label="Alerta Amarilla (minutos)">
+                                        <n-input-number v-model:value="businessSettings.kds.alert_warning_min" :min="1" :max="60" />
+                                    </n-form-item-gi>
+                                    <n-form-item-gi label="Alerta Roja / Crítica (minutos)">
+                                        <n-input-number v-model:value="businessSettings.kds.alert_critical_min" :min="2" :max="120" />
+                                    </n-form-item-gi>
+                                    <n-form-item-gi label="Frecuencia de Auto-recarga (segundos)">
+                                        <n-input-number v-model:value="businessSettings.kds.refresh_interval" :min="2" :max="30" />
+                                    </n-form-item-gi>
+                                </n-grid>
+                            </n-form>
+                        </n-card>
+
+                        <!-- NOTIFICACIONES Y SONIDOS -->
+                        <n-h3 class="section-title mt-4">Notificaciones y Alertas Sonoras</n-h3>
+                        <n-card class="settings-group-card mt-2" :bordered="true">
+                            <div class="list-settings">
+                                <div class="list-item">
+                                    <div class="item-text">
+                                        <span>Sonido al recibir nueva comanda</span>
+                                        <small class="d-block text-muted">Emite una campana de cocina al ingresar una comanda desde Autoservicio o Salón.</small>
+                                    </div>
+                                    <n-switch :disabled="!editMode" v-model:value="businessSettings.kds.sound_new_order" />
+                                </div>
+                                <div class="list-item">
+                                    <div class="item-text">
+                                        <span>Alerta sonora por demora crítica</span>
+                                        <small class="d-block text-muted">Avisa cuando una comanda supera el tiempo límite rojo.</small>
+                                    </div>
+                                    <n-switch :disabled="!editMode" v-model:value="businessSettings.kds.sound_delayed_order" />
+                                </div>
+                                <div class="list-item border-none">
+                                    <div class="item-text">
+                                        <span>Probar timbre de campana</span>
+                                        <small class="d-block text-muted">Haz clic para comprobar el sonido en los parlantes de este equipo.</small>
+                                    </div>
+                                    <n-button secondary type="info" size="small" @click="testChimeSound">
+                                        🔔 Probar Sonido
+                                    </n-button>
+                                </div>
+                            </div>
                         </n-card>
                     </div>
                 </n-tab-pane>
@@ -379,6 +421,7 @@ export default defineComponent({
                 show_birthdays: true,
                 show_reports: true,
                 show_settings: true,
+                show_kds: true,
             };
             for (const key in defaultModules) {
                 if (settings.modules[key] === undefined) {
@@ -387,13 +430,35 @@ export default defineComponent({
             }
         };
 
+        const initKdsSettings = (settings) => {
+            if (!settings) return;
+            if (!settings.kds) {
+                settings.kds = {};
+            }
+            const defaultKds = {
+                enabled: true,
+                alert_warning_min: 8,
+                alert_critical_min: 15,
+                sound_new_order: true,
+                sound_delayed_order: true,
+                refresh_interval: 4,
+            };
+            for (const key in defaultKds) {
+                if (settings.kds[key] === undefined) {
+                    settings.kds[key] = defaultKds[key];
+                }
+            }
+        };
+
         initModules(businessSettings.value);
+        initKdsSettings(businessSettings.value);
 
         import('vue').then(({ watch }) => {
             watch(() => settingsStore.businessSettings, (newVal) => {
                 if (newVal && Object.keys(newVal).length > 0 && !editMode.value) {
                     businessSettings.value = cloneDeep(newVal);
                     initModules(businessSettings.value);
+                    initKdsSettings(businessSettings.value);
                 }
             }, { deep: true });
         });
@@ -526,6 +591,40 @@ export default defineComponent({
             }
         ];
 
+        const testChimeSound = () => {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) {
+                    message.warning("Tu navegador no soporta Web Audio API");
+                    return;
+                }
+                const ctx = new AudioCtx();
+                if (ctx.state === 'suspended') {
+                    ctx.resume();
+                }
+                const now = ctx.currentTime;
+                const playTone = (freq, startTime, duration, vol) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, startTime);
+                    gain.gain.setValueAtTime(vol, startTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(startTime);
+                    osc.stop(startTime + duration);
+                };
+                playTone(1046.50, now, 0.5, 0.4);
+                playTone(1318.51, now + 0.12, 0.7, 0.35);
+                playTone(1567.98, now + 0.25, 0.9, 0.3);
+                message.info("Sonido de campana reproducido.");
+            } catch (e) {
+                console.error("Audio error:", e);
+                message.error("Error al reproducir audio: " + e.message);
+            }
+        };
+
         return {
             current_igv_tax,
             igvOptions,
@@ -542,7 +641,8 @@ export default defineComponent({
             kitchenPrinterFormatOptions,
             infoLocationOptions,
             orderTypeOptions,
-            waiterAuthModeOptions
+            waiterAuthModeOptions,
+            testChimeSound
         };
     }
 });

@@ -106,6 +106,11 @@ const avatarOptions = computed(() => {
       key: 1,
     },
     {
+      label: "Cocina (KDS)",
+      key: "kds",
+      icon: renderIcon("md-dining-twotone"),
+    },
+    {
       label: "Desconectar",
       key: -1,
       icon: renderIcon("md-logout-round"),
@@ -144,8 +149,9 @@ const avatarSelect = (key) => {
     case 1:
       router.push({ name: "WaiterMode" });
       break;
+    case "kds":
     case 0:
-      router.push({ name: "ChefMode" });
+      router.push({ name: "KdsBoard" });
       break;
     case -1:
       doLogout();

@@ -38,6 +38,17 @@
                             Delivery
                         </n-button>
                     </template>
+                    <n-button
+                        v-if="(settingsStore.business_settings?.kds?.enabled ?? true) && (settingsStore.business_settings?.modules?.show_kds ?? true)"
+                        type="warning"
+                        secondary
+                        @click="$router.push({ name: 'KdsBoard' })"
+                    >
+                        <template #icon>
+                            <v-icon name="md-dining-twotone" />
+                        </template>
+                        Cocina (KDS)
+                    </n-button>
                 </n-space>
             </div>
         </template>

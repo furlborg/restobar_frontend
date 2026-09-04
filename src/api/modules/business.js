@@ -53,6 +53,7 @@ export async function updateBusinessSettings(business_settings) {
     reports: business_settings.reports,
     category: business_settings.category,
     modules: business_settings.modules,
+    kds: business_settings.kds,
   });
 }
 

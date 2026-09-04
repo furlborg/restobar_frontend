@@ -64,6 +64,14 @@ const menuOptions = computed(() => {
     });
   }
 
+  if (settingsStore.business_settings?.modules?.show_kds ?? true) {
+    options.push({
+      label: () => h(RouterLink, { to: { name: "KdsBoard" } }, () => h("span", "Cocina")),
+      key: "KdsBoard",
+      icon: renderIcon("md-dining-twotone"),
+    });
+  }
+
   if ((settingsStore.business_settings?.modules?.show_sales ?? true) && userStore.hasPermission("view_sale")) {
     options.push({
       label: () => h(RouterLink, { to: { name: "Sales" } }, () => h("span", "Ventas")),
