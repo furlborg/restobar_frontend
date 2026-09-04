@@ -135,3 +135,7 @@ export async function performDeleteOrderDetail(
         quantity: quantity
     });
 }
+
+export async function releaseMyTableLocks() {
+    return await http.post("table-locks/release_my_locks/");
+}

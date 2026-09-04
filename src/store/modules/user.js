@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { refreshToken, logout, getActiveUsers } from "@/api/modules/users";
+import { releaseMyTableLocks } from "@/api/modules/tables";
 
 import useCookie from "vue-cookies";
 
@@ -144,6 +145,13 @@ export const useUserStore = defineStore("user", {
         });
     },
     async blacklistToken() {
+      // 1. Liberar bloqueos de mesas en la base de datos ANTES de invalidar credenciales
+      try {
+        await releaseMyTableLocks();
+      } catch (e) {
+        console.warn("Error liberando bloqueos en logout:", e);
+      }
+
       return await logout(this.refresh)
         .then((response) => {
           if (response.status === 205 || response.status === 401) {
@@ -152,7 +160,7 @@ export const useUserStore = defineStore("user", {
           return true;
         })
         .catch((error) => {
-          if (error.response.data.code === "token_blacklisted") {
+          if (error.response?.data?.code === "token_blacklisted") {
             this.logout();
             return true;
           }
@@ -160,6 +168,20 @@ export const useUserStore = defineStore("user", {
         });
     },
     logout() {
+      // 2. Cortar y resetear WebSocket para no retener conexiones del usuario saliente
+      try {
+        import("@/composables/useTableLock")
+          .then(({ useTableLock }) => {
+            try {
+              const { disconnectLockWebSocket } = useTableLock();
+              disconnectLockWebSocket();
+            } catch (_) {}
+          })
+          .catch(() => {});
+      } catch (e) {
+        console.warn("Error desconectando WebSocket en logout:", e);
+      }
+
       useCookie.remove("user-info");
       useCookie.remove("token");
       useCookie.remove("refresh");

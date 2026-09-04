@@ -4,8 +4,6 @@ import { useBusinessStore } from "@/store/modules/business";
 import { useUserStore } from "@/store/modules/user";
 import { createDiscreteApi } from "naive-ui";
 
-const businessStore = useBusinessStore();
-const userStore = useUserStore();
 const { notification } = createDiscreteApi(["notification"]);
 
 export const useTableStore = defineStore("table", {
@@ -18,6 +16,8 @@ export const useTableStore = defineStore("table", {
   }),
   getters: {
     getAreasOptions() {
+      const businessStore = useBusinessStore();
+      const userStore = useUserStore();
       let areas = this.areas;
       if (!userStore.user.branchoffice) {
         areas = areas.filter(
@@ -36,6 +36,8 @@ export const useTableStore = defineStore("table", {
       }));
     },
     getAreasTablesOptions() {
+      const businessStore = useBusinessStore();
+      const userStore = useUserStore();
       let areas = this.areas;
 
       const branchToFilter = !userStore.user.branchoffice
@@ -60,6 +62,8 @@ export const useTableStore = defineStore("table", {
       }));
     },
     branchAreas() {
+      const businessStore = useBusinessStore();
+      const userStore = useUserStore();
       if (!userStore.user.branchoffice) {
         return this.areas.filter(
           (area) => area.branch === businessStore.currentBranch
@@ -71,6 +75,8 @@ export const useTableStore = defineStore("table", {
       }
     },
     branch_table_Areas() {
+      const businessStore = useBusinessStore();
+      const userStore = useUserStore();
       const branchToFilter = !userStore.user.branchoffice
         ? businessStore.currentBranch
         : userStore.user.branchoffice;
@@ -92,20 +98,32 @@ export const useTableStore = defineStore("table", {
   },
   actions: {
     sanitizeAreas(rawAreas = []) {
-      return rawAreas
+      const currentLocks = { ...this.lockedTables };
+      const areas = rawAreas
         .filter((area) => !area.is_disabled)
         .map((area) => ({
           ...area,
           tables: Array.isArray(area.tables)
             ? area.tables.filter((table) => !table.is_disabled).map((table) => {
-                // Sincronizar con lockedTables en tiempo real para que la carga HTTP no resucite bloqueos fantasma
-                if (this.wsConnected && !this.lockedTables[table.id] && table.lock_info) {
-                  table.lock_info.is_active = false;
+                // Sincronizar lockedTables con el bloqueo real devuelto por la base de datos
+                if (table.lock_info && table.lock_info.is_active) {
+                  currentLocks[table.id] = {
+                    table_id: table.id,
+                    user_id: table.lock_info.user,
+                    username: table.lock_info.username,
+                    locked_at: table.lock_info.locked_at,
+                    expires_at: table.lock_info.expires_at,
+                    remaining_seconds: table.lock_info.remaining_time
+                  };
+                } else {
+                  delete currentLocks[table.id];
                 }
                 return table;
               })
             : []
         }));
+      this.lockedTables = currentLocks;
+      return areas;
     },
     async initializeStore() {
       return await getAreasTables()
@@ -206,31 +224,56 @@ export const useTableStore = defineStore("table", {
               }
             }
 
-            if (data.type === 'table_locked') {
+            if (data.type === 'initial_locks_sync' && data.locks) {
               this.lockedTables = {
                 ...this.lockedTables,
-                [data.table_id]: {
-                  table_id: data.table_id,
-                  user_id: data.user_id,
-                  username: data.username,
-                  locked_at: data.locked_at,
-                  expires_at: data.expires_at
-                }
+                ...data.locks
               };
-              const t = this.getTableByID(data.table_id);
-              if (t && t.lock_info) {
-                t.lock_info.is_active = true;
-                t.lock_info.username = data.username;
+              Object.entries(data.locks).forEach(([tblId, lock]) => {
+                const t = this.getTableByID(tblId);
+                if (t && t.lock_info) {
+                  t.lock_info.is_active = true;
+                  t.lock_info.username = lock.username;
+                  t.lock_info.user_id = lock.user_id;
+                }
+              });
+            }
+
+            if (data.type === 'table_locked') {
+              const lock = data.lock_data || data;
+              const tableId = lock.table_id || lock.table;
+              const userId = lock.user_id || lock.user;
+              if (tableId) {
+                this.lockedTables = {
+                  ...this.lockedTables,
+                  [tableId]: {
+                    table_id: tableId,
+                    user_id: userId,
+                    username: lock.username,
+                    locked_at: lock.locked_at,
+                    expires_at: lock.expires_at
+                  }
+                };
+                const t = this.getTableByID(tableId);
+                if (t && t.lock_info) {
+                  t.lock_info.is_active = true;
+                  t.lock_info.username = lock.username;
+                  t.lock_info.user_id = userId;
+                }
               }
             }
 
             if (data.type === 'table_unlocked') {
-              const rest = { ...this.lockedTables };
-              delete rest[data.table_id];
-              this.lockedTables = rest;
-              const t = this.getTableByID(data.table_id);
-              if (t && t.lock_info) {
-                t.lock_info.is_active = false;
+              const unlock = data.unlock_data || data;
+              const tableId = unlock.table_id || unlock.table;
+              if (tableId) {
+                const rest = { ...this.lockedTables };
+                delete rest[tableId];
+                this.lockedTables = rest;
+                const t = this.getTableByID(tableId);
+                if (t && t.lock_info) {
+                  t.lock_info.is_active = false;
+                }
               }
             }
 
