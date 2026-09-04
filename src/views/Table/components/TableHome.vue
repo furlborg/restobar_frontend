@@ -161,6 +161,16 @@
                                             ">
                                         Anular pedido
                                     </n-button>
+                                    <n-button v-if="userStore.user.role === 'ADMINISTRADOR' && (tableStore.lockedTables[table.id] || (table.lock_info && table.lock_info.is_active))" class="mb-1" type="warning"
+                                        size="small" block secondary @click="
+                                            openOptions.splice(
+                                                openOptions.findIndex((i) => i === table.id),
+                                                1
+                                            ),
+                                            forceUnlockTable(table.id)
+                                            ">
+                                        Liberar bloqueo
+                                    </n-button>
                                 </n-drawer-content>
                             </n-drawer>
                         </n-card>
@@ -261,15 +271,19 @@ const filteredAreas = computed(() => {
     return tableStore.branch_table_Areas.filter(a => a.id === selectedAreaId.value);
 });
 
-const { connectLockWebSocket, lockSocketConnected } = useTableLock();
+const { connectLockWebSocket, lockSocketConnected, wsUnlockTable } = useTableLock();
+
+const forceUnlockTable = (tableId) => {
+    wsUnlockTable(tableId);
+    message.success("Bloqueo de mesa liberado");
+};
 
 /**
- * Verifica si una mesa está bloqueada usando el store (fuente de verdad global)
+ * Verifica si una mesa está bloqueada para impedir acceso a usuarios sin privilegios
  */
 const isTableBlocked = (table) => {
     // Primero verificar el estado del store (WebSocket global)
     const wsLockInfo = tableStore.lockedTables[table.id];
-
     if (wsLockInfo && wsLockInfo.user_id !== userStore.user.id) {
         return {
             blocked: true,
@@ -278,12 +292,7 @@ const isTableBlocked = (table) => {
         };
     }
 
-    // Si los sockets están activos y la mesa NO está en lockedTables, confiamos en el WebSocket en tiempo real
-    if (tableStore.wsConnected || lockSocketConnected.value) {
-        return { blocked: false };
-    }
-
-    // Luego verificar lock_info de la API (solo como fallback si los sockets están desconectados)
+    // Luego verificar lock_info de la API (respaldo de base de datos)
     if (table.lock_info && table.lock_info.is_active && !table.lock_info.is_locked_by_me) {
         return {
             blocked: true,
@@ -299,8 +308,11 @@ const isTableBlocked = (table) => {
  * Obtiene el color de la mesa según su estado
  */
 const getTableColor = (table) => {
-    const blockStatus = isTableBlocked(table);
-    if (blockStatus.blocked) {
+    const wsLockInfo = tableStore.lockedTables[table.id];
+    const isLockedByOther = (wsLockInfo && wsLockInfo.user_id !== userStore.user.id) ||
+        (table.lock_info && table.lock_info.is_active && !table.lock_info.is_locked_by_me);
+
+    if (isLockedByOther) {
         return '#ffc107'; // Amarillo - Bloqueada
     }
     if (table.status === '3') {
@@ -313,8 +325,11 @@ const getTableColor = (table) => {
  * Obtiene la clase de fondo de la mesa
  */
 const getTableBackgroundClass = (table) => {
-    const blockStatus = isTableBlocked(table);
-    if (blockStatus.blocked) {
+    const wsLockInfo = tableStore.lockedTables[table.id];
+    const isLockedByOther = (wsLockInfo && wsLockInfo.user_id !== userStore.user.id) ||
+        (table.lock_info && table.lock_info.is_active && !table.lock_info.is_locked_by_me);
+
+    if (isLockedByOther) {
         return 'bg-locked';
     }
     if (table.status === '3') {

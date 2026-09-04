@@ -243,6 +243,7 @@ onBeforeRouteUpdate((to) => {
                 positiveText: "Sí",
                 negativeText: "No",
                 onPositiveClick: () => {
+                    unlockCurrentTable();
                     orderStore.clearNewOrders();
                     router.push(to);
                 }
@@ -260,6 +261,7 @@ onBeforeRouteLeave((to) => {
                 positiveText: "Sí",
                 title: "Cambios sin guardar",
                 onPositiveClick: () => {
+                    unlockCurrentTable();
                     orderStore.clearNewOrders();
                     router.push(to);
                 }
@@ -447,11 +449,12 @@ const shouldUnlock = ref(false);
 const capturedTableId = ref(null);
 
 const unlockCurrentTable = () => {
-    const idToUnlock = capturedTableId.value;
-    console.log('[WaiterOrder] 🔍 unlockCurrentTable llamado - shouldUnlock:', shouldUnlock.value, 'capturedTableId:', capturedTableId.value);
-    if (shouldUnlock.value && idToUnlock) {
-        console.log('[WaiterOrder] 🔓 Desbloqueando mesa', idToUnlock);
-        wsUnlockTable(idToUnlock);
+    const idToUnlock = capturedTableId.value || route.params.table;
+    console.log('[WaiterOrder] 🔍 unlockCurrentTable llamado - idToUnlock:', idToUnlock);
+    if (idToUnlock) {
+        const idNum = typeof idToUnlock === 'string' ? parseInt(idToUnlock) : idToUnlock;
+        console.log('[WaiterOrder] 🔓 Desbloqueando mesa', idNum);
+        wsUnlockTable(idNum);
         shouldUnlock.value = false;
     }
 };

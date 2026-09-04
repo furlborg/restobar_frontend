@@ -1,7 +1,7 @@
 <template>
     <div>
         <!-- inicio de navegación hacia las mesas -->
-        <n-page-header v-if="!isWaiterModeView" class="mb-2 px-4" @back="() => $router.push({ name: 'TableHome' })">
+        <n-page-header v-if="!isWaiterModeView" class="mb-2 px-4" @back="goHome">
             <template #title>
                 <n-text class="fs-2">{{ tableStore.getTableByID(table)?.description }}</n-text>
             </template>
@@ -162,8 +162,8 @@ const capturedTableId = ref(null);
 
 const unlockCurrentTable = () => {
     const idToUnlock = capturedTableId.value || route.params.table;
-    console.log('[TableOrderLayout] 🔍 unlockCurrentTable llamado - shouldUnlock:', shouldUnlock.value, 'idToUnlock:', idToUnlock);
-    if (shouldUnlock.value && idToUnlock) {
+    console.log('[TableOrderLayout] 🔍 unlockCurrentTable llamado - idToUnlock:', idToUnlock);
+    if (idToUnlock) {
         const idNum = typeof idToUnlock === 'string' ? parseInt(idToUnlock) : idToUnlock;
         console.log('[TableOrderLayout] 🔓 Desbloqueando mesa', idNum);
         wsUnlockTable(idNum);
@@ -251,6 +251,7 @@ const handleRouteGuard = (to, isLeave = false) => {
             content: "¿Salir de todos modos?",
             positiveText: "Sí",
             onPositiveClick: () => {
+                unlockCurrentTable();
                 cleanupOrderStore();
                 router.push(to);
             },
