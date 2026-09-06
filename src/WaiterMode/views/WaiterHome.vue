@@ -299,9 +299,11 @@ const performChangeTable = async () => {
  * Amarillo: Bloqueada por otro usuario
  */
 const getTableColor = (table) => {
-  // Verificar bloqueo usando la función combinada
-  const blockStatus = isTableBlocked(table);
-  if (blockStatus.blocked) {
+  const wsLockInfo = tableStore.lockedTables[table.id];
+  const isLockedByOther = (wsLockInfo && wsLockInfo.user_id !== userStore.user.id) ||
+    (table.lock_info && table.lock_info.is_active && !table.lock_info.is_locked_by_me);
+
+  if (isLockedByOther) {
     return '#ffc107'; // Amarillo
   }
 
@@ -318,9 +320,11 @@ const getTableColor = (table) => {
  * Obtener clase de fondo de la mesa según su estado
  */
 const getTableBackgroundClass = (table) => {
-  // Verificar bloqueo usando la función combinada
-  const blockStatus = isTableBlocked(table);
-  if (blockStatus.blocked) {
+  const wsLockInfo = tableStore.lockedTables[table.id];
+  const isLockedByOther = (wsLockInfo && wsLockInfo.user_id !== userStore.user.id) ||
+    (table.lock_info && table.lock_info.is_active && !table.lock_info.is_locked_by_me);
+
+  if (isLockedByOther) {
     return 'bg-locked';
   }
 

@@ -13,12 +13,12 @@ import { useBusinessStore } from '@/store/modules/business';
 import { useUserStore } from '@/store/modules/user';
 import { useTableStore } from '@/store/modules/table';
 import useCookie from "vue-cookies";
-const businessStore = useBusinessStore();
-const userStore = useUserStore();
-const tableStore = useTableStore();
+const getBusinessStore = () => useBusinessStore();
+const getUserStore = () => useUserStore();
+const getTableStore = () => useTableStore();
 
 const getAuthConfig = () => {
-  const token = useCookie.get("token") || userStore.token;
+  const token = useCookie.get("token") || getUserStore().token;
   const config = { withCredentials: true };
   if (token) {
     config.headers = { Authorization: `Bearer ${token}` };
@@ -27,10 +27,10 @@ const getAuthConfig = () => {
 };
 
 const connectLockWebSocket = () => {
-  const branchId = userStore.user.branchoffice || businessStore.currentBranch || 1;
+  const branchId = getUserStore().user.branchoffice || getBusinessStore().currentBranch || 1;
   const apiUrl = import.meta.env.VITE_APP_URL.replace(/^https?:\/\//, '');
   const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-  const currentToken = useCookie.get("token") || userStore.token;
+  const currentToken = useCookie.get("token") || getUserStore().token;
   
   // Si no hay token (sesión expirada), no intentar conectar para evitar bucle 403
   if (!currentToken) {
@@ -71,6 +71,32 @@ const connectLockWebSocket = () => {
       const data = JSON.parse(event.data);
 
       switch (data.type) {
+        case 'initial_locks_sync': {
+          if (data.locks) {
+            const newMap = new Map(lockedTables.value);
+            Object.entries(data.locks).forEach(([tblId, lock]) => {
+              const tableId = parseInt(tblId) || tblId;
+              newMap.set(tableId, {
+                table_id: tableId,
+                user_id: lock.user_id,
+                username: lock.username,
+                locked_at: lock.locked_at,
+                expires_at: lock.expires_at,
+                remaining_seconds: lock.remaining_seconds
+              });
+              const table = getTableStore().getTableByID(tableId);
+              if (table) {
+                if (!table.lock_info) table.lock_info = {};
+                table.lock_info.is_active = true;
+                table.lock_info.username = lock.username;
+                table.lock_info.user_id = lock.user_id;
+              }
+            });
+            lockedTables.value = newMap;
+            getTableStore().lockedTables = Object.fromEntries(newMap);
+          }
+          break;
+        }
         case 'table_locked': {
           const lock = data.lock_data || data;
           const tableId = lock.table_id || lock.table;
@@ -86,9 +112,9 @@ const connectLockWebSocket = () => {
               remaining_seconds: lock.remaining_seconds
             });
             lockedTables.value = newMap;
-            tableStore.lockedTables = Object.fromEntries(newMap);
+            getTableStore().lockedTables = Object.fromEntries(newMap);
 
-            const table = tableStore.getTableByID(tableId);
+            const table = getTableStore().getTableByID(tableId);
             if (table) {
               if (!table.lock_info) table.lock_info = {};
               table.lock_info.is_active = true;
@@ -104,11 +130,11 @@ const connectLockWebSocket = () => {
             const newMap = new Map(lockedTables.value);
             newMap.delete(unlock.table_id);
             lockedTables.value = newMap;
-            tableStore.lockedTables = Object.fromEntries(newMap);
+            getTableStore().lockedTables = Object.fromEntries(newMap);
             
             // ELIMINAR EL LOCK FANTASMA CACHEADO DE LA API REST
             // Si no lo limpiamos, la UI usará los datos viejos de la última carga de página
-            const table = tableStore.getTableByID(unlock.table_id);
+            const table = getTableStore().getTableByID(unlock.table_id);
             if (table && table.lock_info) {
                 table.lock_info.is_active = false;
             }
@@ -128,7 +154,7 @@ const connectLockWebSocket = () => {
             };
             newMap.set(tableId, renewEntry);
             lockedTables.value = newMap;
-            tableStore.lockedTables = Object.fromEntries(newMap);
+            getTableStore().lockedTables = Object.fromEntries(newMap);
           }
           break;
         }
@@ -155,6 +181,9 @@ const connectLockWebSocket = () => {
       lockSocketConnected.value = false;
       if (reconnectTimeout) clearTimeout(reconnectTimeout);
     }
+    lockedTables.value = new Map();
+    getTableStore().lockedTables = {};
+    pendingMessages = [];
   };
 
 const wsLockTable = (tableId, durationMinutes = 15) => {
@@ -278,9 +307,9 @@ const unlockTableHTTP = async (tableId) => {
       getAuthConfig()
     );
 
-    const rest = { ...tableStore.lockedTables };
+    const rest = { ...getTableStore().lockedTables };
     delete rest[tableId];
-    tableStore.lockedTables = rest;
+    getTableStore().lockedTables = rest;
 
     return { success: true };
   } catch (error) {
