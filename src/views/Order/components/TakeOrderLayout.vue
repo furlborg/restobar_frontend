@@ -274,7 +274,9 @@ const sale = ref({
 const syncSaleTotals = () => {
   const dsct = parseFloat(totalDSCT.value) || 0;
   const others = parseFloat(sale.value.other_charges) || 0;
-  const calculatedAmount = Math.max(0, grandTotal.value + others - dsct);
+  const deliveryAmount = parseFloat(sale.value.delivery_info?.amount || 0);
+  const icbperAmount = parseFloat(icbper.value || 0);
+  const calculatedAmount = Math.max(0, grandTotal.value + icbperAmount + others + deliveryAmount - dsct);
 
   Object.assign(sale.value, {
     amount: calculatedAmount.toFixed(2),
@@ -287,7 +289,7 @@ const syncSaleTotals = () => {
   });
 };
 
-watch([grandTotal, icbper, totalGRV, totalEXN, totalGRT, totalIGV, totalDSCT, () => sale.value.other_charges], syncSaleTotals, {
+watch([grandTotal, icbper, totalGRV, totalEXN, totalGRT, totalIGV, totalDSCT, () => sale.value.other_charges, () => sale.value.delivery_info?.amount], syncSaleTotals, {
   immediate: true,
 });
 
@@ -360,6 +362,22 @@ const changeCondition = (v) => {
 const goToFirstTab = () => ui.activeTab = "main";
 
 const performTakeAway = async () => {
+  if (sale.value.invoice_type === 1) {
+    const customerId = typeof sale.value.customer === 'object' ? sale.value.customer?.id : sale.value.customer;
+    if (!customerId || customerId === 1) {
+      message.warning("Para emitir Factura Electrónica es obligatorio seleccionar un cliente con RUC (11 dígitos).");
+      return;
+    }
+    const customerObj = typeof sale.value.customer === 'object' ? sale.value.customer : customerResults.value.find((c) => c.id === customerId);
+    if (customerObj) {
+      const docType = String(customerObj.doc_type || "");
+      const docNum = String(customerObj.doc_num || "").trim();
+      if (docType !== "6" || docNum.length !== 11 || !/^\d{11}$/.test(docNum)) {
+        message.warning("El cliente seleccionado no cuenta con un RUC válido (11 dígitos numéricos).");
+        return;
+      }
+    }
+  }
   if (userStore.user.role === "MOZO") {
     ui.showConfirm = true;
     return;

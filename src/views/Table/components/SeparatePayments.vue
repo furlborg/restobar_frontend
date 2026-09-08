@@ -231,14 +231,14 @@
                 <input class="custom-input fw-bold" type="number" min="0" :max="discountInputLimit" step=".5" v-model="totalDSCT"
                   v-autowidth :disabled="sale.sale_details.some(
       (detail) => Number(detail.discount) > 0
-    )
+    ) || Number(sale.other_charges) > 0
       " @click="$event.target.select()" />
               </div>
               <div>
                 OTROS:
                 <span>S/.</span>
                 <input class="custom-input fw-bold" type="number" min="0" step=".5" v-model="sale.other_charges"
-                  v-autowidth @click="$event.target.select()" />
+                  v-autowidth :disabled="Number(totalDSCT) > 0" @click="$event.target.select()" />
               </div>
               <div>
                 TOTAL: <span>S/. {{ sale.amount }}</span>
