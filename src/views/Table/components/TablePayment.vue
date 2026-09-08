@@ -173,6 +173,7 @@ const whatsappNumber = ref("");
 const showPdf = ref(false);
 const previewDrawer = ref(null);
 const pdfData = ref(null);
+const selectedCustomer = ref(null);
 
 const defaultInvoiceType = settingsStore.businessSettings.sale?.enable_invoices
   ? settingsStore.businessSettings.sale.default_invoice : 80;
@@ -267,6 +268,10 @@ const changing = computed(() =>
 );
 
 const paymentTotalsItems = computed(() => {
+  const hasItemDiscount = saleStore.toSale.some(d => Number(d.discount) > 0);
+  const currentOtherCharges = Number(sale.value.other_charges) || 0;
+  const currentDiscount = Number(totalDSCT.value) || 0;
+
   return [
     { label: "SUBTOTAL", value: subTotal.value, editable: false },
     { label: "OP. GRAVADAS", value: totalGRV.value, editable: false },
@@ -277,10 +282,10 @@ const paymentTotalsItems = computed(() => {
     {
       label: "DSCT",
       value: totalDSCT.value,
-      editable: !settingsStore.business_settings.sale?.show_discount_label,
+      editable: Boolean(settingsStore.businessSettings?.sale?.show_discount_label ?? settingsStore.business_settings?.sale?.show_discount_label ?? true),
       field: "discount",
       step: 0.5,
-      disabled: saleStore.toSale.some(d => Number(d.discount) > 0),
+      disabled: hasItemDiscount || currentOtherCharges > 0,
       max: discountInputMax.value
     },
     {
@@ -289,7 +294,7 @@ const paymentTotalsItems = computed(() => {
       editable: true,
       field: "other_charges",
       step: 0.5,
-      disabled: false
+      disabled: currentDiscount > 0
     }
   ];
 });
@@ -365,14 +370,32 @@ const isExpirationDateDisabled = (ts) => {
 const isCredit = computed(() => Number(sale.value.payment_condition) === 2);
 
 const formRules = computed(() => {
+  const isInvoice = Number(sale.value.invoice_type) === 1;
   const rules = {
     customer: {
       ...saleRules.customer,
-      required: !(
+      required: isInvoice || !(
         sale.value.invoice_type !== 1 &&
         sale.value.payment_condition === 1 &&
         sale.value.given_amount <= 699
       ),
+      validator(rule, value) {
+        if (isInvoice) {
+          const customerId = typeof value === 'object' ? value?.id : value;
+          if (!customerId || customerId === 1) {
+            return new Error("Para emitir Factura es obligatorio un cliente con RUC (11 dígitos).");
+          }
+          if (selectedCustomer.value) {
+            const docType = String(selectedCustomer.value.doc_type || "");
+            const docNum = String(selectedCustomer.value.doc_num || "").trim();
+            if (docType !== "6" || docNum.length !== 11 || !/^\d{11}$/.test(docNum)) {
+              return new Error("El cliente seleccionado debe tener un RUC válido de 11 dígitos.");
+            }
+          }
+        }
+        return true;
+      },
+      trigger: ["blur", "change"],
     },
   };
   if (isCredit.value) {
@@ -401,6 +424,7 @@ const changeSerie = (v) => {
     sale.value.customer_name = "";
     sale.value.customer = null;
     sale.value.address = null;
+    selectedCustomer.value = null;
   }
   const newSerie = saleStore.getFirstOption(v);
   sale.value.serie = newSerie;
@@ -420,9 +444,17 @@ const handleSerieChanged = () => {
 // Handlers para PaymentTotals
 const handleValueChange = ({ field, value }) => {
   if (field === 'discount') {
-    sale.value.discount = parseFloat(value) || 0;
+    const dVal = parseFloat(value) || 0;
+    sale.value.discount = dVal;
+    if (dVal > 0) {
+      sale.value.other_charges = "0.00";
+    }
   } else if (field === 'other_charges') {
-    sale.value.other_charges = parseFloat(value) || 0;
+    const cVal = parseFloat(value) || 0;
+    sale.value.other_charges = cVal;
+    if (cVal > 0) {
+      sale.value.discount = 0;
+    }
   }
 };
 
@@ -435,12 +467,28 @@ const performCreateSale = () => {
     if (errors) {
       if (formRules.value.customer.required) {
         const msg = sale.value.invoice_type === 1
-          ? "Debes agregar un cliente cuando la venta es con factura"
+          ? "Debes agregar un cliente con RUC válido para emitir Factura"
           : "Debes agregar un cliente porque la venta es mayor a S/ 699";
         message.warning(msg);
       }
       message.error("Datos Incorrectos");
       return;
+    }
+
+    if (sale.value.invoice_type === 1) {
+      const customerId = typeof sale.value.customer === 'object' ? sale.value.customer?.id : sale.value.customer;
+      if (!customerId || customerId === 1) {
+        message.warning("Para emitir Factura Electrónica es obligatorio seleccionar un cliente con RUC (11 dígitos).");
+        return;
+      }
+      if (selectedCustomer.value) {
+        const docType = String(selectedCustomer.value.doc_type || "");
+        const docNum = String(selectedCustomer.value.doc_num || "").trim();
+        if (docType !== "6" || docNum.length !== 11 || !/^\d{11}$/.test(docNum)) {
+          message.warning("El cliente seleccionado no cuenta con un RUC válido (11 dígitos numéricos).");
+          return;
+        }
+      }
     }
 
     const currentDiscount = Math.round((parseFloat(totalDSCT.value) || 0) * 100) / 100;
@@ -554,10 +602,12 @@ const createAddressesOptions = (customer) => {
 };
 
 const handleCustomerSelected = (customer) => {
+  selectedCustomer.value = customer;
   createAddressesOptions(customer);
 };
 
 const handleCustomerCleared = () => {
+  selectedCustomer.value = null;
   sale.value.address = null;
   whatsappNumber.value = '';
   addressesOptions.value = [];

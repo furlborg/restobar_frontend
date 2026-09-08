@@ -638,8 +638,32 @@ export default defineComponent({
     );
 
     const formRules = computed(() => {
-      let rules = saleRules;
-      rules.customer.required = !(sale.value.invoice_type !== 1 && sale.value.payment_condition === 1 && sale.value.given_amount <= 699);
+      const isInvoice = Number(sale.value.invoice_type) === 1;
+      let rules = {
+        ...saleRules,
+        customer: {
+          ...saleRules.customer,
+          required: isInvoice || !(sale.value.invoice_type !== 1 && sale.value.payment_condition === 1 && sale.value.given_amount <= 699),
+          validator: (_, value) => {
+            if (isInvoice) {
+              const customerId = typeof value === 'object' ? value?.id : value;
+              if (!customerId || customerId === 1) {
+                return new Error("Para emitir Factura es obligatorio seleccionar un cliente con RUC (11 dígitos)");
+              }
+              const customerObj = customerResults.value.find((c) => c.id === customerId);
+              if (customerObj) {
+                const docType = String(customerObj.doc_type || "");
+                const docNum = String(customerObj.doc_num || "").trim();
+                if (docType !== "6" || docNum.length !== 11 || !/^\d{11}$/.test(docNum)) {
+                  return new Error("El cliente debe tener un RUC válido de 11 dígitos");
+                }
+              }
+            }
+            return true;
+          },
+          trigger: ["blur", "change"],
+        },
+      };
       rules.due_date = sale.value.payment_condition === 2
         ? {
           required: true,
@@ -669,6 +693,10 @@ export default defineComponent({
 
     // Crear los items para PaymentTotals
     const paymentTotalsItems = computed(() => {
+      const hasItemDiscount = freeSaleDetails.value.some(d => Number(d.discount) > 0);
+      const currentOtherCharges = Number(sale.value.other_charges) || 0;
+      const currentDiscount = Number(totalDSCT.value) || 0;
+
       return [
         { label: "SUBTOTAL", value: subTotal.value, editable: false },
         { label: "OP. GRAVADAS", value: totalGRV.value, editable: false },
@@ -679,10 +707,10 @@ export default defineComponent({
         {
           label: "DSCT",
           value: totalDSCT.value,
-          editable: !settingsStore.businessSettings.sale?.show_discount_label,
+          editable: Boolean(settingsStore.businessSettings?.sale?.show_discount_label ?? settingsStore.business_settings?.sale?.show_discount_label ?? true),
           field: "discount",
           step: 0.5,
-          disabled: freeSaleDetails.value.some(d => Number(d.discount) > 0),
+          disabled: hasItemDiscount || currentOtherCharges > 0,
           max: discountInputMax.value
         },
         {
@@ -690,7 +718,8 @@ export default defineComponent({
           value: sale.value.other_charges,
           editable: true,
           field: "other_charges",
-          step: 0.5
+          step: 0.5,
+          disabled: currentDiscount > 0
         }
       ];
     });
@@ -698,9 +727,17 @@ export default defineComponent({
     // Manejar cambios en los valores editables
     const handleValueChange = ({ field, value }) => {
       if (field === 'discount') {
-        sale.value.discount = parseFloat(value) || 0;
+        const dVal = parseFloat(value) || 0;
+        sale.value.discount = dVal;
+        if (dVal > 0) {
+          sale.value.other_charges = "0.00";
+        }
       } else if (field === 'other_charges') {
-        sale.value.other_charges = parseFloat(value) || 0;
+        const cVal = parseFloat(value) || 0;
+        sale.value.other_charges = cVal;
+        if (cVal > 0) {
+          sale.value.discount = 0;
+        }
       }
     };
 
@@ -767,6 +804,22 @@ export default defineComponent({
     const performCreateSale = () => {
       saleForm.value.validate((errors) => {
         if (!errors) {
+          if (sale.value.invoice_type === 1) {
+            const customerId = typeof sale.value.customer === 'object' ? sale.value.customer?.id : sale.value.customer;
+            if (!customerId || customerId === 1) {
+              message.warning("Para emitir Factura Electrónica es obligatorio seleccionar un cliente con RUC (11 dígitos).");
+              return;
+            }
+            const customerObj = customerResults.value.find((c) => c.id === customerId);
+            if (customerObj) {
+              const docType = String(customerObj.doc_type || "");
+              const docNum = String(customerObj.doc_num || "").trim();
+              if (docType !== "6" || docNum.length !== 11 || !/^\d{11}$/.test(docNum)) {
+                message.warning("El cliente seleccionado no cuenta con un RUC válido (11 dígitos numéricos).");
+                return;
+              }
+            }
+          }
           const currentDiscount = Math.round((parseFloat(totalDSCT.value) || 0) * 100) / 100;
           const maxAllowedDiscount = discountValidationThreshold.value;
           if (maxAllowedDiscount > 0 && currentDiscount >= maxAllowedDiscount) {

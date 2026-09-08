@@ -234,7 +234,7 @@
                                                 <span>S/.</span>
                                                 <input class="custom-input fw-bold" type="number" min="0" step=".5"
                                                     :max="discountInputLimit" v-model="totalDSCT" v-autowidth
-                                                    :disabled="saleStore.toSale.some(d => Number(d.discount) > 0)"
+                                                    :disabled="saleStore.toSale.some(d => Number(d.discount) > 0) || Number(sale.other_charges) > 0"
                                                     @click="$event.target.select()" />
                                             </div>
                                             <div>
@@ -242,6 +242,7 @@
                                                 <span>S/.</span>
                                                 <input class="custom-input fw-bold" type="number" min="0" step=".1"
                                                     v-model="sale.other_charges" v-autowidth
+                                                    :disabled="Number(totalDSCT) > 0"
                                                     @click="$event.target.select()" />
                                             </div>
                                             <div>
