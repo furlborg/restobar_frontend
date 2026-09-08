@@ -261,12 +261,30 @@ onMounted(() => {
 });
 
 const formRules = computed(() => {
+  const isInvoice = Number(props.sale.invoice_type) === 1;
   const rules = {
     customer: {
       type: "any",
-      required: !(props.sale.invoice_type !== 1 && props.sale.payment_condition === 1 && parseFloat(props.sale.given_amount) < 699),
-      trigger: ["blur", "input"],
-      message: "Campo requerido"
+      required: isInvoice || !(props.sale.invoice_type !== 1 && props.sale.payment_condition === 1 && parseFloat(props.sale.given_amount) < 699),
+      validator: (_, value) => {
+        if (isInvoice) {
+          const customerId = typeof value === 'object' ? value?.id : value;
+          if (!customerId || customerId === 1) {
+            return new Error("Para emitir Factura es obligatorio seleccionar un cliente con RUC (11 dígitos)");
+          }
+          const customerObj = typeof value === 'object' ? value : null;
+          if (customerObj) {
+            const docType = String(customerObj.doc_type || "");
+            const docNum = String(customerObj.doc_num || "").trim();
+            if (docType !== "6" || docNum.length !== 11 || !/^\d{11}$/.test(docNum)) {
+              return new Error("El cliente seleccionado debe tener un RUC válido de 11 dígitos");
+            }
+          }
+        }
+        return true;
+      },
+      trigger: ["blur", "input", "change"],
+      message: "Para emitir Factura es obligatorio un cliente con RUC válido."
     }
   };
 
@@ -432,6 +450,23 @@ const handleTicketPreviewChange = (value) => {
 const handleMainAction = () => {
   saleForm.value?.validate((errors) => {
     if (!errors) {
+      if (props.sale.invoice_type === 1) {
+        const customerVal = props.sale.customer;
+        const customerId = typeof customerVal === 'object' ? customerVal?.id : customerVal;
+        if (!customerId || customerId === 1) {
+          message.warning("Para emitir Factura Electrónica es obligatorio seleccionar un cliente con RUC (11 dígitos).");
+          return;
+        }
+        const customerObj = typeof customerVal === 'object' ? customerVal : null;
+        if (customerObj) {
+          const docType = String(customerObj.doc_type || "");
+          const docNum = String(customerObj.doc_num || "").trim();
+          if (docType !== "6" || docNum.length !== 11 || !/^\d{11}$/.test(docNum)) {
+            message.warning("El cliente seleccionado no cuenta con un RUC válido (11 dígitos numéricos).");
+            return;
+          }
+        }
+      }
       if (userStore.user.role !== "MOZO") {
         if (props.isMultiple) {
           emit('doMultiplePayment');
@@ -466,8 +501,11 @@ const discountInputLimit = computed(() => {
   return Math.max(Math.round(capped * 100) / 100, 0);
 });
 
-// Crear los items para PaymentTotals
 const paymentTotalsItems = computed(() => {
+  const currentOtherCharges = Number(props.sale.other_charges || 0);
+  const currentDiscount = Number(props.totalDsct || 0);
+  const hasItemDiscount = saleStore.toSale.some(d => Number(d.discount) > 0);
+
   return [
     { label: "SUBTOTAL", value: props.subTotal, editable: false, alwaysShow: true },
     { label: "OP. GRAVADAS", value: props.totalGrv, editable: false, alwaysShow: true },
@@ -478,10 +516,10 @@ const paymentTotalsItems = computed(() => {
     {
       label: "DSCT",
       value: props.totalDsct,
-      editable: true,
+      editable: Boolean(settingsStore.businessSettings?.sale?.show_discount_label ?? settingsStore.business_settings?.sale?.show_discount_label ?? true),
       field: "discount",
       step: 0.5,
-      disabled: false,
+      disabled: hasItemDiscount || currentOtherCharges > 0,
       max: discountInputLimit.value
     },
     {
@@ -490,13 +528,15 @@ const paymentTotalsItems = computed(() => {
       editable: true,
       field: "other_charges",
       step: 0.5,
-      disabled: false
+      disabled: currentDiscount > 0
     }
   ];
 });
 
 const totalAmount = computed(() => {
-  const result = grandTotal.value + Number(props.sale.other_charges || 0) - Number(props.totalDsct || 0);
+  const delivery = Number(props.sale.delivery_info?.amount || 0);
+  const icbperVal = Number(props.icbper || 0);
+  const result = grandTotal.value + icbperVal + delivery + Number(props.sale.other_charges || 0) - Number(props.totalDsct || 0);
   return Math.max(0, result);
 });
 // Watcher para actualizar automáticamente el campo de pago y amount cuando cambie el total
@@ -519,7 +559,15 @@ watch(totalAmount, (newTotal) => {
 const handleValueChange = ({ field, value }) => {
   if (field && value !== undefined) {
     const updates = { ...props.sale };
-    updates[field] = value;
+    const numVal = parseFloat(value) || 0;
+    updates[field] = numVal;
+
+    if (field === 'discount' && numVal > 0) {
+      updates.other_charges = 0;
+    } else if (field === 'other_charges' && numVal > 0) {
+      updates.discount = 0;
+    }
+
     // Actualizar el amount con el total calculado
     updates.amount = totalAmount.value;
     emit('update:sale', updates);
