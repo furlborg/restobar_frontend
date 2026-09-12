@@ -268,7 +268,7 @@
                                             <div class="list-item"><div class="item-text"><span>Ventas</span></div><n-switch :disabled="!editMode" v-model:value="businessSettings.modules.show_sales" /></div>
                                             <div class="list-item"><div class="item-text"><span>Anulaciones</span></div><n-switch :disabled="!editMode" v-model:value="businessSettings.modules.show_anulates" /></div>
                                             <div class="list-item"><div class="item-text"><span>Productos</span></div><n-switch :disabled="!editMode" v-model:value="businessSettings.modules.show_products" /></div>
-                                            <div class="list-item"><div class="item-text"><span>Pantalla Cocina / KDS</span></div><n-switch :disabled="!editMode" v-model:value="businessSettings.modules.show_kds" /></div>
+                                            <div class="list-item"><div class="item-text"><span>Pantalla Cocina / KDS</span></div><n-switch :disabled="!editMode" v-model:value="businessSettings.modules.show_kds" @update:value="(val) => { if (businessSettings.kds) businessSettings.kds.enabled = val; }" /></div>
                                             <div class="list-item border-none"><div class="item-text"><span>Reportes</span></div><n-switch :disabled="!editMode" v-model:value="businessSettings.modules.show_reports" /></div>
                                         </div>
                                     </n-grid-item>
@@ -311,17 +311,16 @@
                             <n-text depth="3" class="section-desc">Muestra los pedidos de autoservicio, salón y delivery en tiempo real para el equipo de cocina.</n-text>
                         </div>
 
-                        <!-- ESTADO GENERAL -->
+                        <!-- TEMA VISUAL DEL KDS -->
+                        <n-h3 class="section-title mt-4">Tema Visual del KDS</n-h3>
                         <n-card class="settings-group-card mt-2" :bordered="true">
-                            <div class="list-settings">
-                                <div class="list-item border-none">
-                                    <div class="item-text">
-                                        <span>Habilitar Módulo KDS</span>
-                                        <small class="d-block text-muted">Permite acceder al tablero de cocina y recibir comandas en pantalla.</small>
-                                    </div>
-                                    <n-switch :disabled="!editMode" v-model:value="businessSettings.kds.enabled" @update:value="(val) => { businessSettings.modules.show_kds = val; }" />
-                                </div>
-                            </div>
+                            <n-form :disabled="!editMode" label-placement="top">
+                                <n-grid responsive="screen" cols="1 s:1 m:2 l:2" x-gap="24" y-gap="12">
+                                    <n-form-item-gi label="Tema KDS (Pantalla Cocina)">
+                                        <n-select v-model:value="businessSettings.kds.theme" :options="kdsThemeOptions" size="large" @update:value="onKdsThemeChange" />
+                                    </n-form-item-gi>
+                                </n-grid>
+                            </n-form>
                         </n-card>
 
                         <!-- TIEMPOS DE ALERTA -->
@@ -437,6 +436,7 @@ export default defineComponent({
             }
             const defaultKds = {
                 enabled: true,
+                theme: 'dark',
                 alert_warning_min: 8,
                 alert_critical_min: 15,
                 sound_new_order: true,
@@ -449,6 +449,11 @@ export default defineComponent({
                 }
             }
         };
+
+        const kdsThemeOptions = [
+            { label: "Negro (Oscuro Industrial - Recomendado)", value: "dark" },
+            { label: "Blanco (Claro Nórdico)", value: "light" },
+        ];
 
         initModules(businessSettings.value);
         initKdsSettings(businessSettings.value);
@@ -538,12 +543,24 @@ export default defineComponent({
             }
         ];
 
+        const onKdsThemeChange = (val) => {
+            if (val) {
+                localStorage.setItem('kds_theme', val);
+            }
+        };
+
         // Realiza la actualización de la configuración del negocio
         const performUpdateBusinessSettings = () => {
+            if (businessSettings.value.kds && businessSettings.value.modules) {
+                businessSettings.value.kds.enabled = businessSettings.value.modules.show_kds;
+            }
             updateBusinessSettings(businessSettings.value).then((response) => {
                 if (response.status === 202) {
                     message.success("Actualizado correctamente!");
                     settingsStore.business_settings = response.data;
+                    if (businessSettings.value.kds && businessSettings.value.kds.theme) {
+                        localStorage.setItem('kds_theme', businessSettings.value.kds.theme);
+                    }
                     editMode.value = false;
                 }
             }).catch((error) => {
@@ -642,6 +659,8 @@ export default defineComponent({
             infoLocationOptions,
             orderTypeOptions,
             waiterAuthModeOptions,
+            kdsThemeOptions,
+            onKdsThemeChange,
             testChimeSound
         };
     }

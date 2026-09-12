@@ -195,8 +195,8 @@ export async function retrieveOrderTicket(id) {
   return await http.get(`orders/${id}/order_ticket/`);
 }
 
-export async function listProductPreparation() {
-  return await http.get("product-preparation/");
+export async function listProductPreparation(params = {}) {
+  return await http.get("product-preparation/", { params });
 }
 
 export async function updateProductPreparation(id, status) {
@@ -207,6 +207,12 @@ export async function updateProductPreparation(id, status) {
 
 export async function dispatchOrderPreparations(orderId) {
   return await http.post("product-preparation/dispatch_order/", {
+    order_id: orderId,
+  });
+}
+
+export async function reopenOrderPreparations(orderId) {
+  return await http.post("product-preparation/reopen_order/", {
     order_id: orderId,
   });
 }
