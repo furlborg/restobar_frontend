@@ -722,28 +722,28 @@ export const createTillColumns = ({
                       makeTillReportDetail(row);
                       break;
                     case 211:
-                      requestExcel(row.id, "details", "Movimientos");
+                      requestExcel(row, "details", "Movimientos");
                       break;
                     case 212:
-                      requestExcel(row.id, "income", "Ingresos");
+                      requestExcel(row, "income", "Ingresos");
                       break;
                     case 213:
-                      requestExcel(row.id, "outcome", "Egresos");
+                      requestExcel(row, "outcome", "Egresos");
                       break;
                     case 221:
-                      requestExcel(row.id, "orders", "Pedidos");
+                      requestExcel(row, "orders", "Pedidos");
                       break;
                     case 222:
-                      requestExcel(row.id, "users_details", "Usuarios");
+                      requestExcel(row, "users_details", "Usuarios");
                       break;
                     case 231:
-                      requestExcel(row.id, "sales", "Ventas");
+                      requestExcel(row, "sales", "Ventas");
                       break;
                     case 232:
-                      requestExcel(row.id, "products", "Productos");
+                      requestExcel(row, "products", "Productos");
                       break;
                     case 233:
-                      requestExcel(row.id, "categories", "Categorías");
+                      requestExcel(row, "categories", "Categorías");
                       break;
                     case 3:
                       sendReportMail(row);

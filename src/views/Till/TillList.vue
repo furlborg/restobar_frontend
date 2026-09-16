@@ -487,18 +487,41 @@ export default defineComponent({
             });
         },
         requestExcel(till, report, filename) {
-          getExcelReport(till, report)
+          const tillId = typeof till === "object" && till !== null ? till.id : till;
+          let tillDate = format(new Date(), "yyyy-MM-dd");
+          try {
+            if (till && typeof till === "object" && till.created) {
+              const created = till.created;
+              if (typeof created === "string") {
+                const match = created.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+                if (match) {
+                  const [, day, month, year] = match;
+                  tillDate = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+                } else {
+                  const parsed = new Date(created.replace(" ", "T"));
+                  if (!isNaN(parsed.getTime())) {
+                    tillDate = format(parsed, "yyyy-MM-dd");
+                  }
+                }
+              } else if (created instanceof Date && !isNaN(created.getTime())) {
+                tillDate = format(created, "yyyy-MM-dd");
+              }
+            }
+          } catch (err) {
+            console.error("Error formatting till date:", err);
+          }
+          message.loading("Generando reporte Excel...", { duration: 2000 });
+          getExcelReport(tillId, report)
             .then((response) => {
               downloadReport(
                 response.data,
-                `Reporte ${filename} ${format(
-                  new Date(Date.now()),
-                  "yyyy-MM-dd"
-                )}.xlsx`
+                `Reporte ${filename} Caja #${tillId} ${tillDate}.xlsx`
               );
+              message.success("Descarga completada");
             })
             .catch((error) => {
               console.error(error);
+              message.error("Error al descargar el reporte Excel");
             });
         },
         sendReportMail(row) {

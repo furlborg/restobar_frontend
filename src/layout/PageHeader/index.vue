@@ -139,23 +139,15 @@ watch(showWhatsAppQrModal, (isOpen) => {
   }
 });
 
-let statusPollInterval = null;
-
 onMounted(() => {
+  // Consultar una sola vez al cargar la aplicación
   checkWhatsAppStatus();
+  // Escuchar eventos en tiempo real emitidos al vincular o desvincular
   window.addEventListener("whatsapp-status-changed", handleWhatsAppStatusEvent);
-  window.addEventListener("focus", checkWhatsAppStatus);
-  // Sondeo suave cada 30 segundos para mantener sincronizado el estado del teléfono
-  statusPollInterval = setInterval(checkWhatsAppStatus, 30000);
 });
 
 onUnmounted(() => {
   window.removeEventListener("whatsapp-status-changed", handleWhatsAppStatusEvent);
-  window.removeEventListener("focus", checkWhatsAppStatus);
-  if (statusPollInterval) {
-    clearInterval(statusPollInterval);
-    statusPollInterval = null;
-  }
 });
 
 const state = reactive({
