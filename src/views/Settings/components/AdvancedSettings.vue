@@ -331,9 +331,76 @@
                         </n-card>
                     </div>
                 </n-tab-pane>
+
+                <!-- PESTAÑA: WHATSAPP -->
+                <n-tab-pane name="whatsapp" tab="WhatsApp">
+                    <template #tab>
+                        <div class="tab-label">
+                            <v-icon name="bi-whatsapp" scale="1.2" class="mr-2" style="color: #25D366" />
+                            WhatsApp
+                        </div>
+                    </template>
+                    <div class="tab-content">
+                        <n-h3 class="section-title">Vinculación de WhatsApp (Zendy)</n-h3>
+                        <n-text depth="3" class="section-desc">Vincula el número de WhatsApp de tu restaurante mediante código QR para enviar comprobantes y notificaciones desde tu propio celular.</n-text>
+
+                        <!-- Tarjeta de Estado Principal -->
+                        <n-card class="settings-group-card mt-3" :bordered="true">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                                <div class="d-flex align-items-center gap-3">
+                                    <v-icon name="bi-whatsapp" scale="2.5" :fill="whatsappStatus.is_ready ? '#25D366' : '#909399'" />
+                                    <div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <n-tag :type="whatsappStatus.is_ready ? 'success' : 'default'" round size="small">
+                                                {{ whatsappStatus.is_ready ? 'Conectado' : 'Desconectado' }}
+                                            </n-tag>
+                                            <span v-if="whatsappStatus.phone_number" class="fw-bold fs-6">
+                                                +{{ whatsappStatus.phone_number }}
+                                            </span>
+                                        </div>
+                                        <n-text depth="3" class="fs-7 d-block mt-1">
+                                            {{ whatsappStatus.is_ready ? 'Los comprobantes se enviarán desde tu propio número de WhatsApp vinculado.' : 'Actualmente se utiliza el servicio de mensajería predeterminado del sistema (Emiteca).' }}
+                                        </n-text>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <n-button
+                                        v-if="!whatsappStatus.is_ready"
+                                        type="success"
+                                        secondary
+                                        size="medium"
+                                        @click="showWhatsAppModal = true"
+                                    >
+                                        <template #icon><v-icon name="bi-qr-code-scan" /></template>
+                                        Vincular WhatsApp
+                                    </n-button>
+                                    <n-button
+                                        v-else
+                                        type="error"
+                                        secondary
+                                        size="medium"
+                                        :loading="loadingLogout"
+                                        @click="handleLogoutWhatsApp"
+                                    >
+                                        <template #icon><v-icon name="md-linkoff" /></template>
+                                        Desvincular
+                                    </n-button>
+                                </div>
+                            </div>
+                        </n-card>
+
+                        <!-- Alerta de Entrega Dual -->
+                        <n-alert type="info" :show-icon="true" class="mt-3">
+                            <strong>Entrega Dual Activa:</strong> Si tu celular no está vinculado o se desconecta temporalmente, el sistema continuará enviando los comprobantes con total normalidad a través del servicio predeterminado del sistema (Emiteca).
+                        </n-alert>
+                    </div>
+                </n-tab-pane>
                 
             </n-tabs>
         </n-card>
+
+        <!-- Modal QR WhatsApp -->
+        <WhatsAppQrModal v-model:show="showWhatsAppModal" @linked="onWhatsAppLinked" />
     </div>
 </template>
 <script>
@@ -343,11 +410,15 @@ import { useRouter } from "vue-router";
 import { usePrinterStore } from "@/store/modules/printer";
 import { useProductStore } from "@/store/modules/product";
 import { useSettingsStore } from "@/store/modules/settings";
-import { updateBusinessSettings } from "@/api/modules/business";
+import { updateBusinessSettings, getWhatsAppStatus, logoutWhatsApp } from "@/api/modules/business";
 import { cloneDeep } from "@/utils";
+import WhatsAppQrModal from "./whatsapp/WhatsAppQrModal.vue";
 
 export default defineComponent({
     name: "AdvancedSettings",
+    components: {
+        WhatsAppQrModal
+    },
     setup() {
         const router = useRouter();
         const printerStore = usePrinterStore();
@@ -526,6 +597,67 @@ export default defineComponent({
             }
         ];
 
+        // Estado y funciones de WhatsApp (Zendy)
+        const showWhatsAppModal = ref(false);
+        const loadingLogout = ref(false);
+        const whatsappStatus = ref({
+            state: "disconnected",
+            phone_number: null,
+            is_ready: false
+        });
+
+        const fetchWhatsAppStatus = async () => {
+            try {
+                const res = await getWhatsAppStatus();
+                if (res?.data) {
+                    whatsappStatus.value = res.data;
+                }
+            } catch (err) {
+                console.warn("Error al consultar estado de WhatsApp:", err);
+            }
+        };
+
+        const handleLogoutWhatsApp = async () => {
+            loadingLogout.value = true;
+            try {
+                const res = await logoutWhatsApp();
+                if (res?.data?.success) {
+                    message.success("WhatsApp desvinculado con éxito");
+                    whatsappStatus.value = {
+                        state: "disconnected",
+                        phone_number: null,
+                        is_ready: false
+                    };
+                    window.dispatchEvent(
+                        new CustomEvent("whatsapp-status-changed", {
+                            detail: { is_connected: false, phone_number: null },
+                        })
+                    );
+                }
+            } catch (err) {
+                console.error("Error al desvincular WhatsApp:", err);
+                message.error("No se pudo desvincular WhatsApp");
+            } finally {
+                loadingLogout.value = false;
+            }
+        };
+
+        const onWhatsAppLinked = (data) => {
+            whatsappStatus.value = {
+                state: data?.state || "ready",
+                phone_number: data?.phone_number || whatsappStatus.value.phone_number,
+                is_ready: true
+            };
+            fetchWhatsAppStatus();
+            window.dispatchEvent(
+                new CustomEvent("whatsapp-status-changed", {
+                    detail: { is_connected: true, phone_number: whatsappStatus.value.phone_number },
+                })
+            );
+        };
+
+        fetchWhatsAppStatus();
+
         return {
             current_igv_tax,
             igvOptions,
@@ -542,7 +674,13 @@ export default defineComponent({
             kitchenPrinterFormatOptions,
             infoLocationOptions,
             orderTypeOptions,
-            waiterAuthModeOptions
+            waiterAuthModeOptions,
+            showWhatsAppModal,
+            loadingLogout,
+            whatsappStatus,
+            fetchWhatsAppStatus,
+            handleLogoutWhatsApp,
+            onWhatsAppLinked
         };
     }
 });
