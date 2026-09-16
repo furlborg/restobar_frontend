@@ -637,18 +637,21 @@ export default defineComponent({
     };
 
     const requestExcel = async (report, filename) => {
+      message.loading("Generando reporte Excel...", { duration: 2000 });
       await getExcelReport(till, report)
         .then((response) => {
           downloadReport(
             response.data,
-            `Reporte ${filename} ${format(
+            `Reporte ${filename} Caja #${till} ${format(
               new Date(Date.now()),
               "yyyy-MM-dd"
             )}.xlsx`
           );
+          message.success("Descarga completada");
         })
         .catch((error) => {
           console.error(error);
+          message.error("Error al descargar el reporte Excel");
         });
     };
 
