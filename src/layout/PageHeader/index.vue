@@ -20,6 +20,25 @@
           <span>Pantalla completa</span>
         </n-tooltip>
       </div>
+      <div v-if="userStore.user.role !== 'MOZO'" class="layout-header-trigger layout-header-trigger-min">
+        <n-tooltip placement="bottom">
+          <template #trigger>
+            <n-icon
+              size="20"
+              :color="isWhatsAppConnected ? '#25D366' : '#909399'"
+              style="cursor: pointer; display: flex; align-items: center;"
+              @click="showWhatsAppQrModal = true"
+            >
+              <v-icon
+                name="bi-whatsapp"
+                :fill="isWhatsAppConnected ? '#25D366' : '#909399'"
+                :style="{ color: isWhatsAppConnected ? '#25D366' : '#909399' }"
+              />
+            </n-icon>
+          </template>
+          <span>{{ isWhatsAppConnected ? `WhatsApp Conectado (+${whatsappPhone || ''})` : 'WhatsApp No Vinculado (Haz clic para escanear QR)' }}</span>
+        </n-tooltip>
+      </div>
     </div>
     <div class="layout-header-right">
       <n-space align="end" vertical :size="0">
@@ -41,11 +60,12 @@
       </div>
     </div>
     <ProjectSetting ref="drawerSetting" />
+    <WhatsAppQrModal v-model:show="showWhatsAppQrModal" @linked="onWhatsAppLinked" />
   </div>
 </template>
 
 <script setup>
-import { reactive, ref, computed, toRefs } from "vue";
+import { reactive, ref, computed, toRefs, watch, onMounted, onUnmounted } from "vue";
 import { useDialog } from "naive-ui";
 import { useRouter } from "vue-router";
 import { useUserStore } from "@/store/modules/user";
@@ -53,7 +73,9 @@ import { retrieveCurrentTill } from "@/api/modules/tills";
 import { useTillStore } from "@/store/modules/till";
 import { usePrinterStore } from "@/store/modules/printer";
 import { useBusinessStore } from "@/store/modules/business";
+import { getWhatsAppStatus } from "@/api/modules/business";
 import ProjectSetting from "./ProjectSetting";
+import WhatsAppQrModal from "@/views/Settings/components/whatsapp/WhatsAppQrModal.vue";
 import { renderIcon } from "@/utils";
 
 
@@ -70,6 +92,63 @@ const userStore = useUserStore();
 const printerStore = usePrinterStore();
 const businessStore = useBusinessStore();
 const tillStore = useTillStore();
+
+// WhatsApp (Zendy) estado y modal
+const showWhatsAppQrModal = ref(false);
+const isWhatsAppConnected = ref(false);
+const whatsappPhone = ref("");
+
+const checkWhatsAppStatus = async () => {
+  try {
+    const res = await getWhatsAppStatus();
+    if (res?.data) {
+      isWhatsAppConnected.value = Boolean(res.data.is_ready || res.data.state === "ready");
+      whatsappPhone.value = res.data.phone_number || "";
+    }
+  } catch (e) {
+    console.warn("Aviso al verificar WhatsApp en PageHeader:", e);
+  }
+};
+
+const onWhatsAppLinked = (data) => {
+  isWhatsAppConnected.value = true;
+  whatsappPhone.value = data?.phone_number || "";
+  window.dispatchEvent(
+    new CustomEvent("whatsapp-status-changed", {
+      detail: { is_connected: true, phone_number: whatsappPhone.value },
+    })
+  );
+};
+
+// Escuchar cambios de estado globales emitidos desde Configuración o el Modal QR
+const handleWhatsAppStatusEvent = (e) => {
+  if (e?.detail) {
+    isWhatsAppConnected.value = Boolean(e.detail.is_connected);
+    if (e.detail.phone_number !== undefined) {
+      whatsappPhone.value = e.detail.phone_number || "";
+    }
+  } else {
+    checkWhatsAppStatus();
+  }
+};
+
+// Al cerrar el modal de QR, refrescar siempre el estado actual
+watch(showWhatsAppQrModal, (isOpen) => {
+  if (!isOpen) {
+    checkWhatsAppStatus();
+  }
+});
+
+onMounted(() => {
+  // Consultar una sola vez al cargar la aplicación
+  checkWhatsAppStatus();
+  // Escuchar eventos en tiempo real emitidos al vincular o desvincular
+  window.addEventListener("whatsapp-status-changed", handleWhatsAppStatusEvent);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("whatsapp-status-changed", handleWhatsAppStatusEvent);
+});
 
 const state = reactive({
   fullscreenIcon: "bi-fullscreen",
