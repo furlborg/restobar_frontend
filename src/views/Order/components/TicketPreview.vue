@@ -197,6 +197,7 @@ export default defineComponent({
                             "product_description": it.product_description,
                             "product_category": it.product_category,
                             "precio": parseFloat(it?.["sale_detail_price"].toFixed(2)),
+                            "discount": parseFloat(it?.discount || it?.sale_detail_discount || 0),
                             "total": parseFloat(it?.["sale_detail_total"].toFixed(2)),
                             "indicaciones": it.indication.filter(indicate => {
                                 return (

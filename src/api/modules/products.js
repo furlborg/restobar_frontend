@@ -4,6 +4,7 @@ export async function getProducts(disabled = false) {
   return await http.get("products/", {
     params: {
       disabled: disabled,
+      product_type: "NORMAL",
     },
   });
 }
@@ -12,6 +13,7 @@ export async function getProductsAll(disabled = false) {
   return await http.get("products/all", {
     params: {
       disabled: disabled,
+      product_type: "NORMAL",
     },
   });
 }
@@ -123,6 +125,7 @@ export async function searchProduct(
     disabled: disabled,
     limit: pageLimit,
     offset: pageOffset,
+    product_type: "NORMAL",
   };
 
   // Solo agregar category si tiene un valor válido

@@ -24,23 +24,28 @@ export function expandMenusInSaleData(saleData, orderDetails = []) {
     );
     
     if (menuDetail && menuDetail.product_set && menuDetail.product_set.items?.length > 0) {
-      // Es un menú, expandir sus productos
+      // Es un menú o combo, expandir sus productos
+      const isCombo = menuDetail.product_set.set_type === 'COMBO';
+      const typeSuffix = isCombo ? '(Combo)' : '(Menú)';
       const menuName = menuDetail.product_set.menu_name || menuDetail.product_set.name || item.descripcion;
       expandedItems.push({
         ...item,
-        descripcion: `${menuName} (Menú)`,
+        descripcion: `${menuName} ${typeSuffix}`,
         isMenuHeader: true,
         originalIndex: itemIndex
       });
       
-      // Agregar cada producto del menú
+      // Agregar cada producto del menú/combo
       menuDetail.product_set.items.forEach((menuItem, subIndex) => {
-        if (menuItem.product && menuItem.quantity > 0) {
+        const prod = menuItem.product || menuItem.combo_product?.product;
+        const prodName = prod?.name || menuItem.product_name || 'Producto';
+        const qty = parseFloat(menuItem.quantity) || 1;
+        if (qty > 0) {
           expandedItems.push({
-            cantidad: menuItem.quantity,
-            descripcion: `  ↳ ${menuItem.product.name}`,
-            precio_unitario: parseFloat(menuItem.product.prices) || 0,
-            total_item: (parseFloat(menuItem.product.prices) || 0) * menuItem.quantity,
+            cantidad: qty,
+            descripcion: `  ↳ ${prodName}`,
+            precio_unitario: parseFloat(prod?.prices) || 0,
+            total_item: (parseFloat(prod?.prices) || 0) * qty,
             isMenuProduct: true,
             parentMenu: menuName,
             menuItemIndex: subIndex,
@@ -49,7 +54,7 @@ export function expandMenusInSaleData(saleData, orderDetails = []) {
         }
       });
     } else {
-      // No es un menú, agregar normalmente
+      // No es un menú/combo, agregar normalmente
       expandedItems.push({
         ...item,
         originalIndex: itemIndex
@@ -62,7 +67,7 @@ export function expandMenusInSaleData(saleData, orderDetails = []) {
 }
 
 /**
- * Expands order details to show individual products from menus
+ * Expands order details to show individual products from menus/combos
  * @param {Array} orderDetails - Array of order details
  * @returns {Array} Expanded order details with individual menu products
  */
@@ -71,23 +76,28 @@ export function expandOrderDetails(orderDetails = []) {
   
   orderDetails.forEach((detail, detailIndex) => {
     if (detail.product_set && detail.product_set.items?.length > 0) {
-      // Es un menú, agregar cabecera y productos
-      const menuName = detail.product_set.menu_name || detail.product_set.name || 'Menú';
+      // Es un menú o combo, agregar cabecera y productos
+      const isCombo = detail.product_set.set_type === 'COMBO';
+      const typeSuffix = isCombo ? '(Combo)' : '(Menú)';
+      const menuName = detail.product_set.menu_name || detail.product_set.name || (isCombo ? 'Combo' : 'Menú');
       expanded.push({
         ...detail,
-        product_name: `${menuName} (Menú)`,
-        price: parseFloat(detail.product_set.price) || 0,
+        product_name: `${menuName} ${typeSuffix}`,
+        price: parseFloat(detail.product_set.price || detail.price) || 0,
         isMenuHeader: true,
         originalIndex: detailIndex
       });
       
-      // Agregar cada producto del menú
+      // Agregar cada producto del menú/combo
       detail.product_set.items.forEach((item, itemIndex) => {
-        if (item.product && item.quantity > 0) {
+        const prod = item.product || item.combo_product?.product;
+        const prodName = prod?.name || item.product_name || 'Producto';
+        const qty = parseFloat(item.quantity) || 1;
+        if (qty > 0) {
           expanded.push({
-            quantity: item.quantity,
-            product_name: `  ↳ ${item.product.name}`,
-            price: parseFloat(item.product.prices) || 0,
+            quantity: qty,
+            product_name: `  ↳ ${prodName}`,
+            price: parseFloat(prod?.prices) || 0,
             isMenuProduct: true,
             parentMenu: menuName,
             menuItemIndex: itemIndex,
@@ -95,8 +105,8 @@ export function expandOrderDetails(orderDetails = []) {
           });
         }
       });
-    } else if (detail.product) {
-      // No es un menú, agregar normalmente
+    } else if (detail.product || detail.product_name) {
+      // No es un menú/combo, agregar normalmente
       expanded.push({
         ...detail,
         originalIndex: detailIndex

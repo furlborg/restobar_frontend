@@ -238,7 +238,7 @@
                                                     @click="$event.target.select()" />
                                             </div>
                                             <div>
-                                                OTROS:
+                                                OTROS CARGOS:
                                                 <span>S/.</span>
                                                 <input class="custom-input fw-bold" type="number" min="0" step=".1"
                                                     v-model="sale.other_charges" v-autowidth
