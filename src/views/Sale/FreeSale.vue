@@ -714,7 +714,7 @@ export default defineComponent({
           max: discountInputMax.value
         },
         {
-          label: "OTROS",
+          label: "OTROS CARGOS",
           value: sale.value.other_charges,
           editable: true,
           field: "other_charges",
