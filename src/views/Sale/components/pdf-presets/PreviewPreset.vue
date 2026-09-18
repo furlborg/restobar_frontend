@@ -49,7 +49,7 @@
                     v-if="detail && detail.quantity > 0"
                     :class="{ 'menu-header': detail.isMenuHeader, 'menu-product': detail.isMenuProduct }"
                   >
-                    <td align="center">{{ detail.isMenuProduct ? '' : detail.quantity }}</td>
+                    <td align="center">{{ detail.quantity }}</td>
                     <td align="left" :style="detail.isMenuProduct ? 'font-size: 11px; color: #666;' : ''">
                       {{ detail.product_name }}
                     </td>

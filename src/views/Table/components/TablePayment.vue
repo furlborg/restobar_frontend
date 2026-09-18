@@ -289,7 +289,7 @@ const paymentTotalsItems = computed(() => {
       max: discountInputMax.value
     },
     {
-      label: "OTROS",
+      label: "OTROS CARGOS",
       value: sale.value.other_charges || 0,
       editable: true,
       field: "other_charges",

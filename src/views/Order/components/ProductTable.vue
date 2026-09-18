@@ -16,7 +16,9 @@
           <template v-for="(menuSet, menuIndex) in saleMenuSets" :key="`menu-${menuIndex}`">
             <tr style="background-color: #f8f8f8; font-weight: bold;">
               <td v-if="settingsStore.businessSettings?.sale?.manage_affectations">
-                <n-tag size="small" type="warning">MENÚ</n-tag>
+                <n-tag size="small" :type="menuSet.from_combo || menuSet.set_type === 'COMBO' || menuSet.combo_id ? 'info' : 'warning'">
+                  {{ menuSet.from_combo || menuSet.set_type === 'COMBO' || menuSet.combo_id ? 'COMBO' : 'MENÚ' }}
+                </n-tag>
               </td>
               <td>{{ menuSet.quantity }}</td>
               <td>

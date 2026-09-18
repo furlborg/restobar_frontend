@@ -188,7 +188,7 @@
                 ICBPER: <span>S/. {{ icbper.toFixed(2) }}</span>
               </div>
               <div>
-                OTROS:
+                OTROS CARGOS:
                 <span>S/.</span>
                 <input class="custom-input fw-bold" type="number" min="0" step=".5" v-model="sale.other_charges"
                   v-autowidth @click="$event.target.select()" />
