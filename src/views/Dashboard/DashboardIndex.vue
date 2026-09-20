@@ -534,7 +534,7 @@ const formatMoney = (value) => {
 
 const calculatePercentage = (value, total) => {
   if (!total || total === 0) return 0;
-  return ((value / total) * 100).toFixed(2);
+  return Number(((value / total) * 100).toFixed(2));
 };
 
 const formatDate = (dateString) => {

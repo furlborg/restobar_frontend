@@ -6,6 +6,7 @@
           v-model:value="product.product_name"
           :options="productOptions"
           :loading="searchingProducts"
+          :filter="() => true"
           placeholder=""
           clearable
           @update:value="handleProductInput"
@@ -136,9 +137,21 @@ export default defineComponent({
         resetSelectedProduct();
       }
 
-      if (value.length < 2) {
+      if (value.length < 1) {
         productOptions.value = [];
         return;
+      }
+
+      if (productStore.catalog?.length) {
+        const localMatches = productStore.searchLocal(value);
+        if (localMatches.length) {
+          productOptions.value = localMatches.map((item) => ({
+            label: productOptionLabel(item),
+            value: item.name,
+            product: item,
+          }));
+          return;
+        }
       }
 
       searchingProducts.value = true;
