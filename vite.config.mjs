@@ -10,11 +10,18 @@ export default defineConfig({
         port: 5210,
         historyApiFallback: true,
     },
+    preview: {
+        host: true,
+        port: 5210,
+    },
     resolve: {
         extensions: [".js", ".vue", ".json", ".css", ".min.css"],
         alias: {
             // eslint-disable-next-line no-undef
             "@": path.resolve(__dirname, "./src")
         }
+    },
+    build: {
+        chunkSizeWarningLimit: 2500,
     }
 });

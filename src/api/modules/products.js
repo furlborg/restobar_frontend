@@ -142,20 +142,26 @@ export async function searchProduct(
   });
 }
 
-export async function searchProductByName(search) {
+export async function searchProductByName(search, config = {}) {
   return await http.get("products/search_products/", {
     params: {
       search: search,
     },
+    ...config,
   });
 }
 
-export async function searchProductPrice(search) {
+export async function searchProductPrice(search, config = {}) {
   return await http.get("products/search_price/", {
     params: {
       search: search,
     },
+    ...config,
   });
+}
+
+export async function getProductCatalog() {
+  return await http.get("products/catalog/");
 }
 
 export async function getProductCategories() {

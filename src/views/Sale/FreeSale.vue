@@ -128,6 +128,7 @@
                     v-model:value="detail.product_name"
                     :options="detail._product_options || []"
                     :loading="!!detail._searching_products"
+                    :filter="() => true"
                     placeholder="Buscar producto o escribir ítem manual"
                     clearable
                     @update:value="(value) => handleDetailProductInput(detail, value)"
@@ -396,9 +397,21 @@ export default defineComponent({
         resetDetailProduct(detail);
       }
 
-      if (value.length < 2) {
+      if (!value || value.trim().length < 1) {
         detail._product_options = [];
         return;
+      }
+
+      if (productStore.catalog?.length) {
+        const localMatches = productStore.searchLocal(value);
+        if (localMatches.length) {
+          detail._product_options = localMatches.map((item) => ({
+            label: productOptionLabel(item),
+            value: item.name,
+            product: item,
+          }));
+          return;
+        }
       }
 
       detail._searching_products = true;

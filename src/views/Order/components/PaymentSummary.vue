@@ -20,6 +20,7 @@
         :get-show="showOptions"
         :loading="searching"
         clear-after-select
+        :filter="() => true"
         :render-label="renderLabel"
         placeholder="Buscar producto"
         @select="selectProduct"
@@ -213,7 +214,7 @@ export default defineComponent({
       value: product.id,
       label: product.name,
       disabled: product.is_disabled,
-      category: productStore.getCategorieDescription(product.category),
+      category: productStore.getCategorieDescription(product.category) || '',
       stock: product.stock,
       price: parseFloat(product.prices).toFixed(2),
     })));
@@ -221,7 +222,11 @@ export default defineComponent({
     // Función para mostrar opciones cuando se busca (igual que TableOrder)
     const priceRegex = /^\d+(\.\d{0,2})?$/;
 
-    const { debounced: fetchProducts, cancel: cancelFetchProducts } = useDebounce((value) => {
+    onMounted(() => {
+      productStore.loadCatalog().catch(() => {});
+    });
+
+    const { debounced: debouncedFetchProducts, cancel: cancelFetchProducts } = useDebounce((value) => {
       searching.value = true;
       const request = priceRegex.test(value)
         ? searchProductPrice(value)
@@ -240,10 +245,22 @@ export default defineComponent({
         .finally(() => {
           searching.value = false;
         });
-    }, 300);
+    }, 200);
+
+    const fetchProducts = (value) => {
+      if (productStore.catalog?.length) {
+        const localMatches = productStore.searchLocal(value);
+        if (localMatches.length) {
+          products.value = localMatches;
+          searching.value = false;
+          return;
+        }
+      }
+      debouncedFetchProducts(value);
+    };
 
     const showOptions = (value) => {
-      if (priceRegex.test(value) || value.length >= 3) {
+      if (value && (priceRegex.test(value) || value.trim().length >= 1)) {
         fetchProducts(value);
         return true;
       }

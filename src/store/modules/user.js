@@ -171,10 +171,11 @@ export const useUserStore = defineStore("user", {
       // 2. Cortar y resetear WebSocket para no retener conexiones del usuario saliente
       try {
         import("@/composables/useTableLock")
-          .then(({ useTableLock }) => {
+          .then(({ disconnectLockWebSocket }) => {
             try {
-              const { disconnectLockWebSocket } = useTableLock();
-              disconnectLockWebSocket();
+              if (typeof disconnectLockWebSocket === 'function') {
+                disconnectLockWebSocket();
+              }
             } catch (_) {}
           })
           .catch(() => {});

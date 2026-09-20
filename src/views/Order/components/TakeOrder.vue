@@ -299,6 +299,7 @@
                                 autocomplete: 'disabled',
                             }" v-model:value="productSearch" :options="productOptions" :get-show="showOptions"
                                 :loading="searching" clear-after-select :render-label="renderLabel"
+                                :filter="() => true"
                                 placeholder="Buscar producto" @select="selectProduct" />
                         </n-input-group>
                         <n-scrollbar :x-scrollable="true" style="max-width: 900px">
@@ -630,10 +631,10 @@ export default defineComponent({
             value: product.id,
             label: product.name,
             disabled: product.is_disabled,
-            category: productStore.getCategorieDescription(product.category)
+            category: productStore.getCategorieDescription(product.category) || 'General'
         })));
 
-        const { debounced: fetchProducts, cancel: cancelFetchProducts } = useDebounce((value) => {
+        const { debounced: debouncedFetchProducts, cancel: cancelFetchProducts } = useDebounce((value) => {
             searching.value = true;
             searchProductByName(value).then((response) => {
                 if (response.status === 200) products.value = response.data;
@@ -641,10 +642,22 @@ export default defineComponent({
                 console.error(error);
                 message.error("Algo salió mal...");
             }).finally(() => searching.value = false);
-        }, 300);
+        }, 200);
+
+        const fetchProducts = (value) => {
+            if (productStore.catalog?.length) {
+                const local = productStore.searchLocal(value);
+                if (local.length) {
+                    products.value = local;
+                    searching.value = false;
+                    return;
+                }
+            }
+            debouncedFetchProducts(value);
+        };
 
         const showOptions = (value) => {
-            if (value.length >= 3) {
+            if (value && value.trim().length >= 1) {
                 fetchProducts(value);
                 return true;
             }
