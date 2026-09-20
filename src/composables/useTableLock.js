@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import routerInstance from '@/router';
 import axios from 'axios';
 
 const API_BASE = import.meta.env.VITE_APP_URL;
@@ -174,7 +175,7 @@ const connectLockWebSocket = () => {
   };
 };
 
-  const disconnectLockWebSocket = () => {
+export const disconnectLockWebSocket = () => {
     if (lockSocket) {
       lockSocket.close();
       lockSocket = null;
@@ -321,7 +322,13 @@ const unlockTableHTTP = async (tableId) => {
 };
 
 export function useTableLock() {
-  const router = useRouter();
+  let router = null;
+  try {
+    router = useRouter();
+  } catch (_) {}
+  if (!router) {
+    router = routerInstance;
+  }
   const isRefreshing = ref(false);
 
   const checkLock = async (tableId) => {
