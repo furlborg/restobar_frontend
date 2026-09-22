@@ -369,16 +369,46 @@ export const generateVoucherA4PDF = async (rawData, businessStore, dataOrder = {
                 }
             } else if (item?.discount != null && Number(item.discount) > 0) {
                 itemDiscount = parseFloat(item.discount);
-            } else if (dataOrder?.sale_details && Array.isArray(dataOrder.sale_details)) {
-                const matched = dataOrder.sale_details.find((d) => {
-                    const code = d.product?.code || d.code;
-                    if (code && item?.codigo_interno && code === item.codigo_interno) return true;
-                    const name = d.product_name || d.product?.name;
-                    if (name && item?.descripcion && (name === item.descripcion || item.descripcion.startsWith(name))) return true;
-                    return false;
-                });
-                if (matched && matched.discount != null && Number(matched.discount) > 0) {
-                    itemDiscount = parseFloat(matched.discount);
+            } else {
+                const saleDetails = dataOrder?.original_sale_details || dataOrder?.sale_details;
+                if (saleDetails && Array.isArray(saleDetails)) {
+                    const itemCode = (item?.codigo_interno || item?.code || '').trim().toUpperCase();
+                    const itemDesc = (item?.descripcion || item?.product_name || '').trim().toUpperCase();
+
+                    const matched = saleDetails.find((d) => {
+                        const code = (
+                            d.product_info?.code ||
+                            d.product?.code ||
+                            d.code ||
+                            d.product_code ||
+                            (d.product_set_id ? `MENU-${d.product_set_id}` : (d.product_set?.id ? `MENU-${d.product_set.id}` : ''))
+                        ).trim().toUpperCase();
+
+                        if (code && itemCode && code === itemCode) return true;
+
+                        const name = (
+                            d.product_name ||
+                            d.product_info?.name ||
+                            d.product?.name ||
+                            d.name ||
+                            ''
+                        ).trim().toUpperCase();
+
+                        if (name && itemDesc) {
+                            if (name === itemDesc) return true;
+                            if (
+                                itemDesc.startsWith(name + ' (') ||
+                                itemDesc.startsWith(name + ' [') ||
+                                itemDesc.startsWith(name + ' - ')
+                            ) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+                    if (matched && matched.discount != null && Number(matched.discount) > 0) {
+                        itemDiscount = parseFloat(matched.discount);
+                    }
                 }
             }
             const itemTotal = parseFloat(item?.total_item || item?.total || (qty * unitPrice - itemDiscount));
