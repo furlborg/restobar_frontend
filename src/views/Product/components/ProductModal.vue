@@ -461,6 +461,7 @@ const performCreate = (e) => {
           .then((response) => {
             if (response.status === 201) {
               message.success("Producto registrado!");
+              productStore.loadCatalog(true).catch(() => {});
               emit("on-success");
             }
           })
@@ -494,6 +495,7 @@ const performUpdate = (e) => {
           .then((response) => {
             if (response.status === 202) {
               message.success("Producto actualizado!");
+              productStore.loadCatalog(true).catch(() => {});
               emit("on-success");
             }
           })

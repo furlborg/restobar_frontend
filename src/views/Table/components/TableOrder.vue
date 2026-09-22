@@ -391,7 +391,7 @@ const currentOrder = computed(() => {
     const index = itemIndex.value;
     return typeof index === 'number' && index >= 0 ? orderStore.orderList[index] : null;
 });
-const productOptions = computed(() => products.value.map((product) => ({
+const productOptions = computed(() => products.value.filter((p) => p.product_type !== 'COMBO').map((product) => ({
     value: product.id,
     label: product.name,
     product: product,
@@ -519,7 +519,7 @@ let searchAbortController = null;
 let currentSearchSeq = 0;
 
 onMounted(() => {
-    productStore.loadCatalog().catch(() => {});
+    productStore.loadCatalog(true).catch(() => {});
 });
 
 const executeSearch = (value) => {

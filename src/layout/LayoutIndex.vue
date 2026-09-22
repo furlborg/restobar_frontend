@@ -74,6 +74,7 @@ const genericsStore = useGenericsStore();
 designStore.initializeStore();
 businessStore.initializeStore();
 settingsStore.initializeStore();
+genericsStore.initializeStore();
 tableStore.initializeStore();
 
 // Fase 2 y 3: Escalonar tiendas secundarias para no saturar el límite de conexiones en 3G
@@ -87,7 +88,6 @@ onMounted(() => {
   setTimeout(() => {
     customerStore.initializeStore();
     saleStore.initializeStore();
-    genericsStore.initializeStore();
   }, 300);
 });
 

@@ -125,7 +125,7 @@
     </n-modal>
 
     <OrderIndications v-model:show="ui.showModal" preset="card" title="Indicaciones"
-      :order="orderStore.orderList[ui.itemIndex]" @success="ui.showModal = false" />
+      :order="ui.itemIndex !== null && orderStore.orderList ? orderStore.orderList[ui.itemIndex] : null" @success="ui.showModal = false" />
     <customer-modal v-model:show="ui.showCustomerModal" :id-customer="sale.customer" :document="customerDocument"
       :doc_type="sale.invoice_type === 1 ? '6' : null" @update:show="onCloseModal" @on-success="onSuccess" />
     <TicketPreview :ref="(el) => ui.ticketPreviewRef = el" v-model:show="ui.showPdf" :data="pdfData" :hidden="true" :isUpdate="false" />

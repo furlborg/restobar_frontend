@@ -3,7 +3,7 @@ import {getDeviceType} from "@/utils"
 
 export const useGenericsStore = defineStore('Generics', {
     state: () => ({
-        device: '',
+        device: getDeviceType(),
     }),
     actions: {
         initializeStore() {

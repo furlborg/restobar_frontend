@@ -4,7 +4,7 @@
       <n-button
         type="info"
         secondary
-        :disabled="orderStore.orderList.length === 0 || isValidatingStock"
+        :disabled="orderList.length === 0 || isValidatingStock"
         :loading="isValidatingStock"
         @click="handleButtonClick"
       >
@@ -41,7 +41,7 @@
         </thead>
         <tbody>
           <!-- Menús -->
-          <template v-for="(menu, menuIndex) in orderStore.menuSets" :key="`menu-${menuIndex}`">
+          <template v-for="(menu, menuIndex) in menuSets" :key="`menu-${menuIndex}`">
             <tr style="background-color: #f8f8f8">
               <td>
                 <n-button type="warning" text>
@@ -81,7 +81,7 @@
           </template>
 
           <!-- Productos individuales -->
-          <template v-for="(product, productIndex) in orderStore.productLines" :key="`product-${productIndex}`">
+          <template v-for="(product, productIndex) in productLines" :key="`product-${productIndex}`">
             <tr style="cursor: pointer" @click="handleRowClick(productIndex)">
               <td>
                 <n-button type="info" text>
@@ -135,7 +135,7 @@
 
 <script>
 
-import { defineComponent, computed, ref, h, toRefs } from "vue";
+import { defineComponent, computed, ref, h, toRefs, onMounted } from "vue";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { useProductStore } from "@/store/modules/product";
@@ -192,6 +192,10 @@ export default defineComponent({
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
 
+    const orderList = computed(() => orderStore?.orderList || []);
+    const menuSets = computed(() => orderStore?.menuSets || []);
+    const productLines = computed(() => orderStore?.productLines || []);
+
     const productStore = useProductStore();
     const formatPrice = (price) => isNaN(price) ? "0.00" : Number(price).toFixed(2);
     const { formattedTotals } = useSaleTotals();
@@ -210,7 +214,7 @@ export default defineComponent({
     const buttonText = computed(() => props.selectProducts ? "Seleccionar productos" : "Cobrar");
 
     // Opciones del producto para el autocompletar (igual que TableOrder)
-    const productOptions = computed(() => products.value.map((product) => ({
+    const productOptions = computed(() => products.value.filter((p) => p.product_type !== 'COMBO').map((product) => ({
       value: product.id,
       label: product.name,
       disabled: product.is_disabled,
@@ -235,7 +239,7 @@ export default defineComponent({
       request
         .then((response) => {
           if (response.status === 200) {
-            products.value = response.data;
+            products.value = (response.data || []).filter((p) => p.product_type !== 'COMBO');
           }
         })
         .catch((error) => {
@@ -414,6 +418,9 @@ export default defineComponent({
     return {
       orderStore,
       saleStore,
+      orderList,
+      menuSets,
+      productLines,
 
       localProductSearch,
       formattedTotals,

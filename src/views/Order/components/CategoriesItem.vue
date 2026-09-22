@@ -136,7 +136,7 @@ const loadProducts = async (category_id) => {
     try {
         const response = await getProductsByCategory(category_id);
         if (response.status === 200) {
-            products.value = response.data;
+            products.value = (response.data || []).filter((p) => p.product_type !== "COMBO");
         }
     } catch (error) {
         console.error(error);
