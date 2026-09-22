@@ -333,7 +333,7 @@ export const generateVoucherA4PDF = async (rawData, businessStore, dataOrder = {
     doc.setFont("helvetica", "bold");
     doc.text("FORMA PAGO:", colRightX, rightMetaY);
     doc.setFont("helvetica", "normal");
-    doc.text(`${paymentCondition} ${orderTableDesc ? `| ${orderTableDesc}` : ""}`.trim(), colRightX + 26, rightMetaY);
+    doc.text(paymentCondition, colRightX + 26, rightMetaY);
 
     // ==========================================
     // 3. TABLA DE PRODUCTOS / ÍTEMS

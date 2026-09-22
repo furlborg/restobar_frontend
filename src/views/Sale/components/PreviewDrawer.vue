@@ -324,8 +324,7 @@ export default defineComponent({
                 } else {
                     const gordoPuto = async () => {
                         try {
-                            // eslint-disable-next-line no-undef
-                            const response = await http.post(`${import.meta.env.VITE_APP_URL}/api/v1/sales/${props.data.id}/print/`);
+                            const response = await http.post(`sales/${props.data.id}/print/`);
                             if (response.status === 200) {
                                 return response.data;
                             }
@@ -338,12 +337,12 @@ export default defineComponent({
                     const voucherData = await gordoPuto();
 
                     const sendTicketData = async () => {
-                        console.log(voucherData);
+                        if (!voucherData) return;
                         const jsonTicket = {
                             ...voucherData,
-                            printer_name: voucherData.printer_name
+                            printer_name: voucherData?.printer_name
                                 ? voucherData.printer_name
-                                : settingsStore.business_settings.sale.printer_name
+                                : settingsStore.business_settings?.sale?.printer_name
                         };
                         try {
                             const response = await http.post('orders/print-proxy/', jsonTicket);
@@ -356,7 +355,13 @@ export default defineComponent({
                         }
                     };
 
-                    await sendTicketData();
+                    try {
+                        await sendTicketData();
+                    } catch (err) {
+                        console.error("Error al imprimir voucher:", err);
+                    } finally {
+                        emit("printed");
+                    }
                 }
 
             // Desactivar modo impresión después de generar el PDF
