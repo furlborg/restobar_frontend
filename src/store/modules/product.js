@@ -98,7 +98,7 @@ export const useProductStore = defineStore("product", {
       try {
         const response = await getProductCatalog();
         if (response?.data && Array.isArray(response.data)) {
-          this.catalog = response.data;
+          this.catalog = response.data.filter((p) => p.product_type !== "COMBO");
           this.isCatalogLoaded = true;
         }
       } catch (err) {
@@ -186,9 +186,27 @@ export const useProductStore = defineStore("product", {
         return 1 - levenshtein(w1, w2) / maxLen;
       };
 
+      const rawTrim = (query || "").trim();
+      if (!rawTrim) return [];
+
       const qClean = clean(query);
       const qPhone = phonetic(query);
-      if (!qClean) return [];
+
+      // Si query solo contenía símbolos (ej. '*', '+', '#')
+      if (!qClean) {
+        const rawUpper = rawTrim.toUpperCase();
+        return this.catalog
+          .filter(
+            (p) =>
+              !p.is_disabled &&
+              p.product_type !== "COMBO" &&
+              (p.name || "").toUpperCase().includes(rawUpper)
+          )
+          .slice(0, 25);
+      }
+
+      const rawUpper = rawTrim.toUpperCase();
+      const hasSymbols = /[+*#\-_/.]/.test(rawUpper);
 
       const stopWords = new Set([
         "de", "del", "la", "las", "el", "los", "con", "y", "en", "a", "para", "al", "o", "un", "una", "por", "es", "+", "-", "/"
@@ -207,7 +225,7 @@ export const useProductStore = defineStore("product", {
       const matches = [];
 
       for (const product of this.catalog) {
-        if (product.is_disabled) continue;
+        if (product.is_disabled || product.product_type === "COMBO") continue;
 
         const name = clean(product.name);
         const namePhone = phonetic(product.name);
@@ -220,13 +238,18 @@ export const useProductStore = defineStore("product", {
         let score = 0;
         let matchedTokens = 0;
 
+        // Bonus si contiene literalmente los caracteres especiales buscados (ej: 'PAN *')
+        if (hasSymbols && (product.name || "").toUpperCase().includes(rawUpper)) {
+          score += 1500;
+        }
+
         // 1. Coincidencias exactas
         if (name === qClean) {
-          matches.push({ score: 2000, product });
+          matches.push({ score: 2000 + score, product });
           continue;
         }
         if (namePhone === qPhone) {
-          matches.push({ score: 1800, product });
+          matches.push({ score: 1800 + score, product });
           continue;
         }
 

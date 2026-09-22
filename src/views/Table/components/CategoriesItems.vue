@@ -154,7 +154,7 @@ export default defineComponent({
       await getProductsByCategory(route.params.category)
         .then((response) => {
           if (response.status === 200) {
-            products.value = response.data;
+            products.value = (response.data || []).filter((p) => p.product_type !== "COMBO");
           }
         })
         .catch((error) => {

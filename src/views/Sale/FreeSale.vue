@@ -35,7 +35,7 @@
 
       <n-form class="mb-2" ref="saleForm" :model="sale" :rules="formRules">
         <n-grid responsive="screen" cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12" :x-gap="12">
-          <n-form-item-gi :span="4" label="Cliente" :show-require-mark="formRules.customer.required" path="customer">
+          <n-form-item-gi :span="4" label="Cliente" :show-require-mark="formRules?.customer?.required" path="customer">
             <n-input-group>
               <n-auto-complete blur-after-select :input-props="{
                 autocomplete: 'disabled',
@@ -114,7 +114,7 @@
               <th>Cantidad</th>
               <th>Precio Unitario</th>
               <th>Precio Total</th>
-              <th v-if="settingsStore.businessSettings.sale.manage_affectations">
+              <th v-if="settingsStore.businessSettings?.sale?.manage_affectations">
                 #
               </th>
               <th></th>
@@ -160,7 +160,7 @@
                 <td>
                   {{ detailLineTotal(detail) }}
                 </td>
-                <td v-if="settingsStore.businessSettings.sale.manage_affectations">
+                <td v-if="settingsStore.businessSettings?.sale?.manage_affectations">
                   <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation"
                     :disabled="!userStore.hasPermission('change_product_affectation')"
                     :options="productStore.affectationsOptions" @update:value="() => updateDetailValues(detail)">
@@ -212,9 +212,9 @@
       </n-button>
     </n-card>
     <n-modal :class="{
-      'w-100': genericsStore.device === 'mobile',
-      'w-50': genericsStore.device === 'tablet',
-      'w-25': genericsStore.device === 'desktop',
+      'w-100': (genericsStore?.device || 'desktop') === 'mobile',
+      'w-50': (genericsStore?.device || 'desktop') === 'tablet',
+      'w-25': (genericsStore?.device || 'desktop') === 'desktop',
     }" preset="card" v-model:show="showPayments" title="Realizar venta" :mask-closable="false" closable
       @close="sale.payments = null">
       <n-space justify="space-between">
@@ -251,10 +251,11 @@
       :doc_type="sale.invoice_type === 1 ? '6' : null" :document="customerDocument" @update:show="onCloseModal"
       @on-success="onSuccess" />
     <preview-drawer ref="previewDrawer" v-model:show="showPdf" :data="pdfData" :previewOnly="!ticketPreview"
-      @printed="() => $router.push({ name: 'TableHome' })" @canceled="() => $router.push({ name: 'TableHome' })" />
+      @printed="onTicketFinished"
+      @canceled="onTicketFinished" />
     <FreeSaleProductModal
       v-model:show="showProductModal"
-      :initial-deduct-stock="settingsStore.businessSettings.sale.free_sale_deduct_stock_default"
+      :initial-deduct-stock="Boolean(settingsStore.businessSettings?.sale?.free_sale_deduct_stock_default)"
       @success="addProduct"
     />
   </div>
@@ -262,6 +263,7 @@
 
 <script>
 import { defineComponent, ref, toRefs, computed, watch, onMounted } from "vue";
+import { http } from "@/api";
 import CustomerModal from "@/views/Customer/components/CustomerModal";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useRouter } from "vue-router";
@@ -312,9 +314,17 @@ export default defineComponent({
     const loading = ref(false);
     const dialog = useDialog();
     const showModal = ref(false);
-    const payment_amount = ref(parseFloat(0).toFixed(2));
     const saleForm = ref();
-    const ticketPreview = ref(settingsStore.businessSettings.sale.show_preview);
+    const ticketPreview = ref(settingsStore.businessSettings?.sale?.show_preview ?? true);
+    watch(
+      () => settingsStore.businessSettings?.sale?.show_preview,
+      (val) => {
+        if (val !== undefined && val !== null) {
+          ticketPreview.value = Boolean(val);
+        }
+      },
+      { immediate: true }
+    );
     const changing = computed(() => {
       return sale.value.given_amount > total.value
         ? total.value - sale.value.given_amount
@@ -417,7 +427,7 @@ export default defineComponent({
       detail._searching_products = true;
       try {
         const response = await searchProductByName(value);
-        detail._product_options = (response.data || []).map((item) => ({
+        detail._product_options = (response.data || []).filter((item) => item.product_type !== "COMBO").map((item) => ({
           label: productOptionLabel(item),
           value: item.name,
           product: item,
@@ -435,16 +445,16 @@ export default defineComponent({
       if (!selectedOption?.product) return;
 
       const item = selectedOption.product;
-      const icbperUnit = item.icbper ? Number(settingsStore.businessSettings.sale.icbper_tax || 0) : 0;
+      const icbperUnit = item.icbper ? Number(settingsStore.businessSettings?.sale?.icbper_tax || 0) : 0;
       detail._selected_product = item;
       detail.product = item.id;
       detail.product_name = item.name;
       detail.price_sale = Number(item.prices || 0);
-      detail.product_affectation = Number(item.affectation || settingsStore.businessSettings.sale.default_affectation);
+      detail.product_affectation = Number(item.affectation || settingsStore.businessSettings?.sale?.default_affectation || 20);
       detail.product_igv = Number(item.igv_tax || 0);
       detail.icbper_unit = icbperUnit;
       detail.applies_icbper = !!item.icbper;
-      detail.deduct_stock = !!settingsStore.businessSettings.sale.free_sale_deduct_stock_default;
+      detail.deduct_stock = Boolean(settingsStore.businessSettings?.sale?.free_sale_deduct_stock_default);
       detail._product_options = [];
       updateDetailValues(detail);
     };
@@ -814,6 +824,12 @@ export default defineComponent({
       deduct_stock: !!detail.product && !!detail.deduct_stock,
     });
 
+    const onTicketFinished = () => {
+      showPdf.value = false;
+      saleStore.sale_details = [];
+      router.push({ name: "TableHome" });
+    };
+
     const performCreateSale = () => {
       saleForm.value.validate((errors) => {
         if (!errors) {
@@ -863,11 +879,20 @@ export default defineComponent({
                       return res.data;
                     };
                     await dataPrint();
-                    showPdf.value = true;
+
+                    if (ticketPreview.value) {
+                      showPdf.value = true;
+                    }
+
                     if (settingsStore.business_settings.printer.print_html) {
-                      // pdfData.value = response.data;
                       if (!ticketPreview.value) {
-                        setTimeout(() => previewDrawer.value.generate(), 250);
+                        try {
+                          await http.post(`sales/${response.data.id}/print/`);
+                        } catch (e) {
+                          console.error("Error al imprimir ticket:", e);
+                        } finally {
+                          onTicketFinished();
+                        }
                       }
                     } else {
                       await VoucherPrint({
@@ -877,11 +902,14 @@ export default defineComponent({
                         changing: changing.value,
                         show: true,
                       });
+                      if (!ticketPreview.value) {
+                        onTicketFinished();
+                      }
                     }
 
                     if (
-                      settingsStore.businessSettings.sale.free_sale_send_doc &&
-                      settingsStore.businessSettings.sale.auto_send &&
+                    Boolean(settingsStore.businessSettings?.sale?.free_sale_send_doc) &&
+                    Boolean(settingsStore.businessSettings?.sale?.auto_send) &&
                       String(sale.value.invoice_type) !== "80"
                     ) {
                       sendSale(response.data.id)
@@ -942,7 +970,7 @@ export default defineComponent({
             },
           });
         } else {
-          if (formRules.value.customer.required) {
+          if (formRules.value?.customer?.required) {
             if (sale.value.invoice_type === 1) {
               message.warning("Debes agregar un cliente cuando la venta es con factura");
             } else {
@@ -956,6 +984,7 @@ export default defineComponent({
     };
 
     const obtainSaleNumber = async () => {
+      if (!sale.value?.serie) return;
       loading.value = true;
       await getSaleNumber(sale.value.serie)
         .then((response) => {
@@ -1044,13 +1073,36 @@ export default defineComponent({
 
     const { serie } = toRefs(sale.value);
 
-    watch(serie, async () => {
-      await obtainSaleNumber();
+    watch(serie, async (newVal) => {
+      if (newVal) {
+        await obtainSaleNumber();
+      }
     });
+
+    watch(
+      () => saleStore.series,
+      (newSeries) => {
+        if (newSeries?.length && !sale.value.serie) {
+          const defaultSerie = saleStore.getFreeSaleSerieByType(String(sale.value.invoice_type || 3));
+          if (defaultSerie?.id) {
+            sale.value.serie = defaultSerie.id;
+          }
+        }
+      },
+      { immediate: true }
+    );
 
     onMounted(async () => {
       sale.value.given_amount = total.value;
-      await obtainSaleNumber();
+      if (!sale.value.serie) {
+        const defaultSerie = saleStore.getFreeSaleSerieByType(String(sale.value.invoice_type || 3));
+        if (defaultSerie?.id) {
+          sale.value.serie = defaultSerie.id;
+        }
+      }
+      if (sale.value.serie) {
+        await obtainSaleNumber();
+      }
 
       const fetch = new Date();
       const dd = fetch.getDate();
@@ -1250,7 +1302,6 @@ export default defineComponent({
       handleDetailProductSelect,
       updateDetailValues,
       detailLineTotal,
-      payment_amount,
       subTotal,
       selectSerie,
       changeCondition,
@@ -1288,6 +1339,7 @@ export default defineComponent({
       paymentTotalsItems,
       handleValueChange,
       handlePaymentChange,
+      onTicketFinished,
     };
   },
 });

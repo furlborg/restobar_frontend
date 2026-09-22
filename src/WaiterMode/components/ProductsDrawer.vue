@@ -154,7 +154,7 @@ const productSearch = ref("");
 const products = ref([]);
 
 const productOptions = computed(() => {
-    return products.value.map((product) => ({
+    return products.value.filter((p) => p.product_type !== 'COMBO').map((product) => ({
         value: product.id,
         label: product.name,
         disabled: product?.is_disabled,
@@ -168,7 +168,7 @@ let searchAbortController = null;
 let currentSearchSeq = 0;
 
 onMounted(() => {
-    productStore.loadCatalog().catch(() => {});
+    productStore.loadCatalog(true).catch(() => {});
 });
 
 const executeSearch = (value) => {
@@ -207,7 +207,7 @@ const executeSearch = (value) => {
 
     request.then((response) => {
         if (currentSeq === currentSearchSeq && response.status === 200) {
-            products.value = response.data;
+            products.value = (response.data || []).filter((p) => p.product_type !== 'COMBO');
         }
     }).catch((error) => {
         if (error?.name === 'CanceledError' || error?.code === 'ERR_CANCELED') {

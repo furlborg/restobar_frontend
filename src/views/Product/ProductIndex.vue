@@ -273,6 +273,7 @@ const performDisableProduct = (id, disabled) => {
               `Producto ${disabled ? "Habilitado" : "Deshabilitado"
               } correctamente`
             );
+            productStore.loadCatalog(true).catch(() => {});
             performSearch();
           }
         })
@@ -301,6 +302,7 @@ const onCloseSalesReportModal = () => {
 const onSuccess = async () => {
   showModal.value = false;
   onCloseModal();
+  productStore.loadCatalog(true).catch(() => {});
   await performSearch();
 };
 

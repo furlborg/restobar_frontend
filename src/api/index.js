@@ -36,6 +36,15 @@ export function setupInterceptors(instance) {
       return response;
     },
     async function (error) {
+      // Si la petición fue cancelada intencionalmente (ej. AbortController al teclear en un buscador), NO es un error de conexión
+      if (
+        axios.isCancel(error) ||
+        error?.name === "CanceledError" ||
+        error?.code === "ERR_CANCELED"
+      ) {
+        return Promise.reject(error);
+      }
+
       const userStore = useUserStore();
       const originalRequest = error.config;
 

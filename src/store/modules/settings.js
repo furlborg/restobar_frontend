@@ -6,7 +6,13 @@ let settingsSocket = null;
 
 export const useSettingsStore = defineStore("settings", {
   state: () => ({
-    business_settings: {},
+    business_settings: {
+      sale: {},
+      printer: {},
+      modules: {},
+      order: {},
+      qz_config: {},
+    },
   }),
   getters: {
     businessSettings() {

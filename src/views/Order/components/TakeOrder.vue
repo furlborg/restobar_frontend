@@ -627,7 +627,7 @@ export default defineComponent({
 
         const products = ref([]);
 
-        const productOptions = computed(() => products.value.map(product => ({
+        const productOptions = computed(() => products.value.filter(p => p.product_type !== 'COMBO').map(product => ({
             value: product.id,
             label: product.name,
             disabled: product.is_disabled,
@@ -637,7 +637,7 @@ export default defineComponent({
         const { debounced: debouncedFetchProducts, cancel: cancelFetchProducts } = useDebounce((value) => {
             searching.value = true;
             searchProductByName(value).then((response) => {
-                if (response.status === 200) products.value = response.data;
+                if (response.status === 200) products.value = (response.data || []).filter(p => p.product_type !== 'COMBO');
             }).catch((error) => {
                 console.error(error);
                 message.error("Algo salió mal...");
