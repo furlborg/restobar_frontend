@@ -4,6 +4,7 @@ export async function getProducts(disabled = false) {
   return await http.get("products/", {
     params: {
       disabled: disabled,
+      product_type: "NORMAL",
     },
   });
 }
@@ -12,6 +13,7 @@ export async function getProductsAll(disabled = false) {
   return await http.get("products/all", {
     params: {
       disabled: disabled,
+      product_type: "NORMAL",
     },
   });
 }
@@ -123,6 +125,7 @@ export async function searchProduct(
     disabled: disabled,
     limit: pageLimit,
     offset: pageOffset,
+    product_type: "NORMAL",
   };
 
   // Solo agregar category si tiene un valor válido
@@ -139,20 +142,26 @@ export async function searchProduct(
   });
 }
 
-export async function searchProductByName(search) {
+export async function searchProductByName(search, config = {}) {
   return await http.get("products/search_products/", {
     params: {
       search: search,
     },
+    ...config,
   });
 }
 
-export async function searchProductPrice(search) {
+export async function searchProductPrice(search, config = {}) {
   return await http.get("products/search_price/", {
     params: {
       search: search,
     },
+    ...config,
   });
+}
+
+export async function getProductCatalog() {
+  return await http.get("products/catalog/");
 }
 
 export async function getProductCategories() {

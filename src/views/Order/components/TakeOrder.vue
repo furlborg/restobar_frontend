@@ -234,14 +234,15 @@
                                                 <span>S/.</span>
                                                 <input class="custom-input fw-bold" type="number" min="0" step=".5"
                                                     :max="discountInputLimit" v-model="totalDSCT" v-autowidth
-                                                    :disabled="saleStore.toSale.some(d => Number(d.discount) > 0)"
+                                                    :disabled="saleStore.toSale.some(d => Number(d.discount) > 0) || Number(sale.other_charges) > 0"
                                                     @click="$event.target.select()" />
                                             </div>
                                             <div>
-                                                OTROS:
+                                                OTROS CARGOS:
                                                 <span>S/.</span>
                                                 <input class="custom-input fw-bold" type="number" min="0" step=".1"
                                                     v-model="sale.other_charges" v-autowidth
+                                                    :disabled="Number(totalDSCT) > 0"
                                                     @click="$event.target.select()" />
                                             </div>
                                             <div>
@@ -298,6 +299,7 @@
                                 autocomplete: 'disabled',
                             }" v-model:value="productSearch" :options="productOptions" :get-show="showOptions"
                                 :loading="searching" clear-after-select :render-label="renderLabel"
+                                :filter="() => true"
                                 placeholder="Buscar producto" @select="selectProduct" />
                         </n-input-group>
                         <n-scrollbar :x-scrollable="true" style="max-width: 900px">
@@ -625,25 +627,37 @@ export default defineComponent({
 
         const products = ref([]);
 
-        const productOptions = computed(() => products.value.map(product => ({
+        const productOptions = computed(() => products.value.filter(p => p.product_type !== 'COMBO').map(product => ({
             value: product.id,
             label: product.name,
             disabled: product.is_disabled,
-            category: productStore.getCategorieDescription(product.category)
+            category: productStore.getCategorieDescription(product.category) || 'General'
         })));
 
-        const { debounced: fetchProducts, cancel: cancelFetchProducts } = useDebounce((value) => {
+        const { debounced: debouncedFetchProducts, cancel: cancelFetchProducts } = useDebounce((value) => {
             searching.value = true;
             searchProductByName(value).then((response) => {
-                if (response.status === 200) products.value = response.data;
+                if (response.status === 200) products.value = (response.data || []).filter(p => p.product_type !== 'COMBO');
             }).catch((error) => {
                 console.error(error);
                 message.error("Algo salió mal...");
             }).finally(() => searching.value = false);
-        }, 300);
+        }, 200);
+
+        const fetchProducts = (value) => {
+            if (productStore.catalog?.length) {
+                const local = productStore.searchLocal(value);
+                if (local.length) {
+                    products.value = local;
+                    searching.value = false;
+                    return;
+                }
+            }
+            debouncedFetchProducts(value);
+        };
 
         const showOptions = (value) => {
-            if (value.length >= 3) {
+            if (value && value.trim().length >= 1) {
                 fetchProducts(value);
                 return true;
             }

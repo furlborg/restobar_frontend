@@ -47,6 +47,8 @@
                                 <n-input-group>
                                     <n-auto-complete v-model:value="productSearch" :options="productOptions"
                                         :get-show="showOptions" :loading="searching" :render-label="renderLabel"
+                                        :filter="() => true"
+                                        @update:value="fetchProducts"
                                         :input-props="{ autocomplete: 'disabled' }" placeholder="Nombre del producto"
                                         clear-after-select @select="selectProduct" />
                                 </n-input-group>
@@ -389,18 +391,24 @@ const currentOrder = computed(() => {
     const index = itemIndex.value;
     return typeof index === 'number' && index >= 0 ? orderStore.orderList[index] : null;
 });
-const productOptions = computed(() => products.value.map((product) => ({
-    value: product,
+const productOptions = computed(() => products.value.filter((p) => p.product_type !== 'COMBO').map((product) => ({
+    value: product.id,
     label: product.name,
+    product: product,
     disabled: product.is_disabled,
-    category: productStore.getCategorieDescription(product.category),
-    stock: product.stock,
-    price: parseFloat(product.prices).toFixed(2),
+    category: productStore.getCategorieDescription(product.category) || 'General',
+    stock: product.stock ?? 0,
+    price: parseFloat(product.prices || 0).toFixed(2),
 })));
 const orderButtonDisabled = computed(() => !props.hasUnsavedChanges);
 
 
-const selectProduct = product => emit('productSelect', product);
+const selectProduct = (v) => {
+    const item = (v && typeof v === 'object') ? v : products.value.find(p => p.id === v);
+    if (item) {
+        emit('productSelect', item);
+    }
+};
 
 const localOrderUser = computed({
     get: () => orderUser.value,
@@ -507,45 +515,101 @@ const updateSaleStore = () => {
     saleStore.buildSalePayload();
 };
 
-const { debounced: fetchProducts } = useDebounce((value) => {
-    const priceRegex = /^\d+(\.\d{0,2})?$/
+let searchAbortController = null;
+let currentSearchSeq = 0;
 
-    // Si es un precio, buscar por precio
-    if (priceRegex.test(value)) {
-        searching.value = true
-        searchProductPrice(value)
-            .then(res => {
-                if (res.status === 200) products.value = res.data
-            })
-            .catch(() => message.error('Algo salió mal...'))
-            .finally(() => (searching.value = false))
-        return
+onMounted(() => {
+    productStore.loadCatalog(true).catch(() => {});
+});
+
+const executeSearch = (value) => {
+    const priceRegex = /^\d+(\.\d{0,2})?$/;
+    const isPrice = priceRegex.test(value);
+    const isTextSearch = value && value.trim().length >= 1;
+
+    if (!isPrice && !isTextSearch) {
+        products.value = [];
+        searching.value = false;
+        return;
     }
 
-    // Si es texto con al menos 3 caracteres, buscar por nombre
-    if (value && value.length >= 3) {
-        searching.value = true
-        searchProductByName(value)
-            .then(res => {
-                if (res.status === 200) products.value = res.data
-            })
-            .catch(() => message.error('Algo salió mal...'))
-            .finally(() => (searching.value = false))
+    // 1. Si el catálogo está en memoria, buscar de forma 100% instantánea (0 ms)
+    if (productStore.catalog?.length) {
+        const localMatches = productStore.searchLocal(value);
+        if (localMatches.length) {
+            products.value = localMatches;
+            searching.value = false;
+            return;
+        }
+    }
+
+    // 2. Si no hubo coincidencia local (o el catálogo aún carga), consultar al backend
+    if (searchAbortController) {
+        searchAbortController.abort();
+        searchAbortController = null;
+    }
+
+    searchAbortController = new AbortController();
+    const currentSeq = ++currentSearchSeq;
+    searching.value = true;
+
+    const request = isPrice
+        ? searchProductPrice(value, { signal: searchAbortController.signal })
+        : searchProductByName(value, { signal: searchAbortController.signal });
+
+    request
+        .then(res => {
+            if (currentSeq === currentSearchSeq && res.status === 200) {
+                products.value = res.data;
+            }
+        })
+        .catch(err => {
+            if (err?.name === 'CanceledError' || err?.code === 'ERR_CANCELED') {
+                return;
+            }
+            if (currentSeq === currentSearchSeq) {
+                console.error(err);
+                message.error('Algo salió mal...');
+            }
+        })
+        .finally(() => {
+            if (currentSeq === currentSearchSeq) {
+                searching.value = false;
+            }
+        });
+};
+
+const { debounced: debouncedFetchProducts } = useDebounce(executeSearch, 200);
+
+const fetchProducts = (value) => {
+    // Si el catálogo está listo, la búsqueda local es inmediata (0ms sin debounce!)
+    if (productStore.catalog?.length) {
+        executeSearch(value);
     } else {
-        products.value = []
+        debouncedFetchProducts(value);
     }
-}, 300)
+};
 
-// --- get-show solo controla visibilidad del dropdown ---
+// --- get-show controla visibilidad del dropdown y asegura ejecución inmediata ---
 const showOptions = (value) => {
-    if (!value) return false
-    // cuando hay algo escrito, deja mostrar las opciones
-    return value.length >= 3 || /^\d+(\.\d{0,2})?$/.test(value)
-}
+    if (!value) return false;
+    const shouldShow = value.trim().length >= 1 || /^\d+(\.\d{0,2})?$/.test(value);
+    if (shouldShow) {
+        fetchProducts(value);
+        return true;
+    }
+    return false;
+};
+
+onUnmounted(() => {
+    if (searchAbortController) {
+        searchAbortController.abort();
+    }
+});
 
 watch(productSearch, (value) => {
-    fetchProducts(value)
-})
+    fetchProducts(value);
+});
 
 const renderLabel = (option) => {
     return h(ProductSearchLabel, { option });

@@ -126,3 +126,19 @@ export async function updateDocumentSerie(idSerie, serie) {
 export async function deleteDocumentSerie(idSerie) {
   return await http.delete(`series/${idSerie}/`);
 }
+
+export async function getWhatsAppStatus() {
+  return await http.get("business/whatsapp_status/");
+}
+
+export async function startWhatsAppQr() {
+  return await http.post("business/whatsapp_start_qr/");
+}
+
+export async function getWhatsAppQr() {
+  return await http.get("business/whatsapp_qr/");
+}
+
+export async function logoutWhatsApp() {
+  return await http.post("business/whatsapp_logout/");
+}

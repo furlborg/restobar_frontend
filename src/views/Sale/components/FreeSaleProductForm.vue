@@ -6,6 +6,7 @@
           v-model:value="product.product_name"
           :options="productOptions"
           :loading="searchingProducts"
+          :filter="() => true"
           placeholder=""
           clearable
           @update:value="handleProductInput"
@@ -20,7 +21,7 @@
           v-model:value="product.product_affectation"
           placeholder="Seleccione"
           :options="productStore.affectationsOptions"
-          :disabled="!settingsStore.businessSettings.sale.manage_affectations"
+          :disabled="!settingsStore.businessSettings?.sale?.manage_affectations"
         />
       </n-form-item-gi>
       <n-form-item-gi v-if="selectedProduct" :span="3">
@@ -64,7 +65,7 @@ export default defineComponent({
       product: null,
       product_name: "",
       price_sale: 0,
-      product_affectation: settingsStore.businessSettings.sale.default_affectation,
+      product_affectation: Number(settingsStore.businessSettings?.sale?.default_affectation || 20),
       deduct_stock: initialDeductStock.value,
     });
 
@@ -136,15 +137,27 @@ export default defineComponent({
         resetSelectedProduct();
       }
 
-      if (value.length < 2) {
+      if (value.length < 1) {
         productOptions.value = [];
         return;
+      }
+
+      if (productStore.catalog?.length) {
+        const localMatches = productStore.searchLocal(value);
+        if (localMatches.length) {
+          productOptions.value = localMatches.map((item) => ({
+            label: productOptionLabel(item),
+            value: item.name,
+            product: item,
+          }));
+          return;
+        }
       }
 
       searchingProducts.value = true;
       try {
         const response = await searchProductByName(value);
-        productOptions.value = (response.data || []).map((item) => ({
+        productOptions.value = (response.data || []).filter((item) => item.product_type !== "COMBO").map((item) => ({
           label: productOptionLabel(item),
           value: item.name,
           product: item,
@@ -167,14 +180,14 @@ export default defineComponent({
       product.value.product_name = item.name;
       product.value.price_sale = Number(item.prices || 0);
       product.value.product_affectation = Number(
-        item.affectation || settingsStore.businessSettings.sale.default_affectation,
+        item.affectation || settingsStore.businessSettings?.sale?.default_affectation || 20,
       );
       product.value.deduct_stock = initialDeductStock.value;
     };
 
     const buildSaleDetail = () => {
       const item = selectedProduct.value;
-      const icbperUnit = item?.icbper ? Number(settingsStore.businessSettings.sale.icbper_tax || 0) : 0;
+      const icbperUnit = item?.icbper ? Number(settingsStore.businessSettings?.sale?.icbper_tax || 0) : 0;
       const detail = {
         product: item ? item.id : null,
         product_name: product.value.product_name,

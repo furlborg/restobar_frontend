@@ -122,32 +122,39 @@ export default defineComponent({
     };
 
     const itemsList = computed(() => {
-      const list = products.value.filter((product) => {
-        const searchTerm = search.value.toLowerCase();
-        const productName = product.name.toLowerCase();
-        const productPrice = parseFloat(product.prices).toFixed(2);
-        return productName.includes(searchTerm) || productPrice.includes(searchTerm);
-      });
-      if (products.value.every((product) => !!product.order_index)) {
-        return list.sort((a, b) => {
-          if (a.order_index > b.order_index) {
-            return 1;
-          }
-          if (a.order_index < b.order_index) {
-            return -1;
-          }
-          return 0;
-        });
-      } else {
-        return list;
+      const q = (search.value || "").trim();
+      if (!q) {
+        if (products.value.every((product) => !!product.order_index)) {
+          return [...products.value].sort((a, b) => (a.order_index > b.order_index ? 1 : a.order_index < b.order_index ? -1 : 0));
+        }
+        return products.value;
       }
+
+      // Buscar usando el motor inteligente de productStore
+      const localMatches = productStore.searchLocal(q);
+      if (localMatches.length) {
+        const matchRankMap = new Map();
+        localMatches.forEach((p, idx) => matchRankMap.set(p.id, idx));
+        const filtered = products.value.filter(p => matchRankMap.has(p.id));
+        if (filtered.length) {
+          return filtered.sort((a, b) => (matchRankMap.get(a.id) ?? 999) - (matchRankMap.get(b.id) ?? 999));
+        }
+      }
+
+      // Fallback a coincidencia directa por nombre o precio
+      const qLower = q.toLowerCase();
+      return products.value.filter((product) => {
+        const productName = (product.name || "").toLowerCase();
+        const productPrice = parseFloat(product.prices || 0).toFixed(2);
+        return productName.includes(qLower) || productPrice.includes(qLower);
+      });
     });
 
     const loadProducts = async () => {
       await getProductsByCategory(route.params.category)
         .then((response) => {
           if (response.status === 200) {
-            products.value = response.data;
+            products.value = (response.data || []).filter((p) => p.product_type !== "COMBO");
           }
         })
         .catch((error) => {

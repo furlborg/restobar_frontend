@@ -37,7 +37,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, onMounted } from "vue";
 import { darkTheme } from "naive-ui";
 import { commonEsPE, dateEsPE } from "@/locale";
 import { useUserStore, useActiveUsersStore } from "@/store/modules/user";
@@ -59,46 +59,37 @@ import { lighten } from "@/utils";
 const collapsed = ref(false);
 
 const userStore = useUserStore();
-
 const activeUsersStore = useActiveUsersStore();
-
-activeUsersStore.initializeStore();
-
 const designStore = useDesignSettingStore();
-
-designStore.initializeStore();
-
 const businessStore = useBusinessStore();
-
-businessStore.initializeStore();
-
 const settingsStore = useSettingsStore();
-
-settingsStore.initializeStore();
-
 const customerStore = useCustomerStore();
-
-customerStore.initializeStore();
-
 const tableStore = useTableStore();
-
-tableStore.initializeStore();
-
 const productStore = useProductStore();
-
-productStore.initializeStore();
-
 const tillStore = useTillStore();
-
-tillStore.initializeStore();
-
 const saleStore = useSaleStore();
-
-saleStore.initializeStore();
-
 const genericsStore = useGenericsStore();
 
+// Fase 1: Esenciales inmediatas para pintar el shell y las mesas
+designStore.initializeStore();
+businessStore.initializeStore();
+settingsStore.initializeStore();
 genericsStore.initializeStore();
+tableStore.initializeStore();
+
+// Fase 2 y 3: Escalonar tiendas secundarias para no saturar el límite de conexiones en 3G
+onMounted(() => {
+  setTimeout(() => {
+    productStore.initializeStore();
+    tillStore.initializeStore();
+    activeUsersStore.initializeStore();
+  }, 100);
+
+  setTimeout(() => {
+    customerStore.initializeStore();
+    saleStore.initializeStore();
+  }, 300);
+});
 
 const getThemeOverrides = computed(() => {
   const appTheme = designStore.appTheme;

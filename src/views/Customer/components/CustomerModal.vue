@@ -20,7 +20,7 @@
               <n-form-item-gi label="Nº Documento" :required="formRules.doc_num.required" path="doc_num" :span="7">
                 <n-input-group>
                   <n-input v-model:value="customer.doc_num" :maxlength="docMaxLength" placeholder="" show-count
-                    @keypress="isNumber($event)" />
+                    :allow-input="allowDocInput" @keypress="isNumber($event)" />
                   <n-popover placement="top-end" trigger="hover" :delay="750" :duration="500">
                     <template #trigger>
                       <n-button type="info" :disabled="!(
@@ -171,9 +171,41 @@ const docMaxLength = ref(20);
 const countriesOptions = computed(() => customerStore.countries);
 const ubigeeOptions = computed(() => customerStore.ubigee);
 
+const allowDocInput = (value) => {
+  if (customer.value.doc_type === "1" || customer.value.doc_type === "6") {
+    return !value || /^\d+$/.test(value);
+  }
+  return true;
+};
+
 const formRules = computed(() => {
   let rules = { ...customerRules };
-  rules.doc_num.required = customer.value.doc_type !== "0";
+  rules.doc_num = {
+    required: customer.value.doc_type !== "0",
+    trigger: ["blur", "input"],
+    validator(rule, value) {
+      if (customer.value.doc_type !== "0" && (!value || !value.trim())) {
+        return new Error("Número documento requerido");
+      }
+      if (customer.value.doc_type === "1" && value) {
+        if (!/^\d+$/.test(value)) {
+          return new Error("El DNI solo debe contener números");
+        }
+        if (value.length !== 8) {
+          return new Error("El DNI debe tener 8 dígitos");
+        }
+      }
+      if (customer.value.doc_type === "6" && value) {
+        if (!/^\d+$/.test(value)) {
+          return new Error("El RUC solo debe contener números");
+        }
+        if (value.length !== 11) {
+          return new Error("El RUC debe tener 11 dígitos");
+        }
+      }
+      return true;
+    },
+  };
   return rules;
 });
 

@@ -3,6 +3,8 @@
         <n-drawer-content title="Productos" footer-style="padding: 0; height: 50px" closable>
             <n-auto-complete v-model:value="productSearch" :options="productOptions" :get-show="showOptions"
                 :loading="searchingProduct" placeholder="Buscar..." clear-after-select :render-label="renderLabel"
+                :filter="() => true"
+                @update:value="fetchProducts"
                 @select="selectProduct" />
             <n-list>
                 <n-list-item v-for="(orderItem, index) in waiterStore.preOrderList" :key="index">
@@ -101,7 +103,7 @@
 import ProductIndications from "../views/ProductIndications";
 import TicketPreview from "@/views/Order/components/TicketPreview.vue";
 import WaiterAuthModal from "./WaiterAuthModal.vue";
-import { h, ref, computed } from "vue";
+import { h, ref, computed, onMounted, onUnmounted } from "vue";
 import { NThing, NTag, NSpace, NText, useMessage, useDialog } from "naive-ui";
 import { createTableOrder, updateTableOrder } from "@/api/modules/tables";
 
@@ -152,7 +154,7 @@ const productSearch = ref("");
 const products = ref([]);
 
 const productOptions = computed(() => {
-    return products.value.map((product) => ({
+    return products.value.filter((p) => p.product_type !== 'COMBO').map((product) => ({
         value: product.id,
         label: product.name,
         disabled: product?.is_disabled,
@@ -162,34 +164,107 @@ const productOptions = computed(() => {
 
 const priceRegex = /^\d+(\.\d{0,2})?$/;
 
-const { debounced: fetchProducts, cancel: cancelFetchProducts } = useDebounce((value) => {
+let searchAbortController = null;
+let currentSearchSeq = 0;
+
+onMounted(() => {
+    productStore.loadCatalog(true).catch(() => {});
+});
+
+const executeSearch = (value) => {
+    const isPrice = priceRegex.test(value);
+    const isTextSearch = value && value.trim().length >= 1;
+
+    if (!isPrice && !isTextSearch) {
+        products.value = [];
+        searchingProduct.value = false;
+        return;
+    }
+
+    // 1. Si el catálogo está cargado en memoria, buscar de forma 100% instantánea (0 ms)
+    if (productStore.catalog?.length) {
+        const localMatches = productStore.searchLocal(value);
+        if (localMatches.length) {
+            products.value = localMatches;
+            searchingProduct.value = false;
+            return;
+        }
+    }
+
+    // 2. Si no hubo coincidencia local (o el catálogo aún carga), consultar al backend
+    if (searchAbortController) {
+        searchAbortController.abort();
+        searchAbortController = null;
+    }
+
+    searchAbortController = new AbortController();
+    const currentSeq = ++currentSearchSeq;
     searchingProduct.value = true;
-    const request = priceRegex.test(value)
-        ? searchProductPrice(value)
-        : searchProductByName(value);
+
+    const request = isPrice
+        ? searchProductPrice(value, { signal: searchAbortController.signal })
+        : searchProductByName(value, { signal: searchAbortController.signal });
 
     request.then((response) => {
-        if (response.status === 200) {
-            products.value = response.data;
+        if (currentSeq === currentSearchSeq && response.status === 200) {
+            products.value = (response.data || []).filter((p) => p.product_type !== 'COMBO');
         }
     }).catch((error) => {
-        console.error(error);
-        message.error("Algo salió mal...");
+        if (error?.name === 'CanceledError' || error?.code === 'ERR_CANCELED') {
+            return;
+        }
+        if (currentSeq === currentSearchSeq) {
+            console.error(error);
+            message.error("Algo salió mal...");
+        }
     }).finally(() => {
-        searchingProduct.value = false;
+        if (currentSeq === currentSearchSeq) {
+            searchingProduct.value = false;
+        }
     });
-}, 300);
+};
+
+const { debounced: debouncedFetchProducts, cancel: cancelFetchProducts } = useDebounce(executeSearch, 200);
+
+const fetchProducts = (value) => {
+    if (productStore.catalog?.length) {
+        executeSearch(value);
+    } else {
+        debouncedFetchProducts(value);
+    }
+};
 
 const showOptions = (value) => {
-    if (priceRegex.test(value) || value.length >= 3) {
+    if (!value) {
+        cancelFetchProducts();
+        if (searchAbortController) {
+            searchAbortController.abort();
+            searchAbortController = null;
+        }
+        products.value = [];
+        searchingProduct.value = false;
+        return false;
+    }
+    const shouldShow = priceRegex.test(value) || value.trim().length >= 1;
+    if (shouldShow) {
         fetchProducts(value);
         return true;
     }
     cancelFetchProducts();
+    if (searchAbortController) {
+        searchAbortController.abort();
+        searchAbortController = null;
+    }
     products.value = [];
     searchingProduct.value = false;
     return false;
 };
+
+onUnmounted(() => {
+    if (searchAbortController) {
+        searchAbortController.abort();
+    }
+});
 
 const selectProduct = (v) => {
     const item = products.value.find((product) => product.id === v);
@@ -243,7 +318,7 @@ const renderLabel = (option) => {
                             h(
                                 NTag, { size: "small", type: "info" },
                                 {
-                                    default: () => option.category.toLowerCase().includes("menu") ? "MENU" : option.category.toLowerCase().includes("comb") ? "COMBO" : "CARTA"
+                                    default: () => (option.category || '').toLowerCase().includes("menu") ? "MENU" : (option.category || '').toLowerCase().includes("comb") ? "COMBO" : "CARTA"
                                 }
                             ),
                             h(
@@ -262,7 +337,7 @@ const renderLabel = (option) => {
                             h(
                                 NTag, { size: "small", type: "info" },
                                 {
-                                    default: () => option.category
+                                    default: () => option.category || 'General'
                                 }
                             )
                         ]

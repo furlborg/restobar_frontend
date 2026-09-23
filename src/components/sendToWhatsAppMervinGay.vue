@@ -40,7 +40,14 @@ const sentFileToWhatsApp = async(info) => {
             }
         });
         if (data.status === 200) {
-            message.success("Comprobante A4 enviado con éxito a WhatsApp");
+            if (data.data?.fallback_applied) {
+                message.warning(
+                    data.data.fallback_warning || "Comprobante enviado por servicio de respaldo predeterminado (WhatsApp vinculado desconectado).",
+                    { duration: 7000, keepAliveOnHover: true }
+                );
+            } else {
+                message.success("Comprobante A4 enviado con éxito a WhatsApp");
+            }
             props.dataModal.show.value = false;
         }
     } catch (err) {

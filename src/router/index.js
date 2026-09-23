@@ -532,6 +532,19 @@ router.beforeEach(async (to, from, next) => {
   }
 });
 
+
+router.onError((error, to) => {
+  const isChunkFetchError =
+    error?.message?.includes("Failed to fetch dynamically imported module") ||
+    error?.message?.includes("Importing a module script failed") ||
+    error?.name === "ChunkLoadError";
+
+  if (isChunkFetchError && to?.fullPath) {
+    console.warn("Detectada actualización del sistema, recargando a la versión más reciente...", to.fullPath);
+    window.location.href = to.fullPath;
+  }
+});
+
 export default router;
 
 // Trigger Vite HMR

@@ -144,9 +144,11 @@ const search = ref("");
 const products = ref([]);
 
 const filteredProducts = computed(() => {
-  return products.value.filter((product) =>
-    product.name.toLowerCase().includes(search.value.toLowerCase())
-  );
+  if (!search.value || !search.value.trim()) return products.value;
+  const allMatches = productStore.searchLocal(search.value);
+  const catProductIds = new Set(products.value.map((p) => p.id));
+  const inCategory = allMatches.filter((p) => catProductIds.has(p.id));
+  return inCategory.length ? inCategory : allMatches;
 });
 
 const transformOrderDetails = (orderDetails = []) => {
@@ -261,7 +263,7 @@ const loadProducts = () => {
   getProductsByCategory(route.params.category)
     .then((response) => {
       if (response.status === 200) {
-        products.value = response.data;
+        products.value = (response.data || []).filter((p) => p.product_type !== "COMBO");
       }
     })
     .catch((error) => {

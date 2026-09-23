@@ -107,17 +107,17 @@
             <template v-else>
               <thead>
                 <tr>
-                  <th width="15%">CANT</th>
-                  <th width="40%">DESCRIPCIÓN</th>
-                  <th :width="!!hasDiscounts ? '15%' : '20%'">PRECIO</th>
-                  <th v-if="hasDiscounts" width="15%">DESCT</th>
-                  <th :width="!!hasDiscounts ? '15%' : '20%'">TOTAL</th>
+                  <th :width="hasDiscounts ? '12%' : '15%'" align="center">CANT</th>
+                  <th :width="hasDiscounts ? '38%' : '45%'" align="left">DESCRIPCIÓN</th>
+                  <th :width="hasDiscounts ? '16%' : '20%'" align="right">{{ hasDiscounts ? 'P.U.' : 'PRECIO' }}</th>
+                  <th v-if="hasDiscounts" width="16%" align="right">DTO</th>
+                  <th :width="hasDiscounts ? '18%' : '20%'" align="right">TOTAL</th>
                 </tr>
               </thead>
               <tbody v-if="!isCustomerMode">
                 <tr v-for="(item, index) in sale.items" :key="index" 
                     :class="{ 'menu-header': item.isMenuHeader, 'menu-product': item.isMenuProduct }">
-                  <td>{{ item.isMenuProduct ? '' : item.cantidad }}</td>
+                  <td>{{ item.cantidad }}</td>
                   <td align="left" :style="item.isMenuProduct ? 'font-size: 11px; color: #666;' : ''">
                     {{ item.descripcion }}
                   </td>
@@ -125,7 +125,7 @@
                     {{ item.isMenuProduct ? '' : item.precio_unitario.toFixed(2) }}
                   </td>
                   <td v-if="hasDiscounts" align="right">
-                    {{ item.isMenuProduct ? '' : (data.sale_details[index]?.discount || '0.00') }}
+                    {{ item.isMenuProduct ? '' : getItemDiscount(item) }}
                   </td>
                   <td align="right">
                     {{ item.isMenuProduct ? '' : item.total_item.toFixed(2) }}
@@ -150,7 +150,7 @@
                     {{ item.isMenuProduct ? '' : item.precio_unitario.toFixed(2) }}
                   </td>
                   <td v-if="hasDiscounts" align="right">
-                    {{ item.isMenuProduct ? '' : (data.sale_details[sale.items.indexOf(item)]?.discount || '0.00') }}
+                    {{ item.isMenuProduct ? '' : getItemDiscount(item) }}
                   </td>
                   <td align="right">
                     {{ item.isMenuProduct ? '' : item.total_item.toFixed(2) }}
@@ -243,9 +243,9 @@
                   }}
                 </td>
               </tr>
-              <tr>
+              <tr v-if="Number(data.other_charges)">
                 <td align="right" :colspan="!!hasDiscounts ? 4 : 3">
-                  OTROS :
+                  OTROS CARGOS :
                 </td>
                 <td align="right">
                     {{ data.other_charges }}
@@ -399,9 +399,21 @@ export default defineComponent({
     const businessStore = useBusinessStore();
     const tableStore = useTableStore();
 
-    const hasDiscounts = props.data.sale_details.some(
-      (detail) => !!Number(detail.discount)
-    );
+    const hasDiscounts = computed(() => {
+      const detailsHave = props.data?.sale_details?.some(
+        (detail) => !!Number(detail?.discount)
+      );
+      if (detailsHave) return true;
+      try {
+        const saleData = JSON.parse(props.data?.json_sale || "{}");
+        const itemsHave = saleData?.items?.some(
+          (item) => (item?.descuentos && item?.descuentos?.length > 0) || !!Number(item?.discount)
+        );
+        return !!itemsHave || !!Number(saleData?.totales?.total_descuentos);
+      } catch (e) {
+        return false;
+      }
+    });
 
     // Detectar si es modo clientes
     // Modificado por petición: El Boucher (Ticket final) NO debe separar por clientes.
@@ -560,6 +572,60 @@ export default defineComponent({
       return code_qr;
     };
 
+    const getItemDiscount = (item) => {
+      if (!item || item.isMenuProduct) return '';
+      if (item.descuentos && Array.isArray(item.descuentos) && item.descuentos.length > 0) {
+        const monto = item.descuentos[0]?.monto;
+        if (monto != null && Number(monto) > 0) {
+          return Number(monto).toFixed(2);
+        }
+      }
+      if (item.discount != null && Number(item.discount) > 0) {
+        return Number(item.discount).toFixed(2);
+      }
+      const saleDetails = props.data?.original_sale_details || props.data?.sale_details;
+      if (saleDetails && Array.isArray(saleDetails)) {
+        const itemCode = (item.codigo_interno || item.code || '').trim().toUpperCase();
+        const itemDesc = (item.descripcion || item.product_name || '').trim().toUpperCase();
+
+        const matched = saleDetails.find((d) => {
+          const code = (
+            d.product_info?.code ||
+            d.product?.code ||
+            d.code ||
+            d.product_code ||
+            (d.product_set_id ? `MENU-${d.product_set_id}` : (d.product_set?.id ? `MENU-${d.product_set.id}` : ''))
+          ).trim().toUpperCase();
+
+          if (code && itemCode && code === itemCode) return true;
+
+          const name = (
+            d.product_name ||
+            d.product_info?.name ||
+            d.product?.name ||
+            d.name ||
+            ''
+          ).trim().toUpperCase();
+
+          if (name && itemDesc) {
+            if (name === itemDesc) return true;
+            if (
+              itemDesc.startsWith(name + ' (') ||
+              itemDesc.startsWith(name + ' [') ||
+              itemDesc.startsWith(name + ' - ')
+            ) {
+              return true;
+            }
+          }
+          return false;
+        });
+        if (matched && matched.discount != null && Number(matched.discount) > 0) {
+          return Number(matched.discount).toFixed(2);
+        }
+      }
+      return '0.00';
+    };
+
     return {
       settingsStore,
       businessStore,
@@ -575,6 +641,7 @@ export default defineComponent({
       hasDiscounts,
       isCustomerMode,
       groupedByCustomer,
+      getItemDiscount,
     };
   },
 });
@@ -589,22 +656,24 @@ export default defineComponent({
 
   &-header {
     font-weight: bold;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
     &-logo {
       img {
-        margin: 5px;
+        margin: 4px auto;
+        max-width: 135px;
+        height: auto;
       }
     }
     &-info {
-      font-size: 12px;
+      font-size: 11px;
     }
     &-title {
-      font-size: 14px;
-      margin-top: 5px;
+      font-size: 13px;
+      margin-top: 4px;
     }
   }
   &-body {
-    font-size: 12px;
+    font-size: 11px;
     table td,
     th {
       vertical-align: top;
@@ -626,11 +695,23 @@ export default defineComponent({
     }
     &-details {
       table {
+        table-layout: fixed;
+        width: 100%;
+        font-size: 9px;
         th {
-          font-size: 12px;
+          font-size: 9px;
+          white-space: nowrap;
+          padding: 1px 2px;
+          letter-spacing: -0.2px;
+        }
+        td {
+          padding: 1px 2px;
         }
         tfoot {
           font-weight: bold;
+          td:last-child {
+            white-space: nowrap;
+          }
         }
         
         .menu-header {
@@ -646,23 +727,24 @@ export default defineComponent({
 
     .amount-text {
       font-weight: bold;
+      font-size: 10px;
     }
   }
   &-footer {
-    font-size: 10px;
+    font-size: 9.5px;
     text-align: center;
     &-extra {
       display: flex;
     }
     .extra-info {
       text-align: left;
-      margin-top: 10px;
+      margin-top: 8px;
       &-label {
         font-weight: bold;
       }
     }
     &-url {
-      margin: 5px;
+      margin: 4px;
       font-weight: bold;
     }
     table {

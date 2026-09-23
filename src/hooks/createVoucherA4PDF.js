@@ -333,12 +333,17 @@ export const generateVoucherA4PDF = async (rawData, businessStore, dataOrder = {
     doc.setFont("helvetica", "bold");
     doc.text("FORMA PAGO:", colRightX, rightMetaY);
     doc.setFont("helvetica", "normal");
-    doc.text(`${paymentCondition} ${orderTableDesc ? `| ${orderTableDesc}` : ""}`.trim(), colRightX + 26, rightMetaY);
+    doc.text(paymentCondition, colRightX + 26, rightMetaY);
 
     // ==========================================
     // 3. TABLA DE PRODUCTOS / ÍTEMS
     // ==========================================
     currentY = clientBoxY + clientBoxHeight + 5;
+
+    const hasItemDiscounts = !byConsumption && (
+        items.some(i => (i.descuentos && i.descuentos.length > 0) || Number(i.discount) > 0) ||
+        (dataOrder?.sale_details && dataOrder.sale_details.some(d => Number(d.discount) > 0))
+    );
 
     let tableBody = [];
     if (byConsumption) {
@@ -356,23 +361,95 @@ export const generateVoucherA4PDF = async (rawData, businessStore, dataOrder = {
         tableBody = items.map((item, index) => {
             const qty = parseFloat(item?.cantidad || 1);
             const unitPrice = parseFloat(item?.valor_unitario || item?.precio || 0);
-            const itemTotal = parseFloat(item?.total_item || item?.total || (qty * unitPrice));
+            let itemDiscount = 0;
+            if (item?.descuentos && Array.isArray(item.descuentos) && item.descuentos.length > 0) {
+                const monto = item.descuentos[0]?.monto;
+                if (monto != null && Number(monto) > 0) {
+                    itemDiscount = parseFloat(monto);
+                }
+            } else if (item?.discount != null && Number(item.discount) > 0) {
+                itemDiscount = parseFloat(item.discount);
+            } else {
+                const saleDetails = dataOrder?.original_sale_details || dataOrder?.sale_details;
+                if (saleDetails && Array.isArray(saleDetails)) {
+                    const itemCode = (item?.codigo_interno || item?.code || '').trim().toUpperCase();
+                    const itemDesc = (item?.descripcion || item?.product_name || '').trim().toUpperCase();
+
+                    const matched = saleDetails.find((d) => {
+                        const code = (
+                            d.product_info?.code ||
+                            d.product?.code ||
+                            d.code ||
+                            d.product_code ||
+                            (d.product_set_id ? `MENU-${d.product_set_id}` : (d.product_set?.id ? `MENU-${d.product_set.id}` : ''))
+                        ).trim().toUpperCase();
+
+                        if (code && itemCode && code === itemCode) return true;
+
+                        const name = (
+                            d.product_name ||
+                            d.product_info?.name ||
+                            d.product?.name ||
+                            d.name ||
+                            ''
+                        ).trim().toUpperCase();
+
+                        if (name && itemDesc) {
+                            if (name === itemDesc) return true;
+                            if (
+                                itemDesc.startsWith(name + ' (') ||
+                                itemDesc.startsWith(name + ' [') ||
+                                itemDesc.startsWith(name + ' - ')
+                            ) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+                    if (matched && matched.discount != null && Number(matched.discount) > 0) {
+                        itemDiscount = parseFloat(matched.discount);
+                    }
+                }
+            }
+            const itemTotal = parseFloat(item?.total_item || item?.total || (qty * unitPrice - itemDiscount));
             const desc = item?.descripcion || item?.product_name || "PRODUCTO";
 
-            return [
+            const row = [
                 String(index + 1),
                 qty % 1 === 0 ? String(qty) : qty.toFixed(2),
                 item?.unidad_de_medida || "NIU",
                 desc,
-                unitPrice.toFixed(2),
-                itemTotal.toFixed(2)
+                unitPrice.toFixed(2)
             ];
+            if (hasItemDiscounts) {
+                row.push(itemDiscount.toFixed(2));
+            }
+            row.push(itemTotal.toFixed(2));
+            return row;
         });
     }
 
     autoTable(doc, {
         startY: currentY,
-        head: [["ITEM", "CANT.", "UNIDAD", "DESCRIPCIÓN", "P. UNITARIO", "TOTAL"]],
+        head: [hasItemDiscounts 
+            ? [
+                { content: "ITEM", styles: { halign: "center" } },
+                { content: "CANT.", styles: { halign: "center" } },
+                { content: "UNIDAD", styles: { halign: "center" } },
+                { content: "DESCRIPCIÓN", styles: { halign: "left" } },
+                { content: "P. UNITARIO", styles: { halign: "right" } },
+                { content: "DTO.", styles: { halign: "right" } },
+                { content: "TOTAL", styles: { halign: "right" } }
+            ]
+            : [
+                { content: "ITEM", styles: { halign: "center" } },
+                { content: "CANT.", styles: { halign: "center" } },
+                { content: "UNIDAD", styles: { halign: "center" } },
+                { content: "DESCRIPCIÓN", styles: { halign: "left" } },
+                { content: "P. UNITARIO", styles: { halign: "right" } },
+                { content: "TOTAL", styles: { halign: "right" } }
+            ]
+        ],
         body: tableBody,
         margin: { left: pageMargin, right: pageMargin },
         theme: "plain",
@@ -381,23 +458,43 @@ export const generateVoucherA4PDF = async (rawData, businessStore, dataOrder = {
             textColor: [255, 255, 255],
             fontStyle: "bold",
             fontSize: 8.5,
-            cellPadding: { top: 2.5, bottom: 2.5, left: 2, right: 2 }
+            cellPadding: { top: 2.5, bottom: 2.5, left: 1.5, right: 1.5 }
         },
         bodyStyles: {
             fontSize: 8,
             textColor: [30, 41, 59],
-            cellPadding: { top: 2, bottom: 2, left: 2, right: 2 }
+            cellPadding: { top: 2, bottom: 2, left: 1.5, right: 1.5 }
         },
         alternateRowStyles: {
             fillColor: [248, 250, 252]
         },
-        columnStyles: {
+        columnStyles: hasItemDiscounts ? {
+            0: { cellWidth: 10, halign: "center" },
+            1: { cellWidth: 14, halign: "center" },
+            2: { cellWidth: 18, halign: "center" },
+            3: { cellWidth: 60, halign: "left" },
+            4: { cellWidth: 26, halign: "right" },
+            5: { cellWidth: 24, halign: "right" },
+            6: { cellWidth: 30, halign: "right" }
+        } : {
             0: { cellWidth: 12, halign: "center" },
             1: { cellWidth: 16, halign: "center" },
-            2: { cellWidth: 18, halign: "center" },
-            3: { cellWidth: "auto", halign: "left" },
-            4: { cellWidth: 24, halign: "right" },
-            5: { cellWidth: 24, halign: "right" }
+            2: { cellWidth: 20, halign: "center" },
+            3: { cellWidth: 70, halign: "left" },
+            4: { cellWidth: 32, halign: "right" },
+            5: { cellWidth: 32, halign: "right" }
+        },
+        didParseCell: function (hookData) {
+            // Asegurar que la cabecera comparta la misma alineación que las celdas de datos
+            if (hookData.section === "head") {
+                if (hookData.column.index <= 2) {
+                    hookData.cell.styles.halign = "center";
+                } else if (hookData.column.index === 3) {
+                    hookData.cell.styles.halign = "left";
+                } else {
+                    hookData.cell.styles.halign = "right";
+                }
+            }
         }
     });
 
@@ -549,7 +646,7 @@ export const generateVoucherA4PDF = async (rawData, businessStore, dataOrder = {
         totalsRows.push(["DESCUENTO:", `S/ ${totalDescuentos.toFixed(2)}`]);
     }
     if (totalCargos > 0) {
-        totalsRows.push(["OTROS CARGOS / SERV:", `S/ ${totalCargos.toFixed(2)}`]);
+        totalsRows.push(["OTROS CARGOS:", `S/ ${totalCargos.toFixed(2)}`]);
     }
     if (totalIgv > 0) {
         const itemWithRate = items.find((i) => i.porcentaje_igv !== undefined && i.porcentaje_igv !== null && Number(i.porcentaje_igv) > 0);

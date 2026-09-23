@@ -185,22 +185,43 @@ export default defineComponent({
                             let totalOperation = 0;
                             let totalUnitPrice = 0;
                             let totalIGV = 0;
-                            if (order.product_affectation === 20) {
-                                totalOperation = parseFloat((order.quantity * order.price).toFixed(2));
-                                totalUnitPrice = parseFloat((order.price).toFixed(2));
+                            const affectation = order.product_affectation || 20;
+                            const price = parseFloat(order.price ?? order.product_set?.price ?? 0);
+                            const quantity = parseFloat(order.quantity || 1);
+                            const igvTax = parseFloat(order.product_igv || 0);
+
+                            if (affectation === 20) {
+                                totalOperation = parseFloat((quantity * price).toFixed(2));
+                                totalUnitPrice = parseFloat(price.toFixed(2));
                             }
-                            if (order.product_affectation === 10) {
-                                totalOperation = parseFloat((order.quantity * ((order.price * order.product_igv) + order.price)).toFixed(2));
-                                totalUnitPrice = parseFloat(((order.price * order.product_igv) + order.price)).toFixed(2);
-                                totalIGV = (order?.["sub_total"]) * (order.product_igv);
+                            if (affectation === 10) {
+                                totalOperation = parseFloat((quantity * ((price * igvTax) + price)).toFixed(2));
+                                totalUnitPrice = parseFloat(((price * igvTax) + price).toFixed(2));
+                                totalIGV = (order?.["sub_total"] || (quantity * price)) * igvTax;
                             }
+
+                            let description = order.product_name || order.product_set?.menu_name || order.product_set?.name || "-";
+                            // Si tiene productos componentes de combo/menú, agregamos el desglose con sus cantidades
+                            if (order.product_set && Array.isArray(order.product_set.items) && order.product_set.items.length > 0) {
+                                const subItems = order.product_set.items.map((it) => {
+                                    const qty = parseFloat(it.quantity) || 1;
+                                    const name = it.product?.name || it.product_name || it.combo_product?.product?.name || "";
+                                    return name ? `${qty}x ${name}` : null;
+                                }).filter(Boolean);
+                                if (subItems.length > 0) {
+                                    description += ` (${subItems.join(", ")})`;
+                                }
+                            } else if (order.product_description) {
+                                description += ` (${order.product_description})`;
+                            }
+
                             return {
-                                operation: order.product_affectation,
-                                cantidad: order.quantity,
-                                descripcion: order.product_name,
-                                "product_name": order.product_name,
-                                "product_description": order.product_description,
-                                "product_category": order.product_category,
+                                operation: affectation,
+                                cantidad: quantity,
+                                descripcion: description,
+                                "product_name": description,
+                                "product_description": order.product_description || "",
+                                "product_category": order.product_category || (order.product_set ? "Combos" : ""),
                                 igv: totalIGV.toFixed(2),
                                 precio: totalUnitPrice,
                                 total: totalOperation
@@ -303,8 +324,7 @@ export default defineComponent({
                 } else {
                     const gordoPuto = async () => {
                         try {
-                            // eslint-disable-next-line no-undef
-                            const response = await http.post(`${import.meta.env.VITE_APP_URL}/api/v1/sales/${props.data.id}/print/`);
+                            const response = await http.post(`sales/${props.data.id}/print/`);
                             if (response.status === 200) {
                                 return response.data;
                             }
@@ -317,12 +337,12 @@ export default defineComponent({
                     const voucherData = await gordoPuto();
 
                     const sendTicketData = async () => {
-                        console.log(voucherData);
+                        if (!voucherData) return;
                         const jsonTicket = {
                             ...voucherData,
-                            printer_name: voucherData.printer_name
+                            printer_name: voucherData?.printer_name
                                 ? voucherData.printer_name
-                                : settingsStore.business_settings.sale.printer_name
+                                : settingsStore.business_settings?.sale?.printer_name
                         };
                         try {
                             const response = await http.post('orders/print-proxy/', jsonTicket);
@@ -335,7 +355,13 @@ export default defineComponent({
                         }
                     };
 
-                    await sendTicketData();
+                    try {
+                        await sendTicketData();
+                    } catch (err) {
+                        console.error("Error al imprimir voucher:", err);
+                    } finally {
+                        emit("printed");
+                    }
                 }
 
             // Desactivar modo impresión después de generar el PDF
