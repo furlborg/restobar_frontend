@@ -243,7 +243,7 @@
                   }}
                 </td>
               </tr>
-              <tr>
+              <tr v-if="Number(data.other_charges)">
                 <td align="right" :colspan="!!hasDiscounts ? 4 : 3">
                   OTROS CARGOS :
                 </td>
@@ -695,6 +695,8 @@ export default defineComponent({
     }
     &-details {
       table {
+        table-layout: fixed;
+        width: 100%;
         font-size: 9px;
         th {
           font-size: 9px;
@@ -707,6 +709,9 @@ export default defineComponent({
         }
         tfoot {
           font-weight: bold;
+          td:last-child {
+            white-space: nowrap;
+          }
         }
         
         .menu-header {
