@@ -31,13 +31,13 @@ export function useSaleTotals() {
     const menuSets = salePayload.value.sale_product_sets || [];
     
     // Calcular totales de productos regulares por afectación
-    const taxed = details.filter(d => d.product_affectation === 10)
+    const taxed = details.filter(d => Number(d.product_affectation) === 10)
       .reduce((acc, d) => acc + ((Number(d.price_sale || 0) - Number(d.igv_tax || 0)) * Number(d.quantity || 0)), 0);
     
-    const exempt = details.filter(d => d.product_affectation === 20)
+    const exempt = details.filter(d => Number(d.product_affectation) === 20)
       .reduce((acc, d) => acc + (Number(d.price_sale || 0) * Number(d.quantity || 0)), 0);
     
-    const free = details.filter(d => d.product_affectation === 21)
+    const free = details.filter(d => Number(d.product_affectation) === 21)
       .reduce((acc, d) => acc + (Number(d.price_sale || 0) * Number(d.quantity || 0)), 0);
     
     const igv = details.reduce((acc, d) => 

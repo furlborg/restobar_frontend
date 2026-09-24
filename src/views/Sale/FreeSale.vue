@@ -478,7 +478,7 @@ export default defineComponent({
 
     const totalGRV = computed(() => {
       return freeSaleDetails.value.reduce((acc, curVal) => {
-        return curVal.product_affectation === 10
+        return Number(curVal.product_affectation) === 10
           ? (acc += parseFloat(curVal.price_base) * curVal.quantity)
           : acc;
       }, 0);
@@ -486,7 +486,7 @@ export default defineComponent({
 
     const totalEXN = computed(() => {
       return freeSaleDetails.value.reduce((acc, curVal) => {
-        return curVal.product_affectation === 20
+        return Number(curVal.product_affectation) === 20
           ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
           : acc;
       }, 0);
@@ -494,7 +494,7 @@ export default defineComponent({
 
     const totalGRT = computed(() => {
       return freeSaleDetails.value.reduce((acc, curVal) => {
-        return curVal.product_affectation === 21
+        return Number(curVal.product_affectation) === 21
           ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
           : acc;
       }, 0);
@@ -530,7 +530,7 @@ export default defineComponent({
 
     const subTotal = computed(() => {
       return freeSaleDetails.value.reduce((acc, curVal) => {
-        return curVal.product_affectation === 21
+        return Number(curVal.product_affectation) === 21
           ? (acc += 0)
           : (acc += curVal.price_sale * curVal.quantity);
       }, 0);

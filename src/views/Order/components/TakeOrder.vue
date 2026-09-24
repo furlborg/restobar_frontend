@@ -496,9 +496,9 @@ export default defineComponent({
             const toSale = saleStore.toSale;
             console.log(toSale);
             return {
-                GRV: toSale.reduce((acc, cur) => cur.product_affectation === 10 ? acc + parseFloat(cur.price_sale - cur.igv_tax) * cur.quantity : acc, 0),
-                EXN: toSale.reduce((acc, cur) => cur.product_affectation === 20 ? acc + parseFloat(cur.price_sale) * cur.quantity : acc, 0),
-                GRT: toSale.reduce((acc, cur) => cur.product_affectation === 21 ? acc + parseFloat(cur.price_sale) * cur.quantity : acc, 0),
+                GRV: toSale.reduce((acc, cur) => Number(cur.product_affectation) === 10 ? acc + parseFloat(cur.price_sale - cur.igv_tax) * cur.quantity : acc, 0),
+                EXN: toSale.reduce((acc, cur) => Number(cur.product_affectation) === 20 ? acc + parseFloat(cur.price_sale) * cur.quantity : acc, 0),
+                GRT: toSale.reduce((acc, cur) => Number(cur.product_affectation) === 21 ? acc + parseFloat(cur.price_sale) * cur.quantity : acc, 0),
                 IGV: toSale.reduce((acc, cur) => acc + cur.igv_tax * cur.quantity, 0),
                 DSCT: toSale.some(d => Number(d.discount) > 0) ? toSale.reduce((acc, cur) => acc + Number(cur.discount), 0) : sale.value.discount
             };
@@ -512,7 +512,7 @@ export default defineComponent({
 
         const showObservations = ref(false);
 
-        const subTotal = computed(() => saleStore.toSale.reduce((acc, cur) => cur.product_affectation === 21 ? acc : acc + cur.price_sale * cur.quantity, 0));
+        const subTotal = computed(() => saleStore.toSale.reduce((acc, cur) => Number(cur.product_affectation) === 21 ? acc : acc + cur.price_sale * cur.quantity, 0));
 
         const products_count = computed(() => saleStore.toSale.reduce((acc, cur) => acc + cur.quantity, 0));
 
