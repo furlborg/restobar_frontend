@@ -297,6 +297,38 @@ export const useOrderStore = defineStore("order", {
         }
       }
     },
+    updateOrderAffectation(product_id, customer, is_delta, newAffectation) {
+      const customerId = typeof customer === 'object' && customer !== null ? customer.id : customer ?? null;
+      const matchesCustomer = (order) => {
+        if (customerId === null || customerId === undefined) {
+          return !order?.customer;
+        }
+        const orderCustomerId = typeof order?.customer === 'object' && order?.customer !== null ? order?.customer?.id : order?.customer;
+        return orderCustomerId == customerId;
+      };
+
+      const targetOrder = this.orders.find(
+        (order) =>
+          !!order.is_delta === !!is_delta &&
+          order?.product === product_id &&
+          matchesCustomer(order)
+      );
+
+      if (targetOrder) {
+        targetOrder.product_affectation = newAffectation;
+        targetOrder.affectation = newAffectation;
+      } else {
+        const savedOrder = this.savedOrders.find(
+          (order) =>
+            order?.product === product_id &&
+            matchesCustomer(order)
+        );
+        if (savedOrder) {
+          savedOrder.product_affectation = newAffectation;
+          savedOrder.affectation = newAffectation;
+        }
+      }
+    },
     clearNewOrders() {
       this.orders = [];
     },

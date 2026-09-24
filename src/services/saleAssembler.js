@@ -69,7 +69,7 @@ export function buildSalePayload(orders = [], options = {}) {
       const detail = {
         product: order.product,
         product_name: order.product_name,
-        product_affectation: order.product_affectation,
+        product_affectation: Number(order.product_affectation ?? order.affectation ?? 20),
         product_igv: order.product_igv,
         price_base: Number(order.price || 0),
         igv_tax: 0,
@@ -260,7 +260,9 @@ export function computePayloadTotals(payload) {
 
   const productTotal = sale_details.reduce(
     (acc, detail) =>
-      acc + Number(detail.price_sale || 0) * Number(detail.quantity || 0),
+      Number(detail.product_affectation) === 21
+        ? acc
+        : acc + Number(detail.price_sale || 0) * Number(detail.quantity || 0),
     0,
   );
 
