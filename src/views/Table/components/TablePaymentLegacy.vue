@@ -363,7 +363,7 @@ export default defineComponent({
       
       const totalGRV = computed(() => {
           const totalScaled = saleStore.toSale.reduce((acc, curVal) => {
-              if (curVal.product_affectation === 10) {
+              if (Number(curVal.product_affectation) === 10) {
                   // Multiplica el precio por la cantidad y por la precisión
                   const priceBase = parseFloat(curVal.price_sale) - parseFloat(curVal.igv_tax || 0);
                   const value = Math.round(priceBase * curVal.quantity * precision);
@@ -376,7 +376,7 @@ export default defineComponent({
       
       const totalEXN = computed(() => {
           const totalScaled = saleStore.toSale.reduce((acc, curVal) => {
-              if (curVal.product_affectation === 20) {
+              if (Number(curVal.product_affectation) === 20) {
                   const value = Math.round(parseFloat(curVal.price_sale) * curVal.quantity * precision);
                   return acc + value;
               }
@@ -387,7 +387,7 @@ export default defineComponent({
       
       const totalGRT = computed(() => {
           const totalScaled = saleStore.toSale.reduce((acc, curVal) => {
-              if (curVal.product_affectation === 21) {
+              if (Number(curVal.product_affectation) === 21) {
                   const value = Math.round(parseFloat(curVal.price_sale) * curVal.quantity * precision);
                   return acc + value;
               }
@@ -429,7 +429,7 @@ export default defineComponent({
 
     const subTotal = computed(() => {
       return saleStore.toSale.reduce((acc, curVal) => {
-        return curVal.product_affectation === 21
+        return Number(curVal.product_affectation) === 21
           ? (acc += 0)
           : (acc += curVal.price_sale * curVal.quantity);
       }, 0);

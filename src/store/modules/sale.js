@@ -238,13 +238,21 @@ export const useSaleStore = defineStore("sale", {
           break;
       }
 
-      // Sincronizar el cambio de precio con el store de órdenes
+      // Sincronizar el cambio de precio y afectación con el store de órdenes
       orderStore.updateOrderPrice(
         detail.product, 
         detail.customer, 
         detail.is_delta, 
         detail.price_sale
       );
+      if (detail.product_affectation !== undefined) {
+        orderStore.updateOrderAffectation(
+          detail.product,
+          detail.customer,
+          detail.is_delta,
+          Number(detail.product_affectation)
+        );
+      }
     },
   },
 });

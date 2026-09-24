@@ -37,7 +37,7 @@
         </div>
 
         <n-card class="settings-body" :bordered="false" v-if="businessSettings && businessSettings.qz_config">
-            <n-tabs type="line" placement="left" size="large" class="settings-tabs" animated>
+            <n-tabs v-model:value="activeTab" type="line" placement="left" size="large" class="settings-tabs" animated>
                 
                 <!-- PESTAÑA: IMPRESIÓN Y FORMATOS -->
                 <n-tab-pane name="impresiones" tab="Impresión y Formatos">
@@ -404,9 +404,9 @@
     </div>
 </template>
 <script>
-import { defineComponent, ref, computed } from "vue";
+import { defineComponent, ref, computed, watch, onMounted, onUnmounted } from "vue";
 import { useMessage } from "naive-ui";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import { usePrinterStore } from "@/store/modules/printer";
 import { useProductStore } from "@/store/modules/product";
 import { useSettingsStore } from "@/store/modules/settings";
@@ -421,6 +421,17 @@ export default defineComponent({
     },
     setup() {
         const router = useRouter();
+        const route = useRoute();
+        const activeTab = ref(route.query?.tab || "impresiones");
+
+        watch(
+            () => route.query?.tab,
+            (newTab) => {
+                if (newTab) {
+                    activeTab.value = newTab;
+                }
+            }
+        );
         const printerStore = usePrinterStore();
         const productStore = useProductStore();
         const optionsPrinters = ref();
@@ -606,9 +617,9 @@ export default defineComponent({
             is_ready: false
         });
 
-        const fetchWhatsAppStatus = async () => {
+        const fetchWhatsAppStatus = async (forceRefresh = false) => {
             try {
-                const res = await getWhatsAppStatus();
+                const res = await getWhatsAppStatus(forceRefresh ? { refresh: 1 } : {});
                 if (res?.data) {
                     whatsappStatus.value = res.data;
                 }
@@ -648,7 +659,7 @@ export default defineComponent({
                 phone_number: data?.phone_number || whatsappStatus.value.phone_number,
                 is_ready: true
             };
-            fetchWhatsAppStatus();
+            fetchWhatsAppStatus(true);
             window.dispatchEvent(
                 new CustomEvent("whatsapp-status-changed", {
                     detail: { is_connected: true, phone_number: whatsappStatus.value.phone_number },
@@ -656,8 +667,27 @@ export default defineComponent({
             );
         };
 
-        fetchWhatsAppStatus();
+        const handleWhatsAppStatusEvent = (e) => {
+            if (e?.detail) {
+                whatsappStatus.value.is_ready = Boolean(e.detail.is_connected);
+                whatsappStatus.value.state = e.detail.is_connected ? "ready" : "disconnected";
+                if (e.detail.phone_number !== undefined) {
+                    whatsappStatus.value.phone_number = e.detail.phone_number;
+                }
+            } else {
+                fetchWhatsAppStatus(true);
+            }
+        };
 
+        onMounted(() => {
+            window.addEventListener("whatsapp-status-changed", handleWhatsAppStatusEvent);
+        });
+
+        onUnmounted(() => {
+            window.removeEventListener("whatsapp-status-changed", handleWhatsAppStatusEvent);
+        });
+
+        fetchWhatsAppStatus(true);
         return {
             current_igv_tax,
             igvOptions,
@@ -675,6 +705,7 @@ export default defineComponent({
             infoLocationOptions,
             orderTypeOptions,
             waiterAuthModeOptions,
+            activeTab,
             showWhatsAppModal,
             loadingLogout,
             whatsappStatus,
