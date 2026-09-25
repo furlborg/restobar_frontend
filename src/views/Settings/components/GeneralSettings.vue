@@ -122,27 +122,25 @@
                 </n-card>
               </n-gi>
 
-              <!-- Card 2: Apariencia Visual de Mesas en Salón -->
+              <!-- Card 2: Apariencia y Colores de Mesas en Salón -->
               <n-gi>
                 <n-card title="Apariencia y Colores de Mesas" size="small" class="settings-subcard" :bordered="true">
                   <template #header-extra>
-                    <n-tag type="success" size="small" round>En vivo (1:1 Salón)</n-tag>
+                    <n-tag type="success" size="small" round>En vivo (1:1)</n-tag>
                   </template>
-                  <n-text depth="3" class="mb-3 d-block" style="font-size: 13px;">
-                    Personaliza la posición, el tamaño de la etiqueta, los colores de estado y el degradado de las mesas en el salón.
-                  </n-text>
 
                   <n-form label-placement="top">
-                    <n-grid responsive="screen" cols="1 s:2" :x-gap="16" :y-gap="12">
-                      <n-form-item-gi :span="2" label="Ubicación de la etiqueta de la mesa">
+                    <n-grid responsive="screen" cols="1 s:2" :x-gap="14" :y-gap="10">
+                      <!-- Fila 1: Ubicación y Tamaño en 2 columnas -->
+                      <n-form-item-gi :span="1" label="Ubicación de etiqueta">
                         <n-select
                           v-model:value="tableVisualSettings.position"
                           :options="tablePositionOptions"
-                          placeholder="Selecciona la posición de la etiqueta"
+                          placeholder="Posición"
                         />
                       </n-form-item-gi>
 
-                      <n-form-item-gi :span="2" label="Tamaño de la etiqueta de la mesa">
+                      <n-form-item-gi :span="1" label="Tamaño de etiqueta">
                         <div class="table-size-control-row">
                           <div class="slider-wrapper">
                             <n-slider
@@ -159,16 +157,16 @@
                             :max="48"
                             :step="1"
                             size="medium"
-                            style="width: 115px;"
+                            style="width: 95px;"
                           >
                             <template #suffix>px</template>
                           </n-input-number>
                         </div>
                       </n-form-item-gi>
 
-                      <!-- Colores por Estado -->
-                      <n-form-item-gi :span="2" label="Colores de las mesas según su estado">
-                        <n-grid responsive="screen" cols="1 s:3" :x-gap="12" :y-gap="10" class="w-100">
+                      <!-- Fila 2: Colores de Estado (limpio, sin texto redundante) -->
+                      <n-form-item-gi :span="2" label="Colores de Estado">
+                        <n-grid cols="3" :x-gap="10" class="w-100">
                           <n-gi>
                             <div class="color-picker-box">
                               <div class="color-picker-header">
@@ -214,7 +212,7 @@
                         </n-grid>
                       </n-form-item-gi>
 
-                      <!-- Intensidad del Gradiente de Fondo -->
+                      <!-- Fila 3: Intensidad del fondo -->
                       <n-form-item-gi :span="2" label="Intensidad de fondo / Degradado">
                         <div class="w-100">
                           <div class="table-size-control-row">
@@ -233,7 +231,7 @@
                               :max="60"
                               :step="1"
                               size="medium"
-                              style="width: 115px;"
+                              style="width: 95px;"
                             >
                               <template #suffix>%</template>
                             </n-input-number>
@@ -246,22 +244,18 @@
                         </div>
                       </n-form-item-gi>
 
-                      <!-- Previsualización interactiva a TAMAÑO REAL 1:1 -->
-                      <n-form-item-gi :span="2">
-                        <template #label>
-                          <div class="d-flex align-items-center justify-content-between w-100">
-                            <span>Previsualización en vivo (Tamaño real del salón)</span>
-                            <div class="preview-state-switcher">
-                              <n-radio-group v-model:value="previewState" size="small">
-                                <n-radio-button value="free">Libre</n-radio-button>
-                                <n-radio-button value="occupied">Ocupada</n-radio-button>
-                                <n-radio-button value="locked">Bloqueada</n-radio-button>
-                              </n-radio-group>
-                            </div>
-                          </div>
-                        </template>
-
+                      <!-- Fila 4: Previsualización en vivo (conmutador centrado y con holgura) -->
+                      <n-form-item-gi :span="2" label="Vista Previa">
                         <div class="table-preview-wrapper">
+                          <!-- Conmutador centrado con espacio generoso -->
+                          <div class="preview-state-header mb-3">
+                            <n-radio-group v-model:value="previewState" size="small">
+                              <n-radio-button value="free">Libre</n-radio-button>
+                              <n-radio-button value="occupied">Ocupada</n-radio-button>
+                              <n-radio-button value="locked">Bloqueada</n-radio-button>
+                            </n-radio-group>
+                          </div>
+
                           <!-- Tarjeta idéntica 1:1 a TableHome.vue -->
                           <div
                             class="table-real-card"
@@ -357,13 +351,13 @@
                           </div>
 
                           <n-text depth="3" class="preview-caption mt-2">
-                            Tamaño real 1:1 idéntico al mapa de mesas del salón ({{ tableVisualSettings.size }}px)
+                            Mesa a tamaño real 1:1 ({{ tableVisualSettings.size }}px)
                           </n-text>
                         </div>
                       </n-form-item-gi>
 
                       <n-form-item-gi :span="2">
-                        <n-space justify="end" class="w-100">
+                        <n-space justify="end" class="w-100 mt-2">
                           <n-button
                             type="info"
                             secondary
@@ -2103,8 +2097,8 @@ export default defineComponent({
   .color-picker-box {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding: 10px;
+    gap: 5px;
+    padding: 8px 10px;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
     background: #ffffff;
@@ -2114,13 +2108,13 @@ export default defineComponent({
       display: flex;
       align-items: center;
       gap: 6px;
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 600;
       color: #334155;
 
       .color-dot {
-        width: 12px;
-        height: 12px;
+        width: 10px;
+        height: 10px;
         border-radius: 50%;
         display: inline-block;
         box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
@@ -2134,11 +2128,18 @@ export default defineComponent({
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 20px;
+    padding: 16px 20px 20px 20px;
     background: #f8fafc;
     border: 1px dashed #cbd5e1;
     border-radius: 12px;
     width: 100%;
+
+    .preview-state-header {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      margin-bottom: 14px;
+    }
 
     .table-real-card {
       width: 175px;
