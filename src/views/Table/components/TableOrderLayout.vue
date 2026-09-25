@@ -10,12 +10,12 @@
 
         <!-- Inicio de vista del card si es desktop o mobile -->
         <!-- es desktop -->
-        <n-card v-if="!isMobile">
+        <n-card v-if="!isMobile" class="order-layout-card">
             <n-grid responsive="screen" cols="1 m:10">
-                <n-gi :span="!shouldShowCustomerMode ? '6' : '5 xl:6'" :style="isWaiterModeView ? 'height: calc(100vh - 120px);' : 'height: calc(100vh - 165px);'">
+                <n-gi :span="!shouldShowCustomerMode ? '6' : '5 xl:6'" class="order-left-column" :style="isWaiterModeView ? 'height: calc(100vh - 120px);' : 'height: calc(100vh - 165px);'">
                     <router-view />
                 </n-gi>
-                <n-gi :span="!shouldShowCustomerMode ? '4' : '5 xl:4'" :style="isWaiterModeView ? 'height: calc(100vh - 120px);' : 'height: calc(100vh - 165px);'">
+                <n-gi :span="!shouldShowCustomerMode ? '4' : '5 xl:4'" class="order-right-column" :style="isWaiterModeView ? 'height: calc(100vh - 120px);' : 'height: calc(100vh - 165px);'">
                     <TableOrder :ask_for="ask_for" :orderUser="orderUser" :loading="loading"
                         :hasUnsavedChanges="hasUnsavedChanges" :customers="customers"
                         :selectedCustomerId="selectedCustomerId" :shouldShowCustomerMode="shouldShowCustomerMode"
@@ -650,5 +650,24 @@ const addOrderToCustomer = (orderItem, customerId) => {
 };
 provide("addOrderToCustomer", addOrderToCustomer);
 
-
 </script>
+
+<style lang="scss" scoped>
+.order-layout-card {
+    height: 100%;
+}
+
+.order-left-column {
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 6px;
+    scrollbar-width: thin;
+}
+
+.order-right-column {
+    position: sticky;
+    top: 10px;
+    height: 100%;
+    overflow: hidden;
+}
+</style>

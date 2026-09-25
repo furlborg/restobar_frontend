@@ -47,69 +47,61 @@
                 :bordered="genericsStore.device !== 'mobile'"
                 :content-style="genericsStore.device === 'mobile' ? 'padding: 4px 2px;' : ''"
                 :header-style="genericsStore.device === 'mobile' ? 'padding: 6px 8px; font-size: 1.15rem; font-weight: bold;' : ''">
-                <n-grid responsive="screen" cols="6 xs:6 s:12 m:15 l:18 xl:24 2xl:30" :x-gap="12" :y-gap="12">
-                    <n-gi v-for="table in area.tables.filter(dt => !dt?.is_disabled)" :key="table.id" span="2 xs:2 s:3 m:3 l:3 xl:3 2xl:3">
-                        <n-card :id="`table-${table.id}`" class="overflow-hidden position-relative rounded-3"
+                <n-grid responsive="screen" cols="2 xs:2 s:3 m:4 l:5 xl:6 2xl:7" :x-gap="12" :y-gap="12">
+                    <n-gi v-for="table in area.tables.filter(dt => !dt?.is_disabled)" :key="table.id" span="1">
+                        <n-card :id="`table-${table.id}`" class="overflow-hidden position-relative rounded-3 table-card"
                             :class="getTableBackgroundClass(table)" :style="{
-                                borderLeft: `6px solid ${getTableColor(table)}`,
-                                borderRight: `6px solid ${getTableColor(table)}`,
-                                aspectRatio: '1 / 1'
-                            }" size="small" :content-style="genericsStore.device === 'mobile' ? 'padding: 4px;' : ''" @click="handleTableClick(table)" style="cursor: pointer">
-                            <n-checkbox v-if="groupMode" :checked="currentGroup.some((t) => t.id === table.id)"
-                                :disabled="tableGroups.some((g) => g.some((t) => t.id === table.id)) ||
-                                    currentTableGrouping === table.id
-                                    " size="large" class="top-0 m-2 position-absolute start-0" />
-                            <div class="text-center position-absolute start-50 translate-middle-x d-flex align-items-center justify-content-center"
-                                :style="{
-                                    top: genericsStore.device === 'mobile' ? (table?.order_amount !== '' ? '25%' : '50%') : (table?.order_amount !== '' ? '33%' : '50%'),
-                                    transform: 'translate(-50%, -50%)',
-                                    width: '92%',
-                                    zIndex: 2,
-                                    wordBreak: genericsStore.device === 'mobile' ? 'normal' : 'break-word',
-                                    whiteSpace: genericsStore.device === 'mobile' ? 'nowrap' : 'normal',
-                                    overflow: genericsStore.device === 'mobile' ? 'hidden' : 'visible',
-                                    textOverflow: genericsStore.device === 'mobile' ? 'ellipsis' : 'clip'
-                                }"
-                                :class="{
-                                    'fs-alt': table.description.length <= 3,
-                                    'fs-4':
-                                        table.description.length > 3 &&
-                                        table.description.length <= 15 && genericsStore.device !== 'mobile',
-                                    'fs-6': (table.description.length > 15) || (genericsStore.device === 'mobile' && table.description.length > 3),
-                                }">
-                                {{ table.description }}
+                                borderTop: `5px solid ${getTableColor(table)}`,
+                                minHeight: genericsStore.device === 'mobile' ? '135px' : '175px'
+                            }" size="small" :content-style="genericsStore.device === 'mobile' ? 'padding: 6px;' : 'padding: 8px 10px;'" @click="handleTableClick(table)" style="cursor: pointer">
+                            <div class="d-flex flex-column justify-content-between h-100">
+                                <!-- Top Row: Nombre / Número de mesa + Estado + Opciones -->
+                                <div class="d-flex align-items-center justify-content-between w-100">
+                                    <div class="d-flex align-items-center gap-1 overflow-hidden me-1">
+                                        <n-checkbox v-if="groupMode" :checked="currentGroup.some((t) => t.id === table.id)"
+                                            :disabled="tableGroups.some((g) => g.some((t) => t.id === table.id)) ||
+                                                currentTableGrouping === table.id"
+                                            size="small" class="me-1" />
+                                        <span class="table-name-badge" :title="table.description">
+                                            {{ table.description }}
+                                        </span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                                        <span class="status-badge" :class="getStatusClass(table)">
+                                            {{ getStatusText(table) }}
+                                        </span>
+                                        <n-button v-if="genericsStore.device !== 'mobile'" @click.stop="openOptions.push(table.id)"
+                                            quaternary size="tiny" class="p-1">
+                                            <v-icon name="bi-three-dots-vertical" scale="0.9" />
+                                        </n-button>
+                                    </div>
+                                </div>
+
+                                <!-- Center: Ícono de mesa -->
+                                <div class="d-flex align-items-center justify-content-center position-relative flex-grow-1 my-1" style="min-height: 95px;">
+                                    <v-icon v-if="groupMode === true && tableGroups.some((g) => g.some((t) => t.id === table.id))"
+                                        class="position-absolute top-50 start-50 translate-middle fs-4" name="ri-forbid-line"
+                                        scale="5" fill="#FA8072" style="z-index: 3;" />
+                                    <img draggable="false" src="~@/assets/images/default-table.png" alt="" class="table-card-img" />
+                                </div>
+
+                                <!-- Bottom Row: Monto y/o Hora -->
+                                <div class="table-card-footer mt-auto">
+                                    <div v-if="table?.order_amount !== '' && table?.order_amount !== null && table?.order_amount !== undefined && settingsStore.business_settings?.order?.table_order_total"
+                                        class="d-flex align-items-center justify-content-between table-order-pill">
+                                        <span class="table-order-amount">
+                                            S/. {{ (Number(table?.order_amount) || 0).toFixed(2) }}
+                                        </span>
+                                        <span v-if="table.modified && genericsStore.device !== 'mobile'" class="table-order-time" :title="`Último pedido: ${table.modified}`">
+                                            <v-icon name="md-access-time-round" scale="0.75" class="me-1" />
+                                            {{ table.modified }}
+                                        </span>
+                                    </div>
+                                    <div v-else class="text-center table-free-hint">
+                                        <span class="text-muted" style="font-size: 11px;">Disponible</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="text-center position-absolute start-50 translate-middle-x"
-                                style="bottom: 35px; font-size: 13px; left: 50%; color: #e31414; font-weight: 900 !important; width: 100%;"
-                                v-if="table?.order_amount !== '' && genericsStore.device !== 'mobile'">
-                                Ult. Pedido:
-                            </div>
-                            <div class="text-center position-absolute start-50 translate-middle-x"
-                                style="bottom: 20px; font-size: 13px; left: 50%; color: #e31414; font-weight: 900 !important; width: 100%;"
-                                v-if="table?.order_amount !== '' && genericsStore.device !== 'mobile'">
-                                {{ table.modified }}
-                            </div>
-                            <n-button v-if="
-                                table.order_amount !== '' &&
-                                settingsStore.business_settings?.order?.table_order_total
-                            " class="bottom-0 text-center position-absolute start-50 translate-middle-x fw-bolder"
-                                :class="genericsStore.device === 'mobile' ? 'fs-6' : 'fs-5'"
-                                :style="genericsStore.device === 'mobile' ? 'bottom: 2px !important; z-index: 2;' : ''"
-                                color="#901E00" text>
-                                S/. {{ (Number(table?.order_amount) || 0).toFixed(2) }}
-                            </n-button>
-                            <n-button v-if="genericsStore.device !== 'mobile'" @click.stop="openOptions.push(table.id)" class="top-0 position-absolute end-0"
-                                quaternary size="small">
-                                <v-icon name="bi-three-dots-vertical" />
-                            </n-button>
-                            <v-icon v-if="
-                                groupMode === true &&
-                                tableGroups.some((g) => g.some((t) => t.id === table.id))
-                            " class="position-absolute top-50 start-50 translate-middle fs-4" name="ri-forbid-line"
-                                scale="8" fill="#FA8072" />
-                            <n-space justify="center" align="center" :style="genericsStore.device === 'mobile' ? 'min-height: 80px; display: flex;' : 'min-height: 155px; display: flex;'">
-                                <img draggable="false" src="~@/assets/images/default-table.png" alt="" class="table-bg-img" :style="genericsStore.device === 'mobile' ? 'max-height: 55px; width: 55px; opacity: 0.65;' : ''" />
-                            </n-space>
 
                             <n-drawer :show="groupMode
                                 ? ((openOptions = []), false)
@@ -338,6 +330,32 @@ const getTableBackgroundClass = (table) => {
     return 'bg-free';
 };
 
+/**
+ * Obtiene la clase CSS para el badge de estado
+ */
+const getStatusClass = (table) => {
+    const wsLockInfo = tableStore.lockedTables[table.id];
+    const isLockedByOther = (wsLockInfo && wsLockInfo.user_id !== userStore.user.id) ||
+        (table.lock_info && table.lock_info.is_active && !table.lock_info.is_locked_by_me);
+
+    if (isLockedByOther) return 'status-locked';
+    if (table.status === '3') return 'status-occupied';
+    return 'status-free';
+};
+
+/**
+ * Obtiene el texto amigable para el badge de estado
+ */
+const getStatusText = (table) => {
+    const wsLockInfo = tableStore.lockedTables[table.id];
+    const isLockedByOther = (wsLockInfo && wsLockInfo.user_id !== userStore.user.id) ||
+        (table.lock_info && table.lock_info.is_active && !table.lock_info.is_locked_by_me);
+
+    if (isLockedByOther) return 'Bloqueada';
+    if (table.status === '3') return 'Ocupada';
+    return 'Libre';
+};
+
 // Computed para forzar reactividad cuando cambian los locks
 computed(() => tableStore.lockedTables);
 
@@ -537,36 +555,112 @@ const previewData = ref(null);
 </script>
 
 <style lang="scss" scoped>
+.table-card {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 12px !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    cursor: pointer;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+    }
+}
+
 .bg-free {
-    background-color: rgba(76, 175, 80, 0.1);
+    background: linear-gradient(180deg, #f7fbf8 0%, #ffffff 100%) !important;
 }
 
 .bg-locked {
-    background-color: rgba(255, 193, 7, 0.15);
+    background: linear-gradient(180deg, #fffdf5 0%, #ffffff 100%) !important;
 }
 
 .bg-occuped {
-    background-color: rgb(255, 162, 162);
+    background: linear-gradient(180deg, #fff9f9 0%, #ffffff 100%) !important;
 }
 
-.fs-alt {
-    font-size: clamp(1.3rem, 4.2vw, 2.6rem);
-    font-weight: bold;
-    line-height: 1.1;
-    text-shadow: 0 1px 3px rgba(255, 255, 255, 0.85);
+.status-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 999px;
+    letter-spacing: 0.3px;
+    display: inline-flex;
+    align-items: center;
+
+    &.status-free {
+        background-color: #e8f7ee;
+        color: #166534;
+    }
+
+    &.status-occupied {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    &.status-locked {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
 }
 
-.table-bg-img {
-    width: clamp(64px, 15vw, 128px);
+.table-name-badge {
+    font-weight: 700;
+    color: #1f2937;
+    font-size: 1.05rem;
+    max-width: 105px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+.table-card-img {
+    max-height: 92px;
+    max-width: 92px;
+    width: auto;
     height: auto;
-    max-height: 128px;
-    opacity: 0.85;
+    object-fit: contain;
+    opacity: 0.88;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+
+    @media (max-width: 640px) {
+        max-height: 72px;
+        max-width: 72px;
+    }
 }
 
-.black-outline {
-    -webkit-text-stroke: 0.75px black;
-    color: Gainsboro;
-    -webkit-font-smoothing: antialiased;
-    font-weight: bold;
+.table-card:hover .table-card-img {
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+.table-order-pill {
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    padding: 3px 8px;
+}
+
+.table-order-amount {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #b91c1c;
+}
+
+.table-order-time {
+    font-size: 11px;
+    color: #6b7280;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+}
+
+.table-free-hint {
+    padding: 3px 0;
+    font-size: 11px;
+    color: #9ca3af;
+    font-weight: 500;
 }
 </style>

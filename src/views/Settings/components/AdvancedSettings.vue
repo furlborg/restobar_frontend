@@ -106,7 +106,7 @@
                         <n-h3 class="section-title mt-4">Márgenes (px)</n-h3>
                         <n-card class="settings-group-card mt-2" :bordered="true">
                             <n-form :disabled="!editMode" label-placement="top">
-                                <n-grid responsive="screen" cols="2 s:2 m:4 l:4" x-gap="24" y-gap="12">
+                                <n-grid v-if="businessSettings.printer?.margins?.length >= 4" responsive="screen" cols="2 s:2 m:4 l:4" x-gap="24" y-gap="12">
                                     <n-form-item-gi label="Superior"><n-input-number v-model:value="businessSettings.printer.margins[0]" :min="0" :max="25" /></n-form-item-gi>
                                     <n-form-item-gi label="Derecho"><n-input-number v-model:value="businessSettings.printer.margins[1]" :min="0" :max="25" /></n-form-item-gi>
                                     <n-form-item-gi label="Inferior"><n-input-number v-model:value="businessSettings.printer.margins[2]" :min="0" :max="25" /></n-form-item-gi>
@@ -233,9 +233,12 @@
                         <n-h3 class="section-title mt-4">Visual de Categorías</n-h3>
                         <n-card class="settings-group-card mt-2" :bordered="true">
                             <n-form :disabled="!editMode" label-placement="top">
-                                <n-grid responsive="screen" cols="1 s:3 m:3 l:3" x-gap="24" y-gap="12">
+                                <n-grid responsive="screen" cols="1 s:2 m:2 l:4" x-gap="24" y-gap="12">
+                                    <n-form-item-gi label="Tamaño tarjeta de categoría">
+                                        <n-select v-model:value="businessSettings.category.category_card_size" :options="categorySizeOptions" size="large" />
+                                    </n-form-item-gi>
                                     <n-form-item-gi label="Tamaño letra de categoría">
-                                        <n-input-number v-model:value="businessSettings.category.area_text_size" placeholder="21" size="large" />
+                                        <n-input-number v-model:value="businessSettings.category.area_text_size" placeholder="16" size="large" />
                                     </n-form-item-gi>
                                     <n-form-item-gi label="Ancho imagen producto">
                                         <n-input-number v-model:value="businessSettings.category.width_image_product" placeholder="40" size="large" />
@@ -526,8 +529,70 @@ export default defineComponent({
             { label: "Blanco (Claro Nórdico)", value: "light" },
         ];
 
+        const categorySizeOptions = [
+            { label: "Pequeño (Compacto - Más categorías visibles)", value: "small" },
+            { label: "Mediano (Equilibrado - Estilo Delivery estándar)", value: "medium" },
+            { label: "Grande (Amplio - Fácil pulsación táctil)", value: "large" },
+        ];
+
+        const initCategorySettings = (settings) => {
+            if (!settings) return;
+            if (!settings.category) {
+                settings.category = {};
+            }
+            if (!settings.category.category_card_size) {
+                settings.category.category_card_size = 'medium';
+            }
+            if (!settings.category.category_card_height) {
+                settings.category.category_card_height = 120;
+            }
+        };
+
+        const initPrinterSettings = (settings) => {
+            if (!settings) return;
+            if (!settings.printer) {
+                settings.printer = {};
+            }
+            if (!Array.isArray(settings.printer.margins) || settings.printer.margins.length < 4) {
+                settings.printer.margins = [0, 0, 0, 0];
+            }
+            const defaultPrinter = {
+                header_font_size: 18,
+                sub_header_font_size: 16,
+                body_font_size: 14,
+                footer_font_size: 14,
+                delivery_ticket_font_size: 12,
+                pre_account_ticket_font_size: 12,
+                show_cat: false,
+                print_delivery_ticket: true,
+                auto_print_cancellation: false,
+                detail_items: true,
+                show_delivery_kitchen: true,
+                show_both_names: false,
+                native_printing: false,
+                print_html: true,
+                manage_fittings: false,
+                subticket_mode: false,
+                extra_text: false,
+                show_product_price: false,
+                info_location: 'footer',
+                invoice_printer_format: 80,
+                kitchen_printer_format: 58,
+                kitchen_ticket_format: 4,
+                print_name_take_away: '',
+                print_name_delivery: ''
+            };
+            for (const key in defaultPrinter) {
+                if (settings.printer[key] === undefined) {
+                    settings.printer[key] = defaultPrinter[key];
+                }
+            }
+        };
+
         initModules(businessSettings.value);
         initKdsSettings(businessSettings.value);
+        initCategorySettings(businessSettings.value);
+        initPrinterSettings(businessSettings.value);
 
         import('vue').then(({ watch }) => {
             watch(() => settingsStore.businessSettings, (newVal) => {
@@ -535,6 +600,8 @@ export default defineComponent({
                     businessSettings.value = cloneDeep(newVal);
                     initModules(businessSettings.value);
                     initKdsSettings(businessSettings.value);
+                    initCategorySettings(businessSettings.value);
+                    initPrinterSettings(businessSettings.value);
                 }
             }, { deep: true });
         });
@@ -791,6 +858,7 @@ export default defineComponent({
             orderTypeOptions,
             waiterAuthModeOptions,
             kdsThemeOptions,
+            categorySizeOptions,
             onKdsThemeChange,
             testChimeSound,
             showWhatsAppModal,
