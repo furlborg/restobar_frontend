@@ -44,7 +44,7 @@ export function useSaleTotals() {
       acc + (Number(d.igv_tax || 0) * Number(d.quantity || 0)), 0);
     
     const icbper = details.reduce((acc, d) => 
-      acc + (Number(d.icbper || 0) * Number(d.quantity || 0)), 0);
+      acc + Number(d.icbper || 0), 0);
     
     // AGREGADO: Sumar el total de combos/menús a OP. EXONERADAS
     // Los combos/menús no tienen afectación individual, se consideran exonerados por defecto
