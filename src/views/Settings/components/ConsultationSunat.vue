@@ -1,11 +1,16 @@
 <template>
     <div class="p-4 w-100">
         <n-space justify="space-between" align="center" style="margin-bottom: 24px;">
-            <div>
-                <n-h2 style="margin: 0;">Consulta SUNAT por Rango</n-h2>
-                <n-text depth="3">
-                    Valida un rango de comprobantes de una serie contra SUNAT
-                </n-text>
+            <div class="d-flex align-items-center gap-2">
+                <n-button circle @click="handleBack" size="large" quaternary class="back-btn">
+                    <template #icon><v-icon name="md-arrowback-round" /></template>
+                </n-button>
+                <div>
+                    <n-h2 style="margin: 0;">Consulta SUNAT por Rango</n-h2>
+                    <n-text depth="3">
+                        Valida un rango de comprobantes de una serie contra SUNAT
+                    </n-text>
+                </div>
             </div>
         </n-space>
 
@@ -127,6 +132,7 @@
 
 <script setup>
 import { ref, h, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import {
     NCard, NForm, NFormItem, NInput, NInputNumber, NButton,
     NIcon, NDataTable, NTag, NBadge, NTooltip, NSelect, useMessage,
@@ -134,7 +140,12 @@ import {
 } from 'naive-ui';
 import { http } from '@/api';
 
+const router = useRouter();
 const message = useMessage();
+
+const handleBack = () => {
+    router.push({ name: 'HomeSettings' });
+};
 
 const formRef = ref(null);
 const formData = ref({
