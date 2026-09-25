@@ -56,7 +56,7 @@ const menuOptions = computed(() => {
     });
   }
 
-  if (settingsStore.business_settings?.modules?.show_kds ?? true) {
+  if (settingsStore.business_settings?.modules?.show_kds ?? false) {
     options.push({
       label: () => h(RouterLink, { to: { name: "KdsBoard" } }, () => h("span", "Cocina")),
       key: "KdsBoard",

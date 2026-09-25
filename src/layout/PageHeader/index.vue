@@ -238,11 +238,6 @@ const avatarOptions = computed(() => {
       key: 1,
     },
     {
-      label: "Cocina (KDS)",
-      key: "kds",
-      icon: renderIcon("md-dining-twotone"),
-    },
-    {
       label: "Desconectar",
       key: -1,
       icon: renderIcon("md-logout-round"),

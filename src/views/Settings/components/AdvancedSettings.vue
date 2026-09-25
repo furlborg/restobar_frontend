@@ -505,7 +505,7 @@ export default defineComponent({
                 show_birthdays: true,
                 show_reports: true,
                 show_settings: true,
-                show_kds: true,
+                show_kds: false,
             };
             for (const key in defaultModules) {
                 if (settings.modules[key] === undefined) {

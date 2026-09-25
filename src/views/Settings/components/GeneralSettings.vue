@@ -157,7 +157,7 @@
                             :max="48"
                             :step="1"
                             size="medium"
-                            style="width: 95px;"
+                            style="width: 130px;"
                           >
                             <template #suffix>px</template>
                           </n-input-number>
@@ -231,7 +231,7 @@
                               :max="60"
                               :step="1"
                               size="medium"
-                              style="width: 95px;"
+                              style="width: 130px;"
                             >
                               <template #suffix>%</template>
                             </n-input-number>

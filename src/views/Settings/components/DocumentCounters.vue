@@ -1,9 +1,14 @@
 <template>
   <div id="DocumentCounters">
     <n-space align="center" justify="space-between" class="mb-3">
-      <n-h1 class="m-0">
-        <n-text>Contadores</n-text>
-      </n-h1>
+      <div class="d-flex align-items-center gap-2">
+        <n-button circle @click="handleBack" size="large" quaternary class="back-btn">
+          <template #icon><v-icon name="md-arrowback-round" /></template>
+        </n-button>
+        <n-h1 class="m-0">
+          <n-text>Contadores</n-text>
+        </n-h1>
+      </div>
       <n-button secondary :loading="loading" @click="loadCounters">
         <template #icon>
           <v-icon name="md-refresh-round" />
@@ -25,16 +30,22 @@
 
 <script setup>
 import { h, onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
 import { NButton, NInputNumber, NTag, useMessage } from "naive-ui";
 import {
   getDocumentSeriesCounters,
   updateDocumentSeriesCounter,
 } from "@/api/modules/business";
 
+const router = useRouter();
 const message = useMessage();
 const rows = ref([]);
 const loading = ref(false);
 const savingId = ref(null);
+
+const handleBack = () => {
+  router.push({ name: "HomeSettings" });
+};
 
 const docTypeLabels = {
   1: "Factura",
