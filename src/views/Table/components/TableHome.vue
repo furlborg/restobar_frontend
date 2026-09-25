@@ -325,15 +325,16 @@ const isTableBlocked = (table) => {
 
 const tableColors = computed(() => {
     const order = settingsStore.business_settings?.order || {};
+    const intensityVal = order.table_gradient_intensity;
     return {
         free: order.table_color_free || '#4caf50',
         occupied: order.table_color_occupied || '#f44336',
         locked: order.table_color_locked || '#ffc107',
-        intensity: Number(order.table_gradient_intensity) || 15
+        intensity: (intensityVal !== undefined && intensityVal !== null && intensityVal !== '') ? Number(intensityVal) : 5
     };
 });
 
-const hexToRgba = (hex, alphaPercent = 15) => {
+const hexToRgba = (hex, alphaPercent = 5) => {
     if (!hex) return 'rgba(255, 255, 255, 1)';
     let c = hex.replace('#', '');
     if (c.length === 3) {
@@ -342,7 +343,7 @@ const hexToRgba = (hex, alphaPercent = 15) => {
     const r = parseInt(c.substring(0, 2), 16) || 0;
     const g = parseInt(c.substring(2, 4), 16) || 0;
     const b = parseInt(c.substring(4, 6), 16) || 0;
-    const a = Math.max(0.02, Math.min(0.9, alphaPercent / 100));
+    const a = Math.max(0.01, Math.min(0.9, (alphaPercent ?? 5) / 100));
     return `rgba(${r}, ${g}, ${b}, ${a})`;
 };
 

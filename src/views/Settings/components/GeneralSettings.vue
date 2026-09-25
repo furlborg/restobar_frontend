@@ -221,7 +221,7 @@
                             <div class="slider-wrapper">
                               <n-slider
                                 v-model:value="tableVisualSettings.intensity"
-                                :min="5"
+                                :min="0"
                                 :max="60"
                                 :step="1"
                                 style="width: 100%;"
@@ -229,7 +229,7 @@
                             </div>
                             <n-input-number
                               v-model:value="tableVisualSettings.intensity"
-                              :min="5"
+                              :min="0"
                               :max="60"
                               :step="1"
                               size="medium"
@@ -239,9 +239,9 @@
                             </n-input-number>
                           </div>
                           <div class="d-flex justify-content-between mt-1 text-muted" style="font-size: 11px;">
-                            <span>5% (Más claro / suave)</span>
-                            <span>15% (Predeterminado)</span>
-                            <span>60% (Más oscuro / vivo)</span>
+                            <span>0% (Sin fondo)</span>
+                            <span>Predeterminado (5% - Suave)</span>
+                            <span>60% (Más vivo / oscuro)</span>
                           </div>
                         </div>
                       </n-form-item-gi>
@@ -996,12 +996,12 @@ export default defineComponent({
       color_free: '#4caf50',
       color_occupied: '#f44336',
       color_locked: '#ffc107',
-      intensity: 15,
+      intensity: 5,
     });
 
     const previewState = ref('free'); // 'free' | 'occupied' | 'locked'
 
-    const hexToRgba = (hex, alphaPercent = 15) => {
+    const hexToRgba = (hex, alphaPercent = 5) => {
       if (!hex) return 'rgba(255, 255, 255, 1)';
       let c = hex.replace('#', '');
       if (c.length === 3) {
@@ -1010,7 +1010,7 @@ export default defineComponent({
       const r = parseInt(c.substring(0, 2), 16) || 0;
       const g = parseInt(c.substring(2, 4), 16) || 0;
       const b = parseInt(c.substring(4, 6), 16) || 0;
-      const a = Math.max(0.02, Math.min(0.9, (alphaPercent || 15) / 100));
+      const a = Math.max(0.01, Math.min(0.9, (alphaPercent ?? 5) / 100));
       return `rgba(${r}, ${g}, ${b}, ${a})`;
     };
 
@@ -1054,8 +1054,8 @@ export default defineComponent({
       tableVisualSettings.value.color_free = orderCfg.table_color_free || '#4caf50';
       tableVisualSettings.value.color_occupied = orderCfg.table_color_occupied || '#f44336';
       tableVisualSettings.value.color_locked = orderCfg.table_color_locked || '#ffc107';
-      const intensityVal = Number(orderCfg.table_gradient_intensity);
-      tableVisualSettings.value.intensity = intensityVal && intensityVal >= 5 && intensityVal <= 80 ? intensityVal : 15;
+      const intensityVal = orderCfg.table_gradient_intensity;
+      tableVisualSettings.value.intensity = (intensityVal !== undefined && intensityVal !== null && intensityVal !== '') ? Number(intensityVal) : 5;
     };
 
     watch(
