@@ -3,9 +3,9 @@
         <template #header>
             <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 10px; flex-wrap: wrap;">
                 <!-- Título y Selector (Crecen para llenar el espacio) -->
-                <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
-                    <span style="white-space: nowrap;">Mesas</span>
-                    <n-select v-if="isWaiterModeView" v-model:value="selectedAreaId" :options="areaOptions" clearable placeholder="Cambiar de sucursal" style="flex: 1; min-width: 120px;" />
+                <div style="display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0;">
+                    <span style="white-space: nowrap; margin-right: 8px; font-weight: 500;">Mesas</span>
+                    <n-select v-if="isWaiterModeView" v-model:value="selectedAreaId" :options="areaOptions" clearable placeholder="Seleccionar área" style="flex: 1; min-width: 130px;" />
                 </div>
                 
                 <!-- Botones Extras (Alineados a la derecha) -->
