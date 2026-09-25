@@ -130,7 +130,18 @@ import {
   MdTablechart,
   MdUploadfile,
   GiHotMeal,
-  MdRestaurantRound
+  MdRestaurantRound,
+  MdVolumeupRound,
+  MdVolumeoffRound,
+  MdWarningamberRound,
+  MdCheckRound,
+  MdCheckcircleRound,
+  MdLocationonRound,
+  MdBoltRound,
+  MdLocalfiredepartmentRound,
+  MdBadgeRound,
+  MdSoupkitchenRound,
+  MdNotificationsactiveRound
 } from "oh-vue-icons/icons";
 
 addIcons(
@@ -262,9 +273,19 @@ addIcons(
   MdDeleteRound,
   CoBirthdayCake,
   MdCancelpresentationTwotone,
-  MdUploadfile,
   GiHotMeal,
-  MdRestaurantRound
+  MdRestaurantRound,
+  MdVolumeupRound,
+  MdVolumeoffRound,
+  MdWarningamberRound,
+  MdCheckRound,
+  MdCheckcircleRound,
+  MdLocationonRound,
+  MdBoltRound,
+  MdLocalfiredepartmentRound,
+  MdBadgeRound,
+  MdSoupkitchenRound,
+  MdNotificationsactiveRound
 );
 
 export { OhVueIcon };

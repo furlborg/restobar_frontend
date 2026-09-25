@@ -56,6 +56,14 @@ const menuOptions = computed(() => {
     });
   }
 
+  if (settingsStore.business_settings?.modules?.show_kds ?? false) {
+    options.push({
+      label: () => h(RouterLink, { to: { name: "KdsBoard" } }, () => h("span", "Cocina")),
+      key: "KdsBoard",
+      icon: renderIcon("md-soupkitchen-round"),
+    });
+  }
+
   if ((settingsStore.business_settings?.modules?.show_orders ?? true) && userStore.hasPermission("view_order")) {
     options.push({
       label: () => h(RouterLink, { to: { name: "Orders" } }, () => h("span", "Pedidos")),

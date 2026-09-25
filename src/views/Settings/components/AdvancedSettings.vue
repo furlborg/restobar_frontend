@@ -41,12 +41,6 @@
                 
                 <!-- PESTAÑA: IMPRESIÓN Y FORMATOS -->
                 <n-tab-pane name="impresiones" tab="Impresión y Formatos">
-                    <template #tab>
-                        <div class="tab-label">
-                            <v-icon name="md-print-twotone" scale="1.2" class="mr-2" />
-                            Impresión y Formatos
-                        </div>
-                    </template>
                     <div class="tab-content">
                         <n-h3 class="section-title">Motor de Impresión Kuceta</n-h3>
                         <n-text depth="3" class="section-desc">Configura la conexión con el motor local de WebSockets.</n-text>
@@ -112,7 +106,7 @@
                         <n-h3 class="section-title mt-4">Márgenes (px)</n-h3>
                         <n-card class="settings-group-card mt-2" :bordered="true">
                             <n-form :disabled="!editMode" label-placement="top">
-                                <n-grid responsive="screen" cols="2 s:2 m:4 l:4" x-gap="24" y-gap="12">
+                                <n-grid v-if="businessSettings.printer?.margins?.length >= 4" responsive="screen" cols="2 s:2 m:4 l:4" x-gap="24" y-gap="12">
                                     <n-form-item-gi label="Superior"><n-input-number v-model:value="businessSettings.printer.margins[0]" :min="0" :max="25" /></n-form-item-gi>
                                     <n-form-item-gi label="Derecho"><n-input-number v-model:value="businessSettings.printer.margins[1]" :min="0" :max="25" /></n-form-item-gi>
                                     <n-form-item-gi label="Inferior"><n-input-number v-model:value="businessSettings.printer.margins[2]" :min="0" :max="25" /></n-form-item-gi>
@@ -145,12 +139,6 @@
 
                 <!-- PESTAÑA: VENTAS Y CAJA -->
                 <n-tab-pane name="ventas" tab="Ventas y Caja">
-                    <template #tab>
-                        <div class="tab-label">
-                            <v-icon name="md-pointofsale-twotone" scale="1.2" class="mr-2" />
-                            Ventas y Caja
-                        </div>
-                    </template>
                     <div class="tab-content">
                         <n-h3 class="section-title">Parámetros Financieros</n-h3>
                         <n-card class="settings-group-card mt-2" :bordered="true">
@@ -216,12 +204,6 @@
 
                 <!-- PESTAÑA: PEDIDOS Y CATEGORÍAS -->
                 <n-tab-pane name="pedidos" tab="Pedidos y Categorías">
-                    <template #tab>
-                        <div class="tab-label">
-                            <v-icon name="md-restaurantmenu-twotone" scale="1.2" class="mr-2" />
-                            Pedidos y Categorías
-                        </div>
-                    </template>
                     <div class="tab-content">
                         <n-h3 class="section-title">Flujo de Pedidos</n-h3>
                         <n-card class="settings-group-card mt-2" :bordered="true">
@@ -251,9 +233,12 @@
                         <n-h3 class="section-title mt-4">Visual de Categorías</n-h3>
                         <n-card class="settings-group-card mt-2" :bordered="true">
                             <n-form :disabled="!editMode" label-placement="top">
-                                <n-grid responsive="screen" cols="1 s:3 m:3 l:3" x-gap="24" y-gap="12">
+                                <n-grid responsive="screen" cols="1 s:2 m:2 l:4" x-gap="24" y-gap="12">
+                                    <n-form-item-gi label="Tamaño tarjeta de categoría">
+                                        <n-select v-model:value="businessSettings.category.category_card_size" :options="categorySizeOptions" size="large" />
+                                    </n-form-item-gi>
                                     <n-form-item-gi label="Tamaño letra de categoría">
-                                        <n-input-number v-model:value="businessSettings.category.area_text_size" placeholder="21" size="large" />
+                                        <n-input-number v-model:value="businessSettings.category.area_text_size" placeholder="16" size="large" />
                                     </n-form-item-gi>
                                     <n-form-item-gi label="Ancho imagen producto">
                                         <n-input-number v-model:value="businessSettings.category.width_image_product" placeholder="40" size="large" />
@@ -272,12 +257,6 @@
 
                 <!-- PESTAÑA: MÓDULOS -->
                 <n-tab-pane name="modulos" tab="Módulos Activos">
-                    <template #tab>
-                        <div class="tab-label">
-                            <v-icon name="md-widgets-twotone" scale="1.2" class="mr-2" />
-                            Módulos Activos
-                        </div>
-                    </template>
                     <div class="tab-content">
                         <n-h3 class="section-title">Habilitar/Deshabilitar Módulos</n-h3>
                         <n-text depth="3" class="section-desc mb-4 d-block">Controla qué secciones son visibles en la barra de navegación (Sidebar) para todo el negocio.</n-text>
@@ -292,6 +271,7 @@
                                             <div class="list-item"><div class="item-text"><span>Ventas</span></div><n-switch :disabled="!editMode" v-model:value="businessSettings.modules.show_sales" /></div>
                                             <div class="list-item"><div class="item-text"><span>Anulaciones</span></div><n-switch :disabled="!editMode" v-model:value="businessSettings.modules.show_anulates" /></div>
                                             <div class="list-item"><div class="item-text"><span>Productos</span></div><n-switch :disabled="!editMode" v-model:value="businessSettings.modules.show_products" /></div>
+                                            <div class="list-item"><div class="item-text"><span>Pantalla Cocina / KDS</span></div><n-switch :disabled="!editMode" v-model:value="businessSettings.modules.show_kds" @update:value="(val) => { if (businessSettings.kds) businessSettings.kds.enabled = val; }" /></div>
                                             <div class="list-item border-none"><div class="item-text"><span>Reportes</span></div><n-switch :disabled="!editMode" v-model:value="businessSettings.modules.show_reports" /></div>
                                         </div>
                                     </n-grid-item>
@@ -313,13 +293,7 @@
                 </n-tab-pane>
 
                 <!-- PESTAÑA: INTEGRACIONES -->
-                <n-tab-pane name="integraciones" tab="Integraciones API">
-                    <template #tab>
-                        <div class="tab-label">
-                            <v-icon name="md-api" scale="1.2" class="mr-2" />
-                            Integraciones
-                        </div>
-                    </template>
+                <n-tab-pane name="integraciones" tab="Integraciones">
                     <div class="tab-content">
                         <n-h3 class="section-title">Integración de Clientes</n-h3>
                         <n-card class="settings-group-card mt-2" :bordered="true">
@@ -328,6 +302,76 @@
                                     <n-input type="textarea" v-model:value="businessSettings.customers.api_token" rows="3" placeholder="Inserta aquí tu Bearer Token" />
                                 </n-form-item>
                             </n-form>
+                        </n-card>
+                    </div>
+                </n-tab-pane>
+
+                <!-- PESTAÑA: COCINA / KDS -->
+                <n-tab-pane name="kds" tab="Cocina / KDS">
+                    <div class="tab-content" v-if="businessSettings && businessSettings.kds">
+                        <div class="mb-3">
+                            <n-h3 class="section-title m-0">Sistema de Pantalla de Cocina (KDS)</n-h3>
+                            <n-text depth="3" class="section-desc">Muestra los pedidos de autoservicio, salón y delivery en tiempo real para el equipo de cocina.</n-text>
+                        </div>
+
+                        <!-- TEMA VISUAL DEL KDS -->
+                        <n-h3 class="section-title mt-4">Tema Visual del KDS</n-h3>
+                        <n-card class="settings-group-card mt-2" :bordered="true">
+                            <n-form :disabled="!editMode" label-placement="top">
+                                <n-grid responsive="screen" cols="1 s:1 m:2 l:2" x-gap="24" y-gap="12">
+                                    <n-form-item-gi label="Tema KDS (Pantalla Cocina)">
+                                        <n-select v-model:value="businessSettings.kds.theme" :options="kdsThemeOptions" size="large" @update:value="onKdsThemeChange" />
+                                    </n-form-item-gi>
+                                </n-grid>
+                            </n-form>
+                        </n-card>
+
+                        <!-- TIEMPOS DE ALERTA -->
+                        <n-h3 class="section-title mt-4">Tiempos de Alerta de Comandas</n-h3>
+                        <n-card class="settings-group-card mt-2" :bordered="true">
+                            <n-form :disabled="!editMode" label-placement="top">
+                                <n-grid responsive="screen" cols="1 s:2 m:3 l:3" x-gap="24" y-gap="12">
+                                    <n-form-item-gi label="Alerta Amarilla (minutos)">
+                                        <n-input-number v-model:value="businessSettings.kds.alert_warning_min" :min="1" :max="60" />
+                                    </n-form-item-gi>
+                                    <n-form-item-gi label="Alerta Roja / Crítica (minutos)">
+                                        <n-input-number v-model:value="businessSettings.kds.alert_critical_min" :min="2" :max="120" />
+                                    </n-form-item-gi>
+                                    <n-form-item-gi label="Frecuencia de Auto-recarga (segundos)">
+                                        <n-input-number v-model:value="businessSettings.kds.refresh_interval" :min="2" :max="30" />
+                                    </n-form-item-gi>
+                                </n-grid>
+                            </n-form>
+                        </n-card>
+
+                        <!-- NOTIFICACIONES Y SONIDOS -->
+                        <n-h3 class="section-title mt-4">Notificaciones y Alertas Sonoras</n-h3>
+                        <n-card class="settings-group-card mt-2" :bordered="true">
+                            <div class="list-settings">
+                                <div class="list-item">
+                                    <div class="item-text">
+                                        <span>Sonido al recibir nueva comanda</span>
+                                        <small class="d-block text-muted">Emite una campana de cocina al ingresar una comanda desde Autoservicio o Salón.</small>
+                                    </div>
+                                    <n-switch :disabled="!editMode" v-model:value="businessSettings.kds.sound_new_order" />
+                                </div>
+                                <div class="list-item">
+                                    <div class="item-text">
+                                        <span>Alerta sonora por demora crítica</span>
+                                        <small class="d-block text-muted">Avisa cuando una comanda supera el tiempo límite rojo.</small>
+                                    </div>
+                                    <n-switch :disabled="!editMode" v-model:value="businessSettings.kds.sound_delayed_order" />
+                                </div>
+                                <div class="list-item border-none">
+                                    <div class="item-text">
+                                        <span>Probar timbre de campana</span>
+                                        <small class="d-block text-muted">Haz clic para comprobar el sonido en los parlantes de este equipo.</small>
+                                    </div>
+                                    <n-button secondary type="info" size="small" @click="testChimeSound">
+                                        🔔 Probar Sonido
+                                    </n-button>
+                                </div>
+                            </div>
                         </n-card>
                     </div>
                 </n-tab-pane>
@@ -461,6 +505,7 @@ export default defineComponent({
                 show_birthdays: true,
                 show_reports: true,
                 show_settings: true,
+                show_kds: false,
             };
             for (const key in defaultModules) {
                 if (settings.modules[key] === undefined) {
@@ -469,13 +514,105 @@ export default defineComponent({
             }
         };
 
+        const initKdsSettings = (settings) => {
+            if (!settings) return;
+            if (!settings.kds) {
+                settings.kds = {};
+            }
+            const defaultKds = {
+                enabled: true,
+                theme: 'dark',
+                alert_warning_min: 8,
+                alert_critical_min: 15,
+                sound_new_order: true,
+                sound_delayed_order: true,
+                refresh_interval: 4,
+            };
+            for (const key in defaultKds) {
+                if (settings.kds[key] === undefined) {
+                    settings.kds[key] = defaultKds[key];
+                }
+            }
+        };
+
+        const kdsThemeOptions = [
+            { label: "Negro (Oscuro Industrial - Recomendado)", value: "dark" },
+            { label: "Blanco (Claro Nórdico)", value: "light" },
+        ];
+
+        const categorySizeOptions = [
+            { label: "Pequeño (Compacto - Más categorías visibles)", value: "small" },
+            { label: "Mediano (Equilibrado - Estilo Delivery estándar)", value: "medium" },
+            { label: "Grande (Amplio - Fácil pulsación táctil)", value: "large" },
+        ];
+
+        const initCategorySettings = (settings) => {
+            if (!settings) return;
+            if (!settings.category) {
+                settings.category = {};
+            }
+            if (!settings.category.category_card_size) {
+                settings.category.category_card_size = 'medium';
+            }
+            if (!settings.category.category_card_height) {
+                settings.category.category_card_height = 120;
+            }
+        };
+
+        const initPrinterSettings = (settings) => {
+            if (!settings) return;
+            if (!settings.printer) {
+                settings.printer = {};
+            }
+            if (!Array.isArray(settings.printer.margins) || settings.printer.margins.length < 4) {
+                settings.printer.margins = [0, 0, 0, 0];
+            }
+            const defaultPrinter = {
+                header_font_size: 18,
+                sub_header_font_size: 16,
+                body_font_size: 14,
+                footer_font_size: 14,
+                delivery_ticket_font_size: 12,
+                pre_account_ticket_font_size: 12,
+                show_cat: false,
+                print_delivery_ticket: true,
+                auto_print_cancellation: false,
+                detail_items: true,
+                show_delivery_kitchen: true,
+                show_both_names: false,
+                native_printing: false,
+                print_html: true,
+                manage_fittings: false,
+                subticket_mode: false,
+                extra_text: false,
+                show_product_price: false,
+                info_location: 'footer',
+                invoice_printer_format: 80,
+                kitchen_printer_format: 58,
+                kitchen_ticket_format: 4,
+                print_name_take_away: '',
+                print_name_delivery: ''
+            };
+            for (const key in defaultPrinter) {
+                if (settings.printer[key] === undefined) {
+                    settings.printer[key] = defaultPrinter[key];
+                }
+            }
+        };
+
         initModules(businessSettings.value);
+        initKdsSettings(businessSettings.value);
+        initCategorySettings(businessSettings.value);
+        initPrinterSettings(businessSettings.value);
 
         import('vue').then(({ watch }) => {
             watch(() => settingsStore.businessSettings, (newVal) => {
                 if (newVal && Object.keys(newVal).length > 0 && !editMode.value) {
                     businessSettings.value = cloneDeep(newVal);
                     initModules(businessSettings.value);
+                    initKdsSettings(businessSettings.value);
+                    initCategorySettings(businessSettings.value);
+                    initPrinterSettings(businessSettings.value);
                 }
             }, { deep: true });
         });
@@ -555,12 +692,24 @@ export default defineComponent({
             }
         ];
 
+        const onKdsThemeChange = (val) => {
+            if (val) {
+                localStorage.setItem('kds_theme', val);
+            }
+        };
+
         // Realiza la actualización de la configuración del negocio
         const performUpdateBusinessSettings = () => {
+            if (businessSettings.value.kds && businessSettings.value.modules) {
+                businessSettings.value.kds.enabled = businessSettings.value.modules.show_kds;
+            }
             updateBusinessSettings(businessSettings.value).then((response) => {
                 if (response.status === 202) {
                     message.success("Actualizado correctamente!");
                     settingsStore.business_settings = response.data;
+                    if (businessSettings.value.kds && businessSettings.value.kds.theme) {
+                        localStorage.setItem('kds_theme', businessSettings.value.kds.theme);
+                    }
                     editMode.value = false;
                 }
             }).catch((error) => {
@@ -607,6 +756,40 @@ export default defineComponent({
                 label: "Ingresar código de usuario del responsable"
             }
         ];
+
+        const testChimeSound = () => {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) {
+                    message.warning("Tu navegador no soporta Web Audio API");
+                    return;
+                }
+                const ctx = new AudioCtx();
+                if (ctx.state === 'suspended') {
+                    ctx.resume();
+                }
+                const now = ctx.currentTime;
+                const playTone = (freq, startTime, duration, vol) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, startTime);
+                    gain.gain.setValueAtTime(vol, startTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(startTime);
+                    osc.stop(startTime + duration);
+                };
+                playTone(1046.50, now, 0.5, 0.4);
+                playTone(1318.51, now + 0.12, 0.7, 0.35);
+                playTone(1567.98, now + 0.25, 0.9, 0.3);
+                message.info("Sonido de campana reproducido.");
+            } catch (e) {
+                console.error("Audio error:", e);
+                message.error("Error al reproducir audio: " + e.message);
+            }
+        };
 
         // Estado y funciones de WhatsApp (Zendy)
         const showWhatsAppModal = ref(false);
@@ -705,6 +888,10 @@ export default defineComponent({
             infoLocationOptions,
             orderTypeOptions,
             waiterAuthModeOptions,
+            kdsThemeOptions,
+            categorySizeOptions,
+            onKdsThemeChange,
+            testChimeSound,
             activeTab,
             showWhatsAppModal,
             loadingLogout,

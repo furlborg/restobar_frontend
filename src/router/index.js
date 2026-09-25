@@ -452,21 +452,20 @@ export const routes = [
     ],
   },
   {
-    path: "/chef-mode",
-    name: "CMode",
-    redirect: { name: "CHome" },
-    component: () => import("@/ChefMode/ChefIndex.vue"),
+    path: "/kds",
+    name: "KdsBoard",
+    component: () => import("@/views/Kds/KdsBoard.vue"),
     meta: {
       requiresAuth: true,
-      onlyWaiter: true,
     },
-    children: [
-      {
-        name: "CHome",
-        path: "",
-        component: () => import("@/ChefMode/views/ChefHome.vue"),
-      },
-    ],
+  },
+  {
+    path: "/chef-mode",
+    name: "CMode",
+    redirect: { name: "KdsBoard" },
+    meta: {
+      requiresAuth: true,
+    },
   },
   {
     path: "/:catchAll(.*)",
@@ -504,7 +503,7 @@ router.beforeEach(async (to, from, next) => {
               next({ name: "WaiterMode" });
               return;
             } else if (userStore.user.role === "COCINERO") {
-              next({ name: "ChefMode" });
+              next({ name: "KdsBoard" });
               return;
             } else {
               next();
