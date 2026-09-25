@@ -126,12 +126,21 @@ const pollCycle = async () => {
     if (qrData.state === "ready" || qrData.is_ready) {
       clearTimer();
       isStarting.value = false;
-      const phoneText = qrData.phone_number ? ` Conectado como +${qrData.phone_number}` : "";
+      let finalData = qrData;
+      try {
+        const freshStatus = await getWhatsAppStatus({ refresh: 1 });
+        if (freshStatus?.data) {
+          finalData = freshStatus.data;
+        }
+      } catch (e) {
+        console.warn("Aviso al refrescar estado completo tras vincular:", e);
+      }
+      const phoneText = finalData.phone_number ? ` Conectado como +${finalData.phone_number}` : "";
       message.success(`¡WhatsApp vinculado con éxito!${phoneText}`);
-      emit("linked", qrData);
+      emit("linked", finalData);
       window.dispatchEvent(
         new CustomEvent("whatsapp-status-changed", {
-          detail: { is_connected: true, phone_number: qrData.phone_number },
+          detail: { is_connected: true, phone_number: finalData.phone_number },
         })
       );
       emit("update:show", false);
@@ -140,7 +149,7 @@ const pollCycle = async () => {
 
     if (qrData.state === "authenticated") {
       isSyncing.value = true;
-      const statusRes = await getWhatsAppStatus();
+      const statusRes = await getWhatsAppStatus({ refresh: 1 });
       const statusData = statusRes?.data || {};
       if (statusData.state === "ready" || statusData.is_ready) {
         clearTimer();
@@ -180,7 +189,24 @@ const initQrFlow = async () => {
   errorMessage.value = "";
 
   try {
-    // Solicitar inicio y QR fresco
+    // Protección defensiva: Si ya está listo o autenticado, no forzar un restart destructivo
+    const statusRes = await getWhatsAppStatus({ refresh: 1 });
+    const statusData = statusRes?.data || {};
+    if (statusData.state === "ready" || statusData.is_ready) {
+      isStarting.value = false;
+      const phoneText = statusData.phone_number ? ` Conectado como +${statusData.phone_number}` : "";
+      message.info(`WhatsApp ya se encuentra vinculado.${phoneText}`);
+      emit("linked", statusData);
+      window.dispatchEvent(
+        new CustomEvent("whatsapp-status-changed", {
+          detail: { is_connected: true, phone_number: statusData.phone_number },
+        })
+      );
+      emit("update:show", false);
+      return;
+    }
+
+    // Solicitar inicio y QR fresco solo si no está conectado
     await startWhatsAppQr();
     // Primera consulta inmediata
     await pollCycle();

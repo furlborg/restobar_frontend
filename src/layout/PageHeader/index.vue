@@ -21,22 +21,69 @@
         </n-tooltip>
       </div>
       <div v-if="userStore.user.role !== 'MOZO'" class="layout-header-trigger layout-header-trigger-min">
-        <n-tooltip placement="bottom">
+        <!-- WhatsApp Conectado: Popover informativo seguro sin riesgo de desvinculación accidental -->
+        <n-popover
+          v-if="isWhatsAppConnected"
+          v-model:show="showWhatsAppPopover"
+          trigger="click"
+          placement="bottom"
+          style="max-width: 320px; border-radius: 12px; padding: 14px;"
+        >
+          <template #trigger>
+            <n-tooltip placement="bottom">
+              <template #trigger>
+                <n-icon
+                  size="20"
+                  color="#25D366"
+                  style="cursor: pointer; display: flex; align-items: center;"
+                >
+                  <v-icon
+                    name="bi-whatsapp"
+                    fill="#25D366"
+                    style="color: #25D366"
+                  />
+                </n-icon>
+              </template>
+              <span>WhatsApp Conectado (+{{ whatsappPhone || '' }})</span>
+            </n-tooltip>
+          </template>
+          <div class="whatsapp-popover-content">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <v-icon name="bi-whatsapp" scale="1.4" fill="#25D366" />
+              <div>
+                <div class="fw-bold fs-6 text-success">WhatsApp Conectado</div>
+                <div class="fw-semibold text-muted" v-if="whatsappPhone">+{{ whatsappPhone }}</div>
+              </div>
+            </div>
+            <p class="fs-7 text-secondary mb-3" style="line-height: 1.4; margin: 0 0 12px 0;">
+              Los comprobantes de venta y notificaciones se envían desde este número vinculado.
+            </p>
+            <div class="d-flex justify-content-end">
+              <n-button size="small" type="primary" secondary @click="goToWhatsAppSettings">
+                <template #icon><v-icon name="md-settings-twotone" /></template>
+                Gestionar en Configuración
+              </n-button>
+            </div>
+          </div>
+        </n-popover>
+
+        <!-- WhatsApp Desconectado: Clic para abrir el escáner de código QR -->
+        <n-tooltip v-else placement="bottom">
           <template #trigger>
             <n-icon
               size="20"
-              :color="isWhatsAppConnected ? '#25D366' : '#909399'"
+              color="#909399"
               style="cursor: pointer; display: flex; align-items: center;"
               @click="showWhatsAppQrModal = true"
             >
               <v-icon
                 name="bi-whatsapp"
-                :fill="isWhatsAppConnected ? '#25D366' : '#909399'"
-                :style="{ color: isWhatsAppConnected ? '#25D366' : '#909399' }"
+                fill="#909399"
+                style="color: #909399"
               />
             </n-icon>
           </template>
-          <span>{{ isWhatsAppConnected ? `WhatsApp Conectado (+${whatsappPhone || ''})` : 'WhatsApp No Vinculado (Haz clic para escanear QR)' }}</span>
+          <span>WhatsApp No Vinculado (Haz clic para escanear QR)</span>
         </n-tooltip>
       </div>
     </div>
@@ -95,12 +142,18 @@ const tillStore = useTillStore();
 
 // WhatsApp (Zendy) estado y modal
 const showWhatsAppQrModal = ref(false);
+const showWhatsAppPopover = ref(false);
 const isWhatsAppConnected = ref(false);
 const whatsappPhone = ref("");
 
-const checkWhatsAppStatus = async () => {
+const goToWhatsAppSettings = () => {
+  showWhatsAppPopover.value = false;
+  router.push({ name: "AdvancedSettings", query: { tab: "whatsapp" } });
+};
+
+const checkWhatsAppStatus = async (forceRefresh = false) => {
   try {
-    const res = await getWhatsAppStatus();
+    const res = await getWhatsAppStatus(forceRefresh ? { refresh: 1 } : {});
     if (res?.data) {
       isWhatsAppConnected.value = Boolean(res.data.is_ready || res.data.state === "ready");
       whatsappPhone.value = res.data.phone_number || "";
@@ -128,14 +181,14 @@ const handleWhatsAppStatusEvent = (e) => {
       whatsappPhone.value = e.detail.phone_number || "";
     }
   } else {
-    checkWhatsAppStatus();
+    checkWhatsAppStatus(true);
   }
 };
 
-// Al cerrar el modal de QR, refrescar siempre el estado actual
+// Al cerrar el modal de QR, refrescar siempre el estado actual forzando limpieza de caché
 watch(showWhatsAppQrModal, (isOpen) => {
   if (!isOpen) {
-    checkWhatsAppStatus();
+    checkWhatsAppStatus(true);
   }
 });
 

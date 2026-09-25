@@ -149,6 +149,7 @@ import { useBusinessStore } from "@/store/modules/business";
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 import { createSale, getSaleNumber, retrieveSale, sendSale } from "@/api/modules/sales";
 import { useSaleTotals } from "@/composables/useSaleTotals";
+import { round2 } from "@/utils/money";
 
 
 const router = useRouter();
@@ -213,29 +214,60 @@ const sale = ref({
 
 const { taxBreakdown, productTotal, menuTotal, hasItems } = useSaleTotals();
 
-const totalGRV = computed(() => taxBreakdown.value.taxed);
-const totalEXN = computed(() => taxBreakdown.value.exempt);
-const totalGRT = computed(() => taxBreakdown.value.free);
-const totalIGV = computed(() => taxBreakdown.value.igv);
+// Asegurar que si el usuario editó las afectaciones en toSale, los totales reactivos reflejen exactamente toSale
+const totalsFromToSale = computed(() => {
+  const toSale = saleStore.toSale || [];
+  const menuSets = saleStore.salePayload?.sale_product_sets || [];
+
+  const taxed = toSale
+    .filter((d) => Number(d.product_affectation) === 10)
+    .reduce((acc, d) => acc + (Number(d.price_sale || 0) - Number(d.igv_tax || 0)) * Number(d.quantity || 0), 0);
+
+  const exemptProducts = toSale
+    .filter((d) => Number(d.product_affectation) === 20)
+    .reduce((acc, d) => acc + Number(d.price_sale || 0) * Number(d.quantity || 0), 0);
+
+  const menuSum = menuSets.reduce(
+    (acc, m) => acc + Number(m.price || 0) * Number(m.quantity || 0),
+    0
+  );
+
+  const free = toSale
+    .filter((d) => Number(d.product_affectation) === 21)
+    .reduce((acc, d) => acc + Number(d.price_sale || 0) * Number(d.quantity || 0), 0);
+
+  const igv = toSale.reduce(
+    (acc, d) => acc + Number(d.igv_tax || 0) * Number(d.quantity || 0),
+    0
+  );
+
+  return {
+    taxed: round2(taxed),
+    exempt: round2(exemptProducts + menuSum),
+    free: round2(free),
+    igv: round2(igv),
+  };
+});
+
+const totalGRV = computed(() => totalsFromToSale.value.taxed);
+const totalEXN = computed(() => totalsFromToSale.value.exempt);
+const totalGRT = computed(() => totalsFromToSale.value.free);
+const totalIGV = computed(() => totalsFromToSale.value.igv);
 const totalDSCT = computed(() => saleStore.toSale.some((d) => Number(d.discount) > 0)
   ? saleStore.toSale.reduce((acc, cur) => acc + Number(cur.discount), 0)
-  : parseFloat(sale.value.discount)
+  : parseFloat(sale.value.discount || 0)
 );
 
-const subTotal = computed(() => productTotal.value + menuTotal.value - taxBreakdown.value.free);
-
-// const products_count = computed(() =>
-//   saleStore.toSale.reduce((acc, cur) => acc + cur.quantity, 0)
-// );
+const subTotal = computed(() => round2(totalGRV.value + totalEXN.value + totalIGV.value));
 
 const total = computed(() => {
   let cal = parseFloat(
-    subTotal.value - parseFloat(totalDSCT.value) + icbper.value + parseFloat(sale.value.other_charges)
+    subTotal.value - parseFloat(totalDSCT.value) + icbper.value + parseFloat(sale.value.other_charges || 0)
   );
   if (sale.value.delivery_info) {
-    cal += parseFloat(sale.value.delivery_info.amount);
+    cal += parseFloat(sale.value.delivery_info.amount || 0);
   }
-  return cal.toFixed(2);
+  return Math.max(0, cal).toFixed(2);
 });
 
 const icbper = computed(() => taxBreakdown.value.icbper);
@@ -505,11 +537,16 @@ const performCreateSale = () => {
       positiveText: "Sí",
       onPositiveClick: async () => {
         loading.value = true;
+        sale.value.taxed_amount = totalGRV.value;
+        sale.value.exempt_amount = totalEXN.value;
+        sale.value.free_amount = totalGRT.value;
+        sale.value.igv_amount = totalIGV.value;
+        sale.value.amount = total.value;
         sale.value.order = orderStore.orderId;
         sale.value.sale_details = saleStore.toSale.map(detail => ({
           ...detail,
-          igv_tax: detail.igv_tax.toFixed(2),
-          price_base: detail.price_base.toFixed(2)
+          igv_tax: Number(detail.igv_tax || 0).toFixed(2),
+          price_base: Number(detail.price_base || 0).toFixed(2)
         }));
         // Use buildSalePayload to get both arrays
         const payload = saleStore.buildSalePayload();
