@@ -52,6 +52,14 @@
           </n-space>
         </n-card>
       </router-link>
+      <router-link class="text-decoration-none" :to="{ name: 'KioskPromotions' }">
+        <n-card hoverable>
+          <n-space align="center" vertical>
+            <v-icon name="md-fastfood-twotone" scale="10" />
+            <n-text class="fs-5">Autoservicio</n-text>
+          </n-space>
+        </n-card>
+      </router-link>
     </n-space>
   </div>
 </template>

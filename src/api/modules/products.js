@@ -543,3 +543,63 @@ export async function searchProducts(params = {}) {
 export async function getProductById(id) {
   return await retrieveProduct(id);
 }
+
+// -----------------------------
+// KIOSK PROMOTIONS (AUTOSERVICIO)
+// -----------------------------
+
+/**
+ * Obtener todas las promociones de autoservicio (para admin)
+ * @param {Object} params
+ * @returns {Promise}
+ */
+export async function getKioskPromotions(params = {}) {
+  return await http.get("kiosk-promotions/", { params });
+}
+
+/**
+ * Obtener promociones activas para el quiosco
+ * @param {Object} params - { placement: 'welcome' | 'catalog' }
+ * @returns {Promise}
+ */
+export async function getActiveKioskPromotions(params = {}) {
+  return await http.get("kiosk-promotions/active/", { params });
+}
+
+/**
+ * Crear promoción de autoservicio
+ * @param {FormData|Object} data
+ * @returns {Promise}
+ */
+export async function createKioskPromotion(data) {
+  return await http.post("kiosk-promotions/", data);
+}
+
+/**
+ * Actualizar promoción de autoservicio
+ * @param {number} id
+ * @param {FormData|Object} data
+ * @returns {Promise}
+ */
+export async function updateKioskPromotion(id, data) {
+  return await http.patch(`kiosk-promotions/${id}/`, data);
+}
+
+/**
+ * Alternar estado activo de promoción
+ * @param {number} id
+ * @returns {Promise}
+ */
+export async function toggleKioskPromotionActive(id) {
+  return await http.post(`kiosk-promotions/${id}/toggle_active/`);
+}
+
+/**
+ * Eliminar promoción de autoservicio
+ * @param {number} id
+ * @returns {Promise}
+ */
+export async function deleteKioskPromotion(id) {
+  return await http.delete(`kiosk-promotions/${id}/`);
+}
+

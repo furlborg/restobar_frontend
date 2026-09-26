@@ -385,6 +385,12 @@ export const routes = [
             component: () =>
               import("@/views/Settings/components/ConsultationSunat.vue"),
           },
+          {
+            name: "KioskPromotions",
+            path: "kiosk-promotions",
+            component: () =>
+              import("@/views/Settings/components/KioskPromotions.vue"),
+          },
         ],
       },
     ],
