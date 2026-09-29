@@ -20,8 +20,9 @@ export function setupInterceptors(instance) {
   // Interceptor de solicitud.
   instance.interceptors.request.use((request) => {
     const userStore = useUserStore();
-    if (userStore.token) {
-      request.headers.Authorization = `Bearer ${userStore.token}`;
+    const token = userStore.token || localStorage.getItem("token");
+    if (token) {
+      request.headers.Authorization = `Bearer ${token}`;
     }
     return request;
   });
