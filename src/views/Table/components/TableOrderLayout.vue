@@ -1,21 +1,24 @@
 <template>
     <div>
         <!-- inicio de navegación hacia las mesas -->
-        <n-page-header v-if="!isWaiterModeView" class="mb-2 px-4" @back="goHome">
+        <n-page-header v-if="!isWaiterModeView" class="table-layout-page-header" :class="{ 'payment-mode-header': isPaymentRoute }" @back="goHome">
             <template #title>
-                <n-text class="fs-2">{{ tableStore.getTableByID(table)?.description }}</n-text>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="table-header-name">{{ tableStore.getTableByID(table)?.description }}</span>
+                    <n-tag v-if="isPaymentRoute" type="info" size="small" round :bordered="false" class="payment-header-tag">Liquidación & Cobranza</n-tag>
+                </div>
             </template>
         </n-page-header>
         <!-- fin de navegación hacia las mesas -->
 
         <!-- Inicio de vista del card si es desktop o mobile -->
         <!-- es desktop -->
-        <n-card v-if="!isMobile" class="order-layout-card">
+        <n-card v-if="!isMobile" class="order-layout-card" :content-style="isPaymentRoute ? 'padding: 4px 8px !important; height: 100%;' : ''">
             <n-grid responsive="screen" cols="1 m:10">
-                <n-gi :span="!shouldShowCustomerMode ? '6' : '5 xl:6'" class="order-left-column" :style="isWaiterModeView ? 'height: calc(100vh - 120px);' : 'height: calc(100vh - 165px);'">
+                <n-gi :span="isPaymentRoute ? 10 : (!shouldShowCustomerMode ? '6' : '5 xl:6')" class="order-left-column" :class="{ 'is-payment-column': isPaymentRoute }" :style="isPaymentRoute ? 'height: calc(100vh - 150px);' : (isWaiterModeView ? 'height: calc(100vh - 120px);' : 'height: calc(100vh - 165px);')">
                     <router-view />
                 </n-gi>
-                <n-gi :span="!shouldShowCustomerMode ? '4' : '5 xl:4'" class="order-right-column" :style="isWaiterModeView ? 'height: calc(100vh - 120px);' : 'height: calc(100vh - 165px);'">
+                <n-gi v-if="!isPaymentRoute" :span="!shouldShowCustomerMode ? '4' : '5 xl:4'" class="order-right-column" :style="isWaiterModeView ? 'height: calc(100vh - 120px);' : 'height: calc(100vh - 165px);'">
                     <TableOrder :ask_for="ask_for" :orderUser="orderUser" :loading="loading"
                         :hasUnsavedChanges="hasUnsavedChanges" :customers="customers"
                         :selectedCustomerId="selectedCustomerId" :shouldShowCustomerMode="shouldShowCustomerMode"
@@ -31,7 +34,7 @@
             <n-tab-pane name="main" tab="Principal">
                 <n-card><router-view /></n-card>
             </n-tab-pane>
-            <n-tab-pane name="payment" tab="Orden">
+            <n-tab-pane v-if="!isPaymentRoute" name="payment" tab="Orden">
                 <TableOrder :ask_for="ask_for" :orderUser="orderUser" :loading="loading"
                     :hasUnsavedChanges="hasUnsavedChanges" :customers="customers"
                     :selectedCustomerId="selectedCustomerId" :shouldShowCustomerMode="shouldShowCustomerMode"
@@ -202,6 +205,7 @@ const ticketPreview = ref(null);
 const activeTab = ref('main')
 
 const isWaiterModeView = computed(() => route.matched.some(r => r.name === 'WaiterMode'));
+const isPaymentRoute = computed(() => route.name === 'TablePayment' || route.name === 'WTablePayment');
 const homeRouteName = computed(() => isWaiterModeView.value ? 'WHome' : 'TableHome');
 
 const isMobile = computed(() => ['xs', 's'].includes(breakpointRef.value));
@@ -657,11 +661,45 @@ provide("addOrderToCustomer", addOrderToCustomer);
     height: 100%;
 }
 
+.table-layout-page-header {
+    padding: 6px 16px;
+    margin-bottom: 4px;
+}
+
+.table-layout-page-header.payment-mode-header {
+    padding: 2px 14px;
+    margin-bottom: 2px;
+}
+
+.table-header-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.payment-header-tag {
+    font-size: 11px;
+    font-weight: 600;
+}
+
 .order-left-column {
     overflow-y: auto;
     overflow-x: hidden;
-    padding-right: 6px;
-    scrollbar-width: thin;
+    padding-right: 4px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.order-left-column :deep(.n-scrollbar-rail) {
+    display: none !important;
+}
+
+.order-left-column.is-payment-column {
+    overflow: hidden !important;
+    padding-right: 0 !important;
 }
 
 .order-right-column {

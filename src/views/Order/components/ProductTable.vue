@@ -110,20 +110,20 @@ export default defineComponent({
 
     const DEFAULT_AFFECTATION = computed(() => settingsStore.businessSettings.sale?.default_affectation || 20);
 
-    // Datos de afectaciÃ³n para colores y etiquetas
+    // Datos de afectación para colores y etiquetas
     const afcData = {
-      10: { short: "GRV", color: "#008B8B" },
-      20: { short: "EXN", color: "#9932CC" },
-      21: { short: "GRT", color: "#006400" },
-      default: { short: "---", color: "#8B0000" }
+      10: { short: "GRV", color: "#0369a1", bg: "#e0f2fe", border: "#7dd3fc" },
+      20: { short: "EXN", color: "#475569", bg: "#f1f5f9", border: "#cbd5e1" },
+      21: { short: "GRT", color: "#15803d", bg: "#dcfce7", border: "#86efac" },
+      default: { short: "---", color: "#64748b", bg: "#f1f5f9", border: "#cbd5e1" }
     };
 
     const getAfcColor = (afc) => {
       const data = afcData[afc] || afcData.default;
       return {
-        color: lighten(data.color, 48),
+        color: data.bg,
         textColor: data.color,
-        borderColor: lighten(data.color, 24)
+        borderColor: data.border
       };
     };
 
