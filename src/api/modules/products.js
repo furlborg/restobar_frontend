@@ -532,6 +532,9 @@ export async function deleteCombo(id) {
  * @returns {Promise}
  */
 export async function searchProducts(params = {}) {
+  if (typeof params === "string") {
+    return await http.get("products/simplesearch/" + encodeURIComponent(params));
+  }
   return await http.get("products/", { params });
 }
 
@@ -572,6 +575,11 @@ export async function getActiveKioskPromotions(params = {}) {
  * @returns {Promise}
  */
 export async function createKioskPromotion(data) {
+  if (data instanceof FormData) {
+    return await http.post("kiosk-promotions/", data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  }
   return await http.post("kiosk-promotions/", data);
 }
 
@@ -582,6 +590,11 @@ export async function createKioskPromotion(data) {
  * @returns {Promise}
  */
 export async function updateKioskPromotion(id, data) {
+  if (data instanceof FormData) {
+    return await http.patch(`kiosk-promotions/${id}/`, data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  }
   return await http.patch(`kiosk-promotions/${id}/`, data);
 }
 

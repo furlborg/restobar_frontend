@@ -87,10 +87,12 @@ import {
   NEllipsis,
   NPopselect,
   NEmpty,
+  NColorPicker,
 } from "naive-ui";
 
 export const naive = create({
   components: [
+    NColorPicker,
     NMessageProvider,
     NDialogProvider,
     NConfigProvider,

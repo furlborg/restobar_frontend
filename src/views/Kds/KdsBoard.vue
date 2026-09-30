@@ -972,5 +972,5 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
-@import './kds-board.scss';
+@use './kds-board.scss' as *;
 </style>
