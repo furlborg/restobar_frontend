@@ -66,19 +66,21 @@
                             class="flizzy-menu-item"
                             @click="handleOpenMenuModal(menu)"
                         >
-                            <div class="menu-item-left">
+                            <div class="menu-item-media">
                                 <div class="menu-item-icon-box">
-                                    <v-icon name="gi-hot-meal" scale="1.2" />
+                                    <v-icon name="gi-hot-meal" scale="1.3" />
                                 </div>
-                                <div class="menu-item-details">
+                            </div>
+                            <div class="menu-item-body">
+                                <div class="menu-item-header">
                                     <span class="menu-item-name" :title="menu.menu.name">{{ menu.menu.name }}</span>
                                     <span class="menu-item-tagline">Toca para configurar</span>
                                 </div>
-                            </div>
-                            <div class="menu-item-action-area">
-                                <span class="menu-price-pill">S/. {{ parseFloat(menu.menu.price).toFixed(2) }}</span>
-                                <div class="menu-plus-btn">
-                                    <v-icon name="md-add-round" />
+                                <div class="menu-item-footer">
+                                    <span class="menu-price-pill">S/. {{ parseFloat(menu.menu.price).toFixed(2) }}</span>
+                                    <div class="menu-plus-btn">
+                                        <v-icon name="md-add-round" />
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -104,23 +106,25 @@
                                         class="combo-card-item"
                                     >
                                         <div class="combo-card-prefix">
-                                            <img v-if="combo.image" :src="combo.image" class="combo-img" alt="" />
+                                            <img v-if="combo.image" :src="combo.image" class="combo-img" alt="" @error="combo.image = null" />
                                             <div v-else class="combo-avatar-fallback">
                                                 <v-icon name="gi-hot-meal" scale="1.3" />
                                             </div>
                                         </div>
-                                        <div class="combo-card-content">
-                                            <span class="combo-title">{{ combo.name }}</span>
-                                            <div class="combo-meta">
-                                                <span class="combo-badge-included">
-                                                    {{ combo.products ? combo.products.length : 0 }} productos incluidos
-                                                </span>
+                                        <div class="combo-card-body">
+                                            <div class="combo-card-header">
+                                                <span class="combo-title">{{ combo.name }}</span>
+                                                <div class="combo-meta">
+                                                    <span class="combo-badge-included">
+                                                        {{ combo.products ? combo.products.length : 0 }} productos incluidos
+                                                    </span>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div class="combo-card-action">
-                                            <span class="combo-price">S/. {{ parseFloat(combo.price || 0).toFixed(2) }}</span>
-                                            <div class="combo-add-btn">
-                                                <v-icon name="md-add-round" />
+                                            <div class="combo-card-footer">
+                                                <span class="combo-price">S/. {{ parseFloat(combo.price || 0).toFixed(2) }}</span>
+                                                <div class="combo-add-btn">
+                                                    <v-icon name="md-add-round" />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -274,7 +278,44 @@ onMounted(async () => {
 <style lang="scss" scoped>
 #CategoriesList {
     height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
     background-color: #ffffff;
+}
+
+@media (max-width: 768px) {
+    #CategoriesList {
+        flex: 1 1 0px;
+        overflow: hidden;
+    }
+
+    .categories-card-content,
+    .combos-card-content,
+    .flizzy-menu-content {
+        padding: 4px 6px !important;
+    }
+
+    :deep(.n-tabs) {
+        flex: 1 1 0px !important;
+        height: 100% !important;
+        min-height: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    :deep(.n-tabs-pane-wrapper) {
+        flex: 1 1 0px !important;
+        height: 100% !important;
+        min-height: 0 !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    :deep(.n-tab-pane) {
+        height: auto !important;
+        min-height: 100% !important;
+    }
 }
 
 .categories-card,
@@ -306,107 +347,113 @@ onMounted(async () => {
 
 .flizzy-menus-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
     padding: 6px 2px;
 }
 
 .flizzy-menu-item {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 12px;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
     background: #ffffff;
     border: 1.5px solid #e2e8f0;
-    border-radius: 12px;
+    border-radius: 14px;
     cursor: pointer;
-    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
 .flizzy-menu-item:hover {
     border-color: #ff6b00;
-    box-shadow: 0 4px 12px rgba(255, 107, 0, 0.12);
-    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(255, 107, 0, 0.12);
+    transform: translateY(-2px);
     background: #fffaf5;
 }
 
-.menu-item-left {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex: 1;
-    min-width: 0;
+.menu-item-media {
+    flex-shrink: 0;
 }
 
 .menu-item-icon-box {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
     background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
     color: #d97706;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(217, 119, 6, 0.15);
 }
 
-.menu-item-details {
+.menu-item-body {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    justify-content: space-between;
     flex: 1;
+    min-width: 0;
+    gap: 10px;
+}
+
+.menu-item-header {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
     min-width: 0;
 }
 
 .menu-item-name {
-    font-size: 13.5px;
-    font-weight: 700;
+    font-size: 14px;
+    font-weight: 800;
     color: #0f172a;
-    line-height: 1.25;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    line-height: 1.3;
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: break-word;
+    letter-spacing: -0.01em;
 }
 
 .menu-item-tagline {
     font-size: 11px;
+    font-weight: 500;
     color: #64748b;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.menu-item-action-area {
+.menu-item-footer {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 8px;
-    margin-left: 8px;
-    flex-shrink: 0;
+    padding-top: 2px;
 }
 
 .menu-price-pill {
     display: inline-flex;
     align-items: center;
     white-space: nowrap !important;
-    flex-shrink: 0;
-    padding: 3px 8px;
+    padding: 3px 10px;
     background: #f0fdf4;
     border: 1px solid #bbf7d0;
-    border-radius: 7px;
+    border-radius: 8px;
     color: #15803d;
     font-weight: 800;
-    font-size: 13px;
+    font-size: 13.5px;
     font-variant-numeric: tabular-nums;
 }
 
 .menu-plus-btn {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    color: #ff6b00;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    color: #ea580c;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -418,7 +465,7 @@ onMounted(async () => {
     background: #ff6b00;
     color: #ffffff;
     border-color: #ff6b00;
-    transform: scale(1.05);
+    transform: scale(1.08);
 }
 
 /* ==================================================== */
@@ -456,66 +503,81 @@ onMounted(async () => {
 
 .combos-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
 }
 
 .combo-card-item {
     display: flex;
-    align-items: center;
-    padding: 8px 12px;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
     background: #ffffff;
     border: 1.5px solid #e2e8f0;
-    border-radius: 12px;
+    border-radius: 14px;
     cursor: pointer;
-    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
 .combo-card-item:hover {
     border-color: #ff6b00;
-    box-shadow: 0 4px 12px rgba(255, 107, 0, 0.12);
-    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(255, 107, 0, 0.12);
+    transform: translateY(-2px);
     background: #fffaf5;
 }
 
 .combo-card-prefix {
-    margin-right: 10px;
     flex-shrink: 0;
 }
 
 .combo-avatar-fallback {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
     background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
     color: #15803d;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(21, 128, 61, 0.12);
 }
 
 .combo-img {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
     object-fit: cover;
+    flex-shrink: 0;
 }
 
-.combo-card-content {
+.combo-card-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     flex: 1;
+    min-width: 0;
+    gap: 10px;
+}
+
+.combo-card-header {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
     min-width: 0;
 }
 
 .combo-title {
     display: block;
-    font-size: 13.5px;
-    font-weight: 700;
+    font-size: 14px;
+    font-weight: 800;
     color: #0f172a;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1.25;
+    line-height: 1.3;
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: break-word;
+    letter-spacing: -0.01em;
 }
 
 .combo-meta {
@@ -528,22 +590,22 @@ onMounted(async () => {
     font-weight: 600;
     color: #15803d;
     background: #f0fdf4;
-    padding: 1px 6px;
-    border-radius: 5px;
+    padding: 1px 7px;
+    border-radius: 6px;
     border: 1px solid #dcfce7;
     white-space: nowrap !important;
 }
 
-.combo-card-action {
+.combo-card-footer {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 8px;
-    margin-left: 8px;
-    flex-shrink: 0;
+    padding-top: 2px;
 }
 
 .combo-price {
-    font-size: 13.5px;
+    font-size: 14px;
     font-weight: 800;
     color: #0f172a;
     font-variant-numeric: tabular-nums;
@@ -551,8 +613,8 @@ onMounted(async () => {
 }
 
 .combo-add-btn {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
     background: #fff7ed;
     border: 1px solid #fed7aa;
@@ -568,7 +630,7 @@ onMounted(async () => {
     background: #ff6b00;
     color: #ffffff;
     border-color: #ff6b00;
-    transform: scale(1.05);
+    transform: scale(1.08);
 }
 
 .item-zoom {

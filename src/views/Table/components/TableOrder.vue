@@ -1,35 +1,33 @@
 <template>
-    <n-card class="h-100 flizzy-orders-card" :bordered="false" content-class="flizzy-orders-content">
-        <template #header>
+    <div class="flizzy-orders-card">
+        <!-- HEADER -->
+        <header class="orders-card-top-header">
             <div class="orders-header-title-box">
                 <span class="orders-header-title">Comanda / Pedidos</span>
                 <span v-if="orderStore.orderList.length" class="orders-count-badge">
                     {{ orderStore.orderList.length }} {{ orderStore.orderList.length === 1 ? 'ítem' : 'ítems' }}
                 </span>
             </div>
-        </template>
-        <template #header-extra>
             <div v-if="userStore.hasPermission('charge_order')">
                 <n-button 
-                    v-if="!($route.name === 'TablePayment')" 
-                    class="flizzy-btn-order-cobrar"
+                    v-if="!isPaymentRoute" 
+                    type="success"
+                    text
                     :disabled="!orderStore.orderId" 
                     @click="navigateToPayment"
                 >
                     <v-icon class="me-1" name="fa-coins" />
-                    <span>Cobrar</span>
+                    <span class="fs-6">Cobrar</span>
                 </n-button>
                 <n-button v-else class="flizzy-btn-order-add" text @click="navigateToTakeOrder">
                     <v-icon class="me-1" name="md-add-round" />
                     <span>Añadir pedido</span>
                 </n-button>
             </div>
-        </template>
+        </header>
 
-        <template #default>
-            <n-scrollbar class="flizzy-orders-scrollbar">
-                <div class="orders-body-inner">
-                    <n-form v-if="!($route.name === 'TablePayment')" class="orders-form-header">
+        <!-- FORMULARIO DE CONTROLES: MOZO, CLIENTE, BUSCADOR RÁPIDO -->
+        <n-form v-if="!isPaymentRoute" class="orders-form-header">
                         <n-grid cols="2" x-gap="10" y-gap="6">
                             <!-- Mozo -->
                             <n-form-item-gi v-if="shouldSelectOrderUser" :span="2" label="Mozo Asignado" class="orders-form-item">
@@ -68,8 +66,10 @@
                         </n-grid>
                     </n-form>
 
-                    <!-- Tabla original para modo sin clientes -->
-                    <n-table v-if="!shouldShowCustomerMode" size="small" class="flizzy-orders-table">
+                    <!-- Viewport con scroll dedicado para los ítems de comanda -->
+                    <div class="orders-items-scroll-viewport">
+                        <!-- Tabla original para modo sin clientes -->
+                        <n-table v-if="!shouldShowCustomerMode" size="small" class="flizzy-orders-table">
                         <thead>
                             <tr>
                                 <th style="width: 8%"></th>
@@ -151,27 +151,10 @@
                                 </td>
                             </tr>
                         </tbody>
-                        <tfoot class="flizzy-orders-tfoot">
-                            <tr>
-                                <td colspan="5">
-                                    <div class="orders-footer-summary">
-                                        <div class="footer-total-box">
-                                            <span class="total-label">TOTAL COMANDA:</span>
-                                            <span class="total-value">{{ formattedTotals.grandTotal }}</span>
-                                        </div>
-                                        <n-button v-if="!isPaymentRoute" class="flizzy-btn-order-submit"
-                                            :loading="loading" :disabled="orderButtonDisabled" @click="validateSend()" block>
-                                            <v-icon class="me-2" name="md-notealt-twotone" scale="1.3" />
-                                            <span>{{ orderStore.orderId ? 'Actualizar Pedido' : 'Realizar Pedido' }}</span>
-                                        </n-button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tfoot>
                     </n-table>
 
                     <!-- Nueva tabla para modo con clientes -->
-                    <n-card :bordered="false" v-else content-class="p-0" footer-class="p-0">
+                    <div v-else class="customer-cards-wrapper">
                         <template v-for="(customer, customerIndex) in customers" :key="customer.id">
                             <n-card class="mb-3 flizzy-customer-card" size="small" :title="customer.name" :bordered="false"
                                 header-class="p-0 pb-2" content-class="p-0">
@@ -273,28 +256,31 @@
                                     description="No hay productos agregados" size="small" class="my-4" />
                             </n-card>
                         </template>
-                        <template #footer>
-                            <div v-if="shouldShowCustomerMode" class="orders-footer-summary mt-3">
-                                <div class="footer-total-box">
-                                    <span class="total-label">TOTAL GENERAL ({{ customers.length }} clientes):</span>
-                                    <span class="total-value">S/. {{ formatPrice(orderStore.orderTotal) }}</span>
-                                </div>
-                                <n-button v-if="!($route.name === 'TablePayment')" :loading="loading"
-                                    class="flizzy-btn-order-submit" :disabled="orderButtonDisabled"
-                                    @click="validateSend()" block>
-                                    <v-icon class="me-2" name="md-notealt-twotone" scale="1.3" />
-                                    <span>{{ orderStore.orderId ? 'Actualizar Pedido' : 'Realizar Pedido' }}</span>
-                                </n-button>
-                            </div>
-                        </template>
 
                         <n-empty v-if="customers.length === 0" description="Agregue un cliente para realizar un pedido"
                             class="m-4" />
-                    </n-card>
+                    </div>
                 </div>
-            </n-scrollbar>
-        </template>
-    </n-card>
+
+        <!-- FOOTER FIJO: Total y botón de confirmación siempre visibles en pantalla -->
+        <footer class="orders-card-footer">
+            <div class="orders-footer-summary">
+                <div class="footer-total-box">
+                    <span class="total-label">
+                        {{ shouldShowCustomerMode ? `TOTAL GENERAL (${customers.length} clientes):` : 'TOTAL COMANDA:' }}
+                    </span>
+                    <span class="total-value">
+                        {{ shouldShowCustomerMode ? ('S/. ' + formatPrice(orderStore.orderTotal)) : formattedTotals.grandTotal }}
+                    </span>
+                </div>
+                <n-button v-if="!isPaymentRoute" class="flizzy-btn-order-submit"
+                    :loading="loading" :disabled="orderButtonDisabled" @click="validateSend()" block>
+                    <v-icon class="me-2" name="md-notealt-twotone" scale="1.3" />
+                    <span>{{ orderStore.orderId ? 'Actualizar Pedido' : 'Realizar Pedido' }}</span>
+                </n-button>
+            </div>
+        </footer>
+    </div>
 
     <OrderIndications v-model:show="showModal" preset="card" title="Indicaciones" :order="currentOrder"
         @success="showModal = false" />
@@ -641,19 +627,20 @@ const navigateToTakeOrder = () => {
     display: flex;
     flex-direction: column;
     height: 100%;
-}
-
-:deep(.flizzy-orders-card .n-card-header) {
-    padding: 10px 14px 8px !important;
-    border-bottom: 1px solid #f1f5f9;
-}
-
-:deep(.flizzy-orders-card .n-card__content) {
-    padding: 8px 12px 10px !important;
-    flex: 1;
+    max-height: 100%;
+    min-height: 0;
     overflow: hidden;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.orders-card-top-header {
+    flex-shrink: 0;
+    padding: 10px 14px 8px;
+    border-bottom: 1px solid #f1f5f9;
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .orders-header-title-box {
@@ -663,7 +650,7 @@ const navigateToTakeOrder = () => {
 }
 
 .orders-header-title {
-    font-size: 15.5px;
+    font-size: 15px;
     font-weight: 800;
     color: #0f172a;
 }
@@ -671,57 +658,54 @@ const navigateToTakeOrder = () => {
 .orders-count-badge {
     font-size: 11px;
     font-weight: 700;
-    color: #ea580c;
     background: #fff7ed;
+    color: #ea580c;
     border: 1px solid #fed7aa;
     padding: 1px 7px;
     border-radius: 6px;
 }
 
-.flizzy-btn-order-cobrar {
-    height: 34px !important;
-    padding: 0 14px !important;
-    border-radius: 9px !important;
-    font-weight: 800 !important;
-    font-size: 13px !important;
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-    color: #ffffff !important;
-    border: none !important;
-    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3) !important;
-    transition: all 0.2s ease !important;
-}
-
-.flizzy-btn-order-cobrar:not(:disabled):hover {
-    background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4) !important;
-}
-
-.flizzy-btn-order-cobrar:disabled {
-    background: #e2e8f0 !important;
-    color: #94a3b8 !important;
-    box-shadow: none !important;
-}
-
-.flizzy-btn-order-add {
-    font-weight: 700;
-    color: #0284c7;
-}
-
-.flizzy-orders-scrollbar {
-    max-height: 100%;
-}
-
-:deep(.flizzy-orders-scrollbar .n-scrollbar-rail) {
-    display: none !important;
-}
-
 .orders-form-header {
-    margin-bottom: 8px;
+    flex-shrink: 0;
+    margin: 8px 10px 6px;
     background: #f8fafc;
-    padding: 8px 10px;
-    border-radius: 10px;
+    padding: 6px 8px;
+    border-radius: 8px;
     border: 1px solid #f1f5f9;
+}
+
+.orders-items-scroll-viewport {
+    flex: 1 1 0px;
+    height: 0;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0 10px 6px;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f8fafc;
+}
+
+.orders-items-scroll-viewport::-webkit-scrollbar {
+    width: 6px;
+}
+.orders-items-scroll-viewport::-webkit-scrollbar-track {
+    background: #f8fafc;
+    border-radius: 4px;
+}
+.orders-items-scroll-viewport::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+.orders-items-scroll-viewport::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+.orders-card-footer {
+    flex-shrink: 0;
+    padding: 8px 10px 10px;
+    background: #ffffff;
+    border-top: 1.5px solid #e2e8f0;
+    box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.04);
 }
 
 .orders-form-item {
@@ -939,5 +923,154 @@ const navigateToTakeOrder = () => {
     background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%) !important;
     box-shadow: 0 6px 16px rgba(255, 107, 0, 0.4) !important;
     transform: translateY(-1px) !important;
+}
+
+/* ==================================================== */
+/* OPTIMIZACIONES EXCLUSIVAS PARA MÓVIL (<= 768px)      */
+/* ==================================================== */
+@media (max-width: 768px) {
+    .flizzy-orders-card {
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+        border-radius: 10px !important;
+    }
+
+    .orders-card-top-header {
+        flex-shrink: 0 !important;
+        padding: 8px 10px 6px !important;
+    }
+
+    .orders-header-title {
+        font-size: 14px !important;
+    }
+
+    .orders-form-header {
+        flex-shrink: 0 !important;
+        margin: 6px 6px 4px !important;
+        padding: 6px !important;
+    }
+
+    .orders-items-scroll-viewport {
+        flex: 1 1 0px !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: 0 4px 8px !important;
+    }
+
+    .flizzy-orders-table thead th {
+        padding: 5px 3px !important;
+        font-size: 10px !important;
+        letter-spacing: 0.02em !important;
+    }
+
+    .flizzy-orders-table tbody td {
+        padding: 6px 3px !important;
+    }
+
+    .order-product-name {
+        font-size: 12.5px !important;
+        line-height: 1.25 !important;
+        word-break: break-word;
+    }
+
+    .order-product-time {
+        font-size: 9.5px !important;
+    }
+
+    .order-combo-name {
+        font-size: 12.5px !important;
+        line-height: 1.25 !important;
+        word-break: break-word;
+    }
+
+    .order-combo-subitems {
+        font-size: 10.5px !important;
+    }
+
+    .row-icon-badge {
+        width: 22px !important;
+        height: 22px !important;
+        font-size: 11px !important;
+        border-radius: 6px !important;
+    }
+
+    :deep(.flizzy-stepper-input) {
+        max-width: 76px !important;
+        min-width: 68px !important;
+        width: 100% !important;
+    }
+
+    :deep(.flizzy-stepper-input .n-input__input-el) {
+        font-size: 12px !important;
+        padding: 0 2px !important;
+        text-align: center !important;
+    }
+
+    :deep(.flizzy-stepper-input .n-input-number-button) {
+        width: 18px !important;
+        padding: 0 !important;
+    }
+
+    .qty-pill {
+        padding: 2px 5px !important;
+        font-size: 11px !important;
+    }
+
+    .order-price-col {
+        font-size: 12px !important;
+        padding-left: 2px !important;
+        padding-right: 2px !important;
+    }
+
+    .btn-order-delete {
+        width: 24px !important;
+        height: 24px !important;
+        padding: 0 !important;
+    }
+
+    .btn-order-delete :deep(svg) {
+        width: 16px !important;
+        height: 16px !important;
+    }
+
+    .orders-card-footer {
+        flex-shrink: 0 !important;
+        position: relative !important;
+        bottom: auto !important;
+        background: #ffffff !important;
+        border-top: 1.5px solid #e2e8f0 !important;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05) !important;
+        padding: 8px 10px max(10px, env(safe-area-inset-bottom, 10px)) !important;
+        margin-top: 0 !important;
+    }
+
+    .footer-total-box {
+        padding: 5px 8px !important;
+    }
+
+    .footer-total-box .total-label {
+        font-size: 11px !important;
+    }
+
+    .footer-total-box .total-value {
+        font-size: 16px !important;
+    }
+
+    .flizzy-btn-order-submit {
+        height: 44px !important;
+        font-size: 15px !important;
+    }
+
+    .customer-total-badge {
+        font-size: 12px !important;
+        padding: 2px 6px !important;
+    }
 }
 </style>

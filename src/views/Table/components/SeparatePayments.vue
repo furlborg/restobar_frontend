@@ -1904,57 +1904,58 @@ export default defineComponent({
 }
 
 .navy-total-box {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  border-radius: 8px;
+  background: linear-gradient(135deg, #fff7ed 0%, #ffffff 100%);
+  border-radius: 10px;
   padding: 9px 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  color: #ffffff;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #0f172a;
+  box-shadow: 0 2px 8px -2px rgba(255, 107, 0, 0.12);
+  border: 1.5px solid #fed7aa;
+  border-left: 5px solid #ff6b00;
 }
 
 .total-title {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 800;
   letter-spacing: 0.8px;
-  color: #94a3b8;
+  color: #c2410c;
   text-transform: uppercase;
 }
 
 .total-number {
   font-size: 22px;
   font-weight: 900;
-  color: #ffffff;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
 }
 
 .split-charge-btn {
   width: 100%;
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #ff6b00 0%, #ea580c 100%);
   color: #ffffff;
   border: none;
-  border-radius: 8px;
-  padding: 10px 16px;
+  border-radius: 10px;
+  padding: 11px 16px;
   font-size: 15px;
   font-weight: 800;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+  transition: all 0.18s ease;
+  box-shadow: 0 4px 14px rgba(255, 107, 0, 0.35);
 
   &:hover:not(:disabled) {
-    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
     transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
+    box-shadow: 0 6px 18px rgba(255, 107, 0, 0.45);
   }
 
   &:disabled {
     opacity: 0.55;
-    background: #94a3b8;
+    background: #cbd5e1;
     cursor: not-allowed;
     transform: none;
     box-shadow: none;

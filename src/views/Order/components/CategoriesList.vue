@@ -81,70 +81,84 @@
         </n-space>
       </n-tab-pane>
 
-      <n-tab-pane v-if="canUsePrograms" name="menu" tab="Menú">
-        <n-card title="Menú programado" :bordered="false" content-class="overflow-auto">
-          <n-list v-if="scheduledMenus.length">
-            <n-list-item v-for="menu in scheduledMenus" :key="menu.id" style="cursor: pointer"
-              @click="handleOpenMenuModal(menu)">
-              <n-thing>
-                <n-space vertical>
-                  <n-text class="fs-4">{{ menu.menu.name }}</n-text>
-                  <n-text type="info">S/. {{ parseFloat(menu.menu.price).toFixed(2) }}</n-text>
-                </n-space>
-              </n-thing>
-            </n-list-item>
-          </n-list>
-          <n-empty v-else description="Aún no se programaron menús para hoy" />
+      <n-tab-pane v-if="canUsePrograms" name="menu" tab="Menú del Día">
+        <n-card title="Menú Programado" :bordered="false" class="h-100 flizzy-menu-card" content-class="flizzy-menu-content">
+          <div v-if="scheduledMenus.length" class="flizzy-menus-grid">
+            <div 
+              v-for="menu in scheduledMenus" 
+              :key="menu.id" 
+              class="flizzy-menu-item"
+              @click="handleOpenMenuModal(menu)"
+            >
+              <div class="menu-item-media">
+                <div class="menu-item-icon-box">
+                  <v-icon name="gi-hot-meal" scale="1.3" />
+                </div>
+              </div>
+              <div class="menu-item-body">
+                <div class="menu-item-header">
+                  <span class="menu-item-name" :title="menu.menu.name">{{ menu.menu.name }}</span>
+                  <span class="menu-item-tagline">Toca para configurar</span>
+                </div>
+                <div class="menu-item-footer">
+                  <span class="menu-price-pill">S/. {{ parseFloat(menu.menu.price).toFixed(2) }}</span>
+                  <div class="menu-plus-btn">
+                    <v-icon name="md-add-round" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <n-empty v-else description="Aún no se programaron menús para hoy" class="my-5" />
         </n-card>
       </n-tab-pane>
 
       <n-tab-pane v-if="canUsePrograms" name="combos" tab="Combos">
-        <n-card title="Combos disponibles" :bordered="false" content-class="overflow-auto" class="h-100">
+        <n-card title="Combos Disponibles" :bordered="false" class="h-100 combos-card" content-class="combos-card-content">
           <n-spin :show="loadingCombos">
-            <n-space vertical size="large">
-              <div v-for="category in comboCategories" :key="category.id">
-                <n-divider title-placement="left">
-                  <n-text class="fs-5 fw-bold">{{ category.description }}</n-text>
-                </n-divider>
-                <n-list>
-                  <n-list-item v-for="combo in getCombosForCategory(category.id)" :key="combo.id"
-                    style="cursor: pointer" @click="handleOpenComboModal(combo)">
-                    <template #prefix>
-                      <n-avatar v-if="combo.image" :src="combo.image" :size="60" />
-                      <n-avatar v-else :size="60" style="background-color: #18a058">
-                        <v-icon name="gi-hot-meal" scale="1.5" />
-                      </n-avatar>
-                    </template>
-                    <n-thing>
-                      <template #header>
-                        <n-text class="fs-4">{{ combo.name }}</n-text>
-                      </template>
-                      <template #description>
-                        <n-space vertical size="small">
-                          <n-text type="success" class="fs-6">
-                            S/. {{ parseFloat(combo.price || 0).toFixed(2) }}
-                          </n-text>
-                          <n-text depth="3" style="font-size: 12px">
+            <div class="combos-wrapper">
+              <div v-for="category in comboCategories" :key="category.id" class="combo-category-group">
+                <div class="combo-category-header">
+                  <span class="category-name">{{ category.description }}</span>
+                  <span class="category-count">{{ getCombosForCategory(category.id).length }} combos</span>
+                </div>
+                <div class="combos-grid">
+                  <div 
+                    v-for="combo in getCombosForCategory(category.id)" 
+                    :key="combo.id"
+                    @click="handleOpenComboModal(combo)" 
+                    class="combo-card-item"
+                  >
+                    <div class="combo-card-prefix">
+                      <img v-if="combo.image" :src="combo.image" class="combo-img" alt="" @error="combo.image = null" />
+                      <div v-else class="combo-avatar-fallback">
+                        <v-icon name="gi-hot-meal" scale="1.3" />
+                      </div>
+                    </div>
+                    <div class="combo-card-body">
+                      <div class="combo-card-header">
+                        <span class="combo-title">{{ combo.name }}</span>
+                        <div class="combo-meta">
+                          <span class="combo-badge-included">
                             {{ combo.products ? combo.products.length : 0 }} productos incluidos
-                          </n-text>
-                        </n-space>
-                      </template>
-                    </n-thing>
-                    <template #suffix>
-                      <n-button type="primary" circle>
-                        <template #icon>
+                          </span>
+                        </div>
+                      </div>
+                      <div class="combo-card-footer">
+                        <span class="combo-price">S/. {{ parseFloat(combo.price || 0).toFixed(2) }}</span>
+                        <div class="combo-add-btn">
                           <v-icon name="md-add-round" />
-                        </template>
-                      </n-button>
-                    </template>
-                  </n-list-item>
-                </n-list>
-                <n-empty v-if="!getCombosForCategory(category.id).length"
-                  description="No hay combos para esta categoría" size="small" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <n-empty v-if="getCombosForCategory(category.id).length === 0"
+                  description="No hay combos disponibles en esta categoría" size="small" class="my-3" />
               </div>
-            </n-space>
-            <n-empty v-if="!comboCategories.length && !loadingCombos"
-              description="No hay categorías de combos disponibles" />
+              <n-empty v-if="comboCategories.length === 0 && !loadingCombos"
+                description="No hay categorías de combos disponibles" class="my-5" />
+            </div>
           </n-spin>
         </n-card>
       </n-tab-pane>
@@ -435,5 +449,304 @@ export default defineComponent({
 
 .product-list :deep(.n-list-item__main) {
   width: 100%;
+}
+
+/* ==================================================== */
+/* ESTILOS FLIZZY PARA MENÚ DEL DÍA                     */
+/* ==================================================== */
+.flizzy-menu-card {
+  background: #ffffff;
+}
+
+.flizzy-menus-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  padding: 6px 2px;
+}
+
+.flizzy-menu-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.flizzy-menu-item:hover {
+  border-color: #ff6b00;
+  box-shadow: 0 6px 16px rgba(255, 107, 0, 0.12);
+  transform: translateY(-2px);
+  background: #fffaf5;
+}
+
+.menu-item-media {
+  flex-shrink: 0;
+}
+
+.menu-item-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #d97706;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.15);
+}
+
+.menu-item-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 1;
+  min-width: 0;
+  gap: 10px;
+}
+
+.menu-item-header {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.menu-item-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.3;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: break-word;
+  letter-spacing: -0.01em;
+}
+
+.menu-item-tagline {
+  font-size: 11px;
+  font-weight: 500;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.menu-item-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.menu-price-pill {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap !important;
+  padding: 3px 10px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  color: #15803d;
+  font-weight: 800;
+  font-size: 13.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.menu-plus-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #ea580c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s ease;
+  flex-shrink: 0;
+}
+
+.flizzy-menu-item:hover .menu-plus-btn {
+  background: #ff6b00;
+  color: #ffffff;
+  border-color: #ff6b00;
+  transform: scale(1.08);
+}
+
+/* ==================================================== */
+/* ESTILOS FLIZZY PARA COMBOS                           */
+/* ==================================================== */
+.combos-card {
+  background: #ffffff;
+}
+
+.combo-category-group {
+  margin-bottom: 16px;
+}
+
+.combo-category-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 4px 6px;
+  border-bottom: 1.5px solid #f1f5f9;
+  margin-bottom: 8px;
+}
+
+.combo-category-header .category-name {
+  font-size: 13.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #334155;
+}
+
+.combo-category-header .category-count {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #94a3b8;
+  background: #f8fafc;
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+
+.combos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.combo-card-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.combo-card-item:hover {
+  border-color: #ff6b00;
+  box-shadow: 0 6px 16px rgba(255, 107, 0, 0.12);
+  transform: translateY(-2px);
+  background: #fffaf5;
+}
+
+.combo-card-prefix {
+  flex-shrink: 0;
+}
+
+.combo-avatar-fallback {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  color: #15803d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(21, 128, 61, 0.12);
+}
+
+.combo-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.combo-card-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 1;
+  min-width: 0;
+  gap: 10px;
+}
+
+.combo-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.combo-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.3;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: break-word;
+  letter-spacing: -0.01em;
+}
+
+.combo-meta {
+  margin-top: 2px;
+}
+
+.combo-badge-included {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #15803d;
+  background: #f0fdf4;
+  padding: 1px 7px;
+  border-radius: 6px;
+  border: 1px solid #dcfce7;
+  white-space: nowrap !important;
+}
+
+.combo-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.combo-price {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap !important;
+}
+
+.combo-add-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #ea580c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s ease;
+  flex-shrink: 0;
+}
+
+.combo-card-item:hover .combo-add-btn {
+  background: #ff6b00;
+  color: #ffffff;
+  border-color: #ff6b00;
+  transform: scale(1.08);
 }
 </style>

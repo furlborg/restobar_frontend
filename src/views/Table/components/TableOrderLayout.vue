@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="table-order-layout-root">
         <!-- inicio de navegación hacia las mesas -->
         <n-page-header v-if="!isWaiterModeView" class="table-layout-page-header" :class="{ 'payment-mode-header': isPaymentRoute }" @back="goHome">
             <template #title>
@@ -13,28 +13,28 @@
 
         <!-- Inicio de vista del card si es desktop o mobile -->
         <!-- es desktop -->
-        <n-card v-if="!isMobile" class="order-layout-card" :content-style="isPaymentRoute ? 'padding: 4px 8px !important; height: 100%;' : ''">
-            <n-grid responsive="screen" cols="1 m:10">
-                <n-gi :span="isPaymentRoute ? 10 : (!shouldShowCustomerMode ? '6' : '5 xl:6')" class="order-left-column" :class="{ 'is-payment-column': isPaymentRoute }" :style="isPaymentRoute ? 'height: calc(100vh - 150px);' : (isWaiterModeView ? 'height: calc(100vh - 120px);' : 'height: calc(100vh - 165px);')">
-                    <router-view />
-                </n-gi>
-                <n-gi v-if="!isPaymentRoute" :span="!shouldShowCustomerMode ? '4' : '5 xl:4'" class="order-right-column" :style="isWaiterModeView ? 'height: calc(100vh - 120px);' : 'height: calc(100vh - 165px);'">
-                    <TableOrder :ask_for="ask_for" :orderUser="orderUser" :loading="loading"
-                        :hasUnsavedChanges="hasUnsavedChanges" :customers="customers"
-                        :selectedCustomerId="selectedCustomerId" :shouldShowCustomerMode="shouldShowCustomerMode"
-                        @validateSend="validateSend" @addCustomer="addCustomer" @removeCustomer="removeCustomer"
-                        @deleteOrderDetail="deleteOrderDetail" @goToFirstTab="goToFirstTab"
-                        @update:selectedCustomerId="selectedCustomerId = $event" @update:ask_for="ask_for = $event"
-                        @update:orderUser="orderUser = $event" @productSelect="handleProductClick" />
-                </n-gi>
-            </n-grid>
-        </n-card>
+        <div v-if="!isMobile" class="order-layout-desktop-container">
+            <div class="order-left-column" :class="{ 'is-payment-column': isPaymentRoute }">
+                <router-view />
+            </div>
+            <div v-if="!isPaymentRoute" class="order-right-column">
+                <TableOrder :ask_for="ask_for" :orderUser="orderUser" :loading="loading"
+                    :hasUnsavedChanges="hasUnsavedChanges" :customers="customers"
+                    :selectedCustomerId="selectedCustomerId" :shouldShowCustomerMode="shouldShowCustomerMode"
+                    @validateSend="validateSend" @addCustomer="addCustomer" @removeCustomer="removeCustomer"
+                    @deleteOrderDetail="deleteOrderDetail" @goToFirstTab="goToFirstTab"
+                    @update:selectedCustomerId="selectedCustomerId = $event" @update:ask_for="ask_for = $event"
+                    @update:orderUser="orderUser = $event" @productSelect="handleProductClick" />
+            </div>
+        </div>
         <!-- es mobile -->
-        <n-tabs v-else tab-style="background: #fff;" v-model:value="activeTab" type="segment" animated>
+        <n-tabs v-else class="table-order-mobile-tabs" tab-style="background: #fff;" v-model:value="activeTab" type="segment" animated>
             <n-tab-pane name="main" tab="Principal">
-                <n-card><router-view /></n-card>
+                <div class="table-mobile-view-wrapper">
+                    <router-view />
+                </div>
             </n-tab-pane>
-            <n-tab-pane v-if="!isPaymentRoute" name="payment" tab="Orden">
+            <n-tab-pane v-if="!isPaymentRoute" name="payment" :tab="mobileOrderTabTitle">
                 <TableOrder :ask_for="ask_for" :orderUser="orderUser" :loading="loading"
                     :hasUnsavedChanges="hasUnsavedChanges" :customers="customers"
                     :selectedCustomerId="selectedCustomerId" :shouldShowCustomerMode="shouldShowCustomerMode"
@@ -202,7 +202,11 @@ const userConfirm = ref("");
 const showPdf = ref(false);
 const pdfData = ref(null);
 const ticketPreview = ref(null);
-const activeTab = ref('main')
+const activeTab = ref('main');
+const mobileOrderTabTitle = computed(() => {
+    const count = orderStore.orderList.length;
+    return count > 0 ? `Orden (${count})` : 'Orden';
+});
 
 const isWaiterModeView = computed(() => route.matched.some(r => r.name === 'WaiterMode'));
 const isPaymentRoute = computed(() => route.name === 'TablePayment' || route.name === 'WTablePayment');
@@ -657,13 +661,88 @@ provide("addOrderToCustomer", addOrderToCustomer);
 </script>
 
 <style lang="scss" scoped>
-.order-layout-card {
+.table-order-layout-root {
+    height: calc(100vh - 84px);
+    max-height: calc(100vh - 84px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    @media (max-width: 768px) {
+        height: calc(100vh - 74px) !important;
+        height: calc(100dvh - 74px) !important;
+        max-height: calc(100dvh - 74px) !important;
+        overflow: hidden !important;
+        display: flex;
+        flex-direction: column;
+        margin-bottom: -25px !important;
+
+        :deep(.n-page-header) {
+            flex-shrink: 0 !important;
+            margin-bottom: 2px !important;
+        }
+
+        :deep(.table-order-mobile-tabs) {
+            flex: 1 1 0px !important;
+            min-height: 0 !important;
+            height: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+        }
+
+        :deep(.table-order-mobile-tabs > .n-tabs-nav) {
+            flex-shrink: 0 !important;
+            background: #ffffff;
+        }
+
+        :deep(.table-order-mobile-tabs > .n-tabs-pane-wrapper) {
+            flex: 1 1 0px !important;
+            min-height: 0 !important;
+            height: 100% !important;
+            overflow: hidden !important;
+        }
+
+        :deep(.table-order-mobile-tabs > .n-tabs-pane-wrapper > div) {
+            height: 100% !important;
+            min-height: 0 !important;
+        }
+
+        :deep(.table-order-mobile-tabs > .n-tabs-pane-wrapper > div > .n-tab-pane) {
+            height: 100% !important;
+            min-height: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            display: flex !important;
+            flex-direction: column !important;
+        }
+
+        .table-mobile-view-wrapper {
+            flex: 1 1 0px;
+            height: 100%;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            background: #ffffff;
+        }
+    }
+}
+
+.order-layout-desktop-container {
+    flex: 1 1 0px;
+    min-height: 0;
     height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
 }
 
 .table-layout-page-header {
-    padding: 6px 16px;
-    margin-bottom: 4px;
+    flex-shrink: 0;
+    padding: 2px 14px 4px;
+    margin-bottom: 2px;
 }
 
 .table-layout-page-header.payment-mode-header {
@@ -683,14 +762,17 @@ provide("addOrderToCustomer", addOrderToCustomer);
 }
 
 .order-left-column {
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding-right: 4px;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    &::-webkit-scrollbar {
-        display: none;
-    }
+    flex: 1 1 0px;
+    min-width: 0;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 8px 12px;
 }
 
 .order-left-column :deep(.n-scrollbar-rail) {
@@ -699,13 +781,18 @@ provide("addOrderToCustomer", addOrderToCustomer);
 
 .order-left-column.is-payment-column {
     overflow: hidden !important;
-    padding-right: 0 !important;
+    padding: 6px 12px !important;
 }
 
 .order-right-column {
-    position: sticky;
-    top: 10px;
+    width: 410px;
+    min-width: 380px;
+    max-width: 440px;
+    flex-shrink: 0;
     height: 100%;
+    min-height: 0;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 </style>

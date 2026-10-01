@@ -135,19 +135,11 @@
                 </n-form-item>
               </div>
 
-              <!-- Opciones secundarias del cliente: Por consumo y Observaciones -->
-              <div class="client-options-row">
-                <n-checkbox v-model:checked="sale.by_consumption" :disabled="sale.payment_condition === 2" size="small">
-                  <span>Por consumo</span>
-                  <n-tooltip trigger="hover">
-                    <template #trigger>
-                      <v-icon name="md-infooutline-round" class="ms-1 text-muted" style="cursor: help; vertical-align: -2px;" />
-                    </template>
-                    Emite el comprobante electrónico con un único ítem "Por consumo" en lugar de desglosar cada plato.
-                  </n-tooltip>
-                </n-checkbox>
+              <!-- Observaciones secundarias de la venta -->
+              <div class="client-observations-row">
                 <n-button class="flizzy-text-btn" text size="tiny" @click="showObservations = !showObservations">
-                  {{ showObservations ? "Ocultar" : "+ Añadir" }} Observaciones
+                  <v-icon name="md-notes-round" class="me-1" scale="0.9" />
+                  {{ showObservations ? "Ocultar observaciones" : "+ Añadir observaciones" }}
                 </n-button>
               </div>
 
@@ -266,7 +258,7 @@
                   :precision="2" 
                   :step="1"
                   :disabled="sale.payment_condition === 2"
-                  @update:value="(val) => { sale.given_amount = parseFloat(val || 0).toFixed(2); }"
+                  @update:value="handlePaymentGivenInput"
                   @click="$event.target?.select?.()"
                 >
                   <template #prefix>S/.</template>
@@ -311,6 +303,16 @@
 
           <!-- OPCIONES SECUNDARIAS -->
           <div class="checkout-footer-options">
+            <n-checkbox v-model:checked="sale.by_consumption" :disabled="sale.payment_condition === 2" size="small">
+              <span class="consumption-label">Por consumo</span>
+              <n-tooltip trigger="hover">
+                <template #trigger>
+                  <v-icon name="md-infooutline-round" class="ms-1 text-muted" style="cursor: help; vertical-align: -2px;" />
+                </template>
+                Emite el comprobante electrónico con un único ítem "Por consumo" en lugar de desglosar cada plato.
+              </n-tooltip>
+            </n-checkbox>
+
             <n-checkbox v-model:checked="ticketPreview" size="small">
               Previsualizar ticket
             </n-checkbox>
@@ -488,6 +490,8 @@ const showPdf = ref(false);
 const previewDrawer = ref(null);
 const pdfData = ref(null);
 const selectedCustomer = ref(null);
+const isManualGivenAmount = ref(false);
+const previousTotalAmount = ref(0);
 
 const defaultInvoiceType = settingsStore.businessSettings.sale?.enable_invoices
   ? settingsStore.businessSettings.sale.default_invoice : 80;
@@ -675,10 +679,22 @@ watch(
     if (sale.value.payment_condition === 1) {
       const currentGiven = Number(sale.value.given_amount) || 0;
       const currentTotal = Number(total.value) || 0;
-      // Solo sobreescribir si el monto actual recibido es menor al total o estaba en 0
-      if (currentGiven < currentTotal || currentGiven === 0) {
+      const prevTotal = Number(previousTotalAmount.value) || 0;
+
+      // Sincronizar automáticamente si no se ha digitado manualmente un billete mayor,
+      // si el monto anterior era exacto (ej. al cambiar un producto a gratuito), o si el recibido es menor al total
+      if (
+        !isManualGivenAmount.value ||
+        Math.abs(currentGiven - prevTotal) < 0.01 ||
+        currentGiven < currentTotal ||
+        currentGiven === 0
+      ) {
         sale.value.given_amount = currentTotal > 0 ? total.value : parseFloat(0).toFixed(2);
+        if (currentGiven < currentTotal) {
+          isManualGivenAmount.value = false;
+        }
       }
+      previousTotalAmount.value = currentTotal;
     }
   },
   { immediate: true, deep: true }
@@ -689,6 +705,16 @@ watch(
   (condition) => {
     if (Number(condition) !== 2) {
       sale.value.expiration_sale = null;
+    }
+  }
+);
+
+watch(
+  () => sale.value.payment_method,
+  (newMethod) => {
+    if (Number(newMethod) !== 1) {
+      isManualGivenAmount.value = false;
+      sale.value.given_amount = total.value;
     }
   }
 );
@@ -760,6 +786,7 @@ const formRules = computed(() => {
 });
 
 const changeCondition = (v) => {
+  isManualGivenAmount.value = false;
   sale.value.given_amount = v === 1 ? total.value : parseFloat("0").toFixed(2);
   if (v !== 2) {
     sale.value.expiration_sale = null;
@@ -839,13 +866,24 @@ const formatNumber = (val) => {
   return Number.isFinite(num) ? num.toFixed(2) : "0.00";
 };
 
+const handlePaymentGivenInput = (val) => {
+  const num = parseFloat(val || 0);
+  const tot = Number(total.value) || 0;
+  if (Math.abs(num - tot) < 0.01) {
+    isManualGivenAmount.value = false;
+  } else {
+    isManualGivenAmount.value = true;
+  }
+  sale.value.given_amount = num.toFixed(2);
+};
+
 const paymentInputModel = computed({
   get: () => {
     const val = parseFloat(sale.value.given_amount);
     return Number.isFinite(val) ? val : 0;
   },
   set: (val) => {
-    sale.value.given_amount = parseFloat(val ?? 0).toFixed(2);
+    handlePaymentGivenInput(val);
   }
 });
 
@@ -901,7 +939,14 @@ const quickCashOptions = computed(() => {
 });
 
 const setQuickCash = (val) => {
-  sale.value.given_amount = Number(val).toFixed(2);
+  const numVal = Number(val);
+  const tot = Number(total.value) || 0;
+  if (Math.abs(numVal - tot) < 0.01) {
+    isManualGivenAmount.value = false;
+  } else {
+    isManualGivenAmount.value = true;
+  }
+  sale.value.given_amount = numVal.toFixed(2);
 };
 
 const getMethodIcon = (label = "") => {
@@ -983,6 +1028,13 @@ const performCreateSale = () => {
         const payload = saleStore.buildSalePayload();
         sale.value.sale_product_sets = payload.sale_product_sets;
         sale.value.discount = totalDSCT.value;
+
+        // Asegurar que si no es pago múltiple o payments está vacío, se envíe el payment_method seleccionado
+        if (!isMultiple.value || !sale.value.payments || !sale.value.payments.length) {
+          sale.value.payments = [
+            { payment_method: sale.value.payment_method, amount: String(sale.value.amount) }
+          ];
+        }
 
         try {
           const response = await createSale(sale.value);
@@ -1344,7 +1396,6 @@ onMounted(async () => {
   font-size: 13px;
 }
 
-/* Columna Derecha: Cobranza */
 .pos-checkout-panel {
   display: flex;
   flex-direction: column;
@@ -1352,16 +1403,31 @@ onMounted(async () => {
   height: 100%;
   min-height: 0;
   overflow-y: auto;
-  padding: 10px 14px;
-  gap: 8px;
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
+  padding: 8px 12px 28px 12px;
+  gap: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f8fafc;
 }
 
 .pos-checkout-panel::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
+  width: 5px;
+}
+.pos-checkout-panel::-webkit-scrollbar-track {
+  background: #f8fafc;
+  border-radius: 4px;
+}
+.pos-checkout-panel::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.pos-checkout-panel::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.checkout-submit-wrapper {
+  margin-top: 2px;
+  padding-bottom: 12px;
+  flex-shrink: 0;
 }
 
 .checkout-header-bar {
@@ -1485,11 +1551,24 @@ onMounted(async () => {
   border-color: #ea580c !important;
 }
 
-.client-options-row {
+.doc-options-row {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
-  margin-top: 4px;
+  margin-top: 5px;
+  padding: 0 4px;
+}
+
+.consumption-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.client-observations-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 5px;
 }
 
 .financial-breakdown {
@@ -2066,6 +2145,12 @@ onMounted(async () => {
 /* RESPONSIVE PARA DISPOSITIVOS MÓVILES Y TABLETS       */
 /* ==================================================== */
 @media (max-width: 992px) {
+  .pos-billing-wrapper {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: visible !important;
+  }
+
   .pos-billing-grid {
     grid-template-columns: 1fr;
     height: auto;
@@ -2081,7 +2166,9 @@ onMounted(async () => {
   }
 
   .pos-checkout-panel {
-    height: auto;
+    height: auto !important;
+    overflow-y: visible !important;
+    padding-bottom: 24px !important;
   }
 }
 </style>

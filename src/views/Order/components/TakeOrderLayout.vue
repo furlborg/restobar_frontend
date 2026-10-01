@@ -7,39 +7,46 @@
         </n-space>
       </template>
     </n-page-header>
-    <n-card class="d-none d-lg-flex">
-      <n-grid responsive="screen" cols="1 xs:1 s:1 m:5 l:5 xl:5 2xl:5" :x-gap="12">
-        <n-gi :span="3">
-          <transition v-if="ui.selectProducts" name="mode-fade" mode="out-in">
-            <OrderTaking :loading="ui.loading" :sale="sale" :show-observations="ui.showObservations"
-              :addresses-options="addressesOptions" :customer-options="customerOptions"
-              :searching-customer="searchingCustomer" :whatsapp-number="whatsappNumber" :changing="changing"
-              :sub-total="subTotal" :total-grv="totalGRV" :total-exn="totalEXN" :total-grt="totalGRT"
-              :total-igv="totalIGV" :icbper="icbper" :total-dsct="totalDSCT" :is-multiple="ui.isMultiple"
-              :ticket-preview="ui.isTicketPreview" @update:sale="(newSale) => Object.assign(sale, newSale)"
-              @update:show-observations="ui.showObservations = $event" @update:is-multiple="ui.isMultiple = $event"
-              @update:ticket-preview="ui.isTicketPreview = $event" @select-serie="selectSerie" @change-serie="changeSerie"
-              @change-condition="changeCondition" @auto-create-customer="autoCreateCustomer"
-              @create-addresses-options="createAddressesOptions" @change-address="changeAddress"
-              @handle-delivery="handleDelivery" @show-customer-modal="ui.showCustomerModal = true"
-              @perform-take-away="performTakeAway" @do-multiple-payment="doMultiplePayment" />
-          </transition>
-          <div v-else>
+    <!-- Vista Desktop con flexbox y scroll independiente -->
+    <div class="take-order-desktop-container d-none d-lg-flex">
+      <!-- MODO COBRANZA / POS CHECKOUT (Igual al estándar de Mesas/TablePayment) -->
+      <transition v-if="ui.selectProducts" name="mode-fade" mode="out-in">
+        <div class="take-order-billing-fullscreen">
+          <OrderTaking :loading="ui.loading" :sale="sale" :show-observations="ui.showObservations"
+            :addresses-options="addressesOptions" :customer-options="customerOptions"
+            :searching-customer="searchingCustomer" :whatsapp-number="whatsappNumber" :changing="changing"
+            :sub-total="subTotal" :total-grv="totalGRV" :total-exn="totalEXN" :total-grt="totalGRT"
+            :total-igv="totalIGV" :icbper="icbper" :total-dsct="totalDSCT" :is-multiple="ui.isMultiple"
+            :ticket-preview="ui.isTicketPreview" @update:sale="handleSaleUpdate"
+            @update:show-observations="ui.showObservations = $event" @update:is-multiple="ui.isMultiple = $event"
+            @update:ticket-preview="ui.isTicketPreview = $event" @select-serie="selectSerie" @change-serie="changeSerie"
+            @change-condition="changeCondition" @auto-create-customer="autoCreateCustomer"
+            @create-addresses-options="createAddressesOptions" @change-address="changeAddress"
+            @handle-delivery="handleDelivery" @show-customer-modal="ui.showCustomerModal = true"
+            @perform-take-away="performTakeAway" @do-multiple-payment="doMultiplePayment"
+            @go-back-to-products="ui.selectProducts = false" />
+        </div>
+      </transition>
+
+      <!-- MODO SELECCIÓN DE PRODUCTOS (Categorías + Resumen del Pedido) -->
+      <template v-else>
+        <div class="take-order-left-column">
+          <div class="h-100 flex-column d-flex overflow-hidden">
             <router-view v-slot="{ Component }">
               <component :is="Component" />
             </router-view>
           </div>
-        </n-gi>
-        <n-gi span="2">
+        </div>
+        <div class="take-order-right-column">
           <PaymentSummary :select-products="ui.selectProducts" :product-search="ui.productSearch"
             :show-modal="ui.showModal" :item-index="ui.itemIndex" :total-amount="sale.amount"
             :discount="totalDSCT" :other-charges="sale.other_charges"
             @update:select-products="ui.selectProducts = $event"
             @update:product-search="ui.productSearch = $event" @update:show-modal="ui.showModal = $event"
             @update:item-index="ui.itemIndex = $event" />
-        </n-gi>
-      </n-grid>
-    </n-card>
+        </div>
+      </template>
+    </div>
     <n-tabs class="d-lg-none" tab-style="background: #fff;" v-model:value="ui.activeTab" type="segment" animated>
       <n-tab-pane name="main" tab="Tomar pedido">
         <n-card>
@@ -50,19 +57,24 @@
               :whatsapp-number="whatsappNumber" :changing="changing" :sub-total="subTotal" :total-grv="totalGRV"
               :total-exn="totalEXN" :total-grt="totalGRT" :total-igv="totalIGV" :icbper="icbper" :total-dsct="totalDSCT"
               :is-multiple="ui.isMultiple" :ticket-preview="ui.isTicketPreview"
-              @update:sale="(newSale) => Object.assign(sale, newSale)"
+              @update:sale="handleSaleUpdate"
               @update:show-observations="ui.showObservations = $event" @update:is-multiple="ui.isMultiple = $event"
               @update:ticket-preview="ui.isTicketPreview = $event" @select-serie="selectSerie" @change-serie="changeSerie"
               @change-condition="changeCondition" @show-customer-options="showCustomerOptions"
               @auto-create-customer="autoCreateCustomer" @create-addresses-options="createAddressesOptions"
               @change-address="changeAddress" @handle-delivery="handleDelivery"
               @show-customer-modal="ui.showCustomerModal = true" @perform-take-away="performTakeAway"
-              @do-multiple-payment="doMultiplePayment" @goToFirstTab="goToFirstTab" />
-            <CategoriesList v-else />
+              @do-multiple-payment="doMultiplePayment" @goToFirstTab="goToFirstTab"
+              @go-back-to-products="ui.selectProducts = false" />
+            <div v-else class="h-100 flex-column d-flex">
+              <router-view v-slot="{ Component }">
+                <component :is="Component" />
+              </router-view>
+            </div>
           </transition>
         </n-card>
       </n-tab-pane>
-      <n-tab-pane name="payment" tab="Resumen">
+      <n-tab-pane name="payment" :tab="mobileSummaryTabTitle">
         <PaymentSummary :select-products="ui.selectProducts" :product-search="ui.productSearch"
           :show-modal="ui.showModal" :item-index="ui.itemIndex" :total-amount="sale.amount"
           :discount="totalDSCT" :other-charges="sale.other_charges"
@@ -191,6 +203,11 @@ const ui = reactive({
   productSearch: "",
 });
 
+const mobileSummaryTabTitle = computed(() => {
+  const count = orderStore.orderList.length;
+  return count > 0 ? `Resumen (${count})` : 'Resumen';
+});
+
 const pdfData = ref(null);
 const voucherData = ref(null);
 const addressesOptions = ref([]);
@@ -258,7 +275,7 @@ const sale = ref({
   sale_details: [],
   ask_for: "",
   delivery_info: !(route.query.delivery === undefined) && route.query.delivery === "true"
-    ? { person: "", address: "", phone: "", deliveryman: "", amount: parseFloat(0).toFixed(2) }
+    ? { person: "", address: "", phone: "", deliveryman: "" }
     : null,
   payments: null,
   do_update: true,
@@ -274,9 +291,8 @@ const sale = ref({
 const syncSaleTotals = () => {
   const dsct = parseFloat(totalDSCT.value) || 0;
   const others = parseFloat(sale.value.other_charges) || 0;
-  const deliveryAmount = parseFloat(sale.value.delivery_info?.amount || 0);
   const icbperAmount = parseFloat(icbper.value || 0);
-  const calculatedAmount = Math.max(0, grandTotal.value + icbperAmount + others + deliveryAmount - dsct);
+  const calculatedAmount = Math.max(0, grandTotal.value + icbperAmount + others - dsct);
 
   Object.assign(sale.value, {
     amount: calculatedAmount.toFixed(2),
@@ -289,7 +305,7 @@ const syncSaleTotals = () => {
   });
 };
 
-watch([grandTotal, icbper, totalGRV, totalEXN, totalGRT, totalIGV, totalDSCT, () => sale.value.other_charges, () => sale.value.delivery_info?.amount], syncSaleTotals, {
+watch([grandTotal, icbper, totalGRV, totalEXN, totalGRT, totalIGV, totalDSCT, () => sale.value.other_charges], syncSaleTotals, {
   immediate: true,
 });
 
@@ -361,6 +377,10 @@ const changeCondition = (v) => {
 
 const goToFirstTab = () => ui.activeTab = "main";
 
+const handleSaleUpdate = (newSale) => {
+  Object.assign(sale.value, newSale);
+};
+
 const performTakeAway = async () => {
   if (sale.value.invoice_type === 1) {
     const customerId = typeof sale.value.customer === 'object' ? sale.value.customer?.id : sale.value.customer;
@@ -388,6 +408,12 @@ const performTakeAway = async () => {
     content: "¿Realizar pedido?",
     positiveText: "Sí",
     onPositiveClick: async () => {
+      // Si no es pago múltiple o payments está vacío, sincronizar payments con el método seleccionado
+      if (!ui.isMultiple || !sale.value.payments || !sale.value.payments.length) {
+        sale.value.payments = [
+          { payment_method: sale.value.payment_method, amount: String(sale.value.amount) },
+        ];
+      }
       const result = await processTakeAwayOrder(sale, ui, showAndGenerateTicket, cleanupOrderStore);
       if (result.success) {
         checkState.value = true;
@@ -589,6 +615,58 @@ onBeforeRouteLeave((to) => handleRouteGuard(to, true));
 </script>
 
 <style lang="scss" scoped>
+#TakeOrderLayout {
+  height: calc(100vh - 95px);
+  max-height: calc(100vh - 95px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.take-order-desktop-container {
+  flex: 1 1 0px;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+}
+
+.take-order-left-column {
+  flex: 1 1 0px;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 8px 12px;
+}
+
+.take-order-right-column {
+  width: 410px;
+  min-width: 380px;
+  max-width: 440px;
+  flex-shrink: 0;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.take-order-billing-fullscreen {
+  flex: 1 1 0px;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .mode-fade-enter-active,
 .mode-fade-leave-active {
   transition: opacity 0.2s ease;
@@ -597,5 +675,73 @@ onBeforeRouteLeave((to) => handleRouteGuard(to, true));
 .mode-fade-enter-from,
 .mode-fade-leave-to {
   opacity: 0;
+}
+
+@media (max-width: 768px) {
+  #TakeOrderLayout {
+    height: calc(100vh - 74px) !important;
+    height: calc(100dvh - 74px) !important;
+    max-height: calc(100dvh - 74px) !important;
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: -25px !important;
+  }
+
+  :deep(.n-page-header) {
+    flex-shrink: 0 !important;
+    margin-bottom: 2px !important;
+  }
+
+  :deep(.n-tabs) {
+    flex: 1 1 0px !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  :deep(.n-tabs-nav) {
+    flex-shrink: 0 !important;
+    background: #ffffff;
+  }
+
+  :deep(.n-tabs-pane-wrapper) {
+    flex: 1 1 0px !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  :deep(.n-tabs-pane-wrapper > div) {
+    height: 100% !important;
+    min-height: 0 !important;
+  }
+
+  :deep(.n-tab-pane) {
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  :deep(.n-tab-pane[data-name="main"]),
+  :deep(.n-tab-pane:first-child) {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  :deep(.n-card) {
+    border: none !important;
+    background: transparent !important;
+    height: 100% !important;
+  }
+
+  :deep(.n-card__content) {
+    padding: 0 !important;
+    height: 100% !important;
+  }
 }
 </style>
