@@ -45,7 +45,7 @@
                             :consistent-menu-width="true"
                             :options="areaOptions"
                             placeholder="Selecciona un área para editar"
-                            @update:value="(_, opt) => { area.sale_printer = opt?.sale_printer || ''; area.account_printer = opt?.account_printer || ''; }"
+                            @update:value="(_, opt) => { if (opt) { editArea(); } else { cleanArea(); } }"
                             clearable
                           />
                           <n-button
@@ -75,17 +75,17 @@
                       <n-form-item-gi
                         v-if="userStore.hasPermission('add_area') || !!area.id"
                         :span="1"
-                        label="Impresora de documentos"
+                        label="Impresora de documentos (Kuzeta)"
                       >
-                        <n-input v-model:value="area.sale_printer" placeholder="Nombre en Kuzeta" />
+                        <n-input v-model:value="area.sale_printer" placeholder="Ej: CAJA, TICKET_TERRAZA..." />
                       </n-form-item-gi>
 
                       <n-form-item-gi
                         v-if="userStore.hasPermission('add_area') || !!area.id"
                         :span="1"
-                        label="Impresora de pre-cuentas"
+                        label="Impresora de pre-cuentas (Kuzeta)"
                       >
-                        <n-input v-model:value="area.account_printer" placeholder="Nombre en Kuzeta" />
+                        <n-input v-model:value="area.account_printer" placeholder="Ej: CAJA, PRECUENTA_BAR..." />
                       </n-form-item-gi>
 
                       <n-form-item-gi v-if="userStore.hasPermission('add_area') || !!area.id" :span="2">
@@ -1314,16 +1314,27 @@ export default defineComponent({
     };
 
     const editArea = () => {
-      area.value.id = cloneDeep(currentArea.value);
-      area.value.description = cloneDeep(
-        tableStore.getAreaByID(currentArea.value)
-      );
+      const selected = tableStore.areas.find((a) => a.id === currentArea.value);
+      if (selected) {
+        area.value.id = selected.id;
+        area.value.description = selected.description;
+        area.value.sale_printer = selected.sale_printer || "";
+        area.value.account_printer = selected.account_printer || "";
+      } else {
+        area.value.id = cloneDeep(currentArea.value);
+        area.value.description = cloneDeep(
+          tableStore.getAreaByID(currentArea.value)
+        );
+      }
     };
 
     const cleanArea = () => {
+      currentArea.value = null;
       area.value = {
         id: null,
         description: "",
+        sale_printer: "",
+        account_printer: "",
       };
     };
 
