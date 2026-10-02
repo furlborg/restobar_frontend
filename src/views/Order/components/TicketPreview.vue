@@ -8,57 +8,59 @@
             :z-index="!hidden ? undefined : -1000000"
     >
         <n-drawer-content body-content-style="padding: 0;" :native-scrollbar="false">
-            <template v-for="(place, i) in places" :key="`product-${place.id}`">
-                <default-ticket
-                        ref="tickets"
-                        :data="data"
-                        :place="place"
-                        :isUpdate="isUpdate"
-                />
+            <template v-if="data">
+                <template v-for="(place, i) in places" :key="`product-${place.id}`">
+                    <default-ticket
+                            ref="tickets"
+                            :data="data"
+                            :place="place"
+                            :isUpdate="isUpdate"
+                    />
 
-                <n-button type="info" secondary block @click="printTicket(i, place, true)">
-                    <template #icon>
-                        <v-icon name="md-print-round"/>
-                    </template>
-                    {{ place.description }}
-                </n-button>
-            </template>
+                    <n-button type="info" secondary block @click="printTicket(i, place, true)">
+                        <template #icon>
+                            <v-icon name="md-print-round"/>
+                        </template>
+                        {{ place.description }}
+                    </n-button>
+                </template>
 
-            <template v-if="data.order_type === 'D'">
-                <ticket-delivery ref="delivery" :data="data"/>
-                <n-button type="info" secondary block @click="printDelivery(true)">
-                    <template #icon>
-                        <v-icon name="md-print-round"/>
-                    </template>
-                    DELIVERY
-                </n-button>
-            </template>
-            <template v-if="data.order_canceleddetails && data.order_canceleddetails.length">
-                <div style="margin-top: 20px; padding: 15px; border-top: 1px dashed #ccc; text-align: center; color: #666; font-size: 12px;">
-                    
-                    <div style="font-weight: bold; font-size: 14px; margin-bottom: 10px; color: #000;">
-                        ANULADOS
+                <template v-if="data.order_type === 'D'">
+                    <ticket-delivery ref="delivery" :data="data"/>
+                    <n-button type="info" secondary block @click="printDelivery(true)">
+                        <template #icon>
+                            <v-icon name="md-print-round"/>
+                        </template>
+                        DELIVERY
+                    </n-button>
+                </template>
+                <template v-if="data.order_canceleddetails && data.order_canceleddetails.length">
+                    <div style="margin-top: 20px; padding: 15px; border-top: 1px dashed #ccc; text-align: center; color: #666; font-size: 12px;">
+                        
+                        <div style="font-weight: bold; font-size: 14px; margin-bottom: 10px; color: #000;">
+                            ANULADOS
+                        </div>
+                        
+                        <table style="width: 100%; text-align: left; border-top: 1px dashed #ccc; border-bottom: 1px dashed #ccc; margin-bottom: 15px; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 25%; text-align: center; border-bottom: 1px dotted #ccc; padding: 4px 0; vertical-align: bottom;">CANT</th>
+                                    <th style="width: 75%; border-bottom: 1px dotted #ccc; padding: 4px 0; vertical-align: bottom;">PRODUCTO</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(detail, idx) in data.order_canceleddetails" :key="'canc-'+idx" style="text-decoration: line-through;">
+                                    <td style="text-align: center; padding: 4px 0; border-bottom: 1px dotted #eee; vertical-align: top;">{{ detail.quantity }}</td>
+                                    <td style="padding: 4px 0; border-bottom: 1px dotted #eee; vertical-align: top;">
+                                        {{ detail.product_name || detail.product_set?.name }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <div>-- HISTORIAL DE CAMBIOS / REGISTRO DE AUDITORÍA --</div>
                     </div>
-                    
-                    <table style="width: 100%; text-align: left; border-top: 1px dashed #ccc; border-bottom: 1px dashed #ccc; margin-bottom: 15px; border-collapse: collapse;">
-                        <thead>
-                            <tr>
-                                <th style="width: 25%; text-align: center; border-bottom: 1px dotted #ccc; padding: 4px 0; vertical-align: bottom;">CANT</th>
-                                <th style="width: 75%; border-bottom: 1px dotted #ccc; padding: 4px 0; vertical-align: bottom;">PRODUCTO</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="(detail, idx) in data.order_canceleddetails" :key="'canc-'+idx" style="text-decoration: line-through;">
-                                <td style="text-align: center; padding: 4px 0; border-bottom: 1px dotted #eee; vertical-align: top;">{{ detail.quantity }}</td>
-                                <td style="padding: 4px 0; border-bottom: 1px dotted #eee; vertical-align: top;">
-                                    {{ detail.product_name || detail.product_set?.name }}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    
-                    <div>-- HISTORIAL DE CAMBIOS / REGISTRO DE AUDITORÍA --</div>
-                </div>
+                </template>
             </template>
         </n-drawer-content>
     </n-drawer>
@@ -74,6 +76,7 @@ import { jsPDF } from "jspdf";
 import { useMessage } from "naive-ui";
 import { useTableStore } from "@/store/modules/table";
 import { http } from "@/api";
+import { formatSingleIndicationText } from "@/utils";
 
 export default defineComponent({
     name: "TicketPreview",
@@ -199,13 +202,9 @@ export default defineComponent({
                             "precio": parseFloat(it?.["sale_detail_price"].toFixed(2)),
                             "discount": parseFloat(it?.discount || it?.sale_detail_discount || 0),
                             "total": parseFloat(it?.["sale_detail_total"].toFixed(2)),
-                            "indicaciones": it.indication.filter(indicate => {
-                                return (
-                                    (!indicate.description.includes("[]") || indicate.description.length > 3 ||
-                                        indicate.quick_indications.length > 0) &&
-                                    indicate.description !== ""
-                                );
-                            }).map(indicate => indicate.description) || ""
+                            "indicaciones": (it.indication || [])
+                                .map(indicate => formatSingleIndicationText(indicate, true))
+                                .filter(d => d && d.trim() !== "")
                         })),
                         "totals": {
                             "exonerado": JSON.parse(props.data.json_sale).totales.total_operaciones_exoneradas,
@@ -301,9 +300,9 @@ export default defineComponent({
 
                                     for (let i = 0; i < totalQty; i++) {
                                         const unitInd = indications[i] || null;
+                                        const indText = formatSingleIndicationText(unitInd, false);
                                         const hasValidInd = unitInd && (
-                                            (unitInd.description && unitInd.description.trim() !== "" && !unitInd.description.includes("[]")) ||
-                                            (unitInd.quick_indications && unitInd.quick_indications.length > 0) ||
+                                            indText !== "" ||
                                             unitInd.takeAway
                                         );
 
@@ -327,7 +326,7 @@ export default defineComponent({
                                     let indKey = '__NO_IND__';
                                     if (unit.indication && unit.indication.length > 0) {
                                         const ind = unit.indication[0];
-                                        const indDesc = (ind.description || '').trim();
+                                        const indDesc = formatSingleIndicationText(ind, false);
                                         const takeAway = !!ind.takeAway;
                                         indKey = `${indDesc}__takeAway:${takeAway}`;
                                     }
@@ -358,18 +357,7 @@ export default defineComponent({
                             const mapLine = (it) => {
                                 const indications = (it.indication || []).map(indicate => {
                                     if (!indicate) return "";
-                                    let parts = [];
-                                    if (Array.isArray(indicate.quick_indications) && indicate.quick_indications.length > 0) {
-                                        parts.push(...indicate.quick_indications);
-                                    }
-                                    if (indicate.description && indicate.description.trim() !== "" && !indicate.description.includes("[]")) {
-                                        parts.push(indicate.description.trim());
-                                    }
-                                    let desc = parts.join(", ");
-                                    if (indicate.takeAway) {
-                                        desc = desc ? `${desc} [LLEVAR]` : "[LLEVAR]";
-                                    }
-                                    return desc;
+                                    return formatSingleIndicationText(indicate, true);
                                 }).filter(d => d && d.trim() !== "");
 
                                 if (it.product_set && Array.isArray(it.product_set.items) && it.product_set.items.length > 0) {

@@ -438,7 +438,7 @@ import { useDebounce } from "@/composables/useDebounce";
 import { takeAwayOrder } from "@/api/modules/orders";
 import { sendSale, getSaleNumber } from "@/api/modules/sales";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
-import { lighten } from "@/utils";
+import { lighten, formatSingleIndicationText } from "@/utils";
 import { saleRules } from "@/utils/constants";
 import {
     searchCustomerByName,
@@ -1105,16 +1105,7 @@ export default defineComponent({
             if (!Array.isArray(indications)) return "";
             const valid = [];
             indications.forEach((ind) => {
-                let itemDesc = "";
-                if (ind?.quick_indications && ind.quick_indications.length) {
-                    itemDesc = ind.quick_indications.join(", ");
-                }
-                if (ind?.description && ind.description.trim() !== "" && !ind.description.includes("[]")) {
-                    itemDesc = itemDesc ? `${itemDesc}, ${ind.description.trim()}` : ind.description.trim();
-                }
-                if (ind?.takeAway) {
-                    itemDesc = itemDesc ? `${itemDesc} [LLEVAR]` : "[LLEVAR]";
-                }
+                const itemDesc = formatSingleIndicationText(ind, true);
                 if (itemDesc) {
                     valid.push(`[${itemDesc}]`);
                 }
