@@ -8,14 +8,15 @@ import { useUserStore } from "@/store/modules/user";
 export async function listOrders(filterParams) {
   return await http.get("orders/", {
     params: {
+      till: filterParams?.till || undefined,
       created__range:
-        filterParams.created !== null
+        filterParams?.created !== null && filterParams?.created !== undefined
           ? `${filterParams.created[0]}, ${filterParams.created[1]}`
           : null,
-      take_aways: filterParams.take_aways,
-      tables: filterParams.tables,
-      deliverys: filterParams.deliverys,
-      status: filterParams.status,
+      take_aways: filterParams?.take_aways,
+      tables: filterParams?.tables,
+      deliverys: filterParams?.deliverys,
+      status: filterParams?.status,
     },
   });
 }
@@ -28,14 +29,15 @@ export async function listOrdersByPage(filterParams, page, pageSize) {
   if (filterParams) {
     return await http.get("orders/", {
       params: {
+        till: filterParams?.till || undefined,
         created__range:
-          filterParams.created !== null
+          filterParams?.created !== null && filterParams?.created !== undefined
             ? `${filterParams.created[0]}, ${filterParams.created[1]}`
             : null,
-        take_aways: filterParams.take_aways,
-        tables: filterParams.tables,
-        deliverys: filterParams.deliverys,
-        status: filterParams.status,
+        take_aways: filterParams?.take_aways,
+        tables: filterParams?.tables,
+        deliverys: filterParams?.deliverys,
+        status: filterParams?.status,
         page: page,
         page_size: pageSize,
       },
@@ -61,14 +63,15 @@ export async function updateOrderStatus(order, payments) {
 export async function searchOrders(filterParams, page, pageSize) {
   return await http.get("orders/", {
     params: {
+      till: filterParams?.till || undefined,
       created__range:
-        filterParams.created !== null
+        filterParams?.created !== null && filterParams?.created !== undefined
           ? `${filterParams.created[0]}, ${filterParams.created[1]}`
           : null,
-      take_aways: filterParams.take_aways,
-      tables: filterParams.tables,
-      deliverys: filterParams.deliverys,
-      status: filterParams.status,
+      take_aways: filterParams?.take_aways,
+      tables: filterParams?.tables,
+      deliverys: filterParams?.deliverys,
+      status: filterParams?.status,
       page: page,
       page_size: pageSize,
     },
