@@ -38,8 +38,8 @@
                         <div>{{ info.created }}</div>
                         <div>{{ info.username }}</div>
                     </template>
-                    <div v-if="info.order_type !== 'M' && data.ask_for" key="ask_for">
-                        REFERENCIA: {{ data.ask_for }}
+                    <div v-if="info.order_type !== 'M' && data?.ask_for" key="ask_for">
+                        REFERENCIA: {{ data?.ask_for }}
                     </div>
                 </div>
                 <template v-if="groupedDetails.length">
@@ -110,8 +110,8 @@
                                     <div v-for="desc in detail.product_description.split(',')" :key="desc">*{{ desc }}</div>
                                     </template>
                                     <template v-for="(indication, index) in detail.indication" :key="index">
-                                    <div class="indication-item" v-if="!!indication.description">
-                                        - {{ !indication.takeAway ? indication.description : indication.description + ' [LLEVAR]' }}
+                                    <div class="indication-item" v-if="getIndicationText(indication)">
+                                        - {{ getIndicationText(indication) }}
                                     </div>
                                     </template>
                                     <div v-if="info.order_type === 'M' && detail.indication.some((ind) => ind.takeAway)" class="indication-extra">
@@ -187,13 +187,8 @@
                                         </div>
                                     </template>
                                     <template v-for="(indication, index) in detail.indication" :key="index">
-                                        <div class="indication-item" v-if="!!indication.description">
-                                            -
-                                            {{
-                                                !indication.takeAway
-                                                    ? indication.description
-                                                    : indication.description + " [LLEVAR]"
-                                            }}
+                                        <div class="indication-item" v-if="getIndicationText(indication)">
+                                            - {{ getIndicationText(indication) }}
                                         </div>
                                     </template>
                                     <div v-if="
@@ -228,6 +223,7 @@
 import { defineComponent, ref, computed } from "vue";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useTableStore } from "@/store/modules/table";
+import { cloneDeep, formatSingleIndicationText } from "@/utils";
 
 export default defineComponent({
     name: "DefaultTicket",
@@ -249,71 +245,37 @@ export default defineComponent({
         const tableStore = useTableStore();
 
         const generateData = () => {
-            let data = {
-                ...props.data,
-                order_details: !props.place || props.place?.is_default
-                    ? props.data.order_details
-                    : props.data.order_details.filter((detail) => {
-                        // Debug: verificar el filtrado para menús
-                        console.log('Filtering detail:', {
-                            id: detail.id,
-                            product_name: detail.product_name,
-                            product_set: !!detail.product_set,
-                            preparation_place: detail.preparation_place,
-                            place_description: props.place.description,
-                            will_include: settingsStore.business_settings.printer.subticket_mode &&
-                                props.place.is_main
-                                ? !!detail.preparation_place
-                                : detail.preparation_place === props.place.description
-                        });
-                        
-                        // Si es un menú (product_set existe), siempre incluirlo
-                        if (detail.product_set) {
-                            return true;
-                        }
-                        
-                        // Para productos normales, aplicar la lógica original
-                        return settingsStore.business_settings.printer.subticket_mode &&
-                            props.place.is_main
-                            ? !!detail.preparation_place
-                            : detail.preparation_place === props.place.description;
-                    }),
-                table: !props.data.table
-                    ? ""
-                    : tableStore.getTableByID(props.data.table).description,
-                json_sale: !props.data.json_sale
-                    ? ""
-                    : JSON.parse(props.data.json_sale)
-            };
-            data.order_details.forEach((detail) => {
-                // Verificar si indication existe y es un array antes de usar map
-                if (detail.indication && Array.isArray(detail.indication)) {
-                    detail.indication = detail.indication.map((indication) => {
-                        let desc = "";
-                        if (indication.quick_indications && indication.quick_indications.length) {
-                            indication.quick_indications.forEach((ind) => {
-                                desc += `${ind}, `;
-                            });
-                        }
-                        indication.description = !indication.description
-                            ? desc.slice(0, -2)
-                            : desc + indication.description;
-                        return indication;
-                    });
-                } else {
-                    // Si indication no es un array, inicializar como array vacío
+            const rawDetails = !props.place || props.place?.is_default
+                ? (props.data?.order_details || [])
+                : (props.data?.order_details || []).filter((detail) => {
+                    // Si es un menú (product_set existe), siempre incluirlo
+                    if (detail.product_set) {
+                        return true;
+                    }
+                    // Para productos normales, aplicar la lógica original
+                    return settingsStore.business_settings.printer.subticket_mode &&
+                        props.place.is_main
+                        ? !!detail.preparation_place
+                        : detail.preparation_place === props.place.description;
+                });
+
+            const clonedDetails = cloneDeep(rawDetails);
+            clonedDetails.forEach((detail) => {
+                if (!Array.isArray(detail.indication)) {
                     detail.indication = [];
                 }
-                // if (
-                //     detail.product_category.toLowerCase().includes("combo") &&
-                //     settingsStore.business_settings.printer.kitchen_ticket_format === 3
-                // ) {
-                //     detail.product_name =
-                //         detail.product_category +
-                //         detail.product_description.replaceAll(",", "+");
-                // }
             });
-            return data;
+
+            return {
+                ...props.data,
+                order_details: clonedDetails,
+                table: !props.data?.table
+                    ? ""
+                    : tableStore.getTableByID(props.data?.table)?.description || "",
+                json_sale: !props.data?.json_sale
+                    ? ""
+                    : (typeof props.data.json_sale === "string" ? JSON.parse(props.data.json_sale) : props.data.json_sale)
+            };
         };
 
         const info = ref(generateData());
@@ -332,9 +294,9 @@ export default defineComponent({
 
                 for (let i = 0; i < totalQty; i++) {
                     const unitInd = indications[i] || null;
+                    const indText = formatSingleIndicationText(unitInd, false);
                     const hasValidInd = unitInd && (
-                        (unitInd.description && unitInd.description.trim() !== "" && !unitInd.description.includes("[]")) ||
-                        (unitInd.quick_indications && unitInd.quick_indications.length > 0) ||
+                        indText !== "" ||
                         unitInd.takeAway
                     );
 
@@ -360,7 +322,7 @@ export default defineComponent({
                 let indKey = '__NO_IND__';
                 if (unit.indication && unit.indication.length > 0) {
                     const ind = unit.indication[0];
-                    const indDesc = (ind.description || '').trim();
+                    const indDesc = formatSingleIndicationText(ind, false);
                     const takeAway = !!ind.takeAway;
                     indKey = `${indDesc}__takeAway:${takeAway}`;
                 }
@@ -423,37 +385,31 @@ export default defineComponent({
         });
 
         const generateFittingData = () => {
-            let data = {
-                ...props.data,
-                order_details: !props.place || props.place?.is_default
-                    ? props.data.order_details
-                    : props.data.order_details.filter(
-                        (detail) =>
-                            detail.product_fitting?.preparation_place ===
-                            props.place.description
-                    ),
-                table: !props.data.table
-                    ? ""
-                    : tableStore.getTableByID(props.data.table).description,
-                json_sale: !props.data.json_sale
-                    ? ""
-                    : JSON.parse(props.data.json_sale)
-            };
-            data.order_details.forEach((detail) => {
-                detail.indication = detail.indication.map((indication) => {
-                    let desc = "";
-                    if (indication.quick_indications.length) {
-                        indication.quick_indications.forEach((ind) => {
-                            desc += `${ind}, `;
-                        });
-                    }
-                    indication.description = !indication.description
-                        ? desc.slice(0, -2)
-                        : desc + indication.description;
-                    return indication;
-                });
+            const rawDetails = !props.place || props.place?.is_default
+                ? (props.data?.order_details || [])
+                : (props.data?.order_details || []).filter(
+                    (detail) =>
+                        detail.product_fitting?.preparation_place ===
+                        props.place.description
+                );
+
+            const clonedDetails = cloneDeep(rawDetails);
+            clonedDetails.forEach((detail) => {
+                if (!Array.isArray(detail.indication)) {
+                    detail.indication = [];
+                }
             });
-            return data;
+
+            return {
+                ...props.data,
+                order_details: clonedDetails,
+                table: !props.data?.table
+                    ? ""
+                    : tableStore.getTableByID(props.data?.table)?.description || "",
+                json_sale: !props.data?.json_sale
+                    ? ""
+                    : (typeof props.data.json_sale === "string" ? JSON.parse(props.data.json_sale) : props.data.json_sale)
+            };
         };
 
         const fitting_info = ref(generateFittingData());
@@ -493,20 +449,15 @@ export default defineComponent({
             return prefix;
         };
 
+        const getIndicationText = (indication) => {
+            return formatSingleIndicationText(indication, true);
+        };
+
         const generateIndication = (ind) => {
             if (!ind || !Array.isArray(ind)) return "";
             let text = "";
             for (const indication of ind) {
-                let itemDesc = "";
-                if (indication?.quick_indications && indication.quick_indications.length) {
-                    itemDesc = indication.quick_indications.join(", ");
-                }
-                if (indication?.description && indication.description.trim() !== "" && !indication.description.includes("[]")) {
-                    itemDesc = itemDesc ? `${itemDesc}, ${indication.description.trim()}` : indication.description.trim();
-                }
-                if (indication?.takeAway) {
-                    itemDesc = itemDesc ? `${itemDesc} [LLEVAR]` : "[LLEVAR]";
-                }
+                const itemDesc = formatSingleIndicationText(indication, true);
                 if (itemDesc) {
                     text += ` [${itemDesc}]`;
                 }
@@ -518,6 +469,7 @@ export default defineComponent({
             info,
             fitting_info,
             getPrefix,
+            getIndicationText,
             generateIndication,
             settingsStore,
             indicationTakeAways,

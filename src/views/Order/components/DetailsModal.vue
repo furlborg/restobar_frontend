@@ -45,6 +45,7 @@ import { defineComponent, ref, toRefs, watch } from "vue";
 import { useMessage } from "naive-ui";
 import { useGenericsStore } from "@/store/modules/generics";
 import { listOrderDetails } from "@/api/modules/orders";
+import { formatSingleIndicationText } from "@/utils";
 
 export default defineComponent({
   name: "DetailsModal",
@@ -70,16 +71,7 @@ export default defineComponent({
       if (!Array.isArray(indications)) return "";
       const valid = [];
       indications.forEach((ind) => {
-        let itemDesc = "";
-        if (ind?.quick_indications && ind.quick_indications.length) {
-          itemDesc = ind.quick_indications.join(", ");
-        }
-        if (ind?.description && ind.description.trim() !== "" && !ind.description.includes("[]")) {
-          itemDesc = itemDesc ? `${itemDesc}, ${ind.description.trim()}` : ind.description.trim();
-        }
-        if (ind?.takeAway) {
-          itemDesc = itemDesc ? `${itemDesc} [LLEVAR]` : "[LLEVAR]";
-        }
+        const itemDesc = formatSingleIndicationText(ind, true);
         if (itemDesc) {
           valid.push(`[${itemDesc}]`);
         }

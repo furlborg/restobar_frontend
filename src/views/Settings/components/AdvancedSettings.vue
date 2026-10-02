@@ -121,7 +121,8 @@
                                 <div class="list-settings">
                                     <div class="list-item"><div class="item-text"><span>Mostrar categoría de producto</span></div><n-switch :disabled="!editMode" v-model:value="businessSettings.printer.show_cat" /></div>
                                     <div class="list-item"><div class="item-text"><span>Imprimir ticket de envío</span></div><n-switch :disabled="!editMode" v-model:value="businessSettings.printer.print_delivery_ticket" /></div>
-                                    <div class="list-item"><div class="item-text"><span>Imprimir anulación en cocina</span></div><n-switch :disabled="!editMode" v-model:value="businessSettings.printer.auto_print_cancellation" /></div>
+                                    <div class="list-item"><div class="item-text"><span>Imprimir anulación de pedidos en cocina</span><n-text depth="3" class="d-block text-xs">Imprime comanda al anular platos/pedidos dentro de una mesa.</n-text></div><n-switch :disabled="!editMode" v-model:value="businessSettings.printer.auto_print_cancellation" /></div>
+                                    <div class="list-item"><div class="item-text"><span>Imprimir anulación de mesa en cocina</span><n-text depth="3" class="d-block text-xs">Imprime comanda al anular o cancelar toda la mesa por completo.</n-text></div><n-switch :disabled="!editMode" v-model:value="businessSettings.printer.auto_print_table_cancellation" /></div>
                                     <div class="list-item"><div class="item-text"><span>Items detallados</span></div><n-switch :disabled="!editMode" v-model:value="businessSettings.printer.detail_items" /></div>
                                     <div class="list-item"><div class="item-text"><span>Mostrar información de delivery</span></div><n-switch :disabled="!editMode" v-model:value="businessSettings.printer.show_delivery_kitchen" /></div>
                                     <div class="list-item"><div class="item-text"><span>Mostrar ambos nombres (Empresa)</span></div><n-switch :disabled="!editMode" v-model:value="businessSettings.printer.show_both_names" /></div>
@@ -577,6 +578,7 @@ export default defineComponent({
                 show_cat: false,
                 print_delivery_ticket: true,
                 auto_print_cancellation: false,
+                auto_print_table_cancellation: false,
                 detail_items: true,
                 show_delivery_kitchen: true,
                 show_both_names: false,
