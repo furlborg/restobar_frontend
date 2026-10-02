@@ -58,8 +58,8 @@
             <div>{{ info.created }}</div>
             <div>{{ info.username }}</div>
           </template>
-          <div v-if="info.order_type !== 'M' && data.ask_for" key="ask_for">
-            REFERENCIA: {{ data.ask_for }}
+          <div v-if="info.order_type !== 'M' && data?.ask_for" key="ask_for">
+            REFERENCIA: {{ data?.ask_for }}
           </div>
         </div>
         <template
@@ -134,13 +134,8 @@
                   v-for="(indication, index) in detail.indication"
                   :key="index"
                 >
-                  <div class="indication-item" v-if="!!indication.description">
-                    -
-                    {{
-                      !indication.takeAway
-                        ? indication.description
-                        : indication.description + " [LLEVAR]"
-                    }}
+                  <div class="indication-item" v-if="getIndicationText(indication)">
+                    - {{ getIndicationText(indication) }}
                   </div>
                 </template>
                 <div
@@ -180,6 +175,7 @@
 import { defineComponent, ref } from "vue";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useTableStore } from "@/store/modules/table";
+import { cloneDeep, formatSingleIndicationText } from "@/utils";
 
 export default defineComponent({
   name: "FittingTicket",
@@ -201,37 +197,31 @@ export default defineComponent({
     const tableStore = useTableStore();
 
     const generateData = () => {
-      let data = {
-        ...props.data,
-        order_details: !props.place
-          ? props.data.order_details
-          : props.data.order_details.filter(
-              (detail) =>
-                detail.product_fitting?.preparation_place ===
-                props.place.description
-            ),
-        table: !props.data.table
-          ? ""
-          : tableStore.getTableByID(props.data.table).description,
-        json_sale: !props.data.json_sale
-          ? ""
-          : JSON.parse(props.data.json_sale),
-      };
-      data.order_details.forEach((detail) => {
-        detail.indication = detail.indication.map((indication) => {
-          let desc = "";
-          if (indication.quick_indications.length) {
-            indication.quick_indications.forEach((ind) => {
-              desc += `${ind}, `;
-            });
-          }
-          indication.description = !indication.description
-            ? desc.slice(0, -2)
-            : desc + indication.description;
-          return indication;
-        });
+      const rawDetails = !props.place
+        ? (props.data?.order_details || [])
+        : (props.data?.order_details || []).filter(
+            (detail) =>
+              detail.product_fitting?.preparation_place ===
+              props.place.description
+          );
+
+      const clonedDetails = cloneDeep(rawDetails);
+      clonedDetails.forEach((detail) => {
+        if (!Array.isArray(detail.indication)) {
+          detail.indication = [];
+        }
       });
-      return data;
+
+      return {
+        ...props.data,
+        order_details: clonedDetails,
+        table: !props.data?.table
+          ? ""
+          : tableStore.getTableByID(props.data?.table)?.description || "",
+        json_sale: !props.data?.json_sale
+          ? ""
+          : (typeof props.data.json_sale === "string" ? JSON.parse(props.data.json_sale) : props.data.json_sale),
+      };
     };
 
     const info = ref(generateData());
@@ -259,20 +249,15 @@ export default defineComponent({
       return prefix;
     };
 
+    const getIndicationText = (indication) => {
+      return formatSingleIndicationText(indication, true);
+    };
+
     const generateIndication = (ind) => {
       if (!ind || !Array.isArray(ind)) return "";
       let text = "";
       for (const indication of ind) {
-        let itemDesc = "";
-        if (indication?.quick_indications && indication.quick_indications.length) {
-          itemDesc = indication.quick_indications.join(", ");
-        }
-        if (indication?.description && indication.description.trim() !== "" && !indication.description.includes("[]")) {
-          itemDesc = itemDesc ? `${itemDesc}, ${indication.description.trim()}` : indication.description.trim();
-        }
-        if (indication?.takeAway) {
-          itemDesc = itemDesc ? `${itemDesc} [LLEVAR]` : "[LLEVAR]";
-        }
+        const itemDesc = formatSingleIndicationText(indication, true);
         if (itemDesc) {
           text += ` [${itemDesc}]`;
         }
@@ -283,6 +268,7 @@ export default defineComponent({
     return {
       info,
       getPrefix,
+      getIndicationText,
       generateIndication,
       settingsStore,
       indicationTakeAways,

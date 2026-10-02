@@ -4,8 +4,8 @@
     <!-- <app-provider> -->
     <n-layout class="layout" position="absolute" has-sider>
       <n-layout-sider v-if="genericsStore.device !== 'mobile'" class="layout-sider" @collapse="collapsed = true"
-        @expand="collapsed = false" :collapsed="userStore.user.role !== 'MOZO' ? collapsed : true"
-        :collapsed-width="userStore.user.role !== 'MOZO' ? 64 : 0" collapse-mode="width" :width="175"
+        @expand="collapsed = false" :collapsed="userStore.user?.role !== 'MOZO' ? collapsed : true"
+        :collapsed-width="userStore.user?.role !== 'MOZO' ? 64 : 0" collapse-mode="width" :width="175"
         :native-scrollbar="false" bordered>
         <Logo :collapsed="collapsed" />
         <AsideMenu v-model:collapsed="collapsed" />

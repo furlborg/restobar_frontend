@@ -140,7 +140,7 @@
           <TillSales />
         </n-tab-pane>
         <n-tab-pane name="orders" tab="Pedidos">
-          <TillOrders />
+          <TillOrders :till="till" />
         </n-tab-pane>
         <template #suffix>
           <n-dropdown trigger="click" :options="reportOptions" @select="selectReport">
@@ -683,6 +683,7 @@ export default defineComponent({
       makeSaleReport,
       reportOptions,
       selectReport,
+      till,
       tableColumns: createTillDetailsColumns(),
     };
   },
