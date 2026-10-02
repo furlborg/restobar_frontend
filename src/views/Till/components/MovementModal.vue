@@ -56,6 +56,15 @@
               ">
                 <v-icon name="ri-edit-fill" />
               </n-button>
+              <n-button
+                v-if="userStore.hasPermission('view_concept') || userStore.hasPermission('add_concept') || userStore.user?.is_superuser || userStore.user?.is_owner"
+                type="primary"
+                tertiary
+                title="Gestión de Conceptos"
+                @click="showConceptsModal = true"
+              >
+                <v-icon name="md-listalt-round" />
+              </n-button>
             </n-input-group>
           </n-form-item>
         </transition>
@@ -121,19 +130,26 @@
         {{ detailId ? 'Actualizar' : 'Registrar' }}
         {{ movementType === "0" ? "Ingreso" : "Egreso" }}</n-button>
     </template>
+    <concepts-modal
+      v-model:show="showConceptsModal"
+    />
   </n-modal>
 </template>
 
 <script>
-import { defineComponent, watch } from "vue";
+import { defineComponent, watch, ref } from "vue";
 
 import { useUserStore } from "@/store/modules/user";
 import { useGenericsStore } from "@/store/modules/generics";
 import { isLetter, isNumber, isLetterOrNumber } from "@/utils";
 import { useTillDetail } from "../composables/useTillDetail";
+import ConceptsModal from "./ConceptsModal.vue";
 
 export default defineComponent({
   name: "TillModal",
+  components: {
+    ConceptsModal,
+  },
   emits: ["update:show", "on-success"],
   props: {
     show: {
@@ -185,6 +201,8 @@ export default defineComponent({
       }
     };
 
+    const showConceptsModal = ref(false);
+
     watch(() => props.detailId, (newId) => {
       if (newId) { performFindDetailById(newId) }
       else {
@@ -194,6 +212,7 @@ export default defineComponent({
     }, { immediate: true })
 
     return {
+      showConceptsModal,
       userStore,
       isNumber,
       isLetter,
