@@ -781,18 +781,58 @@
                                 <n-form :disabled="!editMode" label-placement="top">
                                     <n-grid responsive="screen" cols="1 s:2 m:2 l:4" :x-gap="20" :y-gap="14">
                                         <n-form-item-gi label="Tamaño Tarjeta de Categoría">
-                                            <n-select v-model:value="businessSettings.category.category_card_size" :options="categorySizeOptions" size="large" />
+                                            <n-select v-model:value="businessSettings.category.category_card_size" :options="categorySizeOptions" @update:value="handleCategorySizeChange" size="large" />
                                         </n-form-item-gi>
-                                        <n-form-item-gi label="Tamaño Letra Categoría">
-                                            <n-input-number v-model:value="businessSettings.category.area_text_size" placeholder="16" size="large" />
+                                        <n-form-item-gi label="Altura Tarjeta (px)">
+                                            <n-input-number v-model:value="businessSettings.category.category_card_height" :min="60" :max="250" placeholder="120" size="large" />
                                         </n-form-item-gi>
-                                        <n-form-item-gi label="Ancho Imagen Producto (px)">
+                                        <n-form-item-gi label="Tamaño Letra Categoría (px)">
+                                            <n-input-number v-model:value="businessSettings.category.area_text_size" :min="10" :max="36" placeholder="16" size="large" />
+                                        </n-form-item-gi>
+                                        <n-form-item-gi label="Tamaño Imagen Producto (px)">
                                             <n-input-number v-model:value="businessSettings.category.width_image_product" placeholder="40" size="large" />
                                         </n-form-item-gi>
-                                        <n-form-item-gi label="Alto Imagen Producto (px)">
-                                            <n-input-number v-model:value="businessSettings.category.height_image_product" placeholder="40" size="large" />
-                                        </n-form-item-gi>
                                     </n-grid>
+
+                                    <!-- Vista previa en vivo de tarjeta de categoría -->
+                                    <div class="category-preview-banner mt-3 p-3 rounded" style="background: #f8fafc; border: 1.5px dashed #cbd5e1;">
+                                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                                            <div>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <v-icon name="md-preview-round" scale="1.1" style="color: #6366f1;" />
+                                                    <span class="fw-bold" style="color: #1e293b;">Vista Previa en Vivo (Mesas, Para Llevar y Delivery):</span>
+                                                </div>
+                                                <p class="text-muted fs-8 mb-0 mt-1">
+                                                    La tarjeta de categoría se mostrará con este tamaño y tipografía en todas las pantallas de toma de pedidos.
+                                                </p>
+                                            </div>
+                                            <div style="min-width: 170px; max-width: 220px; width: 100%;">
+                                                <div :style="{
+                                                    height: (businessSettings.category.category_card_height || 120) + 'px',
+                                                    position: 'relative',
+                                                    borderRadius: '8px',
+                                                    overflow: 'hidden',
+                                                    background: '#f1f5f9',
+                                                    border: '1.5px solid #cbd5e1',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    boxShadow: '0 2px 6px rgba(0,0,0,0.06)'
+                                                }">
+                                                    <span :style="{
+                                                        fontSize: (businessSettings.category.area_text_size || 16) + 'px',
+                                                        fontWeight: '700',
+                                                        color: '#1e293b',
+                                                        textAlign: 'center',
+                                                        padding: '0 8px',
+                                                        lineHeight: '1.25'
+                                                    }">
+                                                        BEBIDAS FRÍAS
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
 
                                     <div class="clean-switch-grid border-top pt-3 mt-3">
                                         <div class="switch-row-item">
@@ -1494,10 +1534,18 @@ export default defineComponent({
         ];
 
         const categorySizeOptions = [
-            { label: "Pequeño (Compacto - Más categorías visibles)", value: "small" },
-            { label: "Mediano (Equilibrado - Estándar)", value: "medium" },
-            { label: "Grande (Amplio - Fácil pulsación táctil)", value: "large" }
+            { label: "Pequeño (85px - Más categorías en pantalla)", value: "small" },
+            { label: "Mediano (120px - Estándar equilibrado)", value: "medium" },
+            { label: "Grande (155px - Fácil pulsación táctil)", value: "large" },
+            { label: "Personalizado (definir altura libre en px)", value: "custom" }
         ];
+
+        const handleCategorySizeChange = (val) => {
+            if (!businessSettings.value.category) businessSettings.value.category = {};
+            if (val === "small") businessSettings.value.category.category_card_height = 85;
+            else if (val === "medium") businessSettings.value.category.category_card_height = 120;
+            else if (val === "large") businessSettings.value.category.category_card_height = 155;
+        };
 
         // Catálogo de búsqueda rápida
         const settingsDirectory = [
@@ -1701,6 +1749,7 @@ export default defineComponent({
             waiterAuthModeOptions,
             kdsThemeOptions,
             categorySizeOptions,
+            handleCategorySizeChange,
             onKdsThemeChange,
             testChimeSound,
             showWhatsAppModal,

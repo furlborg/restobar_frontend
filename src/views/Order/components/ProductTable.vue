@@ -4,34 +4,34 @@
       <n-table class="product-details-table" :bordered="false">
         <thead>
           <tr>
-            <th v-if="settingsStore.businessSettings?.sale?.manage_affectations">#</th>
-            <th>Cantidad</th>
-            <th>Producto</th>
-            <th>Precio Unitario</th>
-            <th v-if="settingsStore.business_settings?.sale?.show_discount_label">Descuento</th>
-            <th>Precio Total</th>
+            <th v-if="settingsStore.businessSettings?.sale?.manage_affectations" class="th-afc">#</th>
+            <th class="th-qty">Cantidad</th>
+            <th class="th-product">Producto</th>
+            <th class="th-price">Precio Unitario</th>
+            <th v-if="settingsStore.business_settings?.sale?.show_discount_label" class="th-discount">Descuento</th>
+            <th class="th-total">Precio Total</th>
           </tr>
         </thead>
         <tbody>
           <template v-for="(menuSet, menuIndex) in saleMenuSets" :key="`menu-${menuIndex}`">
             <tr style="background-color: #f8f8f8; font-weight: bold;">
-              <td v-if="settingsStore.businessSettings?.sale?.manage_affectations">
+              <td v-if="settingsStore.businessSettings?.sale?.manage_affectations" class="col-tag">
                 <n-tag size="small" :type="menuSet.from_combo || menuSet.set_type === 'COMBO' || menuSet.combo_id ? 'info' : 'warning'">
                   {{ menuSet.from_combo || menuSet.set_type === 'COMBO' || menuSet.combo_id ? 'COMBO' : 'MENÚ' }}
                 </n-tag>
               </td>
-              <td>{{ menuSet.quantity }}</td>
-              <td>
-                <input class="custom-input" v-model="menuSet.name" v-autowidth readonly style="font-weight: bold;" />
+              <td class="col-qty">{{ menuSet.quantity }}</td>
+              <td class="col-name">
+                <input class="custom-input product-name-input" v-model="menuSet.name" v-autowidth readonly style="font-weight: bold;" />
               </td>
-              <td class="currency-input-wrapper">S/. {{ Number(menuSet.price || 0).toFixed(2) }}</td>
-              <td v-if="settingsStore.business_settings?.sale?.show_discount_label">S/. 0.00</td>
-              <td>S/. {{ (menuSet.quantity * menuSet.price).toFixed(2) }}</td>
+              <td class="currency-input-wrapper col-price">S/. {{ Number(menuSet.price || 0).toFixed(2) }}</td>
+              <td v-if="settingsStore.business_settings?.sale?.show_discount_label" class="col-discount">S/. 0.00</td>
+              <td class="col-total">S/. {{ (menuSet.quantity * menuSet.price).toFixed(2) }}</td>
             </tr>
           </template>
 
           <tr v-for="(detail, index) in saleDetails" :key="`product-${index}`">
-            <td v-if="settingsStore.businessSettings?.sale?.manage_affectations">
+            <td v-if="settingsStore.businessSettings?.sale?.manage_affectations" class="col-tag">
               <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation"
                 :disabled="!userStore.hasPermission('change_product_affectation')" :options="menuAffectationOptions"
                 @update:value="handleAffectationChange(detail)">
@@ -40,28 +40,28 @@
                 </n-tag>
               </n-popselect>
             </td>
-            <td>{{ detail.quantity }}</td>
-            <td>
+            <td class="col-qty">{{ detail.quantity }}</td>
+            <td class="col-name">
               <input class="custom-input product-name-input" v-model="detail.product_name" v-autowidth
                 @click="$event.target.select()" />
             </td>
-            <td>
+            <td class="col-price">
               S/.
-              <input class="custom-input" type="number" :min="detail.product_affectation === 21 ? 0 : 1" step=".5"
+              <input class="custom-input price-input" type="number" :min="detail.product_affectation === 21 ? 0 : 1" step=".5"
                 v-model="detail.price_sale" v-autowidth @click="$event.target.select()"
                 :disabled="!settingsStore.business_settings?.sale?.show_discount_label"
                 @input="handlePriceInput(detail)" @blur="handlePriceBlur(detail)"
                 @keydown.enter.prevent="handlePriceBlur(detail)" />
             </td>
-            <td v-if="settingsStore.business_settings?.sale?.show_discount_label">
+            <td v-if="settingsStore.business_settings?.sale?.show_discount_label" class="col-discount">
               S/.
-              <input class="custom-input" type="number" min="0" :max="(detail.price_sale || 0) * (detail.quantity || 0)"
+              <input class="custom-input discount-input" type="number" min="0" :max="(detail.price_sale || 0) * (detail.quantity || 0)"
                 step=".5" :disabled="detail.product_affectation === 21 || !!Number(sale.discount)"
                 v-model="detail.discount" v-autowidth @click="$event.target.select()"
                 @input="handleDiscountInput(detail)" @blur="handleDiscountBlur(detail)"
                 @keydown.enter.prevent="handleDiscountBlur(detail)" />
             </td>
-            <td>
+            <td class="col-total">
               {{
                 detail.product_affectation === 21
                   ? "0.00"
@@ -277,6 +277,90 @@ export default defineComponent({
 <style lang="scss" scoped>
 .table-container {
   overflow-x: auto;
+  width: 100%;
+}
+
+.product-details-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+
+  th {
+    padding: 10px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 9px 10px;
+    font-size: 13.5px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+  }
+
+  .th-afc,
+  .col-tag {
+    text-align: center;
+    width: 48px;
+  }
+
+  .th-qty,
+  .col-qty {
+    text-align: center;
+    font-weight: 800;
+    font-size: 14.5px;
+    color: #0f172a;
+    width: 65px;
+  }
+
+  .th-product,
+  .col-name {
+    text-align: left;
+  }
+
+  .product-name-input {
+    font-weight: 700;
+    font-size: 14px;
+    color: #0f172a;
+    text-align: left;
+    max-width: 100%;
+  }
+
+  .th-price,
+  .col-price {
+    text-align: center;
+    font-weight: 600;
+    font-size: 13.5px;
+    color: #334155;
+    white-space: nowrap;
+  }
+
+  .th-discount,
+  .col-discount {
+    text-align: center;
+    font-size: 13px;
+    color: #64748b;
+    white-space: nowrap;
+  }
+
+  .th-total,
+  .col-total {
+    text-align: right;
+    font-weight: 800;
+    font-size: 14px;
+    color: #0f172a;
+    white-space: nowrap;
+    padding-right: 14px;
+  }
 }
 
 .custom-input {
@@ -286,11 +370,17 @@ export default defineComponent({
   text-align: center;
   width: auto;
   display: inline-block;
+  font-family: inherit;
+  font-size: inherit;
+  padding: 3px 6px;
+  transition: all 0.15s ease;
 }
 
-.custom-input:hover {
-  border-radius: 5px;
-  outline: LightBlue solid 2px;
+.custom-input:hover,
+.custom-input:focus {
+  border-radius: 6px;
+  outline: #fdba74 solid 2px;
+  background: #ffffff;
 }
 
 input::-webkit-outer-spin-button,

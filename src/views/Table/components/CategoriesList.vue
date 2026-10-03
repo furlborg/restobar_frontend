@@ -3,7 +3,7 @@
         <n-tabs type="line" animated>
             <n-tab-pane name="categorias" tab="Categorías">
                 <n-card title="Categorías" :bordered="false" class="h-100 categories-card" content-class="categories-card-content">
-                    <n-scrollbar style="max-height: calc(100vh - 220px)">
+                    <div class="categories-scroll-viewport">
                         <div class="categories-scroll-wrapper">
                             <n-list v-if="listType === 'list'" class="me-2">
                                 <n-list-item v-for="(category, index) in productStore.categories" :key="index">
@@ -15,10 +15,7 @@
                                     <n-thing>
                                         <n-space vertical>
                                             <n-space align="center">
-                                                <router-link class="text-decoration-none" :to="{
-                                                    name: $route.name.startsWith('W') ? 'WCategoriesItems' : 'CategoriesItems',
-                                                    params: { category: category.id },
-                                                }">
+                                                <router-link class="text-decoration-none" :to="getCategoryRoute(category)">
                                                     <n-text class="fs-4">{{ category.description }}</n-text>
                                                 </router-link>
                                                 <n-text class="fs-6" type="success">S/. 10.00</n-text>
@@ -37,8 +34,7 @@
                                 :cols="gridCols" :x-gap="8" :y-gap="8">
                                 <n-gi :span="gridSpan" v-for="(category, index) in productStore.categories" :key="index">
                                     <div class="item-zoom">
-                                        <router-link class="text-decoration-none"
-                                            :to="{ name: $route.name.startsWith('W') ? 'WCategoriesItems' : 'CategoriesItems', params: { category: category.id } }">
+                                        <router-link class="text-decoration-none" :to="getCategoryRoute(category)">
                                             <div class="category-container" :style="{ height: category_settings.card_height + 'px' }">
                                                 <img v-if="category_settings.use_image && categoryHasImage(category)"
                                                     :src="category.image || category.image_url" alt="" />
@@ -53,87 +49,91 @@
                                 </n-gi>
                             </n-grid>
                         </div>
-                    </n-scrollbar>
+                    </div>
                 </n-card>
             </n-tab-pane>
 
             <n-tab-pane v-if="canUseMenus" name="menu" tab="Menú del Día">
                 <n-card title="Menú Programado" :bordered="false" class="h-100 flizzy-menu-card" content-class="flizzy-menu-content">
-                    <div v-if="scheduledMenus.length" class="flizzy-menus-grid">
-                        <div 
-                            v-for="menu in scheduledMenus" 
-                            :key="menu.id" 
-                            class="flizzy-menu-item"
-                            @click="handleOpenMenuModal(menu)"
-                        >
-                            <div class="menu-item-media">
-                                <div class="menu-item-icon-box">
-                                    <v-icon name="gi-hot-meal" scale="1.3" />
+                    <div class="categories-scroll-viewport">
+                        <div v-if="scheduledMenus.length" class="flizzy-menus-grid">
+                            <div 
+                                v-for="menu in scheduledMenus" 
+                                :key="menu.id" 
+                                class="flizzy-menu-item"
+                                @click="handleOpenMenuModal(menu)"
+                            >
+                                <div class="menu-item-media">
+                                    <div class="menu-item-icon-box">
+                                        <v-icon name="gi-hot-meal" scale="1.3" />
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="menu-item-body">
-                                <div class="menu-item-header">
-                                    <span class="menu-item-name" :title="menu.menu.name">{{ menu.menu.name }}</span>
-                                    <span class="menu-item-tagline">Toca para configurar</span>
-                                </div>
-                                <div class="menu-item-footer">
-                                    <span class="menu-price-pill">S/. {{ parseFloat(menu.menu.price).toFixed(2) }}</span>
-                                    <div class="menu-plus-btn">
-                                        <v-icon name="md-add-round" />
+                                <div class="menu-item-body">
+                                    <div class="menu-item-header">
+                                        <span class="menu-item-name" :title="menu.menu.name">{{ menu.menu.name }}</span>
+                                        <span class="menu-item-tagline">Toca para configurar</span>
+                                    </div>
+                                    <div class="menu-item-footer">
+                                        <span class="menu-price-pill">S/. {{ parseFloat(menu.menu.price).toFixed(2) }}</span>
+                                        <div class="menu-plus-btn">
+                                            <v-icon name="md-add-round" />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                        <n-empty v-else description="Aún no se programaron menús para hoy" class="my-5" />
                     </div>
-                    <n-empty v-else description="Aún no se programaron menús para hoy" class="my-5" />
                 </n-card>
             </n-tab-pane>
 
             <n-tab-pane v-if="canUseCombos" name="combos" tab="Combos">
                 <n-card title="Combos Disponibles" :bordered="false" class="h-100 combos-card" content-class="combos-card-content">
-                    <n-spin :show="loadingCombos">
-                        <div class="combos-wrapper">
-                            <div v-for="category in comboCategories" :key="category.id" class="combo-category-group">
-                                <div class="combo-category-header">
-                                    <span class="category-name">{{ category.description }}</span>
-                                    <span class="category-count">{{ getCombosForCategory(category.id).length }} combos</span>
-                                </div>
-                                <div class="combos-grid">
-                                    <div 
-                                        v-for="combo in getCombosForCategory(category.id)" 
-                                        :key="combo.id"
-                                        @click="handleOpenComboModal(combo)" 
-                                        class="combo-card-item"
-                                    >
-                                        <div class="combo-card-prefix">
-                                            <img v-if="combo.image" :src="combo.image" class="combo-img" alt="" @error="combo.image = null" />
-                                            <div v-else class="combo-avatar-fallback">
-                                                <v-icon name="gi-hot-meal" scale="1.3" />
-                                            </div>
-                                        </div>
-                                        <div class="combo-card-body">
-                                            <div class="combo-card-header">
-                                                <span class="combo-title">{{ combo.name }}</span>
-                                                <div class="combo-meta">
-                                                    <span class="combo-badge-included">
-                                                        {{ combo.products ? combo.products.length : 0 }} productos incluidos
-                                                    </span>
+                    <n-spin :show="loadingCombos" class="h-100 d-flex flex-column">
+                        <div class="categories-scroll-viewport">
+                            <div class="combos-wrapper">
+                                <div v-for="category in comboCategories" :key="category.id" class="combo-category-group">
+                                    <div class="combo-category-header">
+                                        <span class="category-name">{{ category.description }}</span>
+                                        <span class="category-count">{{ getCombosForCategory(category.id).length }} combos</span>
+                                    </div>
+                                    <div class="combos-grid">
+                                        <div 
+                                            v-for="combo in getCombosForCategory(category.id)" 
+                                            :key="combo.id"
+                                            @click="handleOpenComboModal(combo)" 
+                                            class="combo-card-item"
+                                        >
+                                            <div class="combo-card-prefix">
+                                                <img v-if="combo.image" :src="combo.image" class="combo-img" alt="" @error="combo.image = null" />
+                                                <div v-else class="combo-avatar-fallback">
+                                                    <v-icon name="gi-hot-meal" scale="1.3" />
                                                 </div>
                                             </div>
-                                            <div class="combo-card-footer">
-                                                <span class="combo-price">S/. {{ parseFloat(combo.price || 0).toFixed(2) }}</span>
-                                                <div class="combo-add-btn">
-                                                    <v-icon name="md-add-round" />
+                                            <div class="combo-card-body">
+                                                <div class="combo-card-header">
+                                                    <span class="combo-title">{{ combo.name }}</span>
+                                                    <div class="combo-meta">
+                                                        <span class="combo-badge-included">
+                                                            {{ combo.products ? combo.products.length : 0 }} productos incluidos
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="combo-card-footer">
+                                                    <span class="combo-price">S/. {{ parseFloat(combo.price || 0).toFixed(2) }}</span>
+                                                    <div class="combo-add-btn">
+                                                        <v-icon name="md-add-round" />
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
+                                    <n-empty v-if="getCombosForCategory(category.id).length === 0"
+                                        description="No hay combos disponibles en esta categoría" size="small" class="my-3" />
                                 </div>
-                                <n-empty v-if="getCombosForCategory(category.id).length === 0"
-                                    description="No hay combos disponibles en esta categoría" size="small" class="my-3" />
+                                <n-empty v-if="comboCategories.length === 0 && !loadingCombos"
+                                    description="No hay categorías de combos disponibles" class="my-5" />
                             </div>
-                            <n-empty v-if="comboCategories.length === 0 && !loadingCombos"
-                                description="No hay categorías de combos disponibles" class="my-5" />
                         </div>
                     </n-spin>
                 </n-card>
@@ -147,6 +147,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from "vue";
+import { useRoute } from "vue-router";
 import { useProductStore } from "@/store/modules/product";
 import { useSettingsStore } from "@/store/modules/settings";
 import { getMenuToday, getComboCategories, getCombos } from "@/api/modules/products";
@@ -155,12 +156,33 @@ import MenuProductModal from "./MenuProductModal.vue";
 import ComboProductModal from "./ComboProductModal.vue";
 import categoryFallback from "@/assets/images/category-bg.jpg";
 
+const route = useRoute();
 const productStore = useProductStore();
 const settingsStore = useSettingsStore();
 const listType = ref("grid");
 const scheduledMenus = ref([]);
 const showMenuModal = ref(false);
 const selectedMenu = ref(null);
+
+const getCategoryRoute = (category) => {
+    if (route.name === 'CategoriesOrder' || route.name === 'TakeOrder' || route.path?.includes('take-order')) {
+        return {
+            name: 'CategoriesOrderItems',
+            params: { category_id: category.id },
+            query: { delivery: route.query.delivery || 'false' }
+        };
+    }
+    if (route.name?.startsWith('W')) {
+        return {
+            name: 'WCategoriesItems',
+            params: { category: category.id }
+        };
+    }
+    return {
+        name: 'CategoriesItems',
+        params: { category: category.id }
+    };
+};
 
 const comboCategories = ref([]);
 const combos = ref([]);
@@ -173,16 +195,17 @@ const category_settings = computed(() => {
     let cardHeight = 120;
     if (raw.category_card_size === 'small') cardHeight = 85;
     else if (raw.category_card_size === 'large') cardHeight = 155;
+    else if (raw.category_card_size === 'custom' && raw.category_card_height) cardHeight = raw.category_card_height;
     else if (raw.category_card_height) cardHeight = raw.category_card_height;
 
     return {
         use_image: false,
-        area_text_size: 15,
+        area_text_size: 16,
         width_image_product: 35,
         height_image_product: 35,
+        ...raw,
         card_height: cardHeight,
         category_card_size: raw.category_card_size || 'medium',
-        ...raw,
     };
 });
 
@@ -278,64 +301,144 @@ onMounted(async () => {
 <style lang="scss" scoped>
 #CategoriesList {
     height: 100%;
+    max-height: 100%;
     min-height: 0;
     display: flex;
     flex-direction: column;
     background-color: #ffffff;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
-@media (max-width: 768px) {
-    #CategoriesList {
-        flex: 1 1 0px;
-        overflow: hidden;
-    }
-
-    .categories-card-content,
-    .combos-card-content,
-    .flizzy-menu-content {
-        padding: 4px 6px !important;
-    }
-
-    :deep(.n-tabs) {
-        flex: 1 1 0px !important;
-        height: 100% !important;
-        min-height: 0 !important;
-        display: flex !important;
-        flex-direction: column !important;
-    }
-
-    :deep(.n-tabs-pane-wrapper) {
-        flex: 1 1 0px !important;
-        height: 100% !important;
-        min-height: 0 !important;
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch !important;
-    }
-
-    :deep(.n-tab-pane) {
-        height: auto !important;
-        min-height: 100% !important;
-    }
+:deep(.n-tabs) {
+    flex: 1 1 0px !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
 }
 
-.categories-card,
-.combos-card {
+:deep(.n-tabs-nav) {
+    flex-shrink: 0 !important;
+}
+
+:deep(.n-tabs-pane-wrapper) {
+    flex: 1 1 0px !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+:deep(.n-tabs-pane-wrapper > div) {
+    flex: 1 1 0px !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: row !important;
+}
+
+:deep(.n-tabs-pane-wrapper > div > .n-tab-pane),
+:deep(.n-tab-pane) {
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 0 !important;
+}
+
+:deep(.categories-card),
+:deep(.combos-card),
+:deep(.flizzy-menu-card) {
+    flex: 1 1 0px !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
     background-color: #ffffff !important;
 }
 
+:deep(.n-card-header) {
+    flex-shrink: 0 !important;
+    padding: 6px 10px 4px !important;
+}
+
+:deep(.n-card__content),
 .categories-card-content,
 .combos-card-content,
 .flizzy-menu-content {
+    flex: 1 1 0px !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
     background-color: #ffffff !important;
-    padding: 12px 16px !important;
+    padding: 4px 6px 6px !important;
+    box-sizing: border-box !important;
+}
+
+.categories-scroll-viewport {
+    flex: 1 1 0px;
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 2px 4px 10px;
+    box-sizing: border-box;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    overscroll-behavior-y: contain;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f8fafc;
+}
+
+.categories-scroll-viewport::-webkit-scrollbar {
+    width: 6px;
+}
+.categories-scroll-viewport::-webkit-scrollbar-track {
+    background: #f8fafc;
+    border-radius: 4px;
+}
+.categories-scroll-viewport::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+.categories-scroll-viewport::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
 .combos-wrapper,
 .categories-scroll-wrapper {
     background-color: #ffffff;
     min-height: 100%;
-    padding: 6px 4px;
+    padding: 2px 2px 8px;
     box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+    .combos-wrapper,
+    .categories-scroll-wrapper {
+        padding-bottom: 50px;
+    }
+}
+
+@media (max-width: 768px) {
+    .categories-card-content,
+    .combos-card-content,
+    .flizzy-menu-content {
+        padding: 4px 4px !important;
+    }
 }
 
 /* ==================================================== */

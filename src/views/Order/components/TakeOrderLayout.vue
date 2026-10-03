@@ -1,10 +1,8 @@
 <template>
   <div id="TakeOrderLayout">
-    <n-page-header class="mb-2" @back="$router.push({ name: 'TableHome' })">
+    <n-page-header class="table-layout-page-header" @back="$router.push({ name: 'TableHome' })">
       <template #title>
-        <n-space justify="space-between">
-          <n-text class="fs-2">Realizar Pedido</n-text>
-        </n-space>
+        <span class="table-header-name">Realizar Pedido</span>
       </template>
     </n-page-header>
     <!-- Vista Desktop con flexbox y scroll independiente -->
@@ -31,11 +29,7 @@
       <!-- MODO SELECCIÓN DE PRODUCTOS (Categorías + Resumen del Pedido) -->
       <template v-else>
         <div class="take-order-left-column">
-          <div class="h-100 flex-column d-flex overflow-hidden">
-            <router-view v-slot="{ Component }">
-              <component :is="Component" />
-            </router-view>
-          </div>
+          <router-view />
         </div>
         <div class="take-order-right-column">
           <PaymentSummary :select-products="ui.selectProducts" :product-search="ui.productSearch"
@@ -616,11 +610,24 @@ onBeforeRouteLeave((to) => handleRouteGuard(to, true));
 
 <style lang="scss" scoped>
 #TakeOrderLayout {
-  height: calc(100vh - 95px);
-  max-height: calc(100vh - 95px);
+  height: calc(100vh - 105px);
+  max-height: calc(100vh - 105px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-sizing: border-box;
+}
+
+.table-layout-page-header {
+  flex-shrink: 0;
+  padding: 2px 14px 4px;
+  margin-bottom: 2px;
+}
+
+.table-header-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
 }
 
 .take-order-desktop-container {
@@ -631,12 +638,15 @@ onBeforeRouteLeave((to) => handleRouteGuard(to, true));
   display: flex;
   flex-direction: row;
   gap: 10px;
+  box-sizing: border-box;
+  padding-bottom: 2px;
 }
 
 .take-order-left-column {
   flex: 1 1 0px;
   min-width: 0;
   height: 100%;
+  max-height: 100%;
   min-height: 0;
   overflow: hidden;
   display: flex;
@@ -645,6 +655,7 @@ onBeforeRouteLeave((to) => handleRouteGuard(to, true));
   border-radius: 12px;
   border: 1px solid #e2e8f0;
   padding: 8px 12px;
+  box-sizing: border-box;
 }
 
 .take-order-right-column {
@@ -653,10 +664,12 @@ onBeforeRouteLeave((to) => handleRouteGuard(to, true));
   max-width: 440px;
   flex-shrink: 0;
   height: 100%;
+  max-height: 100%;
   min-height: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
 .take-order-billing-fullscreen {

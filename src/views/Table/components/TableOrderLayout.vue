@@ -662,11 +662,12 @@ provide("addOrderToCustomer", addOrderToCustomer);
 
 <style lang="scss" scoped>
 .table-order-layout-root {
-    height: calc(100vh - 84px);
-    max-height: calc(100vh - 84px);
+    height: calc(100vh - 105px);
+    max-height: calc(100vh - 105px);
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    box-sizing: border-box;
 
     @media (max-width: 768px) {
         height: calc(100vh - 74px) !important;
@@ -722,8 +723,7 @@ provide("addOrderToCustomer", addOrderToCustomer);
             min-height: 0;
             display: flex;
             flex-direction: column;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
+            overflow: hidden;
             background: #ffffff;
         }
     }
@@ -737,6 +737,8 @@ provide("addOrderToCustomer", addOrderToCustomer);
     display: flex;
     flex-direction: row;
     gap: 10px;
+    box-sizing: border-box;
+    padding-bottom: 2px;
 }
 
 .table-layout-page-header {
@@ -765,6 +767,7 @@ provide("addOrderToCustomer", addOrderToCustomer);
     flex: 1 1 0px;
     min-width: 0;
     height: 100%;
+    max-height: 100%;
     min-height: 0;
     overflow: hidden;
     display: flex;
@@ -773,6 +776,7 @@ provide("addOrderToCustomer", addOrderToCustomer);
     border-radius: 12px;
     border: 1px solid #e2e8f0;
     padding: 8px 12px;
+    box-sizing: border-box;
 }
 
 .order-left-column :deep(.n-scrollbar-rail) {
@@ -780,8 +784,12 @@ provide("addOrderToCustomer", addOrderToCustomer);
 }
 
 .order-left-column.is-payment-column {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
     overflow: hidden !important;
-    padding: 6px 12px !important;
 }
 
 .order-right-column {
@@ -790,9 +798,11 @@ provide("addOrderToCustomer", addOrderToCustomer);
     max-width: 440px;
     flex-shrink: 0;
     height: 100%;
+    max-height: 100%;
     min-height: 0;
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    box-sizing: border-box;
 }
 </style>

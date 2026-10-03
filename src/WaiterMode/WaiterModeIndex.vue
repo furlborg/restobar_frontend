@@ -10,6 +10,12 @@
             {{ tableStore.getTableByID($route.params.table)?.description }}
           </div>
         </div>
+        <div v-else-if="userStore.user?.role !== 'MOZO'" class="d-flex ms-2 align-items-center">
+          <n-button size="tiny" secondary type="primary" @click="$router.push({ name: 'TableHome' })">
+            <template #icon><v-icon name="md-arrowback-round" /></template>
+            Ir a Módulos
+          </n-button>
+        </div>
         <div class="menuBtn" :class="{ act: active === true }" @click="active = !active">
           <span class="lines"></span>
         </div>
@@ -72,7 +78,10 @@
           ">Mover Mesa</a>
         </li>
         <li v-if="userStore.user.role !== 'MOZO'">
-          <a @click="$router.push({ name: 'Dashboard' })">Volver</a>
+          <a @click="$router.push({ name: 'TableHome' })">Mesas (Modo Completo)</a>
+        </li>
+        <li v-if="userStore.user.role !== 'MOZO'">
+          <a @click="$router.push({ name: 'Dashboard' })">Panel de Módulos</a>
         </li>
         <li>
           <a href="#" class="suBtn" @click="doLogout">Cerrar sesión</a>

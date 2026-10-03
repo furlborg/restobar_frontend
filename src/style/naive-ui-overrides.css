@@ -95,3 +95,57 @@
 .n-message.n-message--info-type .n-message__content {
   color: #c2410c !important;
 }
+
+/* ==================================================== */
+/* BARRAS DE DESPLAZAMIENTO INVISIBLES (GLOBAL)        */
+/* Mantiene funcionalidad de scroll ocultando la barra */
+/* ==================================================== */
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+*::-webkit-scrollbar-thumb {
+  display: none !important;
+  background: transparent !important;
+}
+
+*::-webkit-scrollbar-track {
+  display: none !important;
+  background: transparent !important;
+}
+
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+html,
+body,
+#app,
+.n-layout,
+.n-layout-content,
+.n-layout-scroll-container {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+#app::-webkit-scrollbar,
+.n-layout-scroll-container::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Ocultar rieles y barras virtuales de Naive UI */
+.n-scrollbar-rail,
+.n-scrollbar-rail__scrollbar {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}

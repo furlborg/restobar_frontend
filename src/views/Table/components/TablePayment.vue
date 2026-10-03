@@ -1249,11 +1249,17 @@ onMounted(async () => {
 
 .pos-billing-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(380px, 1fr);
+  grid-template-columns: minmax(0, 1.55fr) minmax(380px, 1fr);
   gap: 14px;
   height: 100%;
   min-height: 0;
   align-items: stretch;
+}
+
+@media (min-width: 1440px) {
+  .pos-billing-grid {
+    grid-template-columns: minmax(0, 1.65fr) minmax(400px, 1fr);
+  }
 }
 
 .pos-panel {
@@ -1281,7 +1287,7 @@ onMounted(async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 16px;
+  padding: 12px 18px;
   border-bottom: 1px solid #f1f5f9;
   background: #fafbfc;
 }
@@ -1293,48 +1299,39 @@ onMounted(async () => {
 }
 
 .table-badge {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 800;
   color: #0f172a;
 }
 
 .item-count-tag {
   font-weight: 600;
+  font-size: 12.5px;
 }
 
 .products-scroll-viewport {
   flex: 1 1 0;
   min-height: 0;
   overflow-y: auto;
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f8fafc;
 }
 
 .products-scroll-viewport::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
+  width: 6px;
 }
 
-:deep(.n-scrollbar-rail) {
-  display: none !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
+.products-scroll-viewport::-webkit-scrollbar-track {
+  background: #f8fafc;
 }
 
-:deep(.n-scrollbar-container) {
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
-}
-
-:deep(.n-scrollbar-container::-webkit-scrollbar) {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
+.products-scroll-viewport::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
 }
 
 :deep(.product-details-table) {
-  font-size: 11.5px;
+  font-size: 13.5px;
 }
 
 :deep(.product-details-table th) {
@@ -1343,19 +1340,19 @@ onMounted(async () => {
   background: #f8fafc !important;
   z-index: 5;
   font-weight: 700;
-  font-size: 10.5px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: #64748b;
   border-bottom: 1px solid #e2e8f0 !important;
-  padding: 6px 8px !important;
+  padding: 10px 10px !important;
 }
 
 :deep(.product-details-table td) {
-  padding: 5px 6px !important;
-  font-size: 11.5px;
+  padding: 9px 10px !important;
+  font-size: 13.5px;
   border-bottom: 1px solid #f1f5f9;
-  line-height: 1.25;
+  line-height: 1.35;
 }
 
 :deep(.product-details-table tr:hover td) {
@@ -1363,23 +1360,41 @@ onMounted(async () => {
 }
 
 :deep(.product-details-table .custom-input) {
-  font-size: 11.5px !important;
-  padding: 2px 4px !important;
+  font-size: 13.5px !important;
+  padding: 3px 6px !important;
   color: #1e293b;
 }
 
-:deep(.product-details-table .n-tag) {
-  height: 20px !important;
-  line-height: 18px !important;
-  padding: 0 6px !important;
-  font-size: 10px !important;
+:deep(.product-details-table .product-name-input) {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+}
+
+:deep(.product-details-table .col-qty) {
+  font-size: 14.5px !important;
   font-weight: 800 !important;
-  border-radius: 5px !important;
+  color: #0f172a !important;
+}
+
+:deep(.product-details-table .col-total) {
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  color: #0f172a !important;
+}
+
+:deep(.product-details-table .n-tag) {
+  height: 22px !important;
+  line-height: 20px !important;
+  padding: 0 8px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  border-radius: 6px !important;
 }
 
 .panel-footer {
   flex-shrink: 0;
-  padding: 8px 14px;
+  padding: 10px 16px;
   background: #f8fafc;
   border-top: 1px solid #e2e8f0;
 }
@@ -1388,12 +1403,17 @@ onMounted(async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 12px;
+  font-size: 13.5px;
 }
 
 .account-subtotal-label {
-  color: #334155;
-  font-size: 13px;
+  color: #1e293b;
+  font-size: 14px;
+}
+
+.account-subtotal-label b {
+  font-size: 15px;
+  color: #0f172a;
 }
 
 .pos-checkout-panel {
@@ -2026,6 +2046,12 @@ onMounted(async () => {
   border-color: #fb923c !important;
   color: #c2410c !important;
   transform: translateY(-1px);
+}
+
+.checkout-submit-wrapper {
+  margin-top: 4px;
+  padding-bottom: 6px;
+  flex-shrink: 0;
 }
 
 .pos-cobrar-btn {

@@ -10,21 +10,11 @@
               <span class="split-badge-title">Dividir Cuenta</span>
             </div>
 
-            <!-- SERIE Y CORRELATIVO -->
+            <!-- SERIE Y CORRELATIVO (INFORMATIVO) -->
             <div class="split-serie-selector">
-              <n-dropdown 
-                trigger="click" 
-                :options="saleStore.getDocumentSeriesOptions(sale.invoice_type)"
-                :show-arrow="true" 
-                placement="bottom-start" 
-                size="large" 
-                @select="selectSerie"
-              >
-                <button type="button" class="serie-pill-btn">
-                  <span class="serie-text">{{ `${saleStore.getSerieDescription(sale.serie)}-${sale.number}` }}</span>
-                  <v-icon name="md-arrowdropdown-round" scale="1.2" class="ms-1 text-muted" />
-                </button>
-              </n-dropdown>
+              <div class="serie-pill-btn serie-pill-static">
+                <span class="serie-text">{{ `${saleStore.getSerieDescription(sale.serie)}-${sale.number}` }}</span>
+              </div>
             </div>
           </div>
 
@@ -103,7 +93,7 @@
           <div class="customer-fields-grid">
             <div class="customer-search-field">
               <n-form-item :show-label="false" :show-require-mark="formRules.customer.required" path="customer" class="mb-0">
-                <n-input-group size="small">
+                <n-input-group size="small" class="customer-input-group">
                   <n-auto-complete 
                     blur-after-select 
                     :input-props="{ autocomplete: 'disabled' }" 
@@ -128,7 +118,7 @@
                     placeholder="Buscar cliente (RUC, DNI o Nombre)..." 
                     clearable 
                   />
-                  <n-button type="info" size="small" @click="showModal = true">
+                  <n-button type="info" size="small" class="btn-new-customer" @click="showModal = true">
                     <v-icon name="md-add-round" />
                     <span class="d-none d-sm-inline ms-1">Nuevo</span>
                   </n-button>
@@ -240,8 +230,8 @@
                         size="small" 
                         placement="bottom-start" 
                         v-model:value="detail.product_affectation"
-                        :options="productStore.affectationsOptions" 
-                        @update:value="() => saleStore.updateDetail(detail)"
+                        :options="getAvailableAffectations(detail)" 
+                        @update:value="(val) => handleDetailAffectationChange(detail, val)"
                       >
                         <n-tag size="small" :color="getAfcColor(detail.product_affectation)" class="afc-badge">
                           {{ getAfcShort(detail.product_affectation) }}
@@ -275,7 +265,7 @@
                         :step="0.1" 
                         :precision="2"
                         :disabled="detail.product_affectation === 21 || Number(sale.discount) > 0" 
-                        style="width: 78px;" 
+                        style="width: 98px;" 
                       />
                     </td>
                     <td class="col-total fw-bold text-emerald">
@@ -1034,6 +1024,20 @@ export default defineComponent({
       sale.value.count = products_count.value;
       sale.value.do_update = false;
       sale.value.is_change = true;
+      if (sale.value.sale_details) {
+        sale.value.sale_details.forEach(detail => {
+          if (!detail.original_affectation) {
+            if (Number(detail.product_affectation) !== 21) {
+              detail.original_affectation = Number(detail.product_affectation);
+            } else {
+              const prodInCatalog = productStore.catalog?.find(p => p.id === detail.product);
+              detail.original_affectation = prodInCatalog?.affectation 
+                ? Number(prodInCatalog.affectation)
+                : (Number(detail.product_igv) > 0 || Number(detail.igv_tax) > 0 ? 10 : (Number(settingsStore.businessSettings?.sale?.default_affectation) || 20));
+            }
+          }
+        });
+      }
       await obtainSaleNumber();
 
       const fetch = new Date();
@@ -1222,6 +1226,52 @@ export default defineComponent({
       }
     }
 
+    const getAvailableAffectations = (detail) => {
+      const allOptions = productStore.affectationsOptions || [];
+      let baseAfc = detail.original_affectation;
+      if (!baseAfc) {
+        if (Number(detail.product_affectation) !== 21) {
+          baseAfc = Number(detail.product_affectation);
+        } else {
+          const prodInCatalog = productStore.catalog?.find(p => p.id === detail.product);
+          baseAfc = prodInCatalog?.affectation 
+            ? Number(prodInCatalog.affectation)
+            : (Number(detail.product_igv) > 0 || Number(detail.igv_tax) > 0 ? 10 : (Number(settingsStore.businessSettings?.sale?.default_affectation) || 20));
+        }
+        detail.original_affectation = baseAfc;
+      }
+
+      // Gravado (10): solo Gravado (10) o Gratuito (21)
+      if (baseAfc === 10) {
+        return allOptions.filter(opt => opt.value === 10 || opt.value === 21);
+      }
+      // Exonerado (20): solo Exonerado (20) o Gratuito (21)
+      if (baseAfc === 20) {
+        return allOptions.filter(opt => opt.value === 20 || opt.value === 21);
+      }
+      return allOptions.filter(opt => opt.value === baseAfc || opt.value === 21);
+    };
+
+    const handleDetailAffectationChange = (detail, newAfc) => {
+      const targetAfc = Number(newAfc);
+      const baseAfc = detail.original_affectation || (Number(detail.product_affectation) !== 21 ? Number(detail.product_affectation) : 20);
+
+      if (baseAfc === 10 && targetAfc === 20) {
+        message.warning("Un producto gravado no puede pasar a exonerado.");
+        return;
+      }
+      if (baseAfc === 20 && targetAfc === 10) {
+        message.warning("Un producto exonerado no puede pasar a gravado.");
+        return;
+      }
+
+      detail.product_affectation = targetAfc;
+      if (targetAfc === 21) {
+        detail.discount = 0;
+      }
+      saleStore.updateDetail(detail);
+    };
+
     const whatsappNumber = ref("");
 
     const showPdf = ref(false);
@@ -1349,6 +1399,8 @@ export default defineComponent({
       list,
       getAfcShort,
       getAfcColor,
+      getAvailableAffectations,
+      handleDetailAffectationChange,
       totalIGV,
       totalGRV,
       totalEXN,
@@ -1433,6 +1485,14 @@ export default defineComponent({
   &:hover {
     border-color: #059669;
     background: #ecfdf5;
+  }
+
+  &.serie-pill-static {
+    cursor: default;
+    &:hover {
+      border-color: #cbd5e1;
+      background: #f8fafc;
+    }
   }
 }
 
@@ -1531,6 +1591,35 @@ export default defineComponent({
 
 .customer-search-field {
   flex: 1 1 280px;
+
+  :deep(.customer-input-group) {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+
+    .n-auto-complete {
+      flex: 1 1 auto;
+    }
+
+    .n-input {
+      height: 34px !important;
+      min-height: 34px !important;
+      display: flex;
+      align-items: center;
+    }
+
+    .btn-new-customer {
+      height: 34px !important;
+      min-height: 34px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      font-weight: 600;
+      padding: 0 14px !important;
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+  }
 }
 
 .customer-address-field {
@@ -1634,7 +1723,7 @@ export default defineComponent({
 }
 
 .col-discount {
-  width: 90px;
+  width: 110px;
   text-align: right;
   white-space: nowrap;
 }

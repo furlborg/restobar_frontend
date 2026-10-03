@@ -160,7 +160,7 @@
             <div v-if="showDeliveryCheckbox" class="delivery-toggle-row">
               <div class="delivery-toggle-info">
                 <div class="delivery-icon-pill" :class="{ 'is-active': isDeliveryActive }">
-                  <v-icon name="md-deliverydining-round" scale="1.15" />
+                  <v-icon name="md-deliverydining" scale="1.15" />
                 </div>
                 <div>
                   <span class="delivery-mode-title">Tipo de Entrega</span>
@@ -183,7 +183,7 @@
             <div v-else class="delivery-mode-badge-row">
               <div class="d-flex align-items-center gap-2">
                 <div class="delivery-icon-pill is-active">
-                  <v-icon :name="forceDelivery ? 'md-deliverydining-round' : 'md-shoppingbag-round'" scale="1.1" />
+                  <v-icon :name="forceDelivery ? 'md-deliverydining' : 'ri-shopping-bag-2-fill'" scale="1.15" />
                 </div>
                 <div>
                   <span class="delivery-mode-title">{{ forceDelivery ? 'Pedido para Delivery' : 'Pedido Para Llevar' }}</span>
@@ -899,11 +899,17 @@ const handleMainAction = () => {
 
 .pos-billing-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(380px, 1fr);
+  grid-template-columns: minmax(0, 1.55fr) minmax(380px, 1fr);
   gap: 14px;
   height: 100%;
   min-height: 0;
   align-items: stretch;
+}
+
+@media (min-width: 1440px) {
+  .pos-billing-grid {
+    grid-template-columns: minmax(0, 1.65fr) minmax(400px, 1fr);
+  }
 }
 
 .pos-panel {
@@ -931,7 +937,7 @@ const handleMainAction = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 16px;
+  padding: 12px 18px;
   border-bottom: 1px solid #f1f5f9;
   background: #fafbfc;
 }
@@ -943,13 +949,14 @@ const handleMainAction = () => {
 }
 
 .table-badge {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 800;
   color: #0f172a;
 }
 
 .item-count-tag {
   font-weight: 600;
+  font-size: 12.5px;
 }
 
 .flizzy-add-order-btn {
@@ -978,7 +985,7 @@ const handleMainAction = () => {
 
 .panel-footer {
   flex-shrink: 0;
-  padding: 8px 14px;
+  padding: 10px 16px;
   background: #f8fafc;
   border-top: 1px solid #e2e8f0;
 }
@@ -987,12 +994,17 @@ const handleMainAction = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 12px;
+  font-size: 13.5px;
 }
 
 .account-subtotal-label {
-  color: #334155;
-  font-size: 13px;
+  color: #1e293b;
+  font-size: 14px;
+}
+
+.account-subtotal-label b {
+  font-size: 15px;
+  color: #0f172a;
 }
 
 /* Columna Derecha: Checkout */
