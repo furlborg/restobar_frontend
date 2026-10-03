@@ -752,7 +752,7 @@
                                                 <span class="switch-row-title">Imprimir categoría en ticket de pedido</span>
                                                 <span class="switch-row-desc">Incluye el nombre de la sección (ej. Entradas, Fondos) en la comanda.</span>
                                             </div>
-                                            <n-switch :disabled="!editMode" v-model:value="businessSettings.order.print_category_on_order" />
+                                            <n-switch :disabled="!editMode" v-model:value="businessSettings.printer.show_cat" />
                                         </div>
 
                                         <div class="switch-row-item">
@@ -1582,6 +1582,9 @@ export default defineComponent({
             try {
                 if (businessSettings.value.kds && businessSettings.value.modules) {
                     businessSettings.value.kds.enabled = businessSettings.value.modules.show_kds;
+                }
+                if (businessSettings.value.printer && businessSettings.value.order) {
+                    businessSettings.value.order.print_category_on_order = !!businessSettings.value.printer.show_cat;
                 }
                 const response = await updateBusinessSettings(businessSettings.value);
                 if (response.status === 202 || response.status === 200) {

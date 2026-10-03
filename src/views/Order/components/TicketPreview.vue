@@ -174,9 +174,11 @@ export default defineComponent({
             return new Promise((resolve) => {
 
                 const sendTicketData = async () => {
+                    const showCat = !!(settingsStore.business_settings?.printer?.show_cat ?? settingsStore.businessSettings?.printer?.show_cat);
                     const jsonTicket = {
                         "printer_name": settingsStore.businessSettings.sale.printer_name,
                         "ticket_type": "DELIVERY",
+                        "show_category": showCat,
                         "tittle": {
                             "table": "DELIVERY",
                             "order": props.data.id
@@ -192,20 +194,35 @@ export default defineComponent({
                             "payment_method": JSON.parse(props.data.json_sale).informacion_adicional.split("|")[2],
                             "usuario": props.data.username
                         },
-                        "ticket_content": props.data.order_details.map(it => ({
-                        // "ticket_content": JSON.parse(props.data.json_sale).items.map(it => ({
-                            "cantidad": it.quantity,
-                            "descripcion": it.product_name,
-                            "product_name": it.product_name,
-                            "product_description": it.product_description,
-                            "product_category": it.product_category,
-                            "precio": parseFloat(it?.["sale_detail_price"].toFixed(2)),
-                            "discount": parseFloat(it?.discount || it?.sale_detail_discount || 0),
-                            "total": parseFloat(it?.["sale_detail_total"].toFixed(2)),
-                            "indicaciones": (it.indication || [])
-                                .map(indicate => formatSingleIndicationText(indicate, true))
-                                .filter(d => d && d.trim() !== "")
-                        })),
+                        "ticket_content": props.data.order_details.map(it => {
+                            const rawCat = it.product_set
+                                ? (it.product_set.set_type === 'COMBO' ? "COMBO" : (it.product_category || "MENU"))
+                                : (it.product_category || "");
+                            const baseName = it.product_name || "";
+                            let formattedDesc = baseName;
+                            if (showCat && rawCat) {
+                                const prefix = rawCat.toLowerCase().includes("combo") ? "COMBO" : rawCat.trim().toUpperCase();
+                                let cleanName = baseName;
+                                if (prefix === "COMBO") {
+                                    cleanName = cleanName.replace(/\bcombo\b/gi, "").trim();
+                                }
+                                formattedDesc = `[${prefix}] » ${cleanName}`;
+                            }
+
+                            return {
+                                "cantidad": it.quantity,
+                                "descripcion": formattedDesc,
+                                "product_name": formattedDesc,
+                                "product_description": it.product_description,
+                                "product_category": showCat ? "" : (rawCat || ""),
+                                "precio": parseFloat(it?.["sale_detail_price"].toFixed(2)),
+                                "discount": parseFloat(it?.discount || it?.sale_detail_discount || 0),
+                                "total": parseFloat(it?.["sale_detail_total"].toFixed(2)),
+                                "indicaciones": (it.indication || [])
+                                    .map(indicate => formatSingleIndicationText(indicate, true))
+                                    .filter(d => d && d.trim() !== "")
+                            };
+                        }),
                         "totals": {
                             "exonerado": JSON.parse(props.data.json_sale).totales.total_operaciones_exoneradas,
                             "gravado": JSON.parse(props.data.json_sale).totales.total_operaciones_gravadas,
@@ -259,9 +276,11 @@ export default defineComponent({
                     } else {
                         printerNameToPrint = place.printer_name;
                     }
+                    const showCat = !!(settingsStore.business_settings?.printer?.show_cat ?? settingsStore.businessSettings?.printer?.show_cat);
                     const jsonTicket = {
                         "printer_name": printerNameToPrint,
                         "ticket_type": "ORDER",
+                        "show_category": showCat,
                         "tittle": {
                             "area": props.data.area,
                             "table": "",
@@ -368,13 +387,27 @@ export default defineComponent({
                                     });
                                 }
 
+                                const rawCat = it.product_set
+                                    ? (it.product_set.set_type === 'COMBO' ? "COMBO" : (it.product_category || "MENU"))
+                                    : (it.product_category || "");
+                                const baseName = it.product_name || it.product_set?.name || "";
+                                let formattedDesc = baseName;
+                                if (showCat && rawCat) {
+                                    const prefix = rawCat.toLowerCase().includes("combo") ? "COMBO" : rawCat.trim().toUpperCase();
+                                    let cleanName = baseName;
+                                    if (prefix === "COMBO") {
+                                        cleanName = cleanName.replace(/\bcombo\b/gi, "").trim();
+                                    }
+                                    formattedDesc = `[${prefix}] » ${cleanName}`;
+                                }
+
                                 return {
                                     "id": it.id,
                                     "cantidad": it.quantity,
-                                    "descripcion": it.product_name || it.product_set?.name || "",
-                                    "product_name": it.product_name || it.product_set?.name || "",
+                                    "descripcion": formattedDesc,
+                                    "product_name": formattedDesc,
                                     "product_description": it.product_description || "",
-                                    "product_category": it.product_category || "",
+                                    "product_category": showCat ? "" : (rawCat || ""),
                                     "indicaciones": indications
                                 };
                             };

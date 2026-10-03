@@ -423,27 +423,28 @@ export default defineComponent({
 
         const getPrefix = (cat, productSet) => {
             let prefix = "";
-            if (settingsStore.business_settings.printer.show_cat) {
+            const isShowCat = !!(settingsStore.business_settings?.printer?.show_cat ?? settingsStore.businessSettings?.printer?.show_cat);
+            if (isShowCat) {
                 // Si hay product_set, determinar si es MENU o COMBO
                 if (productSet) {
                     if (productSet.set_type === 'COMBO') {
-                        prefix = "[COMBO] >> ";
+                        prefix = "[COMBO] » ";
                     } else if (productSet.set_type === 'MENU') {
-                        prefix = "[MENU] ";
+                        prefix = "[MENU] » ";
                     } else {
                         // Fallback: intentar determinar por categoría
-                        prefix = "[MENU] ";
+                        prefix = "[MENU] » ";
                     }
                 }
-                // Si no hay product_set, usar la lógica de categoría original
+                // Si no hay product_set, usar la categoría real
                 else if (cat && cat.toLowerCase().includes("menu")) {
-                    prefix = "[MENU] ";
+                    prefix = "[MENU] » ";
                 } else if (cat && cat.toLowerCase().includes("combo")) {
-                    prefix = "[COMBO] >> ";
+                    prefix = "[COMBO] » ";
                 } else if (cat && cat.toLowerCase().includes("porcion")) {
-                    prefix = "[PORCION] >> ";
+                    prefix = "[PORCION] » ";
                 } else if (cat) {
-                    prefix = "[CARTA] >> ";
+                    prefix = `[${cat.toUpperCase()}] » `;
                 }
             }
             return prefix;
