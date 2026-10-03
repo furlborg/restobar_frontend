@@ -235,15 +235,16 @@ export default defineComponent({
 
     const getPrefix = (cat) => {
       let prefix = "";
-      if (settingsStore.business_settings.printer.show_cat) {
+      const isShowCat = !!(settingsStore.business_settings?.printer?.show_cat ?? settingsStore.businessSettings?.printer?.show_cat);
+      if (isShowCat && cat) {
         if (cat.toLowerCase().includes("menu")) {
-          prefix = "[MENU] ";
+          prefix = "[MENU] » ";
         } else if (cat.toLowerCase().includes("combo")) {
-          prefix = "[COMBO] >> ";
+          prefix = "[COMBO] » ";
         } else if (cat.toLowerCase().includes("porcion")) {
-          prefix = "[PORCION] >> ";
+          prefix = "[PORCION] » ";
         } else {
-          prefix = "[CARTA] >> ";
+          prefix = `[${cat.toUpperCase()}] » `;
         }
       }
       return prefix;
