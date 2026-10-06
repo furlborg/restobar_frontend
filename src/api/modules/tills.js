@@ -196,10 +196,14 @@ export async function createConcept(concept) {
 }
 
 export async function updateConcept(idConcept, concept) {
-  return await http.put(`concepts/${idConcept}/`, {
+  const payload = {
     description: concept.description,
     concept_type: concept.concept_type,
-  });
+  };
+  if (concept.is_disabled !== undefined) {
+    payload.is_disabled = concept.is_disabled;
+  }
+  return await http.put(`concepts/${idConcept}/`, payload);
 }
 
 export async function deleteConcept(id) {

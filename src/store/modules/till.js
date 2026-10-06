@@ -1,6 +1,8 @@
 import { defineStore } from "pinia";
 import { getConcepts, retrieveCurrentTill } from "@/api/modules/tills";
 
+export const SYSTEM_CONCEPT_IDS = [1, 2, 3, 4, 5, 6, 7];
+
 export const useTillStore = defineStore("till", {
   state: () => ({
     currentTillID: null,
@@ -8,21 +10,49 @@ export const useTillStore = defineStore("till", {
     concepts: [],
   }),
   getters: {
+    getManualIncomeConceptsOptions() {
+      return (this.concepts || [])
+        .filter(
+          (concept) =>
+            !concept.is_disabled &&
+            !SYSTEM_CONCEPT_IDS.includes(Number(concept.id)) &&
+            String(concept.concept_type) === "0"
+        )
+        .map((concept) => ({ label: concept.description, value: concept.id }));
+    },
+    getManualOutcomeConceptsOptions() {
+      return (this.concepts || [])
+        .filter(
+          (concept) =>
+            !concept.is_disabled &&
+            !SYSTEM_CONCEPT_IDS.includes(Number(concept.id)) &&
+            String(concept.concept_type) === "1"
+        )
+        .map((concept) => ({ label: concept.description, value: concept.id }));
+    },
     getIncomeConceptsOptions() {
-      return this.concepts
-        .filter((concept) => concept.concept_type === "0")
+      return (this.concepts || [])
+        .filter(
+          (concept) =>
+            !concept.is_disabled && String(concept.concept_type) === "0"
+        )
         .map((concept) => ({ label: concept.description, value: concept.id }));
     },
     getOutcomeConceptsOptions() {
-      return this.concepts
-        .filter((concept) => concept.concept_type === "1")
+      return (this.concepts || [])
+        .filter(
+          (concept) =>
+            !concept.is_disabled && String(concept.concept_type) === "1"
+        )
         .map((concept) => ({ label: concept.description, value: concept.id }));
     },
     getConceptsOptions() {
-      return this.concepts.map((concept) => ({
-        label: concept.description,
-        value: concept.id,
-      }));
+      return (this.concepts || [])
+        .filter((concept) => !concept.is_disabled)
+        .map((concept) => ({
+          label: concept.description,
+          value: concept.id,
+        }));
     },
   },
   actions: {
