@@ -183,20 +183,22 @@ const printOrderTicket = (props) => {
             lengthData += 10;
           });
         }
-        if (settingsStore.business_settings.printer.show_cat) {
+        const isShowCat = !!(settingsStore.business_settings?.printer?.show_cat ?? settingsStore.businessSettings?.printer?.show_cat);
+        if (isShowCat && val.product_category) {
           if (
             val.product_category.toLowerCase().includes("menu") ||
             val.product_category.toLowerCase().includes("menus")
           ) {
-            newName = `[MENU] ${newName}`;
+            newName = `[MENU] » ${newName}`;
           } else if (
-            (!!val.product_category.toLowerCase().includes("menu") === false ||
-              !!val.product_category.toLowerCase().includes("menus") ===
-                false) &&
-            (!!val.product_category.toLowerCase().includes("combo") === false ||
-              !!val.product_category.toLowerCase().includes("combo") === false)
+            val.product_category.toLowerCase().includes("combo") ||
+            val.product_category.toLowerCase().includes("combos")
           ) {
-            newName = `[CARTA] ${newName}`;
+            newName = `[COMBO] » ${newName}`;
+          } else if (val.product_category.toLowerCase().includes("porcion")) {
+            newName = `[PORCION] » ${newName}`;
+          } else {
+            newName = `[${val.product_category.toUpperCase()}] » ${newName}`;
           }
         }
 
