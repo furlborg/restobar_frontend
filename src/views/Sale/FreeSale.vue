@@ -67,7 +67,7 @@
             <n-select v-model:value="sale.address" :options="addressesOptions" :disabled="!sale.customer"
               placeholder="" />
           </n-form-item-gi>
-          <n-form-item-gi :span="2" label="Fecha">
+          <n-form-item-gi :span="2" label="Fecha" path="date_sale">
             <n-date-picker class="w-100" type="datetime" :is-date-disabled="dateDisabled"
               v-model:formatted-value="sale.date_sale" />
           </n-form-item-gi>
@@ -687,6 +687,36 @@ export default defineComponent({
           trigger: ["blur", "change"],
         },
       };
+      rules.date_sale = {
+        required: true,
+        validator: (_, value) => {
+          if (!value) return new Error("Debes seleccionar fecha de emisión");
+          const toDate = (str) => {
+            if (!str) return null;
+            if (typeof str === 'number') return new Date(str);
+            const [datePart, timePart] = str.split(" ");
+            if (!datePart) return null;
+            const [d, m, y] = datePart.split("/").map(Number);
+            const [hh, mm, ss] = timePart ? timePart.split(":").map(Number) : [0, 0, 0];
+            return new Date(y, m - 1, d, hh || 0, mm || 0, ss || 0);
+          };
+          try {
+            const dateObj = toDate(value);
+            if (!dateObj || isNaN(dateObj.getTime())) {
+              return new Error("Fecha de emisión inválida");
+            }
+            const now = new Date();
+            const minDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 3, 0, 0, 0, 0);
+            if (dateObj.getTime() < minDate.getTime()) {
+              return new Error("La fecha no puede ser anterior a 3 días atrás");
+            }
+            return true;
+          } catch (e) {
+            return new Error("Fecha de emisión inválida");
+          }
+        },
+        trigger: ["blur", "change"],
+      };
       rules.due_date = sale.value.payment_condition === 2
         ? {
           required: true,
@@ -1190,7 +1220,9 @@ export default defineComponent({
     });
 
     const dateDisabled = (ts) => {
-      return ts > new Date(Date.now());
+      const now = new Date();
+      const minDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 3, 0, 0, 0, 0);
+      return ts < minDate.getTime();
     };
 
     const customerDocument = ref("");
