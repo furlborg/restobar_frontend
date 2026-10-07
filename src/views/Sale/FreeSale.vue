@@ -706,9 +706,9 @@ export default defineComponent({
               return new Error("Fecha de emisión inválida");
             }
             const now = new Date();
-            const minDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 3, 0, 0, 0, 0);
+            const minDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 2, 0, 0, 0, 0);
             if (dateObj.getTime() < minDate.getTime()) {
-              return new Error("La fecha no puede ser anterior a 3 días atrás");
+              return new Error("La fecha no puede ser anterior a 2 días atrás (máximo 3 días contando hoy)");
             }
             return true;
           } catch (e) {
@@ -1221,7 +1221,7 @@ export default defineComponent({
 
     const dateDisabled = (ts) => {
       const now = new Date();
-      const minDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 3, 0, 0, 0, 0);
+      const minDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 2, 0, 0, 0, 0);
       return ts < minDate.getTime();
     };
 
