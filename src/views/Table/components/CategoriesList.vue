@@ -1,6 +1,6 @@
 <template>
     <div id="CategoriesList">
-        <n-tabs type="line" animated>
+        <n-tabs type="line">
             <n-tab-pane name="categorias" tab="Categorías">
                 <n-card title="Categorías" :bordered="false" class="h-100 categories-card" content-class="categories-card-content">
                     <div class="categories-scroll-viewport">
@@ -427,13 +427,38 @@ onMounted(async () => {
 }
 
 @media (max-width: 768px) {
+    #CategoriesList,
+    :deep(.n-tabs),
+    :deep(.n-tabs-pane-wrapper),
+    :deep(.n-tabs-pane-wrapper > div),
+    :deep(.n-tab-pane),
+    .categories-card,
+    :deep(.categories-card),
+    .categories-card-content,
+    :deep(.n-card__content),
+    .categories-scroll-viewport,
+    .combos-card,
+    :deep(.combos-card),
+    .flizzy-menu-card,
+    :deep(.flizzy-menu-card) {
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        min-height: 0 !important;
+    }
+
+    :deep(.n-tabs-nav) {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: #ffffff;
+    }
+
     .combos-wrapper,
     .categories-scroll-wrapper {
-        padding-bottom: 50px;
+        padding-bottom: 80px !important;
     }
-}
 
-@media (max-width: 768px) {
     .categories-card-content,
     .combos-card-content,
     .flizzy-menu-content {

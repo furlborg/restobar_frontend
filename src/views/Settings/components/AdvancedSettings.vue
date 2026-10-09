@@ -420,7 +420,36 @@
                             </n-card>
                         </div>
 
-                        <!-- Card 2: Políticas de Venta y Anulación -->
+                        <!-- Card 2: Distribución Visual de Pantalla de Cobranza -->
+                        <div class="settings-card-group mt-4">
+                            <div class="card-group-header">
+                                <div class="card-header-icon sales-bg"><v-icon name="md-viewquilt-round" /></div>
+                                <div>
+                                    <h3 class="group-title">Distribución Visual de Pantalla de Cobranza</h3>
+                                    <p class="group-desc">Define la posición de la lista de productos y el panel de cobro (liquidación de mesa y delivery).</p>
+                                </div>
+                            </div>
+
+                            <n-card class="settings-inner-card" :bordered="true">
+                                <n-form :disabled="!editMode" label-placement="top">
+                                    <n-grid responsive="screen" cols="1 s:1 m:2 l:2" :x-gap="20" :y-gap="14">
+                                        <n-form-item-gi label="Posición del Panel y Lista de Productos">
+                                            <n-select 
+                                                v-model:value="businessSettings.sale.billing_layout_position" 
+                                                :options="billingLayoutOptions" 
+                                                size="large" 
+                                            />
+                                            <template #feedback>
+                                                <b>Predeterminado:</b> Lista a la derecha y panel a la izquierda.<br>
+                                                <b>Alternativo:</b> Panel a la derecha y lista a la izquierda.
+                                            </template>
+                                        </n-form-item-gi>
+                                    </n-grid>
+                                </n-form>
+                            </n-card>
+                        </div>
+
+                        <!-- Card 3: Políticas de Venta y Anulación -->
                         <div class="settings-card-group mt-4">
                             <div class="card-group-header">
                                 <div class="card-header-icon security-bg"><v-icon name="md-lock-round" /></div>
@@ -1401,6 +1430,7 @@ export default defineComponent({
                 free_sale_deduct_stock_default: false,
                 free_sale_affects_till: true,
                 free_sale_send_doc: true,
+                billing_layout_position: 'checkout_left',
             };
             for (const key in defaultSale) {
                 if (settings.sale[key] === undefined) {
@@ -1504,6 +1534,11 @@ export default defineComponent({
             { label: "NOTA DE VENTA (80)", value: 80 }
         ];
 
+        const billingLayoutOptions = [
+            { label: "Predeterminado: Lista a la derecha y panel a la izquierda", value: "checkout_left" },
+            { label: "Alternativo: Panel a la derecha y lista a la izquierda", value: "checkout_right" }
+        ];
+
         const kitchenPrinterFormatOptions = [
             { label: "FORMATO 1 (Compacto Clásico)", value: 1 },
             { label: "FORMATO 2 (Estándar Destacado)", value: 2 },
@@ -1556,6 +1591,7 @@ export default defineComponent({
             { key: "igv", title: "Tasa de IGV (18% / 10.5% / 0%)", tab: "ventas", tabName: "Ventas y Facturación", icon: "md-pointofsale-twotone", keywords: "igv impuesto tasa mype sunat" },
             { key: "doc_defecto", title: "Documento por Defecto", tab: "ventas", tabName: "Ventas y Facturación", icon: "md-pointofsale-twotone", keywords: "boleta factura nota de venta comprobante" },
             { key: "claves", title: "Claves de Seguridad para Anular", tab: "ventas", tabName: "Ventas y Facturación", icon: "md-lock-round", keywords: "clave password anular contraseña seguridad" },
+            { key: "pos_layout", title: "Posición de Panel y Lista de Cobranza", tab: "ventas", tabName: "Ventas y Facturación", icon: "md-viewquilt-round", keywords: "pos cobranza panel lista izquierda derecha productos layout liquidacion distribucion" },
             { key: "auto_print", title: "Impresión Automática de Ventas", tab: "ventas", tabName: "Ventas y Facturación", icon: "md-pointofsale-twotone", keywords: "impresion automatica comprobante cobrar" },
             { key: "auto_send", title: "Auto Envío SUNAT (CPE)", tab: "ventas", tabName: "Ventas y Facturación", icon: "md-pointofsale-twotone", keywords: "sunat cpe auto envio xml" },
             { key: "creditos", title: "Ventas a Crédito", tab: "ventas", tabName: "Ventas y Facturación", icon: "md-pointofsale-twotone", keywords: "credito cuenta cobrar cliente" },
@@ -1746,6 +1782,7 @@ export default defineComponent({
             igvOptions,
             printOptions,
             invoiceOptions,
+            billingLayoutOptions,
             kitchenPrinterFormatOptions,
             infoLocationOptions,
             orderTypeOptions,

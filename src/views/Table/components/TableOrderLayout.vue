@@ -28,7 +28,7 @@
             </div>
         </div>
         <!-- es mobile -->
-        <n-tabs v-else class="table-order-mobile-tabs" tab-style="background: #fff;" v-model:value="activeTab" type="segment" animated>
+        <n-tabs v-else class="table-order-mobile-tabs" tab-style="background: #fff;" v-model:value="activeTab" type="segment">
             <n-tab-pane name="main" tab="Principal">
                 <div class="table-mobile-view-wrapper">
                     <router-view />
@@ -676,7 +676,7 @@ provide("addOrderToCustomer", addOrderToCustomer);
         overflow: hidden !important;
         display: flex;
         flex-direction: column;
-        margin-bottom: -25px !important;
+        margin-bottom: 0 !important;
 
         :deep(.n-page-header) {
             flex-shrink: 0 !important;
@@ -723,7 +723,10 @@ provide("addOrderToCustomer", addOrderToCustomer);
             min-height: 0;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            -webkit-overflow-scrolling: touch !important;
+            touch-action: pan-y !important;
             background: #ffffff;
         }
     }

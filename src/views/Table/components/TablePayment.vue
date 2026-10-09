@@ -1,7 +1,13 @@
 <template>
   <div class="pos-billing-wrapper">
     <n-spin :show="loading">
-      <div class="pos-billing-grid">
+      <div 
+        class="pos-billing-grid"
+        :class="{
+          'layout-checkout-left': billingLayoutPosition === 'checkout_left',
+          'layout-checkout-right': billingLayoutPosition === 'checkout_right'
+        }"
+      >
         
         <!-- ============================================== -->
         <!-- COLUMNA IZQUIERDA: DETALLE DE CUENTA & PEDIDOS -->
@@ -497,6 +503,10 @@ const defaultInvoiceType = settingsStore.businessSettings.sale?.enable_invoices
   ? settingsStore.businessSettings.sale.default_invoice : 80;
 
 const defaultSerieId = saleStore.getFirstOption(defaultInvoiceType);
+
+const billingLayoutPosition = computed(() => {
+  return settingsStore.businessSettings?.sale?.billing_layout_position || 'checkout_left';
+});
 
 const sale = ref({
   serie: defaultSerieId,
@@ -1260,6 +1270,44 @@ onMounted(async () => {
   .pos-billing-grid {
     grid-template-columns: minmax(0, 1.65fr) minmax(400px, 1fr);
   }
+}
+
+/* Modo Predeterminado: Lista a la derecha y Panel de cobro a la izquierda */
+.pos-billing-grid.layout-checkout-left {
+  grid-template-columns: minmax(380px, 1fr) minmax(0, 1.55fr);
+}
+
+@media (min-width: 1440px) {
+  .pos-billing-grid.layout-checkout-left {
+    grid-template-columns: minmax(400px, 1fr) minmax(0, 1.65fr);
+  }
+}
+
+.pos-billing-grid.layout-checkout-left .pos-checkout-panel {
+  order: 1;
+}
+
+.pos-billing-grid.layout-checkout-left .pos-account-panel {
+  order: 2;
+}
+
+/* Modo Alternativo: Panel a la derecha y Lista a la izquierda */
+.pos-billing-grid.layout-checkout-right {
+  grid-template-columns: minmax(0, 1.55fr) minmax(380px, 1fr);
+}
+
+@media (min-width: 1440px) {
+  .pos-billing-grid.layout-checkout-right {
+    grid-template-columns: minmax(0, 1.65fr) minmax(400px, 1fr);
+  }
+}
+
+.pos-billing-grid.layout-checkout-right .pos-account-panel {
+  order: 1;
+}
+
+.pos-billing-grid.layout-checkout-right .pos-checkout-panel {
+  order: 2;
 }
 
 .pos-panel {
@@ -2178,9 +2226,17 @@ onMounted(async () => {
   }
 
   .pos-billing-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
     height: auto;
     min-height: auto;
+  }
+
+  .pos-billing-grid .pos-account-panel {
+    order: 1 !important;
+  }
+
+  .pos-billing-grid .pos-checkout-panel {
+    order: 2 !important;
   }
 
   .pos-panel {

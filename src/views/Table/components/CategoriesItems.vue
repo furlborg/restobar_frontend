@@ -833,9 +833,16 @@ const handleBack = () => {
     min-height: 0 !important;
     overflow: visible !important;
   }
+  .category-items-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #ffffff;
+  }
   .category-items-scrollable {
     overflow: visible !important;
     max-height: none !important;
+    padding-bottom: 80px !important;
   }
 }
 
