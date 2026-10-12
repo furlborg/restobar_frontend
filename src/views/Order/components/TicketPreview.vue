@@ -123,8 +123,7 @@ export default defineComponent({
                     (detail) =>
                         detail?.product_set ||
                         detail?.preparation_place === place.description ||
-                        detail?.product_fitting?.preparation_place === place.description ||
-                        (!detail?.preparation_place && place.is_main)
+                        detail?.product_fitting?.preparation_place === place.description
                 )
             );
             if (matchedPlaces.length) return matchedPlaces;
@@ -301,8 +300,7 @@ export default defineComponent({
                                     return settingsStore.business_settings?.printer?.subticket_mode && place.is_main
                                         ? !pl.preparation_place
                                         : pl.preparation_place === place.description ||
-                                          pl.product_fitting?.preparation_place === place.description ||
-                                          (!pl.preparation_place && place.is_main);
+                                          pl.product_fitting?.preparation_place === place.description;
                                 });
 
                             const groupDetailsByIndication = (items) => {
