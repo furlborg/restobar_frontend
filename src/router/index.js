@@ -8,7 +8,18 @@ export const routes = [
   {
     path: "",
     name: "App",
-    redirect: { name: "Dashboard" },
+    redirect: () => {
+      let role = null;
+      try {
+        const stored = localStorage.getItem("user-info");
+        role = stored ? JSON.parse(stored)?.role : null;
+      } catch (_) {
+        // Ignorar error de parsing en localStorage
+      }
+      if (role === "MOZO") return { name: "WaiterMode" };
+      if (role === "COCINERO") return { name: "KdsBoard" };
+      return { name: "Dashboard" };
+    },
     component: () => import("@/layout/LayoutIndex.vue"),
     meta: {
       requiresAuth: true,
@@ -176,11 +187,20 @@ export const routes = [
         redirect: { name: "TableHome" },
         component: () => import("@/views/Table/TableIndex.vue"),
         meta: {
-          onlyWaiter: true,
+          requiresAuth: true,
         },
         beforeEnter: async (to, from, next) => {
           const tillStore = useTillStore();
           const userStore = useUserStore();
+          if (userStore.user?.role === "MOZO") {
+            if (to.name === "TableHome") {
+              next({ name: "WaiterMode" });
+              return;
+            }
+            // Mozo accediendo a TakeOrder (delivery/llevar) o subrutas permitidas
+            next();
+            return;
+          }
           await retrieveCurrentTill()
             .then((response) => {
               if (response.status === 200) {
@@ -196,9 +216,7 @@ export const routes = [
             });
           tillStore.currentTillID !== null
             ? next()
-            : userStore.user.role === "MOZO"
-              ? next()
-              : next({ name: "TillList" });
+            : next({ name: "TillList" });
         },
         children: [
           {
@@ -210,7 +228,7 @@ export const routes = [
           {
             name: "TakeOrder",
             path: "take-order",
-            meta: { requiredPerm: "take_away_order" },
+            meta: { requiredPerm: "take_away_order", onlyWaiter: true },
             redirect: { name: "CategoriesOrder" },
             component: () =>
               import("@/views/Order/components/TakeOrderLayout.vue"),
@@ -218,12 +236,14 @@ export const routes = [
               {
                 name: "CategoriesOrder",
                 path: "order-items",
+                meta: { requiredPerm: "take_away_order", onlyWaiter: true },
                 component: () =>
                   import("@/views/Order/components/CategoriesList.vue"),
               },
               {
                 name: "CategoriesOrderItems",
                 path: "order-items/:category_id",
+                meta: { requiredPerm: "take_away_order", onlyWaiter: true },
                 component: () =>
                   import("@/views/Order/components/CategoriesItem.vue"),
               },
@@ -492,30 +512,36 @@ router.beforeEach(async (to, from, next) => {
   // Original authentication logic
   if (to.matched.some((record) => record.meta.requiresAuth)) {
     if (userStore.isAuthenticated) {
+      // Redirigir roles restringidos a su interfaz dedicada si no están en ella
+      const isOnlyWaiterRoute = to.matched.some((record) => record.meta.onlyWaiter);
+      if (!isOnlyWaiterRoute) {
+        if (userStore.user?.role === "MOZO") {
+          next({ name: "WaiterMode" });
+          return;
+        } else if (userStore.user?.role === "COCINERO") {
+          if (to.name !== "KdsBoard" && !to.matched.some((record) => record.name === "KdsBoard")) {
+            next({ name: "KdsBoard" });
+            return;
+          }
+        }
+      }
+
       if (to.matched.some((record) => record.meta.requiredPerm)) {
         if (
           to.matched.some((record) =>
             userStore.hasPermission(record.meta.requiredPerm),
           )
         ) {
-          if (!to.matched.some((record) => record.meta.onlyWaiter)) {
-            if (userStore.user.role === "MOZO") {
-              next({ name: "WaiterMode" });
-              return;
-            } else if (userStore.user.role === "COCINERO") {
-              next({ name: "KdsBoard" });
-              return;
-            } else {
-              next();
-              return;
-            }
-          } else {
-            next();
-            return;
-          }
+          next();
+          return;
         } else {
-          next(from.path === "/" ? { name: "Dashboard" } : false);
-          window.location.reload();
+          const fallback =
+            userStore.user?.role === "MOZO"
+              ? { name: "WaiterMode" }
+              : userStore.user?.role === "COCINERO"
+              ? { name: "KdsBoard" }
+              : { name: "Dashboard" };
+          next(fallback);
           return;
         }
       } else {

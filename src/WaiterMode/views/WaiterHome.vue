@@ -131,12 +131,28 @@ const userStore = useUserStore();
 // Composable de table lock (para enviar lock/unlock)
 const { connectLockWebSocket } = useTableLock();
 
+const getWsLock = (tableId) => {
+  if (!tableId || !tableStore.lockedTables) return null;
+  const lock = tableStore.lockedTables[tableId] ||
+         tableStore.lockedTables[String(tableId)] ||
+         tableStore.lockedTables[Number(tableId)] ||
+         null;
+  if (!lock) return null;
+  if (lock.expires_at) {
+    const expTime = new Date(lock.expires_at).getTime();
+    if (!isNaN(expTime) && Date.now() > expTime) {
+      return null;
+    }
+  }
+  return lock;
+};
+
 /**
  * Verifica si una mesa está bloqueada usando el store (fuente de verdad global)
  */
 const isTableBlocked = (table) => {
   // Verificar el estado del store (WebSocket global)
-  const wsLockInfo = tableStore.lockedTables[table.id];
+  const wsLockInfo = getWsLock(table.id);
 
   if (wsLockInfo && wsLockInfo.user_id !== userStore.user.id) {
     return {
@@ -299,7 +315,7 @@ const performChangeTable = async () => {
  * Amarillo: Bloqueada por otro usuario
  */
 const getTableColor = (table) => {
-  const wsLockInfo = tableStore.lockedTables[table.id];
+  const wsLockInfo = getWsLock(table.id);
   const isLockedByOther = (wsLockInfo && wsLockInfo.user_id !== userStore.user.id) ||
     (table.lock_info && table.lock_info.is_active && !table.lock_info.is_locked_by_me);
 
@@ -320,7 +336,7 @@ const getTableColor = (table) => {
  * Obtener clase de fondo de la mesa según su estado
  */
 const getTableBackgroundClass = (table) => {
-  const wsLockInfo = tableStore.lockedTables[table.id];
+  const wsLockInfo = getWsLock(table.id);
   const isLockedByOther = (wsLockInfo && wsLockInfo.user_id !== userStore.user.id) ||
     (table.lock_info && table.lock_info.is_active && !table.lock_info.is_locked_by_me);
 

@@ -225,17 +225,37 @@ export const useTableStore = defineStore("table", {
             }
 
             if (data.type === 'initial_locks_sync' && data.locks) {
-              this.lockedTables = {
-                ...this.lockedTables,
-                ...data.locks
-              };
+              const activeLocks = {};
+              const now = Date.now();
               Object.entries(data.locks).forEach(([tblId, lock]) => {
-                const t = this.getTableByID(tblId);
-                if (t && t.lock_info) {
-                  t.lock_info.is_active = true;
-                  t.lock_info.username = lock.username;
-                  t.lock_info.user_id = lock.user_id;
+                const id = parseInt(tblId) || tblId;
+                const expTime = lock.expires_at ? new Date(lock.expires_at).getTime() : null;
+                if (!expTime || isNaN(expTime) || now <= expTime) {
+                  activeLocks[id] = {
+                    table_id: id,
+                    user_id: lock.user_id,
+                    username: lock.username,
+                    locked_at: lock.locked_at,
+                    expires_at: lock.expires_at,
+                    remaining_seconds: lock.remaining_seconds
+                  };
                 }
+              });
+              this.lockedTables = activeLocks;
+
+              // Sincronizar todas las mesas de todas las áreas para limpiar locks inactivos
+              this.areas.forEach(area => {
+                (area.tables || []).forEach(table => {
+                  const activeLock = activeLocks[table.id] || activeLocks[Number(table.id)];
+                  if (!table.lock_info) table.lock_info = {};
+                  if (activeLock) {
+                    table.lock_info.is_active = true;
+                    table.lock_info.username = activeLock.username;
+                    table.lock_info.user_id = activeLock.user_id;
+                  } else {
+                    table.lock_info.is_active = false;
+                  }
+                });
               });
             }
 

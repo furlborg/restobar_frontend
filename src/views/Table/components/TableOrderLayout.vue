@@ -156,9 +156,10 @@ const genericsStore = useGenericsStore();
 const orderStore = useOrderStore();
 const saleStore = useSaleStore();
 
-const { wsLockTable, wsUnlockTable } = useTableLock();
+const { wsLockTable, wsUnlockTable, wsRenewLock } = useTableLock();
 const shouldUnlock = ref(false);
 const capturedTableId = ref(null);
+let lockHeartbeatTimer = null;
 
 const unlockCurrentTable = () => {
     const idToUnlock = capturedTableId.value || route.params.table;
@@ -354,8 +355,33 @@ const performRetrieveTableOrder = async () => {
         if (error.response?.status === 423) {
             // Mesa bloqueada por otro usuario
             const lockData = error.response.data.lock_data || error.response.data;
-            const lockedBy = lockData.locked_by_username || 'otro usuario';
+            const lockedBy = lockData.locked_by_username || lockData.username || 'otro usuario';
             const remainingMinutes = lockData.remaining_minutes || Math.ceil((lockData.remaining_seconds || 0) / 60);
+
+            // Evitar que al desmontarse intente desbloquear la mesa de otro usuario
+            shouldUnlock.value = false;
+
+            // Sincronizar el store inmediatamente para que la mesa se muestre bloqueada (amarilla)
+            const targetTableId = capturedTableId.value || parseInt(table);
+            if (targetTableId) {
+                const lockedUserId = lockData.locked_by_id || lockData.user_id || lockData.user;
+                tableStore.lockedTables = {
+                    ...tableStore.lockedTables,
+                    [targetTableId]: {
+                        table_id: targetTableId,
+                        user_id: lockedUserId,
+                        username: lockedBy,
+                        expires_at: lockData.expires_at,
+                        is_active: true
+                    }
+                };
+                const t = tableStore.getTableByID(targetTableId);
+                if (t && t.lock_info) {
+                    t.lock_info.is_active = true;
+                    t.lock_info.username = lockedBy;
+                    t.lock_info.user_id = lockedUserId;
+                }
+            }
 
             message.error(
                 `Mesa bloqueada por ${lockedBy}. Disponible en ${remainingMinutes} minutos.`,
@@ -613,18 +639,32 @@ onMounted(() => {
     console.log('[TableOrderLayout] 🟢 Componente montado - Mesa:', capturedTableId.value);
 
     const lockInfo = tableStore.lockedTables[capturedTableId.value];
+    const isLockExpired = lockInfo && lockInfo.expires_at && Date.now() > new Date(lockInfo.expires_at).getTime();
     const isMyLock = lockInfo && lockInfo.user_id === userStore.user.id;
-    if (!lockInfo || isMyLock) {
+    if (!lockInfo || isLockExpired || isMyLock) {
         console.log('[TableOrderLayout] 🔒 Bloqueando mesa', capturedTableId.value);
-        wsLockTable(capturedTableId.value, 15);
+        wsLockTable(capturedTableId.value, 2);
         shouldUnlock.value = true;
         window.addEventListener('beforeunload', handleBeforeUnload);
+
+        // Heartbeat cada 30 segundos para mantener el bloqueo activo mientras la comanda esté abierta
+        if (lockHeartbeatTimer) clearInterval(lockHeartbeatTimer);
+        lockHeartbeatTimer = setInterval(() => {
+            if (capturedTableId.value && shouldUnlock.value) {
+                console.log('[TableOrderLayout] 💓 Heartbeat renovación mesa', capturedTableId.value);
+                wsRenewLock(capturedTableId.value, 2);
+            }
+        }, 30000);
     }
     performRetrieveTableOrder();
 });
 
 onUnmounted(() => {
     console.log('[TableOrderLayout] 🔴 Componente desmontado - Mesa:', capturedTableId.value);
+    if (lockHeartbeatTimer) {
+        clearInterval(lockHeartbeatTimer);
+        lockHeartbeatTimer = null;
+    }
     window.removeEventListener('beforeunload', handleBeforeUnload);
     unlockCurrentTable();
 });

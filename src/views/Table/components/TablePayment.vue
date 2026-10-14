@@ -120,7 +120,7 @@
         <separate-payments-modal v-model:show="showSeparateModal" :data="separatePayments"
           @success="obtainSaleNumber" />
         <PreviewDrawer ref="previewDrawer" v-model:show="showPdf" :data="pdfData" :previewOnly="!ticketPreview"
-          @printed="$router.push({ name: 'TableHome' })" @canceled="$router.push({ name: 'TableHome' })" />
+          @printed="handlePaymentDone" @canceled="handlePaymentDone" />
       </div>
     </n-scrollbar>
   </n-card>
@@ -135,7 +135,8 @@ import SaleSerieSelector from "@/views/Order/components/SaleSerieSelector.vue";
 import PaymentTotals from "@/views/Order/components/PaymentTotals.vue";
 import ProductTable from "@/views/Order/components/ProductTable.vue";
 import { useSettingsStore } from "@/store/modules/settings";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
+import { useUserStore } from "@/store/modules/user";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { useGenericsStore } from "@/store/modules/generics";
@@ -151,8 +152,14 @@ import { createSale, getSaleNumber, retrieveSale, sendSale } from "@/api/modules
 import { useSaleTotals } from "@/composables/useSaleTotals";
 import { round2 } from "@/utils/money";
 
-
 const router = useRouter();
+const route = useRoute();
+const userStore = useUserStore();
+
+const handlePaymentDone = () => {
+  const isWaiter = userStore.user?.role === 'MOZO' || route.matched.some(r => r.name === 'WaiterMode');
+  router.push({ name: isWaiter ? 'WHome' : 'TableHome' });
+};
 const orderStore = useOrderStore();
 const saleStore = useSaleStore();
 const settingsStore = useSettingsStore();
@@ -212,7 +219,7 @@ const sale = ref({
   total_igv: "0.00",
 });
 
-const { taxBreakdown, productTotal, menuTotal, hasItems } = useSaleTotals();
+const { taxBreakdown, hasItems } = useSaleTotals();
 
 // Asegurar que si el usuario editó las afectaciones en toSale, los totales reactivos reflejen exactamente toSale
 const totalsFromToSale = computed(() => {

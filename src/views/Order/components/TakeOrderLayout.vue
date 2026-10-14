@@ -1,6 +1,6 @@
 <template>
   <div id="TakeOrderLayout">
-    <n-page-header class="mb-2" @back="$router.push({ name: 'TableHome' })">
+    <n-page-header class="mb-2" @back="userStore.user?.role === 'MOZO' ? $router.push({ name: 'WaiterMode' }) : $router.push({ name: 'TableHome' })">
       <template #title>
         <n-space justify="space-between">
           <n-text class="fs-2">Realizar Pedido</n-text>
@@ -167,7 +167,7 @@ const settingsStore = useSettingsStore();
 const userStore = useUserStore();
 const route = useRoute();
 const router = useRouter();
-const { grandTotal, taxBreakdown, summary, menuTotal } = useSaleTotals();
+const { grandTotal, taxBreakdown, summary } = useSaleTotals();
 const { processTakeAwayOrder, processCreateOrder } = useOrderProcessing();
 
 // Estado UI agrupado en objeto reactivo para mejor organización

@@ -21,22 +21,24 @@
                         <v-icon name="hi-solid-refresh" />
                         <span v-if="genericsStore.device !== 'mobile'" class="ms-1">Recargar</span>
                     </n-button>
-                    <template v-if="settingsStore.business_settings?.order?.divide_delivery_takeaway">
-                        <n-button v-if="userStore.hasPermission('take_away_order') && userStore.user.role !== 'MOZO'" type="info" secondary
-                            @click="$router.push({ name: 'TakeOrder', query: { delivery: true } })">
-                            Delivery
-                        </n-button>
-                        <n-button v-if="userStore.hasPermission('take_away_order') && userStore.user.role !== 'MOZO'" type="info" secondary
-                            @click="$router.push({ name: 'TakeOrder', query: { delivery: false } })">
-                            {{ settingsStore.business_settings.order?.fast_sale_format ? "Venta Rápida" : "Para llevar" }}
-                        </n-button>
-                    </template>
-                    <template v-else>
-                        <n-button v-if="userStore.hasPermission('take_away_order') && userStore.user.role !== 'MOZO'" type="info" secondary
-                            @click="$router.push({ name: 'TakeOrder' })">
-                            {{ settingsStore.business_settings.order?.fast_sale_format ? "Venta Rápida" : "Para llevar" }} /
-                            Delivery
-                        </n-button>
+                    <template v-if="userStore.hasPermission('take_away_order')">
+                        <template v-if="settingsStore.business_settings?.order?.divide_delivery_takeaway">
+                            <n-button type="info" secondary
+                                @click="$router.push({ name: 'TakeOrder', query: { delivery: true } })">
+                                Delivery
+                            </n-button>
+                            <n-button type="info" secondary
+                                @click="$router.push({ name: 'TakeOrder', query: { delivery: false } })">
+                                {{ settingsStore.business_settings.order?.fast_sale_format ? "Venta Rápida" : "Para llevar" }}
+                            </n-button>
+                        </template>
+                        <template v-else>
+                            <n-button type="info" secondary
+                                @click="$router.push({ name: 'TakeOrder' })">
+                                {{ settingsStore.business_settings.order?.fast_sale_format ? "Venta Rápida" : "Para llevar" }} /
+                                Delivery
+                            </n-button>
+                        </template>
                     </template>
                 </n-space>
             </div>
@@ -106,6 +108,7 @@
                                 <div class="table-card-footer mt-auto">
                                     <div v-if="table?.order_amount !== '' && table?.order_amount !== null && table?.order_amount !== undefined && settingsStore.business_settings?.order?.table_order_total"
                                         class="d-flex align-items-center justify-content-between table-order-pill"
+                                        :class="`pill-${getStatusClass(table)}`"
                                         :title="table.modified ? `Último pedido: ${table.modified}` : ''">
                                         <span class="table-order-amount">
                                             S/. {{ (Number(table?.order_amount) || 0).toFixed(2) }}
@@ -265,7 +268,22 @@ const tableStore = useTableStore();
 const userStore = useUserStore();
 const businessStore = useBusinessStore();
 
-const isWaiterModeView = computed(() => userStore.user?.role === 'MOZO' || route.matched.some(r => r.name === 'WaiterMode'));
+const isWaiterRole = computed(() => {
+    let role = userStore.user?.role;
+    if (!role) {
+        try {
+            const stored = localStorage.getItem("user-info");
+            role = stored ? JSON.parse(stored)?.role : null;
+        } catch (_) {
+            // Ignorar error de parsing en localStorage
+        }
+    }
+    return role === 'MOZO';
+});
+
+const isWaiterModeView = computed(() => {
+    return isWaiterRole.value || route.matched.some(r => r.name === 'WaiterMode') || route.name === 'WHome' || route.name === 'WOrder';
+});
 
 const tableLabelPosition = computed(() => {
     return settingsStore.business_settings?.order?.table_label_position || 'center';
@@ -290,11 +308,27 @@ const filteredAreas = computed(() => {
     return tableStore.branch_table_Areas.filter(a => a.id === selectedAreaId.value);
 });
 
-const { connectLockWebSocket, lockSocketConnected, wsUnlockTable } = useTableLock();
+const { connectLockWebSocket, wsUnlockTable } = useTableLock();
 
 const forceUnlockTable = (tableId) => {
     wsUnlockTable(tableId);
     message.success("Bloqueo de mesa liberado");
+};
+
+const getWsLock = (tableId) => {
+    if (!tableId || !tableStore.lockedTables) return null;
+    const lock = tableStore.lockedTables[tableId] ||
+           tableStore.lockedTables[String(tableId)] ||
+           tableStore.lockedTables[Number(tableId)] ||
+           null;
+    if (!lock) return null;
+    if (lock.expires_at) {
+        const expTime = new Date(lock.expires_at).getTime();
+        if (!isNaN(expTime) && Date.now() > expTime) {
+            return null;
+        }
+    }
+    return lock;
 };
 
 /**
@@ -302,7 +336,7 @@ const forceUnlockTable = (tableId) => {
  */
 const isTableBlocked = (table) => {
     // Primero verificar el estado del store (WebSocket global)
-    const wsLockInfo = tableStore.lockedTables[table.id];
+    const wsLockInfo = getWsLock(table.id);
     if (wsLockInfo && wsLockInfo.user_id !== userStore.user.id) {
         return {
             blocked: true,
@@ -351,7 +385,7 @@ const hexToRgba = (hex, alphaPercent = 5) => {
  * Obtiene el color de la mesa según su estado
  */
 const getTableColor = (table) => {
-    const wsLockInfo = tableStore.lockedTables[table.id];
+    const wsLockInfo = getWsLock(table.id);
     const isLockedByOther = (wsLockInfo && wsLockInfo.user_id !== userStore.user.id) ||
         (table.lock_info && table.lock_info.is_active && !table.lock_info.is_locked_by_me);
 
@@ -389,7 +423,7 @@ const getStatusBadgeStyle = (table) => {
  * Obtiene la clase CSS para el badge de estado
  */
 const getStatusClass = (table) => {
-    const wsLockInfo = tableStore.lockedTables[table.id];
+    const wsLockInfo = getWsLock(table.id);
     const isLockedByOther = (wsLockInfo && wsLockInfo.user_id !== userStore.user.id) ||
         (table.lock_info && table.lock_info.is_active && !table.lock_info.is_locked_by_me);
 
@@ -402,7 +436,7 @@ const getStatusClass = (table) => {
  * Obtiene el texto amigable para el badge de estado
  */
 const getStatusText = (table) => {
-    const wsLockInfo = tableStore.lockedTables[table.id];
+    const wsLockInfo = getWsLock(table.id);
     const isLockedByOther = (wsLockInfo && wsLockInfo.user_id !== userStore.user.id) ||
         (table.lock_info && table.lock_info.is_active && !table.lock_info.is_locked_by_me);
 
@@ -729,19 +763,46 @@ const previewData = ref(null);
 }
 
 .table-order-pill {
-    background-color: #fef2f2;
-    border: 1px solid #fecaca;
     border-radius: 6px;
     padding: 3px 6px;
     gap: 4px;
     min-height: 28px;
     box-sizing: border-box;
+    transition: all 0.2s ease;
+}
+
+/* Ocupada: Rojo */
+.table-order-pill.pill-status-occupied {
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+}
+.table-order-pill.pill-status-occupied .table-order-amount {
+    color: #b91c1c;
+}
+
+/* Bloqueada: Amarillo / Ámbar */
+.table-order-pill.pill-status-locked {
+    background-color: #fffbeb;
+    border: 1px solid #fde68a;
+}
+.table-order-pill.pill-status-locked .table-order-amount {
+    color: #b45309;
+}
+
+/* Libre o por defecto */
+.table-order-pill.pill-status-free,
+.table-order-pill:not(.pill-status-occupied):not(.pill-status-locked) {
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+}
+.table-order-pill.pill-status-free .table-order-amount,
+.table-order-pill:not(.pill-status-occupied):not(.pill-status-locked) .table-order-amount {
+    color: #15803d;
 }
 
 .table-order-amount {
     font-size: 0.88rem;
     font-weight: 800;
-    color: #b91c1c;
     white-space: nowrap;
     line-height: 1;
 }

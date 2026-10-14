@@ -9,6 +9,9 @@ let lockSocket = null;
 let lockSocketConnected = ref(false);
 let reconnectTimeout = null;
 let pendingMessages = [];
+let expiryCheckInterval = null;
+let shouldReconnect = true;
+let reconnectAttempts = 0;
 
 import { useBusinessStore } from '@/store/modules/business';
 import { useUserStore } from '@/store/modules/user';
@@ -18,8 +21,55 @@ const getBusinessStore = () => useBusinessStore();
 const getUserStore = () => useUserStore();
 const getTableStore = () => useTableStore();
 
+const lockedTables = ref(new Map());
+const myLocks = ref([]);
+
+const purgeExpiredLocks = () => {
+  const now = Date.now();
+  let changed = false;
+  const currentMap = new Map(lockedTables.value);
+  for (const [id, lock] of currentMap.entries()) {
+    if (lock.expires_at) {
+      const expTime = new Date(lock.expires_at).getTime();
+      if (!isNaN(expTime) && now > expTime) {
+        currentMap.delete(id);
+        changed = true;
+        const t = getTableStore().getTableByID(id);
+        if (t && t.lock_info) {
+          t.lock_info.is_active = false;
+        }
+      }
+    }
+  }
+  if (changed) {
+    lockedTables.value = currentMap;
+    getTableStore().lockedTables = Object.fromEntries(currentMap);
+  }
+};
+
+const startExpiryWatcher = () => {
+  if (expiryCheckInterval) return;
+  expiryCheckInterval = setInterval(purgeExpiredLocks, 10000);
+};
+
+if (typeof window !== 'undefined') {
+  startExpiryWatcher();
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        purgeExpiredLocks();
+        if (!lockSocket || lockSocket.readyState === WebSocket.CLOSED) {
+          connectLockWebSocket();
+        } else if (lockSocket && lockSocket.readyState === WebSocket.OPEN) {
+          wsHeartbeat();
+        }
+      }
+    });
+  }
+}
+
 const getAuthConfig = () => {
-  const token = useCookie.get("token") || getUserStore().token;
+  const token = localStorage.getItem("token") || useCookie.get("token") || getUserStore().token;
   const config = { withCredentials: true };
   if (token) {
     config.headers = { Authorization: `Bearer ${token}` };
@@ -28,10 +78,15 @@ const getAuthConfig = () => {
 };
 
 const connectLockWebSocket = () => {
+  shouldReconnect = true;
+  if (reconnectTimeout) {
+    clearTimeout(reconnectTimeout);
+    reconnectTimeout = null;
+  }
   const branchId = getUserStore().user.branchoffice || getBusinessStore().currentBranch || 1;
   const apiUrl = import.meta.env.VITE_APP_URL.replace(/^https?:\/\//, '');
   const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-  const currentToken = useCookie.get("token") || getUserStore().token;
+  const currentToken = localStorage.getItem("token") || useCookie.get("token") || getUserStore().token;
   
   // Si no hay token (sesión expirada), no intentar conectar para evitar bucle 403
   if (!currentToken) {
@@ -50,6 +105,7 @@ const connectLockWebSocket = () => {
 
   lockSocket.onopen = () => {
     lockSocketConnected.value = true;
+    reconnectAttempts = 0;
     if (pendingMessages.length > 0) {
       pendingMessages.forEach(msg => {
         lockSocket.send(JSON.stringify(msg));
@@ -60,7 +116,12 @@ const connectLockWebSocket = () => {
 
   lockSocket.onclose = () => {
     lockSocketConnected.value = false;
-    reconnectTimeout = setTimeout(connectLockWebSocket, 3000);
+    if (!shouldReconnect) return;
+    reconnectAttempts++;
+    const baseDelay = Math.min(1000 * Math.pow(1.5, reconnectAttempts), 30000);
+    const jitter = Math.random() * 1000;
+    if (reconnectTimeout) clearTimeout(reconnectTimeout);
+    reconnectTimeout = setTimeout(connectLockWebSocket, baseDelay + jitter);
   };
 
   lockSocket.onerror = () => {
@@ -74,44 +135,58 @@ const connectLockWebSocket = () => {
       switch (data.type) {
         case 'initial_locks_sync': {
           if (data.locks) {
-            const newMap = new Map(lockedTables.value);
+            const newMap = new Map();
+            const now = Date.now();
             Object.entries(data.locks).forEach(([tblId, lock]) => {
               const tableId = parseInt(tblId) || tblId;
-              newMap.set(tableId, {
-                table_id: tableId,
-                user_id: lock.user_id,
-                username: lock.username,
-                locked_at: lock.locked_at,
-                expires_at: lock.expires_at,
-                remaining_seconds: lock.remaining_seconds
-              });
-              const table = getTableStore().getTableByID(tableId);
-              if (table) {
-                if (!table.lock_info) table.lock_info = {};
-                table.lock_info.is_active = true;
-                table.lock_info.username = lock.username;
-                table.lock_info.user_id = lock.user_id;
+              const expTime = lock.expires_at ? new Date(lock.expires_at).getTime() : null;
+              if (!expTime || isNaN(expTime) || now <= expTime) {
+                newMap.set(tableId, {
+                  table_id: tableId,
+                  user_id: lock.user_id,
+                  username: lock.username,
+                  locked_at: lock.locked_at,
+                  expires_at: lock.expires_at,
+                  remaining_seconds: lock.remaining_seconds
+                });
               }
             });
             lockedTables.value = newMap;
             getTableStore().lockedTables = Object.fromEntries(newMap);
+
+            // Sincronizar todas las mesas de todas las áreas para limpiar locks inactivos
+            (getTableStore().areas || []).forEach(area => {
+              (area.tables || []).forEach(table => {
+                const activeLock = newMap.get(table.id) || newMap.get(Number(table.id));
+                if (!table.lock_info) table.lock_info = {};
+                if (activeLock) {
+                  table.lock_info.is_active = true;
+                  table.lock_info.username = activeLock.username;
+                  table.lock_info.user_id = activeLock.user_id;
+                } else {
+                  table.lock_info.is_active = false;
+                }
+              });
+            });
           }
           break;
         }
         case 'table_locked': {
           const lock = data.lock_data || data;
-          const tableId = lock.table_id || lock.table;
-          const userId = lock.user_id || lock.user;
-          if (lock && tableId) {
+          const rawTableId = lock.table_id || lock.table;
+          const rawUserId = lock.user_id || lock.user;
+          if (lock && rawTableId) {
+            const tableId = Number(rawTableId);
             const newMap = new Map(lockedTables.value);
-            newMap.set(tableId, {
+            const lockObj = {
               table_id: tableId,
-              user_id: userId,
+              user_id: rawUserId,
               username: lock.username,
               locked_at: lock.locked_at,
               expires_at: lock.expires_at,
               remaining_seconds: lock.remaining_seconds
-            });
+            };
+            newMap.set(tableId, lockObj);
             lockedTables.value = newMap;
             getTableStore().lockedTables = Object.fromEntries(newMap);
 
@@ -120,22 +195,28 @@ const connectLockWebSocket = () => {
               if (!table.lock_info) table.lock_info = {};
               table.lock_info.is_active = true;
               table.lock_info.username = lock.username;
-              table.lock_info.user_id = userId;
+              table.lock_info.user_id = rawUserId;
             }
           }
           break;
         }
         case 'table_unlocked': {
           const unlock = data.unlock_data || data;
-          if (unlock && unlock.table_id) {
+          const targetId = unlock?.table_id || unlock?.table;
+          if (targetId) {
+            const idNum = Number(targetId);
             const newMap = new Map(lockedTables.value);
-            newMap.delete(unlock.table_id);
+            newMap.delete(idNum);
+            newMap.delete(String(targetId));
             lockedTables.value = newMap;
-            getTableStore().lockedTables = Object.fromEntries(newMap);
+            
+            const currentLocked = { ...getTableStore().lockedTables };
+            delete currentLocked[idNum];
+            delete currentLocked[String(targetId)];
+            getTableStore().lockedTables = currentLocked;
             
             // ELIMINAR EL LOCK FANTASMA CACHEADO DE LA API REST
-            // Si no lo limpiamos, la UI usará los datos viejos de la última carga de página
-            const table = getTableStore().getTableByID(unlock.table_id);
+            const table = getTableStore().getTableByID(idNum) || getTableStore().getTableByID(targetId);
             if (table && table.lock_info) {
                 table.lock_info.is_active = false;
             }
@@ -176,18 +257,26 @@ const connectLockWebSocket = () => {
 };
 
 export const disconnectLockWebSocket = () => {
+    shouldReconnect = false;
+    if (reconnectTimeout) {
+      clearTimeout(reconnectTimeout);
+      reconnectTimeout = null;
+    }
     if (lockSocket) {
       lockSocket.close();
       lockSocket = null;
       lockSocketConnected.value = false;
-      if (reconnectTimeout) clearTimeout(reconnectTimeout);
     }
     lockedTables.value = new Map();
     getTableStore().lockedTables = {};
     pendingMessages = [];
+    if (expiryCheckInterval) {
+      clearInterval(expiryCheckInterval);
+      expiryCheckInterval = null;
+    }
   };
 
-const wsLockTable = (tableId, durationMinutes = 15) => {
+const wsLockTable = (tableId, durationMinutes = 2) => {
   const message = {
     type: 'lock_table',
     table_id: tableId,
@@ -206,50 +295,43 @@ const wsLockTable = (tableId, durationMinutes = 15) => {
 };
 
 const wsUnlockTable = (tableId) => {
+  if (!tableId) return;
+
+  const idNum = Number(tableId);
+
+  // 1. Limpieza INMEDIATA local en Pinia y Set local para reactividad instantánea
+  const newMap = new Map(lockedTables.value);
+  newMap.delete(idNum);
+  newMap.delete(String(tableId));
+  lockedTables.value = newMap;
+
+  const currentLocked = { ...getTableStore().lockedTables };
+  delete currentLocked[idNum];
+  delete currentLocked[String(tableId)];
+  getTableStore().lockedTables = currentLocked;
+
+  const table = getTableStore().getTableByID(idNum) || getTableStore().getTableByID(tableId);
+  if (table && table.lock_info) {
+    table.lock_info.is_active = false;
+  }
+
   const message = {
     type: 'unlock_table',
-    table_id: tableId
+    table_id: idNum
   };
+
+  // 2. Si el socket está abierto, enviar por WebSocket
   if (lockSocket && lockSocket.readyState === WebSocket.OPEN) {
     lockSocket.send(JSON.stringify(message));
   } else if (lockSocket && lockSocket.readyState === WebSocket.CONNECTING) {
     pendingMessages.push(message);
   } else {
-    pendingMessages.push(message);
-    if (!lockSocket || lockSocket.readyState === WebSocket.CLOSED) {
-      connectLockWebSocket();
-    }
-  }
-
-  // FALLBACK HTTP GARANTIZADO:
-  // Enviar siempre una petición REST en segundo plano con Authorization header para asegurar la liberación del bloqueo
-  if (tableId) {
-    const url = `${API_BASE}/api/v1/table-locks/unlock/`;
-    const data = { table_id: tableId };
-    const config = getAuthConfig();
-
-    try {
-      if (typeof fetch === 'function') {
-        fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(config.headers || {})
-          },
-          body: JSON.stringify(data),
-          keepalive: true
-        }).catch(() => {});
-      }
-    } catch (e) {
-      console.warn('[useTableLock] fetch keepalive error:', e);
-    }
-
-    axios.post(url, data, config)
-      .catch(err => console.warn('[useTableLock] Fallback HTTP unlock error:', err));
+    // 3. Fallback HTTP SOLO si el WebSocket está cerrado/desconectado
+    unlockTableHTTP(idNum).catch(() => {});
   }
 };
 
-const wsRenewLock = (tableId, durationMinutes = 15) => {
+const wsRenewLock = (tableId, durationMinutes = 2) => {
   const message = {
     type: 'renew_lock',
     table_id: tableId,
@@ -296,8 +378,6 @@ const wsHeartbeat = (tableId = null) => {
   }
 };
 
-const lockedTables = ref(new Map());
-const myLocks = ref([]);
 const pollingInterval = ref(null);
 
 const unlockTableHTTP = async (tableId) => {
@@ -325,7 +405,9 @@ export function useTableLock() {
   let router = null;
   try {
     router = useRouter();
-  } catch (_) {}
+  } catch (_) {
+    // Contexto fuera de setup, usar routerInstance
+  }
   if (!router) {
     router = routerInstance;
   }
@@ -343,7 +425,7 @@ export function useTableLock() {
     }
   };
 
-  const lockTable = async (tableId, durationMinutes = 15) => {
+  const lockTable = async (tableId, durationMinutes = 2) => {
     try {
       const response = await axios.post(
         `${API_BASE}/api/v1/table-locks/lock/`,
@@ -426,10 +508,16 @@ export function useTableLock() {
   };
 
   const isTableLockedByMe = (tableId) => {
-    const lock = lockedTables.value.get(tableId);
+    const idNum = Number(tableId);
+    const lock = lockedTables.value.get(idNum) || lockedTables.value.get(tableId);
     if (!lock) return false;
 
-    return myLocks.value.some(myLock => myLock.table.id === tableId);
+    const currentUserId = getUserStore().user?.id;
+    if (currentUserId && (lock.user_id === currentUserId || lock.user === currentUserId)) {
+      return true;
+    }
+
+    return myLocks.value.some(myLock => myLock.table?.id === idNum || myLock.table?.id === tableId);
   };
 
   const isTableLockedByOther = (tableId) => {
@@ -469,10 +557,9 @@ export function useTableLock() {
     }
 
     const lockData = lockStatus.lock_data;
-
-    const isMyLock = myLocks.value.some(
-      lock => lock.table.id === tableId
-    );
+    const currentUserId = getUserStore().user?.id;
+    const isMyLock = (currentUserId && (lockData?.user_id === currentUserId || lockData?.user === currentUserId)) ||
+      myLocks.value.some(lock => lock.table?.id === Number(tableId) || lock.table?.id === tableId);
 
     if (isMyLock) {
       return {

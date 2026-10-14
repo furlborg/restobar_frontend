@@ -126,7 +126,6 @@ import ProductIndications from "./ProductIndications";
 import ModalAnulateSale from "@/views/Sale/modalAnulateSale.vue";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useBusinessStore } from "@/store/modules/business";
-import { useWaiterStore } from "@/store/modules/waiter";
 import { useOrderStore } from "@/store/modules/order";
 import { useUserStore } from "@/store/modules/user";
 import { useSaleStore } from "@/store/modules/sale";
@@ -138,7 +137,6 @@ import { useTableStore } from "@/store/modules/table";
 
 const settingsStore = useSettingsStore();
 const businessStore = useBusinessStore();
-const waiterStore = useWaiterStore();
 const orderStore = useOrderStore();
 
 const dataAnulateModal = ref({
@@ -200,7 +198,8 @@ const canUseCombos = computed(() => {
     return showCombos && userStore.hasPermission('use_combos_menus');
 });
 
-const { wsLockTable, wsUnlockTable } = useTableLock();
+const { wsLockTable, wsUnlockTable, wsRenewLock } = useTableLock();
+let lockHeartbeatTimer = null;
 const message = useMessage();
 const dialog = useDialog();
 const route = useRoute();
@@ -396,18 +395,31 @@ onMounted(() => {
     capturedTableId.value = tableId;
 
     const lockInfo = tableStore.lockedTables[capturedTableId.value];
+    const isLockExpired = lockInfo && lockInfo.expires_at && Date.now() > new Date(lockInfo.expires_at).getTime();
     const isMyLock = lockInfo && lockInfo.user_id === userStore.user.id;
 
-    if (!lockInfo || isMyLock) {
+    if (!lockInfo || isLockExpired || isMyLock) {
         console.log('[WaiterOrder] 🔒 Bloqueando mesa', capturedTableId.value);
-        wsLockTable(capturedTableId.value, 15);
+        wsLockTable(capturedTableId.value, 2);
         shouldUnlock.value = true;
         window.addEventListener('beforeunload', handleBeforeUnload);
+
+        if (lockHeartbeatTimer) clearInterval(lockHeartbeatTimer);
+        lockHeartbeatTimer = setInterval(() => {
+            if (capturedTableId.value && shouldUnlock.value) {
+                console.log('[WaiterOrder] 💓 Heartbeat renovación mesa', capturedTableId.value);
+                wsRenewLock(capturedTableId.value, 2);
+            }
+        }, 30000);
     }
 });
 
 onUnmounted(() => {
     console.log('[WaiterOrder] 🔴 Componente desmontado - Mesa:', capturedTableId.value);
+    if (lockHeartbeatTimer) {
+        clearInterval(lockHeartbeatTimer);
+        lockHeartbeatTimer = null;
+    }
     window.removeEventListener('beforeunload', handleBeforeUnload);
     unlockCurrentTable();
 });
@@ -426,10 +438,11 @@ watch(() => route.params.table, (newTable, oldTable) => {
         const newId = typeof newTable === 'string' ? parseInt(newTable) : newTable;
         capturedTableId.value = newId;
         const lockInfo = tableStore.lockedTables[newId];
+        const isLockExpired = lockInfo && lockInfo.expires_at && Date.now() > new Date(lockInfo.expires_at).getTime();
         const isMyLock = lockInfo && lockInfo.user_id === userStore.user.id;
-        if (!lockInfo || isMyLock) {
+        if (!lockInfo || isLockExpired || isMyLock) {
             console.log('[WaiterOrder] 🔒 Bloqueando nueva mesa', newId);
-            wsLockTable(newId, 15);
+            wsLockTable(newId, 2);
             shouldUnlock.value = true;
         }
     }

@@ -32,8 +32,8 @@ const isTokenExpired = (token) => {
 };
 
 export const useUserStore = defineStore("user", {
-  state: () => ({
-    user: {
+  state: () => {
+    let initialUser = {
       id: "",
       names: "",
       role: "",
@@ -41,11 +41,33 @@ export const useUserStore = defineStore("user", {
       branchoffice_des: "",
       is_owner: false,
       is_superuser: false,
-    },
-    isAuthenticated: false,
-    token: "",
-    refresh: "",
-  }),
+      user_permissions: [],
+    };
+    try {
+      const stored = localStorage.getItem("user-info");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        initialUser = { ...initialUser, ...parsed };
+      }
+      const storedPerms = localStorage.getItem("perms");
+      if (storedPerms) {
+        initialUser.user_permissions = JSON.parse(storedPerms);
+      }
+    } catch (_) {
+      // Ignorar parsing error en inicialización de usuario
+    }
+
+    const token = localStorage.getItem("token") || "";
+    const refresh = localStorage.getItem("refresh") || "";
+    const isAuth = localStorage.getItem("isAuthenticated") === "true";
+
+    return {
+      user: initialUser,
+      isAuthenticated: isAuth,
+      token: token,
+      refresh: refresh,
+    };
+  },
   actions: {
     initializeStore() {
       if (!this.isAuthenticated) {
@@ -55,6 +77,21 @@ export const useUserStore = defineStore("user", {
 
         this.isAuthenticated = Boolean(hasToken && hasRefresh && hasUserInfo);
         localStorage.setItem("isAuthenticated", String(this.isAuthenticated));
+      }
+      if (!this.user?.role) {
+        try {
+          const stored = localStorage.getItem("user-info");
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            this.user = { ...this.user, ...parsed };
+          }
+          const storedPerms = localStorage.getItem("perms");
+          if (storedPerms) {
+            this.user.user_permissions = JSON.parse(storedPerms);
+          }
+        } catch (_) {
+          // Ignorar error de parsing en initializeStore
+        }
       }
     },
     async login(data) {
@@ -193,20 +230,14 @@ export const useUserStore = defineStore("user", {
         console.warn("Error liberando bloqueos en logout:", e);
       }
 
-      return await logout(this.refresh)
-        .then((response) => {
-          if (response.status === 205 || response.status === 401) {
-            this.logout();
-          }
-          return true;
-        })
-        .catch((error) => {
-          if (error.response?.data?.code === "token_blacklisted") {
-            this.logout();
-            return true;
-          }
-          return false;
-        });
+      try {
+        await logout(this.refresh);
+      } catch (error) {
+        console.warn("Error blacklisting token on server:", error);
+      } finally {
+        this.logout();
+      }
+      return true;
     },
     logout() {
       // 2. Cortar y resetear WebSocket para no retener conexiones del usuario saliente
@@ -217,7 +248,9 @@ export const useUserStore = defineStore("user", {
               if (typeof disconnectLockWebSocket === 'function') {
                 disconnectLockWebSocket();
               }
-            } catch (_) {}
+            } catch (_) {
+              // Ignorar error al desconectar socket en logout
+            }
           })
           .catch(() => {});
       } catch (e) {
@@ -242,12 +275,16 @@ export const useUserStore = defineStore("user", {
       }
     },
     hasPermission(permission) {
-      if (this.user?.role === "ADMINISTRADOR") {
+      if (
+        this.user?.role === "ADMINISTRADOR" ||
+        this.user?.is_superuser ||
+        this.user?.is_owner
+      ) {
         return true;
       }
       
       let perms = this.user?.user_permissions;
-      if (!perms) {
+      if (!perms || (Array.isArray(perms) && perms.length === 0)) {
         try {
           perms = JSON.parse(localStorage.getItem("perms") || "[]");
         } catch (e) {

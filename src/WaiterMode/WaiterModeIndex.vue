@@ -3,7 +3,7 @@
     <n-layout-header style="height: 48px" position="absolute" bordered>
       <n-space class="h-100 m-0" align="center" justify="space-between">
         <div v-if="$route.params.table" class="d-flex ms-2 fs-6">
-          <n-button text @click="$router.back()">
+          <n-button text @click="handleHeaderBack">
             <v-icon name="md-arrowback-round" />
           </n-button>
           <div class="ms-2">
@@ -65,14 +65,14 @@
     </n-modal>
     <div class="mainMenu" :class="{ act: active === true }">
       <ul>
+        <li v-if="$route.params.table">
+          <a @click="router.push({ name: 'WHome' }); active = false;">Ver Mesas</a>
+        </li>
         <li v-if="$route.name === 'WHome'">
           <a @click="
             waiterStore.changeTable = true;
           active = false;
           ">Mover Mesa</a>
-        </li>
-        <li v-if="userStore.user.role !== 'MOZO'">
-          <a @click="$router.push({ name: 'Dashboard' })">Volver</a>
         </li>
         <li>
           <a href="#" class="suBtn" @click="doLogout">Cerrar sesión</a>
@@ -84,7 +84,7 @@
 
 <script setup>
 import { ref, computed } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import { useDialog } from "naive-ui";
 import { retrieveCurrentTill } from "@/api/modules/tills";
 import { usePrinterStore } from "@/store/modules/printer";
@@ -102,6 +102,17 @@ const showAddCustomerModal = ref(false);
 const newCustomerName = ref("");
 const dialog = useDialog();
 const router = useRouter();
+const route = useRoute();
+
+const handleHeaderBack = () => {
+  if (route.name === 'WCategoriesItems') {
+    router.push({ name: 'WProductCategories', params: { table: route.params.table } });
+  } else if (route.name === 'WTablePayment') {
+    router.push({ name: 'WProductCategories', params: { table: route.params.table } });
+  } else {
+    router.push({ name: 'WHome' });
+  }
+};
 const businessStore = useBusinessStore();
 const waiterStore = useWaiterStore();
 const printerStore = usePrinterStore();

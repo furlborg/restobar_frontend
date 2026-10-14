@@ -30,7 +30,7 @@ export function useTableLockPolling() {
   /**
    * Bloquear una mesa
    */
-  const lockTable = async (tableId, durationMinutes = 15) => {
+  const lockTable = async (tableId, durationMinutes = 2) => {
     try {
       const response = await apiLockTable(tableId, durationMinutes)
       
