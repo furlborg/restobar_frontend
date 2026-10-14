@@ -130,7 +130,7 @@
                                 </n-form>
 
                                 <!-- Tabla original para modo sin clientes -->
-                                <n-table v-else size="small" >
+                                <n-table v-if="!shouldShowCustomerMode" size="small">
                                   <thead>
                                       <tr>
                                           <th style="width: 10%"></th>
@@ -220,8 +220,8 @@
                                   </tfoot>
                                 </n-table>
 
-                                <!-- Nueva tabla para modo con clientes -->
                                 <div v-else>
+                                    <!-- Nueva tabla para modo con clientes -->
                                     <template v-for="(customer, customerIndex) in customers" :key="customer.id">
                                         <n-card
                                             class="mb-4"
