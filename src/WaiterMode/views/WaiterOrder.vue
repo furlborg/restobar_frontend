@@ -126,7 +126,6 @@ import ProductIndications from "./ProductIndications";
 import ModalAnulateSale from "@/views/Sale/modalAnulateSale.vue";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useBusinessStore } from "@/store/modules/business";
-import { useWaiterStore } from "@/store/modules/waiter";
 import { useOrderStore } from "@/store/modules/order";
 import { useUserStore } from "@/store/modules/user";
 import { useSaleStore } from "@/store/modules/sale";
@@ -138,7 +137,6 @@ import { useTableStore } from "@/store/modules/table";
 
 const settingsStore = useSettingsStore();
 const businessStore = useBusinessStore();
-const waiterStore = useWaiterStore();
 const orderStore = useOrderStore();
 
 const dataAnulateModal = ref({
