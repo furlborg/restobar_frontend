@@ -464,6 +464,10 @@ const performNullifyTableOrder = async () => {
 
 const nullifyTableOrder = async () => {
     if (!orderStore.orderList.length && orderStore.orderId) {
+        if (!userStore.hasPermission('null_orders')) {
+            message.warning("No tiene permisos para anular la mesa.");
+            return;
+        }
         await performNullifyTableOrder();
     }
 };
@@ -477,6 +481,11 @@ const resetDeleteState = () => {
 };
 
 const performDeleteDetail = async () => {
+    if (orderStore.orderId && orderStore.orderList.length === 1 && deleteQuantity.value >= maxQuantity.value) {
+        message.warning("No es posible anular todos los ítems de la comanda. Para cancelar la mesa completa, utilice la opción Anular Pedido.");
+        return;
+    }
+
     if (formRef.value) {
         formRef.value.validate(async (errors) => {
             if (!errors) {
@@ -499,7 +508,7 @@ const performDeleteDetail = async () => {
                     resetDeleteState();
                 } catch (error) {
                     console.error(error);
-                    message.error("Error al anular, verifique sus datos...");
+                    message.error(error.response?.data?.error || "Error al anular, verifique sus datos...");
                 }
             }
         }).catch(() => {});
@@ -523,7 +532,7 @@ const performDeleteDetail = async () => {
             resetDeleteState();
         } catch (error) {
             console.error(error);
-            message.error("Error al anular, verifique sus datos...");
+            message.error(error.response?.data?.error || "Error al anular, verifique sus datos...");
         }
     }
 };
@@ -596,9 +605,12 @@ const handleProductClick = (product) => {
 };
 
 const deleteOrderDetail = (detailIndex, detailId) => {
-    Object.assign(removingItem.value, { ind: detailIndex, id: detailId });
-    console.log('dadada');
     const quantity = saleStore.getOrderQuantity(detailId);
+    if (orderStore.orderId && orderStore.orderList.length === 1 && quantity <= 1) {
+        message.warning("No es posible anular el último ítem de la comanda. Para cancelar la mesa completa, utilice la opción Anular Pedido.");
+        return;
+    }
+    Object.assign(removingItem.value, { ind: detailIndex, id: detailId });
     deleteQuantity.value = quantity;
     maxQuantity.value = quantity;
     showConfirm.value = true;

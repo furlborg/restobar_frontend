@@ -126,7 +126,6 @@ import ProductIndications from "./ProductIndications";
 import ModalAnulateSale from "@/views/Sale/modalAnulateSale.vue";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useBusinessStore } from "@/store/modules/business";
-import { useWaiterStore } from "@/store/modules/waiter";
 import { useOrderStore } from "@/store/modules/order";
 import { useUserStore } from "@/store/modules/user";
 import { useSaleStore } from "@/store/modules/sale";
@@ -138,7 +137,6 @@ import { useTableStore } from "@/store/modules/table";
 
 const settingsStore = useSettingsStore();
 const businessStore = useBusinessStore();
-const waiterStore = useWaiterStore();
 const orderStore = useOrderStore();
 
 const dataAnulateModal = ref({
@@ -150,6 +148,11 @@ const dataAnulateModal = ref({
         try {
             const orderDetail = orderStore.fullOrderList.find(o => o.id === detailId);
             const quantity = dataAnulate.quantity || (orderDetail ? orderDetail.quantity : 1);
+
+            if (orderStore.fullOrderList.length === 1 && quantity >= (orderDetail?.quantity ?? 1)) {
+                message.warning("No es posible anular el último ítem de la comanda. Para cancelar la mesa completa, solicite anular el pedido a un administrador.");
+                return;
+            }
 
             const payload = {
                 ...dataAnulate,
@@ -163,7 +166,7 @@ const dataAnulateModal = ref({
             }
         } catch (error) {
             console.error(error);
-            message.error("Error al anular, verifique sus datos...");
+            message.error(error.response?.data?.error || "Error al anular, verifique sus datos...");
         }
     }
 });

@@ -130,7 +130,7 @@
                                 </n-form>
 
                                 <!-- Tabla original para modo sin clientes -->
-                                <n-table v-else size="small" >
+                                <n-table v-if="!shouldShowCustomerMode" size="small">
                                   <thead>
                                       <tr>
                                           <th style="width: 10%"></th>
@@ -220,8 +220,8 @@
                                   </tfoot>
                                 </n-table>
 
-                                <!-- Nueva tabla para modo con clientes -->
                                 <div v-else>
+                                    <!-- Nueva tabla para modo con clientes -->
                                     <template v-for="(customer, customerIndex) in customers" :key="customer.id">
                                         <n-card
                                             class="mb-4"
@@ -709,6 +709,10 @@ export default defineComponent({
 
         const nullifyTableOrder = async () => {
             if (!orderStore.orderList.length && orderStore.orderId) {
+                if (!userStore.hasPermission('null_orders')) {
+                    message.warning("No tiene permisos para anular la mesa.");
+                    return;
+                }
                 await performNullifyTableOrder();
             }
         };
@@ -739,6 +743,11 @@ export default defineComponent({
         const removingItem = ref({ ind: null, id: null });
 
         const performDeleteDetail = async () => {
+            if (orderStore.orderId && orderStore.orderList.length === 1 && deleteQuantity.value >= maxQuantity.value) {
+                message.warning("No es posible anular todos los ítems de la comanda. Para cancelar la mesa completa, utilice la opción Anular Pedido.");
+                return;
+            }
+
             await performDeleteOrderDetail(
                 route.params.table,
                 removingItem.value.id,
@@ -778,15 +787,20 @@ export default defineComponent({
                 })
                 .catch((error) => {
                     console.error(error);
-                    message.error("Error al anular, verifique sus datos...");
+                    message.error(error.response?.data?.error || "Error al anular, verifique sus datos...");
                 });
         };
 
         const deleteOrderDetail = (detailIndex, detailId) => {
+            const quantity = saleStore.getOrderQuantity(detailId);
+            if (orderStore.orderId && orderStore.orderList.length === 1 && quantity <= 1) {
+                message.warning("No es posible anular el último ítem de la comanda. Para cancelar la mesa completa, utilice la opción Anular Pedido.");
+                return;
+            }
             removingItem.value.ind = detailIndex;
             removingItem.value.id = detailId;
-            deleteQuantity.value = saleStore.getOrderQuantity(detailId);
-            maxQuantity.value = saleStore.getOrderQuantity(detailId);
+            deleteQuantity.value = quantity;
+            maxQuantity.value = quantity;
             showConfirm.value = true;
         };
 

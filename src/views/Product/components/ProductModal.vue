@@ -8,7 +8,7 @@
       <n-form :model="product" :rules="productRulesLocal" ref="productRef">
         <n-grid responsive="screen" cols="6 s:6 m:24 l:24 xl:24 2xl:24" :x-gap="12">
           <n-form-item-gi label="Código" path="code" :span="4">
-            <n-input v-model:value="product.code" placeholder="PRO0000000" />
+            <n-input v-model:value="product.code" placeholder="PRO0000000" disabled />
           </n-form-item-gi>
           <n-form-item-gi label="Nombre" path="name" :span="12">
             <n-input v-model:value="product.name" placeholder="" />
@@ -194,6 +194,7 @@ import {
   retrieveProduct,
   createProductCategory,
   updateProductCategory,
+  getNextProductCode,
 } from "@/api/modules/products";
 import { getSupplies, getMeasureUnit } from "@/api/modules/supplies";
 import { useProductStore } from "@/store/modules/product";
@@ -201,7 +202,6 @@ import { useSettingsStore } from "@/store/modules/settings";
 import { useUserStore } from "@/store/modules/user";
 import { NButton, useMessage } from "naive-ui";
 import { productRules } from "@/utils/constants";
-import { isNumber } from "@/utils";
 import { getBranchs } from "@/api/modules/business";
 import SuppliesModal from "../../Supplies/components/SuppliesModal.vue";
 
@@ -278,6 +278,17 @@ const allowZeroAffectationId = 21;
 
 const productRulesLocal = computed(() => ({
   ...productRules,
+  code: {
+    trigger: ["blur", "input"],
+    validator(rule, value) {
+      if (idProduct.value) {
+        if (!value || !String(value).trim()) {
+          return new Error("El código del producto no puede estar vacío");
+        }
+      }
+      return true;
+    },
+  },
   prices: {
     ...productRules.prices,
     validator(rule, value) {
@@ -438,6 +449,13 @@ watch(show, () => {
     };
     imageFileList.value = [];
     product.value.image = null;
+    getNextProductCode("PRO")
+      .then((res) => {
+        if (res.data?.next_code && (!idProduct.value || idProduct.value === 0)) {
+          product.value.code = res.data.next_code;
+        }
+      })
+      .catch(() => {});
   }
 });
 
@@ -466,8 +484,19 @@ const performCreate = (e) => {
             }
           })
           .catch((error) => {
-            console.error(error.response.data);
-            message.error("Algo salió mal...");
+            console.error(error.response?.data || error);
+            const errData = error.response?.data;
+            let errMsg = "Algo salió mal...";
+            if (errData) {
+              if (Array.isArray(errData.code) && errData.code.length > 0) {
+                errMsg = errData.code[0];
+              } else if (typeof errData.detail === "string") {
+                errMsg = errData.detail;
+              } else if (typeof errData === "string") {
+                errMsg = errData;
+              }
+            }
+            message.error(errMsg);
           })
           .finally(() => {
             isLoadingData.value = false;
@@ -500,8 +529,19 @@ const performUpdate = (e) => {
             }
           })
           .catch((error) => {
-            console.error(error.response.data);
-            message.error("Algo salió mal...");
+            console.error(error.response?.data || error);
+            const errData = error.response?.data;
+            let errMsg = "Algo salió mal...";
+            if (errData) {
+              if (Array.isArray(errData.code) && errData.code.length > 0) {
+                errMsg = errData.code[0];
+              } else if (typeof errData.detail === "string") {
+                errMsg = errData.detail;
+              } else if (typeof errData === "string") {
+                errMsg = errData;
+              }
+            }
+            message.error(errMsg);
           })
           .finally(() => {
             isLoadingData.value = false;
