@@ -906,6 +906,20 @@ export const createMovementsColumns = ({
           );
         }
 
+        if (rowData.status) {
+          return h(
+            NTag,
+            {
+              size: "small",
+              type: "warning",
+              round: true,
+            },
+            {
+              default: () => "ANULADO",
+            },
+          );
+        }
+
         let concept_type = tillStore.getConceptType(rowData.concept);
 
         return h(
@@ -1001,6 +1015,7 @@ export const createMovementsColumns = ({
               size: "small",
               type: "warning",
               secondary: true,
+              disabled: rowData.status,
               onClick: () => editMovement(rowData),
             },
             renderIcon("md-edit"),
@@ -1095,6 +1110,20 @@ export const createTillDetailsColumns = () => {
       align: "center",
       width: 100,
       render(row) {
+        if (row.status) {
+          return h(
+            NTag,
+            {
+              size: "small",
+              type: "warning",
+              round: true,
+            },
+            {
+              default: () => "ANULADO",
+            },
+          );
+        }
+
         let concept_type = tillStore.getConceptType(row.concept);
 
         return h(
