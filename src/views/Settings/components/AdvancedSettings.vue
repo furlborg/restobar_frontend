@@ -238,6 +238,62 @@
                                         <n-form-item-gi label="Inferior (px)"><n-input-number v-model:value="businessSettings.printer.margins[2]" :min="0" :max="25" /></n-form-item-gi>
                                         <n-form-item-gi label="Izquierdo (px)"><n-input-number v-model:value="businessSettings.printer.margins[3]" :min="0" :max="25" /></n-form-item-gi>
                                     </n-grid>
+
+                                    <div class="d-flex align-items-center justify-content-between mt-4 mb-2">
+                                        <div>
+                                            <div class="sub-section-title m-0">Tamaño de Cabecera de Comanda (Kuzeta px)</div>
+                                            <small class="text-muted">Calibra el tamaño según los caracteres del nombre de la mesa. Aplica al formato activo en la ticketera.</small>
+                                        </div>
+                                        <n-button 
+                                            v-if="editMode" 
+                                            size="tiny" 
+                                            quaternary 
+                                            type="info" 
+                                            @click="resetComandaFontSizes"
+                                        >
+                                            <template #icon><v-icon name="md-refresh-round" /></template>
+                                            Restablecer Estándar
+                                        </n-button>
+                                    </div>
+
+                                    <n-grid responsive="screen" cols="1 s:2 m:3 l:6" :x-gap="16" :y-gap="12">
+                                        <n-form-item-gi label="Mesa 1 car. (ej. 1)">
+                                            <n-input-number v-model:value="businessSettings.printer.table_font_size_1" :min="20" :max="200" :step="2" />
+                                            <template #feedback>
+                                                <span class="fs-8 text-muted">Estándar: <b>36 px</b> (20-200)</span>
+                                            </template>
+                                        </n-form-item-gi>
+                                        <n-form-item-gi label="Mesa 2 car. (ej. 12)">
+                                            <n-input-number v-model:value="businessSettings.printer.table_font_size_2" :min="20" :max="180" :step="2" />
+                                            <template #feedback>
+                                                <span class="fs-8 text-muted">Estándar: <b>36 px</b> (20-180)</span>
+                                            </template>
+                                        </n-form-item-gi>
+                                        <n-form-item-gi label="Mesa 3-4 car. (ej. M-01)">
+                                            <n-input-number v-model:value="businessSettings.printer.table_font_size_4" :min="20" :max="150" :step="2" />
+                                            <template #feedback>
+                                                <span class="fs-8 text-muted">Estándar: <b>36 px</b> (20-150)</span>
+                                            </template>
+                                        </n-form-item-gi>
+                                        <n-form-item-gi label="Mesa 5-7 car. (ej. MESA 12)">
+                                            <n-input-number v-model:value="businessSettings.printer.table_font_size_7" :min="20" :max="120" :step="2" />
+                                            <template #feedback>
+                                                <span class="fs-8 text-muted">Estándar: <b>36 px</b> (20-120)</span>
+                                            </template>
+                                        </n-form-item-gi>
+                                        <n-form-item-gi label="Mesa 8+ car. (Largo)">
+                                            <n-input-number v-model:value="businessSettings.printer.table_font_size_default" :min="20" :max="100" :step="2" />
+                                            <template #feedback>
+                                                <span class="fs-8 text-muted">Estándar: <b>36 px</b> (20-100)</span>
+                                            </template>
+                                        </n-form-item-gi>
+                                        <n-form-item-gi label="Número de Orden (#)">
+                                            <n-input-number v-model:value="businessSettings.printer.order_font_size" :min="15" :max="60" :step="2" />
+                                            <template #feedback>
+                                                <span class="fs-8 text-muted">Estándar: <b>25 px</b> (15-60)</span>
+                                            </template>
+                                        </n-form-item-gi>
+                                    </n-grid>
                                 </n-form>
                             </n-card>
                         </div>
@@ -1326,7 +1382,13 @@ export default defineComponent({
                 kitchen_printer_format: 58,
                 kitchen_ticket_format: 4,
                 print_name_take_away: '',
-                print_name_delivery: ''
+                print_name_delivery: '',
+                table_font_size_1: 36,
+                table_font_size_2: 36,
+                table_font_size_4: 36,
+                table_font_size_7: 36,
+                table_font_size_default: 36,
+                order_font_size: 25
             };
             for (const key in defaultPrinter) {
                 if (settings.printer[key] === undefined) {
@@ -1504,6 +1566,7 @@ export default defineComponent({
             { key: "kuzeta", title: "Motor Kuzeta & Ticketeras", tab: "impresiones", tabName: "Impresión y Tickets", icon: "md-print-round", keywords: "kuzeta websocket host precuenta comanda" },
             { key: "formato_caja", title: "Formato de Papel (80mm / 58mm)", tab: "impresiones", tabName: "Impresión y Tickets", icon: "md-print-round", keywords: "papel 80 58 tamaño formato" },
             { key: "fuentes", title: "Tamaños de Letra", tab: "impresiones", tabName: "Impresión y Tickets", icon: "md-print-round", keywords: "fuente letra tamaño cabecera" },
+            { key: "comanda_fuente", title: "Tamaño Cabecera Comanda (Mesa y Orden)", tab: "impresiones", tabName: "Impresión y Tickets", icon: "md-print-round", keywords: "mesa orden cabecera comanda kuzeta fuente tamaño" },
             { key: "margenes", title: "Márgenes de Impresión", tab: "impresiones", tabName: "Impresión y Tickets", icon: "md-print-round", keywords: "margenes superior izquierdo" },
             { key: "igv", title: "Tasa de IGV (18% / 10.5% / 0%)", tab: "ventas", tabName: "Ventas y Facturación", icon: "md-pointofsale-twotone", keywords: "igv impuesto tasa mype sunat" },
             { key: "doc_defecto", title: "Documento por Defecto", tab: "ventas", tabName: "Ventas y Facturación", icon: "md-pointofsale-twotone", keywords: "boleta factura nota de venta comprobante" },
@@ -1614,6 +1677,17 @@ export default defineComponent({
             message.info("Cambios cancelados.");
         };
 
+        const resetComandaFontSizes = () => {
+            if (!businessSettings.value || !businessSettings.value.printer) return;
+            businessSettings.value.printer.table_font_size_1 = 36;
+            businessSettings.value.printer.table_font_size_2 = 36;
+            businessSettings.value.printer.table_font_size_4 = 36;
+            businessSettings.value.printer.table_font_size_7 = 36;
+            businessSettings.value.printer.table_font_size_default = 36;
+            businessSettings.value.printer.order_font_size = 25;
+            message.info("Valores estándar de fábrica restablecidos.");
+        };
+
         // Estado WhatsApp
         const showWhatsAppModal = ref(false);
         const loadingLogout = ref(false);
@@ -1710,7 +1784,8 @@ export default defineComponent({
             loadingLogout,
             whatsappStatus,
             handleLogoutWhatsApp,
-            onWhatsAppLinked
+            onWhatsAppLinked,
+            resetComandaFontSizes
         };
     }
 });
