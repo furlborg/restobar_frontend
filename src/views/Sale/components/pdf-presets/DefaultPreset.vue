@@ -233,7 +233,7 @@
               </template>
               <tr v-else>
                 <td align="right" :colspan="!!hasDiscounts ? 4 : 3">
-                  EFECTIVO :
+                  {{ singlePaymentMethodLabel }} :
                 </td>
                 <td align="right">
                   {{
@@ -380,6 +380,7 @@ import { defineComponent, computed } from "vue";
 import { useBusinessStore } from "@/store/modules/business";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useTableStore } from "@/store/modules/table";
+import { useSaleStore } from "@/store/modules/sale";
 import { numeroALetras } from "@/hooks/numberText.js";
 
 import qr from "qrcode";
@@ -398,6 +399,7 @@ export default defineComponent({
     const settingsStore = useSettingsStore();
     const businessStore = useBusinessStore();
     const tableStore = useTableStore();
+    const saleStore = useSaleStore();
 
     const hasDiscounts = computed(() => {
       const detailsHave = props.data?.sale_details?.some(
@@ -555,6 +557,21 @@ export default defineComponent({
       return info[2];
     });
 
+    const singlePaymentMethodLabel = computed(() => {
+      if (multiplePayments.value.length === 1 && multiplePayments.value[0]?.method) {
+        return String(multiplePayments.value[0].method).toUpperCase();
+      }
+      if (info[2] && info[2].trim() !== "") {
+        return info[2].trim().toUpperCase();
+      }
+      const pmId = props.data?.payment_method;
+      if (pmId) {
+        const found = saleStore.getPaymentMethodsOptions?.find((p) => p.value === pmId);
+        if (found?.label) return found.label.toUpperCase();
+      }
+      return "EFECTIVO";
+    });
+
     const amountText = numeroALetras(
       sale.totales.total_venta.toFixed("2"),
       "SOLES"
@@ -634,6 +651,7 @@ export default defineComponent({
       title,
       info,
       paymentMethods,
+      singlePaymentMethodLabel,
       multiplePayments,
       hasMultiplePayments,
       generateQR,

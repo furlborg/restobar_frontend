@@ -10,7 +10,7 @@
       @keypress.enter="autoCreateCustomer"
       @update:value="handleCustomerNameChange"
       @select="handleCustomerSelect"
-      placeholder=""
+      :placeholder="placeholder"
       clearable
     />
     <n-button
@@ -54,6 +54,10 @@ const props = defineProps({
   disabled: {
     type: Boolean,
     default: false
+  },
+  placeholder: {
+    type: String,
+    default: 'Buscar por DNI, RUC o Nombre...'
   }
 });
 
