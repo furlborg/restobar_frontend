@@ -1,16 +1,21 @@
 <template>
   <div class="layout-header">
     <div class="layout-header-left">
-      <div v-if="userStore.user.role !== 'MOZO'" class="layout-header-trigger layout-header-trigger-min"
+      <div v-if="userStore.user.role !== 'MOZO'" class="layout-header-trigger layout-header-trigger-min layout-header-menu-btn"
         @click="() => $emit('update:collapsed', !collapsed)">
-        <n-icon size="18" v-if="collapsed">
-          <v-icon name="oi-sidebar-expand" flip="horizontal" />
+        <n-icon size="22" v-if="genericsStore.device === 'mobile'">
+          <v-icon name="md-menu-round" />
         </n-icon>
-        <n-icon size="18" v-else>
-          <v-icon name="oi-sidebar-collapse" flip="horizontal" />
-        </n-icon>
+        <template v-else>
+          <n-icon size="18" v-if="collapsed">
+            <v-icon name="oi-sidebar-expand" flip="horizontal" />
+          </n-icon>
+          <n-icon size="18" v-else>
+            <v-icon name="oi-sidebar-collapse" flip="horizontal" />
+          </n-icon>
+        </template>
       </div>
-      <div class="layout-header-trigger layout-header-trigger-min">
+      <div v-if="genericsStore.device !== 'mobile'" class="layout-header-trigger layout-header-trigger-min">
         <n-tooltip placement="bottom">
           <template #trigger>
             <n-icon size="18">
@@ -88,7 +93,7 @@
       </div>
     </div>
     <div class="layout-header-right">
-      <n-space align="end" vertical :size="0">
+      <n-space v-if="genericsStore.device !== 'mobile'" align="end" vertical :size="0">
         <n-text v-if="userStore.user.names" class="fw-bold">{{
           userStore.user.names
         }}</n-text>
@@ -116,6 +121,7 @@ import { reactive, ref, computed, toRefs, watch, onMounted, onUnmounted } from "
 import { useDialog } from "naive-ui";
 import { useRouter } from "vue-router";
 import { useUserStore } from "@/store/modules/user";
+import { useGenericsStore } from "@/store/modules/generics";
 import { retrieveCurrentTill } from "@/api/modules/tills";
 import { useTillStore } from "@/store/modules/till";
 import { usePrinterStore } from "@/store/modules/printer";
@@ -129,6 +135,7 @@ import { renderIcon } from "@/utils";
 defineProps({
   collapsed: Boolean,
 });
+const emit = defineEmits(["update:collapsed"]);
 defineOptions({
   name: "PageHeader",
 });
@@ -136,6 +143,7 @@ const router = useRouter();
 const dialog = useDialog();
 const drawerSetting = ref();
 const userStore = useUserStore();
+const genericsStore = useGenericsStore();
 const printerStore = usePrinterStore();
 const businessStore = useBusinessStore();
 const tillStore = useTillStore();
@@ -373,6 +381,34 @@ const doLogout = () => {
   &-trigger-min {
     width: auto;
     padding: 0 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .layout-header {
+    height: 56px;
+    padding: 0 4px;
+
+    &-right {
+      margin-right: 6px;
+
+      .avatar {
+        height: 56px;
+      }
+    }
+
+    &-trigger {
+      height: 56px;
+
+      .n-icon {
+        height: 56px;
+        line-height: 56px;
+      }
+    }
+
+    &-trigger-min {
+      padding: 0 6px;
+    }
   }
 }
 

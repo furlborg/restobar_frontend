@@ -10,7 +10,7 @@
         <Logo :collapsed="collapsed" />
         <AsideMenu v-model:collapsed="collapsed" />
       </n-layout-sider>
-      <n-drawer v-else v-model:show="collapsed" :width="200" placement="left">
+      <n-drawer v-else v-model:show="collapsed" :width="240" placement="left">
         <n-drawer-content :body-content-style="{ padding: 0 }">
           <Logo :collapsed="false" />
           <AsideMenu :collapsed="false" />
@@ -37,7 +37,8 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from "vue";
+import { computed, ref, onMounted, onUnmounted, watch } from "vue";
+import { useRoute } from "vue-router";
 import { darkTheme } from "naive-ui";
 import { commonEsPE, dateEsPE } from "@/locale";
 import { useUserStore, useActiveUsersStore } from "@/store/modules/user";
@@ -57,6 +58,7 @@ import { lighten } from "@/utils";
 
 
 const collapsed = ref(false);
+const route = useRoute();
 
 const userStore = useUserStore();
 const activeUsersStore = useActiveUsersStore();
@@ -70,6 +72,20 @@ const tillStore = useTillStore();
 const saleStore = useSaleStore();
 const genericsStore = useGenericsStore();
 
+const handleToggleMenu = () => {
+  collapsed.value = !collapsed.value;
+};
+const handleOpenMenu = () => {
+  collapsed.value = true;
+};
+
+// Cerrar drawer automáticamente al cambiar de ruta en móvil
+watch(() => route.path, () => {
+  if (genericsStore.device === 'mobile') {
+    collapsed.value = false;
+  }
+});
+
 // Fase 1: Esenciales inmediatas para pintar el shell y las mesas
 designStore.initializeStore();
 businessStore.initializeStore();
@@ -79,6 +95,9 @@ tableStore.initializeStore();
 
 // Fase 2 y 3: Escalonar tiendas secundarias para no saturar el límite de conexiones en 3G
 onMounted(() => {
+  window.addEventListener('toggle-module-menu', handleToggleMenu);
+  window.addEventListener('open-module-menu', handleOpenMenu);
+
   setTimeout(() => {
     productStore.initializeStore();
     tillStore.initializeStore();
@@ -89,6 +108,11 @@ onMounted(() => {
     customerStore.initializeStore();
     saleStore.initializeStore();
   }, 300);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('toggle-module-menu', handleToggleMenu);
+  window.removeEventListener('open-module-menu', handleOpenMenu);
 });
 
 const getThemeOverrides = computed(() => {
@@ -162,13 +186,13 @@ const getDarkTheme = computed(() =>
 }
 
 .layout-content-main {
-  margin: 10px 25px 25px;
+  margin: 10px 14px 20px;
   position: relative;
 }
 
 @media (max-width: 768px) {
   .layout-content-main {
-    margin: 10px 0 25px;
+    margin: 8px 0 20px;
   }
 }
 

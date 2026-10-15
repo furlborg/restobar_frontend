@@ -1,54 +1,190 @@
 <template>
-    <n-card :bordered="false" :segmented="{ content: 'hard' }" class="h-100" content-class="overflow-auto" :content-style="genericsStore.device === 'mobile' ? 'padding-bottom: 25px !important;' : ''">
-        <template #header>
-            <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 10px; flex-wrap: wrap;">
-                <!-- Título y Selector (Crecen para llenar el espacio) -->
-                <div style="display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0;">
-                    <span style="white-space: nowrap; margin-right: 8px; font-weight: 500;">Mesas</span>
-                    <n-select v-if="isWaiterModeView" v-model:value="selectedAreaId" :options="areaOptions" clearable placeholder="Seleccionar área" style="flex: 1; min-width: 130px;" />
+    <div class="table-home-view-wrapper">
+        <!-- BARRA SUPERIOR ELEGANTE Y ALINEADA 1:1 CON LAS TARJETAS -->
+        <header class="table-home-header-card">
+            <div class="table-home-header-bar">
+                <!-- Título y Filtros por Áreas -->
+                <div class="header-left-col">
+                    <div class="header-title-badge">
+                        <button 
+                            v-if="genericsStore.device === 'mobile' && userStore.user?.role !== 'MOZO'"
+                            type="button" 
+                            class="mobile-menu-trigger-btn"
+                            @click="openMobileMenu"
+                            title="Abrir menú de módulos"
+                        >
+                            <v-icon name="md-menu-round" scale="1.2" />
+                        </button>
+                        <div class="header-title-icon-box">
+                            <v-icon name="gi-table" scale="1.35" />
+                        </div>
+                        <span class="header-title-text">Mesas</span>
+                    </div>
+
+                    <!-- Barra de Pastillas / Filtros por Áreas -->
+                    <div class="area-filters-container">
+                        <button 
+                            type="button" 
+                            class="area-filter-btn"
+                            :class="{ active: selectedAreaId === null }"
+                            @click="selectedAreaId = null"
+                        >
+                            <span>Todas</span>
+                            <span class="filter-count-badge">{{ totalTablesCount }}</span>
+                            <span v-if="totalOccupiedCount > 0" class="filter-occupied-pill" title="Total mesas ocupadas">
+                                {{ totalOccupiedCount }}
+                            </span>
+                        </button>
+
+                        <button 
+                            v-for="area in tableStore.branch_table_Areas" 
+                            :key="'filter-area-' + area.id"
+                            type="button" 
+                            class="area-filter-btn"
+                            :class="{ active: selectedAreaId === area.id }"
+                            @click="selectedAreaId = area.id"
+                        >
+                            <span>{{ area.description }}</span>
+                            <span class="filter-count-badge">{{ getAreaTableCount(area) }}</span>
+                            <span v-if="getAreaOccupiedCount(area) > 0" class="filter-occupied-pill" :title="`${getAreaOccupiedCount(area)} ocupada(s)`">
+                                {{ getAreaOccupiedCount(area) }}
+                            </span>
+                        </button>
+                    </div>
+
+                    <!-- Filtro por Estado: Todas, Libres, Ocupadas -->
+                    <div class="status-filters-container">
+                        <span class="filter-divider"></span>
+                        <button 
+                            type="button" 
+                            class="status-filter-btn"
+                            :class="{ active: selectedStatus === 'all' }"
+                            @click="selectedStatus = 'all'"
+                        >
+                            <span>Todas</span>
+                        </button>
+                        <button 
+                            type="button" 
+                            class="status-filter-btn btn-state-free"
+                            :class="{ active: selectedStatus === 'free' }"
+                            @click="selectedStatus = 'free'"
+                        >
+                            <span class="status-dot dot-free"></span>
+                            <span>Libres</span>
+                            <span class="status-chip-count">{{ totalFreeCount }}</span>
+                        </button>
+                        <button 
+                            type="button" 
+                            class="status-filter-btn btn-state-occupied"
+                            :class="{ active: selectedStatus === 'occupied' }"
+                            @click="selectedStatus = 'occupied'"
+                        >
+                            <span class="status-dot dot-occupied"></span>
+                            <span>Ocupadas</span>
+                            <span class="status-chip-count">{{ totalOccupiedCount }}</span>
+                        </button>
+                        <button 
+                            v-if="totalLockedCount > 0"
+                            type="button" 
+                            class="status-filter-btn btn-state-locked"
+                            :class="{ active: selectedStatus === 'locked' }"
+                            @click="selectedStatus = 'locked'"
+                        >
+                            <span class="status-dot dot-locked"></span>
+                            <span>Bloqueadas</span>
+                            <span class="status-chip-count">{{ totalLockedCount }}</span>
+                        </button>
+                    </div>
                 </div>
                 
-                <!-- Botones Extras (Alineados a la derecha) -->
-                <n-space v-if="tillStore.currentTillID" align="center" item-style="display: flex; align-items: center;" :wrap="false">
-                    <n-tooltip>
-                        <template #trigger>
-                            <v-icon name="fa-circle" scale="0.75" :color="tableStore.wsConnected ? 'green' : 'red'"
-                                :animation="tableStore.wsConnected ? undefined : 'flash'" style="margin-right: 5px;" />
+                <!-- Acciones Rápidas (Alineadas a la derecha) -->
+                <div class="quick-actions-bar" v-if="tillStore.currentTillID">
+                    <!-- Estado WebSocket y Recargar -->
+                    <div class="status-connection-pill">
+                        <n-tooltip>
+                            <template #trigger>
+                                <div class="ws-indicator-wrap">
+                                    <span class="ws-dot" :class="tableStore.wsConnected ? 'connected' : 'disconnected'"></span>
+                                </div>
+                            </template>
+                            {{ tableStore.wsConnected ? 'WebSocket conectado' : 'WebSocket desconectado' }}
+                        </n-tooltip>
+                        <button type="button" class="btn-quick-refresh" @click="refreshData" title="Recargar estado de mesas">
+                            <v-icon name="hi-solid-refresh" scale="0.9" />
+                            <span v-if="genericsStore.device !== 'mobile'">Recargar</span>
+                        </button>
+                    </div>
+
+                    <!-- Botones Delivery y Para Llevar Rediseñados -->
+                    <div class="pos-actions-cluster">
+                        <template v-if="settingsStore.business_settings?.order?.divide_delivery_takeaway">
+                            <button 
+                                v-if="userStore.hasPermission('take_away_order') && userStore.user.role !== 'MOZO'" 
+                                type="button" 
+                                class="flizzy-pos-btn btn-delivery"
+                                @click="$router.push({ name: 'TakeOrder', query: { delivery: true } })"
+                            >
+                                <div class="pos-btn-icon icon-delivery">
+                                    <v-icon name="md-deliverydining" scale="1.15" />
+                                </div>
+                                <span class="pos-btn-text">Delivery</span>
+                            </button>
+
+                            <button 
+                                v-if="userStore.hasPermission('take_away_order') && userStore.user.role !== 'MOZO'" 
+                                type="button" 
+                                class="flizzy-pos-btn btn-takeaway"
+                                @click="$router.push({ name: 'TakeOrder', query: { delivery: false } })"
+                            >
+                                <div class="pos-btn-icon icon-takeaway">
+                                    <v-icon name="ri-shopping-bag-2-fill" scale="1.0" />
+                                </div>
+                                <span class="pos-btn-text">
+                                    {{ settingsStore.business_settings.order?.fast_sale_format ? "Venta Rápida" : "Para llevar" }}
+                                </span>
+                            </button>
                         </template>
-                        {{ tableStore.wsConnected ? 'WebSocket conectado' : 'WebSocket desconectado' }}
-                    </n-tooltip>
-                    <n-button type="info" text @click="refreshData">
-                        <v-icon name="hi-solid-refresh" />
-                        <span v-if="genericsStore.device !== 'mobile'" class="ms-1">Recargar</span>
-                    </n-button>
-                    <template v-if="settingsStore.business_settings?.order?.divide_delivery_takeaway">
-                        <n-button v-if="userStore.hasPermission('take_away_order') && userStore.user.role !== 'MOZO'" type="info" secondary
-                            @click="$router.push({ name: 'TakeOrder', query: { delivery: true } })">
-                            Delivery
-                        </n-button>
-                        <n-button v-if="userStore.hasPermission('take_away_order') && userStore.user.role !== 'MOZO'" type="info" secondary
-                            @click="$router.push({ name: 'TakeOrder', query: { delivery: false } })">
-                            {{ settingsStore.business_settings.order?.fast_sale_format ? "Venta Rápida" : "Para llevar" }}
-                        </n-button>
-                    </template>
-                    <template v-else>
-                        <n-button v-if="userStore.hasPermission('take_away_order') && userStore.user.role !== 'MOZO'" type="info" secondary
-                            @click="$router.push({ name: 'TakeOrder' })">
-                            {{ settingsStore.business_settings.order?.fast_sale_format ? "Venta Rápida" : "Para llevar" }} /
-                            Delivery
-                        </n-button>
-                    </template>
-                </n-space>
+                        <template v-else>
+                            <button 
+                                v-if="userStore.hasPermission('take_away_order') && userStore.user.role !== 'MOZO'" 
+                                type="button" 
+                                class="flizzy-pos-btn btn-combined"
+                                @click="$router.push({ name: 'TakeOrder' })"
+                            >
+                                <div class="pos-btn-icon icon-delivery">
+                                    <v-icon name="md-deliverydining" scale="1.1" />
+                                </div>
+                                <span class="pos-btn-text">
+                                    {{ settingsStore.business_settings.order?.fast_sale_format ? "Venta Rápida" : "Para llevar" }} / Delivery
+                                </span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
             </div>
-        </template>
+        </header>
+
         <n-spin v-if="tillStore.currentTillID" :show="isLoading">
-            <n-card class="my-2" v-for="area in filteredAreas" :key="area.id" :title="area.description"
-                :embedded="genericsStore.device !== 'mobile'"
-                :bordered="genericsStore.device !== 'mobile'"
-                :content-style="genericsStore.device === 'mobile' ? 'padding: 4px 2px;' : ''"
-                :header-style="genericsStore.device === 'mobile' ? 'padding: 6px 8px; font-size: 1.15rem; font-weight: bold;' : ''">
-                <n-grid responsive="screen" cols="2 xs:2 s:3 m:4 l:6 xl:8 2xl:8" :x-gap="10" :y-gap="10">
-                    <n-gi v-for="table in area.tables.filter(dt => !dt?.is_disabled)" :key="table.id" span="1">
+            <div class="area-section-card" v-for="area in filteredAreas" :key="area.id">
+                <div class="area-section-header">
+                    <div class="area-title-wrap">
+                        <span class="area-dot-accent"></span>
+                        <h2 class="area-title-text">{{ area.description }}</h2>
+                    </div>
+                    <div class="area-stats-badge">
+                        <span class="stat-pill-free">
+                            {{ getAreaFreeCount(area) }} libre{{ getAreaFreeCount(area) === 1 ? '' : 's' }}
+                        </span>
+                        <span class="stat-pill-occupied" :class="{ 'is-zero': getAreaOccupiedCount(area) === 0 }">
+                            {{ getAreaOccupiedCount(area) }} ocupada{{ getAreaOccupiedCount(area) === 1 ? '' : 's' }}
+                        </span>
+                        <span v-if="getAreaLockedCount(area) > 0" class="stat-pill-locked">
+                            {{ getAreaLockedCount(area) }} bloqueada{{ getAreaLockedCount(area) === 1 ? '' : 's' }}
+                        </span>
+                    </div>
+                </div>
+                <n-grid responsive="screen" cols="2 xs:2 s:3 m:4 l:6 xl:8 2xl:8" :x-gap="12" :y-gap="12">
+                    <n-gi v-for="table in getFilteredTables(area)" :key="table.id" span="1">
                         <n-card :id="`table-${table.id}`" class="overflow-hidden position-relative rounded-3 table-card h-100"
                             :style="{
                                 borderTop: `5px solid ${getTableColor(table)}`,
@@ -186,7 +322,7 @@
                         </n-card>
                     </n-gi>
                 </n-grid>
-            </n-card>
+            </div>
         </n-spin>
         <div v-else>
             <n-space align="center" vertical>
@@ -224,7 +360,7 @@
         <PreviewDrawer ref="previewDrawer" v-model:show="showPreview" :data="previewData" :preVoucher="true"
             :previewOnly="true" />
         <modal-anulate-sale :data-modal="showConfirm" />
-    </n-card>
+    </div>
 </template>
 
 <script setup>
@@ -277,6 +413,7 @@ const tableLabelSize = computed(() => {
 });
 
 const selectedAreaId = ref(null);
+const selectedStatus = ref('all'); // 'all' | 'free' | 'occupied' | 'locked'
 
 const areaOptions = computed(() => {
     return tableStore.branch_table_Areas.map(a => ({
@@ -285,9 +422,76 @@ const areaOptions = computed(() => {
     }));
 });
 
+const isTableLocked = (table) => {
+    const wsLockInfo = tableStore.lockedTables[table.id];
+    return Boolean((wsLockInfo && wsLockInfo.user_id !== userStore.user.id) ||
+        (table.lock_info && table.lock_info.is_active && !table.lock_info.is_locked_by_me));
+};
+
+const isTableOccupied = (table) => {
+    return !isTableLocked(table) && String(table?.status) === '3';
+};
+
+const isTableFree = (table) => {
+    return !isTableLocked(table) && String(table?.status) !== '3';
+};
+
+const getAreaTableCount = (area) => {
+    return (area.tables || []).filter(t => !t?.is_disabled).length;
+};
+
+const getAreaFreeCount = (area) => {
+    return (area.tables || []).filter(t => !t?.is_disabled && isTableFree(t)).length;
+};
+
+const getAreaOccupiedCount = (area) => {
+    return (area.tables || []).filter(t => !t?.is_disabled && isTableOccupied(t)).length;
+};
+
+const getAreaLockedCount = (area) => {
+    return (area.tables || []).filter(t => !t?.is_disabled && isTableLocked(t)).length;
+};
+
+const totalTablesCount = computed(() => {
+    return (tableStore.branch_table_Areas || []).reduce((acc, a) => acc + getAreaTableCount(a), 0);
+});
+
+const totalFreeCount = computed(() => {
+    return (tableStore.branch_table_Areas || []).reduce((acc, a) => acc + getAreaFreeCount(a), 0);
+});
+
+const totalOccupiedCount = computed(() => {
+    return (tableStore.branch_table_Areas || []).reduce((acc, a) => acc + getAreaOccupiedCount(a), 0);
+});
+
+const totalLockedCount = computed(() => {
+    return (tableStore.branch_table_Areas || []).reduce((acc, a) => acc + getAreaLockedCount(a), 0);
+});
+
+const getFilteredTables = (area) => {
+    const tables = (area.tables || []).filter(dt => !dt?.is_disabled);
+    if (selectedStatus.value === 'free') {
+        return tables.filter(t => isTableFree(t));
+    }
+    if (selectedStatus.value === 'occupied') {
+        return tables.filter(t => isTableOccupied(t));
+    }
+    if (selectedStatus.value === 'locked') {
+        return tables.filter(t => isTableLocked(t));
+    }
+    return tables;
+};
+
 const filteredAreas = computed(() => {
-    if (!selectedAreaId.value) return tableStore.branch_table_Areas;
-    return tableStore.branch_table_Areas.filter(a => a.id === selectedAreaId.value);
+    const areas = tableStore.branch_table_Areas || [];
+    let list = selectedAreaId.value 
+        ? areas.filter(a => a.id === selectedAreaId.value)
+        : areas;
+
+    if (selectedStatus.value !== 'all') {
+        list = list.filter(a => getFilteredTables(a).length > 0);
+    }
+    return list;
 });
 
 const { connectLockWebSocket, lockSocketConnected, wsUnlockTable } = useTableLock();
@@ -461,7 +665,7 @@ const handleTableClick = (table) => {
         }
 
         const isWaiterMode = route.matched.some(r => r.name === 'WaiterMode');
-        const targetRouteName = (userStore.user?.role === 'MOZO' || genericsStore.device === 'mobile' || isWaiterMode) ? 'WOrder' : 'TableOrder';
+        const targetRouteName = (userStore.user?.role === 'MOZO' || isWaiterMode) ? 'WOrder' : 'TableOrder';
         console.log(`✅ Permitiendo navegación a la mesa (${targetRouteName})`);
         router.push({
             name: targetRouteName,
@@ -549,7 +753,16 @@ const refreshData = async () => {
     isLoading.value = false;
 };
 
+const openMobileMenu = () => {
+    window.dispatchEvent(new CustomEvent('toggle-module-menu'));
+};
+
 onMounted(() => {
+    if (route.name === 'WHome' && userStore.user?.role && userStore.user.role !== 'MOZO' && !route.query.waiter_mode) {
+        router.replace({ name: 'TableHome' });
+        return;
+    }
+
     loadTablesData();
 
     const fetch = new Date();
@@ -620,6 +833,517 @@ const previewData = ref(null);
 </script>
 
 <style lang="scss" scoped>
+.table-home-view-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+/* 1. BARRA SUPERIOR: EXACTAMENTE MISMO ANCHO, BORDES Y RADIOS QUE LAS ÁREAS */
+.table-home-header-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.table-home-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.header-left-col {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex: 1;
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+/* Ícono de Mesas agrandado y perfectamente centrado */
+.header-title-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.mobile-menu-trigger-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    padding: 0;
+
+    &:active {
+        background: #059669;
+        color: #ffffff;
+        transform: scale(0.95);
+        border-color: #059669;
+    }
+}
+
+.header-title-icon-box {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    color: #059669;
+    border: 1.5px solid #a7f3d0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 5px rgba(5, 150, 105, 0.12);
+}
+
+.header-title-text {
+    font-size: 17px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+    line-height: 1;
+}
+
+/* Barra de Filtros por Áreas */
+.area-filters-container {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    max-width: 100%;
+    padding: 2px 0;
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.area-filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.16s ease;
+    white-space: nowrap;
+
+    &:hover {
+        background: #f8fafc;
+        color: #1e293b;
+        border-color: #cbd5e1;
+    }
+
+    &.active {
+        background: #0284c7;
+        color: #ffffff;
+        border-color: #0284c7;
+        box-shadow: 0 2px 8px rgba(2, 132, 199, 0.28);
+
+        .filter-count-badge {
+            background: rgba(255, 255, 255, 0.25);
+            color: #ffffff;
+        }
+    }
+}
+
+.filter-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1px 6px;
+    border-radius: 999px;
+    font-size: 10.5px;
+    font-weight: 700;
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.filter-occupied-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1px 5px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 800;
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    line-height: 1;
+}
+
+.area-filter-btn.active .filter-occupied-pill {
+    background: #ffffff;
+    color: #dc2626;
+    border-color: #ffffff;
+}
+
+/* Divisor sutil y Filtros de Estado */
+.filter-divider {
+    width: 1px;
+    height: 18px;
+    background: #cbd5e1;
+    margin: 0 4px;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.status-filters-container {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.status-filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.16s ease;
+    white-space: nowrap;
+
+    &:hover {
+        background: #f1f5f9;
+        color: #1e293b;
+        border-color: #cbd5e1;
+    }
+
+    &.active {
+        background: #0f172a;
+        color: #ffffff;
+        border-color: #0f172a;
+
+        .status-chip-count {
+            background: rgba(255, 255, 255, 0.25);
+            color: #ffffff;
+        }
+    }
+
+    &.btn-state-free.active {
+        background: #059669;
+        border-color: #059669;
+        color: #ffffff;
+    }
+
+    &.btn-state-occupied.active {
+        background: #dc2626;
+        border-color: #dc2626;
+        color: #ffffff;
+    }
+
+    &.btn-state-locked.active {
+        background: #d97706;
+        border-color: #d97706;
+        color: #ffffff;
+    }
+}
+
+.status-dot {
+    width: 6.5px;
+    height: 6.5px;
+    border-radius: 50%;
+    display: inline-block;
+
+    &.dot-free {
+        background: #10b981;
+    }
+    &.dot-occupied {
+        background: #ef4444;
+    }
+    &.dot-locked {
+        background: #f59e0b;
+    }
+}
+
+.status-chip-count {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    color: #475569;
+    line-height: 1.3;
+}
+
+/* 2. ACCIONES RÁPIDAS (RECARGAR, WS, DELIVERY, PARA LLEVAR) */
+.quick-actions-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+
+.status-connection-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 3px 8px;
+    border-radius: 9px;
+    height: 36px;
+    box-sizing: border-box;
+}
+
+.ws-indicator-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.ws-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+
+    &.connected {
+        background: #10b981;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+    }
+
+    &.disconnected {
+        background: #ef4444;
+        box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25);
+    }
+}
+
+.btn-quick-refresh {
+    border: none;
+    background: transparent;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 4px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+        color: #0284c7;
+        background: #f1f5f9;
+    }
+}
+
+.pos-actions-cluster {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* BOTONES REDISEÑADOS PARA DELIVERY Y PARA LLEVAR */
+.flizzy-pos-btn {
+    height: 36px;
+    padding: 0 13px;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    outline: none;
+    box-sizing: border-box;
+
+    &:active {
+        transform: scale(0.97);
+    }
+}
+
+.pos-btn-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* Delivery: Estilo Esmeralda / Teal gastronómico fresco */
+.btn-delivery {
+    background: #f0fdfa;
+    border: 1.5px solid #99f6e4;
+    color: #0f766e;
+    box-shadow: 0 1px 3px rgba(15, 118, 110, 0.06);
+
+    .icon-delivery {
+        background: #ccfbf1;
+        color: #0d9488;
+    }
+
+    &:hover {
+        background: #ccfbf1;
+        border-color: #5eead4;
+        color: #115e59;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.16);
+    }
+}
+
+/* Para Llevar: Estilo Azul Cobalto elegante */
+.btn-takeaway {
+    background: #eff6ff;
+    border: 1.5px solid #bfdbfe;
+    color: #1d4ed8;
+    box-shadow: 0 1px 3px rgba(29, 78, 216, 0.06);
+
+    .icon-takeaway {
+        background: #dbeafe;
+        color: #2563eb;
+    }
+
+    &:hover {
+        background: #dbeafe;
+        border-color: #93c5fd;
+        color: #1e40af;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.16);
+    }
+}
+
+/* Combinado */
+.btn-combined {
+    background: #f0fdf4;
+    border: 1.5px solid #bbf7d0;
+    color: #15803d;
+    box-shadow: 0 1px 3px rgba(21, 128, 61, 0.06);
+
+    &:hover {
+        background: #dcfce7;
+        border-color: #86efac;
+        color: #166534;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(22, 163, 74, 0.16);
+    }
+}
+
+/* Áreas contenedoras con padding optimizado para aprovechar pantalla */
+.area-section-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.area-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.area-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.area-dot-accent {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #0284c7;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+.area-title-text {
+    font-size: 13.5px;
+    font-weight: 800;
+    color: #1e293b;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.area-stats-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+.stat-pill-free {
+    color: #166534;
+    background: #ecfdf5;
+    padding: 2px 9px;
+    border-radius: 6px;
+    border: 1px solid #bbf7d0;
+}
+
+.stat-pill-occupied {
+    color: #991b1b;
+    background: #fef2f2;
+    padding: 2px 9px;
+    border-radius: 6px;
+    border: 1px solid #fecaca;
+
+    &.is-zero {
+        color: #64748b;
+        background: #f8fafc;
+        border-color: #e2e8f0;
+    }
+}
+
+.stat-pill-locked {
+    color: #92400e;
+    background: #fef3c7;
+    padding: 2px 9px;
+    border-radius: 6px;
+    border: 1px solid #fde68a;
+}
+
 .table-card {
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 12px !important;
@@ -767,5 +1491,174 @@ const previewData = ref(null);
     color: #9ca3af;
     font-weight: 500;
     box-sizing: border-box;
+}
+
+/* ==================================================== */
+/* OPTIMIZACIÓN RESPONSIVA MÓVIL (<= 768px y <= 480px)  */
+/* Mantiene el diseño intacto y lo adapta a pantallas móviles */
+/* ==================================================== */
+@media (max-width: 768px) {
+    .table-home-header-card {
+        padding: 9px 10px;
+        margin-bottom: 8px;
+        border-radius: 12px;
+    }
+
+    .table-home-header-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .header-left-col {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 7px;
+        width: 100%;
+    }
+
+    .header-title-badge {
+        gap: 8px;
+    }
+
+    .header-title-icon-box {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+    }
+
+    .header-title-text {
+        font-size: 15px;
+    }
+
+    .area-filters-container {
+        width: 100%;
+        gap: 5px;
+        padding-bottom: 2px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .area-filter-btn {
+        padding: 4px 10px;
+        font-size: 11px;
+        gap: 4px;
+    }
+
+    .filter-count-badge {
+        font-size: 9.5px;
+        padding: 1px 5px;
+    }
+
+    .filter-occupied-pill {
+        font-size: 9px;
+        padding: 1px 4px;
+    }
+
+    .filter-divider {
+        display: none;
+    }
+
+    .status-filters-container {
+        width: 100%;
+        gap: 4px;
+        padding-bottom: 2px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .status-filter-btn {
+        padding: 3px 8px;
+        font-size: 11px;
+        gap: 4px;
+    }
+
+    .status-chip-count {
+        font-size: 9px;
+        padding: 0 3px;
+    }
+
+    .quick-actions-bar {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        justify-content: space-between;
+    }
+
+    .status-connection-pill {
+        height: 34px;
+        padding: 2px 7px;
+        border-radius: 8px;
+        flex-shrink: 0;
+    }
+
+    .pos-actions-cluster {
+        flex: 1;
+        display: flex;
+        gap: 6px;
+        min-width: 0;
+    }
+
+    .flizzy-pos-btn {
+        flex: 1;
+        height: 34px;
+        padding: 0 8px;
+        font-size: 11.5px;
+        justify-content: center;
+        border-radius: 8px;
+        gap: 5px;
+    }
+
+    .pos-btn-icon {
+        width: 20px;
+        height: 20px;
+    }
+
+    .area-section-card {
+        padding: 9px 10px;
+        margin-bottom: 8px;
+        border-radius: 12px;
+    }
+
+    .area-section-header {
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 8px;
+        padding-bottom: 6px;
+    }
+
+    .area-title-text {
+        font-size: 12.5px;
+    }
+
+    .area-stats-badge {
+        font-size: 10.5px;
+        gap: 5px;
+    }
+
+    .stat-pill-free,
+    .stat-pill-occupied,
+    .stat-pill-locked {
+        padding: 1px 6px;
+        border-radius: 5px;
+    }
+}
+
+@media (max-width: 480px) {
+    .table-home-header-card {
+        padding: 8px;
+    }
+
+    .area-section-card {
+        padding: 8px;
+    }
+
+    .flizzy-pos-btn {
+        font-size: 11px;
+        padding: 0 6px;
+    }
+
+    .table-card {
+        border-radius: 10px !important;
+    }
 }
 </style>
