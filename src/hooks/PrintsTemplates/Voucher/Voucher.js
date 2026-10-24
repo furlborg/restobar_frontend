@@ -340,7 +340,10 @@ const VoucherPrint = (props) => {
   }
 
   let datProdsCons = [];
-  const orderDetails = props.data?.order_details || [];
+  // En cuentas separadas, lo ya cobrado queda con quantity 0: no debe salir en la precuenta
+  const orderDetails = (props.data?.order_details || []).filter(
+    (detail) => parseFloat(detail?.quantity) > 0
+  );
   const hasCustomers = orderDetails.some((detail) => !!detail?.customer);
 
   if (props.prePayment) {

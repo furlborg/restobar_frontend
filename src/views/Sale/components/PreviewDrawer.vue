@@ -179,7 +179,10 @@ export default defineComponent({
                     const business = businessStore.business;
                     const sendTicketData = async () => {
 
-                        const orderDetails = props.data.order_details || [];
+                        // En cuentas separadas, lo ya cobrado queda con quantity 0: no debe salir en la precuenta
+                        const orderDetails = (props.data.order_details || []).filter(
+                            (detail) => parseFloat(detail?.quantity) > 0
+                        );
 
                         const mapOrderLine = (order) => {
                             let totalOperation = 0;
@@ -187,7 +190,7 @@ export default defineComponent({
                             let totalIGV = 0;
                             const affectation = order.product_affectation || 20;
                             const price = parseFloat(order.price ?? order.product_set?.price ?? 0);
-                            const quantity = parseFloat(order.quantity || 1);
+                            const quantity = parseFloat(order.quantity ?? 1);
                             const igvTax = parseFloat(order.product_igv || 0);
 
                             if (affectation === 20) {
