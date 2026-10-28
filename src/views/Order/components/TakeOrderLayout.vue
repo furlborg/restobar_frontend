@@ -258,6 +258,7 @@ const sale = ref({
   invoice_type: defaultInvoiceType,
   payment_method: 1,
   payment_condition: 1,
+  expiration_sale: null,
   customer_name: "",
   customer: null,
   address: null,

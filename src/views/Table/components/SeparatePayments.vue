@@ -55,7 +55,7 @@
                 type="button"
                 class="condition-pill"
                 :class="{ active: sale.payment_condition === 1 }"
-                @click="sale.payment_condition = 1"
+                @click="setCondition(1)"
               >
                 CONTADO
               </button>
@@ -63,7 +63,7 @@
                 type="button"
                 class="condition-pill"
                 :class="{ active: sale.payment_condition === 2 }"
-                @click="sale.payment_condition = 2"
+                @click="setCondition(2)"
               >
                 CRÉDITO
               </button>
@@ -134,6 +134,32 @@
                 :disabled="!sale.customer"
                 placeholder="Dirección fiscal..." 
               />
+            </div>
+
+            <div v-if="sale.payment_condition === 2" class="customer-address-field">
+              <n-form-item label="Fecha de vencimiento" path="expiration_sale" class="mb-0">
+                <n-date-picker
+                  class="w-100"
+                  type="date"
+                  format="dd/MM/yyyy"
+                  value-format="dd/MM/yyyy"
+                  :is-date-disabled="isExpirationDateDisabled"
+                  v-model:formatted-value="sale.expiration_sale"
+                  size="small"
+                />
+              </n-form-item>
+              <div class="due-chips">
+                <button
+                  v-for="days in DUE_DAY_SHORTCUTS"
+                  :key="days"
+                  type="button"
+                  class="due-chip"
+                  :class="{ active: sale.expiration_sale === dueDateInDays(days) }"
+                  @click="sale.expiration_sale = dueDateInDays(days)"
+                >
+                  {{ days }} días
+                </button>
+              </div>
             </div>
 
             <div class="customer-toggles-field">
@@ -300,7 +326,7 @@
           <!-- PANEL IZQUIERDO: MÉTODOS DE PAGO, PAGO RECIBIDO Y VUELTO -->
           <div class="split-payment-panel">
             <!-- MÉTODOS DE PAGO EN TILES DE UN SOLO TOQUE -->
-            <div class="pm-section">
+            <div v-if="sale.payment_condition !== 2" class="pm-section">
               <div class="section-label">Método de Pago:</div>
               <div class="split-pm-grid">
                 <button
@@ -317,8 +343,18 @@
               </div>
             </div>
 
+            <!-- CRÉDITO: no hay método de pago ni pago recibido, solo el saldo -->
+            <div v-if="sale.payment_condition === 2" class="cash-action-row">
+              <div class="change-status-card status-credit">
+                <span class="status-label">A CRÉDITO</span>
+                <span class="status-amount">
+                  Saldo S/. {{ total }}{{ sale.expiration_sale ? ` · vence ${sale.expiration_sale}` : "" }}
+                </span>
+              </div>
+            </div>
+
             <!-- FILA DE PAGO RECIBIDO Y VUELTO -->
-            <div class="cash-action-row">
+            <div v-else class="cash-action-row">
               <div class="cash-input-group">
                 <span class="field-title">Pago Recibido:</span>
                 <n-input-number 
@@ -449,6 +485,7 @@
               <v-icon name="fa-coins" class="me-2 text-amber-coins" scale="1.25" />
               <span>COBRAR S/. {{ total }}</span>
             </button>
+            <p v-if="chargeHintText" class="charge-hint">{{ chargeHintText }}</p>
           </div>
         </div>
       </div>
@@ -516,6 +553,16 @@ import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
 import { useGenericsStore } from "@/store/modules/generics";
 import { saleRules } from "@/utils/constants";
+import { firstFormError, chargeHint, dueDateInDays, DUE_DAY_SHORTCUTS } from "@/utils/creditCustomer";
+import {
+  buildCustomerRule,
+  canCharge,
+  changeStatus,
+  conditionPatch,
+  expirationRule,
+  quickCashOptions as buildQuickCashOptions,
+} from "@/utils/checkout";
+import startOfDay from "date-fns/startOfDay";
 import { cloneDeep, isDecimal } from "@/utils";
 import { retrieveOrder } from "@/api/modules/orders";
 import {
@@ -702,17 +749,41 @@ export default defineComponent({
     watch(total, () => {
       sale.value.amount =
         total.value > 0 ? total.value : parseFloat(0).toFixed(2);
+      // En crédito el pago recibido es 0: igualarlo al total registraría el crédito como cobrado en caja
       sale.value.given_amount =
-        total.value > 0 ? total.value : parseFloat(0).toFixed(2);
+        total.value > 0 && Number(sale.value.payment_condition) !== 2
+          ? total.value
+          : parseFloat(0).toFixed(2);
       sale.value.count = products_count.value;
     });
 
+    const setCondition = (condition) => {
+      sale.value.payment_condition = condition;
+      const patch = conditionPatch({ condition, total: total.value, expiration: sale.value.expiration_sale });
+      sale.value.given_amount = patch.given_amount;
+      sale.value.expiration_sale = patch.expiration_sale;
+    };
+
+    const isExpirationDateDisabled = (ts) => ts <= startOfDay(new Date()).getTime();
+
     const formRules = computed(() => {
-      let rules = saleRules;
-      if (sale.value.invoice_type !== 1 && sale.value.given_amount <= 699) {
-        rules.customer.required = false;
-      } else {
-        rules.customer.required = true;
+      const isCredit = Number(sale.value.payment_condition) === 2;
+      const customerId = sale.value.customer;
+      const rules = {
+        ...saleRules,
+        customer: {
+          ...saleRules.customer,
+          ...buildCustomerRule({
+            invoiceType: sale.value.invoice_type,
+            isCredit,
+            amount: total.value,
+            customer: customerResults.value.find((c) => c.id === Number(customerId)) || null,
+          }),
+        },
+      };
+      const expiration = expirationRule(isCredit);
+      if (expiration) {
+        rules.expiration_sale = expiration;
       }
       return rules;
     });
@@ -912,15 +983,8 @@ export default defineComponent({
             },
           });
         } else {
-          if (formRules.value.customer.required) {
-            if (sale.value.invoice_type === 1) {
-              message.warning("Debes agregar un cliente cuando la venta es con factura");
-            } else {
-              message.error("Debes agregar un cliente porque la venta es mayor a S/ 699");
-            }
-          }
           console.error(errors);
-          message.error("Datos Incorrectos");
+          message.warning(firstFormError(errors));
         }
       });
     };
@@ -1292,42 +1356,18 @@ export default defineComponent({
       }
     });
 
-    const changeStatusLabel = computed(() => {
-      if (sale.value.payment_condition === 2) return "A CRÉDITO";
-      if (Number(sale.value.given_amount) >= Number(total.value)) {
-        return "VUELTO";
-      }
-      return "FALTANTE";
-    });
+    const paymentStatus = computed(() =>
+      changeStatus({
+        isCredit: Number(sale.value.payment_condition) === 2,
+        given: sale.value.given_amount,
+        total: total.value,
+      })
+    );
+    const changeStatusLabel = computed(() => paymentStatus.value.label);
+    const changeStatusClass = computed(() => paymentStatus.value.cls);
+    const changeStatusValue = computed(() => paymentStatus.value.value.toFixed(2));
 
-    const changeStatusClass = computed(() => {
-      if (sale.value.payment_condition === 2) return "status-credit";
-      if (Number(sale.value.given_amount) > Number(total.value)) {
-        return "status-success";
-      }
-      if (Number(sale.value.given_amount) === Number(total.value)) {
-        return "status-neutral";
-      }
-      return "status-warning";
-    });
-
-    const changeStatusValue = computed(() => {
-      if (sale.value.payment_condition === 2) return "0.00";
-      const given = Number(sale.value.given_amount) || 0;
-      const tot = Number(total.value) || 0;
-      if (given >= tot) {
-        return (given - tot).toFixed(2);
-      }
-      return (tot - given).toFixed(2);
-    });
-
-    const quickCashOptions = computed(() => {
-      const tot = Number(total.value) || 0;
-      const bills = [20, 50, 100, 200];
-      return bills
-        .filter(b => b >= tot && b !== tot)
-        .map(b => ({ label: `S/ ${b}`, value: b }));
-    });
+    const quickCashOptions = computed(() => buildQuickCashOptions(total.value));
 
     const setQuickCash = (val) => {
       sale.value.given_amount = Number(val).toFixed(2);
@@ -1353,11 +1393,28 @@ export default defineComponent({
       return "pm-default";
     };
 
-    const canPay = computed(() => {
-      if (!list.value.length) return false;
-      if (sale.value.payment_condition === 2) return true;
-      return Number(sale.value.given_amount) >= Number(total.value);
-    });
+    // Motivo por el que aún no se puede cobrar, para mostrarlo bajo el botón
+    const chargeHintText = computed(() =>
+      chargeHint({
+        hasItems: list.value.length > 0,
+        isCredit: Number(sale.value.payment_condition) === 2,
+        given: sale.value.given_amount,
+        amount: total.value,
+        invoiceType: sale.value.invoice_type,
+        customerId: sale.value.customer,
+        customer: customerResults.value.find((c) => c.id === Number(sale.value.customer)) || null,
+        expiration: sale.value.expiration_sale,
+      })
+    );
+
+    const canPay = computed(() =>
+      canCharge({
+        hasItems: list.value.length > 0,
+        isCredit: Number(sale.value.payment_condition) === 2,
+        given: sale.value.given_amount,
+        amount: total.value,
+      })
+    );
 
     return {
       showModal,
@@ -1366,6 +1423,11 @@ export default defineComponent({
       orderStore,
       saleStore,
       sale,
+      setCondition,
+      isExpirationDateDisabled,
+      chargeHintText,
+      dueDateInDays,
+      DUE_DAY_SHORTCUTS,
       isDecimal,
       loading,
       saleForm,
@@ -2063,5 +2125,44 @@ export default defineComponent({
   .split-checkout-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.charge-hint {
+  margin: 6px 2px 0;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+  color: #b45309;
+}
+
+.due-chips {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.due-chip {
+  flex: 1;
+  padding: 4px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.due-chip:hover {
+  border-color: #fdba74;
+  color: #c2410c;
+}
+
+.due-chip.active {
+  background: #fff7ed;
+  border-color: #ea580c;
+  color: #c2410c;
 }
 </style>
