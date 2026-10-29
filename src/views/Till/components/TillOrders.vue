@@ -104,7 +104,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, onMounted } from "vue";
+import { defineComponent, ref, computed, watch, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useMessage } from "naive-ui";
 import DetailsModal from "@/views/Order/components/DetailsModal";
@@ -127,9 +127,15 @@ export default defineComponent({
     DetailsModal,
     DeliveryModal,
   },
-  setup() {
+  props: {
+    till: {
+      type: [String, Number],
+      default: null,
+    },
+  },
+  setup(props) {
     const route = useRoute();
-    const till = route.params.till;
+    const currentTill = computed(() => props.till || route.params.till);
     const businessStore = useBusinessStore();
     const genericsStore = useGenericsStore();
     const userStore = useUserStore();
@@ -142,7 +148,7 @@ export default defineComponent({
     const delivery = ref({});
     const showFilters = ref(false);
     const filterParams = ref({
-      till: till,
+      till: currentTill.value,
       created: null,
       take_aways: true,
       tables: true,
@@ -151,7 +157,7 @@ export default defineComponent({
     });
     const pagination = ref({
       pageSearchParams: {
-        till: till,
+        till: currentTill.value,
         created: null,
         take_aways: true,
         tables: true,
@@ -239,8 +245,13 @@ export default defineComponent({
 
     const loadOrders = async () => {
       isTableLoading.value = true;
-      // pagination.value.pageSize = 20;
-      await listOrders(filterParams.value)
+      filterParams.value.till = currentTill.value;
+      pagination.value.pageSearchParams.till = currentTill.value;
+      await listOrdersByPage(
+        pagination.value.pageSearchParams,
+        pagination.value.page,
+        pagination.value.pageSize
+      )
         .then((response) => {
           pagination.value.total = response.data.count;
           pagination.value.pageCount = Math.trunc(
@@ -264,7 +275,8 @@ export default defineComponent({
 
     const performFilter = async () => {
       isTableLoading.value = true;
-      pagination.value.pageSearchParams = filterParams.value;
+      filterParams.value.till = currentTill.value;
+      pagination.value.pageSearchParams = { ...filterParams.value, till: currentTill.value };
       pagination.value.page = 1;
       await searchOrders(
         pagination.value.pageSearchParams,
@@ -293,14 +305,14 @@ export default defineComponent({
     };
 
     const refreshTable = async () => {
-      filterParams.value.till = till;
+      filterParams.value.till = currentTill.value;
       filterParams.value.created = null;
       filterParams.value.take_aways = true;
       filterParams.value.tables = true;
       filterParams.value.deliverys = true;
       filterParams.value.status = null;
       pagination.value.pageSearchParams = {
-        till: till,
+        till: currentTill.value,
         created: null,
         take_aways: true,
         tables: true,
@@ -310,6 +322,18 @@ export default defineComponent({
       pagination.value.page = 1;
       await loadOrders();
     };
+
+    watch(
+      () => currentTill.value,
+      (newTill) => {
+        if (newTill) {
+          filterParams.value.till = newTill;
+          pagination.value.pageSearchParams.till = newTill;
+          pagination.value.page = 1;
+          loadOrders();
+        }
+      }
+    );
 
     const onCloseModal = () => {
       idOrder.value = 0;

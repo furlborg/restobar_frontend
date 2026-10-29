@@ -1,129 +1,470 @@
 <template>
-  <n-card :bordered="false" class="h-100" content-class="p-0 overflow-auto">
-    <n-scrollbar>
-      <div id="TablePayment">
-        <n-spin :show="loading">
-          <n-card :bordered="false" content-class="p-0">
-            <n-space class="mb-2" align="center" justify="space-between">
-              <SaleSerieSelector :sale="sale" :invoice-type="sale.invoice_type" @update:serie="handleSerieUpdate"
-                @serie-changed="handleSerieChanged" />
-              <n-radio-group v-model:value="sale.invoice_type" name="docType" size="small" @update:value="changeSerie">
-                <n-radio-button :disabled="!settingsStore.businessSettings.sale?.enable_invoices"
-                  :value="1">FACTURA</n-radio-button>
-                <n-radio-button :disabled="!settingsStore.businessSettings.sale?.enable_invoices"
-                  :value="3">BOLETA</n-radio-button>
-                <n-radio-button :value="80">N. VENTA</n-radio-button>
-              </n-radio-group>
-              <n-radio-group v-model:value="sale.payment_condition" name="saleType" size="small"
-                :disabled="!settingsStore.businessSettings?.sale?.enable_credits" @update:value="changeCondition">
-                <n-radio-button :value="1">CONTADO</n-radio-button>
-                <n-radio-button :value="2">CRÉDITO</n-radio-button>
-              </n-radio-group>
-            </n-space>
-            <n-form class="mb-2" ref="saleForm" :model="sale" :rules="formRules">
-              <n-grid responsive="screen" cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12" :x-gap="12">
-                <n-form-item-gi :span="9" label="Cliente" :show-require-mark="formRules.customer.required"
-                  path="customer">
-                  <ClientSelectInput v-model:customer-name="sale.customer_name" v-model:customer-id="sale.customer"
-                    :invoice-type="sale.invoice_type" @customer-selected="handleCustomerSelected"
-                    @customer-cleared="handleCustomerCleared" />
-                </n-form-item-gi>
-                <n-form-item-gi :span="3" label="Fecha">
-                  <n-date-picker class="w-100" type="datetime" :is-date-disabled="ts => ts > new Date()" disabled
-                    v-model:formatted-value="sale.date_sale" />
-                </n-form-item-gi>
-                <n-form-item-gi v-if="isCredit" :span="3" label="Fecha de vencimiento" path="expiration_sale">
-                  <n-date-picker class="w-100" type="date" format="dd/MM/yyyy" value-format="dd/MM/yyyy"
-                    :is-date-disabled="isExpirationDateDisabled" v-model:formatted-value="sale.expiration_sale" />
-                </n-form-item-gi>
-                <n-form-item-gi :span="5" label="Dirección">
-                  <n-select v-model:value="sale.address" :options="addressesOptions" :disabled="!sale.customer"
-                    placeholder="" />
-                </n-form-item-gi>
-                <n-form-item-gi :span="3" label="Método Pago">
-                  <n-select v-model:value="sale.payment_method" :options="saleStore.getPaymentMethodsOptions"
-                    filterable />
-                </n-form-item-gi>
-                <n-form-item-gi :span="2">
-                  <n-checkbox v-model:checked="sale.by_consumption" :disabled="sale.payment_condition === 2">Por
-                    consumo</n-checkbox>
-                </n-form-item-gi>
-                <n-form-item-gi :span="2">
-                  <n-button type="info" text @click="showObservations = !showObservations">
-                    {{ showObservations ? "Ocultar" : "Ver" }} Observaciones
-                  </n-button>
-                </n-form-item-gi>
-                <n-gi :span="12">
-                  <n-collapse-transition :show="showObservations">
-                    <n-form-item label="Observaciones">
-                      <n-input type="textarea" v-model:value="sale.observations" />
-                    </n-form-item>
-                  </n-collapse-transition>
-                </n-gi>
-              </n-grid>
-            </n-form>
-            <ProductTable :sale="sale" :sale-details="saleStore.toSale" :sale-menu-sets="saleStore.salePayload.sale_product_sets" @update-detail="saleStore.updateDetail" />
+  <div class="pos-billing-wrapper">
+    <n-spin :show="loading">
+      <div 
+        class="pos-billing-grid"
+        :class="{
+          'layout-checkout-left': billingLayoutPosition === 'checkout_left',
+          'layout-checkout-right': billingLayoutPosition === 'checkout_right'
+        }"
+      >
+        
+        <!-- ============================================== -->
+        <!-- COLUMNA IZQUIERDA: DETALLE DE CUENTA & PEDIDOS -->
+        <!-- ============================================== -->
+        <section class="pos-panel pos-account-panel">
+          <header class="panel-header">
+            <div class="panel-header-left">
+              <span class="table-badge">Resumen de Pedidos</span>
+              <n-tag round type="info" size="small" class="item-count-tag">
+                {{ totalProductCount }} {{ totalProductCount === 1 ? 'ítem' : 'ítems' }} en cuenta
+              </n-tag>
+            </div>
+            <div class="panel-header-right">
+              <n-button size="small" secondary class="flizzy-add-order-btn" @click="navigateBackToTakeOrder">
+                <template #icon>
+                  <v-icon name="md-add-round" />
+                </template>
+                Añadir pedidos
+              </n-button>
+            </div>
+          </header>
 
-            <PaymentTotals :items="paymentTotalsItems" :total-amount="sale.amount" :payment-amount="sale.given_amount"
-              :change-amount="changing" :payment-max="sale.payment_condition === 2 ? sale.amount - 0.1 : null"
-              @value-changed="handleValueChange" @payment-changed="handlePaymentChange" />
-            <n-space v-if="sale.payment_condition === 1" justify="space-between" class="mt-2">
-              <n-checkbox v-model:checked="isMultiple">Pago multiple</n-checkbox>
-              <n-button type="info" text @click="openSeparatePaymentsModal">Nueva cuenta</n-button>
-            </n-space>
-            <n-divider />
-            <n-grid responsive="screen" cols="8 xs:1 s:8 m:8 l:12 xl:12 2xl:12" :x-gap="12">
-              <n-gi class="d-flex align-items-center" :span="3">
-                <n-checkbox v-model:checked="ticketPreview">Previsualizar ticket</n-checkbox>
-              </n-gi>
-            </n-grid>
-            <n-button class="fs-1 py-5 mt-2" type="success" :disabled="!hasItems ||
-              (sale.payment_condition === 1 ? sale.given_amount < sale.amount : !(sale.given_amount < sale.amount))"
-              secondary block @click.prevent="isMultiple ? doMultiplePayment() : performCreateSale()">
-              <v-icon class="me-2" name="fa-coins" scale="2" />Cobrar
-            </n-button>
-          </n-card>
-        </n-spin>
-        <n-modal :class="{
-          'w-100': genericsStore.device === 'mobile',
-          'w-50': genericsStore.device === 'tablet',
-          'w-25': genericsStore.device === 'desktop',
-        }" preset="card" v-model:show="showPayments" title="Realizar venta" :mask-closable="false" closable
-          @close="sale.payments = null">
-          <n-space justify="space-between">
-            <n-tag type="info">Total: S/. {{ showPayments ? sale.amount : null }}</n-tag>
-            <n-tag :type="evalPayments ? 'error' : 'success'">Monto: S/. {{ showPayments ? currentPaymentsAmount : null
-            }}</n-tag>
-            <n-tag :type="evalPayments ? 'error' : 'warning'">
-              Faltante: S/. {{ showPayments ? parseFloat(sale.amount - currentPaymentsAmount).toFixed(2) : null }}
-            </n-tag>
-          </n-space>
-          <n-form-item class="mt-2" label="Pagos">
-            <n-dynamic-input v-model:value="sale.payments" :min="1" @create="createPayment">
-              <template #default="{ value }">
-                <div style="display: flex; align-items: center; width: 100%">
-                  <n-select v-model:value="value.payment_method" :options="filteredMethods" :disabled="loading" />
-                  <n-input class="ms-2" v-model:value="value.amount" placeholder="" :disabled="loading"
-                    @keypress="isDecimal($event)" />
+          <div class="products-scroll-viewport">
+            <ProductTable 
+              :sale="sale" 
+              :sale-details="saleStore.toSale" 
+              :sale-menu-sets="saleStore.salePayload?.sale_product_sets" 
+              @update-detail="saleStore.updateDetail" 
+            />
+          </div>
+
+          <footer class="panel-footer">
+            <div class="account-summary-row">
+              <span class="text-muted">Total productos: <b>{{ totalProductCount }}</b></span>
+              <span class="account-subtotal-label">Subtotal ítems: <b>S/. {{ formatNumber(subTotal) }}</b></span>
+            </div>
+          </footer>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- COLUMNA DERECHA: LIQUIDACIÓN Y COMMAND CENTER  -->
+        <!-- ============================================== -->
+        <section class="pos-panel pos-checkout-panel">
+          <!-- CABECERA: COMPROBANTE & CONDICIÓN -->
+          <div class="checkout-header-bar">
+            <div class="checkout-header-top">
+              <div class="d-flex align-items-center gap-2">
+                <span class="checkout-title">Comprobante</span>
+                <SaleSerieSelector 
+                  :sale="sale" 
+                  :invoice-type="sale.invoice_type" 
+                  @update:serie="handleSerieUpdate"
+                  @serie-changed="handleSerieChanged" 
+                />
+              </div>
+              <div class="payment-condition-toggle">
+                <n-radio-group
+                  v-model:value="sale.payment_condition"
+                  name="saleType"
+                  size="small"
+                  :disabled="!settingsStore.businessSettings?.sale?.enable_credits"
+                  @update:value="changeCondition"
+                >
+                  <n-radio-button :value="1">Contado</n-radio-button>
+                  <n-radio-button :value="2">Crédito</n-radio-button>
+                </n-radio-group>
+              </div>
+            </div>
+
+            <!-- SELECTORES TIPO DOCUMENTO -->
+            <div class="doc-selectors-row">
+              <n-radio-group v-model:value="sale.invoice_type" name="docType" size="small" class="w-100 doc-type-group" @update:value="changeSerie">
+                <n-radio-button :disabled="!settingsStore.businessSettings.sale?.enable_invoices" :value="1" class="doc-type-rb">
+                  FACTURA
+                </n-radio-button>
+                <n-radio-button :disabled="!settingsStore.businessSettings.sale?.enable_invoices" :value="3" class="doc-type-rb">
+                  BOLETA
+                </n-radio-button>
+                <n-radio-button :value="80" class="doc-type-rb">
+                  NOTA VENTA
+                </n-radio-button>
+              </n-radio-group>
+            </div>
+          </div>
+
+          <!-- DATOS DEL CLIENTE Y FECHA -->
+          <div class="checkout-client-box">
+            <div class="client-header-title">
+              <span class="client-label">Cliente / Receptor:</span>
+              <span class="client-type-hint">
+                {{ customerHint }}
+              </span>
+            </div>
+            <n-form ref="saleForm" :model="sale" :rules="formRules" size="small" :show-label="false">
+              <div class="client-input-wrapper">
+                <n-form-item path="customer" class="mb-0 w-100">
+                  <ClientSelectInput 
+                    v-model:customer-name="sale.customer_name" 
+                    v-model:customer-id="sale.customer"
+                    :invoice-type="sale.invoice_type" 
+                    placeholder="Buscar o registrar cliente (RUC, DNI, Nombre)..."
+                    @customer-selected="handleCustomerSelected"
+                    @customer-cleared="handleCustomerCleared" 
+                  />
+                </n-form-item>
+              </div>
+
+              <!-- Dirección desplegable si el cliente tiene direcciones registradas -->
+              <div v-if="addressesOptions.length > 0" class="mt-2">
+                <n-select 
+                  v-model:value="sale.address" 
+                  :options="addressesOptions" 
+                  :disabled="!sale.customer"
+                  placeholder="Seleccionar dirección..." 
+                  size="small"
+                />
+              </div>
+
+              <!-- Fecha de vencimiento si es crédito -->
+              <div v-if="isCredit" class="mt-2">
+                <n-form-item label="Fecha de vencimiento" path="expiration_sale" class="mb-0">
+                  <n-date-picker 
+                    class="w-100" 
+                    type="date" 
+                    format="dd/MM/yyyy" 
+                    value-format="dd/MM/yyyy"
+                    :is-date-disabled="isExpirationDateDisabled" 
+                    v-model:formatted-value="sale.expiration_sale" 
+                    size="small"
+                  />
+                </n-form-item>
+                <div class="due-chips">
+                  <button
+                    v-for="days in DUE_DAY_SHORTCUTS"
+                    :key="days"
+                    type="button"
+                    class="due-chip"
+                    :class="{ active: sale.expiration_sale === dueDateInDays(days) }"
+                    @click="sale.expiration_sale = dueDateInDays(days)"
+                  >
+                    {{ days }} días
+                  </button>
                 </div>
+              </div>
+
+              <!-- Observaciones secundarias de la venta -->
+              <div class="client-observations-row">
+                <n-button class="flizzy-text-btn" text size="tiny" @click="showObservations = !showObservations">
+                  <v-icon name="md-notes-round" class="me-1" scale="0.9" />
+                  {{ showObservations ? "Ocultar observaciones" : "+ Añadir observaciones" }}
+                </n-button>
+              </div>
+
+              <n-collapse-transition :show="showObservations">
+                <div class="mt-2">
+                  <n-input 
+                    type="textarea" 
+                    v-model:value="sale.observations" 
+                    placeholder="Notas o indicaciones de la venta..." 
+                    :rows="2" 
+                    size="small" 
+                  />
+                </div>
+              </n-collapse-transition>
+            </n-form>
+          </div>
+
+          <!-- DESGLOSE TRIBUTARIO COMPACTO -->
+          <div class="financial-breakdown">
+            <div class="financial-row">
+              <span class="fin-label">Subtotal</span>
+              <span class="fin-val">S/. {{ formatNumber(subTotal) }}</span>
+            </div>
+            <div v-if="Number(totalEXN) > 0" class="financial-row">
+              <span class="fin-label">Op. Exoneradas</span>
+              <span class="fin-val">S/. {{ formatNumber(totalEXN) }}</span>
+            </div>
+            <div v-if="Number(totalGRV) > 0" class="financial-row">
+              <span class="fin-label">Op. Gravadas</span>
+              <span class="fin-val">S/. {{ formatNumber(totalGRV) }}</span>
+            </div>
+            <div v-if="Number(totalIGV) > 0" class="financial-row">
+              <span class="fin-label">IGV</span>
+              <span class="fin-val">S/. {{ formatNumber(totalIGV) }}</span>
+            </div>
+            <div v-if="Number(icbper) > 0" class="financial-row">
+              <span class="fin-label">ICBPER</span>
+              <span class="fin-val">S/. {{ formatNumber(icbper) }}</span>
+            </div>
+
+            <!-- Modificadores de Descuento y Otros Cargos -->
+            <div class="financial-modifiers-grid">
+              <div class="mod-item">
+                <span class="mod-label">Descuento</span>
+                <n-input-number 
+                  size="small" 
+                  :value="Number(totalDSCT)" 
+                  :min="0" 
+                  :max="discountInputMax" 
+                  :step="0.5" 
+                  :precision="2" 
+                  :disabled="hasItemDiscount || Number(sale.other_charges) > 0 || !canEditDiscount"
+                  @update:value="handleDiscountChange"
+                >
+                  <template #prefix>S/.</template>
+                </n-input-number>
+              </div>
+
+              <div class="mod-item">
+                <span class="mod-label">Otros Cargos</span>
+                <n-input-number 
+                  size="small" 
+                  :value="Number(sale.other_charges || 0)" 
+                  :min="0" 
+                  :step="0.5" 
+                  :precision="2" 
+                  :disabled="Number(totalDSCT) > 0"
+                  @update:value="handleChargesChange"
+                >
+                  <template #prefix>S/.</template>
+                </n-input-number>
+              </div>
+            </div>
+          </div>
+
+          <!-- MÉTODO DE PAGO -->
+          <div v-if="!isCredit" class="payment-methods-card">
+            <span class="payment-field-label">Método de Pago:</span>
+            <div class="payment-methods-grid">
+              <button
+                v-for="pm in saleStore.getPaymentMethodsOptions"
+                :key="pm.value"
+                type="button"
+                class="pm-tile"
+                :class="{ 'pm-tile-active': sale.payment_method === pm.value, [getMethodClass(pm.label)]: true }"
+                @click="sale.payment_method = pm.value"
+              >
+                <payment-brand-icon :method="pm.label" :size="24" class="pm-brand-icon" />
+                <span class="pm-name">{{ pm.label }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- BANNER DEL TOTAL A COBRAR (FLIZZY SIGNATURE CARD) -->
+          <div class="flizzy-total-card">
+            <div class="flizzy-total-info">
+              <span class="flizzy-total-badge">TOTAL A COBRAR</span>
+              <span class="flizzy-total-sub">{{ isCredit ? 'Venta registrada a crédito' : 'Monto total de la comanda' }}</span>
+            </div>
+            <div class="flizzy-total-price">
+              <span class="flizzy-currency">S/.</span>
+              <span class="flizzy-digits">{{ total }}</span>
+            </div>
+          </div>
+
+          <!-- LIQUIDACIÓN: PAGO RECIBIDO, ATAJOS Y VUELTO -->
+          <div v-if="isCredit" class="settlement-control-card">
+            <div class="vuelto-state-banner status-credit">
+              <div class="vuelto-label-group">
+                <span class="vuelto-title">A CRÉDITO</span>
+                <span class="vuelto-hint">
+                  {{ sale.expiration_sale ? `Vence el ${sale.expiration_sale}` : "Indica la fecha de vencimiento" }}
+                </span>
+              </div>
+              <div class="vuelto-value">Saldo S/. {{ formatNumber(total) }}</div>
+            </div>
+          </div>
+          <div v-else class="settlement-control-card">
+            <div class="settlement-row">
+              <div class="settlement-field-wrapper">
+                <span class="settlement-label">Pago Recibido:</span>
+                <n-input-number 
+                  class="payment-given-input" 
+                  size="small"
+                  v-model:value="paymentInputModel" 
+                  :min="0" 
+                  :precision="2" 
+                  :step="1"
+                  :disabled="sale.payment_condition === 2"
+                  @update:value="handlePaymentGivenInput"
+                  @click="$event.target?.select?.()"
+                >
+                  <template #prefix>S/.</template>
+                </n-input-number>
+              </div>
+
+              <!-- ATAJOS DE BILLETES RÁPIDOS -->
+              <div v-if="sale.payment_condition === 1" class="quick-cash-chips-group">
+                <button 
+                  type="button" 
+                  class="quick-cash-chip exact-chip"
+                  @click="setQuickCash(Number(total))"
+                >
+                  Exacto
+                </button>
+                <button 
+                  v-for="opt in quickCashOptions" 
+                  :key="opt.value" 
+                  type="button" 
+                  class="quick-cash-chip"
+                  @click="setQuickCash(opt.value)"
+                >
+                  {{ opt.label }}
+                </button>
+              </div>
+            </div>
+
+            <!-- VUELTO / FALTANTE STATE BANNER -->
+            <div class="vuelto-state-banner" :class="changeStatusClass">
+              <div class="vuelto-label-group">
+                <span class="vuelto-title">{{ changeStatusLabel }}</span>
+                <span class="vuelto-hint" v-if="changeStatusClass === 'status-success'">A entregar al cliente</span>
+                <span class="vuelto-hint" v-else-if="changeStatusClass === 'status-neutral'">Monto completo sin vuelto</span>
+                <span class="vuelto-hint" v-else-if="changeStatusClass === 'status-warning'">Monto insuficiente</span>
+                <span class="vuelto-hint" v-else>Operación al crédito</span>
+              </div>
+              <div class="vuelto-value">
+                S/. {{ formatNumber(changeStatusValue) }}
+              </div>
+            </div>
+          </div>
+
+          <!-- OPCIONES SECUNDARIAS -->
+          <div class="checkout-footer-options">
+            <n-checkbox v-model:checked="sale.by_consumption" :disabled="sale.payment_condition === 2" size="small">
+              <span class="consumption-label">Por consumo</span>
+              <n-tooltip trigger="hover">
+                <template #trigger>
+                  <v-icon name="md-infooutline-round" class="ms-1 text-muted" style="cursor: help; vertical-align: -2px;" />
+                </template>
+                Emite el comprobante electrónico con un único ítem "Por consumo" en lugar de desglosar cada plato.
+              </n-tooltip>
+            </n-checkbox>
+
+            <n-checkbox v-model:checked="ticketPreview" size="small">
+              Previsualizar ticket
+            </n-checkbox>
+
+            <div v-if="sale.payment_condition === 1" class="d-flex align-items-center gap-2">
+              <n-checkbox v-model:checked="isMultiple" size="small">
+                Pago múltiple
+              </n-checkbox>
+              <n-button class="flizzy-text-btn" text size="small" @click="openSeparatePaymentsModal">
+                Dividir cuenta
+              </n-button>
+            </div>
+          </div>
+
+          <!-- BOTÓN PRINCIPAL COBRAR -->
+          <div class="checkout-submit-wrapper">
+            <n-button 
+              class="pos-cobrar-btn" 
+              type="primary" 
+              :disabled="!canCharge({ hasItems, isCredit, given: sale.given_amount, amount: sale.amount })" 
+              :loading="loading"
+              block 
+              @click.prevent="isMultiple ? doMultiplePayment() : performCreateSale()"
+            >
+              <template #icon>
+                <v-icon name="md-check-round" scale="1.2" />
               </template>
-            </n-dynamic-input>
-          </n-form-item>
-          <n-space justify="end">
-            <n-button type="success" :disabled="evalPayments || sale.payments.some(p => p.payment_method === null) ||
-              sale.payments.some(p => Number(p.amount) <= 0) || loading" secondary :loading="loading"
-              @click="performCreateSale">
-              Confirmar
+              Cobrar S/. {{ total }}
             </n-button>
-          </n-space>
-        </n-modal>
-        <separate-payments-modal v-model:show="showSeparateModal" :data="separatePayments"
-          @success="obtainSaleNumber" />
-        <PreviewDrawer ref="previewDrawer" v-model:show="showPdf" :data="pdfData" :previewOnly="!ticketPreview"
-          @printed="$router.push({ name: 'TableHome' })" @canceled="$router.push({ name: 'TableHome' })" />
+            <p v-if="chargeHintText" class="charge-hint">{{ chargeHintText }}</p>
+          </div>
+        </section>
+
       </div>
-    </n-scrollbar>
-  </n-card>
+    </n-spin>
+
+    <n-modal 
+      class="flizzy-payment-modal"
+      :style="{ width: genericsStore.device === 'mobile' ? '95%' : '480px' }"
+      preset="card" 
+      v-model:show="showPayments" 
+      title="Liquidación con Pago Múltiple" 
+      :mask-closable="false" 
+      closable
+      @close="sale.payments = null"
+    >
+      <!-- HEADER METRICS (3 CARDS) -->
+      <div class="multi-pay-summary-grid">
+        <div class="multi-pay-metric total-metric">
+          <span class="metric-label">Total a Pagar</span>
+          <span class="metric-value">S/. {{ showPayments ? Number(sale.amount).toFixed(2) : '0.00' }}</span>
+        </div>
+        <div class="multi-pay-metric assigned-metric">
+          <span class="metric-label">Asignado</span>
+          <span class="metric-value">S/. {{ showPayments ? Number(currentPaymentsAmount).toFixed(2) : '0.00' }}</span>
+        </div>
+        <div class="multi-pay-metric" :class="evalPayments ? 'lacking-metric' : 'exact-metric'">
+          <span class="metric-label">{{ evalPayments ? 'Faltante' : 'Cuadrado' }}</span>
+          <span class="metric-value">S/. {{ showPayments ? Math.abs(parseFloat(sale.amount - currentPaymentsAmount)).toFixed(2) : '0.00' }}</span>
+        </div>
+      </div>
+
+      <div class="multi-pay-inputs-section">
+        <span class="multi-pay-section-title">Desglose de Métodos:</span>
+        <n-dynamic-input v-model:value="sale.payments" :min="1" @create="createPayment">
+          <template #default="{ value }">
+            <div class="multi-pay-row">
+              <n-select 
+                class="multi-pay-select"
+                v-model:value="value.payment_method" 
+                :options="filteredMethods" 
+                :disabled="loading" 
+                placeholder="Seleccionar medio..."
+                size="small"
+              />
+              <n-input-number 
+                class="multi-pay-amount"
+                size="small"
+                v-model:value="value.amount" 
+                placeholder="0.00" 
+                :min="0"
+                :precision="2"
+                :step="1"
+                :disabled="loading"
+              >
+                <template #prefix>S/.</template>
+              </n-input-number>
+            </div>
+          </template>
+        </n-dynamic-input>
+      </div>
+
+      <template #action>
+        <div class="multi-pay-actions">
+          <n-button 
+            class="multi-pay-cancel-btn" 
+            size="medium"
+            @click="showPayments = false; sale.payments = null"
+          >
+            Cancelar
+          </n-button>
+          <n-button 
+            class="pos-cobrar-btn multi-pay-confirm-btn" 
+            type="primary" 
+            size="medium"
+            :disabled="evalPayments || sale.payments.some(p => p.payment_method === null) ||
+              sale.payments.some(p => Number(p.amount) <= 0) || loading" 
+            :loading="loading"
+            @click="performCreateSale"
+          >
+            <template #icon>
+              <v-icon name="md-check-round" scale="1.1" />
+            </template>
+            Confirmar Pago
+          </n-button>
+        </div>
+      </template>
+    </n-modal>
+    <separate-payments-modal v-model:show="showSeparateModal" :data="separatePayments"
+      @success="obtainSaleNumber" />
+    <PreviewDrawer ref="previewDrawer" v-model:show="showPdf" :data="pdfData" :previewOnly="!ticketPreview"
+      @printed="$router.push({ name: 'TableHome' })" @canceled="$router.push({ name: 'TableHome' })" />
+  </div>
 </template>
 
 <script setup>
@@ -131,15 +472,26 @@ import { ref, computed, watch, onMounted } from "vue";
 import SeparatePaymentsModal from "./SeparatePaymentsModal";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 import ClientSelectInput from "@/views/Customer/components/ClientSelectInput.vue";
+import PaymentBrandIcon from "./PaymentBrandIcon.vue";
 import SaleSerieSelector from "@/views/Order/components/SaleSerieSelector.vue";
 import PaymentTotals from "@/views/Order/components/PaymentTotals.vue";
 import ProductTable from "@/views/Order/components/ProductTable.vue";
 import { useSettingsStore } from "@/store/modules/settings";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
+import { useTableStore } from "@/store/modules/table";
 import { useGenericsStore } from "@/store/modules/generics";
 import { saleRules } from "@/utils/constants";
+import { firstFormError, chargeHint, dueDateInDays, DNI_THRESHOLD, DUE_DAY_SHORTCUTS } from "@/utils/creditCustomer";
+import {
+  buildCustomerRule,
+  canCharge,
+  changeStatus,
+  conditionPatch,
+  expirationRule,
+  quickCashOptions as buildQuickCashOptions,
+} from "@/utils/checkout";
 import { cloneDeep, isDecimal } from "@/utils";
 import { useDialog, useMessage } from "naive-ui";
 import format from "date-fns/format";
@@ -153,6 +505,8 @@ import { round2 } from "@/utils/money";
 
 
 const router = useRouter();
+const route = useRoute();
+const tableStore = useTableStore();
 const orderStore = useOrderStore();
 const saleStore = useSaleStore();
 const settingsStore = useSettingsStore();
@@ -175,11 +529,17 @@ const showPdf = ref(false);
 const previewDrawer = ref(null);
 const pdfData = ref(null);
 const selectedCustomer = ref(null);
+const isManualGivenAmount = ref(false);
+const previousTotalAmount = ref(0);
 
 const defaultInvoiceType = settingsStore.businessSettings.sale?.enable_invoices
   ? settingsStore.businessSettings.sale.default_invoice : 80;
 
 const defaultSerieId = saleStore.getFirstOption(defaultInvoiceType);
+
+const billingLayoutPosition = computed(() => {
+  return settingsStore.businessSettings?.sale?.billing_layout_position || 'checkout_left';
+});
 
 const sale = ref({
   serie: defaultSerieId,
@@ -293,11 +653,11 @@ const discountValidationThreshold = computed(
   () => Math.round(discountBaseAmount.value * 100) / 100
 );
 
-const changing = computed(() =>
-  sale.value.given_amount > total.value
-    ? (sale.value.given_amount - total.value).toFixed(2)
-    : 0.0
-);
+const changing = computed(() => {
+  const given = Number(sale.value.given_amount) || 0;
+  const tot = Number(total.value) || 0;
+  return given > tot ? (given - tot).toFixed(2) : "0.00";
+});
 
 const paymentTotalsItems = computed(() => {
   const hasItemDiscount = saleStore.toSale.some(d => Number(d.discount) > 0);
@@ -360,10 +720,24 @@ watch(
     });
 
     if (sale.value.payment_condition === 1) {
-      const newGivenAmount = total.value > 0 ? total.value : parseFloat(0).toFixed(2);
-      if (sale.value.given_amount !== newGivenAmount) {
-        sale.value.given_amount = newGivenAmount;
+      const currentGiven = Number(sale.value.given_amount) || 0;
+      const currentTotal = Number(total.value) || 0;
+      const prevTotal = Number(previousTotalAmount.value) || 0;
+
+      // Sincronizar automáticamente si no se ha digitado manualmente un billete mayor,
+      // si el monto anterior era exacto (ej. al cambiar un producto a gratuito), o si el recibido es menor al total
+      if (
+        !isManualGivenAmount.value ||
+        Math.abs(currentGiven - prevTotal) < 0.01 ||
+        currentGiven < currentTotal ||
+        currentGiven === 0
+      ) {
+        sale.value.given_amount = currentTotal > 0 ? total.value : parseFloat(0).toFixed(2);
+        if (currentGiven < currentTotal) {
+          isManualGivenAmount.value = false;
+        }
       }
+      previousTotalAmount.value = currentTotal;
     }
   },
   { immediate: true, deep: true }
@@ -374,6 +748,17 @@ watch(
   (condition) => {
     if (Number(condition) !== 2) {
       sale.value.expiration_sale = null;
+    }
+  }
+);
+
+watch(
+  () => sale.value.payment_method,
+  (newMethod) => {
+    // En crédito el pago recibido es 0 (o lo entregado a cuenta): igualarlo al total bloquearía el cobro
+    if (Number(sale.value.payment_condition) === 1 && Number(newMethod) !== 1) {
+      isManualGivenAmount.value = false;
+      sale.value.given_amount = total.value;
     }
   }
 );
@@ -402,54 +787,62 @@ const isExpirationDateDisabled = (ts) => {
 const isCredit = computed(() => Number(sale.value.payment_condition) === 2);
 
 const formRules = computed(() => {
-  const isInvoice = Number(sale.value.invoice_type) === 1;
   const rules = {
     customer: {
       ...saleRules.customer,
-      required: isInvoice || !(
-        sale.value.invoice_type !== 1 &&
-        sale.value.payment_condition === 1 &&
-        sale.value.given_amount <= 699
-      ),
-      validator(rule, value) {
-        if (isInvoice) {
-          const customerId = typeof value === 'object' ? value?.id : value;
-          if (!customerId || customerId === 1) {
-            return new Error("Para emitir Factura es obligatorio un cliente con RUC (11 dígitos).");
-          }
-          if (selectedCustomer.value) {
-            const docType = String(selectedCustomer.value.doc_type || "");
-            const docNum = String(selectedCustomer.value.doc_num || "").trim();
-            if (docType !== "6" || docNum.length !== 11 || !/^\d{11}$/.test(docNum)) {
-              return new Error("El cliente seleccionado debe tener un RUC válido de 11 dígitos.");
-            }
-          }
-        }
-        return true;
-      },
+      ...buildCustomerRule({
+        invoiceType: sale.value.invoice_type,
+        isCredit: isCredit.value,
+        amount: total.value,
+        customer: selectedCustomer.value,
+      }),
       trigger: ["blur", "change"],
     },
   };
-  if (isCredit.value) {
-    rules.expiration_sale = {
-      validator(rule, value) {
-        if (!value) {
-          return new Error("Debe ingresar la fecha de vencimiento para ventas al credito.");
-        }
-        return true;
-      },
-      trigger: ["blur", "change"],
-    };
+  const expiration = expirationRule(isCredit.value);
+  if (expiration) {
+    rules.expiration_sale = expiration;
   }
   return rules;
 });
 
 const changeCondition = (v) => {
-  sale.value.given_amount = v === 1 ? total.value : parseFloat("0").toFixed(2);
-  if (v !== 2) {
-    sale.value.expiration_sale = null;
+  isManualGivenAmount.value = false;
+  const patch = conditionPatch({ condition: v, total: total.value, expiration: sale.value.expiration_sale });
+  sale.value.given_amount = patch.given_amount;
+  sale.value.expiration_sale = patch.expiration_sale;
+  if (patch.clearMultiple) {
+    // El pago múltiple solo existe en contado; si queda activo el botón abriría el modal en crédito
+    isMultiple.value = false;
+    sale.value.payments = null;
   }
 };
+
+// Motivo por el que aún no se puede cobrar, para mostrarlo bajo el botón
+const chargeHintText = computed(() =>
+  chargeHint({
+    hasItems: hasItems.value,
+    isCredit: isCredit.value,
+    given: sale.value.given_amount,
+    amount: sale.value.amount,
+    invoiceType: sale.value.invoice_type,
+    customerId: sale.value.customer,
+    customer: selectedCustomer.value,
+    expiration: sale.value.expiration_sale,
+  })
+);
+
+const customerHint = computed(() => {
+  const type = Number(sale.value.invoice_type);
+  if (isCredit.value) {
+    return type === 1 ? "RUC obligatorio (Factura a crédito)" : "DNI o RUC obligatorio (Crédito)";
+  }
+  if (type === 1) return "RUC obligatorio (Factura)";
+  if (type === 3) {
+    return Number(total.value) >= DNI_THRESHOLD ? "DNI o RUC obligatorio (Boleta desde S/ 700)" : "DNI o Varios (Boleta)";
+  }
+  return "Opcional (Nota Venta)";
+});
 
 const changeSerie = (v) => {
   if (v === 1) {
@@ -494,16 +887,101 @@ const handlePaymentChange = (value) => {
   sale.value.given_amount = parseFloat(value) || 0;
 };
 
+const currentTableName = computed(() => tableStore.getTableByID(route.params.table)?.description || 'Mesa');
+
+const totalProductCount = computed(() => {
+  const detailsCount = (saleStore.toSale || []).reduce((acc, d) => acc + Number(d.quantity || 0), 0);
+  const menuSetsCount = (saleStore.salePayload?.sale_product_sets || []).reduce((acc, m) => acc + Number(m.quantity || 0), 0);
+  return detailsCount + menuSetsCount;
+});
+
+const navigateBackToTakeOrder = () => {
+  const dest = route.matched.some(r => r.name === 'WaiterMode') ? 'WProductCategories' : 'ProductCategories';
+  router.push({ name: dest, params: { table: route.params.table } });
+};
+
+const hasItemDiscount = computed(() => saleStore.toSale.some(d => Number(d.discount) > 0));
+
+const canEditDiscount = computed(() => Boolean(settingsStore.businessSettings?.sale?.show_discount_label ?? settingsStore.business_settings?.sale?.show_discount_label ?? true));
+
+const handleDiscountChange = (val) => {
+  handleValueChange({ field: 'discount', value: val });
+};
+
+const handleChargesChange = (val) => {
+  handleValueChange({ field: 'other_charges', value: val });
+};
+
+const formatNumber = (val) => {
+  const num = parseFloat(val);
+  return Number.isFinite(num) ? num.toFixed(2) : "0.00";
+};
+
+const handlePaymentGivenInput = (val) => {
+  const num = parseFloat(val || 0);
+  const tot = Number(total.value) || 0;
+  if (Math.abs(num - tot) < 0.01) {
+    isManualGivenAmount.value = false;
+  } else {
+    isManualGivenAmount.value = true;
+  }
+  sale.value.given_amount = num.toFixed(2);
+};
+
+const paymentInputModel = computed({
+  get: () => {
+    const val = parseFloat(sale.value.given_amount);
+    return Number.isFinite(val) ? val : 0;
+  },
+  set: (val) => {
+    handlePaymentGivenInput(val);
+  }
+});
+
+const paymentStatus = computed(() =>
+  changeStatus({ isCredit: isCredit.value, given: sale.value.given_amount, total: total.value })
+);
+const changeStatusLabel = computed(() => paymentStatus.value.label);
+const changeStatusClass = computed(() => paymentStatus.value.cls);
+const changeStatusValue = computed(() => paymentStatus.value.value.toFixed(2));
+
+const quickCashOptions = computed(() => buildQuickCashOptions(total.value));
+
+const setQuickCash = (val) => {
+  const numVal = Number(val);
+  const tot = Number(total.value) || 0;
+  if (Math.abs(numVal - tot) < 0.01) {
+    isManualGivenAmount.value = false;
+  } else {
+    isManualGivenAmount.value = true;
+  }
+  sale.value.given_amount = numVal.toFixed(2);
+};
+
+const getMethodIcon = (label = "") => {
+  const up = String(label).toUpperCase();
+  if (up.includes("EFECTIVO")) return "bi-cash-coin";
+  if (up.includes("YAPE") || up.includes("PLIN")) return "ri-send-plane-fill";
+  if (up.includes("TARJETA") || up.includes("POS") || up.includes("VISA") || up.includes("MASTERCARD")) return "bi-credit-card-2-front";
+  if (up.includes("TRANSFERENCIA") || up.includes("BANCO") || up.includes("BANCAR") || up.includes("DEPOSIT")) return "bi-bank";
+  return "md-pointofsale-twotone";
+};
+
+const getMethodClass = (label = "") => {
+  const up = String(label).toUpperCase();
+  if (up.includes("EFECTIVO")) return "pm-efectivo";
+  if (up.includes("YAPE")) return "pm-yape";
+  if (up.includes("PLIN")) return "pm-plin";
+  if (up.includes("TUNKI")) return "pm-tunki";
+  if (up.includes("TARJETA") || up.includes("POS") || up.includes("VISA") || up.includes("MASTERCARD")) return "pm-tarjeta";
+  if (up.includes("TRANSFERENCIA") || up.includes("BANCO") || up.includes("BANCAR") || up.includes("DEPOSIT")) return "pm-transfer";
+  return "pm-default";
+};
+
 const performCreateSale = () => {
   saleForm.value.validate((errors) => {
     if (errors) {
-      if (formRules.value.customer.required) {
-        const msg = sale.value.invoice_type === 1
-          ? "Debes agregar un cliente con RUC válido para emitir Factura"
-          : "Debes agregar un cliente porque la venta es mayor a S/ 699";
-        message.warning(msg);
-      }
-      message.error("Datos Incorrectos");
+      message.warning(firstFormError(errors));
       return;
     }
 
@@ -553,6 +1031,13 @@ const performCreateSale = () => {
         sale.value.sale_product_sets = payload.sale_product_sets;
         sale.value.discount = totalDSCT.value;
 
+        // Asegurar que si no es pago múltiple o payments está vacío, se envíe el payment_method seleccionado
+        if (!isMultiple.value || !sale.value.payments || !sale.value.payments.length) {
+          sale.value.payments = [
+            { payment_method: sale.value.payment_method, amount: String(sale.value.amount) }
+          ];
+        }
+
         try {
           const response = await createSale(sale.value);
           if (response.status === 201) {
@@ -562,7 +1047,9 @@ const performCreateSale = () => {
               ...sale.value.sale_details, 
               ...(sale.value.sale_product_sets || [])
             ];
-            if (sale.value.payments?.length) {
+            // En crédito los pagos del formulario son solo el total por defecto, no dinero cobrado:
+            // se usan los pagos reales que devuelve el backend
+            if (!isCredit.value && sale.value.payments?.length) {
               pdfData.value.payments = normalizePaymentsForTicket(sale.value.payments);
             }
 
@@ -747,3 +1234,1066 @@ onMounted(async () => {
 //   },
 // });
 </script>
+
+<style scoped>
+.pos-billing-wrapper {
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+:deep(.n-spin-container),
+:deep(.n-spin-content) {
+  height: 100% !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.pos-billing-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(380px, 1fr);
+  gap: 14px;
+  height: 100%;
+  min-height: 0;
+  align-items: stretch;
+}
+
+@media (min-width: 1440px) {
+  .pos-billing-grid {
+    grid-template-columns: minmax(0, 1.65fr) minmax(400px, 1fr);
+  }
+}
+
+/* Modo Predeterminado: Lista a la derecha y Panel de cobro a la izquierda */
+.pos-billing-grid.layout-checkout-left {
+  grid-template-columns: minmax(380px, 1fr) minmax(0, 1.55fr);
+}
+
+@media (min-width: 1440px) {
+  .pos-billing-grid.layout-checkout-left {
+    grid-template-columns: minmax(400px, 1fr) minmax(0, 1.65fr);
+  }
+}
+
+.pos-billing-grid.layout-checkout-left .pos-checkout-panel {
+  order: 1;
+}
+
+.pos-billing-grid.layout-checkout-left .pos-account-panel {
+  order: 2;
+}
+
+/* Modo Alternativo: Panel a la derecha y Lista a la izquierda */
+.pos-billing-grid.layout-checkout-right {
+  grid-template-columns: minmax(0, 1.55fr) minmax(380px, 1fr);
+}
+
+@media (min-width: 1440px) {
+  .pos-billing-grid.layout-checkout-right {
+    grid-template-columns: minmax(0, 1.65fr) minmax(400px, 1fr);
+  }
+}
+
+.pos-billing-grid.layout-checkout-right .pos-account-panel {
+  order: 1;
+}
+
+.pos-billing-grid.layout-checkout-right .pos-checkout-panel {
+  order: 2;
+}
+
+.pos-panel {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+  overflow: hidden;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+/* Columna Izquierda: Cuenta */
+.pos-account-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #fafbfc;
+}
+
+.panel-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.table-badge {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.item-count-tag {
+  font-weight: 600;
+  font-size: 12.5px;
+}
+
+.products-scroll-viewport {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f8fafc;
+}
+
+.products-scroll-viewport::-webkit-scrollbar {
+  width: 6px;
+}
+
+.products-scroll-viewport::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+
+.products-scroll-viewport::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+:deep(.product-details-table) {
+  font-size: 13.5px;
+}
+
+:deep(.product-details-table th) {
+  position: sticky;
+  top: 0;
+  background: #f8fafc !important;
+  z-index: 5;
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  border-bottom: 1px solid #e2e8f0 !important;
+  padding: 10px 10px !important;
+}
+
+:deep(.product-details-table td) {
+  padding: 9px 10px !important;
+  font-size: 13.5px;
+  border-bottom: 1px solid #f1f5f9;
+  line-height: 1.35;
+}
+
+:deep(.product-details-table tr:hover td) {
+  background-color: #fff7ed !important;
+}
+
+:deep(.product-details-table .custom-input) {
+  font-size: 13.5px !important;
+  padding: 3px 6px !important;
+  color: #1e293b;
+}
+
+:deep(.product-details-table .product-name-input) {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+}
+
+:deep(.product-details-table .col-qty) {
+  font-size: 14.5px !important;
+  font-weight: 800 !important;
+  color: #0f172a !important;
+}
+
+:deep(.product-details-table .col-total) {
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  color: #0f172a !important;
+}
+
+:deep(.product-details-table .n-tag) {
+  height: 22px !important;
+  line-height: 20px !important;
+  padding: 0 8px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  border-radius: 6px !important;
+}
+
+.panel-footer {
+  flex-shrink: 0;
+  padding: 10px 16px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+
+.account-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13.5px;
+}
+
+.account-subtotal-label {
+  color: #1e293b;
+  font-size: 14px;
+}
+
+.account-subtotal-label b {
+  font-size: 15px;
+  color: #0f172a;
+}
+
+.pos-checkout-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 12px 28px 12px;
+  gap: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f8fafc;
+}
+
+.pos-checkout-panel::-webkit-scrollbar {
+  width: 5px;
+}
+.pos-checkout-panel::-webkit-scrollbar-track {
+  background: #f8fafc;
+  border-radius: 4px;
+}
+.pos-checkout-panel::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.pos-checkout-panel::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.checkout-submit-wrapper {
+  margin-top: 2px;
+  padding-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.checkout-header-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.checkout-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.checkout-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.doc-selectors-row {
+  display: flex;
+  width: 100%;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: 9px;
+}
+
+.doc-type-group {
+  display: flex;
+  width: 100%;
+}
+
+.doc-selectors-row :deep(.n-radio-group) {
+  display: flex;
+  width: 100%;
+  background: transparent;
+  gap: 3px;
+}
+
+.doc-selectors-row :deep(.n-radio-button) {
+  flex: 1;
+  text-align: center;
+  border: none !important;
+  background: transparent !important;
+  border-radius: 7px !important;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b !important;
+  padding: 4px 6px;
+  box-shadow: none !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.doc-selectors-row :deep(.n-radio-button::before) {
+  display: none !important;
+}
+
+.doc-selectors-row :deep(.n-radio-button.n-radio-button--checked) {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  font-weight: 800 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+.payment-condition-toggle :deep(.n-radio-group) {
+  background: #f1f5f9;
+  padding: 2px;
+  border-radius: 8px;
+  display: flex;
+}
+
+.payment-condition-toggle :deep(.n-radio-button) {
+  border: none !important;
+  background: transparent !important;
+  border-radius: 6px !important;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b !important;
+  padding: 2px 8px;
+  box-shadow: none !important;
+}
+
+.payment-condition-toggle :deep(.n-radio-button::before) {
+  display: none !important;
+}
+
+.payment-condition-toggle :deep(.n-radio-button.n-radio-button--checked) {
+  background: #ffffff !important;
+  color: #ea580c !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+}
+
+.checkout-client-box {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 6px 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.checkout-client-box :deep(.n-input) {
+  --n-border-hover: #fdba74 !important;
+  --n-border-focus: #ff6b00 !important;
+  --n-box-shadow-focus: 0 0 0 2px rgba(255, 107, 0, 0.2) !important;
+  border-radius: 7px;
+}
+
+.checkout-client-box :deep(.n-button--info-type) {
+  background: #ff6b00 !important;
+  border-color: #ff6b00 !important;
+  color: #ffffff !important;
+}
+
+.checkout-client-box :deep(.n-button--info-type:hover) {
+  background: #ea580c !important;
+  border-color: #ea580c !important;
+}
+
+.doc-options-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 5px;
+  padding: 0 4px;
+}
+
+.consumption-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.client-observations-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 5px;
+}
+
+.financial-breakdown {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: 11.5px;
+}
+
+.financial-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5px 0;
+  color: #64748b;
+}
+
+.fin-val {
+  font-weight: 600;
+  color: #1e293b;
+  font-variant-numeric: tabular-nums;
+}
+
+.financial-modifiers-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.mod-item {
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 4px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.15s ease;
+}
+
+.mod-item:hover {
+  border-color: #ff6b00;
+}
+
+.mod-label {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mod-item :deep(.n-input) {
+  background: #f8fafc !important;
+  font-weight: 700;
+  font-size: 12px;
+  border-radius: 6px;
+}
+
+.mod-item :deep(.n-input__prefix) {
+  font-weight: 700;
+  color: #64748b;
+}
+
+.mod-item :deep(.n-input-number-button) {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+  font-weight: 900 !important;
+  border-radius: 4px;
+}
+
+.mod-item :deep(.n-input-number-button:hover) {
+  background: #ff6b00 !important;
+  color: #ffffff !important;
+}
+
+/* Card de Métodos de Pago */
+.payment-methods-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 8px 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.payment-field-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.payment-methods-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.client-header-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.client-label {
+  font-size: 11.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #475569;
+}
+
+.client-type-hint {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #ea580c;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  padding: 1px 7px;
+  border-radius: 6px;
+}
+
+.pm-tile {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 7px;
+  padding: 6px 8px;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 42px;
+  outline: none;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+}
+
+.pm-tile:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.pm-tile .pm-brand-icon {
+  flex-shrink: 0;
+}
+
+.pm-tile .pm-name {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #334155;
+}
+
+/* EFECTIVO */
+.pm-efectivo.pm-tile-active {
+  background: #f0fdf4 !important;
+  border: 1.5px solid #16a34a !important;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.15) !important;
+}
+.pm-efectivo.pm-tile-active .pm-name { color: #15803d !important; font-weight: 800; }
+
+/* YAPE */
+.pm-yape.pm-tile-active {
+  background: #faf5ff !important;
+  border: 1.5px solid #9333ea !important;
+  box-shadow: 0 2px 6px rgba(147, 51, 234, 0.15) !important;
+}
+.pm-yape.pm-tile-active .pm-name { color: #7e22ce !important; font-weight: 800; }
+
+/* PLIN */
+.pm-plin.pm-tile-active {
+  background: #f0fdfa !important;
+  border: 1.5px solid #06b6d4 !important;
+  box-shadow: 0 2px 6px rgba(6, 182, 212, 0.15) !important;
+}
+.pm-plin.pm-tile-active .pm-name { color: #0e7490 !important; font-weight: 800; }
+
+/* TARJETA */
+.pm-tarjeta.pm-tile-active {
+  background: #eff6ff !important;
+  border: 1.5px solid #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.15) !important;
+}
+.pm-tarjeta.pm-tile-active .pm-name { color: #1d4ed8 !important; font-weight: 800; }
+
+/* TUNKI */
+.pm-tunki.pm-tile-active {
+  background: #fff7ed !important;
+  border: 1.5px solid #ea580c !important;
+  box-shadow: 0 2px 6px rgba(234, 88, 12, 0.15) !important;
+}
+.pm-tunki.pm-tile-active .pm-name { color: #c2410c !important; font-weight: 800; }
+
+/* BANCO / TRANSFERENCIA */
+.pm-transfer.pm-tile-active {
+  background: #eef2ff !important;
+  border: 1.5px solid #4f46e5 !important;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.15) !important;
+}
+.pm-transfer.pm-tile-active .pm-name { color: #4338ca !important; font-weight: 800; }
+
+/* Banner del TOTAL - Flizzy Signature Card */
+.flizzy-total-card {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffffff 100%);
+  border: 1.5px solid #fed7aa;
+  border-left: 5px solid #ff6b00;
+  border-radius: 12px;
+  padding: 8px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px -2px rgba(255, 107, 0, 0.08);
+}
+
+.flizzy-total-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.flizzy-total-badge {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #c2410c;
+  text-transform: uppercase;
+}
+
+.flizzy-total-sub {
+  font-size: 10.5px;
+  color: #9a3412;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.flizzy-total-price {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.flizzy-currency {
+  font-size: 15px;
+  font-weight: 700;
+  color: #c2410c;
+}
+
+.flizzy-digits {
+  font-size: 28px;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* Settlement Control Card */
+.settlement-control-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.settlement-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.settlement-field-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 170px;
+}
+
+.settlement-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.payment-given-input {
+  flex: 1;
+}
+
+.payment-given-input :deep(.n-input) {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  border-radius: 8px;
+}
+
+.quick-cash-chips-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.quick-cash-chip {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.quick-cash-chip:hover {
+  background: #fff7ed;
+  border-color: #fdba74;
+  color: #c2410c;
+}
+
+.exact-chip {
+  background: #fff7ed;
+  border-color: #fdba74;
+  color: #ea580c;
+  font-weight: 800;
+}
+
+.exact-chip:hover {
+  background: #ffedd5;
+  border-color: #fb923c;
+}
+
+.vuelto-state-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 12px;
+  border-radius: 9px;
+  border: 1.5px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.vuelto-label-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.vuelto-title {
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.vuelto-hint {
+  font-size: 10px;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.vuelto-value {
+  font-size: 18px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.status-success {
+  background: #f0fdf4;
+  border-color: #86efac;
+  color: #15803d;
+}
+
+.status-neutral {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #64748b;
+}
+
+.status-warning {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #c2410c;
+}
+
+.status-credit {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.checkout-footer-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  margin-top: auto;
+  padding-top: 6px;
+}
+
+.checkout-submit-wrapper {
+  margin-top: 6px;
+}
+
+.checkout-footer-options :deep(.n-checkbox.n-checkbox--checked .n-checkbox-box) {
+  background-color: #ff6b00 !important;
+  border-color: #ff6b00 !important;
+}
+
+.flizzy-text-btn {
+  color: #ea580c !important;
+  font-weight: 700 !important;
+  transition: all 0.15s ease;
+  font-size: 11px !important;
+}
+
+.flizzy-text-btn:hover {
+  color: #c2410c !important;
+  text-decoration: underline;
+}
+
+.flizzy-add-order-btn {
+  background: #fff7ed !important;
+  border: 1.5px solid #fdba74 !important;
+  color: #ea580c !important;
+  font-weight: 800 !important;
+  border-radius: 8px !important;
+  transition: all 0.15s ease;
+}
+
+.flizzy-add-order-btn:hover {
+  background: #ffedd5 !important;
+  border-color: #fb923c !important;
+  color: #c2410c !important;
+  transform: translateY(-1px);
+}
+
+.checkout-submit-wrapper {
+  margin-top: 4px;
+  padding-bottom: 6px;
+  flex-shrink: 0;
+}
+
+.pos-cobrar-btn {
+  height: 48px;
+  font-size: 15.5px;
+  font-weight: 800;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ff6b00 0%, #ea580c 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 4px 14px rgba(255, 107, 0, 0.35) !important;
+  letter-spacing: 0.02em;
+  transition: all 0.18s ease;
+}
+
+.pos-cobrar-btn:not(:disabled):hover {
+  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%) !important;
+  box-shadow: 0 6px 18px rgba(255, 107, 0, 0.45) !important;
+  transform: translateY(-1px);
+}
+
+/* ==================================================== */
+/* MODAL PAGO MÚLTIPLE FLIZZY                           */
+/* ==================================================== */
+:deep(.flizzy-payment-modal) {
+  border-radius: 16px !important;
+  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.15), 0 4px 12px rgba(15, 23, 42, 0.08) !important;
+}
+:deep(.flizzy-payment-modal .n-card-header) {
+  padding: 16px 20px 12px !important;
+  border-bottom: 1px solid #f1f5f9;
+}
+:deep(.flizzy-payment-modal .n-card-header__main) {
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: #0f172a !important;
+}
+:deep(.flizzy-payment-modal .n-card__content) {
+  padding: 16px 20px !important;
+}
+:deep(.flizzy-payment-modal .n-card__action) {
+  padding: 12px 20px !important;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+  border-radius: 0 0 16px 16px;
+}
+.multi-pay-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.multi-pay-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1.5px solid transparent;
+}
+.multi-pay-metric .metric-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+.multi-pay-metric .metric-value {
+  font-size: 15px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+.total-metric { background: #f8fafc; border-color: #cbd5e1; color: #0f172a; }
+.total-metric .metric-label { color: #64748b; }
+.assigned-metric { background: #f0fdf4; border-color: #86efac; color: #15803d; }
+.assigned-metric .metric-label { color: #16a34a; }
+.lacking-metric { background: #fff7ed; border-color: #fed7aa; color: #c2410c; }
+.lacking-metric .metric-label { color: #ea580c; }
+.exact-metric { background: #ecfdf5; border-color: #a7f3d0; color: #047857; }
+.exact-metric .metric-label { color: #059669; }
+.multi-pay-section-title {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin-bottom: 8px;
+  display: block;
+}
+.multi-pay-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.multi-pay-select { flex: 1.2; }
+.multi-pay-amount { flex: 1; }
+.multi-pay-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+.multi-pay-cancel-btn {
+  font-weight: 700;
+  border-radius: 9px;
+  color: #64748b;
+}
+.multi-pay-confirm-btn {
+  height: 42px !important;
+  font-size: 14px !important;
+  padding: 0 20px !important;
+}
+
+/* ==================================================== */
+/* RESPONSIVE PARA DISPOSITIVOS MÓVILES Y TABLETS       */
+/* ==================================================== */
+@media (max-width: 992px) {
+  .pos-billing-wrapper {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: visible !important;
+  }
+
+  .pos-billing-grid {
+    grid-template-columns: 1fr !important;
+    height: auto;
+    min-height: auto;
+  }
+
+  .pos-billing-grid .pos-account-panel {
+    order: 1 !important;
+  }
+
+  .pos-billing-grid .pos-checkout-panel {
+    order: 2 !important;
+  }
+
+  .pos-panel {
+    height: auto;
+  }
+
+  .products-scroll-viewport {
+    max-height: 350px;
+  }
+
+  .pos-checkout-panel {
+    height: auto !important;
+    overflow-y: visible !important;
+    padding-bottom: 24px !important;
+  }
+}
+
+.charge-hint {
+  margin: 6px 2px 0;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+  color: #b45309;
+}
+
+.due-chips {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.due-chip {
+  flex: 1;
+  padding: 4px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.due-chip:hover {
+  border-color: #fdba74;
+  color: #c2410c;
+}
+
+.due-chip.active {
+  background: #fff7ed;
+  border-color: #ea580c;
+  color: #c2410c;
+}
+
+/* El botón de cobrar queda siempre a la vista aunque el panel tenga scroll */
+.pos-checkout-panel .checkout-submit-wrapper {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  margin-top: auto;
+  padding-top: 8px;
+  background: linear-gradient(to top, #ffffff 85%, rgba(255, 255, 255, 0));
+}
+</style>

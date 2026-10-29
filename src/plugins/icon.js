@@ -147,7 +147,9 @@ import {
   MdCampaignRound,
   MdFormatpaintRound,
   MdImageRound,
-  MdOpacityRound
+  MdOpacityRound,
+  MdAccesstimeRound,
+  MdInfooutlineRound
 } from "oh-vue-icons/icons";
 
 addIcons(
@@ -297,7 +299,9 @@ addIcons(
   MdCampaignRound,
   MdFormatpaintRound,
   MdImageRound,
-  MdOpacityRound
+  MdOpacityRound,
+  MdAccesstimeRound,
+  MdInfooutlineRound
 );
 
 export { OhVueIcon };

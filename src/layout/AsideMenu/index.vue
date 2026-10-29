@@ -1,6 +1,6 @@
 <template>
   <n-menu :collapsed-width="64" :collapsed-icon-size="22" :options="menuOptions"
-    :collapsed="userStore.user.role !== 'MOZO' ? collapsed : true" :value="openKey" />
+    :collapsed="userStore.user?.role !== 'MOZO' ? collapsed : true" :value="openKey" />
 </template>
 
 <script setup>
@@ -22,6 +22,15 @@ const tillStore = useTillStore();
 const settingsStore = useSettingsStore();
 const currentRoute = useRoute();
 
+const renderMenuLink = (routeName, label) => {
+  return () =>
+    h(
+      RouterLink,
+      { to: { name: routeName } },
+      { default: () => label }
+    );
+};
+
 const openKey = computed(() => {
   const matched = currentRoute.matched;
   const getOpenKeys =
@@ -33,7 +42,7 @@ const menuOptions = computed(() => {
   const options = [];
   // if (settingsStore.business_settings?.modules?.show_dashboard ?? true) {
   options.push({
-    label: () => h(RouterLink, { to: { name: "Dashboard" } }, () => h("span", "Dashboard")),
+    label: renderMenuLink("Dashboard", "Dashboard"),
     key: "Dashboard",
     icon: renderIcon("md-spacedashboard-twotone"),
   });
@@ -41,7 +50,7 @@ const menuOptions = computed(() => {
 
   if ((settingsStore.business_settings?.modules?.show_till ?? true) && userStore.hasPermission("view_till")) {
     options.push({
-      label: () => h(RouterLink, { to: { name: "Till" } }, () => h("span", "Caja")),
+      label: renderMenuLink("Till", "Caja"),
       key: "Till",
       icon: renderIcon("md-pointofsale-twotone"),
     });
@@ -49,7 +58,7 @@ const menuOptions = computed(() => {
 
   if ((settingsStore.business_settings?.modules?.show_tables ?? true) && userStore.hasPermission("view_table")) {
     options.push({
-      label: () => h(RouterLink, { to: { name: "Table" } }, () => h("span", "Mesas")),
+      label: renderMenuLink("Table", "Mesas"),
       key: "Table",
       icon: renderIcon("md-dining-twotone"),
       disabled: !tillStore.currentTillID,
@@ -58,7 +67,7 @@ const menuOptions = computed(() => {
 
   if (settingsStore.business_settings?.modules?.show_kds ?? false) {
     options.push({
-      label: () => h(RouterLink, { to: { name: "KdsBoard" } }, () => h("span", "Cocina")),
+      label: renderMenuLink("KdsBoard", "Cocina"),
       key: "KdsBoard",
       icon: renderIcon("md-soupkitchen-round"),
     });
@@ -66,7 +75,7 @@ const menuOptions = computed(() => {
 
   if ((settingsStore.business_settings?.modules?.show_orders ?? true) && userStore.hasPermission("view_order")) {
     options.push({
-      label: () => h(RouterLink, { to: { name: "Orders" } }, () => h("span", "Pedidos")),
+      label: renderMenuLink("Orders", "Pedidos"),
       key: "Orders",
       icon: renderIcon("md-pendingactions-twotone"),
     });
@@ -74,7 +83,7 @@ const menuOptions = computed(() => {
 
   if ((settingsStore.business_settings?.modules?.show_sales ?? true) && userStore.hasPermission("view_sale")) {
     options.push({
-      label: () => h(RouterLink, { to: { name: "Sales" } }, () => h("span", "Ventas")),
+      label: renderMenuLink("Sales", "Ventas"),
       key: "Sales",
       icon: renderIcon("md-description-twotone"),
     });
@@ -82,7 +91,7 @@ const menuOptions = computed(() => {
 
   if (settingsStore.business_settings?.modules?.show_anulates ?? true) {
     options.push({
-      label: () => h(RouterLink, { to: { name: "Anulate" } }, () => h("span", "Anulaciones")),
+      label: renderMenuLink("Anulate", "Anulaciones"),
       key: "Anulate",
       icon: renderIcon("md-cancelpresentation-twotone"),
     });
@@ -90,7 +99,7 @@ const menuOptions = computed(() => {
 
   if ((settingsStore.business_settings?.modules?.show_products ?? true) && userStore.hasPermission("view_product")) {
     options.push({
-      label: () => h(RouterLink, { to: { name: "Product" } }, () => h("span", "Productos")),
+      label: renderMenuLink("Product", "Productos"),
       key: "Product",
       icon: renderIcon("md-fastfood-twotone"),
     });
@@ -98,11 +107,7 @@ const menuOptions = computed(() => {
 
   if ((settingsStore.business_settings?.modules?.show_menus ?? true) && userStore.hasPermission('view_menu')) {
     options.push({
-      label: () => h(
-        RouterLink,
-        { to: { name: 'Menu' } },
-        () => h('span', 'Menu')
-      ),
+      label: renderMenuLink("Menu", "Menu"),
       key: 'Menu',
       icon: renderIcon('md-fastfood-twotone'),
     });
@@ -110,14 +115,7 @@ const menuOptions = computed(() => {
 
   if ((settingsStore.business_settings?.modules?.show_combos ?? true) && userStore.hasPermission('view_combo')) {
     options.push({
-      label: () =>
-        h(
-          RouterLink,
-          {
-            to: { name: "Combo" },
-          },
-          () => h("span", "Combos")
-        ),
+      label: renderMenuLink("Combo", "Combos"),
       key: "Combo",
       icon: renderIcon("md-fastfood-twotone"),
     });
@@ -125,7 +123,7 @@ const menuOptions = computed(() => {
 
   if ((settingsStore.business_settings?.modules?.show_suppliers ?? true) && userStore.hasPermission("view_supplier")) {
     options.push({
-      label: () => h(RouterLink, { to: { name: "Supplier" } }, () => h("span", "Proveedores")),
+      label: renderMenuLink("Supplier", "Proveedores"),
       key: "Supplier",
       icon: renderIcon("md-villa-twotone"),
     });
@@ -133,7 +131,7 @@ const menuOptions = computed(() => {
 
   if ((settingsStore.business_settings?.modules?.show_supplies ?? true) && userStore.hasPermission("view_supplies")) {
     options.push({
-      label: () => h(RouterLink, { to: { name: "Supplies" } }, () => h("span", "Insumos")),
+      label: renderMenuLink("Supplies", "Insumos"),
       key: "Supplies",
       icon: renderIcon("md-kitchen-twotone"),
     });
@@ -141,7 +139,7 @@ const menuOptions = computed(() => {
 
   if ((settingsStore.business_settings?.modules?.show_kardex ?? true) && userStore.hasPermission("view_kardex")) {
     options.push({
-      label: () => h(RouterLink, { to: { name: "Kardex" } }, () => h("span", "Kardex")),
+      label: renderMenuLink("Kardex", "Kardex"),
       key: "Kardex",
       icon: renderIcon("md-equalizer-twotone"),
     });
@@ -149,7 +147,7 @@ const menuOptions = computed(() => {
 
   if ((settingsStore.business_settings?.modules?.show_customers ?? true) && userStore.hasPermission("view_customer")) {
     options.push({
-      label: () => h(RouterLink, { to: { name: "Customer" } }, () => h("span", "Clientes")),
+      label: renderMenuLink("Customer", "Clientes"),
       key: "Customer",
       icon: renderIcon("md-supervisedusercircle-twotone"),
     });
@@ -157,7 +155,7 @@ const menuOptions = computed(() => {
     // Cumpleaños is tied to customer view permission natively
     if (settingsStore.business_settings?.modules?.show_birthdays ?? true) {
       options.push({
-        label: () => h(RouterLink, { to: { name: "Cums" } }, () => h("span", "Cumpleaños")),
+        label: renderMenuLink("Cums", "Cumpleaños"),
         key: "Cums",
         icon: renderIcon("co-birthday-cake"),
       });
@@ -166,7 +164,7 @@ const menuOptions = computed(() => {
 
   if ((settingsStore.business_settings?.modules?.show_reports ?? true) && userStore.hasPermission("view_sale")) {
     options.push({
-      label: () => h(RouterLink, { to: { name: "Reports" } }, () => h("span", "Reportes")),
+      label: renderMenuLink("Reports", "Reportes"),
       key: "Reports",
       icon: renderIcon("md-insertchart-outlined"),
     });
@@ -175,7 +173,7 @@ const menuOptions = computed(() => {
   // if ((settingsStore.business_settings?.modules?.show_settings ?? true) && userStore.hasPermission("view_business")) {
   if (userStore.hasPermission("view_business")) {
     options.push({
-      label: () => h(RouterLink, { to: { name: "Settings" } }, () => h("span", "Configuración")),
+      label: renderMenuLink("Settings", "Configuración"),
       key: "Settings",
       icon: renderIcon("md-settings-twotone"),
     });

@@ -3,19 +3,21 @@ import { useSettingsStore } from "@/store/modules/settings";
 import { useBusinessStore } from "@/store/modules/business";
 import { useTillStore } from "@/store/modules/till";
 import { useUserStore } from "@/store/modules/user";
+import { normalizeExpirationSale } from "@/api/modules/sales";
 
 
 export async function listOrders(filterParams) {
   return await http.get("orders/", {
     params: {
+      till: filterParams?.till || undefined,
       created__range:
-        filterParams.created !== null
+        filterParams?.created !== null && filterParams?.created !== undefined
           ? `${filterParams.created[0]}, ${filterParams.created[1]}`
           : null,
-      take_aways: filterParams.take_aways,
-      tables: filterParams.tables,
-      deliverys: filterParams.deliverys,
-      status: filterParams.status,
+      take_aways: filterParams?.take_aways,
+      tables: filterParams?.tables,
+      deliverys: filterParams?.deliverys,
+      status: filterParams?.status,
     },
   });
 }
@@ -28,14 +30,15 @@ export async function listOrdersByPage(filterParams, page, pageSize) {
   if (filterParams) {
     return await http.get("orders/", {
       params: {
+        till: filterParams?.till || undefined,
         created__range:
-          filterParams.created !== null
+          filterParams?.created !== null && filterParams?.created !== undefined
             ? `${filterParams.created[0]}, ${filterParams.created[1]}`
             : null,
-        take_aways: filterParams.take_aways,
-        tables: filterParams.tables,
-        deliverys: filterParams.deliverys,
-        status: filterParams.status,
+        take_aways: filterParams?.take_aways,
+        tables: filterParams?.tables,
+        deliverys: filterParams?.deliverys,
+        status: filterParams?.status,
         page: page,
         page_size: pageSize,
       },
@@ -61,14 +64,15 @@ export async function updateOrderStatus(order, payments) {
 export async function searchOrders(filterParams, page, pageSize) {
   return await http.get("orders/", {
     params: {
+      till: filterParams?.till || undefined,
       created__range:
-        filterParams.created !== null
+        filterParams?.created !== null && filterParams?.created !== undefined
           ? `${filterParams.created[0]}, ${filterParams.created[1]}`
           : null,
-      take_aways: filterParams.take_aways,
-      tables: filterParams.tables,
-      deliverys: filterParams.deliverys,
-      status: filterParams.status,
+      take_aways: filterParams?.take_aways,
+      tables: filterParams?.tables,
+      deliverys: filterParams?.deliverys,
+      status: filterParams?.status,
       page: page,
       page_size: pageSize,
     },
@@ -142,6 +146,7 @@ export async function takeAwayOrder(order_details, sale_data, user, salePayload 
     invoice_type: sale_data.invoice_type,
     payment_method: sale_data.payment_method,
     payment_condition: sale_data.payment_condition,
+    expiration_sale: normalizeExpirationSale(sale_data.expiration_sale, sale_data.payment_condition),
     customer: sale_data.customer === 0 ? null : sale_data.customer,
     address: sale_data.address,
     branch_office: !userStore.user.branchoffice

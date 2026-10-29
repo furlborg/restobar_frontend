@@ -38,7 +38,10 @@ export async function retrieveProduct(id) {
 
 export async function createProduct(product) {
   const form = new FormData();
-  form.append("code", product.code ?? "");
+  const trimmedCode = (product.code || "").trim();
+  if (trimmedCode) {
+    form.append("code", trimmedCode);
+  }
   form.append("name", (product.name || "").toUpperCase());
   form.append("description", product.description ?? "");
   form.append("prices", product.prices ?? "");
@@ -75,7 +78,8 @@ export async function createProduct(product) {
 
 export async function updateProduct(idProduct, product) {
   const form = new FormData();
-  form.append("code", product.code ?? "");
+  const trimmedCode = (product.code || "").trim();
+  form.append("code", trimmedCode);
   form.append("name", (product.name || "").toUpperCase());
   form.append("description", product.description ?? "");
   form.append("prices", product.prices ?? "");
@@ -106,6 +110,10 @@ export async function updateProduct(idProduct, product) {
   return await http.put(`products/${idProduct}/`, form, {
     headers: { "Content-Type": "multipart/form-data" },
   });
+}
+
+export async function getNextProductCode(prefix = "PRO") {
+  return await http.get("products/next_code/", { params: { prefix } });
 }
 
 export async function disableProduct(id) {

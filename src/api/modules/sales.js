@@ -4,7 +4,7 @@ import { useUserStore } from "@/store/modules/user";
 import { useTillStore } from "@/store/modules/till";
 import { useSaleStore } from "@/store/modules/sale";
 
-function normalizeExpirationSale(expiration, paymentCondition) {
+export function normalizeExpirationSale(expiration, paymentCondition) {
     if (paymentCondition !== 2) {
         return null;
     }

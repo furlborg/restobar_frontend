@@ -105,7 +105,7 @@
                 </div>
             </div>
             <div
-                v-if="userStore.hasPermission('cancel_order') && !settingsStore.businessSettings.sale?.require_user_pass_to_null && !settingsStore.business_settings.sale.require_general_pass_to_null">
+                v-if="userStore.hasPermission('cancel_order') && !settingsStore.businessSettings.sale?.require_user_pass_to_null && !settingsStore.business_settings?.sale?.require_general_pass_to_null">
                 <span style="font-weight: 700; font-size: 16px">
                     Para poder anular un pedido, primero debe de activar la
                     configuración "Requerir clave de usuario para anular" en la sección de configuraciones.
@@ -114,7 +114,7 @@
             <template #action>
                 <n-space justify="end">
                     <n-button type="success" :loading="isLoading" secondary @click.prevent="performNullifyTableOrder"
-                        :disabled="settingsStore.business_settings.order.required_null_reason || isLoading">
+                        :disabled="settingsStore.business_settings?.order?.required_null_reason || isLoading">
                         Confirmar
                     </n-button>
                 </n-space>
@@ -242,15 +242,15 @@ const filterParams = ref({
         )
     ],
     take_aways:
-        settingsStore.business_settings?.order?.default_filters.some(
+        settingsStore.business_settings?.order?.default_filters?.some(
             (filter) => filter === "P"
         ) ?? true,
     tables:
-        settingsStore.business_settings?.order?.default_filters.some(
+        settingsStore.business_settings?.order?.default_filters?.some(
             (filter) => filter === "M"
         ) ?? true,
     deliverys:
-        settingsStore.business_settings?.order?.default_filters.some(
+        settingsStore.business_settings?.order?.default_filters?.some(
             (filter) => filter === "D"
         ) ?? true,
     status: null
@@ -612,7 +612,7 @@ const tableColumns = createOrderColumns({
     payDeliver(row) {
         paymentsTotal.value = parseFloat(row.amount);
         if (
-            !settingsStore.business_settings.till.delivery_affects_till &&
+            !settingsStore.business_settings?.till?.delivery_affects_till &&
             row.order_type === "D"
         ) {
             paymentsTotal.value -= parseFloat(row.delivery_info?.amount || 0);

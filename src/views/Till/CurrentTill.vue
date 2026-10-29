@@ -64,8 +64,21 @@
     </n-grid>
     <n-card class="mt-2" title="Movimientos" :segmented="{ content: 'hard' }">
       <template #header-extra>
-        <n-button v-if="userStore.hasPermission('view_till')" type="info" secondary
-          @click="$router.push({ name: 'TillList' })">Lista de Cajas</n-button>
+        <n-space align="center">
+          <n-button
+            v-if="userStore.hasPermission('view_concept') || userStore.hasPermission('add_concept') || userStore.user?.is_superuser || userStore.user?.is_owner"
+            type="primary"
+            secondary
+            @click="showConceptsModal = true"
+          >
+            <template #icon>
+              <v-icon name="md-listalt-round" />
+            </template>
+            Conceptos de Caja
+          </n-button>
+          <n-button v-if="userStore.hasPermission('view_till')" type="info" secondary
+            @click="$router.push({ name: 'TillList' })">Lista de Cajas</n-button>
+        </n-space>
       </template>
       <n-space justify="space-between">
         <n-button type="info" text @click="
@@ -113,6 +126,7 @@
     </n-card>
     <movement-modal v-model:show="showModal" :movement-type="movementType" :detailId="detailId"
       @update:show="onCloseModal" @on-success="onSuccess" />
+    <concepts-modal v-model:show="showConceptsModal" />
   </div>
 </template>
 
@@ -121,6 +135,7 @@ import { CreatePdfFile } from "@/hooks/CreatePdfFile";
 import { defineComponent, ref, onMounted, computed } from "vue";
 import { useMessage, useDialog } from "naive-ui";
 import MovementModal from "./components/MovementModal";
+import ConceptsModal from "./components/ConceptsModal.vue";
 import { isLetter, isNumber, isLetterOrNumber } from "@/utils";
 import { createMovementsColumns } from "@/utils/constants";
 import { useTillStore } from "@/store/modules/till";
@@ -138,6 +153,7 @@ export default defineComponent({
   name: "CurrentTill",
   components: {
     MovementModal,
+    ConceptsModal,
   },
   setup() {
     const dateNow = ref(null);
@@ -149,6 +165,7 @@ export default defineComponent({
     const saleStore = useSaleStore();
     const dialog = useDialog();
     const showModal = ref(false);
+    const showConceptsModal = ref(false);
     const movementType = ref(null);
     const showFilters = ref(false);
     const isLoading = ref(false);
@@ -169,22 +186,22 @@ export default defineComponent({
 
     const income = computed(() =>
       movements.value
-        .filter((row) => tillStore.getConceptType(row.concept) === "0")
+        .filter((row) => !row.status && tillStore.getConceptType(row.concept) === "0")
         .reduce((prevValue, row) => prevValue + Number(row.amount), 0),
     );
 
     const outcome = computed(() =>
       movements.value
-        .filter((row) => tillStore.getConceptType(row.concept) === "1")
+        .filter((row) => !row.status && tillStore.getConceptType(row.concept) === "1")
         .reduce((prevValue, row) => prevValue + Number(row.amount), 0),
     );
 
     const sells = computed(() => {
       const sells_income = movements.value
-        .filter((row) => row.concept === 3)
+        .filter((row) => !row.status && row.concept === 3)
         .reduce((prevValue, row) => prevValue + Number(row.amount), 0);
       const sells_outcome = movements.value
-        .filter((row) => row.concept === 6)
+        .filter((row) => !row.status && row.concept === 6)
         .reduce((prevValue, row) => prevValue + Number(row.amount), 0);
       return sells_income - sells_outcome;
     });
@@ -291,6 +308,7 @@ export default defineComponent({
       pagination,
       isLoading,
       showModal,
+      showConceptsModal,
       movementType,
       showFilters,
       tillStore,

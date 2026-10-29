@@ -1,5 +1,6 @@
 stages:
   - demo
+  - design
 
 demo:
   stage: demo
@@ -8,5 +9,15 @@ demo:
   script:
     - cd /home/tsi/ci/
     - sudo bash ./update_demo_flizzy_front
+  tags:
+    - flizzy
+
+design:
+  stage: design
+  only:
+    - rediseño_cobranza
+  script:
+    - cd /home/tsi/ci/
+    - sudo bash ./update_demodesign_flizzy_front
   tags:
     - flizzy

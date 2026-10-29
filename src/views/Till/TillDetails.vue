@@ -140,7 +140,7 @@
           <TillSales />
         </n-tab-pane>
         <n-tab-pane name="orders" tab="Pedidos">
-          <TillOrders />
+          <TillOrders :till="till" />
         </n-tab-pane>
         <template #suffix>
           <n-dropdown trigger="click" :options="reportOptions" @select="selectReport">
@@ -215,22 +215,22 @@ export default defineComponent({
 
     const income = computed(() =>
       movements.value
-        .filter((row) => tillStore.getConceptType(row?.concept) === "0")
+        .filter((row) => !row?.status && tillStore.getConceptType(row?.concept) === "0")
         .reduce((prevValue, row) => prevValue + Number(row?.amount), 0)
     );
 
     const outcome = computed(() =>
       movements.value
-        .filter((row) => tillStore.getConceptType(row?.concept) === "1")
+        .filter((row) => !row?.status && tillStore.getConceptType(row?.concept) === "1")
         .reduce((prevValue, row) => prevValue + Number(row?.amount), 0)
     );
 
     const sells = computed(() => {
       const sells_income = movements.value
-        .filter((row) => row?.concept === 3)
+        .filter((row) => !row?.status && row?.concept === 3)
         .reduce((prevValue, row) => prevValue + Number(row?.amount), 0);
       const sells_outcome = movements.value
-        .filter((row) => row?.concept === 6)
+        .filter((row) => !row?.status && row?.concept === 6)
         .reduce((prevValue, row) => prevValue + Number(row?.amount), 0);
       return sells_income - sells_outcome;
     });
@@ -683,6 +683,7 @@ export default defineComponent({
       makeSaleReport,
       reportOptions,
       selectReport,
+      till,
       tableColumns: createTillDetailsColumns(),
     };
   },

@@ -78,3 +78,49 @@ export function getDeviceType() {
 }
 
 export { default as cloneDeep } from "clone-deep";
+
+export function formatSingleIndicationText(indication, includeTakeAway = false) {
+  if (!indication) return "";
+  if (typeof indication === "string") {
+    const s = indication.trim();
+    if (!s || s === "[]" || s === "null" || s === "None") return "";
+    return s;
+  }
+
+  const parts = [];
+  const seen = new Set();
+
+  const addUnique = (str) => {
+    if (!str || typeof str !== "string") return;
+    const clean = str.trim();
+    if (!clean || clean === "[]" || clean === "null" || clean === "None") return;
+    const lower = clean.toLowerCase();
+    if (!seen.has(lower)) {
+      seen.add(lower);
+      parts.push(clean);
+    }
+  };
+
+  if (Array.isArray(indication.quick_indications)) {
+    indication.quick_indications.forEach((q) => {
+      if (typeof q === "string") {
+        q.split(",").forEach((sub) => addUnique(sub));
+      } else {
+        addUnique(q);
+      }
+    });
+  } else if (typeof indication.quick_indications === "string") {
+    indication.quick_indications.split(",").forEach((q) => addUnique(q));
+  }
+
+  if (indication.description && typeof indication.description === "string") {
+    indication.description.split(",").forEach((d) => addUnique(d));
+  }
+
+  let text = parts.join(", ");
+  if (includeTakeAway && indication.takeAway) {
+    text = text ? `${text} [LLEVAR]` : "[LLEVAR]";
+  }
+  return text;
+}
+

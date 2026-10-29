@@ -125,6 +125,7 @@
 <script>
 import { defineComponent } from "vue";
 import { useSettingsStore } from "@/store/modules/settings";
+import { formatSingleIndicationText } from "@/utils";
 
 export default defineComponent({
   name: "TicketDelivery",
@@ -137,32 +138,25 @@ export default defineComponent({
     const settingsStore = useSettingsStore();
 
     const parseSale = () => {
-      let saleData = JSON.parse(props.data.json_sale);
+      let saleData = typeof props.data.json_sale === "string" ? JSON.parse(props.data.json_sale) : props.data.json_sale;
       // console.log(JSON.stringify(props.data, null, "  "));
-      saleData.informacion_adicional =
-        saleData.informacion_adicional.split("|");
+      if (typeof saleData.informacion_adicional === "string") {
+        saleData.informacion_adicional =
+          saleData.informacion_adicional.split("|");
+      }
       if (settingsStore.business_settings.printer.detail_items) {
         props.data.order_details.forEach((detail, index) => {
           const indications = Array.isArray(detail?.indication) ? detail.indication : [];
           const validIndications = [];
 
           indications.forEach((ind) => {
-            let itemDesc = "";
-            if (ind?.quick_indications && ind.quick_indications.length) {
-              itemDesc = ind.quick_indications.join(", ");
-            }
-            if (ind?.description && ind.description.trim() !== "" && !ind.description.includes("[]")) {
-              itemDesc = itemDesc ? `${itemDesc}, ${ind.description.trim()}` : ind.description.trim();
-            }
-            if (ind?.takeAway) {
-              itemDesc = itemDesc ? `${itemDesc} [LLEVAR]` : "[LLEVAR]";
-            }
+            const itemDesc = formatSingleIndicationText(ind, true);
             if (itemDesc) {
               validIndications.push(`[${itemDesc}]`);
             }
           });
 
-          if (validIndications.length > 0 && saleData.items[index]) {
+          if (validIndications.length > 0 && saleData.items && saleData.items[index]) {
             saleData.items[index].descripcion += " " + validIndications.join(" ");
           }
         });

@@ -3,6 +3,7 @@ import { useSettingsStore } from "@/store/modules/settings";
 import { useTableStore } from "@/store/modules/table";
 
 import { printPdf } from "@/hooks/PrintPdf.js";
+import { formatSingleIndicationText } from "@/utils";
 
 const settingsStore = useSettingsStore();
 const productStore = useProductStore();
@@ -138,18 +139,10 @@ const printOrderTicket = (props) => {
 
         lengthData += 10;
 
-        val.indication.map((v) => {
-          let desc = "";
-          if (v.quick_indications.length) {
-            v.quick_indications.forEach((ind) => {
-              desc += `${ind}, `;
-            });
-          }
-          v.description = v.description
-            ? desc + v.description
-            : desc.slice(0, -2);
-          if (v.description) {
-            ind = createNewText(v.description);
+        (val.indication || []).forEach((v) => {
+          const indText = formatSingleIndicationText(v, false);
+          if (indText) {
+            ind = createNewText(indText);
 
             if (v.takeAway) {
               if (ind.length + ` [PARA LLEVAR]`.length > 30) {
@@ -190,20 +183,22 @@ const printOrderTicket = (props) => {
             lengthData += 10;
           });
         }
-        if (settingsStore.business_settings.printer.show_cat) {
+        const isShowCat = !!(settingsStore.business_settings?.printer?.show_cat ?? settingsStore.businessSettings?.printer?.show_cat);
+        if (isShowCat && val.product_category) {
           if (
             val.product_category.toLowerCase().includes("menu") ||
             val.product_category.toLowerCase().includes("menus")
           ) {
-            newName = `[MENU] ${newName}`;
+            newName = `[MENU] » ${newName}`;
           } else if (
-            (!!val.product_category.toLowerCase().includes("menu") === false ||
-              !!val.product_category.toLowerCase().includes("menus") ===
-                false) &&
-            (!!val.product_category.toLowerCase().includes("combo") === false ||
-              !!val.product_category.toLowerCase().includes("combo") === false)
+            val.product_category.toLowerCase().includes("combo") ||
+            val.product_category.toLowerCase().includes("combos")
           ) {
-            newName = `[CARTA] ${newName}`;
+            newName = `[COMBO] » ${newName}`;
+          } else if (val.product_category.toLowerCase().includes("porcion")) {
+            newName = `[PORCION] » ${newName}`;
+          } else {
+            newName = `[${val.product_category.toUpperCase()}] » ${newName}`;
           }
         }
 

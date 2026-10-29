@@ -3,6 +3,7 @@ import { useSettingsStore } from "@/store/modules/settings";
 import { useTableStore } from "@/store/modules/table";
 
 import { printPdf } from "@/hooks/PrintPdf.js";
+import { formatSingleIndicationText } from "@/utils";
 
 const settingsStore = useSettingsStore();
 const productStore = useProductStore();
@@ -216,18 +217,10 @@ const printWEBADASDEBRASEROS = (props) => {
         let ind = "";
 
         lengthData += 10;
-        val.indication.map((v) => {
-          let desc = "";
-          if (v.quick_indications.length) {
-            v.quick_indications.forEach((ind) => {
-              desc += `${ind}, `;
-            });
-          }
-          v.description = v.description
-            ? desc + v.description
-            : desc.slice(0, -2);
-          if (v.description) {
-            ind += `${createNewText(`*** ${v.description}`)}`;
+        (val.indication || []).forEach((v) => {
+          const indText = formatSingleIndicationText(v, false);
+          if (indText) {
+            ind += `${createNewText(`*** ${indText}`)}`;
 
             if (v.takeAway) {
               if (ind.length + ` [llevar]`.length > 30) {

@@ -219,7 +219,7 @@ export const routes = [
                 name: "CategoriesOrder",
                 path: "order-items",
                 component: () =>
-                  import("@/views/Order/components/CategoriesList.vue"),
+                  import("@/views/Table/components/CategoriesList.vue"),
               },
               {
                 name: "CategoriesOrderItems",
