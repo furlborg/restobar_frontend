@@ -105,7 +105,7 @@
             <div class="client-header-title">
               <span class="client-label">Cliente / Receptor:</span>
               <span class="client-type-hint">
-                {{ localInvoiceType === 1 ? 'RUC Obligatorio (Factura)' : (localInvoiceType === 3 ? 'DNI o Varios (Boleta)' : 'Opcional (Nota Venta)') }}
+                {{ customerHint }}
               </span>
             </div>
             <n-form ref="saleForm" :model="sale" :rules="formRules" size="small" :show-label="false">
@@ -133,6 +133,34 @@
                   size="small"
                   @update:value="handleAddressChange"
                 />
+              </div>
+
+              <!-- Fecha de vencimiento si es crédito -->
+              <div v-if="localPaymentCondition === 2" class="mt-2">
+                <n-form-item label="Fecha de vencimiento" path="expiration_sale" class="mb-0">
+                  <n-date-picker
+                    class="w-100"
+                    type="date"
+                    format="dd/MM/yyyy"
+                    value-format="dd/MM/yyyy"
+                    :is-date-disabled="isExpirationDateDisabled"
+                    :formatted-value="sale.expiration_sale"
+                    size="small"
+                    @update:formatted-value="handleExpirationChange"
+                  />
+                </n-form-item>
+                <div class="due-chips">
+                  <button
+                    v-for="days in DUE_DAY_SHORTCUTS"
+                    :key="days"
+                    type="button"
+                    class="due-chip"
+                    :class="{ active: sale.expiration_sale === dueDateInDays(days) }"
+                    @click="handleExpirationChange(dueDateInDays(days))"
+                  >
+                    {{ days }} días
+                  </button>
+                </div>
               </div>
 
               <!-- Observaciones secundarias -->
@@ -245,7 +273,7 @@
           </div>
 
           <!-- MÉTODO DE PAGO (TILES VISUALES FLIZZY) -->
-          <div class="payment-methods-card">
+          <div v-if="localPaymentCondition !== 2" class="payment-methods-card">
             <span class="payment-field-label">Método de Pago:</span>
             <div class="payment-methods-grid">
               <button
@@ -277,7 +305,18 @@
           </div>
 
           <!-- LIQUIDACIÓN: PAGO RECIBIDO, ATAJOS Y VUELTO -->
-          <div class="settlement-control-card">
+          <div v-if="localPaymentCondition === 2" class="settlement-control-card">
+            <div class="vuelto-state-banner status-credit">
+              <div class="vuelto-label-group">
+                <span class="vuelto-title">A CRÉDITO</span>
+                <span class="vuelto-hint">
+                  {{ sale.expiration_sale ? `Vence el ${sale.expiration_sale}` : "Indica la fecha de vencimiento" }}
+                </span>
+              </div>
+              <div class="vuelto-value">Saldo S/. {{ formatNumber(totalAmount) }}</div>
+            </div>
+          </div>
+          <div v-else class="settlement-control-card">
             <div class="settlement-row">
               <div class="settlement-field-wrapper">
                 <span class="settlement-label">Pago Recibido:</span>
@@ -423,6 +462,7 @@
               </template>
               {{ userStore.user.role !== "MOZO" ? `Cobrar S/. ${formatNumber(totalAmount)}` : 'Realizar pedido' }}
             </n-button>
+            <p v-if="chargeHintText" class="charge-hint">{{ chargeHintText }}</p>
           </div>
 
         </section>
@@ -444,6 +484,16 @@ import ClientSelectInput from "@/views/Customer/components/ClientSelectInput.vue
 import SaleSerieSelector from "./SaleSerieSelector.vue";
 import PaymentBrandIcon from "@/views/Table/components/PaymentBrandIcon.vue";
 import { useRoute } from "vue-router";
+import startOfDay from "date-fns/startOfDay";
+import { firstFormError, chargeHint, dueDateInDays, DNI_THRESHOLD, DUE_DAY_SHORTCUTS } from "@/utils/creditCustomer";
+import {
+  buildCustomerRule,
+  canCharge,
+  changeStatus,
+  conditionPatch,
+  expirationRule,
+  quickCashOptions as buildQuickCashOptions,
+} from "@/utils/checkout";
 
 const props = defineProps({
   loading: { type: Boolean, required: true },
@@ -504,6 +554,7 @@ const localPaymentMethod = ref(props.sale.payment_method || 1);
 const localAskFor = ref(props.sale.ask_for || "");
 const localObservations = ref(props.sale.observations || "");
 const localDeliveryInfo = ref(props.sale.delivery_info ? { ...props.sale.delivery_info } : { person: "", address: "", phone: "", deliveryman: "" });
+const selectedCustomer = ref(null);
 const localIsMultiple = ref(props.isMultiple);
 const localTicketPreview = ref(props.ticketPreview);
 const isManualGivenAmount = ref(false);
@@ -556,33 +607,44 @@ onMounted(() => {
   }
 });
 
+const isCredit = computed(() => Number(props.sale.payment_condition) === 2);
+
+const customerHint = computed(() => {
+  const type = Number(localInvoiceType.value);
+  if (localPaymentCondition.value === 2) {
+    return type === 1 ? "RUC obligatorio (Factura a crédito)" : "DNI o RUC obligatorio (Crédito)";
+  }
+  if (type === 1) return "RUC obligatorio (Factura)";
+  if (type === 3) {
+    return Number(props.sale.amount) >= DNI_THRESHOLD ? "DNI o RUC obligatorio (Boleta desde S/ 700)" : "DNI o Varios (Boleta)";
+  }
+  return "Opcional (Nota Venta)";
+});
+
+const isExpirationDateDisabled = (ts) => ts <= startOfDay(new Date()).getTime();
+
+const handleExpirationChange = (value) => {
+  emit('update:sale', { ...props.sale, expiration_sale: value });
+};
+
 const formRules = computed(() => {
-  const isInvoice = Number(props.sale.invoice_type) === 1;
   const rules = {
     customer: {
       type: "any",
-      required: isInvoice || !(props.sale.invoice_type !== 1 && props.sale.payment_condition === 1 && parseFloat(props.sale.given_amount) < 699),
-      validator: (_, value) => {
-        if (isInvoice) {
-          const customerId = typeof value === 'object' ? value?.id : value;
-          if (!customerId || customerId === 1) {
-            return new Error("Para emitir Factura es obligatorio seleccionar un cliente con RUC (11 dígitos)");
-          }
-          const customerObj = typeof value === 'object' ? value : null;
-          if (customerObj) {
-            const docType = String(customerObj.doc_type || "");
-            const docNum = String(customerObj.doc_num || "").trim();
-            if (docType !== "6" || docNum.length !== 11 || !/^\d{11}$/.test(docNum)) {
-              return new Error("El cliente seleccionado debe tener un RUC válido de 11 dígitos");
-            }
-          }
-        }
-        return true;
-      },
       trigger: ["blur", "input", "change"],
-      message: "Para emitir Factura es obligatorio un cliente con RUC válido."
-    }
+      ...buildCustomerRule({
+        invoiceType: props.sale.invoice_type,
+        isCredit: isCredit.value,
+        amount: props.sale.amount,
+        customer: selectedCustomer.value,
+      }),
+    },
   };
+
+  const expiration = expirationRule(isCredit.value);
+  if (expiration) {
+    rules.expiration_sale = expiration;
+  }
 
   if (isDeliveryActive.value) {
     rules.delivery_info = {
@@ -604,6 +666,11 @@ const totalAmount = computed(() => {
 watch(totalAmount, (newTotal, oldTotal) => {
   if (newTotal > 0) {
     const updates = { ...props.sale, amount: parseFloat(newTotal).toFixed(2) };
+    // En crédito el pago recibido es 0 (o lo entregado a cuenta): igualarlo al total bloquearía el cobro
+    if (Number(props.sale.payment_condition) === 2) {
+      emit('update:sale', updates);
+      return;
+    }
     const currentGiven = Number(props.sale.given_amount || 0);
     const prevTotal = Number(oldTotal || 0);
     const numNewTotal = Number(newTotal);
@@ -625,22 +692,36 @@ watch(totalAmount, (newTotal, oldTotal) => {
 }, { immediate: true });
 
 const isPaymentDisabled = computed(() => {
-  const hasRegularProducts = (saleStore.toSale || []).length > 0;
-  const hasMenuSets = (saleStore.salePayload?.sale_product_sets || []).length > 0;
-  const hasAnyItems = hasRegularProducts || hasMenuSets;
+  const hasAnyItems =
+    (saleStore.toSale || []).length > 0 || (saleStore.salePayload?.sale_product_sets || []).length > 0;
+  return !canCharge({
+    hasItems: hasAnyItems,
+    isCredit: isCredit.value,
+    given: props.sale.given_amount,
+    amount: totalAmount.value,
+  });
+});
 
-  const givenAmount = Number(props.sale.given_amount) || 0;
-  const totalAmountValue = Number(totalAmount.value) || 0;
-  const isCashPayment = props.sale.payment_condition === 1;
-
-  if (!hasAnyItems) return true;
-  if (isCashPayment && givenAmount < totalAmountValue) return true;
-  if (!isCashPayment && !(givenAmount < totalAmountValue)) return true;
-  return false;
+// Motivo por el que aún no se puede cobrar, para mostrarlo bajo el botón (el mozo solo toma el pedido)
+const chargeHintText = computed(() => {
+  if (userStore.user.role === "MOZO") return "";
+  const hasAnyItems =
+    (saleStore.toSale || []).length > 0 || (saleStore.salePayload?.sale_product_sets || []).length > 0;
+  return chargeHint({
+    hasItems: hasAnyItems,
+    isCredit: isCredit.value,
+    given: props.sale.given_amount,
+    amount: totalAmount.value,
+    invoiceType: props.sale.invoice_type,
+    customerId: props.sale.customer,
+    customer: selectedCustomer.value,
+    expiration: props.sale.expiration_sale,
+  });
 });
 
 // Handlers cliente
 const handleCustomerSelected = (customer) => {
+  selectedCustomer.value = customer;
   localCustomerName.value = `${customer.doc_num} - ${customer.names}`;
   const updatedSale = { ...props.sale };
   updatedSale.customer = customer;
@@ -657,6 +738,7 @@ const handleCustomerSelected = (customer) => {
 };
 
 const handleCustomerCleared = () => {
+  selectedCustomer.value = null;
   localCustomerName.value = "";
   const updatedSale = { ...props.sale, customer: 0, customer_name: "", address: null };
   emit('createAddressesOptions', null);
@@ -690,7 +772,17 @@ const handleInvoiceTypeChange = (value) => {
 
 const handlePaymentConditionChange = (value) => {
   localPaymentCondition.value = value;
-  emit('update:sale', { ...props.sale, payment_condition: value });
+  const patch = conditionPatch({
+    condition: value,
+    total: props.sale.amount,
+    expiration: props.sale.expiration_sale,
+  });
+  // El pago recibido lo ajusta el padre en changeCondition; aquí solo el vencimiento
+  emit('update:sale', { ...props.sale, payment_condition: value, expiration_sale: patch.expiration_sale });
+  if (patch.clearMultiple) {
+    // El pago múltiple solo existe en contado; si queda activo el botón abriría el modal en crédito
+    handleIsMultipleChange(false);
+  }
   emit('changeCondition', value);
 };
 
@@ -743,7 +835,8 @@ const handleDeliverymanChange = (value) => {
 const selectPaymentMethod = (value) => {
   localPaymentMethod.value = value;
   const updates = { ...props.sale, payment_method: value };
-  if (value !== 1) {
+  // Solo el contado iguala el pago recibido al total; en crédito debe seguir en 0
+  if (value !== 1 && Number(props.sale.payment_condition) === 1) {
     isManualGivenAmount.value = false;
     updates.given_amount = parseFloat(totalAmount.value).toFixed(2);
   }
@@ -760,24 +853,11 @@ const getMethodClass = (name) => {
   return "pm-otro";
 };
 
-// Atajos de pago rápido
-const quickCashOptions = [
-  { label: "+10", value: 10 },
-  { label: "+20", value: 20 },
-  { label: "+50", value: 50 },
-  { label: "+100", value: 100 },
-];
+// Atajos de pago rápido: billetes sugeridos según el total (misma lógica en todas las pantallas)
+const quickCashOptions = computed(() => buildQuickCashOptions(totalAmount.value));
 
 const setQuickCash = (amount) => {
-  const tot = Number(totalAmount.value);
-  if (amount === tot) {
-    isManualGivenAmount.value = false;
-    handlePaymentInput(tot);
-  } else {
-    isManualGivenAmount.value = true;
-    const current = Number(props.sale.given_amount || 0);
-    handlePaymentInput(current + amount);
-  }
+  handlePaymentInput(Number(amount));
 };
 
 const handlePaymentInput = (val) => {
@@ -792,30 +872,12 @@ const handlePaymentInput = (val) => {
 };
 
 // Vuelto banner
-const changeStatusClass = computed(() => {
-  if (props.sale.payment_condition === 2) return "status-credit";
-  const given = Number(props.sale.given_amount || 0);
-  const total = Number(totalAmount.value);
-  if (given > total) return "status-success";
-  if (given === total && total > 0) return "status-neutral";
-  return "status-warning";
-});
-
-const changeStatusLabel = computed(() => {
-  if (props.sale.payment_condition === 2) return "Crédito Pendiente";
-  const given = Number(props.sale.given_amount || 0);
-  const total = Number(totalAmount.value);
-  if (given > total) return "Vuelto a entregar:";
-  if (given === total && total > 0) return "Pago exacto:";
-  return "Monto faltante:";
-});
-
-const changeStatusValue = computed(() => {
-  if (props.sale.payment_condition === 2) return totalAmount.value;
-  const given = Number(props.sale.given_amount || 0);
-  const total = Number(totalAmount.value);
-  return Math.abs(given - total);
-});
+const paymentStatus = computed(() =>
+  changeStatus({ isCredit: isCredit.value, given: props.sale.given_amount, total: totalAmount.value })
+);
+const changeStatusClass = computed(() => paymentStatus.value.cls);
+const changeStatusLabel = computed(() => paymentStatus.value.label);
+const changeStatusValue = computed(() => paymentStatus.value.value);
 
 // Modificadores descuento y cargos
 const discountInputLimit = computed(() => {
@@ -885,7 +947,7 @@ const handleMainAction = () => {
         emit('performTakeAway');
       }
     } else {
-      message.error("Por favor complete los campos obligatorios");
+      message.error(firstFormError(errors, "Por favor complete los campos obligatorios"));
     }
   }).catch(() => {});
 };
@@ -1667,5 +1729,54 @@ const handleMainAction = () => {
     flex-wrap: wrap;
     gap: 4px;
   }
+}
+
+.charge-hint {
+  margin: 6px 2px 0;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+  color: #b45309;
+}
+
+.due-chips {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.due-chip {
+  flex: 1;
+  padding: 4px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.due-chip:hover {
+  border-color: #fdba74;
+  color: #c2410c;
+}
+
+.due-chip.active {
+  background: #fff7ed;
+  border-color: #ea580c;
+  color: #c2410c;
+}
+
+/* El botón de cobrar queda siempre a la vista aunque el panel tenga scroll */
+.pos-checkout-panel .checkout-submit-wrapper {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  margin-top: auto;
+  padding-top: 8px;
+  background: linear-gradient(to top, #ffffff 85%, rgba(255, 255, 255, 0));
 }
 </style>

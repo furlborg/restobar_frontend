@@ -98,7 +98,7 @@
             <div class="client-header-title">
               <span class="client-label">Cliente / Receptor:</span>
               <span class="client-type-hint">
-                {{ sale.invoice_type === 1 ? 'RUC Obligatorio (Factura)' : (sale.invoice_type === 2 ? 'DNI o Varios (Boleta)' : 'Opcional (Nota Venta)') }}
+                {{ customerHint }}
               </span>
             </div>
             <n-form ref="saleForm" :model="sale" :rules="formRules" size="small" :show-label="false">
@@ -139,6 +139,18 @@
                     size="small"
                   />
                 </n-form-item>
+                <div class="due-chips">
+                  <button
+                    v-for="days in DUE_DAY_SHORTCUTS"
+                    :key="days"
+                    type="button"
+                    class="due-chip"
+                    :class="{ active: sale.expiration_sale === dueDateInDays(days) }"
+                    @click="sale.expiration_sale = dueDateInDays(days)"
+                  >
+                    {{ days }} días
+                  </button>
+                </div>
               </div>
 
               <!-- Observaciones secundarias de la venta -->
@@ -222,7 +234,7 @@
           </div>
 
           <!-- MÉTODO DE PAGO -->
-          <div class="payment-methods-card">
+          <div v-if="!isCredit" class="payment-methods-card">
             <span class="payment-field-label">Método de Pago:</span>
             <div class="payment-methods-grid">
               <button
@@ -252,7 +264,18 @@
           </div>
 
           <!-- LIQUIDACIÓN: PAGO RECIBIDO, ATAJOS Y VUELTO -->
-          <div class="settlement-control-card">
+          <div v-if="isCredit" class="settlement-control-card">
+            <div class="vuelto-state-banner status-credit">
+              <div class="vuelto-label-group">
+                <span class="vuelto-title">A CRÉDITO</span>
+                <span class="vuelto-hint">
+                  {{ sale.expiration_sale ? `Vence el ${sale.expiration_sale}` : "Indica la fecha de vencimiento" }}
+                </span>
+              </div>
+              <div class="vuelto-value">Saldo S/. {{ formatNumber(total) }}</div>
+            </div>
+          </div>
+          <div v-else class="settlement-control-card">
             <div class="settlement-row">
               <div class="settlement-field-wrapper">
                 <span class="settlement-label">Pago Recibido:</span>
@@ -338,7 +361,7 @@
             <n-button 
               class="pos-cobrar-btn" 
               type="primary" 
-              :disabled="!hasItems || (sale.payment_condition === 1 ? Number(sale.given_amount) < Number(sale.amount) : !(Number(sale.given_amount) < Number(sale.amount)))" 
+              :disabled="!canCharge({ hasItems, isCredit, given: sale.given_amount, amount: sale.amount })" 
               :loading="loading"
               block 
               @click.prevent="isMultiple ? doMultiplePayment() : performCreateSale()"
@@ -348,6 +371,7 @@
               </template>
               Cobrar S/. {{ total }}
             </n-button>
+            <p v-if="chargeHintText" class="charge-hint">{{ chargeHintText }}</p>
           </div>
         </section>
 
@@ -459,6 +483,15 @@ import { useSaleStore } from "@/store/modules/sale";
 import { useTableStore } from "@/store/modules/table";
 import { useGenericsStore } from "@/store/modules/generics";
 import { saleRules } from "@/utils/constants";
+import { firstFormError, chargeHint, dueDateInDays, DNI_THRESHOLD, DUE_DAY_SHORTCUTS } from "@/utils/creditCustomer";
+import {
+  buildCustomerRule,
+  canCharge,
+  changeStatus,
+  conditionPatch,
+  expirationRule,
+  quickCashOptions as buildQuickCashOptions,
+} from "@/utils/checkout";
 import { cloneDeep, isDecimal } from "@/utils";
 import { useDialog, useMessage } from "naive-ui";
 import format from "date-fns/format";
@@ -722,7 +755,8 @@ watch(
 watch(
   () => sale.value.payment_method,
   (newMethod) => {
-    if (Number(newMethod) !== 1) {
+    // En crédito el pago recibido es 0 (o lo entregado a cuenta): igualarlo al total bloquearía el cobro
+    if (Number(sale.value.payment_condition) === 1 && Number(newMethod) !== 1) {
       isManualGivenAmount.value = false;
       sale.value.given_amount = total.value;
     }
@@ -753,55 +787,62 @@ const isExpirationDateDisabled = (ts) => {
 const isCredit = computed(() => Number(sale.value.payment_condition) === 2);
 
 const formRules = computed(() => {
-  const isInvoice = Number(sale.value.invoice_type) === 1;
   const rules = {
     customer: {
       ...saleRules.customer,
-      required: isInvoice || !(
-        sale.value.invoice_type !== 1 &&
-        sale.value.payment_condition === 1 &&
-        sale.value.given_amount <= 699
-      ),
-      validator(rule, value) {
-        if (isInvoice) {
-          const customerId = typeof value === 'object' ? value?.id : value;
-          if (!customerId || customerId === 1) {
-            return new Error("Para emitir Factura es obligatorio un cliente con RUC (11 dígitos).");
-          }
-          if (selectedCustomer.value) {
-            const docType = String(selectedCustomer.value.doc_type || "");
-            const docNum = String(selectedCustomer.value.doc_num || "").trim();
-            if (docType !== "6" || docNum.length !== 11 || !/^\d{11}$/.test(docNum)) {
-              return new Error("El cliente seleccionado debe tener un RUC válido de 11 dígitos.");
-            }
-          }
-        }
-        return true;
-      },
+      ...buildCustomerRule({
+        invoiceType: sale.value.invoice_type,
+        isCredit: isCredit.value,
+        amount: total.value,
+        customer: selectedCustomer.value,
+      }),
       trigger: ["blur", "change"],
     },
   };
-  if (isCredit.value) {
-    rules.expiration_sale = {
-      validator(rule, value) {
-        if (!value) {
-          return new Error("Debe ingresar la fecha de vencimiento para ventas al credito.");
-        }
-        return true;
-      },
-      trigger: ["blur", "change"],
-    };
+  const expiration = expirationRule(isCredit.value);
+  if (expiration) {
+    rules.expiration_sale = expiration;
   }
   return rules;
 });
 
 const changeCondition = (v) => {
   isManualGivenAmount.value = false;
-  sale.value.given_amount = v === 1 ? total.value : parseFloat("0").toFixed(2);
-  if (v !== 2) {
-    sale.value.expiration_sale = null;
+  const patch = conditionPatch({ condition: v, total: total.value, expiration: sale.value.expiration_sale });
+  sale.value.given_amount = patch.given_amount;
+  sale.value.expiration_sale = patch.expiration_sale;
+  if (patch.clearMultiple) {
+    // El pago múltiple solo existe en contado; si queda activo el botón abriría el modal en crédito
+    isMultiple.value = false;
+    sale.value.payments = null;
   }
 };
+
+// Motivo por el que aún no se puede cobrar, para mostrarlo bajo el botón
+const chargeHintText = computed(() =>
+  chargeHint({
+    hasItems: hasItems.value,
+    isCredit: isCredit.value,
+    given: sale.value.given_amount,
+    amount: sale.value.amount,
+    invoiceType: sale.value.invoice_type,
+    customerId: sale.value.customer,
+    customer: selectedCustomer.value,
+    expiration: sale.value.expiration_sale,
+  })
+);
+
+const customerHint = computed(() => {
+  const type = Number(sale.value.invoice_type);
+  if (isCredit.value) {
+    return type === 1 ? "RUC obligatorio (Factura a crédito)" : "DNI o RUC obligatorio (Crédito)";
+  }
+  if (type === 1) return "RUC obligatorio (Factura)";
+  if (type === 3) {
+    return Number(total.value) >= DNI_THRESHOLD ? "DNI o RUC obligatorio (Boleta desde S/ 700)" : "DNI o Varios (Boleta)";
+  }
+  return "Opcional (Nota Venta)";
+});
 
 const changeSerie = (v) => {
   if (v === 1) {
@@ -897,56 +938,14 @@ const paymentInputModel = computed({
   }
 });
 
-const changeStatusLabel = computed(() => {
-  if (sale.value.payment_condition === 2) return "A CRÉDITO";
-  const given = Number(sale.value.given_amount) || 0;
-  const tot = Number(total.value) || 0;
-  if (given > tot) {
-    return "VUELTO";
-  }
-  if (given === tot) {
-    return "EXACTO";
-  }
-  return "FALTANTE";
-});
+const paymentStatus = computed(() =>
+  changeStatus({ isCredit: isCredit.value, given: sale.value.given_amount, total: total.value })
+);
+const changeStatusLabel = computed(() => paymentStatus.value.label);
+const changeStatusClass = computed(() => paymentStatus.value.cls);
+const changeStatusValue = computed(() => paymentStatus.value.value.toFixed(2));
 
-const changeStatusClass = computed(() => {
-  if (sale.value.payment_condition === 2) return "status-credit";
-  const given = Number(sale.value.given_amount) || 0;
-  const tot = Number(total.value) || 0;
-  if (given > tot) {
-    return "status-success";
-  }
-  if (given === tot) {
-    return "status-neutral";
-  }
-  return "status-warning";
-});
-
-const changeStatusValue = computed(() => {
-  if (sale.value.payment_condition === 2) return "0.00";
-  const given = Number(sale.value.given_amount) || 0;
-  const tot = Number(total.value) || 0;
-  if (given >= tot) {
-    return (given - tot).toFixed(2);
-  }
-  return (tot - given).toFixed(2);
-});
-
-const quickCashOptions = computed(() => {
-  const tot = Number(total.value) || 0;
-  const standardBills = [20, 50, 100, 200];
-  let candidates = [...standardBills];
-  if (tot >= 200) {
-    const next100 = Math.ceil(tot / 100) * 100;
-    candidates.push(next100 === tot ? next100 + 50 : next100);
-    candidates.push((next100 === tot ? next100 + 50 : next100) + 50);
-  }
-  return candidates
-    .filter(b => b > tot)
-    .slice(0, 3)
-    .map(b => ({ label: `S/ ${b}`, value: b }));
-});
+const quickCashOptions = computed(() => buildQuickCashOptions(total.value));
 
 const setQuickCash = (val) => {
   const numVal = Number(val);
@@ -982,14 +981,7 @@ const getMethodClass = (label = "") => {
 const performCreateSale = () => {
   saleForm.value.validate((errors) => {
     if (errors) {
-      if (formRules.value.customer.required) {
-        const msg = sale.value.invoice_type === 1
-          ? "Debes agregar un cliente con RUC válido para emitir Factura"
-          : "Debes agregar un cliente porque la venta es mayor a S/ 699";
-        message.warning(msg);
-      } else {
-        message.error("Datos Incorrectos");
-      }
+      message.warning(firstFormError(errors));
       return;
     }
 
@@ -1055,7 +1047,9 @@ const performCreateSale = () => {
               ...sale.value.sale_details, 
               ...(sale.value.sale_product_sets || [])
             ];
-            if (sale.value.payments?.length) {
+            // En crédito los pagos del formulario son solo el total por defecto, no dinero cobrado:
+            // se usan los pagos reales que devuelve el backend
+            if (!isCredit.value && sale.value.payments?.length) {
               pdfData.value.payments = normalizePaymentsForTicket(sale.value.payments);
             }
 
@@ -2252,5 +2246,54 @@ onMounted(async () => {
     overflow-y: visible !important;
     padding-bottom: 24px !important;
   }
+}
+
+.charge-hint {
+  margin: 6px 2px 0;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+  color: #b45309;
+}
+
+.due-chips {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.due-chip {
+  flex: 1;
+  padding: 4px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.due-chip:hover {
+  border-color: #fdba74;
+  color: #c2410c;
+}
+
+.due-chip.active {
+  background: #fff7ed;
+  border-color: #ea580c;
+  color: #c2410c;
+}
+
+/* El botón de cobrar queda siempre a la vista aunque el panel tenga scroll */
+.pos-checkout-panel .checkout-submit-wrapper {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  margin-top: auto;
+  padding-top: 8px;
+  background: linear-gradient(to top, #ffffff 85%, rgba(255, 255, 255, 0));
 }
 </style>
