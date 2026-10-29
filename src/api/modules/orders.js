@@ -3,6 +3,7 @@ import { useSettingsStore } from "@/store/modules/settings";
 import { useBusinessStore } from "@/store/modules/business";
 import { useTillStore } from "@/store/modules/till";
 import { useUserStore } from "@/store/modules/user";
+import { normalizeExpirationSale } from "@/api/modules/sales";
 
 
 export async function listOrders(filterParams) {
@@ -145,6 +146,7 @@ export async function takeAwayOrder(order_details, sale_data, user, salePayload 
     invoice_type: sale_data.invoice_type,
     payment_method: sale_data.payment_method,
     payment_condition: sale_data.payment_condition,
+    expiration_sale: normalizeExpirationSale(sale_data.expiration_sale, sale_data.payment_condition),
     customer: sale_data.customer === 0 ? null : sale_data.customer,
     address: sale_data.address,
     branch_office: !userStore.user.branchoffice

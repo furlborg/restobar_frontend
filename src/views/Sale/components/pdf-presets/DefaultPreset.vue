@@ -221,7 +221,21 @@
                   {{ sale.totales.total_venta.toFixed(2) }}
                 </td>
               </tr>
-              <template v-if="hasMultiplePayments">
+              <template v-if="isCredit">
+                <tr v-if="creditDownPayment > 0">
+                  <td align="right" :colspan="!!hasDiscounts ? 4 : 3">
+                    ANTICIPO{{ paymentMethods ? ` (${paymentMethods})` : "" }} :
+                  </td>
+                  <td align="right">{{ creditDownPayment.toFixed(2) }}</td>
+                </tr>
+                <tr>
+                  <td align="right" :colspan="!!hasDiscounts ? 4 : 3">
+                    SALDO PENDIENTE :
+                  </td>
+                  <td align="right">{{ creditBalance.toFixed(2) }}</td>
+                </tr>
+              </template>
+              <template v-else-if="hasMultiplePayments">
                 <tr v-for="payment in multiplePayments" :key="payment.method">
                   <td align="right" :colspan="!!hasDiscounts ? 4 : 3">
                     {{ payment.method }} :
@@ -279,8 +293,10 @@
               <img :src="generateQR()" alt="qr" width="108" />
             </div>
             <div class="extra-info">
-              <div class="extra-info-label">MÉTODO DE PAGO:</div>
-              <div class="extra-info-value">{{ paymentMethods }}</div>
+              <template v-if="showPaymentMethod">
+                <div class="extra-info-label">MÉTODO DE PAGO:</div>
+                <div class="extra-info-value">{{ paymentMethods }}</div>
+              </template>
               <div class="extra-info-label">CONDICIÓN DE PAGO:</div>
               <div class="extra-info-value">{{ info[1] }}</div>
               <div class="extra-info-label">USUARIO:</div>
@@ -326,7 +342,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr>
+              <tr v-if="showPaymentMethod">
                 <td>MÉTODO DE PAGO:</td>
                 <td>{{ paymentMethods }}</td>
               </tr>
@@ -527,6 +543,19 @@ export default defineComponent({
 
     const info = sale.informacion_adicional.split("|");
 
+    // Comprobantes de "Para llevar" anteriores guardaban la fecha de vencimiento en esta posición
+    const infoMethod = /^\d{4}-\d{2}-\d{2}$/.test((info[2] || "").trim()) ? "" : (info[2] || "").trim();
+
+    // Un crédito aún no se pagó: solo se muestra el anticipo (si lo hubo) y el saldo pendiente
+    const isCredit = computed(() => Number(props.data?.payment_condition) === 2);
+    const creditDownPayment = computed(() =>
+      Math.min(Math.max(Number(props.data?.given_amount) || 0, 0), Number(sale.totales.total_venta) || 0)
+    );
+    const creditBalance = computed(() =>
+      Math.max((Number(sale.totales.total_venta) || 0) - creditDownPayment.value, 0)
+    );
+    const showPaymentMethod = computed(() => !isCredit.value || creditDownPayment.value > 0);
+
     const normalizePayments = (payments = []) =>
       payments
         .filter((payment) => payment && Number(payment.amount) > 0)
@@ -554,15 +583,15 @@ export default defineComponent({
           .map((payment) => `${payment.method} S/. ${payment.amount.toFixed(2)}`)
           .join(" | ");
       }
-      return info[2];
+      return infoMethod || (showPaymentMethod.value ? singlePaymentMethodLabel.value : "");
     });
 
     const singlePaymentMethodLabel = computed(() => {
       if (multiplePayments.value.length === 1 && multiplePayments.value[0]?.method) {
         return String(multiplePayments.value[0].method).toUpperCase();
       }
-      if (info[2] && info[2].trim() !== "") {
-        return info[2].trim().toUpperCase();
+      if (infoMethod !== "") {
+        return infoMethod.toUpperCase();
       }
       const pmId = props.data?.payment_method;
       if (pmId) {
@@ -651,6 +680,10 @@ export default defineComponent({
       title,
       info,
       paymentMethods,
+      isCredit,
+      creditDownPayment,
+      creditBalance,
+      showPaymentMethod,
       singlePaymentMethodLabel,
       multiplePayments,
       hasMultiplePayments,
