@@ -132,7 +132,7 @@ import { useSaleStore } from "@/store/modules/sale";
 import { retrieveTableOrder, performDeleteOrderDetail } from "@/api/modules/tables";
 import { cloneDeep } from "@/utils";
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
-import { useTableLock } from "@/composables/useTableLock";
+import { useTableLock, lockHasExpired } from "@/composables/useTableLock";
 import { useTableStore } from "@/store/modules/table";
 
 const settingsStore = useSettingsStore();
@@ -203,7 +203,7 @@ const canUseCombos = computed(() => {
     return showCombos && userStore.hasPermission('use_combos_menus');
 });
 
-const { wsLockTable, wsUnlockTable, wsRenewLock } = useTableLock();
+const { wsLockTable, wsUnlockTable } = useTableLock();
 let lockHeartbeatTimer = null;
 const message = useMessage();
 const dialog = useDialog();
@@ -333,11 +333,16 @@ const performRetrieveTableOrder = () => {
             // Mesa bloqueada por otro usuario
             const lockData = error.response.data.lock_data || error.response.data;
             const lockedBy = lockData?.locked_by_username || 'otro usuario';
-            const remainingMinutes = lockData?.remaining_minutes ||
-                Math.ceil((lockData?.remaining_seconds || 0) / 60);
+            const remainingSeconds = Number(lockData?.remaining_seconds ?? lockData?.remaining_time ?? 0);
+            const remainingText = remainingSeconds > 0 && remainingSeconds < 60
+                ? `${remainingSeconds} segundos`
+                : `${lockData?.remaining_minutes || Math.ceil(remainingSeconds / 60)} minutos`;
+
+            // Evitar que al desmontarse intente desbloquear la mesa de otro usuario
+            shouldUnlock.value = false;
 
             message.error(
-                `Mesa bloqueada por ${lockedBy}. Disponible en ${remainingMinutes} minutos.`,
+                `Mesa bloqueada por ${lockedBy}. Disponible en ${remainingText}.`,
                 { duration: 5000 }
             );
             router.push({ name: 'WHome' });
@@ -400,22 +405,23 @@ onMounted(() => {
     capturedTableId.value = tableId;
 
     const lockInfo = tableStore.lockedTables[capturedTableId.value];
-    const isLockExpired = lockInfo && lockInfo.expires_at && Date.now() > new Date(lockInfo.expires_at).getTime();
+    const isLockExpired = !!lockInfo && lockHasExpired(lockInfo);
     const isMyLock = lockInfo && lockInfo.user_id === userStore.user.id;
 
     if (!lockInfo || isLockExpired || isMyLock) {
         console.log('[WaiterOrder] 🔒 Bloqueando mesa', capturedTableId.value);
-        wsLockTable(capturedTableId.value, 2);
+        wsLockTable(capturedTableId.value);
         shouldUnlock.value = true;
         window.addEventListener('beforeunload', handleBeforeUnload);
 
+        // Heartbeat cada 20 s (el bloqueo dura 50 s en el servidor); lock_table crea o renueva.
         if (lockHeartbeatTimer) clearInterval(lockHeartbeatTimer);
         lockHeartbeatTimer = setInterval(() => {
             if (capturedTableId.value && shouldUnlock.value) {
                 console.log('[WaiterOrder] 💓 Heartbeat renovación mesa', capturedTableId.value);
-                wsRenewLock(capturedTableId.value, 2);
+                wsLockTable(capturedTableId.value);
             }
-        }, 30000);
+        }, 20000);
     }
 });
 
@@ -443,11 +449,11 @@ watch(() => route.params.table, (newTable, oldTable) => {
         const newId = typeof newTable === 'string' ? parseInt(newTable) : newTable;
         capturedTableId.value = newId;
         const lockInfo = tableStore.lockedTables[newId];
-        const isLockExpired = lockInfo && lockInfo.expires_at && Date.now() > new Date(lockInfo.expires_at).getTime();
+        const isLockExpired = !!lockInfo && lockHasExpired(lockInfo);
         const isMyLock = lockInfo && lockInfo.user_id === userStore.user.id;
         if (!lockInfo || isLockExpired || isMyLock) {
             console.log('[WaiterOrder] 🔒 Bloqueando nueva mesa', newId);
-            wsLockTable(newId, 2);
+            wsLockTable(newId);
             shouldUnlock.value = true;
         }
     }

@@ -111,7 +111,7 @@ import { useGenericsStore } from "@/store/modules/generics";
 import { changeOrderTable } from "@/api/modules/tables";
 import { useMessage } from "naive-ui";
 import { cloneDeep } from "@/utils";
-import { useTableLock } from "@/composables/useTableLock";
+import { useTableLock, lockHasExpired } from "@/composables/useTableLock";
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -138,12 +138,7 @@ const getWsLock = (tableId) => {
          tableStore.lockedTables[Number(tableId)] ||
          null;
   if (!lock) return null;
-  if (lock.expires_at) {
-    const expTime = new Date(lock.expires_at).getTime();
-    if (!isNaN(expTime) && Date.now() > expTime) {
-      return null;
-    }
-  }
+  if (lockHasExpired(lock)) return null;
   return lock;
 };
 
@@ -158,7 +153,10 @@ const isTableBlocked = (table) => {
     return {
       blocked: true,
       username: wsLockInfo.username,
-      remaining: null
+      remaining: null,
+      remainingSeconds: typeof wsLockInfo.local_expires_at === 'number'
+        ? Math.max(1, Math.ceil((wsLockInfo.local_expires_at - Date.now()) / 1000))
+        : null
     };
   }
 
@@ -195,11 +193,13 @@ const handleTableClick = (table) => {
     // Validar si la mesa está bloqueada por otro usuario
     const blockStatus = isTableBlocked(table);
     if (blockStatus.blocked) {
-      const remainingMinutes = blockStatus.remaining || '?';
+      const remainingText = blockStatus.remainingSeconds
+        ? `${blockStatus.remainingSeconds} segundos`
+        : (blockStatus.remaining ? `${blockStatus.remaining} minutos` : 'unos segundos');
       const lockedBy = blockStatus.username;
 
       message.warning(
-        `Mesa bloqueada por ${lockedBy}. Disponible en ${remainingMinutes} minutos.`,
+        `Mesa bloqueada por ${lockedBy}. Disponible en ${remainingText}.`,
         { duration: 4000 }
       );
       return;

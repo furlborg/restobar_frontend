@@ -132,7 +132,7 @@ import TableOrder from "./TableOrder.vue";
 import TicketPreview from "@/views/Order/components/TicketPreview";
 import { ref, computed, onMounted, onUnmounted, provide } from 'vue';
 import { useRoute, useRouter, onBeforeRouteLeave, onBeforeRouteUpdate } from "vue-router";
-import { useTableLock } from "@/composables/useTableLock";
+import { useTableLock, lockHasExpired } from "@/composables/useTableLock";
 import { useDialog, useMessage } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useUserStore, useActiveUsersStore } from "@/store/modules/user";
@@ -159,7 +159,7 @@ const genericsStore = useGenericsStore();
 const orderStore = useOrderStore();
 const saleStore = useSaleStore();
 
-const { wsLockTable, wsUnlockTable, wsRenewLock } = useTableLock();
+const { wsLockTable, wsUnlockTable } = useTableLock();
 const shouldUnlock = ref(false);
 const capturedTableId = ref(null);
 let lockHeartbeatTimer = null;
@@ -364,7 +364,10 @@ const performRetrieveTableOrder = async () => {
             // Mesa bloqueada por otro usuario
             const lockData = error.response.data.lock_data || error.response.data;
             const lockedBy = lockData.locked_by_username || lockData.username || 'otro usuario';
-            const remainingMinutes = lockData.remaining_minutes || Math.ceil((lockData.remaining_seconds || 0) / 60);
+            const remainingSeconds = Number(lockData.remaining_seconds ?? lockData.remaining_time ?? 0);
+            const remainingText = remainingSeconds > 0 && remainingSeconds < 60
+                ? `${remainingSeconds} segundos`
+                : `${lockData.remaining_minutes || Math.ceil(remainingSeconds / 60)} minutos`;
 
             // Evitar que al desmontarse intente desbloquear la mesa de otro usuario
             shouldUnlock.value = false;
@@ -380,6 +383,8 @@ const performRetrieveTableOrder = async () => {
                         user_id: lockedUserId,
                         username: lockedBy,
                         expires_at: lockData.expires_at,
+                        remaining_seconds: remainingSeconds,
+                        local_expires_at: Date.now() + remainingSeconds * 1000,
                         is_active: true
                     }
                 };
@@ -392,7 +397,7 @@ const performRetrieveTableOrder = async () => {
             }
 
             message.error(
-                `Mesa bloqueada por ${lockedBy}. Disponible en ${remainingMinutes} minutos.`,
+                `Mesa bloqueada por ${lockedBy}. Disponible en ${remainingText}.`,
                 { duration: 5000 }
             );
 
@@ -659,22 +664,23 @@ onMounted(() => {
     console.log('[TableOrderLayout] 🟢 Componente montado - Mesa:', capturedTableId.value);
 
     const lockInfo = tableStore.lockedTables[capturedTableId.value];
-    const isLockExpired = lockInfo && lockInfo.expires_at && Date.now() > new Date(lockInfo.expires_at).getTime();
+    const isLockExpired = !!lockInfo && lockHasExpired(lockInfo);
     const isMyLock = lockInfo && lockInfo.user_id === userStore.user.id;
     if (!lockInfo || isLockExpired || isMyLock) {
         console.log('[TableOrderLayout] 🔒 Bloqueando mesa', capturedTableId.value);
-        wsLockTable(capturedTableId.value, 2);
+        wsLockTable(capturedTableId.value);
         shouldUnlock.value = true;
         window.addEventListener('beforeunload', handleBeforeUnload);
 
-        // Heartbeat cada 30 segundos para mantener el bloqueo activo mientras la comanda esté abierta
+        // Heartbeat cada 20 segundos (el bloqueo dura 50 s en el servidor) mientras la comanda esté abierta.
+        // Se reafirma con lock_table (crea o renueva) para recuperarlo si venció, p. ej. con la pestaña en segundo plano.
         if (lockHeartbeatTimer) clearInterval(lockHeartbeatTimer);
         lockHeartbeatTimer = setInterval(() => {
             if (capturedTableId.value && shouldUnlock.value) {
                 console.log('[TableOrderLayout] 💓 Heartbeat renovación mesa', capturedTableId.value);
-                wsRenewLock(capturedTableId.value, 2);
+                wsLockTable(capturedTableId.value);
             }
-        }, 30000);
+        }, 20000);
     }
     performRetrieveTableOrder();
 });

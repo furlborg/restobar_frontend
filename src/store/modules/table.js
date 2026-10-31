@@ -3,6 +3,7 @@ import { getAreasTables } from "@/api/modules/tables";
 import { useBusinessStore } from "@/store/modules/business";
 import { useUserStore } from "@/store/modules/user";
 import { createDiscreteApi } from "naive-ui";
+import { localExpiry, lockHasExpired } from "@/utils/tableLock";
 
 const { notification } = createDiscreteApi(["notification"]);
 
@@ -113,7 +114,8 @@ export const useTableStore = defineStore("table", {
                     username: table.lock_info.username,
                     locked_at: table.lock_info.locked_at,
                     expires_at: table.lock_info.expires_at,
-                    remaining_seconds: table.lock_info.remaining_time
+                    remaining_seconds: table.lock_info.remaining_time,
+                    local_expires_at: localExpiry({ remaining_seconds: table.lock_info.remaining_time })
                   };
                 } else {
                   delete currentLocks[table.id];
@@ -226,19 +228,19 @@ export const useTableStore = defineStore("table", {
 
             if (data.type === 'initial_locks_sync' && data.locks) {
               const activeLocks = {};
-              const now = Date.now();
               Object.entries(data.locks).forEach(([tblId, lock]) => {
                 const id = parseInt(tblId) || tblId;
-                const expTime = lock.expires_at ? new Date(lock.expires_at).getTime() : null;
-                if (!expTime || isNaN(expTime) || now <= expTime) {
-                  activeLocks[id] = {
-                    table_id: id,
-                    user_id: lock.user_id,
-                    username: lock.username,
-                    locked_at: lock.locked_at,
-                    expires_at: lock.expires_at,
-                    remaining_seconds: lock.remaining_seconds
-                  };
+                const lockObj = {
+                  table_id: id,
+                  user_id: lock.user_id,
+                  username: lock.username,
+                  locked_at: lock.locked_at,
+                  expires_at: lock.expires_at,
+                  remaining_seconds: lock.remaining_seconds,
+                  local_expires_at: localExpiry(lock)
+                };
+                if (!lockHasExpired(lockObj)) {
+                  activeLocks[id] = lockObj;
                 }
               });
               this.lockedTables = activeLocks;
@@ -271,7 +273,9 @@ export const useTableStore = defineStore("table", {
                     user_id: userId,
                     username: lock.username,
                     locked_at: lock.locked_at,
-                    expires_at: lock.expires_at
+                    expires_at: lock.expires_at,
+                    remaining_seconds: lock.remaining_seconds,
+                    local_expires_at: localExpiry(lock)
                   }
                 };
                 const t = this.getTableByID(tableId);

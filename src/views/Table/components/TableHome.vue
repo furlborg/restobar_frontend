@@ -381,7 +381,7 @@ import { cloneDeep } from "@/utils";
 import { useBusinessStore } from "@/store/modules/business";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 import ModalAnulateSale from "@/views/Sale/modalAnulateSale.vue";
-import { useTableLock } from "@/composables/useTableLock";
+import { useTableLock, lockHasExpired } from "@/composables/useTableLock";
 import { useRouter, useRoute } from 'vue-router';
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher";
 
@@ -524,12 +524,7 @@ const getWsLock = (tableId) => {
            tableStore.lockedTables[Number(tableId)] ||
            null;
     if (!lock) return null;
-    if (lock.expires_at) {
-        const expTime = new Date(lock.expires_at).getTime();
-        if (!isNaN(expTime) && Date.now() > expTime) {
-            return null;
-        }
-    }
+    if (lockHasExpired(lock)) return null;
     return lock;
 };
 
@@ -543,7 +538,10 @@ const isTableBlocked = (table) => {
         return {
             blocked: true,
             username: wsLockInfo.username,
-            remaining: null
+            remaining: null,
+            remainingSeconds: typeof wsLockInfo.local_expires_at === 'number'
+                ? Math.max(1, Math.ceil((wsLockInfo.local_expires_at - Date.now()) / 1000))
+                : null
         };
     }
 
@@ -685,9 +683,9 @@ const handleTableClick = (table) => {
         if (blockStatus.blocked) {
             console.log('❌ Mesa bloqueada por:', blockStatus.username);
 
-            const remainingMsg = blockStatus.remaining
-                ? `Disponible en ${blockStatus.remaining} minutos.`
-                : '';
+            const remainingMsg = blockStatus.remainingSeconds
+                ? `Disponible en ${blockStatus.remainingSeconds} segundos.`
+                : (blockStatus.remaining ? `Disponible en ${blockStatus.remaining} minutos.` : '');
 
             message.warning(
                 `Mesa bloqueada por ${blockStatus.username}. ${remainingMsg}`,
