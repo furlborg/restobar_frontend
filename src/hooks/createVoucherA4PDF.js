@@ -129,6 +129,10 @@ export const generateVoucherA4PDF = async (rawData, businessStore, dataOrder = {
         singlePaymentMethod = (resolvePaymentMethodName(rawMethod, saleStore) || "EFECTIVO").toUpperCase();
     }
 
+    // Un crédito sin anticipo aún no se pagó: no se imprime método de pago
+    const creditDownPaymentRaw = parseFloat(dataOrder?.given_amount) || 0;
+    const creditWithoutDownPayment = paymentCondition === "CRÉDITO" && !(creditDownPaymentRaw > 0);
+
     // Tipo de documento y descripción
     const docCode = String(data?.codigo_tipo_documento || dataOrder?.document_type || "03");
     let docTitle = "BOLETA DE VENTA ELECTRÓNICA";
@@ -548,7 +552,9 @@ export const generateVoucherA4PDF = async (rawData, businessStore, dataOrder = {
     metaQrY += metaLineHeight;
 
     // Métodos de Pago
-    if (paymentsList.length > 1) {
+    if (creditWithoutDownPayment) {
+        // sin método de pago
+    } else if (paymentsList.length > 1) {
         doc.setFont("helvetica", "bold");
         doc.text("PAGOS MÚLTIPLES:", metaQrX, metaQrY);
         metaQrY += metaLineHeight;
@@ -667,7 +673,11 @@ export const generateVoucherA4PDF = async (rawData, businessStore, dataOrder = {
             }
         }
     } else if (paymentCondition === "CRÉDITO") {
-        totalsRows.push(["MONTO PENDIENTE:", `S/ ${totalSaleNumber.toFixed(2)}`]);
+        const downPayment = Math.min(Math.max(creditDownPaymentRaw, 0), totalSaleNumber);
+        if (downPayment > 0) {
+            totalsRows.push(["ANTICIPO:", `S/ ${downPayment.toFixed(2)}`]);
+        }
+        totalsRows.push(["MONTO PENDIENTE:", `S/ ${(totalSaleNumber - downPayment).toFixed(2)}`]);
         if (fechaVencimiento) {
             totalsRows.push(["F. VENCIMIENTO:", fechaVencimiento]);
         }

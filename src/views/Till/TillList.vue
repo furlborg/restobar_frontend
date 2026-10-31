@@ -146,7 +146,7 @@
 import format from "date-fns/format";
 import { defineComponent, ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { useMessage } from "naive-ui";
+import { useMessage, useDialog } from "naive-ui";
 import { jsPDF } from "jspdf";
 import TillApertureModal from "./components/TillApertureModal";
 import TillClosureModal from "./components/TillClosureModal";
@@ -177,6 +177,7 @@ export default defineComponent({
   },
   setup() {
     const message = useMessage();
+    const dialog = useDialog();
     const router = useRouter();
     const settingsStore = useSettingsStore();
     const businessStore = useBusinessStore();
@@ -537,7 +538,16 @@ export default defineComponent({
         },
         closeTill(row) {
           if (tillStore.currentTillOrders) {
-            message.error("Aún hay pedidos pendientes");
+            dialog.warning({
+              title: "Pedidos Pendientes",
+              content: `Existen ${tillStore.currentTillOrders} pedido(s) pendiente(s) en atención. Al cerrar esta caja, los pedidos permanecerán en las mesas y serán transferidos automáticamente a la siguiente caja que se abra. ¿Deseas continuar con el cierre?`,
+              positiveText: "Continuar con el cierre",
+              negativeText: "Cancelar",
+              onPositiveClick: () => {
+                idTill.value = row.id;
+                showClosureModal.value = true;
+              },
+            });
           } else {
             idTill.value = row.id;
             showClosureModal.value = true;

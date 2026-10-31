@@ -149,6 +149,11 @@ const dataAnulateModal = ref({
             const orderDetail = orderStore.fullOrderList.find(o => o.id === detailId);
             const quantity = dataAnulate.quantity || (orderDetail ? orderDetail.quantity : 1);
 
+            if (orderStore.fullOrderList.length === 1 && quantity >= (orderDetail?.quantity ?? 1)) {
+                message.warning("No es posible anular el último ítem de la comanda. Para cancelar la mesa completa, solicite anular el pedido a un administrador.");
+                return;
+            }
+
             const payload = {
                 ...dataAnulate,
                 reason: dataAnulate.nullReason
@@ -161,7 +166,7 @@ const dataAnulateModal = ref({
             }
         } catch (error) {
             console.error(error);
-            message.error("Error al anular, verifique sus datos...");
+            message.error(error.response?.data?.error || "Error al anular, verifique sus datos...");
         }
     }
 });

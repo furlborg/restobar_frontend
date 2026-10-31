@@ -141,7 +141,9 @@ import {
   MdLocalfiredepartmentRound,
   MdBadgeRound,
   MdSoupkitchenRound,
-  MdNotificationsactiveRound
+  MdNotificationsactiveRound,
+  MdAccesstimeRound,
+  MdInfooutlineRound
 } from "oh-vue-icons/icons";
 
 addIcons(
@@ -285,7 +287,9 @@ addIcons(
   MdLocalfiredepartmentRound,
   MdBadgeRound,
   MdSoupkitchenRound,
-  MdNotificationsactiveRound
+  MdNotificationsactiveRound,
+  MdAccesstimeRound,
+  MdInfooutlineRound
 );
 
 export { OhVueIcon };

@@ -238,7 +238,7 @@ export const routes = [
                 path: "order-items",
                 meta: { requiredPerm: "take_away_order", onlyWaiter: true },
                 component: () =>
-                  import("@/views/Order/components/CategoriesList.vue"),
+                  import("@/views/Table/components/CategoriesList.vue"),
               },
               {
                 name: "CategoriesOrderItems",

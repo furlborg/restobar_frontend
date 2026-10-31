@@ -238,6 +238,62 @@
                                         <n-form-item-gi label="Inferior (px)"><n-input-number v-model:value="businessSettings.printer.margins[2]" :min="0" :max="25" /></n-form-item-gi>
                                         <n-form-item-gi label="Izquierdo (px)"><n-input-number v-model:value="businessSettings.printer.margins[3]" :min="0" :max="25" /></n-form-item-gi>
                                     </n-grid>
+
+                                    <div class="d-flex align-items-center justify-content-between mt-4 mb-2">
+                                        <div>
+                                            <div class="sub-section-title m-0">Tamaño de Cabecera de Comanda (Kuzeta px)</div>
+                                            <small class="text-muted">Calibra el tamaño según los caracteres del nombre de la mesa. Aplica al formato activo en la ticketera.</small>
+                                        </div>
+                                        <n-button 
+                                            v-if="editMode" 
+                                            size="tiny" 
+                                            quaternary 
+                                            type="info" 
+                                            @click="resetComandaFontSizes"
+                                        >
+                                            <template #icon><v-icon name="md-refresh-round" /></template>
+                                            Restablecer Estándar
+                                        </n-button>
+                                    </div>
+
+                                    <n-grid responsive="screen" cols="1 s:2 m:3 l:6" :x-gap="16" :y-gap="12">
+                                        <n-form-item-gi label="Mesa 1 car. (ej. 1)">
+                                            <n-input-number v-model:value="businessSettings.printer.table_font_size_1" :min="20" :max="200" :step="2" />
+                                            <template #feedback>
+                                                <span class="fs-8 text-muted">Estándar: <b>36 px</b> (20-200)</span>
+                                            </template>
+                                        </n-form-item-gi>
+                                        <n-form-item-gi label="Mesa 2 car. (ej. 12)">
+                                            <n-input-number v-model:value="businessSettings.printer.table_font_size_2" :min="20" :max="180" :step="2" />
+                                            <template #feedback>
+                                                <span class="fs-8 text-muted">Estándar: <b>36 px</b> (20-180)</span>
+                                            </template>
+                                        </n-form-item-gi>
+                                        <n-form-item-gi label="Mesa 3-4 car. (ej. M-01)">
+                                            <n-input-number v-model:value="businessSettings.printer.table_font_size_4" :min="20" :max="150" :step="2" />
+                                            <template #feedback>
+                                                <span class="fs-8 text-muted">Estándar: <b>36 px</b> (20-150)</span>
+                                            </template>
+                                        </n-form-item-gi>
+                                        <n-form-item-gi label="Mesa 5-7 car. (ej. MESA 12)">
+                                            <n-input-number v-model:value="businessSettings.printer.table_font_size_7" :min="20" :max="120" :step="2" />
+                                            <template #feedback>
+                                                <span class="fs-8 text-muted">Estándar: <b>36 px</b> (20-120)</span>
+                                            </template>
+                                        </n-form-item-gi>
+                                        <n-form-item-gi label="Mesa 8+ car. (Largo)">
+                                            <n-input-number v-model:value="businessSettings.printer.table_font_size_default" :min="20" :max="100" :step="2" />
+                                            <template #feedback>
+                                                <span class="fs-8 text-muted">Estándar: <b>36 px</b> (20-100)</span>
+                                            </template>
+                                        </n-form-item-gi>
+                                        <n-form-item-gi label="Número de Orden (#)">
+                                            <n-input-number v-model:value="businessSettings.printer.order_font_size" :min="15" :max="60" :step="2" />
+                                            <template #feedback>
+                                                <span class="fs-8 text-muted">Estándar: <b>25 px</b> (15-60)</span>
+                                            </template>
+                                        </n-form-item-gi>
+                                    </n-grid>
                                 </n-form>
                             </n-card>
                         </div>
@@ -420,7 +476,36 @@
                             </n-card>
                         </div>
 
-                        <!-- Card 2: Políticas de Venta y Anulación -->
+                        <!-- Card 2: Distribución Visual de Pantalla de Cobranza -->
+                        <div class="settings-card-group mt-4">
+                            <div class="card-group-header">
+                                <div class="card-header-icon sales-bg"><v-icon name="md-viewquilt-round" /></div>
+                                <div>
+                                    <h3 class="group-title">Distribución Visual de Pantalla de Cobranza</h3>
+                                    <p class="group-desc">Define la posición de la lista de productos y el panel de cobro (liquidación de mesa y delivery).</p>
+                                </div>
+                            </div>
+
+                            <n-card class="settings-inner-card" :bordered="true">
+                                <n-form :disabled="!editMode" label-placement="top">
+                                    <n-grid responsive="screen" cols="1 s:1 m:2 l:2" :x-gap="20" :y-gap="14">
+                                        <n-form-item-gi label="Posición del Panel y Lista de Productos">
+                                            <n-select 
+                                                v-model:value="businessSettings.sale.billing_layout_position" 
+                                                :options="billingLayoutOptions" 
+                                                size="large" 
+                                            />
+                                            <template #feedback>
+                                                <b>Predeterminado:</b> Lista a la derecha y panel a la izquierda.<br>
+                                                <b>Alternativo:</b> Panel a la derecha y lista a la izquierda.
+                                            </template>
+                                        </n-form-item-gi>
+                                    </n-grid>
+                                </n-form>
+                            </n-card>
+                        </div>
+
+                        <!-- Card 3: Políticas de Venta y Anulación -->
                         <div class="settings-card-group mt-4">
                             <div class="card-group-header">
                                 <div class="card-header-icon security-bg"><v-icon name="md-lock-round" /></div>
@@ -781,18 +866,58 @@
                                 <n-form :disabled="!editMode" label-placement="top">
                                     <n-grid responsive="screen" cols="1 s:2 m:2 l:4" :x-gap="20" :y-gap="14">
                                         <n-form-item-gi label="Tamaño Tarjeta de Categoría">
-                                            <n-select v-model:value="businessSettings.category.category_card_size" :options="categorySizeOptions" size="large" />
+                                            <n-select v-model:value="businessSettings.category.category_card_size" :options="categorySizeOptions" @update:value="handleCategorySizeChange" size="large" />
                                         </n-form-item-gi>
-                                        <n-form-item-gi label="Tamaño Letra Categoría">
-                                            <n-input-number v-model:value="businessSettings.category.area_text_size" placeholder="16" size="large" />
+                                        <n-form-item-gi label="Altura Tarjeta (px)">
+                                            <n-input-number v-model:value="businessSettings.category.category_card_height" :min="60" :max="250" placeholder="120" size="large" />
                                         </n-form-item-gi>
-                                        <n-form-item-gi label="Ancho Imagen Producto (px)">
+                                        <n-form-item-gi label="Tamaño Letra Categoría (px)">
+                                            <n-input-number v-model:value="businessSettings.category.area_text_size" :min="10" :max="36" placeholder="16" size="large" />
+                                        </n-form-item-gi>
+                                        <n-form-item-gi label="Tamaño Imagen Producto (px)">
                                             <n-input-number v-model:value="businessSettings.category.width_image_product" placeholder="40" size="large" />
                                         </n-form-item-gi>
-                                        <n-form-item-gi label="Alto Imagen Producto (px)">
-                                            <n-input-number v-model:value="businessSettings.category.height_image_product" placeholder="40" size="large" />
-                                        </n-form-item-gi>
                                     </n-grid>
+
+                                    <!-- Vista previa en vivo de tarjeta de categoría -->
+                                    <div class="category-preview-banner mt-3 p-3 rounded" style="background: #f8fafc; border: 1.5px dashed #cbd5e1;">
+                                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                                            <div>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <v-icon name="md-preview-round" scale="1.1" style="color: #6366f1;" />
+                                                    <span class="fw-bold" style="color: #1e293b;">Vista Previa en Vivo (Mesas, Para Llevar y Delivery):</span>
+                                                </div>
+                                                <p class="text-muted fs-8 mb-0 mt-1">
+                                                    La tarjeta de categoría se mostrará con este tamaño y tipografía en todas las pantallas de toma de pedidos.
+                                                </p>
+                                            </div>
+                                            <div style="min-width: 170px; max-width: 220px; width: 100%;">
+                                                <div :style="{
+                                                    height: (businessSettings.category.category_card_height || 120) + 'px',
+                                                    position: 'relative',
+                                                    borderRadius: '8px',
+                                                    overflow: 'hidden',
+                                                    background: '#f1f5f9',
+                                                    border: '1.5px solid #cbd5e1',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    boxShadow: '0 2px 6px rgba(0,0,0,0.06)'
+                                                }">
+                                                    <span :style="{
+                                                        fontSize: (businessSettings.category.area_text_size || 16) + 'px',
+                                                        fontWeight: '700',
+                                                        color: '#1e293b',
+                                                        textAlign: 'center',
+                                                        padding: '0 8px',
+                                                        lineHeight: '1.25'
+                                                    }">
+                                                        BEBIDAS FRÍAS
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
 
                                     <div class="clean-switch-grid border-top pt-3 mt-3">
                                         <div class="switch-row-item">
@@ -1326,7 +1451,13 @@ export default defineComponent({
                 kitchen_printer_format: 58,
                 kitchen_ticket_format: 4,
                 print_name_take_away: '',
-                print_name_delivery: ''
+                print_name_delivery: '',
+                table_font_size_1: 36,
+                table_font_size_2: 36,
+                table_font_size_4: 36,
+                table_font_size_7: 36,
+                table_font_size_default: 36,
+                order_font_size: 25
             };
             for (const key in defaultPrinter) {
                 if (settings.printer[key] === undefined) {
@@ -1361,6 +1492,7 @@ export default defineComponent({
                 free_sale_deduct_stock_default: false,
                 free_sale_affects_till: true,
                 free_sale_send_doc: true,
+                billing_layout_position: 'checkout_left',
             };
             for (const key in defaultSale) {
                 if (settings.sale[key] === undefined) {
@@ -1464,6 +1596,11 @@ export default defineComponent({
             { label: "NOTA DE VENTA (80)", value: 80 }
         ];
 
+        const billingLayoutOptions = [
+            { label: "Predeterminado: Lista a la derecha y panel a la izquierda", value: "checkout_left" },
+            { label: "Alternativo: Panel a la derecha y lista a la izquierda", value: "checkout_right" }
+        ];
+
         const kitchenPrinterFormatOptions = [
             { label: "FORMATO 1 (Compacto Clásico)", value: 1 },
             { label: "FORMATO 2 (Estándar Destacado)", value: 2 },
@@ -1494,20 +1631,30 @@ export default defineComponent({
         ];
 
         const categorySizeOptions = [
-            { label: "Pequeño (Compacto - Más categorías visibles)", value: "small" },
-            { label: "Mediano (Equilibrado - Estándar)", value: "medium" },
-            { label: "Grande (Amplio - Fácil pulsación táctil)", value: "large" }
+            { label: "Pequeño (85px - Más categorías en pantalla)", value: "small" },
+            { label: "Mediano (120px - Estándar equilibrado)", value: "medium" },
+            { label: "Grande (155px - Fácil pulsación táctil)", value: "large" },
+            { label: "Personalizado (definir altura libre en px)", value: "custom" }
         ];
+
+        const handleCategorySizeChange = (val) => {
+            if (!businessSettings.value.category) businessSettings.value.category = {};
+            if (val === "small") businessSettings.value.category.category_card_height = 85;
+            else if (val === "medium") businessSettings.value.category.category_card_height = 120;
+            else if (val === "large") businessSettings.value.category.category_card_height = 155;
+        };
 
         // Catálogo de búsqueda rápida
         const settingsDirectory = [
             { key: "kuzeta", title: "Motor Kuzeta & Ticketeras", tab: "impresiones", tabName: "Impresión y Tickets", icon: "md-print-round", keywords: "kuzeta websocket host precuenta comanda" },
             { key: "formato_caja", title: "Formato de Papel (80mm / 58mm)", tab: "impresiones", tabName: "Impresión y Tickets", icon: "md-print-round", keywords: "papel 80 58 tamaño formato" },
             { key: "fuentes", title: "Tamaños de Letra", tab: "impresiones", tabName: "Impresión y Tickets", icon: "md-print-round", keywords: "fuente letra tamaño cabecera" },
+            { key: "comanda_fuente", title: "Tamaño Cabecera Comanda (Mesa y Orden)", tab: "impresiones", tabName: "Impresión y Tickets", icon: "md-print-round", keywords: "mesa orden cabecera comanda kuzeta fuente tamaño" },
             { key: "margenes", title: "Márgenes de Impresión", tab: "impresiones", tabName: "Impresión y Tickets", icon: "md-print-round", keywords: "margenes superior izquierdo" },
             { key: "igv", title: "Tasa de IGV (18% / 10.5% / 0%)", tab: "ventas", tabName: "Ventas y Facturación", icon: "md-pointofsale-twotone", keywords: "igv impuesto tasa mype sunat" },
             { key: "doc_defecto", title: "Documento por Defecto", tab: "ventas", tabName: "Ventas y Facturación", icon: "md-pointofsale-twotone", keywords: "boleta factura nota de venta comprobante" },
             { key: "claves", title: "Claves de Seguridad para Anular", tab: "ventas", tabName: "Ventas y Facturación", icon: "md-lock-round", keywords: "clave password anular contraseña seguridad" },
+            { key: "pos_layout", title: "Posición de Panel y Lista de Cobranza", tab: "ventas", tabName: "Ventas y Facturación", icon: "md-viewquilt-round", keywords: "pos cobranza panel lista izquierda derecha productos layout liquidacion distribucion" },
             { key: "auto_print", title: "Impresión Automática de Ventas", tab: "ventas", tabName: "Ventas y Facturación", icon: "md-pointofsale-twotone", keywords: "impresion automatica comprobante cobrar" },
             { key: "auto_send", title: "Auto Envío SUNAT (CPE)", tab: "ventas", tabName: "Ventas y Facturación", icon: "md-pointofsale-twotone", keywords: "sunat cpe auto envio xml" },
             { key: "creditos", title: "Ventas a Crédito", tab: "ventas", tabName: "Ventas y Facturación", icon: "md-pointofsale-twotone", keywords: "credito cuenta cobrar cliente" },
@@ -1614,6 +1761,17 @@ export default defineComponent({
             message.info("Cambios cancelados.");
         };
 
+        const resetComandaFontSizes = () => {
+            if (!businessSettings.value || !businessSettings.value.printer) return;
+            businessSettings.value.printer.table_font_size_1 = 36;
+            businessSettings.value.printer.table_font_size_2 = 36;
+            businessSettings.value.printer.table_font_size_4 = 36;
+            businessSettings.value.printer.table_font_size_7 = 36;
+            businessSettings.value.printer.table_font_size_default = 36;
+            businessSettings.value.printer.order_font_size = 25;
+            message.info("Valores estándar de fábrica restablecidos.");
+        };
+
         // Estado WhatsApp
         const showWhatsAppModal = ref(false);
         const loadingLogout = ref(false);
@@ -1698,19 +1856,22 @@ export default defineComponent({
             igvOptions,
             printOptions,
             invoiceOptions,
+            billingLayoutOptions,
             kitchenPrinterFormatOptions,
             infoLocationOptions,
             orderTypeOptions,
             waiterAuthModeOptions,
             kdsThemeOptions,
             categorySizeOptions,
+            handleCategorySizeChange,
             onKdsThemeChange,
             testChimeSound,
             showWhatsAppModal,
             loadingLogout,
             whatsappStatus,
             handleLogoutWhatsApp,
-            onWhatsAppLinked
+            onWhatsAppLinked,
+            resetComandaFontSizes
         };
     }
 });

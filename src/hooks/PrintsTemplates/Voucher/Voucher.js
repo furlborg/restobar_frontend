@@ -54,6 +54,24 @@ const VoucherPrint = (props) => {
       NoNoteSale = false;
     }
 
+    const isCredit = Number(props.data.payment_condition) === 2;
+    const totalSale = Number(dataForPrint.totales.total_venta) || 0;
+    const downPayment = isCredit
+      ? Math.min(Math.max(Number(props.data.given_amount) || 0, 0), totalSale)
+      : 0;
+    // Contado: efectivo recibido y vuelto. Crédito: anticipo (si lo hubo) y saldo pendiente.
+    const paymentTotals = isCredit
+      ? {
+          ANTICIPO: downPayment.toFixed("2"),
+          "SALDO PENDIENTE": (totalSale - downPayment).toFixed("2"),
+        }
+      : {
+          EFECTIVO: props.data.given_amount,
+          VUELTO: props.changing
+            ? Number(props.changing).toFixed("2")
+            : parseFloat(props.data.given_amount - totalSale).toFixed("2"),
+        };
+
     const rawRate = settingsStore.business_settings?.sale?.igv_tax ?? 0.18;
     const ratePercentage = Number(rawRate) > 1 ? Number(rawRate) : Number(rawRate) * 100;
     const igvLabel = `IGV (${ratePercentage % 1 === 0 ? ratePercentage.toFixed(0) : ratePercentage.toFixed(1)}%)`;
@@ -76,23 +94,13 @@ const VoucherPrint = (props) => {
             ? dataForPrint.totales.total_delivery.toFixed("2")
             : "0.00",
           "IMPORTE TOTAL": dataForPrint.totales.total_venta.toFixed("2"),
-          EFECTIVO: props.data.given_amount,
-          VUELTO: props.changing
-            ? props.changing.toFixed("2")
-            : parseFloat(
-                props.data.given_amount - dataForPrint.totales.total_venta
-              ).toFixed("2"),
+          ...paymentTotals,
         })
       : (newTotal = {
           "IMPORTE TOTAL": dataForPrint.totales.total_venta.toFixed("2"),
           ICPER:
             dataForPrint.totales.total_impuestos_bolsa_plastica.toFixed("2"),
-          EFECTIVO: props.data.given_amount,
-          VUELTO: props.changing
-            ? props.changing.toFixed("2")
-            : parseFloat(
-                props.data.given_amount - dataForPrint.totales.total_venta
-              ).toFixed("2"),
+          ...paymentTotals,
         });
 
     for (let i in newTotal) {
@@ -340,7 +348,10 @@ const VoucherPrint = (props) => {
   }
 
   let datProdsCons = [];
-  const orderDetails = props.data?.order_details || [];
+  // En cuentas separadas, lo ya cobrado queda con quantity 0: no debe salir en la precuenta
+  const orderDetails = (props.data?.order_details || []).filter(
+    (detail) => parseFloat(detail?.quantity) > 0
+  );
   const hasCustomers = orderDetails.some((detail) => !!detail?.customer);
 
   if (props.prePayment) {
@@ -575,8 +586,22 @@ const VoucherPrint = (props) => {
       cont: props.data.username,
     });
     
-    // Si hay pagos múltiples, mostrarlos todos
-    if (props.data.payments && Array.isArray(props.data.payments) && props.data.payments.length > 0) {
+    const creditWithoutDownPayment =
+      Number(props.data.payment_condition) === 2 && !(Number(props.data.given_amount) > 0);
+
+    if (Number(props.data.payment_condition) === 2) {
+      paymentInfo.push({
+        tittle: "CONDICION",
+        twoPoints: ":",
+        cont: "CREDITO",
+      });
+    }
+
+    // Un crédito sin anticipo aún no se pagó: no se imprime método de pago
+    if (creditWithoutDownPayment) {
+      // sin método de pago
+    } else if (props.data.payments && Array.isArray(props.data.payments) && props.data.payments.length > 0) {
+      // Si hay pagos múltiples, mostrarlos todos
       paymentInfo.push({
         tittle: "TIPO DE PAGO",
         twoPoints: ":",
