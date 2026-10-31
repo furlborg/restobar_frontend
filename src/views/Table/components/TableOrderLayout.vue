@@ -143,6 +143,7 @@ import { useSaleStore } from "@/store/modules/sale";
 import { retrieveTableOrder, createTableOrder, updateTableOrder, cancelTableOrder, performDeleteOrderDetail } from "@/api/modules/tables";
 import { verifyWaiterCode } from "@/api/modules/users";
 import { cloneDeep } from "@/utils";
+import { formatLockRemaining, lockOwnerName } from "@/utils/lockMessage";
 import { useBreakpoint } from 'vooks';
 
 const breakpointRef = useBreakpoint();
@@ -362,11 +363,11 @@ const performRetrieveTableOrder = async () => {
         if (error.response?.status === 423) {
             // Mesa bloqueada por otro usuario
             const lockData = error.response.data.lock_data || error.response.data;
-            const lockedBy = lockData.locked_by_username || 'otro usuario';
-            const remainingMinutes = lockData.remaining_minutes || Math.ceil((lockData.remaining_seconds || 0) / 60);
+            const lockedBy = lockOwnerName(lockData);
+            const remainingText = formatLockRemaining(lockData) || 'unos segundos';
 
             message.error(
-                `Mesa bloqueada por ${lockedBy}. Disponible en ${remainingMinutes} minutos.`,
+                `Mesa bloqueada por ${lockedBy}. Disponible en ${remainingText}.`,
                 { duration: 5000 }
             );
 
