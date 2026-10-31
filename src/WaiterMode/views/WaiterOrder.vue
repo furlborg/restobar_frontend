@@ -131,8 +131,9 @@ import { useUserStore } from "@/store/modules/user";
 import { useSaleStore } from "@/store/modules/sale";
 import { retrieveTableOrder, performDeleteOrderDetail } from "@/api/modules/tables";
 import { cloneDeep } from "@/utils";
+import { formatLockRemaining, lockOwnerName } from "@/utils/lockMessage";
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
-import { useTableLock, lockHasExpired } from "@/composables/useTableLock";
+import { useTableLock } from "@/composables/useTableLock";
 import { useTableStore } from "@/store/modules/table";
 
 const settingsStore = useSettingsStore();
@@ -204,7 +205,6 @@ const canUseCombos = computed(() => {
 });
 
 const { wsLockTable, wsUnlockTable } = useTableLock();
-let lockHeartbeatTimer = null;
 const message = useMessage();
 const dialog = useDialog();
 const route = useRoute();
@@ -332,14 +332,8 @@ const performRetrieveTableOrder = () => {
         if (error.response && error.response.status === 423) {
             // Mesa bloqueada por otro usuario
             const lockData = error.response.data.lock_data || error.response.data;
-            const lockedBy = lockData?.locked_by_username || 'otro usuario';
-            const remainingSeconds = Number(lockData?.remaining_seconds ?? lockData?.remaining_time ?? 0);
-            const remainingText = remainingSeconds > 0 && remainingSeconds < 60
-                ? `${remainingSeconds} segundos`
-                : `${lockData?.remaining_minutes || Math.ceil(remainingSeconds / 60)} minutos`;
-
-            // Evitar que al desmontarse intente desbloquear la mesa de otro usuario
-            shouldUnlock.value = false;
+            const lockedBy = lockOwnerName(lockData);
+            const remainingText = formatLockRemaining(lockData) || 'unos segundos';
 
             message.error(
                 `Mesa bloqueada por ${lockedBy}. Disponible en ${remainingText}.`,
@@ -405,32 +399,18 @@ onMounted(() => {
     capturedTableId.value = tableId;
 
     const lockInfo = tableStore.lockedTables[capturedTableId.value];
-    const isLockExpired = !!lockInfo && lockHasExpired(lockInfo);
     const isMyLock = lockInfo && lockInfo.user_id === userStore.user.id;
 
-    if (!lockInfo || isLockExpired || isMyLock) {
+    if (!lockInfo || isMyLock) {
         console.log('[WaiterOrder] 🔒 Bloqueando mesa', capturedTableId.value);
-        wsLockTable(capturedTableId.value);
+        wsLockTable(capturedTableId.value, 15);
         shouldUnlock.value = true;
         window.addEventListener('beforeunload', handleBeforeUnload);
-
-        // Heartbeat cada 20 s (el bloqueo dura 50 s en el servidor); lock_table crea o renueva.
-        if (lockHeartbeatTimer) clearInterval(lockHeartbeatTimer);
-        lockHeartbeatTimer = setInterval(() => {
-            if (capturedTableId.value && shouldUnlock.value) {
-                console.log('[WaiterOrder] 💓 Heartbeat renovación mesa', capturedTableId.value);
-                wsLockTable(capturedTableId.value);
-            }
-        }, 20000);
     }
 });
 
 onUnmounted(() => {
     console.log('[WaiterOrder] 🔴 Componente desmontado - Mesa:', capturedTableId.value);
-    if (lockHeartbeatTimer) {
-        clearInterval(lockHeartbeatTimer);
-        lockHeartbeatTimer = null;
-    }
     window.removeEventListener('beforeunload', handleBeforeUnload);
     unlockCurrentTable();
 });
@@ -449,11 +429,10 @@ watch(() => route.params.table, (newTable, oldTable) => {
         const newId = typeof newTable === 'string' ? parseInt(newTable) : newTable;
         capturedTableId.value = newId;
         const lockInfo = tableStore.lockedTables[newId];
-        const isLockExpired = !!lockInfo && lockHasExpired(lockInfo);
         const isMyLock = lockInfo && lockInfo.user_id === userStore.user.id;
-        if (!lockInfo || isLockExpired || isMyLock) {
+        if (!lockInfo || isMyLock) {
             console.log('[WaiterOrder] 🔒 Bloqueando nueva mesa', newId);
-            wsLockTable(newId);
+            wsLockTable(newId, 15);
             shouldUnlock.value = true;
         }
     }

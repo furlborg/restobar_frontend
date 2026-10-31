@@ -365,7 +365,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useMessage } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useGenericsStore } from "@/store/modules/generics";
@@ -378,10 +378,12 @@ import {
     changeOrderTable
 } from "@/api/modules/tables";
 import { cloneDeep } from "@/utils";
+import { formatLockRemaining } from "@/utils/lockMessage";
+import { getActiveLock, lockRemainingSeconds } from "@/utils/tableLock";
 import { useBusinessStore } from "@/store/modules/business";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 import ModalAnulateSale from "@/views/Sale/modalAnulateSale.vue";
-import { useTableLock, lockHasExpired } from "@/composables/useTableLock";
+import { useTableLock } from "@/composables/useTableLock";
 import { useRouter, useRoute } from 'vue-router';
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher";
 
@@ -401,23 +403,6 @@ const tillStore = useTillStore();
 const tableStore = useTableStore();
 const userStore = useUserStore();
 const businessStore = useBusinessStore();
-
-const isWaiterRole = computed(() => {
-    let role = userStore.user?.role;
-    if (!role) {
-        try {
-            const stored = localStorage.getItem("user-info");
-            role = stored ? JSON.parse(stored)?.role : null;
-        } catch (_) {
-            // Ignorar error de parsing en localStorage
-        }
-    }
-    return role === 'MOZO';
-});
-
-const isWaiterModeView = computed(() => {
-    return isWaiterRole.value || route.matched.some(r => r.name === 'WaiterMode') || route.name === 'WHome' || route.name === 'WOrder';
-});
 
 const tableLabelPosition = computed(() => {
     return settingsStore.business_settings?.order?.table_label_position || 'center';
@@ -517,16 +502,7 @@ const forceUnlockTable = (tableId) => {
     message.success("Bloqueo de mesa liberado");
 };
 
-const getWsLock = (tableId) => {
-    if (!tableId || !tableStore.lockedTables) return null;
-    const lock = tableStore.lockedTables[tableId] ||
-           tableStore.lockedTables[String(tableId)] ||
-           tableStore.lockedTables[Number(tableId)] ||
-           null;
-    if (!lock) return null;
-    if (lockHasExpired(lock)) return null;
-    return lock;
-};
+const getWsLock = (tableId) => getActiveLock(tableStore.lockedTables, tableId);
 
 /**
  * Verifica si una mesa está bloqueada para impedir acceso a usuarios sin privilegios
@@ -538,10 +514,7 @@ const isTableBlocked = (table) => {
         return {
             blocked: true,
             username: wsLockInfo.username,
-            remaining: null,
-            remainingSeconds: typeof wsLockInfo.local_expires_at === 'number'
-                ? Math.max(1, Math.ceil((wsLockInfo.local_expires_at - Date.now()) / 1000))
-                : null
+            remaining: formatLockRemaining({ remaining_seconds: lockRemainingSeconds(wsLockInfo) })
         };
     }
 
@@ -550,7 +523,7 @@ const isTableBlocked = (table) => {
         return {
             blocked: true,
             username: table.lock_info.username,
-            remaining: table.lock_info.remaining_minutes
+            remaining: formatLockRemaining(table.lock_info)
         };
     }
 
@@ -585,9 +558,7 @@ const hexToRgba = (hex, alphaPercent = 5) => {
  * Obtiene el color de la mesa según su estado
  */
 const getTableColor = (table) => {
-    const wsLockInfo = getWsLock(table.id);
-    const isLockedByOther = (wsLockInfo && wsLockInfo.user_id !== userStore.user.id) ||
-        (table.lock_info && table.lock_info.is_active && !table.lock_info.is_locked_by_me);
+    const isLockedByOther = isTableLocked(table);
 
     if (isLockedByOther) {
         return tableColors.value.locked;
@@ -623,9 +594,7 @@ const getStatusBadgeStyle = (table) => {
  * Obtiene la clase CSS para el badge de estado
  */
 const getStatusClass = (table) => {
-    const wsLockInfo = getWsLock(table.id);
-    const isLockedByOther = (wsLockInfo && wsLockInfo.user_id !== userStore.user.id) ||
-        (table.lock_info && table.lock_info.is_active && !table.lock_info.is_locked_by_me);
+    const isLockedByOther = isTableLocked(table);
 
     if (isLockedByOther) return 'status-locked';
     if (table.status === '3') return 'status-occupied';
@@ -636,17 +605,12 @@ const getStatusClass = (table) => {
  * Obtiene el texto amigable para el badge de estado
  */
 const getStatusText = (table) => {
-    const wsLockInfo = getWsLock(table.id);
-    const isLockedByOther = (wsLockInfo && wsLockInfo.user_id !== userStore.user.id) ||
-        (table.lock_info && table.lock_info.is_active && !table.lock_info.is_locked_by_me);
+    const isLockedByOther = isTableLocked(table);
 
     if (isLockedByOther) return 'Bloqueada';
     if (table.status === '3') return 'Ocupada';
     return 'Libre';
 };
-
-// Computed para forzar reactividad cuando cambian los locks
-computed(() => tableStore.lockedTables);
 
 /**
  * Extrae solo la hora del timestamp para mantener la tarjeta compacta y alineada
@@ -683,9 +647,9 @@ const handleTableClick = (table) => {
         if (blockStatus.blocked) {
             console.log('❌ Mesa bloqueada por:', blockStatus.username);
 
-            const remainingMsg = blockStatus.remainingSeconds
-                ? `Disponible en ${blockStatus.remainingSeconds} segundos.`
-                : (blockStatus.remaining ? `Disponible en ${blockStatus.remaining} minutos.` : '');
+            const remainingMsg = blockStatus.remaining
+                ? `Disponible en ${blockStatus.remaining}.`
+                : '';
 
             message.warning(
                 `Mesa bloqueada por ${blockStatus.username}. ${remainingMsg}`,
@@ -712,11 +676,6 @@ const loadTablesData = async () => {
         isLoading.value = false;
     });
 };
-
-// Watch para forzar re-render cuando cambian los locks
-watch(() => tableStore.lockedTables, () => {
-    console.log('[TableHome] 🔄 lockedTables cambió:', tableStore.lockedTables);
-}, { deep: true });
 
 const performRetrieveTableOrder = async (table) => {
     await retrieveTableOrder(table).then((response) => {

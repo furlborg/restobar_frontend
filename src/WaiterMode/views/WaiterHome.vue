@@ -111,7 +111,8 @@ import { useGenericsStore } from "@/store/modules/generics";
 import { changeOrderTable } from "@/api/modules/tables";
 import { useMessage } from "naive-ui";
 import { cloneDeep } from "@/utils";
-import { useTableLock, lockHasExpired } from "@/composables/useTableLock";
+import { formatLockRemaining } from "@/utils/lockMessage";
+import { useTableLock } from "@/composables/useTableLock";
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -131,32 +132,18 @@ const userStore = useUserStore();
 // Composable de table lock (para enviar lock/unlock)
 const { connectLockWebSocket } = useTableLock();
 
-const getWsLock = (tableId) => {
-  if (!tableId || !tableStore.lockedTables) return null;
-  const lock = tableStore.lockedTables[tableId] ||
-         tableStore.lockedTables[String(tableId)] ||
-         tableStore.lockedTables[Number(tableId)] ||
-         null;
-  if (!lock) return null;
-  if (lockHasExpired(lock)) return null;
-  return lock;
-};
-
 /**
  * Verifica si una mesa está bloqueada usando el store (fuente de verdad global)
  */
 const isTableBlocked = (table) => {
   // Verificar el estado del store (WebSocket global)
-  const wsLockInfo = getWsLock(table.id);
+  const wsLockInfo = tableStore.lockedTables[table.id];
 
   if (wsLockInfo && wsLockInfo.user_id !== userStore.user.id) {
     return {
       blocked: true,
       username: wsLockInfo.username,
-      remaining: null,
-      remainingSeconds: typeof wsLockInfo.local_expires_at === 'number'
-        ? Math.max(1, Math.ceil((wsLockInfo.local_expires_at - Date.now()) / 1000))
-        : null
+      remaining: null
     };
   }
 
@@ -165,7 +152,7 @@ const isTableBlocked = (table) => {
     return {
       blocked: true,
       username: table.lock_info.username,
-      remaining: table.lock_info.remaining_minutes
+      remaining: formatLockRemaining(table.lock_info)
     };
   }
 
@@ -193,9 +180,7 @@ const handleTableClick = (table) => {
     // Validar si la mesa está bloqueada por otro usuario
     const blockStatus = isTableBlocked(table);
     if (blockStatus.blocked) {
-      const remainingText = blockStatus.remainingSeconds
-        ? `${blockStatus.remainingSeconds} segundos`
-        : (blockStatus.remaining ? `${blockStatus.remaining} minutos` : 'unos segundos');
+      const remainingText = blockStatus.remaining || 'unos segundos';
       const lockedBy = blockStatus.username;
 
       message.warning(
@@ -315,7 +300,7 @@ const performChangeTable = async () => {
  * Amarillo: Bloqueada por otro usuario
  */
 const getTableColor = (table) => {
-  const wsLockInfo = getWsLock(table.id);
+  const wsLockInfo = tableStore.lockedTables[table.id];
   const isLockedByOther = (wsLockInfo && wsLockInfo.user_id !== userStore.user.id) ||
     (table.lock_info && table.lock_info.is_active && !table.lock_info.is_locked_by_me);
 
@@ -336,7 +321,7 @@ const getTableColor = (table) => {
  * Obtener clase de fondo de la mesa según su estado
  */
 const getTableBackgroundClass = (table) => {
-  const wsLockInfo = getWsLock(table.id);
+  const wsLockInfo = tableStore.lockedTables[table.id];
   const isLockedByOther = (wsLockInfo && wsLockInfo.user_id !== userStore.user.id) ||
     (table.lock_info && table.lock_info.is_active && !table.lock_info.is_locked_by_me);
 

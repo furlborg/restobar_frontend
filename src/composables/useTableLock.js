@@ -2,9 +2,7 @@ import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import routerInstance from '@/router';
 import axios from 'axios';
-import { dropVolatileForTable, isStalePending, localExpiry, lockHasExpired } from '@/utils/tableLock';
-
-export { lockHasExpired };
+import { addPending, isStalePending, lockHasExpired, normalizeLock } from '@/utils/tableLock';
 
 const API_BASE = import.meta.env.VITE_APP_URL;
 
@@ -15,14 +13,12 @@ let pendingMessages = [];
 let expiryCheckInterval = null;
 
 // Mensajes encolados mientras el socket está caído (utils/tableLock.js: los que crean o renuevan un
-// bloqueo caducan, y un unlock cancela los pendientes de esa mesa).
+// bloqueo caducan, un mensaje nuevo reemplaza al anterior igual, y un unlock cancela los pendientes de esa mesa).
 const queuePending = (message) => {
-  if (message.type === 'unlock_table') {
-    pendingMessages = dropVolatileForTable(pendingMessages, message.table_id);
-  }
-  pendingMessages.push({ message, queuedAt: Date.now() });
+  pendingMessages = addPending(pendingMessages, message);
 };
-let shouldReconnect = true;
+// Solo se reconecta por visibilidad/cierre si alguna pantalla pidió conectar (connectLockWebSocket)
+let shouldReconnect = false;
 let reconnectAttempts = 0;
 
 import { useBusinessStore } from '@/store/modules/business';
@@ -58,23 +54,39 @@ const purgeExpiredLocks = () => {
   }
 };
 
+// Quita un bloqueo del estado local: Map del composable, store y lock_info de la mesa
+const removeLocalLock = (tableId) => {
+  const idNum = Number(tableId);
+
+  const newMap = new Map(lockedTables.value);
+  newMap.delete(idNum);
+  lockedTables.value = newMap;
+
+  const currentLocked = { ...getTableStore().lockedTables };
+  delete currentLocked[idNum];
+  getTableStore().lockedTables = currentLocked;
+
+  const table = getTableStore().getTableByID(idNum);
+  if (table && table.lock_info) {
+    table.lock_info.is_active = false;
+  }
+};
+
 const startExpiryWatcher = () => {
   if (expiryCheckInterval) return;
   expiryCheckInterval = setInterval(purgeExpiredLocks, 10000);
 };
 
-if (typeof window !== 'undefined') {
-  startExpiryWatcher();
-  if (typeof document !== 'undefined') {
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') {
-        purgeExpiredLocks();
-        if (!lockSocket || lockSocket.readyState === WebSocket.CLOSED) {
-          connectLockWebSocket();
-        }
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      purgeExpiredLocks();
+      // Solo reconecta si una pantalla de mesas pidió conectar (evita abrir el socket en login, KDS, etc.)
+      if (shouldReconnect && (!lockSocket || lockSocket.readyState === WebSocket.CLOSED)) {
+        connectLockWebSocket();
       }
-    });
-  }
+    }
+  });
 }
 
 // Misma prioridad que el interceptor HTTP (src/api/index.js): store -> localStorage -> cookie.
@@ -109,6 +121,9 @@ const connectLockWebSocket = () => {
 
   const tokenQuery = `?token=${currentToken}`;
   const wsUrl = `${wsProtocol}://${apiUrl}/ws/tables/${branchId}/${tokenQuery}`;
+
+  // La purga de bloqueos vencidos corre mientras haya conexión pedida (disconnectLockWebSocket la detiene)
+  startExpiryWatcher();
 
     if (lockSocket && lockSocket.readyState !== WebSocket.CLOSED) {
       return;
@@ -151,18 +166,9 @@ const connectLockWebSocket = () => {
           if (data.locks) {
             const newMap = new Map();
             Object.entries(data.locks).forEach(([tblId, lock]) => {
-              const tableId = parseInt(tblId) || tblId;
-              const lockObj = {
-                table_id: tableId,
-                user_id: lock.user_id,
-                username: lock.username,
-                locked_at: lock.locked_at,
-                expires_at: lock.expires_at,
-                remaining_seconds: lock.remaining_seconds,
-                local_expires_at: localExpiry(lock)
-              };
-              if (!lockHasExpired(lockObj)) {
-                newMap.set(tableId, lockObj);
+              const entry = normalizeLock({ table_id: tblId, ...lock });
+              if (!lockHasExpired(entry)) {
+                newMap.set(entry.table_id, entry);
               }
             });
             lockedTables.value = newMap;
@@ -187,30 +193,19 @@ const connectLockWebSocket = () => {
         }
         case 'table_locked': {
           const lock = data.lock_data || data;
-          const rawTableId = lock.table_id || lock.table;
-          const rawUserId = lock.user_id || lock.user;
-          if (lock && rawTableId) {
-            const tableId = Number(rawTableId);
+          if (lock && (lock.table_id || lock.table)) {
+            const entry = normalizeLock(lock);
             const newMap = new Map(lockedTables.value);
-            const lockObj = {
-              table_id: tableId,
-              user_id: rawUserId,
-              username: lock.username,
-              locked_at: lock.locked_at,
-              expires_at: lock.expires_at,
-              remaining_seconds: lock.remaining_seconds,
-              local_expires_at: localExpiry(lock)
-            };
-            newMap.set(tableId, lockObj);
+            newMap.set(entry.table_id, entry);
             lockedTables.value = newMap;
             getTableStore().lockedTables = Object.fromEntries(newMap);
 
-            const table = getTableStore().getTableByID(tableId);
+            const table = getTableStore().getTableByID(entry.table_id);
             if (table) {
               if (!table.lock_info) table.lock_info = {};
               table.lock_info.is_active = true;
-              table.lock_info.username = lock.username;
-              table.lock_info.user_id = rawUserId;
+              table.lock_info.username = entry.username;
+              table.lock_info.user_id = entry.user_id;
             }
           }
           break;
@@ -218,39 +213,15 @@ const connectLockWebSocket = () => {
         case 'table_unlocked': {
           const unlock = data.unlock_data || data;
           const targetId = unlock?.table_id || unlock?.table;
-          if (targetId) {
-            const idNum = Number(targetId);
-            const newMap = new Map(lockedTables.value);
-            newMap.delete(idNum);
-            newMap.delete(String(targetId));
-            lockedTables.value = newMap;
-            
-            const currentLocked = { ...getTableStore().lockedTables };
-            delete currentLocked[idNum];
-            delete currentLocked[String(targetId)];
-            getTableStore().lockedTables = currentLocked;
-            
-            // ELIMINAR EL LOCK FANTASMA CACHEADO DE LA API REST
-            const table = getTableStore().getTableByID(idNum) || getTableStore().getTableByID(targetId);
-            if (table && table.lock_info) {
-                table.lock_info.is_active = false;
-            }
-          }
+          if (targetId) removeLocalLock(targetId);
           break;
         }
         case 'lock_renewed': {
           const renewData = data.lock_data || data;
-          const tableId = renewData.table_id || renewData.table;
-          if (renewData && tableId) {
+          if (renewData && (renewData.table_id || renewData.table)) {
+            const entry = normalizeLock(renewData);
             const newMap = new Map(lockedTables.value);
-            // Asegurarnos de mantener table_id y user_id con los nombres correctos
-            const renewEntry = {
-              ...renewData,
-              table_id: tableId,
-              user_id: renewData.user_id || renewData.user,
-              local_expires_at: localExpiry(renewData)
-            };
-            newMap.set(tableId, renewEntry);
+            newMap.set(entry.table_id, entry);
             lockedTables.value = newMap;
             getTableStore().lockedTables = Object.fromEntries(newMap);
           }
@@ -315,21 +286,8 @@ const wsUnlockTable = (tableId) => {
 
   const idNum = Number(tableId);
 
-  // 1. Limpieza INMEDIATA local en Pinia y Set local para reactividad instantánea
-  const newMap = new Map(lockedTables.value);
-  newMap.delete(idNum);
-  newMap.delete(String(tableId));
-  lockedTables.value = newMap;
-
-  const currentLocked = { ...getTableStore().lockedTables };
-  delete currentLocked[idNum];
-  delete currentLocked[String(tableId)];
-  getTableStore().lockedTables = currentLocked;
-
-  const table = getTableStore().getTableByID(idNum) || getTableStore().getTableByID(tableId);
-  if (table && table.lock_info) {
-    table.lock_info.is_active = false;
-  }
+  // 1. Limpieza INMEDIATA local para reactividad instantánea
+  removeLocalLock(idNum);
 
   const message = {
     type: 'unlock_table',
@@ -441,13 +399,14 @@ export function useTableLock() {
     }
   };
 
-  const lockTable = async (tableId, durationMinutes = 2) => {
+  const lockTable = async (tableId, durationMinutes = null) => {
     try {
       const response = await axios.post(
         `${API_BASE}/api/v1/table-locks/lock/`,
         {
           table_id: tableId,
-          duration_minutes: durationMinutes
+          // La duración la fija el servidor (Configuración Avanzada); solo se envía si se quiere acortar
+          ...(durationMinutes ? { duration_minutes: durationMinutes } : {})
         },
         getAuthConfig()
       );

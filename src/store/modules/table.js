@@ -3,7 +3,7 @@ import { getAreasTables } from "@/api/modules/tables";
 import { useBusinessStore } from "@/store/modules/business";
 import { useUserStore } from "@/store/modules/user";
 import { createDiscreteApi } from "naive-ui";
-import { localExpiry, lockHasExpired } from "@/utils/tableLock";
+import { normalizeLock } from "@/utils/tableLock";
 
 const { notification } = createDiscreteApi(["notification"]);
 
@@ -108,15 +108,7 @@ export const useTableStore = defineStore("table", {
             ? area.tables.filter((table) => !table.is_disabled).map((table) => {
                 // Sincronizar lockedTables con el bloqueo real devuelto por la base de datos
                 if (table.lock_info && table.lock_info.is_active) {
-                  currentLocks[table.id] = {
-                    table_id: table.id,
-                    user_id: table.lock_info.user,
-                    username: table.lock_info.username,
-                    locked_at: table.lock_info.locked_at,
-                    expires_at: table.lock_info.expires_at,
-                    remaining_seconds: table.lock_info.remaining_time,
-                    local_expires_at: localExpiry({ remaining_seconds: table.lock_info.remaining_time })
-                  };
+                  currentLocks[table.id] = normalizeLock({ ...table.lock_info, table_id: table.id });
                 } else {
                   delete currentLocks[table.id];
                 }
@@ -226,63 +218,18 @@ export const useTableStore = defineStore("table", {
               }
             }
 
-            if (data.type === 'initial_locks_sync' && data.locks) {
-              const activeLocks = {};
-              Object.entries(data.locks).forEach(([tblId, lock]) => {
-                const id = parseInt(tblId) || tblId;
-                const lockObj = {
-                  table_id: id,
-                  user_id: lock.user_id,
-                  username: lock.username,
-                  locked_at: lock.locked_at,
-                  expires_at: lock.expires_at,
-                  remaining_seconds: lock.remaining_seconds,
-                  local_expires_at: localExpiry(lock)
-                };
-                if (!lockHasExpired(lockObj)) {
-                  activeLocks[id] = lockObj;
-                }
-              });
-              this.lockedTables = activeLocks;
-
-              // Sincronizar todas las mesas de todas las áreas para limpiar locks inactivos
-              this.areas.forEach(area => {
-                (area.tables || []).forEach(table => {
-                  const activeLock = activeLocks[table.id] || activeLocks[Number(table.id)];
-                  if (!table.lock_info) table.lock_info = {};
-                  if (activeLock) {
-                    table.lock_info.is_active = true;
-                    table.lock_info.username = activeLock.username;
-                    table.lock_info.user_id = activeLock.user_id;
-                  } else {
-                    table.lock_info.is_active = false;
-                  }
-                });
-              });
-            }
-
+            // (initial_locks_sync no llega por este socket: solo lo envía TableLockConsumer por /ws/tables/,
+            // que maneja useTableLock)
             if (data.type === 'table_locked') {
               const lock = data.lock_data || data;
-              const tableId = lock.table_id || lock.table;
-              const userId = lock.user_id || lock.user;
-              if (tableId) {
-                this.lockedTables = {
-                  ...this.lockedTables,
-                  [tableId]: {
-                    table_id: tableId,
-                    user_id: userId,
-                    username: lock.username,
-                    locked_at: lock.locked_at,
-                    expires_at: lock.expires_at,
-                    remaining_seconds: lock.remaining_seconds,
-                    local_expires_at: localExpiry(lock)
-                  }
-                };
-                const t = this.getTableByID(tableId);
+              if (lock.table_id || lock.table) {
+                const entry = normalizeLock(lock);
+                this.lockedTables = { ...this.lockedTables, [entry.table_id]: entry };
+                const t = this.getTableByID(entry.table_id);
                 if (t && t.lock_info) {
                   t.lock_info.is_active = true;
-                  t.lock_info.username = lock.username;
-                  t.lock_info.user_id = userId;
+                  t.lock_info.username = entry.username;
+                  t.lock_info.user_id = entry.user_id;
                 }
               }
             }

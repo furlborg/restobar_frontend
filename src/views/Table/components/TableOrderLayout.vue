@@ -132,7 +132,7 @@ import TableOrder from "./TableOrder.vue";
 import TicketPreview from "@/views/Order/components/TicketPreview";
 import { ref, computed, onMounted, onUnmounted, provide } from 'vue';
 import { useRoute, useRouter, onBeforeRouteLeave, onBeforeRouteUpdate } from "vue-router";
-import { useTableLock, lockHasExpired } from "@/composables/useTableLock";
+import { useTableLock } from "@/composables/useTableLock";
 import { useDialog, useMessage } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useUserStore, useActiveUsersStore } from "@/store/modules/user";
@@ -143,6 +143,8 @@ import { useSaleStore } from "@/store/modules/sale";
 import { retrieveTableOrder, createTableOrder, updateTableOrder, cancelTableOrder, performDeleteOrderDetail } from "@/api/modules/tables";
 import { verifyWaiterCode } from "@/api/modules/users";
 import { cloneDeep } from "@/utils";
+import { formatLockRemaining, lockOwnerName } from "@/utils/lockMessage";
+import { lockHasExpired, lockHeartbeatMs, normalizeLock } from "@/utils/tableLock";
 import { useBreakpoint } from 'vooks';
 
 const breakpointRef = useBreakpoint();
@@ -167,7 +169,9 @@ let lockHeartbeatTimer = null;
 const unlockCurrentTable = () => {
     const idToUnlock = capturedTableId.value || route.params.table;
     console.log('[TableOrderLayout] 🔍 unlockCurrentTable llamado - idToUnlock:', idToUnlock);
-    if (idToUnlock) {
+    // Solo libera quien tiene el bloqueo: tras un 423 (bloqueada por otro) o si ya se liberó, no se envía nada.
+    // Antes se enviaba siempre (hasta 3 veces por salida) y un usuario bloqueado liberaba el bloqueo ajeno.
+    if (idToUnlock && shouldUnlock.value) {
         const idNum = typeof idToUnlock === 'string' ? parseInt(idToUnlock) : idToUnlock;
         console.log('[TableOrderLayout] 🔓 Desbloqueando mesa', idNum);
         wsUnlockTable(idNum);
@@ -363,36 +367,27 @@ const performRetrieveTableOrder = async () => {
         if (error.response?.status === 423) {
             // Mesa bloqueada por otro usuario
             const lockData = error.response.data.lock_data || error.response.data;
-            const lockedBy = lockData.locked_by_username || lockData.username || 'otro usuario';
-            const remainingSeconds = Number(lockData.remaining_seconds ?? lockData.remaining_time ?? 0);
-            const remainingText = remainingSeconds > 0 && remainingSeconds < 60
-                ? `${remainingSeconds} segundos`
-                : `${lockData.remaining_minutes || Math.ceil(remainingSeconds / 60)} minutos`;
+            const lockedBy = lockOwnerName(lockData);
+            const remainingText = formatLockRemaining(lockData) || 'unos segundos';
 
-            // Evitar que al desmontarse intente desbloquear la mesa de otro usuario
+            // Evitar que al desmontarse intente desbloquear la mesa de otro usuario (unlockCurrentTable respeta este flag)
             shouldUnlock.value = false;
 
             // Sincronizar el store inmediatamente para que la mesa se muestre bloqueada (amarilla)
             const targetTableId = capturedTableId.value || parseInt(table);
             if (targetTableId) {
-                const lockedUserId = lockData.locked_by_id || lockData.user_id || lockData.user;
-                tableStore.lockedTables = {
-                    ...tableStore.lockedTables,
-                    [targetTableId]: {
-                        table_id: targetTableId,
-                        user_id: lockedUserId,
-                        username: lockedBy,
-                        expires_at: lockData.expires_at,
-                        remaining_seconds: remainingSeconds,
-                        local_expires_at: Date.now() + remainingSeconds * 1000,
-                        is_active: true
-                    }
-                };
+                const entry = normalizeLock({
+                    ...lockData,
+                    table_id: targetTableId,
+                    user_id: lockData.locked_by_id || lockData.user_id || lockData.user,
+                    username: lockedBy
+                });
+                tableStore.lockedTables = { ...tableStore.lockedTables, [targetTableId]: entry };
                 const t = tableStore.getTableByID(targetTableId);
                 if (t && t.lock_info) {
                     t.lock_info.is_active = true;
-                    t.lock_info.username = lockedBy;
-                    t.lock_info.user_id = lockedUserId;
+                    t.lock_info.username = entry.username;
+                    t.lock_info.user_id = entry.user_id;
                 }
             }
 
@@ -663,24 +658,25 @@ onMounted(() => {
     capturedTableId.value = tableIdNum;
     console.log('[TableOrderLayout] 🟢 Componente montado - Mesa:', capturedTableId.value);
 
+    // lockHasExpired(undefined) es true: sin bloqueo, o con uno vencido, o propio, esta pantalla toma la mesa
     const lockInfo = tableStore.lockedTables[capturedTableId.value];
-    const isLockExpired = !!lockInfo && lockHasExpired(lockInfo);
     const isMyLock = lockInfo && lockInfo.user_id === userStore.user.id;
-    if (!lockInfo || isLockExpired || isMyLock) {
+    if (lockHasExpired(lockInfo) || isMyLock) {
         console.log('[TableOrderLayout] 🔒 Bloqueando mesa', capturedTableId.value);
         wsLockTable(capturedTableId.value);
         shouldUnlock.value = true;
         window.addEventListener('beforeunload', handleBeforeUnload);
 
-        // Heartbeat cada 20 segundos (el bloqueo dura 50 s en el servidor) mientras la comanda esté abierta.
-        // Se reafirma con lock_table (crea o renueva) para recuperarlo si venció, p. ej. con la pestaña en segundo plano.
+        // Latido mientras la comanda esté abierta: ~2,5 renovaciones por tiempo de bloqueo (configurable en
+        // Configuración Avanzada, 50 s por defecto => 20 s). Se reafirma con lock_table (crea o renueva) para
+        // recuperarlo si venció, p. ej. con la pestaña en segundo plano.
         if (lockHeartbeatTimer) clearInterval(lockHeartbeatTimer);
         lockHeartbeatTimer = setInterval(() => {
             if (capturedTableId.value && shouldUnlock.value) {
                 console.log('[TableOrderLayout] 💓 Heartbeat renovación mesa', capturedTableId.value);
                 wsLockTable(capturedTableId.value);
             }
-        }, 20000);
+        }, lockHeartbeatMs(settingsStore.businessSettings?.order?.table_lock_seconds));
     }
     performRetrieveTableOrder();
 });

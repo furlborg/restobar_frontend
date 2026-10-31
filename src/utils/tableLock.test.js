@@ -1,10 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  addPending,
   dropVolatileForTable,
+  getActiveLock,
   isStalePending,
   localExpiry,
   lockHasExpired,
+  lockHeartbeatMs,
+  lockRemainingSeconds,
+  normalizeLock,
   PENDING_MAX_AGE_MS,
 } from "./tableLock.js";
 
@@ -82,4 +87,83 @@ test("isStalePending: solo caducan los mensajes que crean/renuevan bloqueos", ()
   assert.equal(isStalePending(old("renew_lock"), PENDING_MAX_AGE_MS + 1), true);
   assert.equal(isStalePending(old("lock_table"), PENDING_MAX_AGE_MS - 1), false);
   assert.equal(isStalePending(old("unlock_table"), 60_000), false);
+});
+
+// ---- normalizeLock / getActiveLock / lockRemainingSeconds / lockHeartbeatMs / addPending ----
+test("normalizeLock: unifica los nombres de campo de las distintas fuentes", () => {
+  const fromSignal = normalizeLock({ table_id: "7", user_id: 3, username: "ANA", remaining_seconds: 40 }, 1_000);
+  const fromHttp = normalizeLock({ table: 7, user: 3, username: "ANA", remaining_time: 40 }, 1_000);
+  assert.deepEqual(fromSignal, fromHttp);
+  assert.equal(fromSignal.table_id, 7);
+  assert.equal(fromSignal.user_id, 3);
+  assert.equal(fromSignal.local_expires_at, 41_000);
+});
+
+test("normalizeLock: un user_id 0 no se pierde y sin segundos restantes no hay vencimiento local", () => {
+  const lock = normalizeLock({ table_id: 1, user_id: 0, expires_at: "2026-10-31T15:00:00Z" }, 1_000);
+  assert.equal(lock.user_id, 0);
+  assert.equal(lock.local_expires_at, undefined);
+  assert.equal(lock.expires_at, "2026-10-31T15:00:00Z");
+});
+
+test("normalizeLock: tolera entradas vacías sin lanzar", () => {
+  assert.doesNotThrow(() => normalizeLock(null));
+  assert.doesNotThrow(() => normalizeLock(undefined));
+});
+
+test("getActiveLock: devuelve el bloqueo vigente, y null si venció, no existe o no hay datos", () => {
+  const live = normalizeLock({ table_id: 5, user_id: 1, remaining_seconds: 30 }, 0);
+  const lockedTables = { 5: live };
+  assert.equal(getActiveLock(lockedTables, 5, 10_000), live);
+  assert.equal(getActiveLock(lockedTables, "5", 10_000), live); // misma clave que 5
+  assert.equal(getActiveLock(lockedTables, 5, 31_000), null); // venció
+  assert.equal(getActiveLock(lockedTables, 6, 0), null);
+  assert.equal(getActiveLock(null, 5, 0), null);
+  assert.equal(getActiveLock(lockedTables, undefined, 0), null);
+});
+
+test("lockRemainingSeconds: usa el vencimiento local y nunca es negativo", () => {
+  const lock = normalizeLock({ table_id: 1, remaining_seconds: 50 }, 0);
+  assert.equal(lockRemainingSeconds(lock, 0), 50);
+  assert.equal(lockRemainingSeconds(lock, 49_500), 1);
+  assert.equal(lockRemainingSeconds(lock, 90_000), 0);
+  assert.equal(lockRemainingSeconds({}, 0), 0);
+  assert.equal(lockRemainingSeconds(null, 0), 0);
+});
+
+test("lockHeartbeatMs: con 50 s da 20 s y se adapta al tiempo configurado", () => {
+  assert.equal(lockHeartbeatMs(50), 20_000); // Caso A: el valor que había fijo
+  assert.equal(lockHeartbeatMs(10), 4_000); // TTL mínimo: antes el latido de 20 s dejaba vencer el bloqueo
+  assert.equal(lockHeartbeatMs(300), 120_000); // TTL largo: menos mensajes
+  assert.equal(lockHeartbeatMs(undefined), 20_000);
+  assert.equal(lockHeartbeatMs("abc"), 20_000);
+  assert.equal(lockHeartbeatMs(1), 3_000); // nunca por debajo de 3 s
+});
+
+test("addPending: un latido nuevo reemplaza al pendiente de la misma mesa en vez de acumularse", () => {
+  let pending = [];
+  pending = addPending(pending, { type: "lock_table", table_id: 5 }, 1_000);
+  pending = addPending(pending, { type: "lock_table", table_id: 5 }, 2_000);
+  pending = addPending(pending, { type: "lock_table", table_id: 6 }, 2_500);
+  assert.equal(pending.length, 2);
+  assert.equal(pending.find((i) => i.message.table_id === 5).queuedAt, 2_000);
+});
+
+test("addPending: un unlock cancela los pendientes de esa mesa y se conserva", () => {
+  let pending = [];
+  pending = addPending(pending, { type: "lock_table", table_id: 5 }, 1_000);
+  pending = addPending(pending, { type: "heartbeat", table_id: 5 }, 1_100);
+  pending = addPending(pending, { type: "lock_table", table_id: 6 }, 1_200);
+  pending = addPending(pending, { type: "unlock_table", table_id: 5 }, 1_300);
+  assert.deepEqual(
+    pending.map((i) => `${i.message.type}:${i.message.table_id}`),
+    ["lock_table:6", "unlock_table:5"]
+  );
+});
+
+test("addPending: no muta la lista original", () => {
+  const original = [{ message: { type: "lock_table", table_id: 1 }, queuedAt: 0 }];
+  addPending(original, { type: "lock_table", table_id: 1 }, 5);
+  assert.equal(original.length, 1);
+  assert.equal(original[0].queuedAt, 0);
 });
