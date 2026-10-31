@@ -111,6 +111,7 @@ import { useGenericsStore } from "@/store/modules/generics";
 import { changeOrderTable } from "@/api/modules/tables";
 import { useMessage } from "naive-ui";
 import { cloneDeep } from "@/utils";
+import { formatLockRemaining } from "@/utils/lockMessage";
 import { useTableLock } from "@/composables/useTableLock";
 import { useRouter } from 'vue-router';
 
@@ -151,7 +152,7 @@ const isTableBlocked = (table) => {
     return {
       blocked: true,
       username: table.lock_info.username,
-      remaining: table.lock_info.remaining_minutes
+      remaining: formatLockRemaining(table.lock_info)
     };
   }
 
@@ -179,11 +180,11 @@ const handleTableClick = (table) => {
     // Validar si la mesa está bloqueada por otro usuario
     const blockStatus = isTableBlocked(table);
     if (blockStatus.blocked) {
-      const remainingMinutes = blockStatus.remaining || '?';
+      const remainingText = blockStatus.remaining || 'unos segundos';
       const lockedBy = blockStatus.username;
 
       message.warning(
-        `Mesa bloqueada por ${lockedBy}. Disponible en ${remainingMinutes} minutos.`,
+        `Mesa bloqueada por ${lockedBy}. Disponible en ${remainingText}.`,
         { duration: 4000 }
       );
       return;

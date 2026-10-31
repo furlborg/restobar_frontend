@@ -377,6 +377,7 @@ import {
     changeOrderTable
 } from "@/api/modules/tables";
 import { cloneDeep } from "@/utils";
+import { formatLockRemaining } from "@/utils/lockMessage";
 import { useBusinessStore } from "@/store/modules/business";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 import ModalAnulateSale from "@/views/Sale/modalAnulateSale.vue";
@@ -520,7 +521,7 @@ const isTableBlocked = (table) => {
         return {
             blocked: true,
             username: table.lock_info.username,
-            remaining: table.lock_info.remaining_minutes
+            remaining: formatLockRemaining(table.lock_info)
         };
     }
 
@@ -654,7 +655,7 @@ const handleTableClick = (table) => {
             console.log('❌ Mesa bloqueada por:', blockStatus.username);
 
             const remainingMsg = blockStatus.remaining
-                ? `Disponible en ${blockStatus.remaining} minutos.`
+                ? `Disponible en ${blockStatus.remaining}.`
                 : '';
 
             message.warning(
