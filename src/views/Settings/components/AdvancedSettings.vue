@@ -773,6 +773,11 @@
                                             <n-select v-model:value="businessSettings.order.waiter_auth_mode" :options="waiterAuthModeOptions" size="large" />
                                             <template #feedback>Mozo predeterminado, selector en lista o código PIN.</template>
                                         </n-form-item-gi>
+
+                                        <n-form-item-gi label="Tiempo de bloqueo de mesa (Seg)">
+                                            <n-input-number v-model:value="businessSettings.order.table_lock_seconds" :min="10" :max="900" :step="10" :precision="0" size="large" />
+                                            <template #feedback>Segundos que una mesa queda bloqueada para otros usuarios cuando alguien la abre. Predeterminado: 50.</template>
+                                        </n-form-item-gi>
                                     </n-grid>
 
                                     <div class="clean-switch-grid border-top pt-3">
@@ -1524,6 +1529,7 @@ export default defineComponent({
                 required_null_reason: false,
                 print_category_on_order: false,
                 print_area_on_order: false,
+                table_lock_seconds: 50,
             };
             for (const key in defaultOrder) {
                 if (settings.order[key] === undefined) {
