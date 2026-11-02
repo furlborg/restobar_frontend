@@ -18,6 +18,11 @@ export function useOrderProcessing() {
   const settingsStore = useSettingsStore();
   //const userStore = useUserStore();
 
+  // Impide enviar dos veces el mismo pedido: el diálogo de confirmación de naive-ui sigue abierto y
+  // clicable mientras la petición está en vuelo, así que un doble clic en "Sí" llamaba dos veces.
+  // Bandera propia (no ui.loading) porque ui.loading también la usa la carga del correlativo.
+  let submitting = false;
+
   /**
    * Procesa un pedido para llevar
    * @param {Object} sale - El objeto de venta
@@ -31,6 +36,8 @@ export function useOrderProcessing() {
     showAndGenerateTicket,
     cleanupOrderStore,
   ) => {
+    if (submitting) return { success: false, skipped: true };
+    submitting = true;
     ui.loading = true;
     try {
       // Preparar detalles de venta
@@ -88,6 +95,7 @@ export function useOrderProcessing() {
       return { success: false, error };
     } finally {
       ui.loading = false;
+      submitting = false;
     }
   };
 
@@ -104,6 +112,8 @@ export function useOrderProcessing() {
     showAndGenerateTicket,
     cleanupOrderStore,
   ) => {
+    if (submitting) return { success: false, skipped: true };
+    submitting = true;
     ui.loading = true;
     try {
       // Preparar detalles
@@ -145,6 +155,7 @@ export function useOrderProcessing() {
       return { success: false, error };
     } finally {
       ui.loading = false;
+      submitting = false;
       ui.showConfirm = false;
       ui.userConfirm = "";
     }
