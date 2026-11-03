@@ -73,7 +73,7 @@
                     </n-grid>
                 </n-form>
             </n-collapse-transition>
-            <n-data-table class="mt-2" scroll-x="1200" :columns="tableColumns" :data="sales" :loading="isTableLoading"
+            <n-data-table class="mt-2 sales-table" scroll-x="1305" :columns="tableColumns" :data="sales" :loading="isTableLoading"
                 :pagination="pagination" remote />
         </n-card>
         <SaleUpdate v-model:sale="saleId" @update:sale="onCloseUpdate" @on-success="updateSuccess" />
@@ -85,7 +85,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
+import { useBreakpoint } from "vooks";
 import { useDialog, useMessage } from "naive-ui";
 import { createSaleColumns } from "@/utils/constants";
 import {
@@ -464,7 +465,11 @@ const verifyCpe = async (row) => {
     }
 };
 
-const tableColumns = createSaleColumns({
+const breakpoint = useBreakpoint();
+// Solo en teléfono (xs < 640px) se suelta la columna de acciones para poder hacer scroll
+const fixedActions = computed(() => breakpoint.value !== "xs");
+
+const saleColumnHandlers = {
     updateSale(row) {
         showModal.value = true;
         saleId.value = row.id;
@@ -513,7 +518,23 @@ const tableColumns = createSaleColumns({
     downloadXML,
     downloadCDR,
     verifyCpe
-})
+};
+
+const tableColumns = computed(() =>
+    createSaleColumns({ ...saleColumnHandlers, fixedActions: fixedActions.value })
+);
 </script>
 
-<style></style>
+<style>
+/* Listado de ventas: solo la columna Cliente puede partir el texto en varias líneas */
+.sales-table .n-data-table-th,
+.sales-table .n-data-table-td {
+    white-space: nowrap;
+}
+
+.sales-table .n-data-table-th.sale-col-wrap,
+.sales-table .n-data-table-td.sale-col-wrap {
+    white-space: normal;
+    word-break: break-word;
+}
+</style>
