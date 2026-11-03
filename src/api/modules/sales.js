@@ -235,6 +235,11 @@ export async function sendSale(id) {
     return await http.get(`sales/${id}/send_sale/`);
 }
 
+// Consulta el estado real del CPE (y de su baja) en el PSE y sincroniza la venta
+export async function verifySaleCpe(id) {
+    return await http.post(`sales/${id}/verify-cpe/`);
+}
+
 export async function changeSaleStatus(id, status) {
     return await http.post(`sales/${id}/change-status/`, {
         status: status

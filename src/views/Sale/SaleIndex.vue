@@ -86,7 +86,7 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import { useMessage } from "naive-ui";
+import { useDialog, useMessage } from "naive-ui";
 import { createSaleColumns } from "@/utils/constants";
 import {
     listSales,
@@ -96,8 +96,10 @@ import {
     sendSale,
     nullSale,
     changeSaleStatus,
-    resendPendingVouchers
+    resendPendingVouchers,
+    verifySaleCpe
 } from "@/api/modules/sales";
+import { cpeVerificationLines } from "@/utils/cpeVerification";
 import { useSaleStore } from "@/store/modules/sale";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useBusinessStore } from "@/store/modules/business";
@@ -113,6 +115,7 @@ import ModalAnulateSale from "@/views/Sale/modalAnulateSale.vue";
 
 const dateNow = ref(null);
 const message = useMessage();
+const dialog = useDialog();
 const settingsStore = useSettingsStore();
 const businessStore = useBusinessStore();
 const userStore = useUserStore();
@@ -425,14 +428,39 @@ const performStatusChange = async (row, newStatus, fromLabel, toLabel) => {
         isTableLoading.value = false;
     }
 };
-const downloadXML = (row) => {
-    const apiUrl = businessStore.business.api_url;
-    if (apiUrl) {
-        // apiUrl ya incluye el tenant, ej: https://faqtureapi.tsifactur.com/documents/demo
-        const url = `${apiUrl}/xml/?serie=${row.serie}&number=${row.number}`;
+// Los links los arma el backend según el PSE que recibió el comprobante (legacy o Faqture).
+// Se abren directo, sin fetch/HEAD previo: la API de Faqture rechaza esas peticiones por CORS.
+const openCpeLink = (url, label) => {
+    if (url) {
         window.open(url, '_blank');
     } else {
-        message.error("La URL de facturación no está configurada en los datos de la Empresa.");
+        message.warning(`El ${label} no está disponible para este comprobante.`);
+    }
+};
+const downloadXML = (row) => openCpeLink(row.xml, "XML");
+const downloadCDR = (row) => openCpeLink(row.cdr, "CDR");
+
+const verifyingCpe = ref(false);
+const verifyCpe = async (row) => {
+    if (verifyingCpe.value) return;
+    verifyingCpe.value = true;
+    isTableLoading.value = true;
+    try {
+        const response = await verifySaleCpe(row.id);
+        const result = response.data;
+        dialog[result.success ? "success" : "warning"]({
+            title: `Verificación ${row.serie}-${row.number}`,
+            content: cpeVerificationLines(result).join("\n") || "Sin respuesta del PSE",
+            positiveText: "Aceptar",
+            style: { whiteSpace: "pre-line" },
+        });
+    } catch (error) {
+        const errorMessage = error.response?.data?.error || "No se pudo verificar el comprobante";
+        message.warning(errorMessage, { duration: 5000, closable: true });
+    } finally {
+        verifyingCpe.value = false;
+        isTableLoading.value = false;
+        await pagination.value.onChange(pagination.value.page);
     }
 };
 
@@ -482,7 +510,9 @@ const tableColumns = createSaleColumns({
         showConfirm.value = { show: true, saleId: row.id, permission: "cancel_sale", loadSales, performNullifySale };
     },
     changeStatus,
-    downloadXML
+    downloadXML,
+    downloadCDR,
+    verifyCpe
 })
 </script>
 

@@ -1,6 +1,7 @@
 import { h } from "vue";
 import { NButton, NTag, NPopover, NDropdown, NText, NSpace } from "naive-ui";
 import { renderIcon, lighten } from "@/utils";
+import { canVerifyCpe } from "@/utils/cpeVerification";
 import { useUserStore } from "@/store/modules/user";
 import { useSaleStore } from "@/store/modules/sale";
 import { useTillStore } from "@/store/modules/till";
@@ -1448,6 +1449,8 @@ export const createSaleColumns = ({
   nullifySale,
   changeStatus,
   downloadXML,
+  downloadCDR,
+  verifyCpe,
 }) => {
   return [
     {
@@ -1704,14 +1707,45 @@ export const createSaleColumns = ({
               size: "small",
               type: "primary",
               secondary: true,
-              // Solo mostrar para comprobantes electrónicos (no nota de venta) Y que ya hayan sido enviados con éxito a la SUNAT (estado 'E')
-              disabled: row.invoice_type === "80" || row.status !== "E",
+              // El backend solo da link cuando el PSE que recibió el comprobante lo tiene (ver apps.pse.links)
+              disabled: row.invoice_type === "80" || !row.xml,
               onClick: () => {
                 if (downloadXML) downloadXML(row);
               },
             },
             () => "XML",
           ),
+          // Boton CDR (constancia de SUNAT)
+          h(
+            NButton,
+            {
+              class: "ms-2",
+              size: "small",
+              type: "primary",
+              secondary: true,
+              disabled: row.invoice_type === "80" || !row.cdr,
+              onClick: () => {
+                if (downloadCDR) downloadCDR(row);
+              },
+            },
+            () => "CDR",
+          ),
+          // Verificar el CPE en el PSE (estado real del comprobante y de su baja)
+          userStore.hasPermission("send_sale") && verifyCpe
+            ? h(
+                NButton,
+                {
+                  class: "ms-2",
+                  size: "small",
+                  type: "success",
+                  secondary: true,
+                  title: "Verificar CPE",
+                  disabled: !canVerifyCpe(row),
+                  onClick: () => verifyCpe(row),
+                },
+                renderIcon("md-factcheck-twotone"),
+              )
+            : null,
         ];
       },
     },
