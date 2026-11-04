@@ -39,557 +39,412 @@
       />
     </n-card>
     <!-- Modal Form: Create / Edit -->
+    <!-- Modal: crear / editar promoción de autoservicio -->
     <n-modal
       v-model:show="showModal"
       preset="card"
-      :title="isEditing ? 'Editar Promoción de Autoservicio' : 'Nueva Promoción de Autoservicio'"
+      :title="isEditing ? 'Editar promoción de autoservicio' : 'Nueva promoción de autoservicio'"
       style="max-width: 1140px; width: 95vw;"
       content-style="max-height: 84vh; overflow-y: auto; padding: 20px 24px;"
       :mask-closable="false"
     >
       <n-form ref="formRef" :model="form" :rules="rules" label-placement="top">
-        <n-grid :cols="12" :x-gap="24" :y-gap="16">
-          <!-- Columna Izquierda: Configuraciones Modulares (7 cols) -->
-          <n-gi :span="7">
-            <n-tabs v-model:value="activeModalTab" type="segment" animated class="mb-3">
-              <!-- TAB 1: CONTENIDO Y VINCULACIÓN -->
-              <n-tab-pane name="content">
-                <template #tab>
-                  <div class="d-flex align-items-center gap-2">
-                    <v-icon name="md-description-twotone" />
-                    <span>Contenido y Enlace</span>
-                  </div>
-                </template>
+        <div class="kp-layout">
 
-                <n-grid :cols="2" :x-gap="16" :y-gap="14">
-                  <n-gi :span="2">
-                    <n-form-item label="Título del Anuncio / Oferta" path="title" required>
-                      <n-input v-model:value="form.title" placeholder="Ej. ¡Super Combo Familiar!" size="large" />
-                    </n-form-item>
-                  </n-gi>
+          <!-- Izquierda: formulario en 4 pasos, todos visibles -->
+          <div class="kp-steps">
 
-                  <n-gi :span="2">
-                    <n-form-item label="Subtítulo / Breve Descripción">
-                      <n-input
-                        v-model:value="form.subtitle"
-                        placeholder="Ej. Pizza Grande + Bebida 1.5L + Papas Crujientes"
-                      />
-                    </n-form-item>
-                  </n-gi>
-
-                  <n-gi :span="2">
-                    <n-form-item label="¿A qué producto o combo dirige este anuncio?">
-                      <n-radio-group v-model:value="targetType" @update:value="handleTargetTypeChange" class="w-100">
-                        <n-radio-button value="PRODUCT" style="width: 33.3%; text-align: center;">
-                          <div class="d-flex align-items-center justify-content-center gap-1">
-                            <v-icon name="md-fastfood-twotone" />
-                            <span>Producto</span>
-                          </div>
-                        </n-radio-button>
-                        <n-radio-button value="COMBO" style="width: 33.3%; text-align: center;">
-                          <div class="d-flex align-items-center justify-content-center gap-1">
-                            <v-icon name="gi-hot-meal" />
-                            <span>Combo</span>
-                          </div>
-                        </n-radio-button>
-                        <n-radio-button value="NONE" style="width: 33.3%; text-align: center;">
-                          <div class="d-flex align-items-center justify-content-center gap-1">
-                            <v-icon name="md-campaign-round" />
-                            <span>Solo Anuncio</span>
-                          </div>
-                        </n-radio-button>
-                      </n-radio-group>
-                    </n-form-item>
-                  </n-gi>
-
-                  <!-- Si es Producto -->
-                  <template v-if="targetType === 'PRODUCT'">
-                    <n-gi :span="1">
-                      <n-form-item label="Filtrar por Categoría">
-                        <n-select
-                          v-model:value="selectedCategoryFilter"
-                          :options="categoryOptions"
-                          clearable
-                          placeholder="Todas las categorías"
-                        />
-                      </n-form-item>
-                    </n-gi>
-                    <n-gi :span="1">
-                      <n-form-item label="Producto Seleccionado" required>
-                        <n-select
-                          v-model:value="form.product"
-                          :options="filteredProductOptions"
-                          filterable
-                          :filter="filterProductOption"
-                          placeholder="Buscar producto..."
-                          @update:value="onProductSelected"
-                        />
-                      </n-form-item>
-                    </n-gi>
-                  </template>
-
-                  <!-- Si es Combo -->
-                  <template v-if="targetType === 'COMBO'">
-                    <n-gi :span="2">
-                      <n-form-item label="Combo Seleccionado" required>
-                        <n-select
-                          v-model:value="form.combo"
-                          :options="comboOptions"
-                          filterable
-                          :filter="filterComboOption"
-                          placeholder="Selecciona el combo a vincular"
-                          @update:value="onComboSelected"
-                        />
-                      </n-form-item>
-                    </n-gi>
-                  </template>
-
-                  <!-- Precio Promocional y Descuento -->
-                  <n-gi :span="targetType !== 'NONE' ? 1 : 2">
-                    <n-form-item label="Precio Promocional en Quiosco (S/)">
-                      <n-input-number
-                        v-model:value="form.promo_price"
-                        :min="0"
-                        :precision="2"
-                        placeholder="Dejar vacío para precio regular"
-                        class="w-100"
-                      />
-                    </n-form-item>
-                  </n-gi>
-
-                  <n-gi :span="1" v-if="targetType !== 'NONE' && selectedOriginalPrice">
-                    <div class="p-2 border rounded bg-light mt-1">
-                      <div class="d-flex justify-content-between align-items-center">
-                        <span class="fs-8 text-muted">Precio Regular:</span>
-                        <span class="fw-bold text-decoration-line-through">S/ {{ selectedOriginalPrice.toFixed(2) }}</span>
-                      </div>
-                      <div v-if="calculatedDiscountPercent && calculatedDiscountPercent > 0" class="d-flex justify-content-between align-items-center mt-1">
-                        <span class="fs-8 text-success fw-bold">Ahorro: {{ calculatedDiscountPercent }}%</span>
-                        <n-button size="tiny" type="primary" secondary @click="applyCalculatedBadge">
-                          Usar "{{ calculatedDiscountPercent }}% OFF"
-                        </n-button>
-                      </div>
-                    </div>
-                  </n-gi>
-                </n-grid>
-              </n-tab-pane>
-
-              <!-- TAB 2: DISEÑO Y COLOR DE FONDO -->
-              <n-tab-pane name="design">
-                <template #tab>
-                  <div class="d-flex align-items-center gap-2">
-                    <v-icon name="md-palette-round" />
-                    <span>Diseño y Colores</span>
-                  </div>
-                </template>
-
-                <n-grid :cols="2" :x-gap="16" :y-gap="14">
-                  <!-- Insignia / Badge -->
-                  <n-gi :span="2">
-                    <n-form-item label="Texto de Insignia Destacada (Badge)">
-                      <n-input v-model:value="form.badge_text" placeholder="Ej. 30% OFF, 2x1, POPULAR, PREMIUM" />
-                      <div class="mt-2 d-flex flex-wrap gap-1 align-items-center">
-                        <span class="text-muted fs-8 me-1">Sugerencias:</span>
-                        <n-tag
-                          v-for="badge in ['30% OFF', 'POPULAR', 'PREMIUM', 'NUEVO', '2x1', 'OFERTA', 'DEL DÍA']"
-                          :key="badge"
-                          size="small"
-                          round
-                          checkable
-                          :checked="form.badge_text === badge"
-                          @click="form.badge_text = badge"
-                          style="cursor: pointer;"
-                        >
-                          {{ badge }}
-                        </n-tag>
-                      </div>
-                    </n-form-item>
-                  </n-gi>
-
-                  <!-- Modo de Fondo: Colores o Imagen -->
-                  <n-gi :span="2">
-                    <n-form-item label="Tipo de Fondo del Banner">
-                      <n-radio-group v-model:value="colorMode" @update:value="onColorModeChange">
-                        <n-radio-button value="gradient">
-                          <div class="d-flex align-items-center gap-1">
-                            <v-icon name="md-gradient-round" />
-                            <span>Degradado Dinámico</span>
-                          </div>
-                        </n-radio-button>
-                        <n-radio-button value="solid">
-                          <div class="d-flex align-items-center gap-1">
-                            <v-icon name="md-formatpaint-round" />
-                            <span>Color Sólido</span>
-                          </div>
-                        </n-radio-button>
-                        <n-radio-button value="image">
-                          <div class="d-flex align-items-center gap-1">
-                            <v-icon name="md-image-round" />
-                            <span>Imagen con Sombreado</span>
-                          </div>
-                        </n-radio-button>
-                      </n-radio-group>
-                    </n-form-item>
-                  </n-gi>
-
-                  <!-- CONFIGURACIÓN PARA MODO IMAGEN FOTOGRÁFICA -->
-                  <template v-if="colorMode === 'image'">
-                    <n-gi :span="2">
-                      <div class="p-3 border rounded-3 bg-light">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                          <label class="form-label fs-7 fw-bold mb-0">Imagen para el Banner Promocional</label>
-                          <span class="fs-8 text-muted">Formatos: JPG, PNG, WEBP</span>
-                        </div>
-
-                        <!-- Si el producto o combo seleccionado ya tiene imagen en BD -->
-                        <div v-if="selectedTargetImage" class="p-2 mb-3 border rounded bg-white d-flex align-items-center justify-content-between gap-3 shadow-sm">
-                          <div class="d-flex align-items-center gap-3">
-                            <img :src="selectedTargetImage" alt="Target" style="width: 46px; height: 46px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0;" />
-                            <div>
-                              <div class="fw-bold fs-8">Foto de {{ targetType === 'PRODUCT' ? 'Producto' : 'Combo' }} Vinculado</div>
-                              <div class="text-muted fs-8">Disponible desde la base de datos de Flizzy</div>
-                            </div>
-                          </div>
-                          <n-button
-                            size="small"
-                            type="primary"
-                            secondary
-                            @click="useSelectedTargetImage"
-                          >
-                            Usar esta Foto
-                          </n-button>
-                        </div>
-
-                        <!-- Selector y Subida de Archivo Personalizado -->
-                        <div class="d-flex align-items-center gap-3 flex-wrap">
-                          <n-upload
-                            ref="uploadRef"
-                            :max="1"
-                            accept="image/*"
-                            :default-upload="false"
-                            :show-file-list="false"
-                            @change="handleImageFileChange"
-                          >
-                            <n-button secondary type="info">
-                              <template #icon>
-                                <v-icon name="md-image-round" />
-                              </template>
-                              {{ form.image_preview ? 'Cambiar Imagen' : 'Subir Imagen desde el Equipo' }}
-                            </n-button>
-                          </n-upload>
-
-                          <n-button
-                            v-if="form.image_preview || form.image_file"
-                            size="small"
-                            quaternary
-                            type="error"
-                            @click="clearImage"
-                          >
-                            Quitar Imagen
-                          </n-button>
-                        </div>
-
-                        <div v-if="form.image_preview" class="mt-2 text-success fs-8 fw-bold">
-                          ✓ Imagen activa para el fondo del banner
-                        </div>
-                      </div>
-                    </n-gi>
-
-                    <!-- Control Deslizante de Sombreado / Oscurecimiento (Overlay) -->
-                    <n-gi :span="2">
-                      <div class="p-3 border rounded-3 bg-white shadow-sm">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                          <div class="d-flex align-items-center gap-2">
-                            <v-icon name="md-opacity-round" class="text-primary" />
-                            <label class="form-label fs-7 fw-bold mb-0">Sombreado / Oscurecimiento de Imagen</label>
-                          </div>
-                          <span class="badge bg-primary fs-7">{{ Math.round((form.overlay_opacity ?? 0.45) * 100) }}% Sombreado</span>
-                        </div>
-                        <p class="text-muted fs-8 mb-3">
-                          Ajusta la opacidad del sombreado para que los textos, precios e insignias resalten con nitidez sobre cualquier foto.
-                        </p>
-
-                        <n-slider
-                          v-model:value="form.overlay_opacity"
-                          :min="0.10"
-                          :max="0.85"
-                          :step="0.05"
-                          :marks="{ 0.20: 'Claro (20%)', 0.45: 'Recomendado (45%)', 0.75: 'Oscuro (75%)' }"
-                        />
-                      </div>
-                    </n-gi>
-                  </template>
-
-                  <!-- CONFIGURACIÓN PARA MODO COLOR / DEGRADADO -->
-                  <template v-else>
-                    <!-- Paletas Rápidas -->
-                    <n-gi :span="2">
-                      <div class="mb-2">
-                        <label class="form-label fs-8 text-muted mb-2 d-block">Paletas Cromáticas Rápidas:</label>
-                        <div class="d-flex flex-wrap gap-2">
-                          <button
-                            v-for="p in colorPresets"
-                            :key="p.name"
-                            type="button"
-                            class="btn btn-sm text-white px-3 py-1 rounded-pill shadow-sm"
-                            @click="applyColorPreset(p)"
-                            :style="{ background: `linear-gradient(135deg, ${p.start}, ${p.end})`, border: 'none', fontSize: '11px', fontWeight: 'bold' }"
-                          >
-                            {{ p.name }}
-                          </button>
-                        </div>
-                      </div>
-                    </n-gi>
-
-                    <!-- Selectores de Color -->
-                    <template v-if="colorMode === 'gradient'">
-                      <n-gi :span="1">
-                        <n-form-item label="Color Inicial (Izquierda)">
-                          <div class="d-flex align-items-center gap-2 w-100">
-                            <n-color-picker
-                              v-model:value="form.gradient_color_start"
-                              :show-alpha="false"
-                              :modes="['hex']"
-                              style="width: 100px;"
-                            />
-                            <n-input v-model:value="form.gradient_color_start" placeholder="#FF6B00" />
-                          </div>
-                        </n-form-item>
-                      </n-gi>
-                      <n-gi :span="1">
-                        <n-form-item label="Color Final (Derecha)">
-                          <div class="d-flex align-items-center gap-2 w-100">
-                            <n-color-picker
-                              v-model:value="form.gradient_color_end"
-                              :show-alpha="false"
-                              :modes="['hex']"
-                              style="width: 100px;"
-                            />
-                            <n-input v-model:value="form.gradient_color_end" placeholder="#E11D48" />
-                          </div>
-                        </n-form-item>
-                      </n-gi>
-                    </template>
-
-                    <template v-else>
-                      <n-gi :span="2">
-                        <n-form-item label="Color de Fondo Sólido">
-                          <div class="d-flex align-items-center gap-2" style="max-width: 380px;">
-                            <n-color-picker
-                              :value="form.gradient_color_start"
-                              @update:value="handleColorStartChange"
-                              :show-alpha="false"
-                              :modes="['hex']"
-                              style="width: 120px;"
-                            />
-                            <n-input
-                              :value="form.gradient_color_start"
-                              @update:value="handleColorStartChange"
-                              placeholder="#FF6B00"
-                            />
-                          </div>
-                        </n-form-item>
-                      </n-gi>
-                    </template>
-                  </template>
-                </n-grid>
-              </n-tab-pane>
-
-              <!-- TAB 3: VISIBILIDAD Y REGLAS -->
-              <n-tab-pane name="visibility">
-                <template #tab>
-                  <div class="d-flex align-items-center gap-2">
-                    <v-icon name="md-viewcarousel-twotone" />
-                    <span>Visibilidad y Canales</span>
-                  </div>
-                </template>
-
-                <n-grid :cols="2" :x-gap="16" :y-gap="16">
-                  <n-gi :span="2">
-                    <n-form-item label="Prioridad en el Carrusel (Mayor número aparece primero)">
-                      <n-input-number v-model:value="form.order_priority" :min="0" :max="100" class="w-100" />
-                    </n-form-item>
-                  </n-gi>
-
-                  <n-gi :span="2">
-                    <div class="p-3 border rounded-3 bg-light">
-                      <div class="alert py-2 px-3 mb-3 border-0 rounded-3 d-flex align-items-center gap-2" style="background-color: #e0f2fe; color: #0369a1;">
-                        <v-icon name="md-infomation-round" scale="1.1" />
-                        <div class="fs-8">
-                          <strong>Consejo de Visualización:</strong> Las promociones con imágenes grandes o de formato Hero se lucen mejor en la <strong>Pantalla de Bienvenida</strong>. Si activas <strong>Pantalla del Catálogo</strong>, se mostrará como un banner compacto para no quitar espacio a la carta.
-                        </div>
-                      </div>
-                      <h6 class="fw-bold mb-3 fs-7 text-dark">Canales de Visualización en el Quiosco</h6>
-                      <div class="d-flex flex-column gap-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                          <div>
-                            <div class="fw-bold fs-7">Pantalla de Bienvenida (Inicio del Quiosco)</div>
-                            <div class="text-muted fs-8">Aparece en el gran carrusel táctil de bienvenida</div>
-                          </div>
-                          <n-switch v-model:value="form.show_in_welcome" />
-                        </div>
-                        <hr class="my-1 text-muted opacity-25" />
-                        <div class="d-flex justify-content-between align-items-center">
-                          <div>
-                            <div class="fw-bold fs-7">Pantalla del Catálogo (Navegación de Productos)</div>
-                            <div class="text-muted fs-8">Aparece como banner superior interactivo en la tienda</div>
-                          </div>
-                          <n-switch v-model:value="form.show_in_catalog" />
-                        </div>
-                        <hr class="my-1 text-muted opacity-25" />
-                        <div class="d-flex justify-content-between align-items-center">
-                          <div>
-                            <div class="fw-bold fs-7">Estado Activo</div>
-                            <div class="text-muted fs-8">Habilita o pausa la visualización inmediata de esta promoción</div>
-                          </div>
-                          <n-switch v-model:value="form.is_active" />
-                        </div>
-                      </div>
-                    </div>
-                  </n-gi>
-                </n-grid>
-              </n-tab-pane>
-            </n-tabs>
-          </n-gi>
-
-          <!-- Columna Derecha: Panel de Simulación Kiosco en Vivo (5 cols) -->
-          <n-gi :span="5">
-            <div class="p-3 border rounded-4 bg-light shadow-sm" style="position: sticky; top: 0;">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <div class="d-flex align-items-center gap-2">
-                  <v-icon name="md-pointofsale-twotone" class="text-primary" />
-                  <span class="fw-bold fs-7 text-dark">Simulación en Quiosco</span>
+            <!-- Paso 1: qué se promociona -->
+            <section class="kp-step">
+              <header class="kp-step__head">
+                <span class="kp-step__num">1</span>
+                <div>
+                  <h3 class="kp-step__title">¿Qué quieres promocionar?</h3>
+                  <p class="kp-step__desc">Elige si el anuncio es de un producto, de un combo o solo un mensaje.</p>
                 </div>
-                <span class="badge bg-success text-white fs-8">
-                  Tiempo Real
-                </span>
+              </header>
+
+              <n-radio-group v-model:value="targetType" @update:value="handleTargetTypeChange" class="kp-seg">
+                <n-radio-button value="PRODUCT">
+                  <span class="kp-seg__item"><v-icon name="md-fastfood-twotone" /> Producto</span>
+                </n-radio-button>
+                <n-radio-button value="COMBO">
+                  <span class="kp-seg__item"><v-icon name="gi-hot-meal" /> Combo</span>
+                </n-radio-button>
+                <n-radio-button value="NONE">
+                  <span class="kp-seg__item"><v-icon name="md-campaign-round" /> Solo anuncio</span>
+                </n-radio-button>
+              </n-radio-group>
+
+              <p class="kp-hint" v-if="targetType === 'PRODUCT'">Se mostrará el precio del producto, o el precio promocional si lo defines.</p>
+              <p class="kp-hint" v-else-if="targetType === 'COMBO'">Se mostrará el precio del combo, o el precio promocional si lo defines.</p>
+              <p class="kp-hint" v-else>Es solo un mensaje: no vincula ningún producto y no muestra precio.</p>
+
+              <div class="kp-grid kp-mt" v-if="targetType === 'PRODUCT'">
+                <n-form-item label="Filtrar por categoría">
+                  <n-select
+                    v-model:value="selectedCategoryFilter"
+                    :options="categoryOptions"
+                    clearable
+                    placeholder="Todas las categorías"
+                  />
+                </n-form-item>
+                <n-form-item label="Producto" required>
+                  <n-select
+                    v-model:value="form.product"
+                    :options="filteredProductOptions"
+                    filterable
+                    :filter="filterProductOption"
+                    placeholder="Buscar producto..."
+                    @update:value="onProductSelected"
+                  />
+                </n-form-item>
               </div>
 
-              <!-- Tarjeta de Anuncio 1:1 con Sombreado Dinámico -->
-              <div
-                class="preview-card p-3 text-white rounded-4 shadow mb-3 position-relative overflow-hidden"
-                :style="previewCardStyle"
-              >
-                <!-- Capa de Sombreado si tiene imagen -->
-                <div
-                  v-if="effectivePreviewImage && colorMode === 'image'"
-                  class="position-absolute top-0 start-0 w-100 h-100"
-                  :style="previewOverlayStyle"
+              <n-form-item v-if="targetType === 'COMBO'" class="kp-mt" label="Combo" required>
+                <n-select
+                  v-model:value="form.combo"
+                  :options="comboOptions"
+                  filterable
+                  :filter="filterComboOption"
+                  placeholder="Selecciona el combo"
+                  @update:value="onComboSelected"
                 />
+              </n-form-item>
 
-                <!-- Círculos decorativos translúcidos si no tiene imagen (Estilo preferido) -->
-                <template v-if="!effectivePreviewImage || colorMode !== 'image'">
-                  <div
-                    class="position-absolute rounded-circle"
-                    style="top: -25px; right: -25px; width: 110px; height: 110px; background: rgba(255,255,255,0.08); pointer-events: none; z-index: 1;"
+              <div class="kp-grid kp-mt">
+                <n-form-item label="Precio promocional (S/)">
+                  <n-input-number
+                    v-model:value="form.promo_price"
+                    :min="0"
+                    :precision="2"
+                    placeholder="Vacío = precio normal"
+                    class="w-100"
                   />
-                  <div
-                    class="position-absolute rounded-circle"
-                    style="bottom: -35px; right: 25px; width: 140px; height: 140px; background: rgba(255,255,255,0.06); pointer-events: none; z-index: 1;"
-                  />
-                </template>
+                </n-form-item>
 
-                <div class="d-flex justify-content-between align-items-center position-relative" style="z-index: 2;">
-                  <div style="flex: 1;">
-                    <div v-if="form.badge_text" class="mb-2">
-                      <span
-                        class="preview-badge-pill px-2 py-1 rounded-pill fw-bold"
-                        :style="{
-                          backgroundColor: form.badge_color || '#e11d48',
-                          color: '#ffffff',
-                          boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                          border: '1px solid rgba(255,255,255,0.45)',
-                          fontSize: '11px',
-                          letterSpacing: '0.5px',
-                          display: 'inline-block'
-                        }"
-                      >
-                        {{ form.badge_text }}
-                      </span>
-                    </div>
-                    <h4 class="preview-title fw-bold m-0 fs-6">{{ form.title || 'Título de Promoción' }}</h4>
-                    <p class="preview-subtitle small m-0 mt-1 fs-8">{{ form.subtitle || 'Subtítulo o combo especial' }}</p>
-                    <div class="mt-2 d-flex align-items-baseline gap-2" v-if="form.promo_price">
-                      <span
-                        class="preview-price-badge px-2 py-1 rounded-pill fw-bold fs-7"
-                        :style="{
-                          backgroundColor: '#ffffff',
-                          color: (effectivePreviewImage && colorMode === 'image') ? '#FF6B00' : form.gradient_color_start,
-                          boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
-                        }"
-                      >
-                        S/ {{ Number(form.promo_price).toFixed(2) }}
-                      </span>
-                      <span v-if="selectedOriginalPrice && selectedOriginalPrice > form.promo_price" class="preview-old-price fs-8">
-                        S/ {{ selectedOriginalPrice.toFixed(2) }}
-                      </span>
-                    </div>
+                <div v-if="targetType !== 'NONE' && selectedOriginalPrice" class="kp-price-card">
+                  <div class="kp-price-card__row">
+                    <span>Precio normal</span>
+                    <strong class="kp-strike">S/ {{ selectedOriginalPrice.toFixed(2) }}</strong>
                   </div>
-                  <div class="ms-2 text-center" style="z-index: 2;">
-                    <div
-                      v-if="effectivePreviewImage && colorMode === 'image'"
-                      class="preview-cta-btn p-2 text-center"
-                      style="background: rgba(34,34,34,0.72); border: 1.5px solid rgba(255,255,255,0.7); border-radius: 12px; min-width: 68px;"
-                    >
-                      <v-icon name="md-add-round" scale="1.2" class="text-white" />
-                      <div style="font-size: 8.5px; font-weight: 800; line-height: 1.1; letter-spacing: 0.5px;" class="mt-1 text-white">PEDIR<br>AHORA</div>
-                    </div>
-                    <div v-else class="d-flex flex-column align-items-center gap-2">
-                      <div
-                        class="d-flex align-items-center justify-content-center rounded-circle"
-                        style="width: 38px; height: 38px; background: rgba(255,255,255,0.18); border: 1.5px solid rgba(255,255,255,0.40);"
-                      >
-                        <v-icon name="md-restaurant-round" scale="1.2" class="text-white" />
-                      </div>
-                      <div
-                        class="preview-cta-btn-solid px-2 py-1 rounded-pill fw-bold shadow-sm d-flex align-items-center gap-1"
-                        :style="{ backgroundColor: '#ffffff', color: form.gradient_color_start, fontSize: '9.5px', letterSpacing: '0.5px' }"
-                      >
-                        <v-icon name="md-add-round" scale="0.9" />
-                        <span>PEDIR</span>
-                      </div>
-                    </div>
+                  <div v-if="calculatedDiscountPercent && calculatedDiscountPercent > 0" class="kp-price-card__row">
+                    <span class="kp-save">Ahorro: {{ calculatedDiscountPercent }}%</span>
+                    <n-button size="tiny" type="primary" secondary @click="applyCalculatedBadge">
+                      Usar “{{ calculatedDiscountPercent }}% OFF” como insignia
+                    </n-button>
                   </div>
                 </div>
               </div>
+              <p v-if="targetType === 'NONE'" class="kp-hint">En un “solo anuncio” el precio no se muestra en el kiosko.</p>
+            </section>
 
-              <!-- Resumen Contextual de Canales y Destino -->
-              <div class="p-3 bg-white border rounded-3">
-                <div class="text-muted fs-8 fw-bold mb-2 text-uppercase">Resumen de Configuración:</div>
-                <div class="d-flex flex-column gap-2 fs-8">
-                  <div class="d-flex justify-content-between">
-                    <span class="text-muted">Destino:</span>
-                    <span class="fw-bold text-dark text-truncate" style="max-width: 170px;">{{ selectedTargetName }}</span>
+            <!-- Paso 2: mensaje -->
+            <section class="kp-step">
+              <header class="kp-step__head">
+                <span class="kp-step__num">2</span>
+                <div>
+                  <h3 class="kp-step__title">Mensaje del anuncio</h3>
+                  <p class="kp-step__desc">Lo que lee el cliente en la pantalla del kiosko.</p>
+                </div>
+              </header>
+
+              <n-form-item label="Título" path="title" required>
+                <n-input
+                  v-model:value="form.title"
+                  placeholder="Ej. ¡Super combo familiar!"
+                  size="large"
+                  :maxlength="120"
+                  show-count
+                />
+              </n-form-item>
+
+              <n-form-item label="Subtítulo (opcional)">
+                <n-input
+                  v-model:value="form.subtitle"
+                  placeholder="Ej. Pizza grande + bebida 1.5L + papas crujientes"
+                  :maxlength="255"
+                />
+              </n-form-item>
+
+              <n-form-item label="Insignia (opcional)">
+                <div class="kp-badge-field">
+                  <n-input v-model:value="form.badge_text" placeholder="Ej. 30% OFF, 2x1, NUEVO" :maxlength="50" />
+                  <div class="kp-chips">
+                    <n-tag
+                      v-for="badge in ['30% OFF', 'POPULAR', 'PREMIUM', 'NUEVO', '2x1', 'OFERTA', 'DEL DÍA']"
+                      :key="badge"
+                      size="small"
+                      round
+                      checkable
+                      :checked="form.badge_text === badge"
+                      @click="form.badge_text = badge"
+                      style="cursor: pointer;"
+                    >
+                      {{ badge }}
+                    </n-tag>
                   </div>
-                  <div class="d-flex justify-content-between">
-                    <span class="text-muted">Canales:</span>
-                    <div class="d-flex gap-1">
-                      <span class="badge" :class="form.show_in_welcome ? 'bg-primary' : 'bg-light text-muted border'">Bienvenida</span>
-                      <span class="badge" :class="form.show_in_catalog ? 'bg-primary' : 'bg-light text-muted border'">Catálogo</span>
+                </div>
+              </n-form-item>
+            </section>
+
+            <!-- Paso 3: apariencia -->
+            <section class="kp-step">
+              <header class="kp-step__head">
+                <span class="kp-step__num">3</span>
+                <div>
+                  <h3 class="kp-step__title">Apariencia</h3>
+                  <p class="kp-step__desc">Elige el fondo del banner. La vista previa se actualiza al instante.</p>
+                </div>
+              </header>
+
+              <n-radio-group v-model:value="colorMode" @update:value="onColorModeChange" class="kp-seg">
+                <n-radio-button value="gradient">
+                  <span class="kp-seg__item"><v-icon name="md-gradient-round" /> Degradado</span>
+                </n-radio-button>
+                <n-radio-button value="solid">
+                  <span class="kp-seg__item"><v-icon name="md-formatpaint-round" /> Color sólido</span>
+                </n-radio-button>
+                <n-radio-button value="image">
+                  <span class="kp-seg__item"><v-icon name="md-image-round" /> Imagen</span>
+                </n-radio-button>
+              </n-radio-group>
+
+              <!-- Fondo con imagen -->
+              <template v-if="colorMode === 'image'">
+                <div class="kp-box kp-mt">
+                  <div class="kp-box__head">
+                    <strong>Imagen del banner</strong>
+                    <span class="kp-muted">JPG, PNG o WEBP</span>
+                  </div>
+
+                  <!-- Si el producto o combo seleccionado ya tiene foto -->
+                  <div v-if="selectedTargetImage" class="kp-linked-photo">
+                    <img :src="selectedTargetImage" alt="Foto vinculada" class="kp-linked-photo__img" />
+                    <div class="kp-linked-photo__text">
+                      <strong>Foto del {{ targetType === 'PRODUCT' ? 'producto' : 'combo' }} vinculado</strong>
+                      <span class="kp-muted">Ya está cargada en Flizzy</span>
                     </div>
+                    <n-button size="small" type="primary" secondary @click="useSelectedTargetImage">
+                      Usar esta foto
+                    </n-button>
                   </div>
-                  <div class="d-flex justify-content-between" v-if="form.badge_text">
-                    <span class="text-muted">Insignia:</span>
-                    <span class="badge bg-warning text-dark fw-bold">{{ form.badge_text }}</span>
+
+                  <div class="kp-actions">
+                    <n-upload
+                      ref="uploadRef"
+                      :max="1"
+                      accept="image/*"
+                      :default-upload="false"
+                      :show-file-list="false"
+                      @change="handleImageFileChange"
+                    >
+                      <n-button secondary type="info">
+                        <template #icon>
+                          <v-icon name="md-image-round" />
+                        </template>
+                        {{ form.image_preview ? 'Cambiar imagen' : 'Subir imagen desde el equipo' }}
+                      </n-button>
+                    </n-upload>
+
+                    <n-button
+                      v-if="form.image_preview || form.image_file"
+                      size="small"
+                      quaternary
+                      type="error"
+                      @click="clearImage"
+                    >
+                      Quitar imagen
+                    </n-button>
                   </div>
-                  <div class="d-flex justify-content-between">
-                    <span class="text-muted">Estado:</span>
-                    <span :class="form.is_active ? 'text-success fw-bold' : 'text-danger fw-bold'">
-                      {{ form.is_active ? '● Activa en quiosco' : '○ Pausada' }}
-                    </span>
+
+                  <p v-if="form.image_preview" class="kp-ok">✓ Imagen activa como fondo del banner</p>
+                </div>
+
+                <div class="kp-box kp-mt">
+                  <div class="kp-box__head">
+                    <strong><v-icon name="md-opacity-round" /> Oscurecer la imagen</strong>
+                    <span class="kp-pill">{{ Math.round((form.overlay_opacity ?? 0.45) * 100) }}%</span>
                   </div>
+                  <p class="kp-hint kp-hint--tight">Un poco de sombra ayuda a que el texto y el precio se lean bien sobre cualquier foto.</p>
+                  <n-slider
+                    v-model:value="form.overlay_opacity"
+                    :min="0.10"
+                    :max="0.85"
+                    :step="0.05"
+                    :marks="{ 0.20: 'Claro', 0.45: 'Recomendado', 0.75: 'Oscuro' }"
+                  />
+                </div>
+              </template>
+
+              <!-- Fondo con color o degradado -->
+              <template v-else>
+                <div class="kp-mt">
+                  <div class="kp-label">Colores sugeridos</div>
+                  <div class="kp-presets">
+                    <button
+                      v-for="p in colorPresets"
+                      :key="p.name"
+                      type="button"
+                      class="kp-preset"
+                      @click="applyColorPreset(p)"
+                      :style="{ background: `linear-gradient(135deg, ${p.start}, ${p.end})` }"
+                    >
+                      {{ p.name }}
+                    </button>
+                  </div>
+                </div>
+
+                <div v-if="colorMode === 'gradient'" class="kp-grid kp-mt">
+                  <n-form-item label="Color inicial (izquierda)">
+                    <div class="kp-color">
+                      <n-color-picker
+                        v-model:value="form.gradient_color_start"
+                        :show-alpha="false"
+                        :modes="['hex']"
+                        style="width: 100px;"
+                      />
+                      <n-input v-model:value="form.gradient_color_start" placeholder="#FF6B00" />
+                    </div>
+                  </n-form-item>
+                  <n-form-item label="Color final (derecha)">
+                    <div class="kp-color">
+                      <n-color-picker
+                        v-model:value="form.gradient_color_end"
+                        :show-alpha="false"
+                        :modes="['hex']"
+                        style="width: 100px;"
+                      />
+                      <n-input v-model:value="form.gradient_color_end" placeholder="#E11D48" />
+                    </div>
+                  </n-form-item>
+                </div>
+
+                <n-form-item v-else class="kp-mt" label="Color de fondo">
+                  <div class="kp-color kp-color--single">
+                    <n-color-picker
+                      :value="form.gradient_color_start"
+                      @update:value="handleColorStartChange"
+                      :show-alpha="false"
+                      :modes="['hex']"
+                      style="width: 120px;"
+                    />
+                    <n-input
+                      :value="form.gradient_color_start"
+                      @update:value="handleColorStartChange"
+                      placeholder="#FF6B00"
+                    />
+                  </div>
+                </n-form-item>
+              </template>
+            </section>
+
+            <!-- Paso 4: dónde y cuándo se muestra -->
+            <section class="kp-step">
+              <header class="kp-step__head">
+                <span class="kp-step__num">4</span>
+                <div>
+                  <h3 class="kp-step__title">¿Dónde se muestra?</h3>
+                  <p class="kp-step__desc">Activa o pausa la promoción y elige en qué pantallas aparece.</p>
+                </div>
+              </header>
+
+              <div class="kp-switch-row">
+                <div>
+                  <div class="kp-switch-row__title">Promoción activa</div>
+                  <div class="kp-muted">Si la pausas, deja de mostrarse en el kiosko.</div>
+                </div>
+                <n-switch v-model:value="form.is_active" />
+              </div>
+              <div class="kp-switch-row">
+                <div>
+                  <div class="kp-switch-row__title">Pantalla de bienvenida</div>
+                  <div class="kp-muted">Carrusel grande que ve el cliente al llegar al kiosko.</div>
+                </div>
+                <n-switch v-model:value="form.show_in_welcome" />
+              </div>
+              <div class="kp-switch-row">
+                <div>
+                  <div class="kp-switch-row__title">Catálogo</div>
+                  <div class="kp-muted">Banner en la pantalla donde se elige la comida.</div>
+                </div>
+                <n-switch v-model:value="form.show_in_catalog" />
+              </div>
+              <div class="kp-switch-row">
+                <div>
+                  <div class="kp-switch-row__title">Orden de aparición</div>
+                  <div class="kp-muted">El 0 se muestra primero; los números mayores van después.</div>
+                </div>
+                <n-input-number v-model:value="form.order_priority" :min="0" :max="100" style="width: 120px;" />
+              </div>
+            </section>
+          </div>
+
+          <!-- Derecha: vista previa fija mientras se desplaza el formulario -->
+          <aside class="kp-preview">
+            <div class="kp-preview__head">
+              <v-icon name="md-pointofsale-twotone" scale="1.2" />
+              <div>
+                <strong>Así se verá en el kiosko</strong>
+                <span class="kp-muted">Vista previa en tiempo real</span>
+              </div>
+            </div>
+
+            <div class="preview-card" :style="previewCardStyle">
+              <!-- Sombreado cuando el fondo es una imagen -->
+              <div
+                v-if="effectivePreviewImage && colorMode === 'image'"
+                class="preview-shade"
+                :style="previewOverlayStyle"
+              />
+              <!-- Círculos decorativos cuando no hay imagen (igual que en el kiosko) -->
+              <template v-else>
+                <span class="preview-circle preview-circle--a" />
+                <span class="preview-circle preview-circle--b" />
+              </template>
+
+              <div class="preview-content">
+                <span v-if="form.badge_text" class="preview-badge">{{ form.badge_text }}</span>
+                <h4 class="preview-title">{{ form.title || 'Título de la promoción' }}</h4>
+                <p class="preview-subtitle">{{ form.subtitle || 'Subtítulo del anuncio' }}</p>
+                <div v-if="form.promo_price && targetType !== 'NONE'" class="preview-price-row">
+                  <span class="preview-price">S/ {{ Number(form.promo_price).toFixed(2) }}</span>
+                  <span v-if="selectedOriginalPrice && selectedOriginalPrice > form.promo_price" class="preview-old-price">
+                    S/ {{ selectedOriginalPrice.toFixed(2) }}
+                  </span>
                 </div>
               </div>
             </div>
-          </n-gi>
-        </n-grid>
+
+            <dl class="kp-summary">
+              <div class="kp-summary__row">
+                <dt>Destino</dt>
+                <dd class="kp-truncate">{{ selectedTargetName }}</dd>
+              </div>
+              <div class="kp-summary__row">
+                <dt>Se muestra en</dt>
+                <dd>
+                  <span class="kp-tag" :class="{ 'kp-tag--on': form.show_in_welcome }">Bienvenida</span>
+                  <span class="kp-tag" :class="{ 'kp-tag--on': form.show_in_catalog }">Catálogo</span>
+                </dd>
+              </div>
+              <div class="kp-summary__row">
+                <dt>Estado</dt>
+                <dd :class="form.is_active ? 'kp-state kp-state--on' : 'kp-state kp-state--off'">
+                  {{ form.is_active ? '● Activa' : '○ Pausada' }}
+                </dd>
+              </div>
+            </dl>
+          </aside>
+
+        </div>
       </n-form>
 
       <template #action>
         <n-space justify="end" class="mt-2">
           <n-button @click="showModal = false">Cancelar</n-button>
           <n-button type="primary" :loading="saving" @click="handleSave">
-            Guardar Promoción
+            Guardar promoción
           </n-button>
         </n-space>
       </template>
@@ -605,8 +460,6 @@ import {
   NTag,
   NSwitch,
   NColorPicker,
-  NTabs,
-  NTabPane,
   NRadioGroup,
   NRadioButton,
   NSlider,
@@ -1275,57 +1128,434 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* ===== Modal de promoción: formulario en pasos + vista previa ===== */
+.kp-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 24px;
+  align-items: start;
+}
+
+.kp-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.kp-step {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 18px 20px;
+}
+
+.kp-step__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.kp-step__num {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kp-step__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.3;
+  color: #0f172a;
+}
+
+.kp-step__desc {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.kp-hint {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: #64748b;
+}
+
+.kp-hint--tight {
+  margin: 0 0 12px;
+}
+
+.kp-muted {
+  font-size: 12.5px;
+  color: #64748b;
+}
+
+.kp-label {
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.kp-mt {
+  margin-top: 14px;
+}
+
+.kp-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
+}
+
+/* Selector segmentado: tres opciones del mismo ancho */
+.kp-seg {
+  display: flex;
+  width: 100%;
+}
+.kp-seg :deep(.n-radio-button) {
+  flex: 1;
+  text-align: center;
+}
+.kp-seg__item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-weight: 700;
+}
+
+/* Comparación de precio normal / ahorro */
+.kp-price-card {
+  align-self: end;
+  margin-bottom: 24px;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  color: #475569;
+}
+.kp-price-card__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.kp-strike {
+  text-decoration: line-through;
+  color: #0f172a;
+}
+.kp-save {
+  font-weight: 800;
+  color: #059669;
+}
+
+.kp-badge-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+.kp-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Cajas internas (imagen, sombreado) */
+.kp-box {
+  padding: 14px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+.kp-box__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: #0f172a;
+}
+.kp-linked-photo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+}
+.kp-linked-photo__img {
+  width: 46px;
+  height: 46px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+.kp-linked-photo__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+}
+.kp-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.kp-ok {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #059669;
+}
+.kp-pill {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* Colores sugeridos */
+.kp-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.kp-preset {
+  border: 0;
+  border-radius: 999px;
+  padding: 6px 14px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.18);
+}
+.kp-color {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.kp-color--single {
+  max-width: 380px;
+}
+
+/* Filas con interruptor */
+.kp-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-top: 1px solid #f1f5f9;
+}
+.kp-switch-row:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+.kp-switch-row__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* ===== Vista previa ===== */
+.kp-preview {
+  position: sticky;
+  top: 0;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  background: #f8fafc;
+}
+.kp-preview__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  color: #0f172a;
+}
+.kp-preview__head strong,
+.kp-preview__head .kp-muted {
+  display: block;
+}
+
 .preview-card {
-  min-height: 130px;
   position: relative;
+  min-height: 190px;
+  display: flex;
+  align-items: flex-end;
   overflow: hidden;
-  color: #ffffff !important;
+  border-radius: 20px;
+  color: #ffffff;
+  box-shadow: 0 12px 28px -6px rgba(15, 23, 42, 0.25);
+}
+/* Pie oscuro para que el texto blanco se lea sobre cualquier color */
+.preview-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.38) 100%);
+  pointer-events: none;
+}
+.preview-shade {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.preview-circle {
+  position: absolute;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+}
+.preview-circle--a {
+  top: -50px;
+  right: -40px;
+  width: 190px;
+  height: 190px;
+}
+.preview-circle--b {
+  bottom: -60px;
+  right: 70px;
+  width: 140px;
+  height: 140px;
+  background: rgba(255, 255, 255, 0.07);
+}
+.preview-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  padding: 18px;
+}
+.preview-badge {
+  display: inline-block;
+  margin-bottom: 8px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #c2410c;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+.preview-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.3px;
+  color: #ffffff;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+}
+.preview-subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+}
+.preview-price-row {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-top: 10px;
+}
+.preview-price {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1;
+  color: #ffffff;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+}
+.preview-old-price {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: line-through;
 }
 
-.preview-card h4,
-.preview-card .preview-title {
-  color: #ffffff !important;
-  font-weight: 800 !important;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.65) !important;
+/* Resumen bajo la vista previa */
+.kp-summary {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
 }
-
-.preview-card p,
-.preview-card .preview-subtitle {
-  color: rgba(255, 255, 255, 0.95) !important;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55) !important;
+.kp-summary__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
-
-.preview-card .preview-badge-pill {
-  color: #ffffff !important;
-  font-weight: 800 !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+.kp-summary dt {
+  font-weight: 600;
+  color: #64748b;
 }
-
-.preview-card .preview-price-badge {
-  background-color: #ffffff !important;
-  color: #1e293b !important;
-  font-weight: 900 !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+.kp-summary dd {
+  margin: 0;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  gap: 6px;
 }
-
-.preview-card .preview-old-price {
-  color: rgba(255, 255, 255, 0.7) !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
-  text-decoration: line-through !important;
+.kp-truncate {
+  max-width: 190px;
+  display: block !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-
-.preview-card .preview-cta-btn {
-  background-color: rgba(255, 255, 255, 0.28) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.6) !important;
-  color: #ffffff !important;
-  backdrop-filter: blur(4px) !important;
+.kp-tag {
+  padding: 1px 9px;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+  background: #f1f5f9;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 700;
 }
-
-.preview-card .preview-cta-btn-solid {
-  background-color: #ffffff !important;
-  color: #1e293b !important;
-  font-weight: 900 !important;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25) !important;
+.kp-tag--on {
+  border-color: #fed7aa;
+  background: #fff7ed;
+  color: #c2410c;
+}
+.kp-state--on {
+  color: #059669 !important;
+}
+.kp-state--off {
+  color: #b91c1c !important;
 }
 
 .fs-7 {
@@ -1333,5 +1563,41 @@ onMounted(() => {
 }
 .fs-8 {
   font-size: 0.75rem;
+}
+
+/* Pantallas angostas: la vista previa pasa arriba y todo en una columna */
+@media (max-width: 960px) {
+  .kp-layout {
+    grid-template-columns: 1fr;
+  }
+  .kp-preview {
+    position: static;
+    order: -1;
+  }
+  .kp-grid {
+    grid-template-columns: 1fr;
+  }
+  .kp-price-card {
+    margin-bottom: 14px;
+  }
+}
+
+/* Celulares: el selector segmentado no se corta (sin iconos y con menos relleno) */
+@media (max-width: 560px) {
+  .kp-seg :deep(.n-radio-button) {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0 4px;
+  }
+  .kp-seg__item {
+    font-size: 12.5px;
+    gap: 0;
+  }
+  .kp-seg__item :deep(svg) {
+    display: none;
+  }
+  .kp-step {
+    padding: 16px 14px;
+  }
 }
 </style>
