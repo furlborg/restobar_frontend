@@ -440,18 +440,13 @@
                                 <div class="card-header-icon sales-bg"><v-icon name="md-pointofsale-twotone" /></div>
                                 <div>
                                     <h3 class="group-title">Parámetros de Comprobantes e Impuestos</h3>
-                                    <p class="group-desc">Define la ticketera de caja, tipos de documento por defecto y tasas tributarias SUNAT.</p>
+                                    <p class="group-desc">Define los tipos de documento por defecto y las tasas tributarias SUNAT. La ticketera de caja se configura en Impresión y Tickets.</p>
                                 </div>
                             </div>
 
                             <n-card class="settings-inner-card" :bordered="true">
                                 <n-form :disabled="!editMode" label-placement="top">
                                     <n-grid responsive="screen" cols="1 s:2 m:3 l:5" :x-gap="20" :y-gap="14">
-                                        <n-form-item-gi label="Impresora de Comprobantes (Caja)">
-                                            <n-input v-model:value="businessSettings.sale.printer_name" placeholder="Ej: CAJA" size="large" />
-                                            <template #feedback>Nombre en Kuzeta para tickets de venta.</template>
-                                        </n-form-item-gi>
-
                                         <n-form-item-gi label="Documento por Defecto">
                                             <n-select v-model:value="businessSettings.sale.default_invoice" :options="invoiceOptions" size="large" />
                                             <template #feedback>Tipo inicial al abrir ventana de cobro.</template>
