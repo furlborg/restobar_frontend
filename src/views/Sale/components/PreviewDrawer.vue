@@ -339,27 +339,13 @@ export default defineComponent({
 
                     const voucherData = await gordoPuto();
 
-                    const sendTicketData = async () => {
-                        if (!voucherData) return;
-                        const jsonTicket = {
-                            ...voucherData,
-                            printer_name: voucherData?.printer_name
-                                ? voucherData.printer_name
-                                : settingsStore.business_settings?.sale?.printer_name
-                        };
-                        try {
-                            const response = await http.post('orders/print-proxy/', jsonTicket);
-                            if (response.status === 200) {
-                                message.success('Voucher enviado a imprimir');
-                            }
-                        } catch (error) {
-                            console.error("Error enviando voucher", error);
-                            message.error("Error de conexión con el servidor");
-                        }
-                    };
-
+                    // El POST a sales/{id}/print/ ya envía el voucher a Kuzeta desde el backend
+                    // (sender_data). Reenviarlo por orders/print-proxy duplicaba el mensaje
+                    // (mismo id): Kuzeta lo descartaba, pero se generaba igual.
                     try {
-                        await sendTicketData();
+                        if (voucherData) {
+                            message.success('Voucher enviado a imprimir');
+                        }
                     } catch (err) {
                         console.error("Error al imprimir voucher:", err);
                     } finally {
