@@ -10,6 +10,7 @@ import {
 } from "@/plugins/numeric-only";
 import "@/style/bootstrap-utilities";
 import "@/style/naive-ui-overrides.css";
+import "@/style/mobile-responsive.css";
 import "vfonts/Lato.css";
 import VueCookies from "vue-cookies";
 import { addIcons } from "oh-vue-icons";

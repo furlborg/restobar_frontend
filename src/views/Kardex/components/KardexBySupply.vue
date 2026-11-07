@@ -1,5 +1,5 @@
 <template>
-  <n-grid responsive="screen" cols="10 s:10 m:10 l:10 xl:10 2xl:10" :x-gap="12">
+  <n-grid class="kardex-grid" responsive="screen" cols="10 s:10 m:10 l:10 xl:10 2xl:10" :x-gap="12">
     <n-gi :span="3">
       <n-card :bordered="false" embedded>
         <n-space class="mb-2">
@@ -42,7 +42,7 @@
       </n-card>
     </n-gi>
     <n-gi :span="7">
-      <n-card :title="ProductInstance.product">
+      <n-card class="kardex-detail-card" :title="ProductInstance.product">
         <template #header-extra>
           <n-date-picker type="datetimerange" size="small" value-format="yyyy-MM-dd HH:mm:ss"
             v-model:formatted-value="dateSearch" clearable />
@@ -334,5 +334,35 @@ const columns = createKardexBySupplyColumns();
   -moz-user-select: none;
   -khtml-user-select: none;
   -ms-user-select: none;
+}
+
+/* Solo celular: lista arriba y detalle abajo (en PC se mantienen las 2 columnas) */
+@media (max-width: 768px) {
+  .kardex-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    row-gap: 12px;
+  }
+
+  .kardex-grid > * {
+    grid-column: 1 / -1 !important;
+  }
+
+  .kardex-grid .listItems {
+    height: 240px !important;
+  }
+
+  .kardex-grid .kardex-detail-card .n-data-table {
+    height: 420px !important;
+  }
+
+  .kardex-grid .kardex-detail-card .n-card-header__extra {
+    flex-basis: 100%;
+  }
+
+  .kardex-grid .kardex-detail-card .n-card-header__extra .n-date-picker {
+    flex: 1 1 100%;
+    min-width: 0;
+    margin-bottom: 6px;
+  }
 }
 </style>
