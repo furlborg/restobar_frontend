@@ -192,7 +192,7 @@ const getDarkTheme = computed(() =>
 
 @media (max-width: 768px) {
   .layout-content-main {
-    margin: 8px 0 20px;
+    margin: 8px 10px 20px;
   }
 }
 

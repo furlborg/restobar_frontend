@@ -8,6 +8,10 @@ export const useGenericsStore = defineStore('Generics', {
     actions: {
         initializeStore() {
             this.device = getDeviceType()
+            if (!this._resizeBound) {
+                this._resizeBound = true
+                window.addEventListener('resize', () => this.updateDevice())
+            }
         },
         updateDevice() {
             this.device = getDeviceType()

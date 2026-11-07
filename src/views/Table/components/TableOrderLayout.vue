@@ -133,6 +133,7 @@ import TicketPreview from "@/views/Order/components/TicketPreview";
 import { ref, computed, onMounted, onUnmounted, provide } from 'vue';
 import { useRoute, useRouter, onBeforeRouteLeave, onBeforeRouteUpdate } from "vue-router";
 import { useTableLock } from "@/composables/useTableLock";
+import { useFitViewportHeight } from "@/composables/useFitViewportHeight";
 import { useDialog, useMessage } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useUserStore, useActiveUsersStore } from "@/store/modules/user";
@@ -652,6 +653,8 @@ const goHome = () => {
     router.push({ name: homeRouteName.value });
 };
 
+useFitViewportHeight(".table-order-layout-root");
+
 onMounted(() => {
     const tableParam = route.params.table;
     const tableIdNum = typeof tableParam === 'string' ? parseInt(tableParam) : tableParam;
@@ -727,6 +730,10 @@ provide("addOrderToCustomer", addOrderToCustomer);
         height: calc(100vh - 74px) !important;
         height: calc(100dvh - 74px) !important;
         max-height: calc(100dvh - 74px) !important;
+        /* svh = altura con la barra del navegador visible; evita que el layout exterior se pueda deslizar */
+        height: calc(100svh - 74px) !important;
+        max-height: calc(100svh - 74px) !important;
+        overscroll-behavior: none;
         overflow: hidden !important;
         display: flex;
         flex-direction: column;
@@ -771,6 +778,17 @@ provide("addOrderToCustomer", addOrderToCustomer);
             flex-direction: column !important;
         }
 
+        /* Naive UI renderiza los paneles como hijos directos de .n-tabs (sin .n-tabs-pane-wrapper) */
+        :deep(.table-order-mobile-tabs > .n-tab-pane:not([style*="display: none"])) {
+            flex: 1 1 0px !important;
+            height: auto !important;
+            min-height: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            display: flex !important;
+            flex-direction: column !important;
+        }
+
         .table-mobile-view-wrapper {
             flex: 1 1 0px;
             height: 100%;
@@ -781,7 +799,8 @@ provide("addOrderToCustomer", addOrderToCustomer);
             overflow-x: hidden !important;
             -webkit-overflow-scrolling: touch !important;
             touch-action: pan-y !important;
-            background: #ffffff;
+            background: transparent;
+            overscroll-behavior: contain;
         }
     }
 }

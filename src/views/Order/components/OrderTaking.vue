@@ -1678,6 +1678,38 @@ const handleMainAction = () => {
   transform: translateY(-1px);
 }
 
+/* Solo celular: evita que títulos y serie se partan letra por letra */
+@media (max-width: 768px) {
+  .panel-header {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .panel-header-left {
+    flex-wrap: wrap;
+  }
+
+  .table-badge {
+    font-size: 15px;
+    white-space: nowrap;
+  }
+
+  .checkout-header-top {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .checkout-title {
+    white-space: nowrap;
+  }
+
+  .checkout-header-top :deep(.n-text) {
+    white-space: nowrap;
+    font-size: 16px !important;
+  }
+}
+
 @media (max-width: 992px) {
   .pos-billing-wrapper {
     height: auto !important;

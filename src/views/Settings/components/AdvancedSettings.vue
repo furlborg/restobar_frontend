@@ -113,7 +113,7 @@
             <n-tabs 
                 v-model:value="activeTab" 
                 type="line" 
-                placement="left" 
+                :placement="isMobileView ? 'top' : 'left'"
                 size="large" 
                 class="settings-tabs"
             >
@@ -1831,16 +1831,23 @@ export default defineComponent({
             }
         };
 
+        // En celular las pestañas van arriba (en PC se mantiene el menú lateral)
+        const isMobileView = ref(window.innerWidth <= 768);
+        const updateIsMobileView = () => { isMobileView.value = window.innerWidth <= 768; };
+
         onMounted(() => {
+            window.addEventListener("resize", updateIsMobileView);
             window.addEventListener("whatsapp-status-changed", handleWhatsAppStatusEvent);
             fetchWhatsAppStatus(true);
         });
 
         onUnmounted(() => {
+            window.removeEventListener("resize", updateIsMobileView);
             window.removeEventListener("whatsapp-status-changed", handleWhatsAppStatusEvent);
         });
 
         return {
+            isMobileView,
             activeTab,
             editMode,
             saving,
@@ -2264,5 +2271,98 @@ export default defineComponent({
 
 .border-top {
     border-top: 1px solid #f1f5f9;
+}
+
+/* ==================================================== */
+/* SOLO CELULAR: pestañas arriba y contenido a ancho    */
+/* completo. En PC no cambia nada.                      */
+/* ==================================================== */
+@media (max-width: 768px) {
+    .settings-container {
+        height: auto;
+        max-height: none;
+        overflow: visible;
+    }
+
+    .settings-header {
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .header-left {
+        width: 100%;
+    }
+
+    .page-title {
+        font-size: 18px;
+    }
+
+    .header-search {
+        flex: 1 1 100%;
+        max-width: none;
+        margin: 0;
+    }
+
+    .header-actions {
+        width: 100%;
+    }
+
+    .search-results-banner {
+        padding: 10px 12px;
+    }
+
+    .settings-body {
+        display: block;
+        overflow: visible;
+    }
+
+    .settings-tabs {
+        height: auto;
+        flex-direction: column;
+        overflow: visible;
+
+        :deep(.n-tabs-nav) {
+            width: 100%;
+            min-width: 0;
+            max-width: none;
+            height: auto;
+            border-right: none;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 8px;
+            overflow: hidden;
+        }
+
+        :deep(.n-tabs-wrapper),
+        :deep(.n-tabs-tab-wrapper),
+        :deep(.n-tabs-tab) {
+            width: auto;
+        }
+
+        :deep(.n-tabs-tab) {
+            margin-bottom: 0;
+            margin-right: 6px;
+        }
+
+        :deep(.n-tab-pane),
+        :deep(.n-tabs-pane-wrapper) {
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
+        }
+
+        :deep(.n-tab-pane) {
+            padding: 16px 12px 80px 12px !important;
+        }
+    }
+
+    .tab-sub-title {
+        display: none;
+    }
+
+    .tab-label-item {
+        width: auto;
+        white-space: nowrap;
+    }
 }
 </style>
