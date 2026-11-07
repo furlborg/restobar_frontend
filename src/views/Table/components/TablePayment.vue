@@ -1,5 +1,12 @@
 <template>
   <div class="pos-billing-wrapper">
+    <!-- Solo celular: la lista de productos va en su propia pestaña (en PC no se muestra) -->
+    <div class="mobile-panel-switch">
+      <button type="button" :class="{ active: mobilePanel === 'pay' }" @click="mobilePanel = 'pay'">Cobro</button>
+      <button type="button" :class="{ active: mobilePanel === 'items' }" @click="mobilePanel = 'items'">
+        Productos <span class="mps-count">{{ totalProductCount }}</span>
+      </button>
+    </div>
     <n-spin :show="loading">
       <div 
         class="pos-billing-grid"
@@ -12,7 +19,7 @@
         <!-- ============================================== -->
         <!-- COLUMNA IZQUIERDA: DETALLE DE CUENTA & PEDIDOS -->
         <!-- ============================================== -->
-        <section class="pos-panel pos-account-panel">
+        <section class="pos-panel pos-account-panel" :class="{ 'mps-hidden': mobilePanel !== 'items' }">
           <header class="panel-header">
             <div class="panel-header-left">
               <span class="table-badge">Resumen de Pedidos</span>
@@ -50,7 +57,7 @@
         <!-- ============================================== -->
         <!-- COLUMNA DERECHA: LIQUIDACIÓN Y COMMAND CENTER  -->
         <!-- ============================================== -->
-        <section class="pos-panel pos-checkout-panel">
+        <section class="pos-panel pos-checkout-panel" :class="{ 'mps-hidden': mobilePanel !== 'pay' }">
           <!-- CABECERA: COMPROBANTE & CONDICIÓN -->
           <div class="checkout-header-bar">
             <div class="checkout-header-top">
@@ -282,6 +289,7 @@
                 <n-input-number 
                   class="payment-given-input" 
                   size="small"
+                  :input-props="{ inputmode: 'decimal' }"
                   v-model:value="paymentInputModel" 
                   :min="0" 
                   :precision="2" 
@@ -894,6 +902,9 @@ const handlePaymentChange = (value) => {
 };
 
 const currentTableName = computed(() => tableStore.getTableByID(route.params.table)?.description || 'Mesa');
+
+// Pestaña activa en celular: 'pay' (cobro) o 'items' (lista de productos)
+const mobilePanel = ref('pay');
 
 const totalProductCount = computed(() => {
   const detailsCount = (saleStore.toSale || []).reduce((acc, d) => acc + Number(d.quantity || 0), 0);
@@ -2216,6 +2227,94 @@ onMounted(async () => {
   padding: 0 20px !important;
 }
 
+/* Solo celular: evita que títulos y serie se partan letra por letra */
+@media (max-width: 768px) {
+  .panel-header {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .panel-header-left {
+    flex-wrap: wrap;
+  }
+
+  .table-badge {
+    font-size: 15px;
+    white-space: nowrap;
+  }
+
+  .checkout-header-top {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .checkout-title {
+    white-space: nowrap;
+  }
+
+  .checkout-header-top :deep(.n-text) {
+    white-space: nowrap;
+    font-size: 16px !important;
+  }
+
+  /* La lista de productos se colapsaba a 0 de alto (flex: 1 1 0 dentro de un panel de alto automático) */
+  .products-scroll-viewport {
+    flex: 0 0 auto;
+  }
+
+  /* Métodos de pago: 2 por fila y sin salirse de la tarjeta */
+  .payment-methods-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pm-tile {
+    min-width: 0;
+  }
+
+  .pm-tile .pm-name {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  /* Tabla de productos compacta (se ven precio y total sin deslizar de lado) */
+  :deep(.product-details-table th) {
+    padding: 8px 4px !important;
+    font-size: 10px;
+    letter-spacing: 0;
+    white-space: normal;
+    line-height: 1.15;
+  }
+
+  :deep(.product-details-table td) {
+    padding: 7px 4px !important;
+    font-size: 12.5px;
+  }
+
+  :deep(.product-details-table .custom-input) {
+    font-size: 12.5px !important;
+    padding: 3px 2px !important;
+  }
+
+  :deep(.product-details-table .product-name-input) {
+    font-size: 12.5px !important;
+  }
+
+  :deep(.product-details-table .col-qty) {
+    font-size: 13px !important;
+  }
+
+  :deep(.product-details-table .col-total) {
+    font-size: 12px !important;
+    padding-right: 6px !important;
+  }
+
+  :deep(.product-details-table .n-tag) {
+    padding: 0 4px !important;
+    font-size: 10px !important;
+  }
+}
+
 /* ==================================================== */
 /* RESPONSIVE PARA DISPOSITIVOS MÓVILES Y TABLETS       */
 /* ==================================================== */
@@ -2302,5 +2401,99 @@ onMounted(async () => {
   margin-top: auto;
   padding-top: 8px;
   background: linear-gradient(to top, #ffffff 85%, rgba(255, 255, 255, 0));
+}
+
+/* Solo celular: pestañas "Cobro" / "Productos" (la lista puede ser larga, p. ej. 20 platos) */
+.mobile-panel-switch {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-panel-switch {
+    display: flex;
+    gap: 6px;
+    padding: 4px;
+    margin-bottom: 8px;
+    background: #f1f5f9;
+    border-radius: 10px;
+  }
+
+  .mobile-panel-switch button {
+    flex: 1;
+    border: 0;
+    background: transparent;
+    padding: 8px 6px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #475569;
+  }
+
+  .mobile-panel-switch button.active {
+    background: #ffffff;
+    color: #ea580c;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+  }
+
+  .mps-count {
+    display: inline-block;
+    min-width: 18px;
+    margin-left: 4px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: #fff7ed;
+    color: #ea580c;
+    font-size: 11px;
+    line-height: 18px;
+  }
+
+  .mps-hidden {
+    display: none !important;
+  }
+
+  /* En su propia pestaña la lista se muestra completa y se desliza con la pantalla */
+  .products-scroll-viewport {
+    max-height: none !important;
+  }
+}
+
+/* Solo celular: campo "Pago Recibido" cómodo de leer y de escribir */
+@media (max-width: 768px) {
+  .settlement-field-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .settlement-label {
+    font-size: 12px;
+  }
+
+  .payment-given-input {
+    width: 100%;
+  }
+
+  .payment-given-input :deep(.n-input) {
+    --n-height: 44px !important;
+    font-size: 18px;
+  }
+
+  /* Sin los botones − / + para que quepan los dígitos (se escribe con el teclado numérico) */
+  .payment-given-input :deep(.n-input__suffix) {
+    display: none;
+  }
+
+  /* Opciones del pie: que no se partan letra por letra */
+  .checkout-footer-options {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 6px 14px;
+  }
+
+  .checkout-footer-options :deep(.n-checkbox) {
+    white-space: nowrap;
+  }
 }
 </style>
