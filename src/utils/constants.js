@@ -1650,6 +1650,7 @@ export const createSaleColumns = ({
       title: "Acciones",
       key: "actions",
       width: 235,
+      align: "right",
       fixed: fixedActions ? "right" : undefined,
       render(row) {
         const isNote = row.invoice_type === "80";
@@ -1689,7 +1690,7 @@ export const createSaleColumns = ({
           "div",
           {
             style:
-              "display: flex; gap: 4px; flex-wrap: nowrap; align-items: center;",
+              "display: flex; gap: 4px; flex-wrap: nowrap; align-items: center; justify-content: flex-end;",
           },
           [
             userStore.hasPermission("send_sale") && !isNote
