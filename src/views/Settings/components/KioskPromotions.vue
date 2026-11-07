@@ -16,6 +16,10 @@
         </div>
       </div>
       <n-space>
+        <n-button secondary @click="openCategoriesModal">
+          <template #icon><v-icon name="md-fastfood-twotone" /></template>
+          Categorías del kiosko
+        </n-button>
         <n-button secondary :loading="loading" @click="loadPromotions">
           <template #icon><v-icon name="hi-solid-refresh" /></template>
           Actualizar
@@ -38,7 +42,59 @@
         :pagination="{ pageSize: 10 }"
       />
     </n-card>
-    <!-- Modal Form: Create / Edit -->
+    <!-- Modal: categorías que se muestran en el kiosko -->
+    <n-modal
+      v-model:show="showCategoriesModal"
+      preset="card"
+      title="Categorías del kiosko"
+      style="max-width: 560px; width: 95vw;"
+      content-style="padding: 16px 20px;"
+    >
+      <n-text depth="3" class="fs-7">
+        Elige qué categorías verá el cliente en el autoservicio. Las ocultas no aparecen en el kiosko, pero sus
+        productos siguen en el sistema.
+      </n-text>
+
+      <div class="kc-toolbar">
+        <n-input v-model:value="categorySearch" clearable placeholder="Buscar categoría..." />
+        <n-tag round :type="visibleCategoriesCount ? 'success' : 'warning'">
+          {{ visibleCategoriesCount }} de {{ kioskCategories.length }} visibles
+        </n-tag>
+      </div>
+      <n-space class="kc-bulk">
+        <n-button size="small" secondary :disabled="categoriesLoading" @click="setAllKioskCategories(true)">
+          Mostrar {{ categorySearch ? "las filtradas" : "todas" }}
+        </n-button>
+        <n-button size="small" secondary :disabled="categoriesLoading" @click="setAllKioskCategories(false)">
+          Ocultar {{ categorySearch ? "las filtradas" : "todas" }}
+        </n-button>
+      </n-space>
+
+      <n-spin :show="categoriesLoading">
+        <n-scrollbar style="max-height: 52vh;">
+          <div v-if="filteredKioskCategories.length" class="kc-list">
+            <label v-for="cat in filteredKioskCategories" :key="cat.id" class="kc-row">
+              <span class="kc-row__name">{{ cat.description }}</span>
+              <n-switch
+                :value="cat.show_in_kiosk"
+                :loading="savingCategoryIds.includes(cat.id)"
+                @update:value="(value) => toggleKioskCategory(cat, value)"
+              />
+            </label>
+          </div>
+          <n-empty
+            v-else-if="!categoriesLoading"
+            :description="categorySearch ? 'Ninguna categoría coincide' : 'No hay categorías activas'"
+            class="kc-empty"
+          />
+        </n-scrollbar>
+      </n-spin>
+      <n-text v-if="!categoriesLoading && kioskCategories.length && !visibleCategoriesCount" type="warning" class="fs-7">
+        Con todas las categorías ocultas el kiosko no mostrará ningún producto.
+      </n-text>
+    </n-modal>
+
+    <!-- Modal Form: Create / Edit -->
     <!-- Modal: crear / editar promoción de autoservicio -->
     <n-modal
       v-model:show="showModal"
@@ -476,6 +532,7 @@ import {
   getProductsAll,
   getCombos,
   getCategories,
+  setCategoryShowInKiosk,
 } from "@/api/modules/products";
 
 const router = useRouter();
@@ -606,7 +663,7 @@ const calculatedDiscountPercent = computed(() => {
 const selectedTargetName = computed(() => {
   if (targetType.value === "PRODUCT" && form.product) {
     const prod = productOptions.value.find((p) => p.value === form.product);
-    return prod ? prod.label : "Producto seleccionado";
+    return prod ? prod.name : "Producto seleccionado";
   }
   if (targetType.value === "COMBO" && form.combo) {
     const c = comboOptions.value.find((item) => item.value === form.combo);
@@ -738,7 +795,8 @@ const handleTargetTypeChange = (val) => {
 const onProductSelected = (prodId) => {
   const prod = productOptions.value.find((p) => p.value === prodId);
   if (prod && !form.title) {
-    form.title = prod.label;
+    // Solo el nombre: la etiqueta del selector trae "[Categoría] ... - S/ precio".
+    form.title = prod.name;
   }
 };
 
@@ -1120,6 +1178,68 @@ const columns = [
     },
   },
 ];
+
+// ─── Categorías que muestra el kiosko ───────────────────────────────────────
+const showCategoriesModal = ref(false);
+const categoriesLoading = ref(false);
+const kioskCategories = ref([]);
+const categorySearch = ref("");
+const savingCategoryIds = ref([]);
+
+const normalizeText = (str) =>
+  (str || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .trim();
+
+const filteredKioskCategories = computed(() => {
+  const q = normalizeText(categorySearch.value);
+  if (!q) return kioskCategories.value;
+  return kioskCategories.value.filter((c) => normalizeText(c.description).includes(q));
+});
+
+const visibleCategoriesCount = computed(
+  () => kioskCategories.value.filter((c) => c.show_in_kiosk).length
+);
+
+const openCategoriesModal = async () => {
+  showCategoriesModal.value = true;
+  categorySearch.value = "";
+  categoriesLoading.value = true;
+  try {
+    const res = await getCategories();
+    const list = res.data?.results || res.data || [];
+    kioskCategories.value = list
+      .filter((c) => !c.is_disabled)
+      // Si el backend aún no devuelve el campo, se asume visible (valor por defecto).
+      .map((c) => ({ ...c, show_in_kiosk: c.show_in_kiosk !== false }));
+  } catch (error) {
+    message.error("No se pudieron cargar las categorías");
+  } finally {
+    categoriesLoading.value = false;
+  }
+};
+
+const toggleKioskCategory = async (category, value) => {
+  const previous = category.show_in_kiosk;
+  category.show_in_kiosk = value;
+  savingCategoryIds.value.push(category.id);
+  try {
+    await setCategoryShowInKiosk(category, value);
+  } catch (error) {
+    category.show_in_kiosk = previous;
+    message.error(`No se pudo actualizar "${category.description}"`);
+  } finally {
+    savingCategoryIds.value = savingCategoryIds.value.filter((id) => id !== category.id);
+  }
+};
+
+// Aplica a las categorías que se están viendo (respeta el buscador).
+const setAllKioskCategories = async (value) => {
+  const pending = filteredKioskCategories.value.filter((c) => c.show_in_kiosk !== value);
+  await Promise.all(pending.map((c) => toggleKioskCategory(c, value)));
+};
 
 onMounted(() => {
   loadPromotions();
@@ -1599,5 +1719,42 @@ onMounted(() => {
   .kp-step {
     padding: 16px 14px;
   }
+}
+
+/* Categorías del kiosko */
+.kc-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 10px;
+}
+.kc-toolbar :deep(.n-input) {
+  flex: 1;
+}
+.kc-bulk {
+  margin-bottom: 10px;
+}
+.kc-list {
+  display: flex;
+  flex-direction: column;
+}
+.kc-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 6px 4px;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.18);
+  cursor: pointer;
+}
+.kc-row__name {
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kc-empty {
+  padding: 24px 0;
 }
 </style>

@@ -190,6 +190,20 @@ export async function disableProductCategory(id) {
   return await http.delete(`product-categories/${id}/`);
 }
 
+/**
+ * Elige si una categoría se muestra en el kiosko de autoservicio.
+ * El backend actualiza con PUT completo, por eso se envían todos los campos.
+ * @param {{id:number, description:string, is_disabled:boolean}} category
+ * @param {boolean} showInKiosk
+ */
+export async function setCategoryShowInKiosk(category, showInKiosk) {
+  return await http.put(`product-categories/${category.id}/`, {
+    description: category.description,
+    is_disabled: category.is_disabled,
+    show_in_kiosk: showInKiosk,
+  });
+}
+
 export async function getInventoryConcepts() {
   return await http.get("inventoryconcept/");
 }
