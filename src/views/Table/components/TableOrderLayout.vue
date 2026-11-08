@@ -743,7 +743,12 @@ provide("addOrderToCustomer", addOrderToCustomer);
             flex-shrink: 0 !important;
             margin-bottom: 2px !important;
         }
+    }
 
+    /* Las pestañas de celular se muestran hasta 1023px (isMobile = breakpoint xs/s de Naive), así que
+       sus estilos deben cubrir también tablets (769–1023px). Antes solo llegaban a 768px y en tablet
+       las pestañas no tomaban alto: la mesa (y el modo mozo) quedaba en blanco, sin categorías. */
+    @media (max-width: 1023.98px) {
         :deep(.table-order-mobile-tabs) {
             flex: 1 1 0px !important;
             min-height: 0 !important;
