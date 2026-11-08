@@ -747,11 +747,6 @@ const openMobileMenu = () => {
 };
 
 onMounted(() => {
-    if (route.name === 'WHome' && userStore.user?.role && userStore.user.role !== 'MOZO' && !route.query.waiter_mode) {
-        router.replace({ name: 'TableHome' });
-        return;
-    }
-
     loadTablesData();
 
     const fetch = new Date();
