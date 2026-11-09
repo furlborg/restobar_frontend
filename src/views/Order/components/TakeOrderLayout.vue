@@ -713,7 +713,12 @@ onBeforeRouteLeave((to) => handleRouteGuard(to, true));
     flex-shrink: 0 !important;
     margin-bottom: 2px !important;
   }
+}
 
+/* Las pestañas se muestran hasta 991px (clase d-lg-none de Bootstrap), así que sus estilos deben
+   cubrir también tablets (769–991px). Antes solo llegaban a 768px y en tablet las pestañas no
+   tomaban alto: delivery / para llevar quedaba en blanco, sin categorías. */
+@media (max-width: 991.98px) {
   #TakeOrderLayout > :deep(.n-tabs) {
     flex: 1 1 0px !important;
     min-height: 0 !important;
