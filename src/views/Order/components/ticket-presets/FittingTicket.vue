@@ -58,9 +58,6 @@
             <div>{{ info.created }}</div>
             <div>{{ info.username }}</div>
           </template>
-          <div v-if="info.order_type !== 'M' && data?.ask_for" key="ask_for">
-            REFERENCIA: {{ data?.ask_for }}
-          </div>
         </div>
         <template
           v-if="
@@ -158,6 +155,10 @@
           fontSize: `${settingsStore.business_settings.printer.footer_font_size}px`,
         }"
       >
+        <!-- "Preguntar por": solo para llevar, debajo de los productos (igual que kuzeta) -->
+        <div v-if="info.order_type === 'P' && data?.ask_for" key="ask_for">
+          PREGUNTAR POR: {{ data?.ask_for }}
+        </div>
         <template
           v-if="
             settingsStore.business_settings.printer.info_location === 'footer'

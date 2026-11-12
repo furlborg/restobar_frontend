@@ -38,7 +38,7 @@
               </td>
             </tr>
             <tr>
-              <td align="right">REFERENCIA :</td>
+              <td align="right">CONTACTO :</td>
               <td>{{ data.delivery_info.person }}</td>
             </tr>
             <tr>
@@ -48,6 +48,14 @@
             <tr>
               <td align="right">DIRECCIÓN :</td>
               <td>{{ data.delivery_info.address }}</td>
+            </tr>
+            <tr v-if="data.delivery_info.reference">
+              <td align="right">REFERENCIA :</td>
+              <td>{{ data.delivery_info.reference }}</td>
+            </tr>
+            <tr v-if="data.ask_for">
+              <td align="right">PREGUNTAR POR :</td>
+              <td>{{ data.ask_for }}</td>
             </tr>
             <tr>
               <td align="right">F.EMISIÓN :</td>
