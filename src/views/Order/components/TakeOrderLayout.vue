@@ -271,7 +271,7 @@ const sale = ref({
   sale_details: [],
   ask_for: "",
   delivery_info: !(route.query.delivery === undefined) && route.query.delivery === "true"
-    ? { person: "", address: "", phone: "", deliveryman: "" }
+    ? { person: "", address: "", reference: "", phone: "", deliveryman: "" }
     : null,
   payments: null,
   do_update: true,
@@ -527,11 +527,12 @@ const handleDelivery = (v) => {
   sale.value.delivery_info = v ? {
     person: "",
     address: "",
+    reference: "",
     phone: "",
     deliveryman: "",
     amount: parseFloat(0).toFixed(2)
   } : null;
-  if (v) sale.value.ask_for = "";
+  // "Preguntar por" se conserva al pasar a delivery: también se imprime en el ticket de delivery
 };
 
 const performCreateOrder = async () => {
