@@ -149,7 +149,7 @@
                   <span class="order-origin-badge" :class="getOrderTypeClass(order.order_type)">
                     {{ getOrderBadgeText(order) }}
                   </span>
-                  <span v-if="order.is_flizzy" class="order-origin-badge badge-flizzy">Flizzy</span>
+                  <span v-if="order.is_app" class="order-origin-badge badge-app">App</span>
                   <span v-if="order.elapsedMinutes >= criticalThreshold" class="alert-status-badge critical" title="Demorado">
                     <span class="pulse-dot"></span>
                     <span>DEMORADO</span>
@@ -560,7 +560,7 @@ const activeGroupedOrders = computed(() => {
         area: prep.area,
         ask_for: prep.ask_for,
         user: prep.user,
-        is_flizzy: prep.is_flizzy === true,
+        is_app: prep.is_app === true,
         created_at_ms: createdAtMs,
         status: prep.status,
         items: [],
@@ -619,8 +619,8 @@ const isWebOrder = (o) => {
   return o.order_type === 'M' || o.order_type === 'D' || (o.table !== null && o.table !== undefined && o.table !== '');
 };
 
-// Pedidos que llegan de Flizzy: siguen contando también en sus pestañas de siempre
-const isFlizzyOrder = (o) => o.is_flizzy === true;
+// Pedidos que llegan de la app (Flizzy): siguen contando también en sus pestañas de siempre
+const isAppOrder = (o) => o.is_app === true;
 
 const isKioskOrder = (o) => {
   return o.order_type === 'P' && (o.table === null || o.table === undefined || o.table === '');
@@ -643,7 +643,7 @@ const stationTabs = computed(() => {
   return [
     { id: 'all', name: 'Todos', count: activeList.length, icon: 'md-listalt-round' },
     { id: 'web', name: 'Pedidos Web', count: activeList.filter(isWebOrder).length, icon: 'md-restaurant-round' },
-    { id: 'flizzy', name: 'Flizzy', count: activeList.filter(isFlizzyOrder).length, icon: 'md-deliverydining-round' },
+    { id: 'app', name: 'Pedidos App', count: activeList.filter(isAppOrder).length, icon: 'md-deliverydining-round' },
     { id: 'kiosk', name: 'Autoservicio', count: activeList.filter(isKioskOrder).length, icon: 'io-bag' },
     { id: 'delayed', name: 'Demorados', count: activeList.filter(isDelayedOrder).length, icon: 'md-warningamber-round' },
     { id: 'preparing', name: 'En Preparación', count: activeList.filter(isPreparingOrder).length, icon: 'md-localfiredepartment-round' },
@@ -655,8 +655,8 @@ const filteredOrders = computed(() => {
   switch (currentStation.value) {
     case 'web':
       return activeGroupedOrders.value.filter(isWebOrder);
-    case 'flizzy':
-      return activeGroupedOrders.value.filter(isFlizzyOrder);
+    case 'app':
+      return activeGroupedOrders.value.filter(isAppOrder);
     case 'kiosk':
       return activeGroupedOrders.value.filter(isKioskOrder);
     case 'delayed':
