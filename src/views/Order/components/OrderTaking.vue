@@ -170,6 +170,20 @@
                 </div>
               </div>
 
+              <!-- Preguntar por (opcional): para llevar → comanda de cocina; delivery → ticket de delivery.
+                   No se imprime en el ticket de venta. -->
+              <div class="form-field-item mt-2">
+                <span class="field-label">Preguntar por (opcional)</span>
+                <n-input
+                  v-model:value="localAskFor"
+                  placeholder="Nombre para llamar al cliente..."
+                  size="small"
+                  maxlength="100"
+                  clearable
+                  @update:value="handleAskForChange"
+                />
+              </div>
+
               <!-- Observaciones secundarias -->
               <div class="client-observations-row">
                 <n-button class="flizzy-text-btn" text size="tiny" @click="$emit('update:showObservations', !showObservations)">
@@ -263,6 +277,17 @@
                       placeholder="Calle, número, urbanización, referencia..." 
                       size="small"
                       @update:value="handleDeliveryAddressChange" 
+                    />
+                  </div>
+                  <!-- Referencia de la dirección (dónde vive el cliente): se guarda en delivery_info.reference -->
+                  <div class="form-field-item span-full">
+                    <span class="field-label">Referencia (opcional)</span>
+                    <n-input 
+                      v-model:value="localDeliveryInfo.reference" 
+                      placeholder="Frente al parque, casa de dos pisos, portón verde..." 
+                      size="small"
+                      maxlength="150"
+                      @update:value="handleDeliveryReferenceChange" 
                     />
                   </div>
                   <div class="form-field-item span-full">
@@ -561,7 +586,7 @@ const localAddress = ref(props.sale.address || null);
 const localPaymentMethod = ref(props.sale.payment_method || 1);
 const localAskFor = ref(props.sale.ask_for || "");
 const localObservations = ref(props.sale.observations || "");
-const localDeliveryInfo = ref(props.sale.delivery_info ? { ...props.sale.delivery_info } : { person: "", address: "", phone: "", deliveryman: "" });
+const localDeliveryInfo = ref(props.sale.delivery_info ? { reference: "", ...props.sale.delivery_info } : { person: "", address: "", reference: "", phone: "", deliveryman: "" });
 const selectedCustomer = ref(null);
 const localIsMultiple = ref(props.isMultiple);
 const localTicketPreview = ref(props.ticketPreview);
@@ -816,19 +841,31 @@ const toggleDeliveryMode = (value) => {
       person: localCustomerName.value || "",
       address: localAddress.value || "",
       phone: props.sale.customer?.phone || "",
+      reference: "",
       deliveryman: ""
     };
     emit('update:sale', { ...props.sale, delivery_info: { ...localDeliveryInfo.value } });
   }
 };
 
+const handleAskForChange = (value) => {
+  localAskFor.value = value || "";
+  emit('update:sale', { ...props.sale, ask_for: localAskFor.value });
+};
+
 const handleDeliveryPersonChange = (value) => {
   localDeliveryInfo.value.person = value;
-  emit('update:sale', { ...props.sale, delivery_info: { ...localDeliveryInfo.value }, ask_for: value });
+  // El contacto ya no pisa "Preguntar por": son datos distintos
+  emit('update:sale', { ...props.sale, delivery_info: { ...localDeliveryInfo.value } });
 };
 
 const handleDeliveryAddressChange = (value) => {
   localDeliveryInfo.value.address = value;
+  emit('update:sale', { ...props.sale, delivery_info: { ...localDeliveryInfo.value } });
+};
+
+const handleDeliveryReferenceChange = (value) => {
+  localDeliveryInfo.value.reference = value || "";
   emit('update:sale', { ...props.sale, delivery_info: { ...localDeliveryInfo.value } });
 };
 
@@ -1830,11 +1867,28 @@ const handleMainAction = () => {
 /* El botón de cobrar queda siempre a la vista aunque el panel tenga scroll */
 .pos-checkout-panel .checkout-submit-wrapper {
   position: sticky;
-  bottom: 0;
+  /* El panel tiene 28px de padding inferior: el pie baja hasta el borde y lo tapa,
+     así el contenido no se ve pasar por debajo del botón. */
+  bottom: -28px;
+  margin-bottom: -28px;
+  padding-top: 10px;
+  padding-bottom: 40px; /* 12px de antes + los 28px del panel */
   z-index: 3;
   margin-top: auto;
-  padding-top: 8px;
-  background: linear-gradient(to top, #ffffff 85%, rgba(255, 255, 255, 0));
+  background: #ffffff;
+  box-shadow: 0 -10px 12px -12px rgba(15, 23, 42, 0.35);
+}
+
+/* Celular y tablet: el panel no tiene scroll propio (scrollea la página): se mantiene como antes */
+@media (max-width: 992px) {
+  .pos-checkout-panel .checkout-submit-wrapper {
+    bottom: 0;
+    margin-bottom: 0;
+    padding-top: 8px;
+    padding-bottom: 12px;
+    background: linear-gradient(to top, #ffffff 85%, rgba(255, 255, 255, 0));
+    box-shadow: none;
+  }
 }
 
 /* Solo celular: pestañas "Cobro" / "Productos" (la lista puede ser larga, p. ej. 20 platos) */

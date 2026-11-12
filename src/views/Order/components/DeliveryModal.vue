@@ -18,6 +18,10 @@
       <n-text class="fs-6">Dirección:</n-text>
       <n-text v-if="delivery" class="fs-4">{{ delivery.address }}</n-text>
       <n-skeleton v-else text />
+      <template v-if="delivery?.reference">
+        <n-text class="fs-6">Referencia:</n-text>
+        <n-text class="fs-4">{{ delivery.reference }}</n-text>
+      </template>
       <n-text class="fs-6">Número de contacto:</n-text>
       <n-text v-if="delivery" class="fs-4">{{ delivery.phone }}</n-text>
       <n-skeleton v-else text />
