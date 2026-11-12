@@ -170,20 +170,6 @@
                 </div>
               </div>
 
-              <!-- Preguntar por (opcional): para llevar → comanda de cocina; delivery → ticket de delivery.
-                   No se imprime en el ticket de venta. -->
-              <div class="form-field-item mt-2">
-                <span class="field-label">Preguntar por (opcional)</span>
-                <n-input
-                  v-model:value="localAskFor"
-                  placeholder="Nombre para llamar al cliente..."
-                  size="small"
-                  maxlength="100"
-                  clearable
-                  @update:value="handleAskForChange"
-                />
-              </div>
-
               <!-- Observaciones secundarias -->
               <div class="client-observations-row">
                 <n-button class="flizzy-text-btn" text size="tiny" @click="$emit('update:showObservations', !showObservations)">
@@ -290,6 +276,18 @@
                       @update:value="handleDeliveryReferenceChange" 
                     />
                   </div>
+                  <!-- Preguntar por: va al ticket de delivery (motorizado), no al de venta -->
+                  <div class="form-field-item span-full">
+                    <span class="field-label">Preguntar por (opcional)</span>
+                    <n-input
+                      v-model:value="localAskFor"
+                      placeholder="Nombre para llamar al cliente..."
+                      size="small"
+                      maxlength="100"
+                      clearable
+                      @update:value="handleAskForChange"
+                    />
+                  </div>
                   <div class="form-field-item span-full">
                     <span class="field-label">Repartidor / Motorizado</span>
                     <n-input 
@@ -302,6 +300,21 @@
                 </div>
               </div>
             </n-collapse-transition>
+
+            <!-- Para llevar: Preguntar por va a la comanda de cocina, no al ticket de venta -->
+            <div v-if="!isDeliveryActive" class="delivery-fields-wrapper">
+              <div class="form-field-item">
+                <span class="field-label">Preguntar por (opcional)</span>
+                <n-input
+                  v-model:value="localAskFor"
+                  placeholder="Nombre para llamar al cliente..."
+                  size="small"
+                  maxlength="100"
+                  clearable
+                  @update:value="handleAskForChange"
+                />
+              </div>
+            </div>
           </div>
 
           <!-- MÉTODO DE PAGO (TILES VISUALES FLIZZY) -->
