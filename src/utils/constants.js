@@ -1478,6 +1478,15 @@ export const createSaleColumns = ({
       },
     },
     {
+      title: "Tipo",
+      key: "order_type_label",
+      width: 100,
+      ellipsis: { tooltip: true },
+      render(row) {
+        return row.order_type_label || "-";
+      },
+    },
+    {
       title: "Canje",
       key: "recovery_reference",
       width: 180,
@@ -1554,6 +1563,15 @@ export const createSaleColumns = ({
       key: "payment_method",
       width: 110,
       ellipsis: { tooltip: true },
+    },
+    {
+      title: "Cobrado por",
+      key: "username",
+      width: 150,
+      ellipsis: { tooltip: true },
+      render(row) {
+        return row.username || "-";
+      },
     },
     {
       title: "Monto",
