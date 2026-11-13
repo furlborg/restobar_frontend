@@ -73,7 +73,7 @@
                     </n-grid>
                 </n-form>
             </n-collapse-transition>
-            <n-data-table class="mt-2 sales-table" scroll-x="1305" :columns="tableColumns" :data="sales" :loading="isTableLoading"
+            <n-data-table class="mt-2 sales-table" scroll-x="1555" :columns="tableColumns" :data="sales" :loading="isTableLoading"
                 :pagination="pagination" remote />
         </n-card>
         <SaleUpdate v-model:sale="saleId" @update:sale="onCloseUpdate" @on-success="updateSuccess" />
