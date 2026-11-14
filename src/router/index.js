@@ -559,17 +559,8 @@ router.beforeEach(async (to, from, next) => {
 });
 
 
-router.onError((error, to) => {
-  const isChunkFetchError =
-    error?.message?.includes("Failed to fetch dynamically imported module") ||
-    error?.message?.includes("Importing a module script failed") ||
-    error?.name === "ChunkLoadError";
-
-  if (isChunkFetchError && to?.fullPath) {
-    console.warn("Detectada actualización del sistema, recargando a la versión más reciente...", to.fullPath);
-    window.location.href = to.fullPath;
-  }
-});
+// Los fallos al cargar una pantalla los atiende src/version/loadRecovery.js (HU-FLZ-ACT-008):
+// se instala desde main.js y nunca recarga sin límite ni salta la barrera de operaciones.
 
 export default router;
 

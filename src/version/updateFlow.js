@@ -47,6 +47,20 @@ export const setUpdateResult = (result) => {
   updateResult.value = result ?? null;
 };
 
+// ---- Pantalla que no pudo cargar (HU-FLZ-ACT-008) ----
+// { kind: "retry" | "offline" | "needs_update", target: "/ruta?x#y" }
+const loadFailure = shallowRef(null);
+let retryNavigation = null;
+
+export const setLoadFailure = (failure) => {
+  loadFailure.value = failure ?? null;
+};
+
+/** main.js registra cómo volver a intentar abrir una pantalla (router.push). */
+export const setLoadRetryNavigator = (fn) => {
+  retryNavigation = fn;
+};
+
 // ---- Coordinador ----
 const coordinatorState = shallowRef(null);
 const coordinator = createUpdateCoordinator({
@@ -57,7 +71,7 @@ const coordinator = createUpdateCoordinator({
   },
   isOnline: () => navigator.onLine !== false,
   evaluateBarrier: () => hooks.evaluateBarrier(),
-  apply: (candidate) => hooks.apply(candidate),
+  apply: (candidate, options) => hooks.apply(candidate, options),
 });
 coordinatorState.value = coordinator.getState();
 coordinator.subscribe((next) => {
@@ -94,6 +108,7 @@ export const noticeView = computed(() =>
     now: now.value,
     interruptionUnsafe: interruptionUnsafe.value,
     result: updateResult.value,
+    loadFailure: loadFailure.value,
   })
 );
 
@@ -121,7 +136,30 @@ const currentDeploymentId = () => updateState.value?.candidate?.deploymentId ?? 
 /** "Actualizar ahora": siempre pasa por el coordinador (revalida, barrera, aplica). */
 export const updateNow = () => {
   updateResult.value = null;
+  loadFailure.value = null;
   return coordinator.requestUpdate();
+};
+
+/** Actualiza y llega a una pantalla concreta (la que no pudo cargar). Pasa por el coordinador igual. */
+export const updateToTarget = (targetUrl) => {
+  updateResult.value = null;
+  loadFailure.value = null;
+  return coordinator.requestUpdate({ targetUrl });
+};
+
+/** "Reintentar" tras un fallo de carga sin versión nueva: vuelve a intentar abrir la pantalla. */
+export const retryFailedLoad = () => {
+  const target = loadFailure.value?.target;
+  loadFailure.value = null;
+  if (target && retryNavigation) retryNavigation(target);
+};
+
+/** "Actualizar ahora" tras un fallo de carga: actualiza y llega a esa pantalla. */
+export const updateToFailedLoad = () => updateToTarget(loadFailure.value?.target);
+
+/** Cierra el aviso de fallo de carga; la pantalla actual sigue igual. */
+export const dismissLoadFailure = () => {
+  loadFailure.value = null;
 };
 
 /** "Más tarde" o cerrar: pospone esta publicación 30 minutos. */

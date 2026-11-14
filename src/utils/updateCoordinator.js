@@ -26,7 +26,7 @@ const NETWORK_ERRORS = new Set(["offline", "network", "timeout"]);
  * @param {() => Promise<object>} deps.revalidate        consulta ya el manifiesto; devuelve el estado del detector
  * @param {() => boolean} deps.isOnline
  * @param {() => ({ok: true} | {ok: false, reason: string})} deps.evaluateBarrier
- * @param {(candidate: object) => Promise<void>} deps.apply  normalmente no vuelve (recarga la página)
+ * @param {(candidate: object, options?: object) => Promise<void>} deps.apply  normalmente no vuelve (recarga la página)
  */
 export const createUpdateCoordinator = (deps) => {
   const { revalidate, isOnline, evaluateBarrier, apply } = deps;
@@ -45,7 +45,7 @@ export const createUpdateCoordinator = (deps) => {
     }
   };
 
-  const run = async () => {
+  const run = async (options) => {
     setState({ phase: COORDINATOR_PHASE.CHECKING });
 
     if (!isOnline()) {
@@ -90,7 +90,7 @@ export const createUpdateCoordinator = (deps) => {
 
     setState({ phase: COORDINATOR_PHASE.APPLYING, candidate: detected.candidate });
     try {
-      await apply(detected.candidate);
+      await apply(detected.candidate, options);
     } catch (error) {
       // La barrera puede bloquear en el último instante (una operación empezó mientras tanto):
       // es un bloqueo, no un fallo, y el trabajo sigue en pantalla.
@@ -108,10 +108,13 @@ export const createUpdateCoordinator = (deps) => {
   };
 
   return {
-    /** "Actualizar ahora". Repetido mientras corre devuelve la misma promesa. */
-    requestUpdate() {
+    /**
+     * "Actualizar ahora". Repetido mientras corre devuelve la misma promesa.
+     * `options.targetUrl`: ruta a la que llegar tras actualizar (HU-FLZ-ACT-008); por defecto, la actual.
+     */
+    requestUpdate(options) {
       if (inFlight) return inFlight;
-      inFlight = run().finally(() => {
+      inFlight = run(options).finally(() => {
         inFlight = null;
       });
       return inFlight;

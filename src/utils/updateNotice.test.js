@@ -121,3 +121,26 @@ test("lo que el usuario está pidiendo ahora gana al resultado anterior", () => 
   const v = view({ coordinator: { phase: P.CHECKING }, result: { type: "failed", reason: "still_old" } });
   assert.equal(v.message, M.CHECKING);
 });
+
+// ---- Pantalla que no pudo cargar (HU-FLZ-ACT-008) ----
+test("fallo de carga: cada tipo tiene su mensaje y gana a la posposición y al resultado", () => {
+  const postponement = createPostponement("dep-b", 1_000_000);
+  const cases = [
+    ["retry", M.LOAD_RETRY],
+    ["offline", M.LOAD_OFFLINE],
+    ["needs_update", M.LOAD_NEEDS_UPDATE],
+  ];
+  for (const [kind, message] of cases) {
+    const v = view({ postponement, loadFailure: { kind }, result: { type: "completed" } });
+    assert.equal(v.message, message, kind);
+  }
+});
+
+test("fallo de carga: lo que el usuario está pidiendo ahora gana", () => {
+  const v = view({ coordinator: { phase: P.APPLYING }, loadFailure: { kind: "retry" } });
+  assert.equal(v.message, M.APPLYING);
+});
+
+test("fallo de carga con un tipo desconocido se ignora", () => {
+  assert.equal(view({ loadFailure: { kind: "otro" } }).message, M.AVAILABLE);
+});

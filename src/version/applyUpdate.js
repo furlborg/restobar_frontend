@@ -22,6 +22,7 @@ import {
   resolveAttemptOnBoot,
 } from "@/utils/updateAttempt";
 import { DETECTOR_STATUS } from "@/utils/versionDetector";
+import { isSafeTargetPath } from "@/utils/loadRecovery";
 import { getUpdateDetector } from "@/version/updateDetector";
 import { updateBarrier } from "@/version/updateBarrier";
 import { configureUpdateFlow, setUpdateResult } from "@/version/updateFlow";
@@ -30,7 +31,7 @@ import { configureUpdateFlow, setUpdateResult } from "@/version/updateFlow";
 export const BOOT_TIMEOUT_MS = 20_000; // la versión nueva debe quedar lista en este tiempo
 export const RELOAD_START_TIMEOUT_MS = 15_000; // si la página sigue viva, la recarga no empezó
 
-const readAttempt = () => {
+export const readAttempt = () => {
   try {
     return parseAttempt(window.sessionStorage.getItem(ATTEMPT_STORAGE_KEY));
   } catch {
@@ -51,8 +52,11 @@ const writeAttempt = (attempt) => {
 
 const failure = (code) => Object.assign(new Error(code), { code });
 
-/** Aplica la candidata ya revalidada. Normalmente no vuelve: la página se recarga. */
-export const applyUpdate = (candidate) => {
+/**
+ * Aplica la candidata ya revalidada. Normalmente no vuelve: la página se recarga.
+ * `options.targetUrl` (HU-FLZ-ACT-008): pantalla que no pudo cargar; se llega a ella con la versión nueva.
+ */
+export const applyUpdate = (candidate, options = {}) => {
   const barrier = updateBarrier.evaluate();
   if (!barrier.ok) {
     return Promise.reject(Object.assign(new Error("bloqueada"), { blockedReason: barrier.reason }));
@@ -74,7 +78,11 @@ export const applyUpdate = (candidate) => {
     })
   );
 
-  window.location.reload();
+  const target = options?.targetUrl;
+  const here = `${window.location.pathname}${window.location.search}`;
+  const targetWithoutHash = isSafeTargetPath(target) ? target.split("#")[0] : null;
+  if (targetWithoutHash && targetWithoutHash !== here) window.location.assign(target);
+  else window.location.reload();
 
   // Si la página sigue viva demasiado tiempo, la recarga no ocurrió: se informa, sin quedarse cargando.
   return new Promise((_, reject) => {

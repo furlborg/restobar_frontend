@@ -15,6 +15,7 @@ import "vfonts/Lato.css";
 import VueCookies from "vue-cookies";
 import { startUpdateDetector } from "@/version/updateDetector";
 import { resolveUpdateOnBoot } from "@/version/applyUpdate";
+import { installLoadRecovery } from "@/version/loadRecovery";
 import { addIcons } from "oh-vue-icons";
 import {
   MdCalculateRound,
@@ -39,7 +40,18 @@ addIcons(MdMonetizationonRound, MdCalculateRound, MdSendRound);
 app.component("v-icon", OhVueIcon);
 app.directive("numeric-only", numericOnlyDirective);
 
+// Recuperación ante pantallas que no cargan (HU-FLZ-ACT-008). Va antes de montar para cubrir la primera ruta.
+try {
+  installLoadRecovery(router);
+} catch (error) {
+  console.warn("[flizzy] no se pudo instalar la recuperación de carga", error);
+}
+
 app.mount("#app");
+
+// Señal de arranque para el aviso de respaldo de index.html (HU-FLZ-ACT-008).
+window.__FLIZZY_BOOTED__ = true;
+window.dispatchEvent(new Event("flizzy:booted"));
 
 // Detector de versiones nuevas (HU-FLZ-ACT-004). Solo informa; nunca recarga.
 // Un error aquí no debe impedir que Flizzy arranque.

@@ -28,7 +28,17 @@ export const NOTICE_MESSAGE = Object.freeze({
   APPLYING: "applying",
   FAILED: "failed",
   COMPLETED: "completed",
+  LOAD_RETRY: "load_retry",
+  LOAD_OFFLINE: "load_offline",
+  LOAD_NEEDS_UPDATE: "load_needs_update",
 });
+
+// Pantalla que no pudo cargar (HU-FLZ-ACT-008).
+const LOAD_MESSAGE = {
+  retry: NOTICE_MESSAGE.LOAD_RETRY,
+  offline: NOTICE_MESSAGE.LOAD_OFFLINE,
+  needs_update: NOTICE_MESSAGE.LOAD_NEEDS_UPDATE,
+};
 
 /** Registro de posposición: solo ids y fechas, sin datos personales. */
 export const createPostponement = (deploymentId, now, remindAfterMs = REMIND_AFTER_MS) => ({
@@ -74,17 +84,29 @@ const view = (mode, message = null, { remindAt = null, reason = null } = {}) => 
  * @param {object|null} input.postponement    { deployment_id, remind_at }
  * @param {number} input.now
  * @param {boolean} input.interruptionUnsafe  hay un cobro u operación sensible en pantalla
+ * @param {object|null} [input.loadFailure]   pantalla que no pudo cargar (HU-FLZ-ACT-008): { kind }
  * @param {object|null} [input.result]        resultado comprobado tras recargar (HU-FLZ-ACT-007):
  *                                            { type: "completed" } o { type: "failed", reason }
  * @returns {{ mode: "hidden"|"card"|"indicator", message: string|null, remindAt: number|null, reason: string|null }}
  */
-export const decideNoticeView = ({ detector, coordinator, postponement, now, interruptionUnsafe, result = null }) => {
+export const decideNoticeView = ({
+  detector,
+  coordinator,
+  postponement,
+  now,
+  interruptionUnsafe,
+  result = null,
+  loadFailure = null,
+}) => {
   const phase = coordinator?.phase ?? COORDINATOR_PHASE.IDLE;
 
   // Lo que el usuario pidió se informa aunque la candidata haya cambiado mientras tanto.
   if (phase !== COORDINATOR_PHASE.IDLE && COORDINATOR_MESSAGE[phase]) {
     return view("card", COORDINATOR_MESSAGE[phase](coordinator.reason), { reason: coordinator.reason ?? null });
   }
+
+  // Una pantalla no pudo cargar: se explica y se ofrece qué hacer, sin recargar sola.
+  if (loadFailure && LOAD_MESSAGE[loadFailure.kind]) return view("card", LOAD_MESSAGE[loadFailure.kind]);
 
   // Resultado de una actualización, comprobado al arrancar (nunca deducido del tiempo).
   if (result?.type === "completed") return view("card", NOTICE_MESSAGE.COMPLETED);

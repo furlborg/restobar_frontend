@@ -35,6 +35,13 @@ test("camino feliz: revalida, consulta la barrera y aplica la candidata revalida
   assert.equal(s.phase, P.APPLYING);
 });
 
+test("las opciones (ruta destino) llegan hasta apply", async () => {
+  const seen = [];
+  const { coordinator } = make({ apply: async (c, options) => seen.push(options) });
+  await coordinator.requestUpdate({ targetUrl: "/mesas?x=1#y" });
+  assert.deepEqual(seen, [{ targetUrl: "/mesas?x=1#y" }]);
+});
+
 test("CA04: pulsar varias veces emite una sola solicitud activa", async () => {
   let release;
   const { coordinator, calls } = make({

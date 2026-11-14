@@ -52,7 +52,15 @@ import { darkTheme } from "naive-ui";
 import { useDesignSettingStore } from "@/store/modules/designSetting";
 import { lighten } from "@/utils";
 import { NOTICE_MESSAGE as M } from "@/utils/updateNotice";
-import { dismissUpdateResult, noticeView, postponeUpdate, updateNow } from "@/version/updateFlow";
+import {
+  dismissLoadFailure,
+  dismissUpdateResult,
+  noticeView,
+  postponeUpdate,
+  retryFailedLoad,
+  updateNow,
+  updateToFailedLoad,
+} from "@/version/updateFlow";
 import { acknowledgeUncertainAndRetry } from "@/version/updateBarrier";
 
 const designStore = useDesignSettingStore();
@@ -73,6 +81,9 @@ const actionRetry = { id: "retry", label: "Reintentar", primary: true, run: () =
 const actionBack = { id: "back", label: "Volver a la operación", primary: true, run: () => postponeUpdate() };
 const actionReviewed = { id: "reviewed", label: "Ya lo revisé", primary: true, run: () => acknowledgeUncertainAndRetry() };
 const actionClose = { id: "close", label: "Cerrar", run: () => postponeUpdate() };
+const actionRetryLoad = { id: "retry-load", label: "Reintentar", primary: true, run: () => retryFailedLoad() };
+const actionUpdateToLoad = { id: "update-load", label: "Actualizar ahora", primary: true, run: () => updateToFailedLoad() };
+const actionCloseLoad = { id: "close-load", label: "Cerrar", run: () => dismissLoadFailure() };
 
 // Detalle del fallo según el motivo (HU-FLZ-ACT-007). Agotados los intentos ya no se ofrece reintentar.
 const FAILED_BY_REASON = {
@@ -155,6 +166,37 @@ const CONTENT = {
     title: "Actualizando Flizzy…",
     actions: [],
     closable: false,
+  },
+  // Pantalla que no pudo cargar (HU-FLZ-ACT-008). La pantalla actual y sus datos siguen igual.
+  [M.LOAD_RETRY]: {
+    tone: "warning",
+    icon: "md-warningamber-round",
+    title: "No se pudo abrir la pantalla",
+    detail: "Puede ser un problema momentáneo. La pantalla en la que estabas sigue igual.",
+    actions: [actionRetryLoad, actionCloseLoad],
+    closable: true,
+    closeLabel: "Cerrar aviso",
+    onClose: () => dismissLoadFailure(),
+  },
+  [M.LOAD_OFFLINE]: {
+    tone: "warning",
+    icon: "md-warningamber-round",
+    title: "No se pudo abrir la pantalla",
+    detail: "Revisa la conexión e inténtalo de nuevo. La pantalla en la que estabas sigue igual.",
+    actions: [actionRetryLoad, actionCloseLoad],
+    closable: true,
+    closeLabel: "Cerrar aviso",
+    onClose: () => dismissLoadFailure(),
+  },
+  [M.LOAD_NEEDS_UPDATE]: {
+    tone: "warning",
+    icon: "md-warningamber-round",
+    title: "Esta pantalla necesita la versión nueva de Flizzy",
+    detail: "La actualización automática no funcionó. Puedes intentarlo de nuevo o seguir en esta pantalla.",
+    actions: [actionUpdateToLoad, actionCloseLoad],
+    closable: true,
+    closeLabel: "Cerrar aviso",
+    onClose: () => dismissLoadFailure(),
   },
   [M.COMPLETED]: {
     tone: "success",
