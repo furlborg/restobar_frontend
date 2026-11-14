@@ -161,3 +161,15 @@ test("incompatible: lo que el usuario pidió (bloqueo, aplicando) se sigue infor
   assert.equal(view({ incompatible: true, coordinator: { phase: P.BLOCKED, reason: "uncertain" } }).message, M.UNCERTAIN);
   assert.equal(view({ incompatible: true, coordinator: { phase: P.APPLYING } }).message, M.APPLYING);
 });
+
+// ---- Abierto por el usuario desde el ícono ----
+test("abierto desde el ícono: se muestra aunque haya un cobro en pantalla o una posposición", () => {
+  const postponement = createPostponement("dep-b", 1_000_000);
+  const v = view({ openedByUser: "dep-b", interruptionUnsafe: true, postponement });
+  assert.equal(v.mode, "card");
+  assert.equal(v.message, M.AVAILABLE);
+});
+
+test("abierto desde el ícono para otra publicación no fuerza la tarjeta", () => {
+  assert.equal(view({ openedByUser: "dep-vieja", interruptionUnsafe: true }).mode, "indicator");
+});

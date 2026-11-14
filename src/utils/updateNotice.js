@@ -87,6 +87,8 @@ const view = (mode, message = null, { remindAt = null, reason = null } = {}) => 
  * @param {boolean} input.interruptionUnsafe  hay un cobro u operación sensible en pantalla
  * @param {object|null} [input.loadFailure]   pantalla que no pudo cargar (HU-FLZ-ACT-008): { kind }
  * @param {boolean} [input.incompatible]      esta web ya no es compatible con la API (HU-FLZ-ACT-010)
+ * @param {string|null} [input.openedByUser]  deployment_id que el usuario abrió desde el ícono: se muestra
+ *                                            aunque haya un cobro en pantalla (lo pidió él)
  * @param {object|null} [input.result]        resultado comprobado tras recargar (HU-FLZ-ACT-007):
  *                                            { type: "completed" } o { type: "failed", reason }
  * @returns {{ mode: "hidden"|"card"|"indicator", message: string|null, remindAt: number|null, reason: string|null }}
@@ -100,6 +102,7 @@ export const decideNoticeView = ({
   result = null,
   loadFailure = null,
   incompatible = false,
+  openedByUser = null,
 }) => {
   const phase = coordinator?.phase ?? COORDINATOR_PHASE.IDLE;
 
@@ -124,6 +127,9 @@ export const decideNoticeView = ({
   }
 
   if (!candidate) return view("hidden");
+
+  // Abierto desde el ícono: es una acción del usuario, no una interrupción.
+  if (openedByUser && openedByUser === candidate.deploymentId) return view("card", NOTICE_MESSAGE.AVAILABLE);
 
   const postponedThis = postponement && postponement.deployment_id === candidate.deploymentId;
   if (postponedThis && now < postponement.remind_at) {

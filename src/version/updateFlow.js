@@ -140,6 +140,9 @@ watch(incompatible, (value, before) => {
   if (value && !before) trackUpdateEvent(EVENT_TYPE.INCOMPATIBLE, { reason: contractState.value.rejected ? "rejected" : "minimum" });
 });
 
+// Publicación que el usuario abrió desde el ícono (se muestra aunque haya un cobro en pantalla).
+const openedByUser = ref(null);
+
 // ---- Reloj para el recordatorio ----
 const now = ref(Date.now());
 let remindTimer = null;
@@ -154,6 +157,7 @@ export const noticeView = computed(() =>
     result: updateResult.value,
     loadFailure: loadFailure.value,
     incompatible: incompatible.value,
+    openedByUser: openedByUser.value,
   })
 );
 
@@ -211,6 +215,7 @@ export const dismissLoadFailure = () => {
 export const postponeUpdate = () => {
   coordinator.dismiss();
   updateResult.value = null;
+  openedByUser.value = null;
   const deploymentId = currentDeploymentId();
   if (!deploymentId) return;
   trackUpdateEvent(EVENT_TYPE.POSTPONED, { toRelease: updateState.value?.candidate?.releaseId, deployment: deploymentId });
@@ -223,6 +228,7 @@ export const postponeUpdate = () => {
 export const reopenUpdateNotice = () => {
   coordinator.dismiss();
   updateResult.value = null;
+  openedByUser.value = currentDeploymentId();
   postponement.value = null;
   persist(null);
   now.value = Date.now();
