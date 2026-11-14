@@ -198,6 +198,15 @@ const CONTENT = {
     closeLabel: "Cerrar aviso",
     onClose: () => dismissLoadFailure(),
   },
+  // Versión incompatible con la API (HU-FLZ-ACT-010). Obligatorio: sin "Más tarde" ni cerrar.
+  [M.MANDATORY]: {
+    tone: "warning",
+    icon: "md-warningamber-round",
+    title: "Debes actualizar Flizzy para continuar",
+    detail: "Esta versión ya no es compatible con el servidor. Puedes revisar lo que tienes en pantalla, pero para guardar cambios tienes que actualizar.",
+    actions: [actionUpdate],
+    closable: false,
+  },
   [M.COMPLETED]: {
     tone: "success",
     icon: "md-checkcircle-round",
@@ -224,6 +233,13 @@ const content = computed(() => {
   if (!base) return null;
   if (view.value.message === M.FAILED && FAILED_BY_REASON[view.value.reason]) {
     return { ...base, ...FAILED_BY_REASON[view.value.reason] };
+  }
+  if (view.value.message === M.MANDATORY && view.value.reason === "no_update") {
+    return {
+      ...base,
+      detail: "Esta versión ya no es compatible con el servidor y todavía no hay una nueva publicada. Avisa a soporte.",
+      actions: [],
+    };
   }
   return base;
 });

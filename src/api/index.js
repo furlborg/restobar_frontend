@@ -3,6 +3,7 @@ import { useUserStore } from "@/store/modules/user";
 import { sleep } from "@/utils";
 import { createDiscreteApi } from "naive-ui";
 import { trackRequest, trackResponse, trackError } from "@/version/updateBarrier";
+import { addContractHeader, noteContractResponse } from "@/version/clientContract";
 
 const { message } = createDiscreteApi(["message"]);
 
@@ -25,6 +26,8 @@ export function setupInterceptors(instance) {
     if (token) {
       request.headers.Authorization = `Bearer ${token}`;
     }
+    // Contrato web/API, solo si el backend lo anunció (HU-FLZ-ACT-010).
+    addContractHeader(request);
     // Vigila escrituras para no actualizar mientras se guardan (HU-FLZ-ACT-006).
     return trackRequest(request);
   });
@@ -33,6 +36,7 @@ export function setupInterceptors(instance) {
   instance.interceptors.response.use(
     async (response) => {
       trackResponse(response);
+      noteContractResponse(response);
       // eslint-disable-next-line no-undef
       if (import.meta.env.NODE_ENV === "development") {
         await sleep();
@@ -48,6 +52,12 @@ export function setupInterceptors(instance) {
         error?.name === "CanceledError" ||
         error?.code === "ERR_CANCELED"
       ) {
+        return Promise.reject(error);
+      }
+
+      // Versión incompatible con la API (HU-FLZ-ACT-010): el servidor no escribió nada y el aviso
+      // obligatorio explica qué hacer; no se muestra además un error genérico.
+      if (noteContractResponse(error.response)) {
         return Promise.reject(error);
       }
 

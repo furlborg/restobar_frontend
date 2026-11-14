@@ -16,6 +16,9 @@ import {
   POSTPONE_STORAGE_KEY,
 } from "@/utils/updateNotice";
 import { getUpdateDetector, updateState } from "@/version/updateDetector";
+import { isIncompatible } from "@/utils/clientContract";
+import { contractState } from "@/version/clientContract";
+import { CLIENT_CONTRACT_VERSION } from "@/version/contract";
 
 // ---- Puntos de integración (HU-FLZ-ACT-006 y HU-FLZ-ACT-007) ----
 const interruptionUnsafe = ref(false);
@@ -96,6 +99,19 @@ const persist = (value) => {
   }
 };
 
+// ---- Versión incompatible con la API (HU-FLZ-ACT-010) ----
+// Por el mínimo que anuncia el backend, por un rechazo 409, o porque la versión publicada de la web
+// declara que ya no soporta este contrato.
+export const incompatible = computed(
+  () =>
+    contractState.value.rejected ||
+    isIncompatible({
+      clientContract: CLIENT_CONTRACT_VERSION,
+      backendMin: contractState.value.backendMin,
+      manifestMin: updateState.value?.candidate?.minSupportedClientContract ?? null,
+    })
+);
+
 // ---- Reloj para el recordatorio ----
 const now = ref(Date.now());
 let remindTimer = null;
@@ -109,6 +125,7 @@ export const noticeView = computed(() =>
     interruptionUnsafe: interruptionUnsafe.value,
     result: updateResult.value,
     loadFailure: loadFailure.value,
+    incompatible: incompatible.value,
   })
 );
 

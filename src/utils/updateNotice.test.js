@@ -144,3 +144,20 @@ test("fallo de carga: lo que el usuario está pidiendo ahora gana", () => {
 test("fallo de carga con un tipo desconocido se ignora", () => {
   assert.equal(view({ loadFailure: { kind: "otro" } }).message, M.AVAILABLE);
 });
+
+// ---- Versión incompatible (HU-FLZ-ACT-010) ----
+test("incompatible con versión nueva disponible: obligatorio, gana a la posposición y al cobro en pantalla", () => {
+  const postponement = createPostponement("dep-b", 1_000_000);
+  const v = view({ incompatible: true, postponement, interruptionUnsafe: true });
+  assert.deepEqual(v, { mode: "card", message: M.MANDATORY, remindAt: null, reason: "update_available" });
+});
+
+test("incompatible sin versión nueva publicada: obligatorio, sin actualización que ofrecer", () => {
+  const v = view({ incompatible: true, detector: { status: S.UP_TO_DATE, candidate: null } });
+  assert.deepEqual(v, { mode: "card", message: M.MANDATORY, remindAt: null, reason: "no_update" });
+});
+
+test("incompatible: lo que el usuario pidió (bloqueo, aplicando) se sigue informando primero", () => {
+  assert.equal(view({ incompatible: true, coordinator: { phase: P.BLOCKED, reason: "uncertain" } }).message, M.UNCERTAIN);
+  assert.equal(view({ incompatible: true, coordinator: { phase: P.APPLYING } }).message, M.APPLYING);
+});

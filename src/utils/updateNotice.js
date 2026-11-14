@@ -31,6 +31,7 @@ export const NOTICE_MESSAGE = Object.freeze({
   LOAD_RETRY: "load_retry",
   LOAD_OFFLINE: "load_offline",
   LOAD_NEEDS_UPDATE: "load_needs_update",
+  MANDATORY: "mandatory",
 });
 
 // Pantalla que no pudo cargar (HU-FLZ-ACT-008).
@@ -85,6 +86,7 @@ const view = (mode, message = null, { remindAt = null, reason = null } = {}) => 
  * @param {number} input.now
  * @param {boolean} input.interruptionUnsafe  hay un cobro u operación sensible en pantalla
  * @param {object|null} [input.loadFailure]   pantalla que no pudo cargar (HU-FLZ-ACT-008): { kind }
+ * @param {boolean} [input.incompatible]      esta web ya no es compatible con la API (HU-FLZ-ACT-010)
  * @param {object|null} [input.result]        resultado comprobado tras recargar (HU-FLZ-ACT-007):
  *                                            { type: "completed" } o { type: "failed", reason }
  * @returns {{ mode: "hidden"|"card"|"indicator", message: string|null, remindAt: number|null, reason: string|null }}
@@ -97,6 +99,7 @@ export const decideNoticeView = ({
   interruptionUnsafe,
   result = null,
   loadFailure = null,
+  incompatible = false,
 }) => {
   const phase = coordinator?.phase ?? COORDINATOR_PHASE.IDLE;
 
@@ -113,6 +116,13 @@ export const decideNoticeView = ({
   if (result?.type === "failed") return view("card", NOTICE_MESSAGE.FAILED, { reason: result.reason ?? null });
 
   const candidate = detector?.status === DETECTOR_STATUS.AVAILABLE ? detector.candidate : null;
+
+  // Incompatible con la API: obligatorio, sin "Más tarde" ni posposición. No recarga solo:
+  // el usuario puede seguir revisando lo que tiene en pantalla y actualizar por el coordinador.
+  if (incompatible) {
+    return view("card", NOTICE_MESSAGE.MANDATORY, { reason: candidate ? "update_available" : "no_update" });
+  }
+
   if (!candidate) return view("hidden");
 
   const postponedThis = postponement && postponement.deployment_id === candidate.deploymentId;
