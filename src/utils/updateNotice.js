@@ -22,6 +22,8 @@ export const NOTICE_MESSAGE = Object.freeze({
   CHECKING: "checking",
   UNSAVED: "unsaved",
   PAYMENT: "payment",
+  SAVING: "saving",
+  UNCERTAIN: "uncertain",
   OFFLINE: "offline",
   APPLYING: "applying",
   FAILED: "failed",
@@ -45,7 +47,14 @@ export const parsePostponement = (raw) => {
   }
 };
 
-const blockedMessage = (reason) => (reason === "payment" ? NOTICE_MESSAGE.PAYMENT : NOTICE_MESSAGE.UNSAVED);
+// Motivos de la barrera (HU-FLZ-ACT-006). Uno desconocido se presenta como "sin guardar": nunca como seguro.
+const BLOCKED_MESSAGE = {
+  payment: NOTICE_MESSAGE.PAYMENT,
+  saving: NOTICE_MESSAGE.SAVING,
+  uncertain: NOTICE_MESSAGE.UNCERTAIN,
+  unsaved: NOTICE_MESSAGE.UNSAVED,
+};
+const blockedMessage = (reason) => BLOCKED_MESSAGE[reason] ?? NOTICE_MESSAGE.UNSAVED;
 
 const COORDINATOR_MESSAGE = {
   [COORDINATOR_PHASE.CHECKING]: () => NOTICE_MESSAGE.CHECKING,

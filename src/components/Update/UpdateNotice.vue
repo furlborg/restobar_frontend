@@ -53,6 +53,7 @@ import { useDesignSettingStore } from "@/store/modules/designSetting";
 import { lighten } from "@/utils";
 import { NOTICE_MESSAGE as M } from "@/utils/updateNotice";
 import { noticeView, postponeUpdate, updateNow } from "@/version/updateFlow";
+import { acknowledgeUncertainAndRetry } from "@/version/updateBarrier";
 
 const designStore = useDesignSettingStore();
 const view = noticeView;
@@ -70,6 +71,7 @@ const actionUpdate = { id: "update", label: "Actualizar ahora", primary: true, r
 const actionLater = { id: "later", label: "Más tarde", run: () => postponeUpdate() };
 const actionRetry = { id: "retry", label: "Reintentar", primary: true, run: () => updateNow() };
 const actionBack = { id: "back", label: "Volver a la operación", primary: true, run: () => postponeUpdate() };
+const actionReviewed = { id: "reviewed", label: "Ya lo revisé", primary: true, run: () => acknowledgeUncertainAndRetry() };
 
 // Textos de la HU-FLZ-ACT-005. Nunca dicen "todo guardado" ni muestran porcentajes inventados.
 const CONTENT = {
@@ -102,6 +104,22 @@ const CONTENT = {
     icon: "md-warningamber-round",
     title: "Estamos verificando la operación. Espera antes de actualizar",
     actions: [actionBack],
+    closable: true,
+  },
+  [M.SAVING]: {
+    tone: "warning",
+    icon: "md-warningamber-round",
+    title: "Espera a que termine de guardarse la operación",
+    detail: "Cuando el servidor responda podrás actualizar.",
+    actions: [actionRetry, actionLater],
+    closable: true,
+  },
+  [M.UNCERTAIN]: {
+    tone: "warning",
+    icon: "md-warningamber-round",
+    title: "Una operación quedó sin respuesta del servidor",
+    detail: "Revisa que se haya registrado (por ejemplo, en Ventas o en la mesa) antes de actualizar.",
+    actions: [actionReviewed, actionLater],
     closable: true,
   },
   [M.OFFLINE]: {

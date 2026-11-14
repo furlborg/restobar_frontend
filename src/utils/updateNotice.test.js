@@ -81,6 +81,8 @@ test("lo que pidió el usuario siempre se informa en la tarjeta", () => {
     [{ phase: P.OFFLINE, reason: "offline" }, M.OFFLINE],
     [{ phase: P.BLOCKED, reason: "unsaved" }, M.UNSAVED],
     [{ phase: P.BLOCKED, reason: "payment" }, M.PAYMENT],
+    [{ phase: P.BLOCKED, reason: "saving" }, M.SAVING],
+    [{ phase: P.BLOCKED, reason: "uncertain" }, M.UNCERTAIN],
     [{ phase: P.BLOCKED, reason: "barrier_error" }, M.UNSAVED],
     [{ phase: P.APPLYING }, M.APPLYING],
     [{ phase: P.FAILED, reason: "boot_timeout" }, M.FAILED],

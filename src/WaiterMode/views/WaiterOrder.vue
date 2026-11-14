@@ -110,6 +110,7 @@
 </template>
 
 <script setup>
+import { useUpdateBlocker } from "@/version/updateBarrier";
 import { ref, onUpdated, onMounted, onUnmounted, provide, computed, nextTick, watch } from "vue";
 import ProductsDrawer from "../components/ProductsDrawer";
 import WaiterMenus from "./WaiterMenus.vue";
@@ -256,6 +257,10 @@ onBeforeRouteUpdate((to) => {
         }
     }
 });
+
+// No actualizar Flizzy con productos del pedido sin enviar (HU-FLZ-ACT-006).
+// Mismo criterio que la guardia de salida de abajo.
+useUpdateBlocker(() => orderStore.orders.length > 0);
 
 onBeforeRouteLeave((to) => {
     if (!ALLOWED_ROUTES.includes(to.name)) {
