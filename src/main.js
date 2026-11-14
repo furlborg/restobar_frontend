@@ -16,6 +16,7 @@ import VueCookies from "vue-cookies";
 import { startUpdateDetector } from "@/version/updateDetector";
 import { resolveUpdateOnBoot } from "@/version/applyUpdate";
 import { installLoadRecovery } from "@/version/loadRecovery";
+import { CLIENT_CONTRACT_VERSION } from "@/version/contract";
 import { addIcons } from "oh-vue-icons";
 import {
   MdCalculateRound,
@@ -48,6 +49,12 @@ try {
 }
 
 app.mount("#app");
+
+// Para soporte (HU-FLZ-ACT-011): versión cargada, consultable desde la consola del navegador.
+window.__FLIZZY_VERSION__ = Object.freeze({
+  release: document.querySelector('meta[name="flizzy-release"]')?.content ?? null,
+  contract: CLIENT_CONTRACT_VERSION,
+});
 
 // Señal de arranque para el aviso de respaldo de index.html (HU-FLZ-ACT-008).
 window.__FLIZZY_BOOTED__ = true;

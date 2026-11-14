@@ -14,6 +14,8 @@ import { createIncidentGate, decideLoadRecovery, isChunkLoadError, isSafeTargetP
 import { getUpdateDetector } from "@/version/updateDetector";
 import { readAttempt } from "@/version/applyUpdate";
 import { setLoadFailure, setLoadRetryNavigator, updateToTarget } from "@/version/updateFlow";
+import { EVENT_TYPE } from "@/utils/updateTelemetry";
+import { trackUpdateEvent } from "@/version/updateTelemetry";
 
 const gate = createIncidentGate({ now: () => Date.now() });
 const PRELOAD_GRACE_MS = 300;
@@ -30,6 +32,7 @@ export const handleChunkLoadError = async (error, targetPath) => {
     const detector = getUpdateDetector();
     const state = detector ? await detector.checkNow() : null;
     const action = decideLoadRecovery({ detector: state, previousAttempt: readAttempt() });
+    trackUpdateEvent(EVENT_TYPE.LOAD_ERROR, { reason: action, path: target });
 
     if (action === LOAD_ACTION.AUTO_UPDATE) {
       // Muestra "Preparando…/Actualizando…"; si hay trabajo pendiente, el bloqueo con su motivo.

@@ -24,23 +24,48 @@
             var RETRY_WINDOW_MS = 5 * 60 * 1000;
             var SLOW_MS = 30000;
             var shown = false;
+            // Reporte al log del backend (HU-FLZ-ACT-011): evidencia de que la app no arrancó,
+            // independiente del bundle. Vite reemplaza %VITE_APP_URL% al compilar.
+            var API = "%VITE_APP_URL%";
+            var EVENTS_URL = API && API.charAt(0) !== "%" && API !== "undefined" ? API + "/api/v1/client-events/" : null;
+
+            function release() {
+                var m = document.querySelector('meta[name="flizzy-release"]');
+                return m ? m.getAttribute("content") : null;
+            }
+
+            function report(code, reason) {
+                if (!EVENTS_URL || !navigator.sendBeacon) return;
+                try {
+                    navigator.sendBeacon(EVENTS_URL, JSON.stringify({
+                        type: "boot_failed",
+                        attempt: code,
+                        release: release(),
+                        reason: reason,
+                        path: location.pathname.replace(/\/[^/]*\d[^/]*/g, "/:id")
+                    }));
+                } catch (e) { /* nunca bloquear el aviso */ }
+            }
 
             function booted() { return window.__FLIZZY_BOOTED__ === true; }
 
             function el(id) { return document.getElementById(id); }
 
-            function show(title, text, autoRetry) {
+            function show(title, text, autoRetry, reason) {
                 if (booted() || shown) return;
                 var box = el("flz-boot-fallback");
                 if (!box) {
-                    document.addEventListener("DOMContentLoaded", function () { show(title, text, autoRetry); });
+                    document.addEventListener("DOMContentLoaded", function () { show(title, text, autoRetry, reason); });
                     return;
                 }
                 shown = true;
                 el("flz-boot-title").textContent = title;
                 el("flz-boot-text").textContent = text;
-                el("flz-boot-code").textContent = "Código: FLZ-" + Date.now().toString(36).toUpperCase();
+                var code = "FLZ-" + Date.now().toString(36).toUpperCase();
+                var rel = release();
+                el("flz-boot-code").textContent = "Código: " + code + (rel ? " · Versión: " + rel.slice(0, 8) : "");
                 box.hidden = false;
+                report(code, reason);
                 if (autoRetry) setTimeout(function () { if (!booted()) location.reload(); }, 3000);
             }
 
@@ -65,12 +90,12 @@
                 show("No pudimos cargar Flizzy",
                     auto ? "Puede haber una publicación en curso. Reintentando en unos segundos…"
                          : "Puede haber una publicación en curso o un problema de conexión. Reintenta en unos segundos; si sigue igual, avisa a soporte.",
-                    auto);
+                    auto, t.tagName === "SCRIPT" ? "entry_script_error" : "entry_preload_error");
             }, true);
 
             // Si tarda demasiado, se ofrece reintentar (sin recargar sola).
             setTimeout(function () {
-                show("Flizzy está tardando en cargar", "Revisa la conexión y vuelve a intentarlo.", false);
+                show("Flizzy está tardando en cargar", "Revisa la conexión y vuelve a intentarlo.", false, "slow_boot");
             }, SLOW_MS);
 
             window.addEventListener("flizzy:booted", function () {

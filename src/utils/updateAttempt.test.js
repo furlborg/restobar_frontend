@@ -19,6 +19,7 @@ test("createAttempt: primer intento, sin datos de negocio", () => {
   const a = createAttempt(base);
   assert.deepEqual(a, {
     schema: 1,
+    attempt_id: null,
     from_release: A,
     to_release: B,
     to_deployment: "dep-b",
@@ -92,4 +93,12 @@ test("markAttemptFailed conserva el conteo", () => {
   assert.equal(f.status, "failed");
   assert.equal(f.attempts, 2);
   assert.equal(markAttemptFailed(null), null);
+});
+
+test("attempt_id: se guarda si es válido; uno raro se descarta sin invalidar el registro", () => {
+  const a = createAttempt({ ...base, attemptId: "k3j9x2ab" });
+  assert.equal(parseAttempt(JSON.stringify(a)).attempt_id, "k3j9x2ab");
+  const raro = parseAttempt(JSON.stringify({ ...a, attempt_id: "<script>" }));
+  assert.equal(raro.attempt_id, null);
+  assert.equal(raro.to_release, B);
 });

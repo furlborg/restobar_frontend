@@ -26,6 +26,8 @@ import { isSafeTargetPath } from "@/utils/loadRecovery";
 import { getUpdateDetector } from "@/version/updateDetector";
 import { updateBarrier } from "@/version/updateBarrier";
 import { configureUpdateFlow, setUpdateResult } from "@/version/updateFlow";
+import { createAttemptId, EVENT_TYPE } from "@/utils/updateTelemetry";
+import { flushUpdateEvents, trackUpdateEvent } from "@/version/updateTelemetry";
 
 // Esperas máximas (HU-FLZ-ACT-001 las ajusta con medidas reales de las terminales).
 export const BOOT_TIMEOUT_MS = 20_000; // la versión nueva debe quedar lista en este tiempo
@@ -68,15 +70,24 @@ export const applyUpdate = (candidate, options = {}) => {
   const previous = readAttempt();
   if (!canAttempt(previous, candidate.releaseId)) return Promise.reject(failure("too_many_attempts"));
 
-  writeAttempt(
-    createAttempt({
-      fromRelease: currentRelease,
-      toRelease: candidate.releaseId,
-      toDeployment: candidate.deploymentId,
-      now: Date.now(),
-      previous,
-    })
-  );
+  const attempt = createAttempt({
+    fromRelease: currentRelease,
+    toRelease: candidate.releaseId,
+    toDeployment: candidate.deploymentId,
+    now: Date.now(),
+    previous,
+    attemptId: createAttemptId(),
+  });
+  writeAttempt(attempt);
+
+  // Evento de inicio, enviado antes de recargar (sendBeacon) (HU-FLZ-ACT-011).
+  trackUpdateEvent(EVENT_TYPE.STARTED, {
+    attempt: attempt.attempt_id,
+    toRelease: attempt.to_release,
+    deployment: attempt.to_deployment,
+    reason: options?.targetUrl ? "load_recovery" : "manual",
+  });
+  flushUpdateEvents();
 
   const target = options?.targetUrl;
   const here = `${window.location.pathname}${window.location.search}`;
@@ -106,10 +117,19 @@ export const resolveUpdateOnBoot = async (router) => {
   const attempt = readAttempt();
   if (!attempt || attempt.status !== "applying") return;
 
+  const eventData = (extra = {}) => ({
+    attempt: attempt.attempt_id ?? undefined,
+    toRelease: attempt.to_release,
+    deployment: attempt.to_deployment,
+    durationMs: Math.max(0, Date.now() - attempt.started_at),
+    ...extra,
+  });
+
   const ready = await withTimeout(router.isReady(), BOOT_TIMEOUT_MS).catch(() => false);
   if (!ready) {
     writeAttempt(markAttemptFailed(attempt));
     setUpdateResult({ type: "failed", reason: "boot_timeout" });
+    trackUpdateEvent(EVENT_TYPE.FAILED, eventData({ reason: "boot_timeout" }));
     return;
   }
 
@@ -119,6 +139,7 @@ export const resolveUpdateOnBoot = async (router) => {
   if (outcome === BOOT_RESULT.COMPLETED) {
     writeAttempt(null);
     setUpdateResult({ type: "completed" });
+    trackUpdateEvent(EVENT_TYPE.CONFIRMED, eventData());
     return;
   }
 
@@ -126,6 +147,7 @@ export const resolveUpdateOnBoot = async (router) => {
     // El servidor (o una caché) sigue entregando la versión anterior. No se recarga de nuevo sola.
     writeAttempt(markAttemptFailed(attempt));
     setUpdateResult({ type: "failed", reason: "still_old" });
+    trackUpdateEvent(EVENT_TYPE.FAILED, eventData({ reason: "still_old" }));
     return;
   }
 
@@ -134,7 +156,13 @@ export const resolveUpdateOnBoot = async (router) => {
     writeAttempt(null);
     const detector = getUpdateDetector();
     const state = detector ? await detector.checkNow() : null;
-    if (state?.status === DETECTOR_STATUS.UP_TO_DATE) setUpdateResult({ type: "completed" });
+    if (state?.status === DETECTOR_STATUS.UP_TO_DATE) {
+      setUpdateResult({ type: "completed" });
+      trackUpdateEvent(EVENT_TYPE.CONFIRMED, eventData({ reason: "other_release" }));
+    } else {
+      // Ni éxito ni fallo demostrado: queda registrado como intento sin confirmación.
+      trackUpdateEvent(EVENT_TYPE.FAILED, eventData({ reason: "unconfirmed" }));
+    }
     // Si no se confirma, no se anuncia nada: el detector ofrecerá la versión correcta si existe.
   }
 };

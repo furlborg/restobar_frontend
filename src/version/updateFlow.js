@@ -19,6 +19,10 @@ import { getUpdateDetector, updateState } from "@/version/updateDetector";
 import { isIncompatible } from "@/utils/clientContract";
 import { contractState } from "@/version/clientContract";
 import { CLIENT_CONTRACT_VERSION } from "@/version/contract";
+import { EVENT_TYPE } from "@/utils/updateTelemetry";
+import { DETECTOR_STATUS } from "@/utils/versionDetector";
+import { COORDINATOR_PHASE } from "@/utils/updateCoordinator";
+import { trackUpdateEvent } from "@/version/updateTelemetry";
 
 // ---- Puntos de integración (HU-FLZ-ACT-006 y HU-FLZ-ACT-007) ----
 const interruptionUnsafe = ref(false);
@@ -79,7 +83,27 @@ const coordinator = createUpdateCoordinator({
 coordinatorState.value = coordinator.getState();
 coordinator.subscribe((next) => {
   coordinatorState.value = next;
+  // Eventos para soporte (HU-FLZ-ACT-011): bloqueos y fallos, con su motivo.
+  const target = { toRelease: next.candidate?.releaseId, deployment: next.candidate?.deploymentId };
+  if (next.phase === COORDINATOR_PHASE.BLOCKED) trackUpdateEvent(EVENT_TYPE.BLOCKED, { ...target, reason: next.reason });
+  if (next.phase === COORDINATOR_PHASE.OFFLINE) trackUpdateEvent(EVENT_TYPE.FAILED, { ...target, reason: next.reason || "offline" });
+  if (next.phase === COORDINATOR_PHASE.FAILED) {
+    const type = next.reason === "too_many_attempts" ? EVENT_TYPE.LIMIT_REACHED : EVENT_TYPE.FAILED;
+    trackUpdateEvent(type, { ...target, reason: next.reason });
+  }
 });
+
+// Una versión nueva detectada se registra una vez por publicación (HU-FLZ-ACT-011).
+const reportedDeployments = new Set();
+watch(
+  () => updateState.value,
+  (state) => {
+    const candidate = state?.status === DETECTOR_STATUS.AVAILABLE ? state.candidate : null;
+    if (!candidate || reportedDeployments.has(candidate.deploymentId)) return;
+    reportedDeployments.add(candidate.deploymentId);
+    trackUpdateEvent(EVENT_TYPE.DETECTED, { toRelease: candidate.releaseId, deployment: candidate.deploymentId });
+  }
+);
 
 // ---- Posposición (por pestaña y por publicación; sin datos personales) ----
 const readStored = () => {
@@ -111,6 +135,10 @@ export const incompatible = computed(
       manifestMin: updateState.value?.candidate?.minSupportedClientContract ?? null,
     })
 );
+
+watch(incompatible, (value, before) => {
+  if (value && !before) trackUpdateEvent(EVENT_TYPE.INCOMPATIBLE, { reason: contractState.value.rejected ? "rejected" : "minimum" });
+});
 
 // ---- Reloj para el recordatorio ----
 const now = ref(Date.now());
@@ -185,6 +213,7 @@ export const postponeUpdate = () => {
   updateResult.value = null;
   const deploymentId = currentDeploymentId();
   if (!deploymentId) return;
+  trackUpdateEvent(EVENT_TYPE.POSTPONED, { toRelease: updateState.value?.candidate?.releaseId, deployment: deploymentId });
   now.value = Date.now();
   postponement.value = createPostponement(deploymentId, now.value);
   persist(postponement.value);

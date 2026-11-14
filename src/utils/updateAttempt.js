@@ -21,8 +21,9 @@ export const BOOT_RESULT = Object.freeze({
  * Crea el registro del intento. Si el anterior iba a la misma versión, suma el intento.
  * @param {{fromRelease: string, toRelease: string, toDeployment: string, now: number, previous?: object|null}} p
  */
-export const createAttempt = ({ fromRelease, toRelease, toDeployment, now, previous = null }) => ({
+export const createAttempt = ({ fromRelease, toRelease, toDeployment, now, previous = null, attemptId = null }) => ({
   schema: ATTEMPT_SCHEMA,
+  attempt_id: attemptId, // correlaciona los eventos del intento (HU-FLZ-ACT-011); no es sensible
   from_release: fromRelease,
   to_release: toRelease,
   to_deployment: toDeployment,
@@ -56,6 +57,7 @@ export const parseAttempt = (raw) => {
     }
     return {
       schema: d.schema,
+      attempt_id: typeof d.attempt_id === "string" && /^[a-z0-9]{1,16}$/.test(d.attempt_id) ? d.attempt_id : null,
       from_release: d.from_release,
       to_release: d.to_release,
       to_deployment: d.to_deployment,

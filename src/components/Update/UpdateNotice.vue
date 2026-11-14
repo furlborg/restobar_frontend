@@ -18,6 +18,7 @@
         <div class="flz-update__body">
           <p class="flz-update__title">{{ content.title }}</p>
           <p v-if="content.detail" class="flz-update__detail">{{ content.detail }}</p>
+          <p v-if="supportLine" class="flz-update__support">{{ supportLine }}</p>
           <div v-if="content.actions.length" class="flz-update__actions">
             <n-button
               v-for="action in content.actions"
@@ -62,6 +63,8 @@ import {
   updateToFailedLoad,
 } from "@/version/updateFlow";
 import { acknowledgeUncertainAndRetry } from "@/version/updateBarrier";
+import { readAttempt } from "@/version/applyUpdate";
+import { readCurrentReleaseId } from "@/utils/appVersion";
 
 const designStore = useDesignSettingStore();
 const view = noticeView;
@@ -246,6 +249,15 @@ const content = computed(() => {
 
 const closeCard = () => (content.value?.onClose ?? postponeUpdate)();
 
+// Para soporte (HU-FLZ-ACT-011): versión cargada y código del intento, en los mensajes de problema.
+const SUPPORT_MESSAGES = new Set([M.FAILED, M.MANDATORY, M.LOAD_RETRY, M.LOAD_OFFLINE, M.LOAD_NEEDS_UPDATE, M.UNCERTAIN]);
+const supportLine = computed(() => {
+  if (!SUPPORT_MESSAGES.has(view.value.message)) return "";
+  const release = readCurrentReleaseId(document);
+  const code = readAttempt()?.attempt_id;
+  return [release && `Versión: ${release.slice(0, 8)}`, code && `Código: ${code}`].filter(Boolean).join(" · ");
+});
+
 // "Flizzy se actualizó" se cierra solo; los demás mensajes esperan una acción.
 let autoHideTimer = null;
 watch(
@@ -338,6 +350,13 @@ onBeforeUnmount(() => {
   font-size: 13px;
   line-height: 1.4;
   color: var(--flz-muted);
+}
+
+.flz-update__support {
+  margin: 0;
+  font-size: 11px;
+  color: var(--flz-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .flz-update__actions {
