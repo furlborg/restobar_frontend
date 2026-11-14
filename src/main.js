@@ -13,6 +13,7 @@ import "@/style/naive-ui-overrides.css";
 import "@/style/mobile-responsive.css";
 import "vfonts/Lato.css";
 import VueCookies from "vue-cookies";
+import { startUpdateDetector } from "@/version/updateDetector";
 import { addIcons } from "oh-vue-icons";
 import {
   MdCalculateRound,
@@ -38,3 +39,11 @@ app.component("v-icon", OhVueIcon);
 app.directive("numeric-only", numericOnlyDirective);
 
 app.mount("#app");
+
+// Detector de versiones nuevas (HU-FLZ-ACT-004). Solo informa; nunca recarga.
+// Un error aquí no debe impedir que Flizzy arranque.
+try {
+  startUpdateDetector();
+} catch (error) {
+  console.warn("[flizzy] no se pudo iniciar el detector de versiones", error);
+}
