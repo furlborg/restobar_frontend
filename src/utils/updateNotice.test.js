@@ -26,7 +26,7 @@ const view = (over = {}) =>
   });
 
 test("CA01: con versión nueva se muestra la tarjeta 'disponible'", () => {
-  assert.deepEqual(view(), { mode: "card", message: M.AVAILABLE, remindAt: null });
+  assert.deepEqual(view(), { mode: "card", message: M.AVAILABLE, remindAt: null, reason: null });
 });
 
 test("sin versión nueva, al día o sin detector: nada", () => {
@@ -50,6 +50,7 @@ test("CA02: después de 'Más tarde' queda solo el indicador durante 30 minutos"
     mode: "indicator",
     message: null,
     remindAt: now + REMIND_AFTER_MS,
+    reason: null,
   });
   assert.equal(view({ postponement, now: now + REMIND_AFTER_MS - 1 }).mode, "indicator");
 });
@@ -89,7 +90,7 @@ test("lo que pidió el usuario siempre se informa en la tarjeta", () => {
   ];
   for (const [coordinator, message] of cases) {
     const v = view({ coordinator, postponement, interruptionUnsafe: true });
-    assert.deepEqual(v, { mode: "card", message, remindAt: null }, coordinator.phase);
+    assert.deepEqual(v, { mode: "card", message, remindAt: null, reason: coordinator.reason ?? null }, coordinator.phase);
   }
 });
 
@@ -102,4 +103,21 @@ test("parsePostponement: descarta vacíos, JSON roto o campos incorrectos", () =
   for (const raw of [null, undefined, "", "{", "null", "[]", '{"deployment_id":1,"remind_at":2}', '{"deployment_id":"x"}', '{"deployment_id":"x","remind_at":"mañana"}']) {
     assert.equal(parsePostponement(raw), null, String(raw));
   }
+});
+
+// ---- Resultado tras recargar (HU-FLZ-ACT-007) ----
+test("resultado 'completada' se muestra aunque ya no haya candidata", () => {
+  const v = view({ detector: { status: S.UP_TO_DATE, candidate: null }, result: { type: "completed" } });
+  assert.deepEqual(v, { mode: "card", message: M.COMPLETED, remindAt: null, reason: null });
+});
+
+test("resultado 'fallida' muestra el motivo y gana a la posposición", () => {
+  const postponement = createPostponement("dep-b", 1_000_000);
+  const v = view({ postponement, result: { type: "failed", reason: "still_old" } });
+  assert.deepEqual(v, { mode: "card", message: M.FAILED, remindAt: null, reason: "still_old" });
+});
+
+test("lo que el usuario está pidiendo ahora gana al resultado anterior", () => {
+  const v = view({ coordinator: { phase: P.CHECKING }, result: { type: "failed", reason: "still_old" } });
+  assert.equal(v.message, M.CHECKING);
 });

@@ -39,6 +39,14 @@ export const setInterruptionUnsafe = (value) => {
   interruptionUnsafe.value = Boolean(value);
 };
 
+// ---- Resultado comprobado al arrancar tras una actualización (HU-FLZ-ACT-007) ----
+const updateResult = shallowRef(null);
+
+/** Lo usa applyUpdate al arrancar: { type: "completed" } o { type: "failed", reason }. */
+export const setUpdateResult = (result) => {
+  updateResult.value = result ?? null;
+};
+
 // ---- Coordinador ----
 const coordinatorState = shallowRef(null);
 const coordinator = createUpdateCoordinator({
@@ -85,6 +93,7 @@ export const noticeView = computed(() =>
     postponement: postponement.value,
     now: now.value,
     interruptionUnsafe: interruptionUnsafe.value,
+    result: updateResult.value,
   })
 );
 
@@ -110,11 +119,15 @@ export const updateCoordinatorState = readonly(coordinatorState);
 const currentDeploymentId = () => updateState.value?.candidate?.deploymentId ?? null;
 
 /** "Actualizar ahora": siempre pasa por el coordinador (revalida, barrera, aplica). */
-export const updateNow = () => coordinator.requestUpdate();
+export const updateNow = () => {
+  updateResult.value = null;
+  return coordinator.requestUpdate();
+};
 
 /** "Más tarde" o cerrar: pospone esta publicación 30 minutos. */
 export const postponeUpdate = () => {
   coordinator.dismiss();
+  updateResult.value = null;
   const deploymentId = currentDeploymentId();
   if (!deploymentId) return;
   now.value = Date.now();
@@ -125,9 +138,15 @@ export const postponeUpdate = () => {
 /** Desde el ícono de cabecera: vuelve a mostrar la tarjeta. */
 export const reopenUpdateNotice = () => {
   coordinator.dismiss();
+  updateResult.value = null;
   postponement.value = null;
   persist(null);
   now.value = Date.now();
 };
 
 export const isUpdateRequestRunning = () => coordinator.isBusy();
+
+/** Cierra el mensaje de resultado (p. ej., "Flizzy se actualizó"). */
+export const dismissUpdateResult = () => {
+  updateResult.value = null;
+};

@@ -92,11 +92,17 @@ export const createUpdateCoordinator = (deps) => {
     try {
       await apply(detected.candidate);
     } catch (error) {
-      setState({
-        phase: COORDINATOR_PHASE.FAILED,
-        reason: error?.code || "apply_error",
-        candidate: detected.candidate,
-      });
+      // La barrera puede bloquear en el último instante (una operación empezó mientras tanto):
+      // es un bloqueo, no un fallo, y el trabajo sigue en pantalla.
+      if (error?.blockedReason) {
+        setState({ phase: COORDINATOR_PHASE.BLOCKED, reason: error.blockedReason, candidate: detected.candidate });
+      } else {
+        setState({
+          phase: COORDINATOR_PHASE.FAILED,
+          reason: error?.code || "apply_error",
+          candidate: detected.candidate,
+        });
+      }
     }
     return state;
   };

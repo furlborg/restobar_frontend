@@ -144,6 +144,19 @@ test("si aplicar falla, queda en fallo con el motivo", async () => {
   assert.equal(s.reason, "boot_timeout");
 });
 
+test("si la barrera bloquea en el último instante (dentro de apply), se muestra como bloqueo", async () => {
+  const { coordinator } = make({
+    apply: async () => {
+      const e = new Error("bloqueada");
+      e.blockedReason = "payment";
+      throw e;
+    },
+  });
+  const s = await coordinator.requestUpdate();
+  assert.equal(s.phase, P.BLOCKED);
+  assert.equal(s.reason, "payment");
+});
+
 test("dismiss vuelve a reposo después de un bloqueo y permite reintentar", async () => {
   let blocked = true;
   const { coordinator, calls } = make({

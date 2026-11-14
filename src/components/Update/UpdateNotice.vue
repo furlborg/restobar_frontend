@@ -10,7 +10,7 @@
         role="status"
         aria-live="polite"
         aria-atomic="true"
-        @keydown.esc="content.closable && postponeUpdate()"
+        @keydown.esc="content.closable && closeCard()"
       >
         <div class="flz-update__icon" aria-hidden="true">
           <v-icon :name="content.icon" scale="1.2" :animation="content.spin ? 'spin' : undefined" />
@@ -36,8 +36,8 @@
           v-if="content.closable"
           type="button"
           class="flz-update__close"
-          aria-label="Cerrar y actualizar más tarde"
-          @click="postponeUpdate"
+          :aria-label="content.closeLabel || 'Cerrar y actualizar más tarde'"
+          @click="closeCard"
         >
           <v-icon name="md-close-round" />
         </button>
@@ -47,12 +47,12 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, onBeforeUnmount, watch } from "vue";
 import { darkTheme } from "naive-ui";
 import { useDesignSettingStore } from "@/store/modules/designSetting";
 import { lighten } from "@/utils";
 import { NOTICE_MESSAGE as M } from "@/utils/updateNotice";
-import { noticeView, postponeUpdate, updateNow } from "@/version/updateFlow";
+import { dismissUpdateResult, noticeView, postponeUpdate, updateNow } from "@/version/updateFlow";
 import { acknowledgeUncertainAndRetry } from "@/version/updateBarrier";
 
 const designStore = useDesignSettingStore();
@@ -72,6 +72,24 @@ const actionLater = { id: "later", label: "Más tarde", run: () => postponeUpdat
 const actionRetry = { id: "retry", label: "Reintentar", primary: true, run: () => updateNow() };
 const actionBack = { id: "back", label: "Volver a la operación", primary: true, run: () => postponeUpdate() };
 const actionReviewed = { id: "reviewed", label: "Ya lo revisé", primary: true, run: () => acknowledgeUncertainAndRetry() };
+const actionClose = { id: "close", label: "Cerrar", run: () => postponeUpdate() };
+
+// Detalle del fallo según el motivo (HU-FLZ-ACT-007). Agotados los intentos ya no se ofrece reintentar.
+const FAILED_BY_REASON = {
+  still_old: {
+    detail: "El servidor todavía entrega la versión anterior. Intenta de nuevo en unos minutos.",
+  },
+  boot_timeout: {
+    detail: "La versión nueva tardó demasiado en cargar. Puedes reintentar o seguir trabajando.",
+  },
+  reload_not_started: {
+    detail: "La página no se recargó. Puedes reintentar o seguir trabajando con esta versión.",
+  },
+  too_many_attempts: {
+    detail: "Se intentó varias veces sin éxito. Sigue trabajando con esta versión y avisa a soporte.",
+    actions: [actionClose],
+  },
+};
 
 // Textos de la HU-FLZ-ACT-005. Nunca dicen "todo guardado" ni muestran porcentajes inventados.
 const CONTENT = {
@@ -138,6 +156,17 @@ const CONTENT = {
     actions: [],
     closable: false,
   },
+  [M.COMPLETED]: {
+    tone: "success",
+    icon: "md-checkcircle-round",
+    title: "Flizzy se actualizó",
+    detail: "Ya estás usando la versión nueva.",
+    actions: [],
+    closable: true,
+    closeLabel: "Cerrar aviso",
+    onClose: () => dismissUpdateResult(),
+    autoHideMs: 8000,
+  },
   [M.FAILED]: {
     tone: "warning",
     icon: "md-warningamber-round",
@@ -148,7 +177,30 @@ const CONTENT = {
   },
 };
 
-const content = computed(() => CONTENT[view.value.message] ?? null);
+const content = computed(() => {
+  const base = CONTENT[view.value.message];
+  if (!base) return null;
+  if (view.value.message === M.FAILED && FAILED_BY_REASON[view.value.reason]) {
+    return { ...base, ...FAILED_BY_REASON[view.value.reason] };
+  }
+  return base;
+});
+
+const closeCard = () => (content.value?.onClose ?? postponeUpdate)();
+
+// "Flizzy se actualizó" se cierra solo; los demás mensajes esperan una acción.
+let autoHideTimer = null;
+watch(
+  () => content.value?.autoHideMs ?? null,
+  (ms) => {
+    if (autoHideTimer) window.clearTimeout(autoHideTimer);
+    autoHideTimer = ms ? window.setTimeout(() => closeCard(), ms) : null;
+  },
+  { immediate: true }
+);
+onBeforeUnmount(() => {
+  if (autoHideTimer) window.clearTimeout(autoHideTimer);
+});
 </script>
 
 <style scoped>
@@ -158,6 +210,7 @@ const content = computed(() => CONTENT[view.value.message] ?? null);
   --flz-muted: #5c6370;
   --flz-border: #e4e7ec;
   --flz-warning: #d97706;
+  --flz-success: #16a34a;
   --flz-accent: var(--flz-primary, #0099ff);
 
   position: fixed;
@@ -182,12 +235,17 @@ const content = computed(() => CONTENT[view.value.message] ?? null);
   --flz-accent: var(--flz-warning);
 }
 
+.flz-update--success {
+  --flz-accent: var(--flz-success);
+}
+
 .flz-update--dark {
   --flz-bg: #26262b;
   --flz-fg: #ececf1;
   --flz-muted: #a6a8b0;
   --flz-border: #3a3a41;
   --flz-warning: #f0a33a;
+  --flz-success: #4ade80;
   box-shadow: 0 8px 24px rgb(0 0 0 / 40%);
 }
 

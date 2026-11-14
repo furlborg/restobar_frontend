@@ -27,6 +27,7 @@ export const NOTICE_MESSAGE = Object.freeze({
   OFFLINE: "offline",
   APPLYING: "applying",
   FAILED: "failed",
+  COMPLETED: "completed",
 });
 
 /** Registro de posposición: solo ids y fechas, sin datos personales. */
@@ -64,6 +65,8 @@ const COORDINATOR_MESSAGE = {
   [COORDINATOR_PHASE.FAILED]: () => NOTICE_MESSAGE.FAILED,
 };
 
+const view = (mode, message = null, { remindAt = null, reason = null } = {}) => ({ mode, message, remindAt, reason });
+
 /**
  * @param {object} input
  * @param {object|null} input.detector        estado del detector (HU-FLZ-ACT-004)
@@ -71,26 +74,32 @@ const COORDINATOR_MESSAGE = {
  * @param {object|null} input.postponement    { deployment_id, remind_at }
  * @param {number} input.now
  * @param {boolean} input.interruptionUnsafe  hay un cobro u operación sensible en pantalla
- * @returns {{ mode: "hidden"|"card"|"indicator", message: string|null, remindAt: number|null }}
+ * @param {object|null} [input.result]        resultado comprobado tras recargar (HU-FLZ-ACT-007):
+ *                                            { type: "completed" } o { type: "failed", reason }
+ * @returns {{ mode: "hidden"|"card"|"indicator", message: string|null, remindAt: number|null, reason: string|null }}
  */
-export const decideNoticeView = ({ detector, coordinator, postponement, now, interruptionUnsafe }) => {
+export const decideNoticeView = ({ detector, coordinator, postponement, now, interruptionUnsafe, result = null }) => {
   const phase = coordinator?.phase ?? COORDINATOR_PHASE.IDLE;
 
   // Lo que el usuario pidió se informa aunque la candidata haya cambiado mientras tanto.
   if (phase !== COORDINATOR_PHASE.IDLE && COORDINATOR_MESSAGE[phase]) {
-    return { mode: "card", message: COORDINATOR_MESSAGE[phase](coordinator.reason), remindAt: null };
+    return view("card", COORDINATOR_MESSAGE[phase](coordinator.reason), { reason: coordinator.reason ?? null });
   }
 
+  // Resultado de una actualización, comprobado al arrancar (nunca deducido del tiempo).
+  if (result?.type === "completed") return view("card", NOTICE_MESSAGE.COMPLETED);
+  if (result?.type === "failed") return view("card", NOTICE_MESSAGE.FAILED, { reason: result.reason ?? null });
+
   const candidate = detector?.status === DETECTOR_STATUS.AVAILABLE ? detector.candidate : null;
-  if (!candidate) return { mode: "hidden", message: null, remindAt: null };
+  if (!candidate) return view("hidden");
 
   const postponedThis = postponement && postponement.deployment_id === candidate.deploymentId;
   if (postponedThis && now < postponement.remind_at) {
-    return { mode: "indicator", message: null, remindAt: postponement.remind_at };
+    return view("indicator", null, { remindAt: postponement.remind_at });
   }
   if (interruptionUnsafe) {
     // No irrumpir sobre un cobro: queda el ícono y la tarjeta espera una oportunidad segura.
-    return { mode: "indicator", message: null, remindAt: null };
+    return view("indicator");
   }
-  return { mode: "card", message: NOTICE_MESSAGE.AVAILABLE, remindAt: null };
+  return view("card", NOTICE_MESSAGE.AVAILABLE);
 };

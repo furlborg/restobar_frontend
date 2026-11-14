@@ -14,6 +14,7 @@ import "@/style/mobile-responsive.css";
 import "vfonts/Lato.css";
 import VueCookies from "vue-cookies";
 import { startUpdateDetector } from "@/version/updateDetector";
+import { resolveUpdateOnBoot } from "@/version/applyUpdate";
 import { addIcons } from "oh-vue-icons";
 import {
   MdCalculateRound,
@@ -44,6 +45,10 @@ app.mount("#app");
 // Un error aquí no debe impedir que Flizzy arranque.
 try {
   startUpdateDetector();
+  // Si esta carga viene de "Actualizar ahora", confirma qué versión arrancó (HU-FLZ-ACT-007).
+  resolveUpdateOnBoot(router).catch((error) => {
+    console.warn("[flizzy] no se pudo verificar la actualización", error);
+  });
 } catch (error) {
   console.warn("[flizzy] no se pudo iniciar el detector de versiones", error);
 }
