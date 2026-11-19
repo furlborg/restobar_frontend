@@ -128,6 +128,7 @@
 </template>
 
 <script setup>
+import { useUpdateBlocker } from "@/version/updateBarrier";
 import TableOrder from "./TableOrder.vue";
 import TicketPreview from "@/views/Order/components/TicketPreview";
 import { ref, computed, onMounted, onUnmounted, provide } from 'vue';
@@ -696,6 +697,9 @@ onUnmounted(() => {
 
 onBeforeRouteUpdate((to) => handleRouteGuard(to, false));
 onBeforeRouteLeave((to) => handleRouteGuard(to, true));
+
+// No actualizar Flizzy con cambios del pedido sin enviar (HU-FLZ-ACT-006).
+useUpdateBlocker(() => hasUnsavedChanges.value);
 
 provide("customers", customers);
 provide("selectedCustomer", selectedCustomer);
