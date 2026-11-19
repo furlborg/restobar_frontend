@@ -13,6 +13,9 @@
         <div class="menuBtn" :class="{ act: active === true }" @click="active = !active">
           <span class="lines"></span>
         </div>
+        <div class="waiter-update-indicator">
+          <UpdateIndicator />
+        </div>
         <v-icon class="position-absolute top-0 end-0 me-1" name="fa-circle" scale="0.75"
           :color="isConnected ? 'green' : 'red'" :animation="isConnected ? undefined : 'flash'" />
       </n-space>
@@ -87,6 +90,7 @@
 
 <script setup>
 import { ref, computed } from "vue";
+import UpdateIndicator from "@/components/Update/UpdateIndicator.vue";
 import { useRouter, useRoute } from "vue-router";
 import { useDialog } from "naive-ui";
 import { retrieveCurrentTill } from "@/api/modules/tills";
@@ -216,6 +220,15 @@ header {
   line-height: 50px;
   padding: 0 0 0 20px;
   text-transform: capitalize;
+}
+
+/* actualización pendiente (HU-FLZ-ACT-005): a la izquierda del botón de menú */
+.waiter-update-indicator {
+  position: absolute;
+  right: 60px;
+  top: 8px;
+  z-index: 101;
+  display: flex;
 }
 
 /* menu button */

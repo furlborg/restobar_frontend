@@ -476,6 +476,7 @@
 </template>
 
 <script setup>
+import { useUpdateBlocker, useSensitiveScreen } from "@/version/updateBarrier";
 import { ref, computed, watch, onMounted } from "vue";
 import SeparatePaymentsModal from "./SeparatePaymentsModal";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
@@ -523,6 +524,10 @@ const handlePaymentDone = () => {
 const tableStore = useTableStore();
 const orderStore = useOrderStore();
 const saleStore = useSaleStore();
+
+// Pantalla de cobro: no se actualiza Flizzy hasta terminarlo o salir, y el recordatorio no aparece encima (HU-FLZ-ACT-006).
+useUpdateBlocker(() => true);
+useSensitiveScreen();
 const settingsStore = useSettingsStore();
 const genericsStore = useGenericsStore();
 const businessStore = useBusinessStore();

@@ -143,6 +143,7 @@
 </template>
 
 <script setup>
+import { useUpdateBlocker, useSensitiveScreen } from "@/version/updateBarrier";
 import { ref, computed, watch, onMounted, nextTick, reactive, defineAsyncComponent } from "vue";
 import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router";
 import { useMessage, useDialog } from "naive-ui";
@@ -610,6 +611,10 @@ const cleanupOrderStore = () => {
 };
 
 onBeforeRouteLeave((to) => handleRouteGuard(to, true));
+
+// No actualizar Flizzy con un pedido sin procesar; el recordatorio no interrumpe el cobro (HU-FLZ-ACT-006).
+useUpdateBlocker(() => hasUnsavedChanges.value);
+useSensitiveScreen();
 
 </script>
 

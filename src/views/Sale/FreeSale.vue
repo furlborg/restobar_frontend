@@ -262,6 +262,7 @@
 </template>
 
 <script>
+import { useUpdateBlocker, useSensitiveScreen } from "@/version/updateBarrier";
 import { defineComponent, ref, toRefs, computed, watch, onMounted } from "vue";
 import { http } from "@/api";
 import CustomerModal from "@/views/Customer/components/CustomerModal";
@@ -309,6 +310,10 @@ export default defineComponent({
     const productStore = useProductStore();
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
+
+    // No actualizar Flizzy con productos cargados en la venta; el recordatorio no interrumpe el cobro (HU-FLZ-ACT-006).
+    useUpdateBlocker(() => saleStore.sale_details.length > 0);
+    useSensitiveScreen();
     const userStore = useUserStore();
     const settingsStore = useSettingsStore();
     const genericsStore = useGenericsStore();
