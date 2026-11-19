@@ -1,0 +1,66 @@
+/*
+ * Tamaño del panel de cobranza (Mesa y Delivery/Para llevar).
+ * Parámetro: Configuración Avanzada > Ventas > sale.billing_panel_size
+ *   small (predeterminado) = diseño original, sin reglas aquí.
+ *   medium / large         = clases .panel-size-medium / .panel-size-large en .pos-billing-grid
+ *
+ * El panel de cobro se escala completo con `zoom` para que textos, botones, inputs
+ * y logos crezcan en la misma proporción (armonía). La columna se ensancha igual.
+ * Solo aplica en pantallas > 768px; el celular conserva su diseño compacto.
+ */
+@media (min-width: 769px) {
+  .pos-billing-grid.panel-size-medium .pos-checkout-panel { zoom: 1.12; }
+  .pos-billing-grid.panel-size-large .pos-checkout-panel { zoom: 1.25; }
+
+  .pos-billing-grid.panel-size-medium.layout-checkout-left { grid-template-columns: minmax(430px, 1fr) minmax(0, 1.3fr); }
+  .pos-billing-grid.panel-size-medium.layout-checkout-right { grid-template-columns: minmax(0, 1.3fr) minmax(430px, 1fr); }
+  .pos-billing-grid.panel-size-large.layout-checkout-left { grid-template-columns: minmax(480px, 1fr) minmax(0, 1.3fr); }
+  .pos-billing-grid.panel-size-large.layout-checkout-right { grid-template-columns: minmax(0, 1.3fr) minmax(480px, 1fr); }
+
+  @media (min-width: 1440px) {
+    .pos-billing-grid.panel-size-medium.layout-checkout-left { grid-template-columns: minmax(460px, 1fr) minmax(0, 1.3fr); }
+    .pos-billing-grid.panel-size-medium.layout-checkout-right { grid-template-columns: minmax(0, 1.3fr) minmax(460px, 1fr); }
+    .pos-billing-grid.panel-size-large.layout-checkout-left { grid-template-columns: minmax(510px, 1fr) minmax(0, 1.3fr); }
+    .pos-billing-grid.panel-size-large.layout-checkout-right { grid-template-columns: minmax(0, 1.3fr) minmax(510px, 1fr); }
+  }
+}
+
+/*
+ * Estructura del panel de cobro: el contenido hace scroll dentro de .checkout-scroll
+ * y el botón Cobrar queda FIJO debajo (ya no flota encima del contenido).
+ * En tablet/celular (<=992px) se mantiene el comportamiento anterior.
+ */
+.pos-billing-grid .pos-checkout-panel.pos-panel .checkout-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+@media (min-width: 993px) {
+  .pos-billing-grid .pos-checkout-panel.pos-panel {
+    overflow: hidden;
+    padding-bottom: 12px;
+  }
+
+  .pos-billing-grid .pos-checkout-panel.pos-panel .checkout-scroll {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 3px;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f8fafc;
+  }
+
+  .pos-billing-grid .pos-checkout-panel.pos-panel .checkout-scroll::-webkit-scrollbar { width: 5px; }
+  .pos-billing-grid .pos-checkout-panel.pos-panel .checkout-scroll::-webkit-scrollbar-track { background: #f8fafc; border-radius: 4px; }
+  .pos-billing-grid .pos-checkout-panel.pos-panel .checkout-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+  .pos-billing-grid .pos-checkout-panel.pos-panel .checkout-submit-wrapper {
+    position: static;
+    flex: none;
+    margin: 0;
+    padding: 10px 0 0;
+    background: none;
+    box-shadow: none;
+  }
+}

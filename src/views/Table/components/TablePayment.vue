@@ -12,7 +12,9 @@
         class="pos-billing-grid"
         :class="{
           'layout-checkout-left': billingLayoutPosition === 'checkout_left',
-          'layout-checkout-right': billingLayoutPosition === 'checkout_right'
+          'layout-checkout-right': billingLayoutPosition === 'checkout_right',
+          'panel-size-medium': billingPanelSize === 'medium',
+          'panel-size-large': billingPanelSize === 'large'
         }"
       >
         
@@ -58,310 +60,314 @@
         <!-- COLUMNA DERECHA: LIQUIDACIÓN Y COMMAND CENTER  -->
         <!-- ============================================== -->
         <section class="pos-panel pos-checkout-panel" :class="{ 'mps-hidden': mobilePanel !== 'pay' }">
-          <!-- CABECERA: COMPROBANTE & CONDICIÓN -->
-          <div class="checkout-header-bar">
-            <div class="checkout-header-top">
-              <div class="d-flex align-items-center gap-2">
-                <span class="checkout-title">Comprobante</span>
-                <SaleSerieSelector 
-                  :sale="sale" 
-                  :invoice-type="sale.invoice_type" 
-                  @update:serie="handleSerieUpdate"
-                  @serie-changed="handleSerieChanged" 
-                />
+          <!-- ÁREA CON SCROLL: el botón Cobrar queda fijo debajo, sin tapar el contenido -->
+          <div class="checkout-scroll">
+            <!-- CABECERA: COMPROBANTE & CONDICIÓN -->
+            <div class="checkout-header-bar">
+              <div class="checkout-header-top">
+                <div class="d-flex align-items-center gap-2">
+                  <span class="checkout-title">Comprobante</span>
+                  <SaleSerieSelector 
+                    :sale="sale" 
+                    :invoice-type="sale.invoice_type" 
+                    @update:serie="handleSerieUpdate"
+                    @serie-changed="handleSerieChanged" 
+                  />
+                </div>
+                <div class="payment-condition-toggle">
+                  <n-radio-group
+                    v-model:value="sale.payment_condition"
+                    name="saleType"
+                    size="small"
+                    :disabled="!settingsStore.businessSettings?.sale?.enable_credits"
+                    @update:value="changeCondition"
+                  >
+                    <n-radio-button :value="1">Contado</n-radio-button>
+                    <n-radio-button :value="2">Crédito</n-radio-button>
+                  </n-radio-group>
+                </div>
               </div>
-              <div class="payment-condition-toggle">
-                <n-radio-group
-                  v-model:value="sale.payment_condition"
-                  name="saleType"
-                  size="small"
-                  :disabled="!settingsStore.businessSettings?.sale?.enable_credits"
-                  @update:value="changeCondition"
-                >
-                  <n-radio-button :value="1">Contado</n-radio-button>
-                  <n-radio-button :value="2">Crédito</n-radio-button>
+
+              <!-- SELECTORES TIPO DOCUMENTO -->
+              <div class="doc-selectors-row">
+                <n-radio-group v-model:value="sale.invoice_type" name="docType" size="small" class="w-100 doc-type-group" @update:value="changeSerie">
+                  <n-radio-button :disabled="!settingsStore.businessSettings.sale?.enable_invoices" :value="1" class="doc-type-rb">
+                    FACTURA
+                  </n-radio-button>
+                  <n-radio-button :disabled="!settingsStore.businessSettings.sale?.enable_invoices" :value="3" class="doc-type-rb">
+                    BOLETA
+                  </n-radio-button>
+                  <n-radio-button :value="80" class="doc-type-rb">
+                    NOTA VENTA
+                  </n-radio-button>
                 </n-radio-group>
               </div>
             </div>
 
-            <!-- SELECTORES TIPO DOCUMENTO -->
-            <div class="doc-selectors-row">
-              <n-radio-group v-model:value="sale.invoice_type" name="docType" size="small" class="w-100 doc-type-group" @update:value="changeSerie">
-                <n-radio-button :disabled="!settingsStore.businessSettings.sale?.enable_invoices" :value="1" class="doc-type-rb">
-                  FACTURA
-                </n-radio-button>
-                <n-radio-button :disabled="!settingsStore.businessSettings.sale?.enable_invoices" :value="3" class="doc-type-rb">
-                  BOLETA
-                </n-radio-button>
-                <n-radio-button :value="80" class="doc-type-rb">
-                  NOTA VENTA
-                </n-radio-button>
-              </n-radio-group>
-            </div>
-          </div>
-
-          <!-- DATOS DEL CLIENTE Y FECHA -->
-          <div class="checkout-client-box">
-            <div class="client-header-title">
-              <span class="client-label">Cliente / Receptor:</span>
-              <span class="client-type-hint">
-                {{ customerHint }}
-              </span>
-            </div>
-            <n-form ref="saleForm" :model="sale" :rules="formRules" size="small" :show-label="false">
-              <div class="client-input-wrapper">
-                <n-form-item path="customer" class="mb-0 w-100">
-                  <ClientSelectInput 
-                    v-model:customer-name="sale.customer_name" 
-                    v-model:customer-id="sale.customer"
-                    :invoice-type="sale.invoice_type" 
-                    placeholder="Buscar o registrar cliente (RUC, DNI, Nombre)..."
-                    @customer-selected="handleCustomerSelected"
-                    @customer-cleared="handleCustomerCleared" 
-                  />
-                </n-form-item>
+            <!-- DATOS DEL CLIENTE Y FECHA -->
+            <div class="checkout-client-box">
+              <div class="client-header-title">
+                <span class="client-label">Cliente / Receptor:</span>
+                <span class="client-type-hint">
+                  {{ customerHint }}
+                </span>
               </div>
+              <n-form ref="saleForm" :model="sale" :rules="formRules" size="small" :show-label="false">
+                <div class="client-input-wrapper">
+                  <n-form-item path="customer" class="mb-0 w-100">
+                    <ClientSelectInput 
+                      v-model:customer-name="sale.customer_name" 
+                      v-model:customer-id="sale.customer"
+                      :invoice-type="sale.invoice_type" 
+                      placeholder="Buscar o registrar cliente (RUC, DNI, Nombre)..."
+                      @customer-selected="handleCustomerSelected"
+                      @customer-cleared="handleCustomerCleared" 
+                    />
+                  </n-form-item>
+                </div>
 
-              <!-- Dirección desplegable si el cliente tiene direcciones registradas -->
-              <div v-if="addressesOptions.length > 0" class="mt-2">
-                <n-select 
-                  v-model:value="sale.address" 
-                  :options="addressesOptions" 
-                  :disabled="!sale.customer"
-                  placeholder="Seleccionar dirección..." 
-                  size="small"
-                />
-              </div>
-
-              <!-- Fecha de vencimiento si es crédito -->
-              <div v-if="isCredit" class="mt-2">
-                <n-form-item label="Fecha de vencimiento" path="expiration_sale" class="mb-0">
-                  <n-date-picker 
-                    class="w-100" 
-                    type="date" 
-                    format="dd/MM/yyyy" 
-                    value-format="dd/MM/yyyy"
-                    :is-date-disabled="isExpirationDateDisabled" 
-                    v-model:formatted-value="sale.expiration_sale" 
+                <!-- Dirección desplegable si el cliente tiene direcciones registradas -->
+                <div v-if="addressesOptions.length > 0" class="mt-2">
+                  <n-select 
+                    v-model:value="sale.address" 
+                    :options="addressesOptions" 
+                    :disabled="!sale.customer"
+                    placeholder="Seleccionar dirección..." 
                     size="small"
                   />
-                </n-form-item>
-                <div class="due-chips">
-                  <button
-                    v-for="days in DUE_DAY_SHORTCUTS"
-                    :key="days"
-                    type="button"
-                    class="due-chip"
-                    :class="{ active: sale.expiration_sale === dueDateInDays(days) }"
-                    @click="sale.expiration_sale = dueDateInDays(days)"
+                </div>
+
+                <!-- Fecha de vencimiento si es crédito -->
+                <div v-if="isCredit" class="mt-2">
+                  <n-form-item label="Fecha de vencimiento" path="expiration_sale" class="mb-0">
+                    <n-date-picker 
+                      class="w-100" 
+                      type="date" 
+                      format="dd/MM/yyyy" 
+                      value-format="dd/MM/yyyy"
+                      :is-date-disabled="isExpirationDateDisabled" 
+                      v-model:formatted-value="sale.expiration_sale" 
+                      size="small"
+                    />
+                  </n-form-item>
+                  <div class="due-chips">
+                    <button
+                      v-for="days in DUE_DAY_SHORTCUTS"
+                      :key="days"
+                      type="button"
+                      class="due-chip"
+                      :class="{ active: sale.expiration_sale === dueDateInDays(days) }"
+                      @click="sale.expiration_sale = dueDateInDays(days)"
+                    >
+                      {{ days }} días
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Observaciones secundarias de la venta -->
+                <div class="client-observations-row">
+                  <n-button class="flizzy-text-btn" text size="tiny" @click="showObservations = !showObservations">
+                    <v-icon name="md-notes-round" class="me-1" scale="0.9" />
+                    {{ showObservations ? "Ocultar observaciones" : "+ Añadir observaciones" }}
+                  </n-button>
+                </div>
+
+                <n-collapse-transition :show="showObservations">
+                  <div class="mt-2">
+                    <n-input 
+                      type="textarea" 
+                      v-model:value="sale.observations" 
+                      placeholder="Notas o indicaciones de la venta..." 
+                      :rows="2" 
+                      size="small" 
+                    />
+                  </div>
+                </n-collapse-transition>
+              </n-form>
+            </div>
+
+            <!-- DESGLOSE TRIBUTARIO COMPACTO -->
+            <div class="financial-breakdown">
+              <div class="financial-row">
+                <span class="fin-label">Subtotal</span>
+                <span class="fin-val">S/. {{ formatNumber(subTotal) }}</span>
+              </div>
+              <div v-if="Number(totalEXN) > 0" class="financial-row">
+                <span class="fin-label">Op. Exoneradas</span>
+                <span class="fin-val">S/. {{ formatNumber(totalEXN) }}</span>
+              </div>
+              <div v-if="Number(totalGRV) > 0" class="financial-row">
+                <span class="fin-label">Op. Gravadas</span>
+                <span class="fin-val">S/. {{ formatNumber(totalGRV) }}</span>
+              </div>
+              <div v-if="Number(totalIGV) > 0" class="financial-row">
+                <span class="fin-label">IGV</span>
+                <span class="fin-val">S/. {{ formatNumber(totalIGV) }}</span>
+              </div>
+              <div v-if="Number(icbper) > 0" class="financial-row">
+                <span class="fin-label">ICBPER</span>
+                <span class="fin-val">S/. {{ formatNumber(icbper) }}</span>
+              </div>
+
+              <!-- Modificadores de Descuento y Otros Cargos -->
+              <div class="financial-modifiers-grid">
+                <div class="mod-item">
+                  <span class="mod-label">Descuento</span>
+                  <n-input-number 
+                    size="small" 
+                    :value="Number(totalDSCT)" 
+                    :min="0" 
+                    :max="discountInputMax" 
+                    :step="0.5" 
+                    :precision="2" 
+                    :disabled="hasItemDiscount || Number(sale.other_charges) > 0 || !canEditDiscount"
+                    @update:value="handleDiscountChange"
                   >
-                    {{ days }} días
+                    <template #prefix>S/.</template>
+                  </n-input-number>
+                </div>
+
+                <div class="mod-item">
+                  <span class="mod-label">Otros Cargos</span>
+                  <n-input-number 
+                    size="small" 
+                    :value="Number(sale.other_charges || 0)" 
+                    :min="0" 
+                    :step="0.5" 
+                    :precision="2" 
+                    :disabled="Number(totalDSCT) > 0"
+                    @update:value="handleChargesChange"
+                  >
+                    <template #prefix>S/.</template>
+                  </n-input-number>
+                </div>
+              </div>
+            </div>
+
+            <!-- MÉTODO DE PAGO -->
+            <div v-if="!isCredit" class="payment-methods-card">
+              <span class="payment-field-label">Método de Pago:</span>
+              <div class="payment-methods-grid">
+                <button
+                  v-for="pm in saleStore.getPaymentMethodsOptions"
+                  :key="pm.value"
+                  type="button"
+                  class="pm-tile"
+                  :class="{ 'pm-tile-active': sale.payment_method === pm.value, [getMethodClass(pm.label)]: true }"
+                  @click="sale.payment_method = pm.value"
+                >
+                  <payment-brand-icon :method="pm.label" :size="24" class="pm-brand-icon" />
+                  <span class="pm-name">{{ pm.label }}</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- BANNER DEL TOTAL A COBRAR (FLIZZY SIGNATURE CARD) -->
+            <div class="flizzy-total-card">
+              <div class="flizzy-total-info">
+                <span class="flizzy-total-badge">TOTAL A COBRAR</span>
+                <span class="flizzy-total-sub">{{ isCredit ? 'Venta registrada a crédito' : 'Monto total de la comanda' }}</span>
+              </div>
+              <div class="flizzy-total-price">
+                <span class="flizzy-currency">S/.</span>
+                <span class="flizzy-digits">{{ total }}</span>
+              </div>
+            </div>
+
+            <!-- LIQUIDACIÓN: PAGO RECIBIDO, ATAJOS Y VUELTO -->
+            <div v-if="isCredit" class="settlement-control-card">
+              <div class="vuelto-state-banner status-credit">
+                <div class="vuelto-label-group">
+                  <span class="vuelto-title">A CRÉDITO</span>
+                  <span class="vuelto-hint">
+                    {{ sale.expiration_sale ? `Vence el ${sale.expiration_sale}` : "Indica la fecha de vencimiento" }}
+                  </span>
+                </div>
+                <div class="vuelto-value">Saldo S/. {{ formatNumber(total) }}</div>
+              </div>
+            </div>
+            <div v-else class="settlement-control-card">
+              <div class="settlement-row">
+                <div class="settlement-field-wrapper">
+                  <span class="settlement-label">Pago Recibido:</span>
+                  <n-input-number 
+                    class="payment-given-input" 
+                    size="small"
+                    :input-props="{ inputmode: 'decimal' }"
+                    v-model:value="paymentInputModel" 
+                    :min="0" 
+                    :precision="2" 
+                    :step="1"
+                    :disabled="sale.payment_condition === 2"
+                    @update:value="handlePaymentGivenInput"
+                    @click="$event.target?.select?.()"
+                  >
+                    <template #prefix>S/.</template>
+                  </n-input-number>
+                </div>
+
+                <!-- ATAJOS DE BILLETES RÁPIDOS -->
+                <div v-if="sale.payment_condition === 1" class="quick-cash-chips-group">
+                  <button 
+                    type="button" 
+                    class="quick-cash-chip exact-chip"
+                    @click="setQuickCash(Number(total))"
+                  >
+                    Exacto
+                  </button>
+                  <button 
+                    v-for="opt in quickCashOptions" 
+                    :key="opt.value" 
+                    type="button" 
+                    class="quick-cash-chip"
+                    @click="setQuickCash(opt.value)"
+                  >
+                    {{ opt.label }}
                   </button>
                 </div>
               </div>
 
-              <!-- Observaciones secundarias de la venta -->
-              <div class="client-observations-row">
-                <n-button class="flizzy-text-btn" text size="tiny" @click="showObservations = !showObservations">
-                  <v-icon name="md-notes-round" class="me-1" scale="0.9" />
-                  {{ showObservations ? "Ocultar observaciones" : "+ Añadir observaciones" }}
+              <!-- VUELTO / FALTANTE STATE BANNER -->
+              <div class="vuelto-state-banner" :class="changeStatusClass">
+                <div class="vuelto-label-group">
+                  <span class="vuelto-title">{{ changeStatusLabel }}</span>
+                  <span class="vuelto-hint" v-if="changeStatusClass === 'status-success'">A entregar al cliente</span>
+                  <span class="vuelto-hint" v-else-if="changeStatusClass === 'status-neutral'">Monto completo sin vuelto</span>
+                  <span class="vuelto-hint" v-else-if="changeStatusClass === 'status-warning'">Monto insuficiente</span>
+                  <span class="vuelto-hint" v-else>Operación al crédito</span>
+                </div>
+                <div class="vuelto-value">
+                  S/. {{ formatNumber(changeStatusValue) }}
+                </div>
+              </div>
+            </div>
+
+            <!-- OPCIONES SECUNDARIAS -->
+            <div class="checkout-footer-options">
+              <n-checkbox v-model:checked="sale.by_consumption" :disabled="sale.payment_condition === 2" size="small">
+                <span class="consumption-label">Por consumo</span>
+                <n-tooltip trigger="hover">
+                  <template #trigger>
+                    <v-icon name="md-infooutline-round" class="ms-1 text-muted" style="cursor: help; vertical-align: -2px;" />
+                  </template>
+                  Emite el comprobante electrónico con un único ítem "Por consumo" en lugar de desglosar cada plato.
+                </n-tooltip>
+              </n-checkbox>
+
+              <n-checkbox v-model:checked="ticketPreview" size="small">
+                Previsualizar ticket
+              </n-checkbox>
+
+              <div v-if="sale.payment_condition === 1" class="d-flex align-items-center gap-2">
+                <n-checkbox v-model:checked="isMultiple" size="small">
+                  Pago múltiple
+                </n-checkbox>
+                <n-button class="flizzy-text-btn" text size="small" @click="openSeparatePaymentsModal">
+                  Dividir cuenta
                 </n-button>
               </div>
-
-              <n-collapse-transition :show="showObservations">
-                <div class="mt-2">
-                  <n-input 
-                    type="textarea" 
-                    v-model:value="sale.observations" 
-                    placeholder="Notas o indicaciones de la venta..." 
-                    :rows="2" 
-                    size="small" 
-                  />
-                </div>
-              </n-collapse-transition>
-            </n-form>
-          </div>
-
-          <!-- DESGLOSE TRIBUTARIO COMPACTO -->
-          <div class="financial-breakdown">
-            <div class="financial-row">
-              <span class="fin-label">Subtotal</span>
-              <span class="fin-val">S/. {{ formatNumber(subTotal) }}</span>
-            </div>
-            <div v-if="Number(totalEXN) > 0" class="financial-row">
-              <span class="fin-label">Op. Exoneradas</span>
-              <span class="fin-val">S/. {{ formatNumber(totalEXN) }}</span>
-            </div>
-            <div v-if="Number(totalGRV) > 0" class="financial-row">
-              <span class="fin-label">Op. Gravadas</span>
-              <span class="fin-val">S/. {{ formatNumber(totalGRV) }}</span>
-            </div>
-            <div v-if="Number(totalIGV) > 0" class="financial-row">
-              <span class="fin-label">IGV</span>
-              <span class="fin-val">S/. {{ formatNumber(totalIGV) }}</span>
-            </div>
-            <div v-if="Number(icbper) > 0" class="financial-row">
-              <span class="fin-label">ICBPER</span>
-              <span class="fin-val">S/. {{ formatNumber(icbper) }}</span>
             </div>
 
-            <!-- Modificadores de Descuento y Otros Cargos -->
-            <div class="financial-modifiers-grid">
-              <div class="mod-item">
-                <span class="mod-label">Descuento</span>
-                <n-input-number 
-                  size="small" 
-                  :value="Number(totalDSCT)" 
-                  :min="0" 
-                  :max="discountInputMax" 
-                  :step="0.5" 
-                  :precision="2" 
-                  :disabled="hasItemDiscount || Number(sale.other_charges) > 0 || !canEditDiscount"
-                  @update:value="handleDiscountChange"
-                >
-                  <template #prefix>S/.</template>
-                </n-input-number>
-              </div>
-
-              <div class="mod-item">
-                <span class="mod-label">Otros Cargos</span>
-                <n-input-number 
-                  size="small" 
-                  :value="Number(sale.other_charges || 0)" 
-                  :min="0" 
-                  :step="0.5" 
-                  :precision="2" 
-                  :disabled="Number(totalDSCT) > 0"
-                  @update:value="handleChargesChange"
-                >
-                  <template #prefix>S/.</template>
-                </n-input-number>
-              </div>
-            </div>
-          </div>
-
-          <!-- MÉTODO DE PAGO -->
-          <div v-if="!isCredit" class="payment-methods-card">
-            <span class="payment-field-label">Método de Pago:</span>
-            <div class="payment-methods-grid">
-              <button
-                v-for="pm in saleStore.getPaymentMethodsOptions"
-                :key="pm.value"
-                type="button"
-                class="pm-tile"
-                :class="{ 'pm-tile-active': sale.payment_method === pm.value, [getMethodClass(pm.label)]: true }"
-                @click="sale.payment_method = pm.value"
-              >
-                <payment-brand-icon :method="pm.label" :size="24" class="pm-brand-icon" />
-                <span class="pm-name">{{ pm.label }}</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- BANNER DEL TOTAL A COBRAR (FLIZZY SIGNATURE CARD) -->
-          <div class="flizzy-total-card">
-            <div class="flizzy-total-info">
-              <span class="flizzy-total-badge">TOTAL A COBRAR</span>
-              <span class="flizzy-total-sub">{{ isCredit ? 'Venta registrada a crédito' : 'Monto total de la comanda' }}</span>
-            </div>
-            <div class="flizzy-total-price">
-              <span class="flizzy-currency">S/.</span>
-              <span class="flizzy-digits">{{ total }}</span>
-            </div>
-          </div>
-
-          <!-- LIQUIDACIÓN: PAGO RECIBIDO, ATAJOS Y VUELTO -->
-          <div v-if="isCredit" class="settlement-control-card">
-            <div class="vuelto-state-banner status-credit">
-              <div class="vuelto-label-group">
-                <span class="vuelto-title">A CRÉDITO</span>
-                <span class="vuelto-hint">
-                  {{ sale.expiration_sale ? `Vence el ${sale.expiration_sale}` : "Indica la fecha de vencimiento" }}
-                </span>
-              </div>
-              <div class="vuelto-value">Saldo S/. {{ formatNumber(total) }}</div>
-            </div>
-          </div>
-          <div v-else class="settlement-control-card">
-            <div class="settlement-row">
-              <div class="settlement-field-wrapper">
-                <span class="settlement-label">Pago Recibido:</span>
-                <n-input-number 
-                  class="payment-given-input" 
-                  size="small"
-                  :input-props="{ inputmode: 'decimal' }"
-                  v-model:value="paymentInputModel" 
-                  :min="0" 
-                  :precision="2" 
-                  :step="1"
-                  :disabled="sale.payment_condition === 2"
-                  @update:value="handlePaymentGivenInput"
-                  @click="$event.target?.select?.()"
-                >
-                  <template #prefix>S/.</template>
-                </n-input-number>
-              </div>
-
-              <!-- ATAJOS DE BILLETES RÁPIDOS -->
-              <div v-if="sale.payment_condition === 1" class="quick-cash-chips-group">
-                <button 
-                  type="button" 
-                  class="quick-cash-chip exact-chip"
-                  @click="setQuickCash(Number(total))"
-                >
-                  Exacto
-                </button>
-                <button 
-                  v-for="opt in quickCashOptions" 
-                  :key="opt.value" 
-                  type="button" 
-                  class="quick-cash-chip"
-                  @click="setQuickCash(opt.value)"
-                >
-                  {{ opt.label }}
-                </button>
-              </div>
-            </div>
-
-            <!-- VUELTO / FALTANTE STATE BANNER -->
-            <div class="vuelto-state-banner" :class="changeStatusClass">
-              <div class="vuelto-label-group">
-                <span class="vuelto-title">{{ changeStatusLabel }}</span>
-                <span class="vuelto-hint" v-if="changeStatusClass === 'status-success'">A entregar al cliente</span>
-                <span class="vuelto-hint" v-else-if="changeStatusClass === 'status-neutral'">Monto completo sin vuelto</span>
-                <span class="vuelto-hint" v-else-if="changeStatusClass === 'status-warning'">Monto insuficiente</span>
-                <span class="vuelto-hint" v-else>Operación al crédito</span>
-              </div>
-              <div class="vuelto-value">
-                S/. {{ formatNumber(changeStatusValue) }}
-              </div>
-            </div>
-          </div>
-
-          <!-- OPCIONES SECUNDARIAS -->
-          <div class="checkout-footer-options">
-            <n-checkbox v-model:checked="sale.by_consumption" :disabled="sale.payment_condition === 2" size="small">
-              <span class="consumption-label">Por consumo</span>
-              <n-tooltip trigger="hover">
-                <template #trigger>
-                  <v-icon name="md-infooutline-round" class="ms-1 text-muted" style="cursor: help; vertical-align: -2px;" />
-                </template>
-                Emite el comprobante electrónico con un único ítem "Por consumo" en lugar de desglosar cada plato.
-              </n-tooltip>
-            </n-checkbox>
-
-            <n-checkbox v-model:checked="ticketPreview" size="small">
-              Previsualizar ticket
-            </n-checkbox>
-
-            <div v-if="sale.payment_condition === 1" class="d-flex align-items-center gap-2">
-              <n-checkbox v-model:checked="isMultiple" size="small">
-                Pago múltiple
-              </n-checkbox>
-              <n-button class="flizzy-text-btn" text size="small" @click="openSeparatePaymentsModal">
-                Dividir cuenta
-              </n-button>
-            </div>
           </div>
 
           <!-- BOTÓN PRINCIPAL COBRAR -->
@@ -502,6 +508,7 @@ import {
   expirationRule,
   quickCashOptions as buildQuickCashOptions,
 } from "@/utils/checkout";
+import "@/style/billing-panel-size.css";
 import { cloneDeep, isDecimal } from "@/utils";
 import { useDialog, useMessage } from "naive-ui";
 import format from "date-fns/format";
@@ -558,6 +565,12 @@ const defaultSerieId = saleStore.getFirstOption(defaultInvoiceType);
 
 const billingLayoutPosition = computed(() => {
   return settingsStore.businessSettings?.sale?.billing_layout_position || 'checkout_left';
+});
+
+// Tamaño del panel de cobranza: small (predeterminado) | medium | large
+const billingPanelSize = computed(() => {
+  const size = settingsStore.businessSettings?.sale?.billing_panel_size;
+  return ['medium', 'large'].includes(size) ? size : 'small';
 });
 
 const sale = ref({
@@ -1558,6 +1571,12 @@ onMounted(async () => {
 }
 
 .doc-selectors-row :deep(.n-radio-button) {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  height: auto !important;
+  min-height: 32px;
+  line-height: 1.2 !important;
   flex: 1;
   text-align: center;
   border: none !important;
@@ -1569,6 +1588,15 @@ onMounted(async () => {
   padding: 4px 6px;
   box-shadow: none !important;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.doc-selectors-row :deep(.n-radio-button .n-radio__label),
+.payment-condition-toggle :deep(.n-radio-button .n-radio__label) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 !important;
+  line-height: 1.2;
 }
 
 .doc-selectors-row :deep(.n-radio-button::before) {
@@ -1590,6 +1618,12 @@ onMounted(async () => {
 }
 
 .payment-condition-toggle :deep(.n-radio-button) {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  height: auto !important;
+  min-height: 26px;
+  line-height: 1.2 !important;
   border: none !important;
   background: transparent !important;
   border-radius: 6px !important;
