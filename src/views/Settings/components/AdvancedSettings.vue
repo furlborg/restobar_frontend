@@ -495,6 +495,16 @@
                                                 <b>Alternativo:</b> Panel a la derecha y lista a la izquierda.
                                             </template>
                                         </n-form-item-gi>
+                                        <n-form-item-gi label="Tamaño del Panel de Cobranza">
+                                            <n-select 
+                                                v-model:value="businessSettings.sale.billing_panel_size" 
+                                                :options="billingPanelSizeOptions" 
+                                                size="large" 
+                                            />
+                                            <template #feedback>
+                                                Agranda textos, botones y logos del panel de cobro (mesa, delivery y para llevar). No afecta al celular.
+                                            </template>
+                                        </n-form-item-gi>
                                     </n-grid>
                                 </n-form>
                             </n-card>
@@ -1493,6 +1503,7 @@ export default defineComponent({
                 free_sale_affects_till: true,
                 free_sale_send_doc: true,
                 billing_layout_position: 'checkout_left',
+                billing_panel_size: 'small',
             };
             for (const key in defaultSale) {
                 if (settings.sale[key] === undefined) {
@@ -1600,6 +1611,12 @@ export default defineComponent({
         const billingLayoutOptions = [
             { label: "Predeterminado: Lista a la derecha y panel a la izquierda", value: "checkout_left" },
             { label: "Alternativo: Panel a la derecha y lista a la izquierda", value: "checkout_right" }
+        ];
+
+        const billingPanelSizeOptions = [
+            { label: "Pequeño (predeterminado)", value: "small" },
+            { label: "Mediano", value: "medium" },
+            { label: "Grande", value: "large" }
         ];
 
         const kitchenPrinterFormatOptions = [
@@ -1865,6 +1882,7 @@ export default defineComponent({
             printOptions,
             invoiceOptions,
             billingLayoutOptions,
+            billingPanelSizeOptions,
             kitchenPrinterFormatOptions,
             infoLocationOptions,
             orderTypeOptions,
