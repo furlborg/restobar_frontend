@@ -92,7 +92,7 @@ export async function searchOrdersAnulate(filterParams, page, pageSize) {
 export async function nullOrder(order, dataAnulate) {
   return await http.post(`orders/${order}/secure_delete/`, {
     ...dataAnulate
-  });
+  }, { skipGlobalError: true });
 }
 
 export async function listOrderDetails(order) {
