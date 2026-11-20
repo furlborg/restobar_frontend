@@ -31,15 +31,16 @@ import { useMessage } from "naive-ui";
 import { performDeleteOrderDetail } from "@/api/modules/tables";
 import { useCancellationReasons } from "@/composables/useCancellationReasons";
 import { useGenericsStore } from "@/store/modules/generics";
+import { useSettingsStore } from "@/store/modules/settings";
 import { useUserStore } from "@/store/modules/user";
 import {
     PERMISSION_CANCEL_DETAIL,
     authError,
-    authMode,
     buildRemoveDetailPayload,
     cancellationErrorMessage,
     findReason,
     itemError,
+    resolveAuthMode,
     resolveDestination,
 } from "@/utils/cancellation";
 import CancellationAuth from "./CancellationAuth.vue";
@@ -58,6 +59,7 @@ const emit = defineEmits(["update:show", "cancelled"]);
 const message = useMessage();
 const userStore = useUserStore();
 const genericsStore = useGenericsStore();
+const settingsStore = useSettingsStore();
 const { reasons, load } = useCancellationReasons();
 
 const emptyForm = () => ({ reasonCode: null, chosenDestination: null, note: "" });
@@ -70,7 +72,12 @@ const maxQuantity = computed(() => Number(props.detail?.quantity) || 1);
 const reason = computed(() => findReason(reasons.value, form.value.reasonCode));
 const destination = computed(() => resolveDestination(reason.value, form.value.chosenDestination));
 const mode = computed(() =>
-    authMode((permission) => userStore.hasPermission(permission), PERMISSION_CANCEL_DETAIL, destination.value)
+    resolveAuthMode({
+        settings: settingsStore.businessSettings?.sale,
+        hasPermission: (permission) => userStore.hasPermission(permission),
+        scopePermission: PERMISSION_CANCEL_DETAIL,
+        destination: destination.value,
+    })
 );
 const modalClass = computed(() => ({
     'w-100': genericsStore.device === 'mobile',
@@ -128,7 +135,7 @@ const submit = async () => {
         console.error(error);
         // Se conserva lo ingresado (salvo la clave) para corregir y reintentar.
         credentials.value = { ...credentials.value, password: "" };
-        message.error(cancellationErrorMessage(error));
+        message.error(cancellationErrorMessage(error, mode.value));
     } finally {
         loading.value = false;
     }

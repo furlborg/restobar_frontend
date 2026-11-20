@@ -1,13 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  AUTH_MODE_GENERAL,
   authError,
   authMode,
   buildCancelOrderPayload,
   buildRemoveDetailPayload,
   canSeeWasteCost,
   cancellationErrorMessage,
+  credentialPayload,
   itemError,
+  resolveAuthMode,
   resolveDestination,
   summarize,
   wasteModuleEnabled,
@@ -106,7 +109,53 @@ test("summarize: cuenta stock/merma y valoriza la merma en céntimos", () => {
 test("cancellationErrorMessage: traduce códigos del backend", () => {
   assert.match(cancellationErrorMessage({ response: { data: { code: "MISSING_PERMISSION" } } }), /permiso/);
   assert.match(cancellationErrorMessage({ response: { data: { code: "INVALID_CREDENTIALS" } } }), /incorrectos/);
+  assert.match(
+    cancellationErrorMessage({ response: { data: { code: "INVALID_CREDENTIALS" } } }, AUTH_MODE_GENERAL),
+    /clave general/i
+  );
   assert.equal(cancellationErrorMessage({ response: { data: { error: "Otro error" } } }), "Otro error");
+});
+
+test("resolveAuthMode: la configuración manda y la merma queda blindada", () => {
+  const has = perms("cancel_orderdetail", "authorize_waste");
+  const base = { hasPermission: has, scopePermission: "cancel_orderdetail" };
+
+  // Sin configuración se comporta como credencial personal.
+  assert.equal(resolveAuthMode({ ...base, settings: {}, destination: "STOCK" }), "own");
+
+  // Modo clave general: aplica a stock...
+  assert.equal(
+    resolveAuthMode({ ...base, settings: { cancellation_auth_mode: AUTH_MODE_GENERAL }, destination: "STOCK" }),
+    AUTH_MODE_GENERAL
+  );
+  // ...pero no a merma salvo que se habilite aparte.
+  assert.equal(
+    resolveAuthMode({ ...base, settings: { cancellation_auth_mode: AUTH_MODE_GENERAL }, destination: "WASTE" }),
+    "own"
+  );
+  assert.equal(
+    resolveAuthMode({
+      ...base,
+      settings: { cancellation_auth_mode: AUTH_MODE_GENERAL, allow_general_pass_for_waste: true },
+      destination: "WASTE",
+    }),
+    AUTH_MODE_GENERAL
+  );
+
+  // Modo personal: nunca acepta clave general.
+  assert.equal(
+    resolveAuthMode({ ...base, settings: { cancellation_auth_mode: "personal" }, destination: "STOCK" }),
+    "own"
+  );
+});
+
+test("authError y credentialPayload: modo clave general solo pide la clave", () => {
+  assert.match(authError(AUTH_MODE_GENERAL, {}), /clave general/);
+  assert.equal(authError(AUTH_MODE_GENERAL, { password: "999999" }), null);
+  assert.deepEqual(credentialPayload(AUTH_MODE_GENERAL, { username: "ignorado", password: "999999" }), {
+    supervisor_username: "",
+    supervisor_password: "999999",
+  });
 });
 
 test("canSeeWasteCost: solo con authorize_waste o view_waste_report", () => {

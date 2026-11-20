@@ -64,18 +64,19 @@ import { cancelTableOrder, retrieveTableOrder } from "@/api/modules/tables";
 import { getCancellationUnitCosts, listOrderDetails, nullOrder } from "@/api/modules/orders";
 import { useCancellationReasons } from "@/composables/useCancellationReasons";
 import { useGenericsStore } from "@/store/modules/generics";
+import { useSettingsStore } from "@/store/modules/settings";
 import { useUserStore } from "@/store/modules/user";
 import {
     DESTINATION_STOCK,
     DESTINATION_WASTE,
     PERMISSION_CANCEL_ORDER,
     authError,
-    authMode,
     buildCancelOrderPayload,
     canSeeWasteCost,
     cancellationErrorMessage,
     findReason,
     itemError,
+    resolveAuthMode,
     resolveDestination,
     summarize,
 } from "@/utils/cancellation";
@@ -93,6 +94,7 @@ const emit = defineEmits(["update:show", "cancelled"]);
 const message = useMessage();
 const userStore = useUserStore();
 const genericsStore = useGenericsStore();
+const settingsStore = useSettingsStore();
 const { reasons, load } = useCancellationReasons();
 
 const emptyForm = () => ({ reasonCode: null, chosenDestination: null, note: "" });
@@ -133,11 +135,12 @@ const hasWasteWithoutCost = computed(() =>
     items.value.some((item) => destinationOf(item) === DESTINATION_WASTE && !(unitCosts.value[item.id] > 0))
 );
 const mode = computed(() =>
-    authMode(
-        (permission) => userStore.hasPermission(permission),
-        PERMISSION_CANCEL_ORDER,
-        summary.value.wasteUnits > 0 ? DESTINATION_WASTE : DESTINATION_STOCK
-    )
+    resolveAuthMode({
+        settings: settingsStore.businessSettings?.sale,
+        hasPermission: (permission) => userStore.hasPermission(permission),
+        scopePermission: PERMISSION_CANCEL_ORDER,
+        destination: summary.value.wasteUnits > 0 ? DESTINATION_WASTE : DESTINATION_STOCK,
+    })
 );
 
 const toggleOverride = (item) => {
@@ -246,7 +249,7 @@ const submit = async () => {
             return;
         }
         credentials.value = { ...credentials.value, password: "" };
-        message.error(cancellationErrorMessage(error));
+        message.error(cancellationErrorMessage(error, mode.value));
     } finally {
         loading.value = false;
     }

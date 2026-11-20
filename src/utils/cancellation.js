@@ -12,6 +12,12 @@ export const PERMISSION_CANCEL_DETAIL = "cancel_orderdetail";
 export const PERMISSION_AUTHORIZE_WASTE = "authorize_waste";
 export const PERMISSION_VIEW_WASTE_REPORT = "view_waste_report";
 
+// `business_settings.sale.cancellation_auth_mode`: credencial personal (por defecto)
+// o clave general del negocio. La merma solo admite clave general si además
+// `allow_general_pass_for_waste` está activo.
+export const AUTH_MODE_PERSONAL = "personal";
+export const AUTH_MODE_GENERAL = "general_pass";
+
 /** Solo quien autoriza mermas o ve su reporte puede ver el costo de compra. */
 export function canSeeWasteCost(hasPermission) {
   return hasPermission(PERMISSION_AUTHORIZE_WASTE) || hasPermission(PERMISSION_VIEW_WASTE_REPORT);
@@ -57,6 +63,22 @@ export function authMode(hasPermission, scopePermission, destination) {
   return "own";
 }
 
+/**
+ * Modo efectivo de la anulación: la configuración del negocio manda, salvo que la
+ * merma esté blindada (`allow_general_pass_for_waste` inactivo), en cuyo caso se
+ * aplica la credencial personal o de supervisor.
+ */
+export function resolveAuthMode({ settings, hasPermission, scopePermission, destination }) {
+  const configured =
+    settings?.cancellation_auth_mode === AUTH_MODE_GENERAL ? AUTH_MODE_GENERAL : AUTH_MODE_PERSONAL;
+  if (configured === AUTH_MODE_GENERAL) {
+    const wasteBlocked =
+      destination === DESTINATION_WASTE && settings?.allow_general_pass_for_waste !== true;
+    if (!wasteBlocked) return AUTH_MODE_GENERAL;
+  }
+  return authMode(hasPermission, scopePermission, destination);
+}
+
 /** Error de validación de un ítem (motivo, destino, observación) o null si está completo. */
 export function itemError(reason, chosenDestination, note) {
   if (!reason) return "Seleccione un motivo.";
@@ -72,14 +94,22 @@ export function itemError(reason, chosenDestination, note) {
 /** Error de la credencial según el modo, o null si está completa. */
 export function authError(mode, credentials) {
   const { username = "", password = "" } = credentials || {};
+  if (mode === AUTH_MODE_GENERAL) {
+    return password ? null : "Ingrese la clave general del negocio.";
+  }
   if (mode === "supervisor" && !username.trim()) return "Ingrese el usuario del supervisor.";
   if (!password) return mode === "supervisor" ? "Ingrese la clave del supervisor." : "Ingrese su clave.";
   return null;
 }
 
-/** Campos de credencial del contrato nuevo. En modo "own" no se envía usuario. */
+/** Campos de credencial del contrato nuevo. */
 export function credentialPayload(mode, credentials) {
   const { username = "", password = "" } = credentials || {};
+  if (mode === AUTH_MODE_GENERAL) {
+    // La clave general viaja sin usuario: el backend la contrasta con
+    // `business.general_pass` y deja `authorized_by` nulo.
+    return { supervisor_username: "", supervisor_password: password };
+  }
   return {
     supervisor_username: mode === "supervisor" ? username.trim() : "",
     supervisor_password: password,
@@ -143,13 +173,16 @@ export function summarize(items) {
 }
 
 /** Mensaje claro para errores de la API de anulación (400 credenciales / 403 permisos). */
-export function cancellationErrorMessage(error) {
+export function cancellationErrorMessage(error, mode) {
   const data = error?.response?.data || {};
   switch (data.code) {
     case "INVALID_CREDENTIALS":
+      if (mode === AUTH_MODE_GENERAL) {
+        return "La clave general no es correcta. Verifíquela en Ajustes o use la credencial personal de un supervisor.";
+      }
       return "Usuario o clave incorrectos. Use la clave personal de su usuario o de un supervisor; la clave general del negocio no se acepta en anulaciones.";
     case "MISSING_PERMISSION":
-      return "Ese usuario no tiene permiso para autorizar esta anulación.";
+      return "Esa credencial no tiene permiso para autorizar esta anulación.";
     case "NOTE_REQUIRED":
       return "Este motivo requiere una observación.";
     case "REASON_NOT_ALLOWED":
