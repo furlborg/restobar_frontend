@@ -20,7 +20,7 @@
         <n-select
           v-model:value="product.product_affectation"
           placeholder="Seleccione"
-          :options="productStore.affectationsOptions"
+          :options="regularAffectations"
           :disabled="!settingsStore.businessSettings?.sale?.manage_affectations"
         />
       </n-form-item-gi>
@@ -52,6 +52,10 @@ export default defineComponent({
   emits: ["success"],
   setup(props, { emit }) {
     const productStore = useProductStore();
+    // La gratuidad se registra después, con motivo y autorización (FLZ-GRA-04/05).
+    const regularAffectations = computed(() =>
+      (productStore.affectationsOptions || []).filter((option) => [10, 20].includes(Number(option.value)))
+    );
     const saleStore = useSaleStore();
     const settingsStore = useSettingsStore();
 

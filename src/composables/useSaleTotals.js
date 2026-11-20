@@ -1,6 +1,6 @@
 /**
  * Sale Totals Composable
- * 
+ *
  * Provides reactive calculations for sale totals including:
  * - Product lines and menu sets totals
  * - Tax breakdowns (IGV, ICBPER, exempt, free)
@@ -11,55 +11,72 @@
 import { computed } from 'vue';
 import { useSaleStore } from '@/store/modules/sale';
 import { round2 } from '@/utils/money';
+import { isFreeAffectation, isTaxedFreeAffectation, calculateTaxedFreeAmounts } from '@/utils/freeOperations';
 
 export function useSaleTotals() {
   const saleStore = useSaleStore();
-  
+
   // Core payload (reactive)
   const salePayload = computed(() => saleStore.salePayload);
-  
+
   // Basic totals
   const totals = computed(() => saleStore.computeTotals());
-  
+
   const productTotal = computed(() => totals.value.productTotal);
   const menuTotal = computed(() => totals.value.menuTotal);
   const grandTotal = computed(() => totals.value.grandTotal);
-  
+
   // Tax breakdown for product lines only (menus don't have individual tax breakdown)
   const taxBreakdown = computed(() => {
     const details = salePayload.value.sale_details || [];
     const menuSets = salePayload.value.sale_product_sets || [];
-    
+
     // Calcular totales de productos regulares por afectación
     const taxed = details.filter(d => Number(d.product_affectation) === 10)
       .reduce((acc, d) => acc + ((Number(d.price_sale || 0) - Number(d.igv_tax || 0)) * Number(d.quantity || 0)), 0);
-    
+
     const exempt = details.filter(d => Number(d.product_affectation) === 20)
       .reduce((acc, d) => acc + (Number(d.price_sale || 0) * Number(d.quantity || 0)), 0);
-    
-    const free = details.filter(d => Number(d.product_affectation) === 21)
-      .reduce((acc, d) => acc + (Number(d.price_sale || 0) * Number(d.quantity || 0)), 0);
-    
-    const igv = details.reduce((acc, d) => 
+
+    const free = details.filter(d => isFreeAffectation(d.product_affectation))
+      .reduce((acc, d) => {
+        const qty = Number(d.quantity || 0);
+        if (isTaxedFreeAffectation(d.product_affectation)) {
+          const base = d.price_base != null ? Number(d.price_base) : calculateTaxedFreeAmounts(d.price_sale).priceBase;
+          return acc + base * qty;
+        }
+        return acc + Number(d.price_sale || 0) * qty;
+      }, 0);
+
+    const free_igv = details.filter(d => isTaxedFreeAffectation(d.product_affectation))
+      .reduce((acc, d) => {
+        const qty = Number(d.quantity || 0);
+        const igv = d.igv_tax != null ? Number(d.igv_tax) : calculateTaxedFreeAmounts(d.price_sale).igvTax;
+        return acc + igv * qty;
+      }, 0);
+
+    // Solo IGV cobrado (productos gravados 10)
+    const igv = details.filter(d => Number(d.product_affectation) === 10).reduce((acc, d) =>
       acc + (Number(d.igv_tax || 0) * Number(d.quantity || 0)), 0);
-    
-    const icbper = details.reduce((acc, d) => 
+
+    const icbper = details.reduce((acc, d) =>
       acc + Number(d.icbper || 0), 0);
-    
+
     // AGREGADO: Sumar el total de combos/menús a OP. EXONERADAS
     // Los combos/menús no tienen afectación individual, se consideran exonerados por defecto
-    const menuTotal = menuSets.reduce((acc, menu) => 
+    const menuTotal = menuSets.reduce((acc, menu) =>
       acc + (Number(menu.price || 0) * Number(menu.quantity || 0)), 0);
-    
+
     return {
       taxed: round2(taxed),
       exempt: round2(exempt + menuTotal), // ✅ Incluir combos/menús en exoneradas
       free: round2(free),
+      free_igv: round2(free_igv),
       igv: round2(igv),
       icbper: round2(icbper)
     };
   });
-  
+
   // Summary for display
   const summary = computed(() => ({
     subtotal: round2(productTotal.value + menuTotal.value - taxBreakdown.value.igv),
@@ -67,7 +84,7 @@ export function useSaleTotals() {
     icbper: taxBreakdown.value.icbper,
     total: grandTotal.value
   }));
-  
+
   // Item counts
   const itemCounts = computed(() => {
     const payload = salePayload.value;
@@ -77,15 +94,15 @@ export function useSaleTotals() {
       totalItems: (payload.sale_details || []).length + (payload.sale_product_sets || []).length
     };
   });
-  
+
   // Validation helpers
   const hasItems = computed(() => itemCounts.value.totalItems > 0);
   const hasMenus = computed(() => itemCounts.value.menuCount > 0);
   const hasProducts = computed(() => itemCounts.value.productCount > 0);
-  
+
   // Format helpers
   const formatCurrency = (value) => `S/. ${Number(value || 0).toFixed(2)}`;
-  
+
   const formattedTotals = computed(() => ({
     productTotal: formatCurrency(productTotal.value),
     menuTotal: formatCurrency(menuTotal.value),
@@ -93,7 +110,7 @@ export function useSaleTotals() {
     igv: formatCurrency(taxBreakdown.value.igv),
     icbper: formatCurrency(taxBreakdown.value.icbper)
   }));
-  
+
   // Payment summary helper
   const getPaymentSummary = () => {
     const { taxed, exempt, free, igv, icbper } = taxBreakdown.value;
@@ -105,21 +122,21 @@ export function useSaleTotals() {
       tax_breakdown: { taxed, exempt, free }
     };
   };
-  
+
   // Validation
   const validateSaleData = () => {
     const errors = [];
-    
+
     if (!hasItems.value) {
       errors.push('No hay productos ni menús seleccionados');
     }
-    
+
     if (grandTotal.value <= 0) {
       errors.push('El total debe ser mayor que cero');
     }
-    
+
     const payload = salePayload.value;
-    
+
     // Validate product details
     (payload.sale_details || []).forEach((detail, index) => {
       if (!detail.product || !detail.quantity || detail.quantity <= 0) {
@@ -129,7 +146,7 @@ export function useSaleTotals() {
         errors.push(`Producto ${index + 1}: precio inválido`);
       }
     });
-    
+
     // Validate menu sets
     (payload.sale_product_sets || []).forEach((menu, index) => {
       if (!menu.menu_id || !menu.quantity || menu.quantity <= 0) {
@@ -139,31 +156,31 @@ export function useSaleTotals() {
         errors.push(`Menú ${index + 1}: precio inválido`);
       }
     });
-    
+
     return { isValid: errors.length === 0, errors };
   };
 
   return {
     // Core data
     salePayload,
-    
+
     // Totals
     productTotal,
-    menuTotal, 
+    menuTotal,
     grandTotal,
     taxBreakdown,
     summary,
-    
+
     // Counts
     itemCounts,
     hasItems,
     hasMenus,
     hasProducts,
-    
+
     // Formatted
     formattedTotals,
     formatCurrency,
-    
+
     // Helpers
     getPaymentSummary,
     validateSaleData

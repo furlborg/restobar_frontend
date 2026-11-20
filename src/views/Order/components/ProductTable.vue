@@ -32,59 +32,78 @@
 
           <tr v-for="(detail, index) in saleDetails" :key="`product-${index}`">
             <td v-if="settingsStore.businessSettings?.sale?.manage_affectations" class="col-tag">
-              <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation"
-                :disabled="!userStore.hasPermission('change_product_affectation')" :options="menuAffectationOptions"
-                @update:value="handleAffectationChange(detail)">
-                <n-tag size="small" :color="getAfcColor(detail.product_affectation)">
-                  {{ getAfcShort(detail.product_affectation) }}
-                </n-tag>
-              </n-popselect>
+              <n-tag
+                size="small"
+                :color="getAfcColor(detail.product_affectation)"
+                class="afc-tag"
+                :class="{ 'cursor-pointer': userStore.hasPermission('change_product_affectation') }"
+                style="cursor: pointer"
+                @click="userStore.hasPermission('change_product_affectation') && openFreeModal(detail)"
+              >
+                {{ getAfcShort(detail.product_affectation) }}
+              </n-tag>
             </td>
             <td class="col-qty">{{ detail.quantity }}</td>
             <td class="col-name">
               <input class="custom-input product-name-input" v-model="detail.product_name" v-autowidth
                 @click="$event.target.select()" />
+              <n-tag v-if="detail.free_reason" size="tiny" type="warning" class="ms-1" round>
+                {{ getFreeReasonLabel(detail.free_reason) }}
+              </n-tag>
             </td>
             <td class="col-price">
               S/.
-              <input class="custom-input price-input" type="number" :min="detail.product_affectation === 21 ? 0 : 1" step=".5"
+              <input class="custom-input price-input" type="number" :min="isFreeAffectation(detail.product_affectation) ? 0 : 1" step=".5"
                 v-model="detail.price_sale" v-autowidth @click="$event.target.select()"
-                :disabled="!settingsStore.business_settings?.sale?.show_discount_label"
+                :disabled="isFreeAffectation(detail.product_affectation) || !settingsStore.business_settings?.sale?.show_discount_label"
                 @input="handlePriceInput(detail)" @blur="handlePriceBlur(detail)"
                 @keydown.enter.prevent="handlePriceBlur(detail)" />
             </td>
             <td v-if="settingsStore.business_settings?.sale?.show_discount_label" class="col-discount">
               S/.
               <input class="custom-input discount-input" type="number" min="0" :max="(detail.price_sale || 0) * (detail.quantity || 0)"
-                step=".5" :disabled="detail.product_affectation === 21 || !!Number(sale.discount)"
+                step=".5" :disabled="isFreeAffectation(detail.product_affectation) || !!Number(sale.discount)"
                 v-model="detail.discount" v-autowidth @click="$event.target.select()"
                 @input="handleDiscountInput(detail)" @blur="handleDiscountBlur(detail)"
                 @keydown.enter.prevent="handleDiscountBlur(detail)" />
             </td>
             <td class="col-total">
-              {{
-                detail.product_affectation === 21
-                  ? "0.00"
-                  : (detail.quantity * detail.price_sale - detail.discount).toFixed(2)
-              }}
+              <template v-if="isFreeAffectation(detail.product_affectation)">
+                <span class="free-strike">S/. {{ (detail.quantity * (detail.price_sale || 0)).toFixed(2) }}</span>
+                <span class="free-zero">0.00</span>
+                <div class="free-label">No se cobra</div>
+              </template>
+              <template v-else>
+                {{ (detail.quantity * detail.price_sale - detail.discount).toFixed(2) }}
+              </template>
             </td>
           </tr>
         </tbody>
       </n-table>
     </n-scrollbar>
+    <ItemFreeModal v-model:show="showFreeModal" :detail="activeDetail" @apply="onApplyFree" />
   </div>
 </template>
 
 <script>
-import { defineComponent, computed } from 'vue';
+import { defineComponent, computed, ref } from 'vue';
 import { useProductStore } from "@/store/modules/product";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useUserStore } from "@/store/modules/user";
 import { lighten } from "@/utils";
 import { directive as VueInputAutowidth } from "vue-input-autowidth";
+import ItemFreeModal from "@/components/FreeOperation/ItemFreeModal.vue";
+import {
+  isFreeAffectation,
+  getAffectationTag,
+  getFreeReasonLabel,
+} from "@/utils/freeOperations";
 
 export default defineComponent({
   name: "ProductTable",
+  components: {
+    ItemFreeModal,
+  },
   directives: {
     autowidth: VueInputAutowidth
   },
@@ -110,16 +129,31 @@ export default defineComponent({
 
     const DEFAULT_AFFECTATION = computed(() => settingsStore.businessSettings.sale?.default_affectation || 20);
 
-    // Datos de afectación para colores y etiquetas
-    const afcData = {
-      10: { short: "GRV", color: "#0369a1", bg: "#e0f2fe", border: "#7dd3fc" },
-      20: { short: "EXN", color: "#475569", bg: "#f1f5f9", border: "#cbd5e1" },
-      21: { short: "GRT", color: "#15803d", bg: "#dcfce7", border: "#86efac" },
-      default: { short: "---", color: "#64748b", bg: "#f1f5f9", border: "#cbd5e1" }
+    const showFreeModal = ref(false);
+    const activeDetail = ref(null);
+
+    const openFreeModal = (detail) => {
+      activeDetail.value = detail;
+      showFreeModal.value = true;
+    };
+
+    const onApplyFree = ({ is_free, product_affectation, free_reason, original_affectation }) => {
+      if (!activeDetail.value) return;
+      const detail = activeDetail.value;
+      detail.original_affectation = original_affectation;
+      detail.product_affectation = product_affectation;
+      detail.free_reason = free_reason;
+      if (is_free) {
+        storePreviousPrice(detail);
+        detail.discount = 0;
+      } else {
+        restorePreviousPrice(detail);
+      }
+      emit("updateDetail", detail);
     };
 
     const getAfcColor = (afc) => {
-      const data = afcData[afc] || afcData.default;
+      const data = getAffectationTag(afc);
       return {
         color: data.bg,
         textColor: data.color,
@@ -128,7 +162,7 @@ export default defineComponent({
     };
 
     const getAfcShort = (afc) => {
-      return (afcData[afc] || afcData.default).short;
+      return getAffectationTag(afc).short;
     };
 
     const normalizeNumber = (value) => {
@@ -155,43 +189,23 @@ export default defineComponent({
       detail.price_sale = formatMoney(price);
     };
 
-    const applyTransferenciaGratuita = (detail) => {
-      storePreviousPrice(detail);
-      //console.info(detail)
-      detail.product_affectation = 21;
-      //detail.price_sale = formatMoney(0);
-      resetDiscount(detail);
-    };
-
-    const ensureValidPrice = (detail, { fromAffectationChange = false } = {}) => {
+    const ensureValidPrice = (detail) => {
       const price = normalizeNumber(detail.price_sale);
 
-      if (detail.product_affectation === 21) {
-        detail.price_sale = formatMoney(0);
+      if (isFreeAffectation(detail.product_affectation)) {
+        // En gratuitas el precio es el valor referencial: no se pone en cero.
         resetDiscount(detail);
         return;
       }
 
       if (price <= 0) {
-        if (fromAffectationChange) {
-          restorePreviousPrice(detail);
-        } else {
-          applyTransferenciaGratuita(detail);
-        }
+        // Un precio 0 no convierte el ítem en gratuito: eso exige motivo y autorización
+        // (FLZ-GRA-04). Se restaura el último precio válido.
+        restorePreviousPrice(detail);
         return;
       }
 
       detail.price_sale = formatMoney(price);
-    };
-
-    const handleAffectationChange = (detail) => {
-      if (detail.product_affectation === 21) {
-        applyTransferenciaGratuita(detail);
-      } else {
-        restorePreviousPrice(detail);
-        ensureValidPrice(detail, { fromAffectationChange: true });
-      }
-      emit("updateDetail", detail);
     };
 
     const handlePriceInput = (detail) => {
@@ -203,7 +217,7 @@ export default defineComponent({
       const price = normalizeNumber(detail.price_sale);
 
       if (price <= 0) {
-        applyTransferenciaGratuita(detail);
+        // Se valida en blur; no se cambia la afectación automáticamente.
       } else if (detail.product_affectation === 21) {
         detail.product_affectation = DEFAULT_AFFECTATION.value;
         detail.price_sale = formatMoney(price);
@@ -241,21 +255,12 @@ export default defineComponent({
         discount = 0;
       }
 
-      const fullDiscount = maxDiscount > 0 && Math.abs(discount - maxDiscount) < 0.001;
-
-      if (fullDiscount) {
-        applyTransferenciaGratuita(detail);
-      } else {
-        detail.discount = formatMoney(discount).toFixed(2);
-      }
+      // Un descuento del 100 % no se convierte en operación gratuita: la gratuidad
+      // se registra con motivo y autorización desde el modal de afectación.
+      detail.discount = formatMoney(discount).toFixed(2);
 
       emit("updateDetail", detail);
     };
-
-    const menuAffectationOptions = computed(() => {
-      const options = productStore.affectationsOptions;
-      return options.filter(opt => opt.value === 21)
-    });
 
     return {
       productStore,
@@ -263,12 +268,16 @@ export default defineComponent({
       userStore,
       getAfcColor,
       getAfcShort,
-      handleAffectationChange,
       handlePriceInput,
       handlePriceBlur,
       handleDiscountInput,
       handleDiscountBlur,
-      menuAffectationOptions
+      showFreeModal,
+      activeDetail,
+      openFreeModal,
+      onApplyFree,
+      isFreeAffectation,
+      getFreeReasonLabel,
     };
   }
 });
@@ -455,5 +464,24 @@ input[type="number"] {
       white-space: normal !important;
     }
   }
+}
+
+.free-strike {
+  color: #94a3b8;
+  text-decoration: line-through;
+  font-size: 11px;
+  display: block;
+}
+
+.free-zero {
+  font-weight: 700;
+  color: #15803d;
+}
+
+.free-label {
+  font-size: 10px;
+  color: #15803d;
+  font-weight: 600;
+  text-transform: uppercase;
 }
 </style>

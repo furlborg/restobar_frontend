@@ -167,6 +167,7 @@ export async function takeAwayOrder(order_details, sale_data, user, salePayload 
     free_amount: Number(sale_data.free_amount || 0).toFixed(2),
     igv_amount: Number(sale_data.igv_amount || 0).toFixed(2),
     total_igv: safeIgvValue,
+    free_authorization: sale_data.free_authorization || null,
   };
   // Asegurar que total_igv esté presente y formateado correctamente
   const total_igv = typeof sale.total_igv === 'number' ? sale.total_igv.toFixed(2) : sale.total_igv || "0.00";
@@ -188,7 +189,9 @@ export async function takeAwayOrder(order_details, sale_data, user, salePayload 
   const payload = {
     order,
     sale: formattedSale,
-    total_igv: formattedSale.total_igv
+    total_igv: formattedSale.total_igv,
+    // D1: el backend lee la autorización del nivel superior (SaleSerializer.create).
+    free_authorization: sale_data.free_authorization || null,
   };
   
   console.log("Payload final enviado a API:", payload);
@@ -225,5 +228,18 @@ export async function reopenOrderPreparations(orderId) {
 export async function startOrderPreparations(orderId) {
   return await http.post("product-preparation/start_order/", {
     order_id: orderId,
+  });
+}
+
+// Catálogo de motivos de anulación (FLZ-MER-01). Cada motivo fija su destino (STOCK/WASTE/CHOICE).
+export async function listCancellationReasons() {
+  return await http.get("cancellation-reasons/");
+}
+
+// Costo unitario de ítems a anular (valor de la merma). El backend responde 403 si el
+// usuario no puede autorizar mermas ni ver su reporte.
+export async function getCancellationUnitCosts(detailIds) {
+  return await http.get("cancellation-reasons/unit_costs/", {
+    params: { details: detailIds.join(",") },
   });
 }

@@ -470,6 +470,8 @@
     </n-modal>
     <separate-payments-modal v-model:show="showSeparateModal" :data="separatePayments"
       @success="obtainSaleNumber" />
+    <FreeAuthModal v-model:show="showFreeAuthModal" :loading="loading" @authorized="onFreeAuthorized"
+      @update:show="onFreeAuthVisibility" />
     <PreviewDrawer ref="previewDrawer" v-model:show="showPdf" :data="pdfData" :previewOnly="!ticketPreview"
       @printed="handlePaymentDone" @canceled="handlePaymentDone" />
   </div>
@@ -511,7 +513,10 @@ import { useBusinessStore } from "@/store/modules/business";
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 import { createSale, getSaleNumber, retrieveSale, sendSale } from "@/api/modules/sales";
 import { useSaleTotals } from "@/composables/useSaleTotals";
+import { useFreeSaleAuthorization } from "@/composables/useFreeSaleAuthorization";
 import { round2 } from "@/utils/money";
+import FreeAuthModal from "@/components/FreeOperation/FreeAuthModal.vue";
+import { isFreeAffectation, isTaxedFreeAffectation, calculateTaxedFreeAmounts } from "@/utils/freeOperations";
 
 const router = useRouter();
 const route = useRoute();
@@ -593,6 +598,15 @@ const sale = ref({
 
 const { taxBreakdown, hasItems } = useSaleTotals();
 
+// FLZ-GRA-05 / D1: si la venta incluye cortesías o consumo interno, se pide una
+// autorización (propia o de supervisor) antes de emitir. El backend la vuelve a validar.
+const {
+  show: showFreeAuthModal,
+  ensure: ensureFreeAuthorization,
+  onAuthorized: onFreeAuthorized,
+  onVisibility: onFreeAuthVisibility,
+} = useFreeSaleAuthorization({ sale, details: () => saleStore.toSale });
+
 // Asegurar que si el usuario editó las afectaciones en toSale, los totales reactivos reflejen exactamente toSale
 const totalsFromToSale = computed(() => {
   const toSale = saleStore.toSale || [];
@@ -612,18 +626,34 @@ const totalsFromToSale = computed(() => {
   );
 
   const free = toSale
-    .filter((d) => Number(d.product_affectation) === 21)
-    .reduce((acc, d) => acc + Number(d.price_sale || 0) * Number(d.quantity || 0), 0);
+    .filter((d) => isFreeAffectation(d.product_affectation))
+    .reduce((acc, d) => {
+      const qty = Number(d.quantity || 0);
+      if (isTaxedFreeAffectation(d.product_affectation)) {
+        const base = d.price_base != null ? Number(d.price_base) : calculateTaxedFreeAmounts(d.price_sale).priceBase;
+        return acc + base * qty;
+      }
+      return acc + Number(d.price_sale || 0) * qty;
+    }, 0);
 
-  const igv = toSale.reduce(
-    (acc, d) => acc + Number(d.igv_tax || 0) * Number(d.quantity || 0),
-    0
-  );
+  const free_igv = toSale
+    .filter((d) => isTaxedFreeAffectation(d.product_affectation))
+    .reduce((acc, d) => {
+      const qty = Number(d.quantity || 0);
+      const igv = d.igv_tax != null ? Number(d.igv_tax) : calculateTaxedFreeAmounts(d.price_sale).igvTax;
+      return acc + igv * qty;
+    }, 0);
+
+  // Solo IGV cobrado de productos gravados (10)
+  const igv = toSale
+    .filter((d) => Number(d.product_affectation) === 10)
+    .reduce((acc, d) => acc + Number(d.igv_tax || 0) * Number(d.quantity || 0), 0);
 
   return {
     taxed: round2(taxed),
     exempt: round2(exemptProducts + menuSum),
     free: round2(free),
+    free_igv: round2(free_igv),
     igv: round2(igv),
   };
 });
@@ -1000,8 +1030,8 @@ const getMethodClass = (label = "") => {
   return "pm-default";
 };
 
-const performCreateSale = () => {
-  saleForm.value.validate((errors) => {
+const performCreateSale = async () => {
+  saleForm.value.validate(async (errors) => {
     if (errors) {
       message.warning(firstFormError(errors));
       return;
@@ -1029,6 +1059,8 @@ const performCreateSale = () => {
       message.warning("El descuento no puede ser 100%. Debe cambiar a operacion gratuita.");
       return;
     }
+
+    if (!(await ensureFreeAuthorization())) return;
 
     dialog.success({
       closable: false,
@@ -1108,6 +1140,10 @@ const performCreateSale = () => {
           }
         } catch (error) {
           console.error(error);
+          // Si falló la venta (p. ej. credencial de gratuita inválida), se limpia la
+          // autorización para poder reintentar con otra credencial.
+          sale.value.free_authorization = null;
+          message.error(error?.response?.data?.error || "No se pudo registrar la venta.");
         } finally {
           loading.value = false;
         }
@@ -1204,7 +1240,8 @@ const normalizePaymentsForTicket = (payments = []) =>
     amount: normalizePaymentAmount(payment.amount),
   }));
 
-const openSeparatePaymentsModal = () => {
+const openSeparatePaymentsModal = async () => {
+  if (!(await ensureFreeAuthorization())) return;
   separatePayments.value = cloneDeep(sale.value);
   separatePayments.value.order = cloneDeep(orderStore.orderId);
   separatePayments.value.sale_details = cloneDeep(saleStore.toSale);

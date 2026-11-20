@@ -546,8 +546,8 @@
 
                                     <div class="switch-row-item">
                                         <div class="switch-row-text">
-                                            <span class="switch-row-title">Requerir contraseña del USUARIO para anular</span>
-                                            <span class="switch-row-desc">El usuario autenticado debe ingresar su propia contraseña para anular.</span>
+                                            <span class="switch-row-title">Requerir contraseña del USUARIO para anular ventas</span>
+                                            <span class="switch-row-desc">El usuario debe ingresar su propia contraseña para anular una venta. Las anulaciones de mesa y pedidos siempre piden la clave personal o la de un supervisor.</span>
                                         </div>
                                         <n-switch 
                                             :disabled="!editMode" 
@@ -558,8 +558,8 @@
 
                                     <div class="switch-row-item">
                                         <div class="switch-row-text">
-                                            <span class="switch-row-title">Requerir contraseña GENERAL de Administrador para anular</span>
-                                            <span class="switch-row-desc">Exige la clave maestra administrativa para anular cualquier comprobante.</span>
+                                            <span class="switch-row-title">Requerir contraseña GENERAL de Administrador para anular ventas</span>
+                                            <span class="switch-row-desc">Exige la clave maestra administrativa para anular comprobantes. No se acepta en mesas ni pedidos: allí cada persona firma con su propia clave.</span>
                                         </div>
                                         <n-switch 
                                             :disabled="!editMode" 
@@ -1077,6 +1077,13 @@
                                                 <n-switch :disabled="!editMode" v-model:value="businessSettings.modules.show_kardex" />
                                             </div>
                                             <div class="switch-row-item">
+                                                <div class="switch-row-text">
+                                                    <span class="switch-row-title">Mermas</span>
+                                                    <span class="switch-row-desc">Registrar mermas al anular y ver la pantalla "Mermas". Desactivado, todo lo anulado vuelve al stock.</span>
+                                                </div>
+                                                <n-switch :disabled="!editMode" v-model:value="businessSettings.modules.show_waste" />
+                                            </div>
+                                            <div class="switch-row-item">
                                                 <div class="switch-row-text"><span class="switch-row-title">Cartera de Clientes</span></div>
                                                 <n-switch :disabled="!editMode" v-model:value="businessSettings.modules.show_customers" />
                                             </div>
@@ -1377,6 +1384,7 @@ export default defineComponent({
                 show_suppliers: true,
                 show_supplies: true,
                 show_kardex: true,
+                show_waste: true,
                 show_customers: true,
                 show_birthdays: true,
                 show_reports: true,
