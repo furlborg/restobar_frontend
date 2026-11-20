@@ -19,6 +19,7 @@
 
 <script setup>
 import { computed } from "vue";
+import { useUserStore } from "@/store/modules/user";
 
 const props = defineProps({
     // "own" | "supervisor" (ver authMode en utils/cancellation.js)
@@ -29,11 +30,16 @@ const props = defineProps({
 });
 const emit = defineEmits(["update:modelValue", "submit"]);
 
+const userStore = useUserStore();
+const currentUsername = computed(() => userStore.user?.username || "su usuario");
+
 const hint = computed(() => {
-    if (props.mode !== "supervisor") return "";
-    return props.isWaste
-        ? "La merma la autoriza un usuario con permiso para autorizar mermas."
-        : "No tiene permiso para anular: la anulación la autoriza un supervisor.";
+    if (props.mode === "supervisor") {
+        return props.isWaste
+            ? "Usuario y clave personal de alguien con permiso para autorizar mermas. La clave general del negocio no se acepta."
+            : "Usuario y clave personal de alguien con permiso para anular. La clave general del negocio no se acepta.";
+    }
+    return `Ingrese la clave personal de ${currentUsername.value}. La clave general del negocio ya no se acepta en anulaciones.`;
 });
 
 const update = (field, value) => emit("update:modelValue", { ...props.modelValue, [field]: value });

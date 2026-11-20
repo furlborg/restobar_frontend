@@ -147,7 +147,7 @@ export function cancellationErrorMessage(error) {
   const data = error?.response?.data || {};
   switch (data.code) {
     case "INVALID_CREDENTIALS":
-      return "Usuario o clave incorrectos.";
+      return "Usuario o clave incorrectos. Use la clave personal de su usuario o de un supervisor; la clave general del negocio no se acepta en anulaciones.";
     case "MISSING_PERMISSION":
       return "Ese usuario no tiene permiso para autorizar esta anulación.";
     case "NOTE_REQUIRED":
