@@ -60,66 +60,9 @@
             </template>
         </n-modal>
 
-        <n-modal :class="modalClass" preset="card" v-model:show="showConfirm" title="Eliminando comanda"
-            :mask-closable="false" closable @close="resetAnulateData">
-            <div v-if="!userStore.hasPermission('cancel_orderdetail') && userStore.user.role !== 'MOZO'">
-                <n-form ref="formRef" :model="dataAnulate" :rules="rules">
-                    <n-form-item label="Cantidad">
-                        <n-input-number v-model:value="deleteQuantity" :min="1" :max="maxQuantity"
-                            style="width: 100%" />
-                    </n-form-item>
-                    <n-form-item label="Motivo de anulación"
-                        :path="settingsStore.businessSettings.sale?.required_null_reason ? 'nullReason' : ''">
-                        <n-input v-model:value="dataAnulate.nullReason" placeholder="" />
-                    </n-form-item>
-                </n-form>
-            </div>
-            <div v-else>
-                <div v-if="requireUserPass">
-                    <n-form ref="formRef" :model="dataAnulate" :rules="rules">
-                        <n-form-item label="Ingrese su usuario" path="username">
-                            <n-input v-model:value="dataAnulate.username" />
-                        </n-form-item>
-                        <n-form-item label="Ingrese su contraseña" path="pass">
-                            <n-input type="password" v-model:value="dataAnulate.pass" />
-                        </n-form-item>
-                        <n-form-item label="Cantidad">
-                            <n-input-number v-model:value="deleteQuantity" :min="1" :max="maxQuantity"
-                                style="width: 100%" />
-                        </n-form-item>
-                        <n-form-item label="Motivo de anulación"
-                            :path="settingsStore.businessSettings.sale?.required_null_reason ? 'nullReason' : ''">
-                            <n-input v-model:value="dataAnulate.nullReason" placeholder="" />
-                        </n-form-item>
-                    </n-form>
-                </div>
-                <div v-else-if="requireGeneralPass || userStore.user.role === 'MOZO'">
-                    <n-form ref="formRef" :model="dataAnulate" :rules="rules">
-                        <n-form-item label="Ingrese la contraseña" path="pass">
-                            <n-input type="password" v-model:value="dataAnulate.pass" />
-                        </n-form-item>
-                        <n-form-item label="Cantidad">
-                            <n-input-number v-model:value="deleteQuantity" :min="1" :max="maxQuantity"
-                                style="width: 100%" />
-                        </n-form-item>
-                        <n-form-item label="Motivo de anulación"
-                            :path="settingsStore.businessSettings.sale?.required_null_reason ? 'nullReason' : ''">
-                            <n-input v-model:value="dataAnulate.nullReason" placeholder="" />
-                        </n-form-item>
-                    </n-form>
-                </div>
-            </div>
-            <div v-if="showConfigMessage">
-                <span style="font-weight: 700; font-size: 16px">Para poder anular un pedido, primero debe de activar la
-                    configuración "Requerir clave de usuario para anular" en la sección de configuraciones.</span>
-            </div>
-            <template #action>
-                <n-space justify="end">
-                    <n-button type="success" secondary @click.prevent="performDeleteDetail"
-                        :disabled="showConfigMessage">Confirmar</n-button>
-                </n-space>
-            </template>
-        </n-modal>
+        <CancelItemModal v-model:show="showConfirm" :table-id="table" :detail="removingDetail"
+            :forbid-full-quantity="!!orderStore.orderId && orderStore.orderList.length === 1"
+            @cancelled="onItemCancelled" @update:show="(value) => !value && resetDeleteState()" />
 
         <TicketPreview ref="ticketPreview" v-model:show="showPdf" :data="pdfData" :hidden="true"
             :isUpdate="!!orderStore.orderId" @printed="goHome" @canceled="goHome" />
@@ -142,12 +85,14 @@ import { useGenericsStore } from "@/store/modules/generics";
 import { useTableStore } from "@/store/modules/table";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
-import { retrieveTableOrder, createTableOrder, updateTableOrder, cancelTableOrder, performDeleteOrderDetail } from "@/api/modules/tables";
+import { retrieveTableOrder, createTableOrder, updateTableOrder, cancelTableOrder } from "@/api/modules/tables";
 import { verifyWaiterCode } from "@/api/modules/users";
 import { cloneDeep } from "@/utils";
 import { formatLockRemaining, lockOwnerName } from "@/utils/lockMessage";
 import { lockHasExpired, lockHeartbeatMs, normalizeLock } from "@/utils/tableLock";
 import { useBreakpoint } from 'vooks';
+import CancelItemModal from "@/components/Cancellation/CancelItemModal.vue";
+import { cancellationErrorMessage } from "@/utils/cancellation";
 
 const breakpointRef = useBreakpoint();
 const route = useRoute();
@@ -187,10 +132,10 @@ const handleBeforeUnload = () => {
 };
 
 const table = route.params.table;
-const rules = { username: { required: true, trigger: ["blur", "input"], message: "" }, pass: { required: true, trigger: ["blur", "input"], message: "" } };
 
-const formRef = ref(null);
-const dataAnulate = ref({ username: "", pass: "" });
+// Anulación parcial con motivo/destino (FLZ-MER-07): el formulario vive en CancelItemModal.
+// Último payload de anulación: si se quitó el último ítem, se reutiliza para anular la mesa.
+const lastCancelPayload = ref(null);
 const loading = ref(false);
 const ask_for = ref(undefined);
 const orderUser = ref(null);
@@ -200,7 +145,6 @@ const customerIdCounter = ref(1);
 const customers = ref([]);
 const selectedCustomerId = ref(null);
 const showConfirm = ref(false);
-const deleteQuantity = ref(1);
 const maxQuantity = ref(1);
 const removingItem = ref({ ind: null, id: null });
 const showUserConfirm = ref(false);
@@ -223,9 +167,12 @@ const isMobile = computed(() => ['xs', 's'].includes(breakpointRef.value));
 const shouldShowCustomerMode = computed(() => orderStore.orderId ? orderStore.orderList.some(order => order.customer) : settingsStore.businessSettings?.order?.order_by_customer);
 const selectedCustomer = computed(() => customers.value.find(c => String(c.id) === String(selectedCustomerId.value)) || null);
 const modalClass = computed(() => ({ 'w-100': genericsStore.device === 'mobile', 'w-50': genericsStore.device === 'tablet', 'w-25': genericsStore.device === 'desktop' }));
-const requireUserPass = computed(() => settingsStore.businessSettings.sale?.require_user_pass_to_null);
-const requireGeneralPass = computed(() => settingsStore.businessSettings.sale.require_general_pass_to_null);
-const showConfigMessage = computed(() => userStore.hasPermission('cancel_orderdetail') && !requireUserPass.value && !requireGeneralPass.value);
+const removingDetail = computed(() => {
+    const index = removingItem.value.ind;
+    const order = typeof index === 'number' && index >= 0 ? orderStore.orderList[index] : null;
+    if (!order || !removingItem.value.id) return null;
+    return { id: removingItem.value.id, product_name: order.product_name, quantity: maxQuantity.value };
+});
 
 const getImportantData = (orders) => {
     if (!orders) return [];
@@ -477,8 +424,10 @@ const performUpdateTableOrder = async () => {
 };
 
 const performNullifyTableOrder = async () => {
+    // Al quitar el último ítem se anula la mesa con el mismo motivo y la misma autorización.
+    const payload = lastCancelPayload.value || {};
     try {
-        const response = await cancelTableOrder(table, dataAnulate.value);
+        const response = await cancelTableOrder(table, { ...payload, nullReason: payload.null_reason });
         if (response.status === 202) {
             message.success("Pedido anulado correctamente!");
             cleanupOrderStore();
@@ -486,7 +435,7 @@ const performNullifyTableOrder = async () => {
         }
     } catch (error) {
         console.error(error);
-        message.error("Algo salió mal...");
+        message.error(cancellationErrorMessage(error));
     }
 };
 
@@ -502,67 +451,25 @@ const nullifyTableOrder = async () => {
 
 const resetDeleteState = () => {
     Object.assign(removingItem.value, { ind: "", id: "" });
-    deleteQuantity.value = 1;
     maxQuantity.value = 1;
     showConfirm.value = false;
-    dataAnulate.value = { username: "", pass: "" };
 };
 
-const performDeleteDetail = async () => {
-    if (orderStore.orderId && orderStore.orderList.length === 1 && deleteQuantity.value >= maxQuantity.value) {
-        message.warning("No es posible anular todos los ítems de la comanda. Para cancelar la mesa completa, utilice la opción Anular Pedido.");
-        return;
+// La comanda en pantalla solo cambia cuando el backend aceptó la anulación.
+const onItemCancelled = async ({ response, payload }) => {
+    lastCancelPayload.value = payload;
+    const { ind } = removingItem.value;
+    if (response.status === 204) {
+        orderStore.orderList.splice(ind, 1);
+        saleStore.order_initial.splice(ind, 1);
+        await nullifyTableOrder();
+    } else if (response.status === 202) {
+        const { quantity } = response.data;
+        orderStore.orderList[ind].quantity -= quantity;
+        saleStore.order_initial[ind].quantity -= quantity;
+        saleStore.order_initial[ind].subTotal = saleStore.order_initial[ind].quantity * saleStore.order_initial[ind].price;
     }
-
-    if (formRef.value) {
-        formRef.value.validate(async (errors) => {
-            if (!errors) {
-                try {
-                    const payload = { ...dataAnulate.value, reason: dataAnulate.value.nullReason };
-                    const response = await performDeleteOrderDetail(table, removingItem.value.id, payload, deleteQuantity.value);
-                    if (response.status === 204) {
-                        orderStore.orderList.splice(removingItem.value.ind, 1);
-                        saleStore.order_initial.splice(removingItem.value.ind, 1);
-                        await nullifyTableOrder();
-                        message.success("Comanda eliminada");
-                    } else if (response.status === 202) {
-                        const { ind } = removingItem.value;
-                        const { quantity } = response.data;
-                        orderStore.orderList[ind].quantity -= quantity;
-                        saleStore.order_initial[ind].quantity -= quantity;
-                        saleStore.order_initial[ind].subTotal = saleStore.order_initial[ind].quantity * saleStore.order_initial[ind].price;
-                        message.success("Comanda actualizada correctamente");
-                    }
-                    resetDeleteState();
-                } catch (error) {
-                    console.error(error);
-                    message.error(error.response?.data?.error || "Error al anular, verifique sus datos...");
-                }
-            }
-        }).catch(() => {});
-    } else {
-        try {
-            const payload = { ...dataAnulate.value, reason: dataAnulate.value.nullReason };
-            const response = await performDeleteOrderDetail(table, removingItem.value.id, payload, deleteQuantity.value);
-            if (response.status === 204) {
-                orderStore.orderList.splice(removingItem.value.ind, 1);
-                saleStore.order_initial.splice(removingItem.value.ind, 1);
-                await nullifyTableOrder();
-                message.success("Comanda eliminada");
-            } else if (response.status === 202) {
-                const { ind } = removingItem.value;
-                const { quantity } = response.data;
-                orderStore.orderList[ind].quantity -= quantity;
-                saleStore.order_initial[ind].quantity -= quantity;
-                saleStore.order_initial[ind].subTotal = saleStore.order_initial[ind].quantity * saleStore.order_initial[ind].price;
-                message.success("Comanda actualizada correctamente");
-            }
-            resetDeleteState();
-        } catch (error) {
-            console.error(error);
-            message.error(error.response?.data?.error || "Error al anular, verifique sus datos...");
-        }
-    }
+    resetDeleteState();
 };
 
 const addCustomer = (name) => {
@@ -639,13 +546,8 @@ const deleteOrderDetail = (detailIndex, detailId) => {
         return;
     }
     Object.assign(removingItem.value, { ind: detailIndex, id: detailId });
-    deleteQuantity.value = quantity;
     maxQuantity.value = quantity;
     showConfirm.value = true;
-};
-
-const resetAnulateData = () => {
-    dataAnulate.value = { username: "", pass: "" };
 };
 
 const goHome = () => {

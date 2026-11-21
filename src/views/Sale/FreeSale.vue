@@ -161,13 +161,10 @@
                   {{ detailLineTotal(detail) }}
                 </td>
                 <td v-if="settingsStore.businessSettings?.sale?.manage_affectations">
-                  <n-popselect size="small" placement="bottom-start" v-model:value="detail.product_affectation"
-                    :disabled="!userStore.hasPermission('change_product_affectation')"
-                    :options="productStore.affectationsOptions" @update:value="() => updateDetailValues(detail)">
-                    <n-tag size="small" :color="getAfcColor(detail.product_affectation)">
-                      {{ getAfcShort(detail.product_affectation) }}
-                    </n-tag>
-                  </n-popselect>
+                  <n-tag size="small" :color="getAfcColor(detail.product_affectation)" style="cursor: pointer"
+                    @click="userStore.hasPermission('change_product_affectation') && openFreeModal(detail)">
+                    {{ getAfcShort(detail.product_affectation) }}
+                  </n-tag>
                 </td>
                 <td>
                   <n-button type="error" text @click="saleStore.sale_details.splice(index, 1)">
@@ -253,6 +250,9 @@
     <preview-drawer ref="previewDrawer" v-model:show="showPdf" :data="pdfData" :previewOnly="!ticketPreview"
       @printed="onTicketFinished"
       @canceled="onTicketFinished" />
+    <ItemFreeModal v-model:show="showFreeModal" :detail="activeDetail" @apply="onApplyFree" />
+    <FreeAuthModal v-model:show="showFreeAuthModal" :loading="loading" @authorized="onFreeAuthorized"
+      @update:show="onFreeAuthVisibility" />
     <FreeSaleProductModal
       v-model:show="showProductModal"
       :initial-deduct-stock="Boolean(settingsStore.businessSettings?.sale?.free_sale_deduct_stock_default)"
@@ -293,6 +293,10 @@ import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 import { useBusinessStore } from "@/store/modules/business";
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 import FreeSaleProductModal from "./components/FreeSaleProductModal.vue";
+import ItemFreeModal from "@/components/FreeOperation/ItemFreeModal.vue";
+import FreeAuthModal from "@/components/FreeOperation/FreeAuthModal.vue";
+import { useFreeSaleAuthorization } from "@/composables/useFreeSaleAuthorization";
+import { getAffectationTag, isFreeAffectation, isTaxedFreeAffectation, calculateTaxedFreeAmounts } from "@/utils/freeOperations";
 import PaymentTotals from "@/views/Order/components/PaymentTotals.vue";
 
 export default defineComponent({
@@ -338,6 +342,27 @@ export default defineComponent({
         : 0.0;
     });
     const freeSaleDetails = computed(() => saleStore.sale_details);
+    const showFreeModal = ref(false);
+    const activeDetail = ref(null);
+    const {
+      show: showFreeAuthModal,
+      ensure: ensureFreeAuthorization,
+      onAuthorized: onFreeAuthorized,
+      onVisibility: onFreeAuthVisibility,
+    } = useFreeSaleAuthorization({ sale, details: () => saleStore.sale_details });
+
+    const openFreeModal = (detail) => {
+      activeDetail.value = detail;
+      showFreeModal.value = true;
+    };
+
+    const onApplyFree = ({ product_affectation, free_reason, original_affectation }) => {
+      if (!activeDetail.value) return;
+      activeDetail.value.product_affectation = product_affectation;
+      activeDetail.value.free_reason = free_reason || null;
+      activeDetail.value.original_affectation = original_affectation;
+      updateDetailValues(activeDetail.value);
+    };
     const stockToggleDetails = computed(() => freeSaleDetails.value.filter((detail) => !!detail.product));
     const stockMasterChecked = computed(() => {
       return stockToggleDetails.value.length > 0 && stockToggleDetails.value.every((detail) => !!detail.deduct_stock);
@@ -467,7 +492,7 @@ export default defineComponent({
     };
 
     const detailLineTotal = (detail) => {
-      if (detail.product_affectation === 21) return "0.00";
+      if (isFreeAffectation(detail.product_affectation)) return "0.00";
       return parseFloat(detail.quantity * detail.price_sale - detail.discount).toFixed(2);
     };
 
@@ -501,15 +526,24 @@ export default defineComponent({
 
     const totalGRT = computed(() => {
       return freeSaleDetails.value.reduce((acc, curVal) => {
-        return Number(curVal.product_affectation) === 21
-          ? (acc += parseFloat(curVal.price_sale) * curVal.quantity)
-          : acc;
+        if (!isFreeAffectation(curVal.product_affectation)) return acc;
+        const quantity = Number(curVal.quantity || 0);
+        if (isTaxedFreeAffectation(curVal.product_affectation)) {
+          const base = curVal.price_base != null
+            ? Number(curVal.price_base)
+            : calculateTaxedFreeAmounts(curVal.price_sale).priceBase;
+          return acc + base * quantity;
+        }
+        return acc + Number(curVal.price_sale || 0) * quantity;
       }, 0);
     });
 
     const totalIGV = computed(() => {
+      // Solo IGV cobrado (productos gravados 10); el de retiros 11-16 es referencial.
       return freeSaleDetails.value.reduce((acc, curVal) => {
-        return (acc += curVal.igv_tax * curVal.quantity);
+        return Number(curVal.product_affectation) === 10
+          ? acc + Number(curVal.igv_tax || 0) * curVal.quantity
+          : acc;
       }, 0);
     });
 
@@ -606,6 +640,7 @@ export default defineComponent({
       exempt_amount: 0,
       free_amount: 0,
       igv_amount: 0,
+      free_authorization: null,
     });
 
     // date_sale/due_date van como "dd/MM/yyyy HH:mm:ss"; new Date() los leería como MM/dd.
@@ -885,6 +920,7 @@ export default defineComponent({
       quantity: detail.quantity,
       icbper: Number(detailIcbperAmount(detail)).toFixed(2),
       deduct_stock: !!detail.product && !!detail.deduct_stock,
+      free_reason: detail.free_reason || null,
     });
 
     const onTicketFinished = () => {
@@ -893,8 +929,8 @@ export default defineComponent({
       router.push({ name: "TableHome" });
     };
 
-    const performCreateSale = () => {
-      saleForm.value.validate((errors) => {
+    const performCreateSale = async () => {
+      saleForm.value.validate(async (errors) => {
         if (!errors) {
           if (sale.value.invoice_type === 1) {
             const customerId = typeof sale.value.customer === 'object' ? sale.value.customer?.id : sale.value.customer;
@@ -918,6 +954,7 @@ export default defineComponent({
             message.warning("El descuento no puede ser 100%. Debe cambiar a operacion gratuita.");
             return;
           }
+          if (!(await ensureFreeAuthorization())) return;
           dialog.success({
             closable: false,
             title: "Venta",
@@ -1026,6 +1063,8 @@ export default defineComponent({
                   }
                 }).catch((error) => {
                   console.error(error);
+                  // El interceptor global ya muestra el error del backend; no se duplica el aviso.
+                  sale.value.free_authorization = null;
                 })
                 .finally(() => {
                   loading.value = false;
@@ -1275,46 +1314,12 @@ export default defineComponent({
     };
 
     function getAfcColor(afc) {
-      switch (afc) {
-        case 10:
-          return {
-            color: lighten("#008B8B", 48),
-            textColor: "#008B8B",
-            borderColor: lighten("#008B8B", 24),
-          };
-        case 20:
-          return {
-            color: lighten("#9932CC", 48),
-            textColor: "#9932CC",
-            borderColor: lighten("#9932CC", 24),
-          };
-        case 21:
-          return {
-            color: lighten("#006400", 48),
-            textColor: "#006400",
-            borderColor: lighten("#006400", 24),
-          };
-        default:
-          return {
-            color: lighten("#8B0000", 48),
-            textColor: "#8B0000",
-            borderColor: lighten("#8B0000", 24),
-          };
-      }
+      const data = getAffectationTag(afc);
+      return { color: data.bg, textColor: data.color, borderColor: data.border };
     }
 
     function getAfcShort(afc) {
-      switch (afc) {
-        case 10:
-          return "GRV";
-        case 20:
-          return "EXN";
-        case 21:
-          return "GRT";
-        default:
-          console.error("Afectación inválida");
-          return "---";
-      }
+      return getAffectationTag(afc).short;
     }
 
     const whatsappNumber = ref("");
@@ -1390,6 +1395,13 @@ export default defineComponent({
       dueDateDisabled,
       getAfcShort,
       getAfcColor,
+      showFreeModal,
+      activeDetail,
+      openFreeModal,
+      onApplyFree,
+      showFreeAuthModal,
+      onFreeAuthorized,
+      onFreeAuthVisibility,
       totalIGV,
       totalGRV,
       totalEXN,

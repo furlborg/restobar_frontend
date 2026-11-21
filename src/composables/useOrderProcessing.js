@@ -91,7 +91,8 @@ export function useOrderProcessing() {
       }
     } catch (error) {
       console.error("Error procesando pedido:", error);
-      message.error("Ha ocurrido un error al procesar la venta");
+      sale.value.free_authorization = null;
+      message.error(error?.response?.data?.error || "Ha ocurrido un error al procesar la venta");
       return { success: false, error };
     } finally {
       ui.loading = false;
@@ -151,7 +152,8 @@ export function useOrderProcessing() {
       }
     } catch (error) {
       console.error("Error creando pedido:", error);
-      message.error("Algo salió mal...");
+      sale.value.free_authorization = null;
+      message.error(error?.response?.data?.error || "Algo salió mal...");
       return { success: false, error };
     } finally {
       ui.loading = false;

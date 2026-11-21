@@ -44,6 +44,9 @@
     <n-gi :span="7">
       <n-card class="kardex-detail-card" :title="ProductInstance.product">
         <template #header-extra>
+          <!-- FLZ-REP-07: filtro por concepto (sin selección, el kardex se ve igual que antes). -->
+          <n-select v-model:value="conceptFilter" multiple clearable size="small" placeholder="Concepto"
+            :options="conceptOptions" max-tag-count="responsive" class="me-2" style="min-width: 180px; max-width: 260px" />
           <n-date-picker type="datetimerange" size="small" value-format="yyyy-MM-dd HH:mm:ss"
             v-model:formatted-value="dateSearch" clearable />
           <n-button :disabled="ProductInstance.id ? false : true" class="ms-2" type="info" size="small" @click="
@@ -106,7 +109,8 @@ import { createKardexBySupplyColumns } from "@/utils/constants";
 import { renderIcon } from "@/utils";
 import { getSupplies } from "@/api/modules/supplies";
 import { getSuplieKardex, getProductKardex } from "@/api/modules/kardex";
-import { getProducts, searchProduct } from "@/api/modules/products";
+import { getProducts, searchProduct, getInventoryConcepts } from "@/api/modules/products";
+import { useRoute } from "vue-router";
 import { useMessage } from "naive-ui";
 import { getExcelReport } from "@/api/modules/tills";
 import format from "date-fns/format";
@@ -132,8 +136,36 @@ const total = ref({
 // Variable para detectar si el control de stock está desactivado
 const isStockControlDisabled = ref(false);
 
+// FLZ-REP-07: conceptos seleccionados (por nombre: estables entre instalaciones).
+const route = useRoute();
+const conceptFilter = ref([]);
+const conceptOptions = ref([]);
+const conceptQuery = () =>
+  conceptFilter.value.length ? `&concept=${encodeURIComponent(conceptFilter.value.join(","))}` : "";
+const lastBalanceOf = (rows) => {
+  const val = rows.length ? rows[rows.length - 1]?.balance : 0;
+  const num = Number(val);
+  return Number.isFinite(num) ? num : 0;
+};
+
+const loadConcepts = () => {
+  getInventoryConcepts()
+    .then((response) => {
+      const rows = response.data?.results || response.data || [];
+      conceptOptions.value = rows.map((row) => ({ label: row.concept, value: row.concept }));
+    })
+    .catch((error) => console.error(error));
+};
+
 onMounted(() => {
   listProducts();
+  loadConcepts();
+  // "Ver en kardex" desde Mermas: /kardex?product=ID&name=NOMBRE&concept=MERMA
+  const { product, name, concept } = route.query;
+  if (product) {
+    conceptFilter.value = concept ? String(concept).split(",") : [];
+    selectKardex(Number(product), name || "PRODUCTO");
+  }
 });
 
 const listProducts = () => {
@@ -176,7 +208,7 @@ const selectKardex = (id, prod, date) => {
     if (date) {
       filter += `&dfrom=${date[0]}&dto=${date[1]}`;
     }
-    getProductKardex(filter)
+    getProductKardex(filter + conceptQuery())
       .then((response) => {
         const rows = Array.isArray(response.data) ? response.data : [];
         dataKardex.value = [...rows].reverse();
@@ -206,6 +238,14 @@ const selectKardex = (id, prod, date) => {
             v.type == "1" ? total.value.egress + 1 : total.value.egress;
         });
         total.value.total = lastBalance;
+        // Con filtro de concepto, la última fila no es el stock actual: se toma del kardex completo.
+        if (conceptQuery()) {
+          (checkedValue.value == "product" ? getProductKardex(filter) : getSuplieKardex(filter))
+            .then((all) => {
+              total.value.total = lastBalanceOf(Array.isArray(all.data) ? all.data : []);
+            })
+            .catch((error) => console.error(error));
+        }
 
         if (!hasNumericMovement && !Number.isFinite(lastBalance)) {
           isStockControlDisabled.value = true;
@@ -220,7 +260,7 @@ const selectKardex = (id, prod, date) => {
     if (date) {
       filter += `&dfrom=${date[0]}&dto=${date[1]}`;
     }
-    getSuplieKardex(filter)
+    getSuplieKardex(filter + conceptQuery())
       .then((response) => {
         const rows = Array.isArray(response.data) ? response.data : [];
         dataKardex.value = [...rows].reverse();
@@ -250,6 +290,14 @@ const selectKardex = (id, prod, date) => {
             v.type == "1" ? total.value.egress + 1 : total.value.egress;
         });
         total.value.total = lastBalance;
+        // Con filtro de concepto, la última fila no es el stock actual: se toma del kardex completo.
+        if (conceptQuery()) {
+          (checkedValue.value == "product" ? getProductKardex(filter) : getSuplieKardex(filter))
+            .then((all) => {
+              total.value.total = lastBalanceOf(Array.isArray(all.data) ? all.data : []);
+            })
+            .catch((error) => console.error(error));
+        }
 
         if (!hasNumericMovement && !Number.isFinite(lastBalance)) {
           isStockControlDisabled.value = true;

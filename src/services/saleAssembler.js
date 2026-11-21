@@ -81,6 +81,10 @@ export function buildSalePayload(orders = [], options = {}) {
         is_delta: order.is_delta || false,
       };
 
+      // FLZ-GRA-04: el motivo viaja con el ítem hasta la venta; sin él, el backend
+      // no puede autorizar ni reclasificar el kardex como CORTESÍA / CONSUMO INTERNO.
+      if (order.free_reason) detail.free_reason = order.free_reason;
+
       if (order.id) detail.id = order.id;
       if (order.indication) detail.indication = order.indication;
       if (order.quick_indications)

@@ -360,7 +360,7 @@
         </n-modal>
         <PreviewDrawer ref="previewDrawer" v-model:show="showPreview" :data="previewData" :preVoucher="true"
             :previewOnly="true" />
-        <modal-anulate-sale :data-modal="showConfirm" />
+        <CancelOrderModal v-model:show="cancelOrder.show" :table-id="cancelOrder.tableId" @cancelled="loadTablesData()" />
     </div>
 </template>
 
@@ -373,7 +373,6 @@ import { useTableStore } from "@/store/modules/table";
 import { useTillStore } from "@/store/modules/till";
 import { useUserStore } from "@/store/modules/user";
 import {
-    cancelTableOrder,
     retrieveTableOrder,
     changeOrderTable
 } from "@/api/modules/tables";
@@ -382,7 +381,7 @@ import { formatLockRemaining } from "@/utils/lockMessage";
 import { getActiveLock, lockRemainingSeconds } from "@/utils/tableLock";
 import { useBusinessStore } from "@/store/modules/business";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
-import ModalAnulateSale from "@/views/Sale/modalAnulateSale.vue";
+import CancelOrderModal from "@/components/Cancellation/CancelOrderModal.vue";
 import { useTableLock } from "@/composables/useTableLock";
 import { useRouter, useRoute } from 'vue-router';
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher";
@@ -699,32 +698,11 @@ const performRetrieveTableOrder = async (table) => {
     });
 };
 
-const showConfirm = ref({ show: false, saleId: null });
-const passConfirm = ref("");
-const deleteId = ref(null);
+// Anular pedido: destino por ítem y credencial personal (FLZ-MER-08, FLZ-SEC-03).
+const cancelOrder = ref({ show: false, tableId: null });
 
 const nullifyTableOrder = (id) => {
-    deleteId.value = id;
-    showConfirm.value = { show: true, saleId: id, permission: "cancel_order", loadTablesData, performNullifyTableOrder };
-};
-
-
-const performNullifyTableOrder = async (id, dataAnulate) => {
-    isLoading.value = true;
-    await cancelTableOrder(id, dataAnulate).then((response) => {
-        if (response.status === 202) {
-            message.success("Pedido anulado correctamente!");
-            showConfirm.value = { show: false, saleId: null };
-            deleteId.value = null;
-            passConfirm.value = "";
-            loadTablesData();
-        }
-    }).catch((error) => {
-        console.error(error);
-        message.error("Error al anular pedido...");
-        passConfirm.value = "";
-        isLoading.value = false;
-    });
+    cancelOrder.value = { show: true, tableId: id };
 };
 
 const addToGroup = (table) => {
