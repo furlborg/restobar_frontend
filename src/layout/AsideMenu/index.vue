@@ -97,6 +97,24 @@ const menuOptions = computed(() => {
     });
   }
 
+  // FLZ-REP-03: "Mermas" (módulo modules.show_waste).
+  if ((settingsStore.business_settings?.modules?.show_waste ?? true) && userStore.hasPermission("view_waste_report")) {
+    options.push({
+      label: renderMenuLink("Waste", "Mermas"),
+      key: "Waste",
+      icon: renderIcon("md-deletesweep-round"),
+    });
+  }
+
+  // FLZ-REP-06: reporte de cortesías, consumo interno e IGV de retiros.
+  if (userStore.hasPermission("view_free_operations_report")) {
+    options.push({
+      label: renderMenuLink("FreeOperations", "Operaciones gratuitas"),
+      key: "FreeOperations",
+      icon: renderIcon("md-redeem"),
+    });
+  }
+
   if ((settingsStore.business_settings?.modules?.show_products ?? true) && userStore.hasPermission("view_product")) {
     options.push({
       label: renderMenuLink("Product", "Productos"),

@@ -47,79 +47,9 @@
                 :pagination="pagination" remote />
         </n-card>
         <ticket-preview v-model:show="showPreview" :data="ticketData" />
-        <n-modal :class="{
-            'w-100': genericsStore.device === 'mobile',
-            'w-50': genericsStore.device === 'tablet',
-            'w-25': genericsStore.device === 'desktop',
-        }" preset="card" v-model:show="showConfirm" title="Anular pedido" :mask-closable="false" closable
-            @after-leave="closeNullModal" @close="closeNullModal">
-            <!--      <n-form-item label="Ingrese clave de seguridad" required v-if="settingsStore.business_settings.order.required_null_reason">-->
-            <!--        <n-input type="password" v-model:value="passConfirm" placeholder="" />-->
-            <!--      </n-form-item>-->
-            <!--      <n-form-item-->
-            <!--        v-if="settingsStore.business_settings.order.required_null_reason"-->
-            <!--        label="Motivo de anulación"-->
-            <!--        required-->
-            <!--      >-->
-            <!--        <n-input v-model:value="nullReason" placeholder="" />-->
-            <!--      </n-form-item>-->
-            <!--      <n-space v-else justify="end">-->
-            <!--        <n-button type="info" text @click="addReason = true"-->
-            <!--          >Especificar motivo</n-button-->
-            <!--        >-->
-            <!--      </n-space>-->
-            <div
-                v-if="!userStore.hasPermission('cancel_order') && !settingsStore.businessSettings.sale?.require_user_pass_to_null && !settingsStore.businessSettings.sale?.require_general_pass_to_null">
-                <n-form ref="formRef" :model="dataAnulate" :rules="rules">
-                    <n-form-item label="Motivo de anulación"
-                        :path="settingsStore.businessSettings.sale.required_null_reason ? 'nullReason' : ''">
-                        <n-input v-model:value="dataAnulate.nullReason" placeholder="" />
-                    </n-form-item>
-                </n-form>
-            </div>
-            <div v-else>
-                <div v-if="settingsStore.businessSettings.sale?.require_user_pass_to_null">
-                    <n-form ref="formRef" :model="dataAnulate" :rules="rules">
-                        <n-form-item label="Ingrese su usuario" path="username">
-                            <n-input v-model:value="dataAnulate.username" placeholder="" />
-                        </n-form-item>
-                        <n-form-item label="Ingrese su contraseña" path="pass">
-                            <n-input type="password" v-model:value="dataAnulate.pass" placeholder="" />
-                        </n-form-item>
-                        <n-form-item label="Motivo de anulación"
-                            :path="settingsStore.businessSettings.sale.required_null_reason ? 'nullReason' : ''">
-                            <n-input v-model:value="dataAnulate.nullReason" placeholder="" />
-                        </n-form-item>
-                    </n-form>
-                </div>
-                <div v-else-if="settingsStore.businessSettings.sale.require_general_pass_to_null">
-                    <n-form ref="formRef" :model="dataAnulate" :rules="rules">
-                        <n-form-item label="Ingrese la contraseña" path="pass">
-                            <n-input type="password" v-model:value="dataAnulate.pass" placeholder="" />
-                        </n-form-item>
-                        <n-form-item label="Motivo de anulación"
-                            :path="settingsStore.businessSettings.sale.required_null_reason ? 'nullReason' : ''">
-                            <n-input v-model:value="dataAnulate.nullReason" placeholder="" />
-                        </n-form-item>
-                    </n-form>
-                </div>
-            </div>
-            <div
-                v-if="userStore.hasPermission('cancel_order') && !settingsStore.businessSettings.sale?.require_user_pass_to_null && !settingsStore.business_settings?.sale?.require_general_pass_to_null">
-                <span style="font-weight: 700; font-size: 16px">
-                    Para poder anular un pedido, primero debe de activar la
-                    configuración "Requerir clave de usuario para anular" en la sección de configuraciones.
-                </span>
-            </div>
-            <template #action>
-                <n-space justify="end">
-                    <n-button type="success" :loading="isLoading" secondary @click.prevent="performNullifyTableOrder"
-                        :disabled="settingsStore.business_settings?.order?.required_null_reason || isLoading">
-                        Confirmar
-                    </n-button>
-                </n-space>
-            </template>
-        </n-modal>
+        <!-- Anular pedido: motivo/destino por ítem y credencial personal (FLZ-MER-08, FLZ-SEC-03). -->
+        <CancelOrderModal v-model:show="cancelOrder.show" :table-id="cancelOrder.tableId" :order-id="cancelOrder.orderId"
+            @cancelled="pagination.onChange(pagination.page)" />
         <!-- Details Modal -->
         <details-modal v-model:show="showDetailsModal" :id-order="idOrder" @update:show="onCloseModal" />
         <!-- Details Modal -->
@@ -187,16 +117,14 @@ import { useBusinessStore } from "@/store/modules/business";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useGenericsStore } from "@/store/modules/generics";
 import { sendSale } from "@/api/modules/sales";
-import { useUserStore } from "@/store/modules/user";
 import {
     listOrders,
     listOrdersByPage,
     searchOrders,
-    nullOrder,
     updateOrderStatus,
     retrieveOrder
 } from "@/api/modules/orders";
-import { cancelTableOrder } from "@/api/modules/tables";
+import CancelOrderModal from "@/components/Cancellation/CancelOrderModal.vue";
 
 // export default defineComponent({
 //     name: "Order",
@@ -211,10 +139,6 @@ const saleStore = useSaleStore();
 const businessStore = useBusinessStore();
 const settingsStore = useSettingsStore();
 const genericsStore = useGenericsStore();
-const formRef = ref("");
-const userStore = useUserStore();
-const dataAnulate = ref({ username: "", pass: "", nullReason: "" });
-const isLoading = ref(false);
 const isTableLoading = ref(false);
 const showDetailsModal = ref(false);
 const showDeliveryModal = ref(false);
@@ -228,11 +152,6 @@ const today = set(new Date(Date.now()), {
     seconds: 0
 });
 
-const rules = {
-    username: { required: true, trigger: ["blur", "input"], message: "" },
-    pass: { required: true, trigger: ["blur", "input"], message: "" },
-    nullReason: { required: true, trigger: ["blur", "input"], message: "" }
-};
 
 const filterParams = ref({
     created: [
@@ -430,83 +349,7 @@ const onCloseModal = () => {
     delivery.value = null;
 };
 
-const showConfirm = ref(false);
-
-const passConfirm = ref("");
-
-const deleteTable = ref(null);
-
-const addReason = ref(false);
-
-const nullReason = ref(undefined);
-
-const closeNullModal = () => {
-    addReason.value = false;
-    passConfirm.value = "";
-    nullReason.value = undefined;
-    dataAnulate.value = { username: "", pass: "", nullReason: "" }
-};
-
-const deleteId = ref(null);
-
-const performNullifyTableOrder = async () => {
-    isLoading.value = true;
-    if (!deleteTable.value) {
-        await nullOrder(deleteId.value, dataAnulate.value).then((response) => {
-            if (response.status === 202) {
-                message.success("Pedido anulado correctamente!");
-                showConfirm.value = false;
-                deleteId.value = null;
-                passConfirm.value = "";
-                isLoading.value = false;
-                pagination.value.onChange(pagination.value.page);
-            }
-        }).catch((error) => {
-            if (error.response.status === 409) {
-                message.error("Anulación incompleta");
-                message.error("Envio manual necesario");
-            } else {
-                console.error(error);
-
-            }
-            passConfirm.value = "";
-            isLoading.value = false;
-        });
-    } else {
-        formRef.value?.validate(async (errors) => {
-            if (!errors) {
-                await cancelTableOrder(
-                    deleteTable.value,
-                    dataAnulate.value
-                ).then((response) => {
-                    if (response.status === 202) {
-                        message.success("Pedido anulado correctamente!");
-                        showConfirm.value = false;
-                        deleteTable.value = null;
-                        passConfirm.value = "";
-                        isLoading.value = false;
-                        pagination.value.onChange(pagination.value.page);
-                    }
-                }).catch((error) => {
-                    if (error.response.status === 409) {
-                        message.error("Anulación incompleta");
-                        message.error("Envio manual necesario");
-                    } else {
-                        console.error(error);
-                        isLoading.value = false;
-                        message.error("Error al anular, revise sus credenciales de anulación.");
-                    }
-                    passConfirm.value = "";
-                    isLoading.value = false;
-                });
-            } else {
-                isLoading.value = false;
-                message.warning("Llene todos los campos");
-            }
-        }).catch(() => {});
-
-    }
-};
+const cancelOrder = ref({ show: false, tableId: null, orderId: null });
 
 onMounted(async () => {
     await loadOrders();
@@ -639,12 +482,10 @@ const tableColumns = createOrderColumns({
         });
     },
     nullifyOrder(row) {
-        showConfirm.value = true;
-        if (row.table) {
-            deleteTable.value = row.table;
-        } else {
-            deleteId.value = row.id;
-        }
+        // Pedido de mesa: se anula por la mesa (cancel_order); el resto por el pedido (secure_delete).
+        cancelOrder.value = row.table
+            ? { show: true, tableId: row.table, orderId: null }
+            : { show: true, tableId: null, orderId: row.id };
     }
 })
 // return {

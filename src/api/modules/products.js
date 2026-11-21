@@ -281,6 +281,10 @@ export async function getProductAffectations() {
   return await http.get("product-affectation/");
 }
 
+export async function getFreeAffectationOptions(original) {
+  return await http.get(`product-affectation/free_options/?original=${original}`);
+}
+
 export async function getProductFittings() {
   return await http.get("product-fitting/");
 }

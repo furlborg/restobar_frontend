@@ -120,7 +120,7 @@ export async function cancelTableOrder(idTable, dataAnulate) {
     return http.post(`tables/${ idTable }/cancel_order/`, {
         ...dataAnulate,
         null_reason: dataAnulate.nullReason
-    });
+    }, { skipGlobalError: true });
 }
 
 export async function performDeleteOrderDetail(
@@ -133,7 +133,7 @@ export async function performDeleteOrderDetail(
         id: orderId,
         ...pass,
         quantity: quantity
-    });
+    }, { skipGlobalError: true });
 }
 
 export async function releaseMyTableLocks() {
