@@ -110,6 +110,7 @@
 </template>
 
 <script setup>
+import { useUpdateBlocker } from "@/version/updateBarrier";
 import { ref, onUpdated, onMounted, onUnmounted, provide, computed, nextTick, watch } from "vue";
 import ProductsDrawer from "../components/ProductsDrawer";
 import WaiterMenus from "./WaiterMenus.vue";
@@ -131,6 +132,7 @@ import { useUserStore } from "@/store/modules/user";
 import { useSaleStore } from "@/store/modules/sale";
 import { retrieveTableOrder, performDeleteOrderDetail } from "@/api/modules/tables";
 import { cloneDeep } from "@/utils";
+import { formatLockRemaining, lockOwnerName } from "@/utils/lockMessage";
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
 import { useTableLock } from "@/composables/useTableLock";
 import { useTableStore } from "@/store/modules/table";
@@ -256,6 +258,10 @@ onBeforeRouteUpdate((to) => {
     }
 });
 
+// No actualizar Flizzy con productos del pedido sin enviar (HU-FLZ-ACT-006).
+// Mismo criterio que la guardia de salida de abajo.
+useUpdateBlocker(() => orderStore.orders.length > 0);
+
 onBeforeRouteLeave((to) => {
     if (!ALLOWED_ROUTES.includes(to.name)) {
         if (orderStore.orders.length) {
@@ -331,12 +337,11 @@ const performRetrieveTableOrder = () => {
         if (error.response && error.response.status === 423) {
             // Mesa bloqueada por otro usuario
             const lockData = error.response.data.lock_data || error.response.data;
-            const lockedBy = lockData?.locked_by_username || 'otro usuario';
-            const remainingMinutes = lockData?.remaining_minutes ||
-                Math.ceil((lockData?.remaining_seconds || 0) / 60);
+            const lockedBy = lockOwnerName(lockData);
+            const remainingText = formatLockRemaining(lockData) || 'unos segundos';
 
             message.error(
-                `Mesa bloqueada por ${lockedBy}. Disponible en ${remainingMinutes} minutos.`,
+                `Mesa bloqueada por ${lockedBy}. Disponible en ${remainingText}.`,
                 { duration: 5000 }
             );
             router.push({ name: 'WHome' });

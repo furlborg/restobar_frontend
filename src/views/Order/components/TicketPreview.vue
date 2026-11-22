@@ -189,6 +189,9 @@ export default defineComponent({
                             "fecha": JSON.parse(props.data.json_sale).fecha_de_emision,
                             "customer": props.data.delivery_info.person,
                             "reference": props.data.ask_for,
+                            // kuzeta actualizada: Referencia = la de la dirección, Preguntar por en su propia fila
+                            "address_reference": props.data.delivery_info.reference || "",
+                            "ask_for": props.data.ask_for || "",
                             "phone": props.data.delivery_info.phone,
                             "address": props.data.delivery_info.address,
                             "payment_method": JSON.parse(props.data.json_sale).informacion_adicional.split("|")[2],
@@ -289,6 +292,8 @@ export default defineComponent({
                         "header": {
                             "date": props.data.created,
                             "reference": props.data.ask_for,
+                            // kuzeta actualizada: "PREGUNTAR POR" en la comanda, salvo delivery
+                            "ask_for": props.data.order_type !== "D" ? (props.data.ask_for || "") : "",
                             "username": props.data.username
                         },
                         "ticket_content": (() => {

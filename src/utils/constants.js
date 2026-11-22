@@ -1,6 +1,7 @@
 import { h } from "vue";
 import { NButton, NTag, NPopover, NDropdown, NText, NSpace } from "naive-ui";
 import { renderIcon, lighten } from "@/utils";
+import { canVerifyCpe } from "@/utils/cpeVerification";
 import { useUserStore } from "@/store/modules/user";
 import { useSaleStore } from "@/store/modules/sale";
 import { useTillStore } from "@/store/modules/till";
@@ -1441,6 +1442,8 @@ const verifyDate = (date) =>
     parse(date.split(" ")[0], "dd/MM/yyyy", new Date()),
   ) > 5;
 
+const ACTION_BTN_STYLE = "padding: 0 11px;";
+
 export const createSaleColumns = ({
   printSale,
   updateSale,
@@ -1448,30 +1451,45 @@ export const createSaleColumns = ({
   nullifySale,
   changeStatus,
   downloadXML,
+  downloadCDR,
+  verifyCpe,
+  // En pantallas angostas (teléfono) la columna no se fija para no tapar la tabla
+  fixedActions = true,
 }) => {
   return [
     {
       title: "#",
       key: "id",
-      width: 10,
+      width: 50,
     },
     {
       title: "Cliente",
       key: "customer",
-      width: 170,
+      width: 260,
+      className: "sale-col-wrap",
     },
     {
       title: "Documento",
       key: "document",
-      width: 60,
+      width: 120,
+      ellipsis: { tooltip: true },
       render(row) {
         return `${row.serie}-${row.number}`;
       },
     },
     {
+      title: "Tipo",
+      key: "order_type_label",
+      width: 100,
+      ellipsis: { tooltip: true },
+      render(row) {
+        return row.order_type_label || "-";
+      },
+    },
+    {
       title: "Canje",
       key: "recovery_reference",
-      width: 110,
+      width: 180,
       render(row) {
         const reference = row.recovery_of
           ? `ID original: #${row.recovery_of}`
@@ -1543,12 +1561,23 @@ export const createSaleColumns = ({
     {
       title: "Método Pago",
       key: "payment_method",
-      width: 60,
+      width: 110,
+      ellipsis: { tooltip: true },
+    },
+    {
+      title: "Cobrado por",
+      key: "username",
+      width: 150,
+      ellipsis: { tooltip: true },
+      render(row) {
+        return row.username || "-";
+      },
     },
     {
       title: "Monto",
       key: "amount",
-      width: 50,
+      width: 90,
+      ellipsis: { tooltip: true },
       render(row) {
         return `S/. ${row.amount}`;
       },
@@ -1556,12 +1585,13 @@ export const createSaleColumns = ({
     {
       title: "Emisión",
       key: "date_sale",
-      width: 90,
+      width: 150,
+      ellipsis: { tooltip: true },
     },
     {
       title: "Estado",
       key: "status",
-      width: 30,
+      width: 110,
       render(row) {
         let type, text, tooltip, isClickable;
 
@@ -1637,82 +1667,137 @@ export const createSaleColumns = ({
     {
       title: "Acciones",
       key: "actions",
-      width: 160,
+      width: 235,
+      align: "right",
+      fixed: fixedActions ? "right" : undefined,
       render(row) {
-        return [
-          userStore.hasPermission("send_sale") && row.invoice_type !== "80"
-            ? h(
-                NButton,
+        const isNote = row.invoice_type === "80";
+        const moreOptions = [
+          {
+            key: "xml",
+            label: "Descargar XML",
+            icon: renderIcon("md-download-round"),
+            // El backend solo da link cuando el PSE que recibió el comprobante lo tiene (ver apps.pse.links)
+            disabled: isNote || !row.xml,
+          },
+          {
+            key: "cdr",
+            label: "Descargar CDR",
+            icon: renderIcon("md-download-round"),
+            disabled: isNote || !row.cdr,
+          },
+          // Verificar el CPE en el PSE (estado real del comprobante y de su baja)
+          ...(userStore.hasPermission("send_sale") && verifyCpe
+            ? [
                 {
-                  class: "me-2",
-                  size: "small",
-                  type: "info",
-                  secondary: true,
-                  disabled: row.status === "E" || row.status === "A" || row.status === "B",
-                  onClick: () => sendSale(row),
+                  key: "verify",
+                  label: "Verificar CPE",
+                  icon: renderIcon("md-factcheck-twotone"),
+                  disabled: !canVerifyCpe(row),
                 },
-                renderIcon("ri-send-plane-fill"),
-              )
-            : null,
-          userStore.hasPermission("delete_sale") &&
-            h(
-              NButton,
-              {
-                class: "me-2",
-                size: "small",
-                type: "error",
-                secondary: true,
-                disabled:
-                  row.invoice_type !== "80"
-                    ? row.status !== "E" || row.status === "B" || verifyDate(row.date_sale)
-                    : row.status === "A" || row.status === "B",
-                onClick: () => nullifySale(row),
-              },
-              renderIcon("md-cancel-twotone"),
-            ),
-          userStore.hasPermission("change_sale") &&
-            h(
-              NButton,
-              {
-                class: "me-2",
-                size: "small",
-                type: "info",
-                secondary: true,
-                disabled:
-                  row.invoice_type !== "80"
-                    ? !["E", "X"].includes(row.status)
-                    : !["N", "X"].includes(row.status),
-                onClick: () => updateSale(row),
-              },
-              renderIcon("gi-card-exchange"),
-            ),
-          h(
-            NButton,
-            {
-              size: "small",
-              type: "warning",
-              secondary: true,
-              onClick: () => printSale(row),
-            },
-            renderIcon("md-print-round"),
-          ),
-          // Boton XML
-          h(
-            NButton,
-            {
-              class: "ms-2",
-              size: "small",
-              type: "primary",
-              secondary: true,
-              // Solo mostrar para comprobantes electrónicos (no nota de venta) Y que ya hayan sido enviados con éxito a la SUNAT (estado 'E')
-              disabled: row.invoice_type === "80" || row.status !== "E",
-              onClick: () => {
-                if (downloadXML) downloadXML(row);
-              },
-            },
-            () => "XML",
-          ),
+              ]
+            : []),
         ];
+        const moreHandlers = {
+          xml: () => downloadXML && downloadXML(row),
+          cdr: () => downloadCDR && downloadCDR(row),
+          verify: () => verifyCpe && verifyCpe(row),
+        };
+
+        return h(
+          "div",
+          {
+            style:
+              "display: flex; gap: 4px; flex-wrap: nowrap; align-items: center; justify-content: flex-end;",
+          },
+          [
+            userStore.hasPermission("send_sale") && !isNote
+              ? h(
+                  NButton,
+                  {
+                    size: "small",
+                    type: "info",
+                    secondary: true,
+                    title: "Enviar a SUNAT",
+                    style: ACTION_BTN_STYLE,
+                    disabled:
+                      row.status === "E" || row.status === "A" || row.status === "B",
+                    onClick: () => sendSale(row),
+                  },
+                  renderIcon("ri-send-plane-fill"),
+                )
+              : null,
+            userStore.hasPermission("delete_sale")
+              ? h(
+                  NButton,
+                  {
+                    size: "small",
+                    type: "error",
+                    secondary: true,
+                    title: "Anular",
+                    style: ACTION_BTN_STYLE,
+                    disabled: !isNote
+                      ? row.status !== "E" || row.status === "B" || verifyDate(row.date_sale)
+                      : row.status === "A" || row.status === "B",
+                    onClick: () => nullifySale(row),
+                  },
+                  renderIcon("md-cancel-twotone"),
+                )
+              : null,
+            userStore.hasPermission("change_sale")
+              ? h(
+                  NButton,
+                  {
+                    size: "small",
+                    type: "info",
+                    secondary: true,
+                    title: "Canjear",
+                    style: ACTION_BTN_STYLE,
+                    disabled: !isNote
+                      ? !["E", "X"].includes(row.status)
+                      : !["N", "X"].includes(row.status),
+                    onClick: () => updateSale(row),
+                  },
+                  renderIcon("gi-card-exchange"),
+                )
+              : null,
+            h(
+              NButton,
+              {
+                size: "small",
+                type: "warning",
+                secondary: true,
+                title: "Imprimir",
+                style: ACTION_BTN_STYLE,
+                onClick: () => printSale(row),
+              },
+              renderIcon("md-print-round"),
+            ),
+            h(
+              NDropdown,
+              {
+                trigger: "click",
+                placement: "bottom-end",
+                options: moreOptions,
+                onSelect: (key) => moreHandlers[key]?.(),
+              },
+              {
+                default: () =>
+                  h(
+                    NButton,
+                    {
+                      size: "small",
+                      secondary: true,
+                      title: "Más acciones",
+                      style: ACTION_BTN_STYLE,
+                      disabled: moreOptions.every((option) => option.disabled),
+                    },
+                    renderIcon("bi-three-dots-vertical"),
+                  ),
+              },
+            ),
+          ],
+        );
       },
     },
   ];

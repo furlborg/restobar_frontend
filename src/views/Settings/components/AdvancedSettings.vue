@@ -113,7 +113,7 @@
             <n-tabs 
                 v-model:value="activeTab" 
                 type="line" 
-                placement="left" 
+                :placement="isMobileView ? 'top' : 'left'"
                 size="large" 
                 class="settings-tabs"
             >
@@ -440,18 +440,13 @@
                                 <div class="card-header-icon sales-bg"><v-icon name="md-pointofsale-twotone" /></div>
                                 <div>
                                     <h3 class="group-title">Parámetros de Comprobantes e Impuestos</h3>
-                                    <p class="group-desc">Define la ticketera de caja, tipos de documento por defecto y tasas tributarias SUNAT.</p>
+                                    <p class="group-desc">Define los tipos de documento por defecto y las tasas tributarias SUNAT. La ticketera de caja se configura en Impresión y Tickets.</p>
                                 </div>
                             </div>
 
                             <n-card class="settings-inner-card" :bordered="true">
                                 <n-form :disabled="!editMode" label-placement="top">
                                     <n-grid responsive="screen" cols="1 s:2 m:3 l:5" :x-gap="20" :y-gap="14">
-                                        <n-form-item-gi label="Impresora de Comprobantes (Caja)">
-                                            <n-input v-model:value="businessSettings.sale.printer_name" placeholder="Ej: CAJA" size="large" />
-                                            <template #feedback>Nombre en Kuzeta para tickets de venta.</template>
-                                        </n-form-item-gi>
-
                                         <n-form-item-gi label="Documento por Defecto">
                                             <n-select v-model:value="businessSettings.sale.default_invoice" :options="invoiceOptions" size="large" />
                                             <template #feedback>Tipo inicial al abrir ventana de cobro.</template>
@@ -498,6 +493,16 @@
                                             <template #feedback>
                                                 <b>Predeterminado:</b> Lista a la derecha y panel a la izquierda.<br>
                                                 <b>Alternativo:</b> Panel a la derecha y lista a la izquierda.
+                                            </template>
+                                        </n-form-item-gi>
+                                        <n-form-item-gi label="Tamaño del Panel de Cobranza">
+                                            <n-select 
+                                                v-model:value="businessSettings.sale.billing_panel_size" 
+                                                :options="billingPanelSizeOptions" 
+                                                size="large" 
+                                            />
+                                            <template #feedback>
+                                                Agranda textos, botones y logos del panel de cobro (mesa, delivery y para llevar). No afecta al celular.
                                             </template>
                                         </n-form-item-gi>
                                     </n-grid>
@@ -772,6 +777,11 @@
                                         <n-form-item-gi label="Flujo de Autenticación para Mozos">
                                             <n-select v-model:value="businessSettings.order.waiter_auth_mode" :options="waiterAuthModeOptions" size="large" />
                                             <template #feedback>Mozo predeterminado, selector en lista o código PIN.</template>
+                                        </n-form-item-gi>
+
+                                        <n-form-item-gi label="Tiempo de bloqueo de mesa (Seg)">
+                                            <n-input-number v-model:value="businessSettings.order.table_lock_seconds" :min="10" :max="900" :step="10" :precision="0" size="large" />
+                                            <template #feedback>Segundos que una mesa queda bloqueada para otros usuarios cuando alguien la abre. Predeterminado: 50.</template>
                                         </n-form-item-gi>
                                     </n-grid>
 
@@ -1493,6 +1503,7 @@ export default defineComponent({
                 free_sale_affects_till: true,
                 free_sale_send_doc: true,
                 billing_layout_position: 'checkout_left',
+                billing_panel_size: 'small',
             };
             for (const key in defaultSale) {
                 if (settings.sale[key] === undefined) {
@@ -1524,6 +1535,7 @@ export default defineComponent({
                 required_null_reason: false,
                 print_category_on_order: false,
                 print_area_on_order: false,
+                table_lock_seconds: 50,
             };
             for (const key in defaultOrder) {
                 if (settings.order[key] === undefined) {
@@ -1599,6 +1611,12 @@ export default defineComponent({
         const billingLayoutOptions = [
             { label: "Predeterminado: Lista a la derecha y panel a la izquierda", value: "checkout_left" },
             { label: "Alternativo: Panel a la derecha y lista a la izquierda", value: "checkout_right" }
+        ];
+
+        const billingPanelSizeOptions = [
+            { label: "Pequeño (predeterminado)", value: "small" },
+            { label: "Mediano", value: "medium" },
+            { label: "Grande", value: "large" }
         ];
 
         const kitchenPrinterFormatOptions = [
@@ -1830,16 +1848,23 @@ export default defineComponent({
             }
         };
 
+        // En celular las pestañas van arriba (en PC se mantiene el menú lateral)
+        const isMobileView = ref(window.innerWidth <= 768);
+        const updateIsMobileView = () => { isMobileView.value = window.innerWidth <= 768; };
+
         onMounted(() => {
+            window.addEventListener("resize", updateIsMobileView);
             window.addEventListener("whatsapp-status-changed", handleWhatsAppStatusEvent);
             fetchWhatsAppStatus(true);
         });
 
         onUnmounted(() => {
+            window.removeEventListener("resize", updateIsMobileView);
             window.removeEventListener("whatsapp-status-changed", handleWhatsAppStatusEvent);
         });
 
         return {
+            isMobileView,
             activeTab,
             editMode,
             saving,
@@ -1857,6 +1882,7 @@ export default defineComponent({
             printOptions,
             invoiceOptions,
             billingLayoutOptions,
+            billingPanelSizeOptions,
             kitchenPrinterFormatOptions,
             infoLocationOptions,
             orderTypeOptions,
@@ -2263,5 +2289,98 @@ export default defineComponent({
 
 .border-top {
     border-top: 1px solid #f1f5f9;
+}
+
+/* ==================================================== */
+/* SOLO CELULAR: pestañas arriba y contenido a ancho    */
+/* completo. En PC no cambia nada.                      */
+/* ==================================================== */
+@media (max-width: 768px) {
+    .settings-container {
+        height: auto;
+        max-height: none;
+        overflow: visible;
+    }
+
+    .settings-header {
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .header-left {
+        width: 100%;
+    }
+
+    .page-title {
+        font-size: 18px;
+    }
+
+    .header-search {
+        flex: 1 1 100%;
+        max-width: none;
+        margin: 0;
+    }
+
+    .header-actions {
+        width: 100%;
+    }
+
+    .search-results-banner {
+        padding: 10px 12px;
+    }
+
+    .settings-body {
+        display: block;
+        overflow: visible;
+    }
+
+    .settings-tabs {
+        height: auto;
+        flex-direction: column;
+        overflow: visible;
+
+        :deep(.n-tabs-nav) {
+            width: 100%;
+            min-width: 0;
+            max-width: none;
+            height: auto;
+            border-right: none;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 8px;
+            overflow: hidden;
+        }
+
+        :deep(.n-tabs-wrapper),
+        :deep(.n-tabs-tab-wrapper),
+        :deep(.n-tabs-tab) {
+            width: auto;
+        }
+
+        :deep(.n-tabs-tab) {
+            margin-bottom: 0;
+            margin-right: 6px;
+        }
+
+        :deep(.n-tab-pane),
+        :deep(.n-tabs-pane-wrapper) {
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
+        }
+
+        :deep(.n-tab-pane) {
+            padding: 16px 12px 80px 12px !important;
+        }
+    }
+
+    .tab-sub-title {
+        display: none;
+    }
+
+    .tab-label-item {
+        width: auto;
+        white-space: nowrap;
+    }
 }
 </style>

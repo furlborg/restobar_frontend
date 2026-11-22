@@ -1,6 +1,6 @@
 <template>
   <div id="TakeOrderLayout">
-    <n-page-header class="table-layout-page-header" @back="$router.push({ name: 'TableHome' })">
+    <n-page-header class="table-layout-page-header" @back="userStore.user?.role === 'MOZO' ? $router.push({ name: 'WaiterMode' }) : $router.push({ name: 'TableHome' })">
       <template #title>
         <span class="table-header-name">Realizar Pedido</span>
       </template>
@@ -60,7 +60,7 @@
               @show-customer-modal="ui.showCustomerModal = true" @perform-take-away="performTakeAway"
               @do-multiple-payment="doMultiplePayment" @goToFirstTab="goToFirstTab"
               @go-back-to-products="ui.selectProducts = false" />
-            <div v-else class="h-100 flex-column d-flex">
+            <div v-else class="h-100 flex-column d-flex take-order-route-host">
               <router-view v-slot="{ Component }">
                 <component :is="Component" />
               </router-view>
@@ -143,10 +143,12 @@
 </template>
 
 <script setup>
+import { useUpdateBlocker, useSensitiveScreen } from "@/version/updateBarrier";
 import { ref, computed, watch, onMounted, nextTick, reactive, defineAsyncComponent } from "vue";
 import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router";
 import { useMessage, useDialog } from "naive-ui";
 import { getSaleNumber } from "@/api/modules/sales";
+import { useFitViewportHeight } from "@/composables/useFitViewportHeight";
 import { searchCustomerByName, searchRucCustomer } from "@/api/modules/customer";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
@@ -173,7 +175,7 @@ const settingsStore = useSettingsStore();
 const userStore = useUserStore();
 const route = useRoute();
 const router = useRouter();
-const { grandTotal, taxBreakdown, summary, menuTotal } = useSaleTotals();
+const { grandTotal, taxBreakdown, summary } = useSaleTotals();
 const { processTakeAwayOrder, processCreateOrder } = useOrderProcessing();
 
 // Estado UI agrupado en objeto reactivo para mejor organización
@@ -270,7 +272,7 @@ const sale = ref({
   sale_details: [],
   ask_for: "",
   delivery_info: !(route.query.delivery === undefined) && route.query.delivery === "true"
-    ? { person: "", address: "", phone: "", deliveryman: "" }
+    ? { person: "", address: "", reference: "", phone: "", deliveryman: "" }
     : null,
   payments: null,
   do_update: true,
@@ -350,6 +352,8 @@ watch(
     if (newValue !== undefined && newValue !== null) await obtainSaleNumber();
   }
 );
+
+useFitViewportHeight("#TakeOrderLayout");
 
 onMounted(async () => {
   console.log('Componente montado, obteniendo número de venta inicial');
@@ -524,11 +528,12 @@ const handleDelivery = (v) => {
   sale.value.delivery_info = v ? {
     person: "",
     address: "",
+    reference: "",
     phone: "",
     deliveryman: "",
     amount: parseFloat(0).toFixed(2)
   } : null;
-  if (v) sale.value.ask_for = "";
+  // "Preguntar por" se conserva al pasar a delivery: también se imprime en el ticket de delivery
 };
 
 const performCreateOrder = async () => {
@@ -606,6 +611,10 @@ const cleanupOrderStore = () => {
 };
 
 onBeforeRouteLeave((to) => handleRouteGuard(to, true));
+
+// No actualizar Flizzy con un pedido sin procesar; el recordatorio no interrumpe el cobro (HU-FLZ-ACT-006).
+useUpdateBlocker(() => hasUnsavedChanges.value);
+useSensitiveScreen();
 
 </script>
 
@@ -696,18 +705,27 @@ onBeforeRouteLeave((to) => handleRouteGuard(to, true));
     height: calc(100vh - 74px) !important;
     height: calc(100dvh - 74px) !important;
     max-height: calc(100dvh - 74px) !important;
+    /* svh = altura con la barra del navegador visible; evita que el layout exterior se pueda deslizar */
+    height: calc(100svh - 74px) !important;
+    max-height: calc(100svh - 74px) !important;
+    overscroll-behavior: none;
     overflow: hidden !important;
     display: flex;
     flex-direction: column;
-    margin-bottom: -25px !important;
+    margin-bottom: 0 !important;
   }
 
   :deep(.n-page-header) {
     flex-shrink: 0 !important;
     margin-bottom: 2px !important;
   }
+}
 
-  :deep(.n-tabs) {
+/* Las pestañas se muestran hasta 991px (clase d-lg-none de Bootstrap), así que sus estilos deben
+   cubrir también tablets (769–991px). Antes solo llegaban a 768px y en tablet las pestañas no
+   tomaban alto: delivery / para llevar quedaba en blanco, sin categorías. */
+@media (max-width: 991.98px) {
+  #TakeOrderLayout > :deep(.n-tabs) {
     flex: 1 1 0px !important;
     min-height: 0 !important;
     height: 100% !important;
@@ -715,24 +733,28 @@ onBeforeRouteLeave((to) => handleRouteGuard(to, true));
     flex-direction: column !important;
   }
 
-  :deep(.n-tabs-nav) {
+  #TakeOrderLayout > :deep(.n-tabs > .n-tabs-nav) {
     flex-shrink: 0 !important;
     background: #ffffff;
   }
 
-  :deep(.n-tabs-pane-wrapper) {
+  #TakeOrderLayout > :deep(.n-tabs > .n-tabs-pane-wrapper) {
     flex: 1 1 0px !important;
     min-height: 0 !important;
     height: 100% !important;
     overflow: hidden !important;
   }
 
-  :deep(.n-tabs-pane-wrapper > div) {
+  #TakeOrderLayout > :deep(.n-tabs > .n-tabs-pane-wrapper > .n-tab-pane) {
+    box-sizing: border-box;
+  }
+
+  #TakeOrderLayout > :deep(.n-tabs > .n-tabs-pane-wrapper > div) {
     height: 100% !important;
     min-height: 0 !important;
   }
 
-  :deep(.n-tab-pane) {
+  #TakeOrderLayout > :deep(.n-tabs > .n-tabs-pane-wrapper > .n-tab-pane) {
     height: 100% !important;
     min-height: 0 !important;
     padding: 0 !important;
@@ -741,19 +763,34 @@ onBeforeRouteLeave((to) => handleRouteGuard(to, true));
     flex-direction: column !important;
   }
 
-  :deep(.n-tab-pane[data-name="main"]),
-  :deep(.n-tab-pane:first-child) {
+  #TakeOrderLayout > :deep(.n-tabs > .n-tabs-pane-wrapper > .n-tab-pane:first-child) {
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
   }
 
-  :deep(.n-card) {
+  #TakeOrderLayout > :deep(.n-tabs > .n-tabs-pane-wrapper > .n-tab-pane > .n-card) {
     border: none !important;
     background: transparent !important;
     height: 100% !important;
   }
 
-  :deep(.n-card__content) {
+  #TakeOrderLayout > :deep(.n-tabs > .n-tabs-pane-wrapper > .n-tab-pane > .n-card > .n-card-content) {
+    padding: 0 !important;
+    height: 100% !important;
+  }
+
+  /* Igual que Mesas (.table-mobile-view-wrapper): scroll propio, sin recuadro blanco */
+  .take-order-route-host {
+    overscroll-behavior: contain;
+    flex: 1 1 0px;
+    min-height: 0;
+    background: transparent;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #TakeOrderLayout > :deep(.n-tabs > .n-tabs-pane-wrapper > .n-tab-pane > .n-card > .n-card__content) {
     padding: 0 !important;
     height: 100% !important;
   }

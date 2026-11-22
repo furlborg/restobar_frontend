@@ -44,7 +44,7 @@
           </div>
 
           <n-date-picker v-model:value="dateRange" type="daterange" :shortcuts="dateShortcuts" clearable
-            @update:value="loadDashboardData" style="min-width: 280px;" />
+            @update:value="loadDashboardData" style="min-width: 280px; max-width: 100%;" class="dashboard-date-picker" />
         </n-space>
       </n-space>
     </n-card>
@@ -862,5 +862,25 @@ onMounted(() => {
 
 .mini-chart {
   flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  #Dashboard {
+    padding: 6px;
+  }
+
+  .dashboard-date-picker {
+    min-width: 0 !important;
+    width: 100%;
+  }
+
+  .total-ventas-section,
+  .growth-section {
+    width: 100%;
+  }
+
+  .order-stat {
+    padding: 8px;
+  }
 }
 </style>

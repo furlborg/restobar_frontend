@@ -119,7 +119,7 @@
                     <div class="pos-actions-cluster">
                         <template v-if="settingsStore.business_settings?.order?.divide_delivery_takeaway">
                             <button 
-                                v-if="userStore.hasPermission('take_away_order') && userStore.user.role !== 'MOZO'" 
+                                v-if="userStore.hasPermission('take_away_order')"
                                 type="button" 
                                 class="flizzy-pos-btn btn-delivery"
                                 @click="$router.push({ name: 'TakeOrder', query: { delivery: true } })"
@@ -131,7 +131,7 @@
                             </button>
 
                             <button 
-                                v-if="userStore.hasPermission('take_away_order') && userStore.user.role !== 'MOZO'" 
+                                v-if="userStore.hasPermission('take_away_order')"
                                 type="button" 
                                 class="flizzy-pos-btn btn-takeaway"
                                 @click="$router.push({ name: 'TakeOrder', query: { delivery: false } })"
@@ -146,7 +146,7 @@
                         </template>
                         <template v-else>
                             <button 
-                                v-if="userStore.hasPermission('take_away_order') && userStore.user.role !== 'MOZO'" 
+                                v-if="userStore.hasPermission('take_away_order')"
                                 type="button" 
                                 class="flizzy-pos-btn btn-combined"
                                 @click="$router.push({ name: 'TakeOrder' })"
@@ -242,6 +242,7 @@
                                 <div class="table-card-footer mt-auto">
                                     <div v-if="table?.order_amount !== '' && table?.order_amount !== null && table?.order_amount !== undefined && settingsStore.business_settings?.order?.table_order_total"
                                         class="d-flex align-items-center justify-content-between table-order-pill"
+                                        :class="`pill-${getStatusClass(table)}`"
                                         :title="table.modified ? `Último pedido: ${table.modified}` : ''">
                                         <span class="table-order-amount">
                                             S/. {{ (Number(table?.order_amount) || 0).toFixed(2) }}
@@ -364,7 +365,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useMessage } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useGenericsStore } from "@/store/modules/generics";
@@ -377,6 +378,8 @@ import {
     changeOrderTable
 } from "@/api/modules/tables";
 import { cloneDeep } from "@/utils";
+import { formatLockRemaining } from "@/utils/lockMessage";
+import { getActiveLock, lockRemainingSeconds } from "@/utils/tableLock";
 import { useBusinessStore } from "@/store/modules/business";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 import ModalAnulateSale from "@/views/Sale/modalAnulateSale.vue";
@@ -401,8 +404,6 @@ const tableStore = useTableStore();
 const userStore = useUserStore();
 const businessStore = useBusinessStore();
 
-const isWaiterModeView = computed(() => userStore.user?.role === 'MOZO' || route.matched.some(r => r.name === 'WaiterMode'));
-
 const tableLabelPosition = computed(() => {
     return settingsStore.business_settings?.order?.table_label_position || 'center';
 });
@@ -423,7 +424,7 @@ const areaOptions = computed(() => {
 });
 
 const isTableLocked = (table) => {
-    const wsLockInfo = tableStore.lockedTables[table.id];
+    const wsLockInfo = getWsLock(table.id);
     return Boolean((wsLockInfo && wsLockInfo.user_id !== userStore.user.id) ||
         (table.lock_info && table.lock_info.is_active && !table.lock_info.is_locked_by_me));
 };
@@ -494,24 +495,26 @@ const filteredAreas = computed(() => {
     return list;
 });
 
-const { connectLockWebSocket, lockSocketConnected, wsUnlockTable } = useTableLock();
+const { connectLockWebSocket, wsUnlockTable } = useTableLock();
 
 const forceUnlockTable = (tableId) => {
     wsUnlockTable(tableId);
     message.success("Bloqueo de mesa liberado");
 };
 
+const getWsLock = (tableId) => getActiveLock(tableStore.lockedTables, tableId);
+
 /**
  * Verifica si una mesa está bloqueada para impedir acceso a usuarios sin privilegios
  */
 const isTableBlocked = (table) => {
     // Primero verificar el estado del store (WebSocket global)
-    const wsLockInfo = tableStore.lockedTables[table.id];
+    const wsLockInfo = getWsLock(table.id);
     if (wsLockInfo && wsLockInfo.user_id !== userStore.user.id) {
         return {
             blocked: true,
             username: wsLockInfo.username,
-            remaining: null
+            remaining: formatLockRemaining({ remaining_seconds: lockRemainingSeconds(wsLockInfo) })
         };
     }
 
@@ -520,7 +523,7 @@ const isTableBlocked = (table) => {
         return {
             blocked: true,
             username: table.lock_info.username,
-            remaining: table.lock_info.remaining_minutes
+            remaining: formatLockRemaining(table.lock_info)
         };
     }
 
@@ -555,9 +558,7 @@ const hexToRgba = (hex, alphaPercent = 5) => {
  * Obtiene el color de la mesa según su estado
  */
 const getTableColor = (table) => {
-    const wsLockInfo = tableStore.lockedTables[table.id];
-    const isLockedByOther = (wsLockInfo && wsLockInfo.user_id !== userStore.user.id) ||
-        (table.lock_info && table.lock_info.is_active && !table.lock_info.is_locked_by_me);
+    const isLockedByOther = isTableLocked(table);
 
     if (isLockedByOther) {
         return tableColors.value.locked;
@@ -593,9 +594,7 @@ const getStatusBadgeStyle = (table) => {
  * Obtiene la clase CSS para el badge de estado
  */
 const getStatusClass = (table) => {
-    const wsLockInfo = tableStore.lockedTables[table.id];
-    const isLockedByOther = (wsLockInfo && wsLockInfo.user_id !== userStore.user.id) ||
-        (table.lock_info && table.lock_info.is_active && !table.lock_info.is_locked_by_me);
+    const isLockedByOther = isTableLocked(table);
 
     if (isLockedByOther) return 'status-locked';
     if (table.status === '3') return 'status-occupied';
@@ -606,17 +605,12 @@ const getStatusClass = (table) => {
  * Obtiene el texto amigable para el badge de estado
  */
 const getStatusText = (table) => {
-    const wsLockInfo = tableStore.lockedTables[table.id];
-    const isLockedByOther = (wsLockInfo && wsLockInfo.user_id !== userStore.user.id) ||
-        (table.lock_info && table.lock_info.is_active && !table.lock_info.is_locked_by_me);
+    const isLockedByOther = isTableLocked(table);
 
     if (isLockedByOther) return 'Bloqueada';
     if (table.status === '3') return 'Ocupada';
     return 'Libre';
 };
-
-// Computed para forzar reactividad cuando cambian los locks
-computed(() => tableStore.lockedTables);
 
 /**
  * Extrae solo la hora del timestamp para mantener la tarjeta compacta y alineada
@@ -654,7 +648,7 @@ const handleTableClick = (table) => {
             console.log('❌ Mesa bloqueada por:', blockStatus.username);
 
             const remainingMsg = blockStatus.remaining
-                ? `Disponible en ${blockStatus.remaining} minutos.`
+                ? `Disponible en ${blockStatus.remaining}.`
                 : '';
 
             message.warning(
@@ -682,11 +676,6 @@ const loadTablesData = async () => {
         isLoading.value = false;
     });
 };
-
-// Watch para forzar re-render cuando cambian los locks
-watch(() => tableStore.lockedTables, () => {
-    console.log('[TableHome] 🔄 lockedTables cambió:', tableStore.lockedTables);
-}, { deep: true });
 
 const performRetrieveTableOrder = async (table) => {
     await retrieveTableOrder(table).then((response) => {
@@ -758,11 +747,6 @@ const openMobileMenu = () => {
 };
 
 onMounted(() => {
-    if (route.name === 'WHome' && userStore.user?.role && userStore.user.role !== 'MOZO' && !route.query.waiter_mode) {
-        router.replace({ name: 'TableHome' });
-        return;
-    }
-
     loadTablesData();
 
     const fetch = new Date();
@@ -1453,19 +1437,46 @@ const previewData = ref(null);
 }
 
 .table-order-pill {
-    background-color: #fef2f2;
-    border: 1px solid #fecaca;
     border-radius: 6px;
     padding: 3px 6px;
     gap: 4px;
     min-height: 28px;
     box-sizing: border-box;
+    transition: all 0.2s ease;
+}
+
+/* Ocupada: Rojo */
+.table-order-pill.pill-status-occupied {
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+}
+.table-order-pill.pill-status-occupied .table-order-amount {
+    color: #b91c1c;
+}
+
+/* Bloqueada: Amarillo / Ámbar */
+.table-order-pill.pill-status-locked {
+    background-color: #fffbeb;
+    border: 1px solid #fde68a;
+}
+.table-order-pill.pill-status-locked .table-order-amount {
+    color: #b45309;
+}
+
+/* Libre o por defecto */
+.table-order-pill.pill-status-free,
+.table-order-pill:not(.pill-status-occupied):not(.pill-status-locked) {
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+}
+.table-order-pill.pill-status-free .table-order-amount,
+.table-order-pill:not(.pill-status-occupied):not(.pill-status-locked) .table-order-amount {
+    color: #15803d;
 }
 
 .table-order-amount {
     font-size: 0.88rem;
     font-weight: 800;
-    color: #b91c1c;
     white-space: nowrap;
     line-height: 1;
 }

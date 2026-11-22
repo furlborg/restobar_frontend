@@ -27,7 +27,7 @@
           </n-button>
         </n-space>
       </template>
-      <n-space align="center">
+      <n-space align="center" class="product-filters">
         <n-input-group>
           <n-input v-model:value="search" placeholder="Buscar..." clearable
             @clear="() => { (search = ''); (show_disabled = false); debouncedPerformSearch() }"
@@ -79,7 +79,7 @@
               </n-thing>
               <template #suffix>
                 <transition name="fade">
-                  <n-button-group v-if="product.showButtons">
+                  <n-button-group v-if="product.showButtons || genericsStore.device === 'mobile'">
                     <n-button v-if="userStore.hasPermission('change_product')" class="p-4" type="warning" tertiary
                       @click="editProduct(product.id)">
                       <v-icon name="ri-edit-fill" scale="1.5" />
@@ -157,6 +157,7 @@ import ProductImportModal from "./components/ProductImportModal.vue";
 import SalesReportModal from "./components/SalesReportModal";
 import { useProductStore } from "@/store/modules/product";
 import { useUserStore } from "@/store/modules/user";
+import { useGenericsStore } from "@/store/modules/generics";
 import {
   getProducts,
   searchProduct,
@@ -169,6 +170,7 @@ import { useProductFilters } from "./composables/useProductFilters";
 const productImage = (p) => p?.image || p?.image_url || defaultFoodImage;
 const productStore = useProductStore();
 const userStore = useUserStore();
+const genericsStore = useGenericsStore();
 const message = useMessage();
 const dialog = useDialog();
 
@@ -317,5 +319,45 @@ const onSuccess = async () => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+@media (max-width: 768px) {
+  #Product .n-card-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  #Product .n-card-header .n-card-header__main {
+    flex: 1 0 100%;
+  }
+
+  #Product .n-card-header .n-card-header__extra {
+    flex: 1 0 100%;
+    margin-left: 0;
+  }
+
+  #Product .product-filters > div {
+    width: 100%;
+  }
+
+  #Product .product-filters,
+  #Product .product-filters .n-select,
+  #Product .product-filters .n-input-group {
+    width: 100%;
+    min-width: 0 !important;
+  }
+
+  #Product .n-card__content,
+  #Product .n-card__footer {
+    padding: 12px;
+  }
+
+  #Product .n-list-item {
+    flex-wrap: wrap;
+  }
+
+  #Product .n-pagination {
+    flex-wrap: wrap;
+  }
 }
 </style>

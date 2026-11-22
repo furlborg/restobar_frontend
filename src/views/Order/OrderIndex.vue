@@ -180,6 +180,7 @@ import { set, format } from "date-fns";
 import DetailsModal from "./components/DetailsModal";
 import DeliveryModal from "./components/DeliveryModal";
 import TicketPreview from "./components/TicketPreview";
+import { detailsForReprint } from "@/utils/orderReprint";
 import { createOrderColumns } from "@/utils/constants";
 import { useSaleStore } from "@/store/modules/sale";
 import { useBusinessStore } from "@/store/modules/business";
@@ -629,7 +630,8 @@ const tableColumns = createOrderColumns({
     },
     async printOrder(row) {
         await retrieveOrder(row.id).then((response) => {
-            ticketData.value = response.data;
+            const order = response.data || {};
+            ticketData.value = { ...order, order_details: detailsForReprint(order) };
             showPreview.value = true;
         }).catch((error) => {
             console.error(error);

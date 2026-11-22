@@ -2,7 +2,7 @@
   <div id="Shopping">
     <n-card title="Compras" :segmented="{ content: 'hard' }">
       <n-form>
-        <n-grid responsive="screen" cols="12 s:12 m:12 l:12 xl:12 2xl:12" :x-gap="12">
+        <n-grid class="stack-on-mobile" responsive="screen" cols="12 s:12 m:12 l:12 xl:12 2xl:12" :x-gap="12">
           <n-form-item-gi :span="2" label="RUC">
             <n-input-group>
               <n-input placeholder="" />
@@ -30,7 +30,7 @@
       </n-form>
       <n-card title="Insumos">
         <n-form>
-          <n-grid responsive="screen" cols="20 s:20 m:20 l:20 xl:20 2xl:20" :x-gap="12">
+          <n-grid class="stack-on-mobile" responsive="screen" cols="20 s:20 m:20 l:20 xl:20 2xl:20" :x-gap="12">
             <n-form-item-gi :span="4" label="Insumo">
               <n-input-group>
                 <n-input placeholder="" />

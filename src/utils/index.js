@@ -63,6 +63,8 @@ export function isLetterOrNumber(e) {
 }
 
 export function getDeviceType() {
+  // El ancho de pantalla manda: así el modo responsivo de Chrome y ventanas angostas también cuentan como móvil
+  if (window.innerWidth <= 768) return "mobile";
   const ua = navigator.userAgent;
   if(/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
     return "tablet";

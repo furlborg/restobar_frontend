@@ -393,4 +393,67 @@ input[type="number"] {
   appearance: textfield;
   -moz-appearance: textfield;
 }
+
+/* Solo celular: tabla compacta para que se vean precio y total sin deslizar de lado */
+@media (max-width: 768px) {
+  .product-details-table {
+    th {
+      padding: 8px 4px !important;
+      font-size: 10px !important;
+      letter-spacing: 0;
+      white-space: normal;
+      line-height: 1.15;
+    }
+
+    td {
+      padding: 7px 4px !important;
+      font-size: 12.5px !important;
+    }
+
+    .th-afc,
+    .col-tag,
+    .th-qty,
+    .col-qty {
+      width: auto !important;
+    }
+
+    .col-qty {
+      font-size: 13px !important;
+    }
+
+    .product-name-input {
+      font-size: 12.5px !important;
+    }
+
+    .th-price,
+    .col-price,
+    .th-discount,
+    .col-discount,
+    .th-total,
+    .col-total {
+      font-size: 12px !important;
+    }
+
+    .th-total,
+    .col-total {
+      padding-right: 6px !important;
+    }
+
+    th {
+      word-break: normal !important;
+      overflow-wrap: normal !important;
+    }
+
+    .th-afc,
+    .th-qty {
+      white-space: nowrap !important;
+    }
+
+    .th-price,
+    .th-discount,
+    .th-total {
+      white-space: normal !important;
+    }
+  }
+}
 </style>

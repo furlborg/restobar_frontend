@@ -10,8 +10,13 @@ import {
 } from "@/plugins/numeric-only";
 import "@/style/bootstrap-utilities";
 import "@/style/naive-ui-overrides.css";
+import "@/style/mobile-responsive.css";
 import "vfonts/Lato.css";
 import VueCookies from "vue-cookies";
+import { startUpdateDetector } from "@/version/updateDetector";
+import { resolveUpdateOnBoot } from "@/version/applyUpdate";
+import { installLoadRecovery } from "@/version/loadRecovery";
+import { CLIENT_CONTRACT_VERSION } from "@/version/contract";
 import { addIcons } from "oh-vue-icons";
 import {
   MdCalculateRound,
@@ -36,4 +41,33 @@ addIcons(MdMonetizationonRound, MdCalculateRound, MdSendRound);
 app.component("v-icon", OhVueIcon);
 app.directive("numeric-only", numericOnlyDirective);
 
+// Recuperación ante pantallas que no cargan (HU-FLZ-ACT-008). Va antes de montar para cubrir la primera ruta.
+try {
+  installLoadRecovery(router);
+} catch (error) {
+  console.warn("[flizzy] no se pudo instalar la recuperación de carga", error);
+}
+
 app.mount("#app");
+
+// Para soporte (HU-FLZ-ACT-011): versión cargada, consultable desde la consola del navegador.
+window.__FLIZZY_VERSION__ = Object.freeze({
+  release: document.querySelector('meta[name="flizzy-release"]')?.content ?? null,
+  contract: CLIENT_CONTRACT_VERSION,
+});
+
+// Señal de arranque para el aviso de respaldo de index.html (HU-FLZ-ACT-008).
+window.__FLIZZY_BOOTED__ = true;
+window.dispatchEvent(new Event("flizzy:booted"));
+
+// Detector de versiones nuevas (HU-FLZ-ACT-004). Solo informa; nunca recarga.
+// Un error aquí no debe impedir que Flizzy arranque.
+try {
+  startUpdateDetector();
+  // Si esta carga viene de "Actualizar ahora", confirma qué versión arrancó (HU-FLZ-ACT-007).
+  resolveUpdateOnBoot(router).catch((error) => {
+    console.warn("[flizzy] no se pudo verificar la actualización", error);
+  });
+} catch (error) {
+  console.warn("[flizzy] no se pudo iniciar el detector de versiones", error);
+}

@@ -459,6 +459,13 @@ onMounted(async () => {
         padding-bottom: 80px !important;
     }
 
+    /* Las categorías van sobre el gris de la página, sin recuadro blanco */
+    :deep(.categories-card),
+    .categories-scroll-wrapper,
+    .categories-scroll-viewport {
+        background: transparent !important;
+    }
+
     .categories-card-content,
     .combos-card-content,
     .flizzy-menu-content {

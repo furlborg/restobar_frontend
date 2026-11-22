@@ -1,0 +1,63 @@
+/* ==================================================== */
+/* RESPONSIVIDAD PARA CELULAR (solo <= 768px)           */
+/* Nada de esto aplica en PC: todo va dentro del @media */
+/* y acotado al contenido de los módulos.               */
+/* ==================================================== */
+@media (max-width: 768px) {
+  /* Encabezado de tarjeta: el título no se aprieta; los botones bajan a otra línea si no caben */
+  .layout-content-main .n-card > .n-card-header {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  .layout-content-main .n-card > .n-card-header .n-card-header__main {
+    flex: 0 0 auto;
+    max-width: 100%;
+  }
+
+  .layout-content-main .n-card > .n-card-header .n-card-header__extra {
+    flex: 1 1 auto;
+    margin-left: auto;
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  /* Tablas: no aplastar columnas ni partir números letra por letra;
+     una palabra solo se corta si de verdad no cabe en su columna */
+  .layout-content-main .n-data-table .n-data-table-th,
+  .layout-content-main .n-data-table .n-data-table-td {
+    word-break: normal;
+    overflow-wrap: break-word;
+  }
+
+  /* Tablas con columnas de ancho fijo que no caben: crecen a su ancho natural y se deslizan
+     horizontalmente (antes las columnas sin ancho quedaban en cero y se cortaban) */
+  .layout-content-main .n-data-table-base-table {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .layout-content-main .n-data-table-table {
+    table-layout: auto !important;
+    width: max-content !important;
+    min-width: 100%;
+  }
+
+  /* Grillas de formulario de N columnas fijas: en celular se apilan en una sola columna.
+     Se activa agregando class="stack-on-mobile" al n-grid. */
+  .layout-content-main .n-grid.stack-on-mobile {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .layout-content-main .n-grid.stack-on-mobile > * {
+    grid-column: 1 / -1 !important;
+  }
+
+  /* Botones del encabezado de tarjeta: alineados, sin el reparto "space-around" de n-space */
+  .layout-content-main .n-card > .n-card-header .n-card-header__extra > .n-space {
+    justify-content: flex-end !important;
+    gap: 8px !important;
+  }
+}

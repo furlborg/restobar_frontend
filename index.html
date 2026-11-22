@@ -2,6 +2,109 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <!--
+      Aviso de respaldo (HU-FLZ-ACT-008): si el archivo principal de Flizzy no carga, se muestra
+      este mensaje en lugar de una pantalla en blanco. No depende del bundle: solo HTML, CSS y
+      este script. Hace como máximo una recarga automática por incidente (5 minutos); después
+      todo queda en manos del usuario. main.js avisa con "flizzy:booted" cuando la app arrancó.
+    -->
+    <style>
+        #flz-boot-fallback { position: fixed; inset: 0; z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 16px; background: #f5f7f9; font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #1f2329; }
+        #flz-boot-fallback[hidden] { display: none; }
+        #flz-boot-fallback .flz-card { max-width: 420px; width: 100%; background: #fff; border: 1px solid #e4e7ec; border-top: 4px solid #0099ff; border-radius: 10px; padding: 24px; box-shadow: 0 8px 24px rgba(29, 35, 41, .12); }
+        #flz-boot-fallback h1 { margin: 0 0 8px; font-size: 18px; }
+        #flz-boot-fallback p { margin: 0 0 16px; color: #5c6370; }
+        #flz-boot-fallback button { font: inherit; font-weight: 600; padding: 8px 18px; border: none; border-radius: 6px; background: #0099ff; color: #fff; cursor: pointer; }
+        #flz-boot-fallback button:focus-visible { outline: 2px solid #0099ff; outline-offset: 2px; }
+        #flz-boot-fallback small { display: block; margin-top: 16px; color: #8a8f98; }
+    </style>
+    <script>
+        (function () {
+            var RETRY_KEY = "flizzy-boot-retry";
+            var RETRY_WINDOW_MS = 5 * 60 * 1000;
+            var SLOW_MS = 30000;
+            var shown = false;
+            // Reporte al log del backend (HU-FLZ-ACT-011): evidencia de que la app no arrancó,
+            // independiente del bundle. Vite reemplaza %VITE_APP_URL% al compilar.
+            var API = "%VITE_APP_URL%";
+            var EVENTS_URL = API && API.charAt(0) !== "%" && API !== "undefined" ? API + "/api/v1/client-events/" : null;
+
+            function release() {
+                var m = document.querySelector('meta[name="flizzy-release"]');
+                return m ? m.getAttribute("content") : null;
+            }
+
+            function report(code, reason) {
+                if (!EVENTS_URL || !navigator.sendBeacon) return;
+                try {
+                    navigator.sendBeacon(EVENTS_URL, JSON.stringify({
+                        type: "boot_failed",
+                        attempt: code,
+                        release: release(),
+                        reason: reason,
+                        path: location.pathname.replace(/\/[^/]*\d[^/]*/g, "/:id")
+                    }));
+                } catch (e) { /* nunca bloquear el aviso */ }
+            }
+
+            function booted() { return window.__FLIZZY_BOOTED__ === true; }
+
+            function el(id) { return document.getElementById(id); }
+
+            function show(title, text, autoRetry, reason) {
+                if (booted() || shown) return;
+                var box = el("flz-boot-fallback");
+                if (!box) {
+                    document.addEventListener("DOMContentLoaded", function () { show(title, text, autoRetry, reason); });
+                    return;
+                }
+                shown = true;
+                el("flz-boot-title").textContent = title;
+                el("flz-boot-text").textContent = text;
+                var code = "FLZ-" + Date.now().toString(36).toUpperCase();
+                var rel = release();
+                el("flz-boot-code").textContent = "Código: " + code + (rel ? " · Versión: " + rel.slice(0, 8) : "");
+                box.hidden = false;
+                report(code, reason);
+                if (autoRetry) setTimeout(function () { if (!booted()) location.reload(); }, 3000);
+            }
+
+            // Una sola recarga automática por incidente; si no se puede llevar la cuenta, ninguna.
+            function canAutoRetry() {
+                try {
+                    var last = Number(sessionStorage.getItem(RETRY_KEY) || 0);
+                    if (Date.now() - last < RETRY_WINDOW_MS) return false;
+                    sessionStorage.setItem(RETRY_KEY, String(Date.now()));
+                    return true;
+                } catch (e) { return false; }
+            }
+
+            // Un archivo principal (/assets/…) que no carga antes del arranque.
+            window.addEventListener("error", function (event) {
+                var t = event && event.target;
+                if (booted() || shown || !t || (t.tagName !== "SCRIPT" && t.tagName !== "LINK")) return;
+                var url = t.src || t.href || "";
+                if (url.indexOf("/assets/") === -1) return;
+                if (t.tagName === "LINK" && t.rel === "stylesheet") return; // sin estilos la app igual arranca
+                var auto = canAutoRetry();
+                show("No pudimos cargar Flizzy",
+                    auto ? "Puede haber una publicación en curso. Reintentando en unos segundos…"
+                         : "Puede haber una publicación en curso o un problema de conexión. Reintenta en unos segundos; si sigue igual, avisa a soporte.",
+                    auto, t.tagName === "SCRIPT" ? "entry_script_error" : "entry_preload_error");
+            }, true);
+
+            // Si tarda demasiado, se ofrece reintentar (sin recargar sola).
+            setTimeout(function () {
+                show("Flizzy está tardando en cargar", "Revisa la conexión y vuelve a intentarlo.", false, "slow_boot");
+            }, SLOW_MS);
+
+            window.addEventListener("flizzy:booted", function () {
+                var box = el("flz-boot-fallback");
+                if (box) box.hidden = true;
+                try { sessionStorage.removeItem(RETRY_KEY); } catch (e) { /* sin almacenamiento */ }
+            });
+        })();
+    </script>
     <script type="module" src="/src/main.js"></script>
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="icon" href="/favicon.ico">
@@ -10,5 +113,13 @@
 </head>
 <body>
 <div id="app"></div>
+<div id="flz-boot-fallback" role="alert" hidden>
+    <div class="flz-card">
+        <h1 id="flz-boot-title">No pudimos cargar Flizzy</h1>
+        <p id="flz-boot-text"></p>
+        <button type="button" onclick="location.reload()">Reintentar</button>
+        <small id="flz-boot-code"></small>
+    </div>
+</div>
 </body>
 </html>

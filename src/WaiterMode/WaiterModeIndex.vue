@@ -3,21 +3,18 @@
     <n-layout-header style="height: 48px" position="absolute" bordered>
       <n-space class="h-100 m-0" align="center" justify="space-between">
         <div v-if="$route.params.table" class="d-flex ms-2 fs-6">
-          <n-button text @click="$router.back()">
+          <n-button text @click="handleHeaderBack">
             <v-icon name="md-arrowback-round" />
           </n-button>
           <div class="ms-2">
             {{ tableStore.getTableByID($route.params.table)?.description }}
           </div>
         </div>
-        <div v-else-if="userStore.user?.role !== 'MOZO'" class="d-flex ms-2 align-items-center">
-          <n-button size="tiny" secondary type="primary" @click="$router.push({ name: 'TableHome' })">
-            <template #icon><v-icon name="md-arrowback-round" /></template>
-            Ir a Módulos
-          </n-button>
-        </div>
         <div class="menuBtn" :class="{ act: active === true }" @click="active = !active">
           <span class="lines"></span>
+        </div>
+        <div class="waiter-update-indicator">
+          <UpdateIndicator />
         </div>
         <v-icon class="position-absolute top-0 end-0 me-1" name="fa-circle" scale="0.75"
           :color="isConnected ? 'green' : 'red'" :animation="isConnected ? undefined : 'flash'" />
@@ -71,6 +68,9 @@
     </n-modal>
     <div class="mainMenu" :class="{ act: active === true }">
       <ul>
+        <li v-if="$route.params.table">
+          <a @click="router.push({ name: 'WHome' }); active = false;">Ver Mesas</a>
+        </li>
         <li v-if="$route.name === 'WHome'">
           <a @click="
             waiterStore.changeTable = true;
@@ -78,10 +78,7 @@
           ">Mover Mesa</a>
         </li>
         <li v-if="userStore.user.role !== 'MOZO'">
-          <a @click="$router.push({ name: 'TableHome' })">Mesas (Modo Completo)</a>
-        </li>
-        <li v-if="userStore.user.role !== 'MOZO'">
-          <a @click="$router.push({ name: 'Dashboard' })">Panel de Módulos</a>
+          <a @click="$router.push({ name: 'TableHome' })">Salir de modo mozo</a>
         </li>
         <li>
           <a href="#" class="suBtn" @click="doLogout">Cerrar sesión</a>
@@ -93,7 +90,8 @@
 
 <script setup>
 import { ref, computed } from "vue";
-import { useRouter } from "vue-router";
+import UpdateIndicator from "@/components/Update/UpdateIndicator.vue";
+import { useRouter, useRoute } from "vue-router";
 import { useDialog } from "naive-ui";
 import { retrieveCurrentTill } from "@/api/modules/tills";
 import { usePrinterStore } from "@/store/modules/printer";
@@ -111,6 +109,17 @@ const showAddCustomerModal = ref(false);
 const newCustomerName = ref("");
 const dialog = useDialog();
 const router = useRouter();
+const route = useRoute();
+
+const handleHeaderBack = () => {
+  if (route.name === 'WCategoriesItems') {
+    router.push({ name: 'WProductCategories', params: { table: route.params.table } });
+  } else if (route.name === 'WTablePayment') {
+    router.push({ name: 'WProductCategories', params: { table: route.params.table } });
+  } else {
+    router.push({ name: 'WHome' });
+  }
+};
 const businessStore = useBusinessStore();
 const waiterStore = useWaiterStore();
 const printerStore = usePrinterStore();
@@ -211,6 +220,15 @@ header {
   line-height: 50px;
   padding: 0 0 0 20px;
   text-transform: capitalize;
+}
+
+/* actualización pendiente (HU-FLZ-ACT-005): a la izquierda del botón de menú */
+.waiter-update-indicator {
+  position: absolute;
+  right: 60px;
+  top: 8px;
+  z-index: 101;
+  display: flex;
 }
 
 /* menu button */

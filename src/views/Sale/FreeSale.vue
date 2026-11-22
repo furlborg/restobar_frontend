@@ -68,12 +68,12 @@
               placeholder="" />
           </n-form-item-gi>
           <n-form-item-gi :span="2" label="Fecha" path="date_sale">
-            <n-date-picker class="w-100" type="datetime" :is-date-disabled="dateDisabled"
-              v-model:formatted-value="sale.date_sale" />
+            <n-date-picker class="w-100" type="datetime" format="dd/MM/yyyy HH:mm:ss" value-format="dd/MM/yyyy HH:mm:ss"
+              :is-date-disabled="dateDisabled" v-model:formatted-value="sale.date_sale" />
           </n-form-item-gi>
           <n-form-item-gi v-if="sale.payment_condition === 2" :span="2" label="Fecha vencimiento" path="due_date">
             <n-date-picker class="w-100" type="datetime" format="dd/MM/yyyy HH:mm:ss" value-format="dd/MM/yyyy HH:mm:ss"
-              v-model:formatted-value="sale.due_date" :is-date-disabled="(ts) => ts <= new Date(sale.date_sale)" />
+              v-model:formatted-value="sale.due_date" :is-date-disabled="dueDateDisabled" />
           </n-form-item-gi>
           <n-form-item-gi v-if="sale.payment_condition === 1" label="Método Pago">
             <n-select v-model:value="sale.payment_method" :options="saleStore.getPaymentMethodsOptions" filterable />
@@ -262,6 +262,7 @@
 </template>
 
 <script>
+import { useUpdateBlocker, useSensitiveScreen } from "@/version/updateBarrier";
 import { defineComponent, ref, toRefs, computed, watch, onMounted } from "vue";
 import { http } from "@/api";
 import CustomerModal from "@/views/Customer/components/CustomerModal";
@@ -285,6 +286,8 @@ import format from "date-fns/format";
 import addMonths from "date-fns/addMonths";
 import parse from "date-fns/parse";
 import isValid from "date-fns/isValid";
+import addDays from "date-fns/addDays";
+import startOfDay from "date-fns/startOfDay";
 import { lighten } from "@/utils";
 import PreviewDrawer from "@/views/Sale/components/PreviewDrawer";
 import { useBusinessStore } from "@/store/modules/business";
@@ -307,6 +310,10 @@ export default defineComponent({
     const productStore = useProductStore();
     const orderStore = useOrderStore();
     const saleStore = useSaleStore();
+
+    // No actualizar Flizzy con productos cargados en la venta; el recordatorio no interrumpe el cobro (HU-FLZ-ACT-006).
+    useUpdateBlocker(() => saleStore.sale_details.length > 0);
+    useSensitiveScreen();
     const userStore = useUserStore();
     const settingsStore = useSettingsStore();
     const genericsStore = useGenericsStore();
@@ -601,6 +608,19 @@ export default defineComponent({
       igv_amount: 0,
     });
 
+    // date_sale/due_date van como "dd/MM/yyyy HH:mm:ss"; new Date() los leería como MM/dd.
+    const parseSaleDate = (str) => {
+      if (!str) return null;
+      const parsed = parse(str, "dd/MM/yyyy HH:mm:ss", new Date());
+      return isValid(parsed) ? parsed : null;
+    };
+
+    // Vencimiento: desde el día siguiente a la emisión.
+    const dueDateDisabled = (ts) => {
+      const saleDate = parseSaleDate(sale.value.date_sale) || new Date();
+      return ts < startOfDay(addDays(saleDate, 1)).getTime();
+    };
+
     const computeDefaultDueDate = () => {
       const baseDateString = sale.value.date_sale;
       if (baseDateString) {
@@ -611,6 +631,19 @@ export default defineComponent({
       }
       return format(addMonths(new Date(), 1), "dd/MM/yyyy HH:mm:ss");
     };
+
+    // Si cambian la emisión y el vencimiento queda igual o antes, se recalcula.
+    watch(
+      () => sale.value.date_sale,
+      () => {
+        if (sale.value.payment_condition !== 2) return;
+        const saleDate = parseSaleDate(sale.value.date_sale);
+        const due = parseSaleDate(sale.value.due_date);
+        if (saleDate && (!due || due <= saleDate)) {
+          sale.value.due_date = computeDefaultDueDate();
+        }
+      }
+    );
 
     watch(
       () => sale.value.payment_condition,
@@ -1354,6 +1387,7 @@ export default defineComponent({
       evalPayments,
       currentPaymentsAmount,
       dateDisabled,
+      dueDateDisabled,
       getAfcShort,
       getAfcColor,
       totalIGV,

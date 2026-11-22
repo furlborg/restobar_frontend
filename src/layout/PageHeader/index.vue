@@ -91,6 +91,9 @@
           <span>WhatsApp No Vinculado (Haz clic para escanear QR)</span>
         </n-tooltip>
       </div>
+      <div v-if="updateNoticeView.mode === 'indicator'" class="layout-header-trigger layout-header-trigger-min layout-header-update">
+        <UpdateIndicator />
+      </div>
     </div>
     <div class="layout-header-right">
       <n-space v-if="genericsStore.device !== 'mobile'" align="end" vertical :size="0">
@@ -130,6 +133,8 @@ import { getWhatsAppStatus } from "@/api/modules/business";
 import ProjectSetting from "./ProjectSetting";
 import WhatsAppQrModal from "@/views/Settings/components/whatsapp/WhatsAppQrModal.vue";
 import { renderIcon } from "@/utils";
+import UpdateIndicator from "@/components/Update/UpdateIndicator.vue";
+import { noticeView as updateNoticeView } from "@/version/updateFlow";
 
 
 defineProps({
@@ -381,6 +386,11 @@ const doLogout = () => {
   &-trigger-min {
     width: auto;
     padding: 0 12px;
+  }
+
+  &-update {
+    display: inline-flex;
+    align-items: center;
   }
 }
 

@@ -128,11 +128,13 @@
 </template>
 
 <script setup>
+import { useUpdateBlocker } from "@/version/updateBarrier";
 import TableOrder from "./TableOrder.vue";
 import TicketPreview from "@/views/Order/components/TicketPreview";
 import { ref, computed, onMounted, onUnmounted, provide } from 'vue';
 import { useRoute, useRouter, onBeforeRouteLeave, onBeforeRouteUpdate } from "vue-router";
 import { useTableLock } from "@/composables/useTableLock";
+import { useFitViewportHeight } from "@/composables/useFitViewportHeight";
 import { useDialog, useMessage } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useUserStore, useActiveUsersStore } from "@/store/modules/user";
@@ -143,6 +145,8 @@ import { useSaleStore } from "@/store/modules/sale";
 import { retrieveTableOrder, createTableOrder, updateTableOrder, cancelTableOrder, performDeleteOrderDetail } from "@/api/modules/tables";
 import { verifyWaiterCode } from "@/api/modules/users";
 import { cloneDeep } from "@/utils";
+import { formatLockRemaining, lockOwnerName } from "@/utils/lockMessage";
+import { lockHasExpired, lockHeartbeatMs, normalizeLock } from "@/utils/tableLock";
 import { useBreakpoint } from 'vooks';
 
 const breakpointRef = useBreakpoint();
@@ -162,11 +166,14 @@ const saleStore = useSaleStore();
 const { wsLockTable, wsUnlockTable } = useTableLock();
 const shouldUnlock = ref(false);
 const capturedTableId = ref(null);
+let lockHeartbeatTimer = null;
 
 const unlockCurrentTable = () => {
     const idToUnlock = capturedTableId.value || route.params.table;
     console.log('[TableOrderLayout] 🔍 unlockCurrentTable llamado - idToUnlock:', idToUnlock);
-    if (idToUnlock) {
+    // Solo libera quien tiene el bloqueo: tras un 423 (bloqueada por otro) o si ya se liberó, no se envía nada.
+    // Antes se enviaba siempre (hasta 3 veces por salida) y un usuario bloqueado liberaba el bloqueo ajeno.
+    if (idToUnlock && shouldUnlock.value) {
         const idNum = typeof idToUnlock === 'string' ? parseInt(idToUnlock) : idToUnlock;
         console.log('[TableOrderLayout] 🔓 Desbloqueando mesa', idNum);
         wsUnlockTable(idNum);
@@ -362,11 +369,32 @@ const performRetrieveTableOrder = async () => {
         if (error.response?.status === 423) {
             // Mesa bloqueada por otro usuario
             const lockData = error.response.data.lock_data || error.response.data;
-            const lockedBy = lockData.locked_by_username || 'otro usuario';
-            const remainingMinutes = lockData.remaining_minutes || Math.ceil((lockData.remaining_seconds || 0) / 60);
+            const lockedBy = lockOwnerName(lockData);
+            const remainingText = formatLockRemaining(lockData) || 'unos segundos';
+
+            // Evitar que al desmontarse intente desbloquear la mesa de otro usuario (unlockCurrentTable respeta este flag)
+            shouldUnlock.value = false;
+
+            // Sincronizar el store inmediatamente para que la mesa se muestre bloqueada (amarilla)
+            const targetTableId = capturedTableId.value || parseInt(table);
+            if (targetTableId) {
+                const entry = normalizeLock({
+                    ...lockData,
+                    table_id: targetTableId,
+                    user_id: lockData.locked_by_id || lockData.user_id || lockData.user,
+                    username: lockedBy
+                });
+                tableStore.lockedTables = { ...tableStore.lockedTables, [targetTableId]: entry };
+                const t = tableStore.getTableByID(targetTableId);
+                if (t && t.lock_info) {
+                    t.lock_info.is_active = true;
+                    t.lock_info.username = entry.username;
+                    t.lock_info.user_id = entry.user_id;
+                }
+            }
 
             message.error(
-                `Mesa bloqueada por ${lockedBy}. Disponible en ${remainingMinutes} minutos.`,
+                `Mesa bloqueada por ${lockedBy}. Disponible en ${remainingText}.`,
                 { duration: 5000 }
             );
 
@@ -626,31 +654,52 @@ const goHome = () => {
     router.push({ name: homeRouteName.value });
 };
 
+useFitViewportHeight(".table-order-layout-root");
+
 onMounted(() => {
     const tableParam = route.params.table;
     const tableIdNum = typeof tableParam === 'string' ? parseInt(tableParam) : tableParam;
     capturedTableId.value = tableIdNum;
     console.log('[TableOrderLayout] 🟢 Componente montado - Mesa:', capturedTableId.value);
 
+    // lockHasExpired(undefined) es true: sin bloqueo, o con uno vencido, o propio, esta pantalla toma la mesa
     const lockInfo = tableStore.lockedTables[capturedTableId.value];
     const isMyLock = lockInfo && lockInfo.user_id === userStore.user.id;
-    if (!lockInfo || isMyLock) {
+    if (lockHasExpired(lockInfo) || isMyLock) {
         console.log('[TableOrderLayout] 🔒 Bloqueando mesa', capturedTableId.value);
-        wsLockTable(capturedTableId.value, 15);
+        wsLockTable(capturedTableId.value);
         shouldUnlock.value = true;
         window.addEventListener('beforeunload', handleBeforeUnload);
+
+        // Latido mientras la comanda esté abierta: ~2,5 renovaciones por tiempo de bloqueo (configurable en
+        // Configuración Avanzada, 50 s por defecto => 20 s). Se reafirma con lock_table (crea o renueva) para
+        // recuperarlo si venció, p. ej. con la pestaña en segundo plano.
+        if (lockHeartbeatTimer) clearInterval(lockHeartbeatTimer);
+        lockHeartbeatTimer = setInterval(() => {
+            if (capturedTableId.value && shouldUnlock.value) {
+                console.log('[TableOrderLayout] 💓 Heartbeat renovación mesa', capturedTableId.value);
+                wsLockTable(capturedTableId.value);
+            }
+        }, lockHeartbeatMs(settingsStore.businessSettings?.order?.table_lock_seconds));
     }
     performRetrieveTableOrder();
 });
 
 onUnmounted(() => {
     console.log('[TableOrderLayout] 🔴 Componente desmontado - Mesa:', capturedTableId.value);
+    if (lockHeartbeatTimer) {
+        clearInterval(lockHeartbeatTimer);
+        lockHeartbeatTimer = null;
+    }
     window.removeEventListener('beforeunload', handleBeforeUnload);
     unlockCurrentTable();
 });
 
 onBeforeRouteUpdate((to) => handleRouteGuard(to, false));
 onBeforeRouteLeave((to) => handleRouteGuard(to, true));
+
+// No actualizar Flizzy con cambios del pedido sin enviar (HU-FLZ-ACT-006).
+useUpdateBlocker(() => hasUnsavedChanges.value);
 
 provide("customers", customers);
 provide("selectedCustomer", selectedCustomer);
@@ -685,6 +734,10 @@ provide("addOrderToCustomer", addOrderToCustomer);
         height: calc(100vh - 74px) !important;
         height: calc(100dvh - 74px) !important;
         max-height: calc(100dvh - 74px) !important;
+        /* svh = altura con la barra del navegador visible; evita que el layout exterior se pueda deslizar */
+        height: calc(100svh - 74px) !important;
+        max-height: calc(100svh - 74px) !important;
+        overscroll-behavior: none;
         overflow: hidden !important;
         display: flex;
         flex-direction: column;
@@ -694,7 +747,12 @@ provide("addOrderToCustomer", addOrderToCustomer);
             flex-shrink: 0 !important;
             margin-bottom: 2px !important;
         }
+    }
 
+    /* Las pestañas de celular se muestran hasta 1023px (isMobile = breakpoint xs/s de Naive), así que
+       sus estilos deben cubrir también tablets (769–1023px). Antes solo llegaban a 768px y en tablet
+       las pestañas no tomaban alto: la mesa (y el modo mozo) quedaba en blanco, sin categorías. */
+    @media (max-width: 1023.98px) {
         :deep(.table-order-mobile-tabs) {
             flex: 1 1 0px !important;
             min-height: 0 !important;
@@ -729,6 +787,17 @@ provide("addOrderToCustomer", addOrderToCustomer);
             flex-direction: column !important;
         }
 
+        /* Naive UI renderiza los paneles como hijos directos de .n-tabs (sin .n-tabs-pane-wrapper) */
+        :deep(.table-order-mobile-tabs > .n-tab-pane:not([style*="display: none"])) {
+            flex: 1 1 0px !important;
+            height: auto !important;
+            min-height: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            display: flex !important;
+            flex-direction: column !important;
+        }
+
         .table-mobile-view-wrapper {
             flex: 1 1 0px;
             height: 100%;
@@ -739,7 +808,8 @@ provide("addOrderToCustomer", addOrderToCustomer);
             overflow-x: hidden !important;
             -webkit-overflow-scrolling: touch !important;
             touch-action: pan-y !important;
-            background: #ffffff;
+            background: transparent;
+            overscroll-behavior: contain;
         }
     }
 }

@@ -126,8 +126,9 @@ const brand = computed(() => {
   if (m.includes("PLIN")) return "PLIN";
   if (m.includes("TUNKI")) return "TUNKI";
   if (m.includes("EFECTIVO") || m.includes("CASH")) return "EFECTIVO";
-  if (m.includes("TARJETA") || m.includes("POS") || m.includes("VISA") || m.includes("MASTERCARD") || m.includes("CARD")) return "TARJETA";
+  // BANCO va antes: "DEPOSITO" contiene "POS" y se confundía con TARJETA
   if (m.includes("DEPOSIT") || m.includes("BANCO") || m.includes("BANCAR") || m.includes("TRANSFER")) return "BANCO";
+  if (m.includes("TARJETA") || m.includes("POS") || m.includes("VISA") || m.includes("MASTERCARD") || m.includes("CARD")) return "TARJETA";
   return "OTHER";
 });
 

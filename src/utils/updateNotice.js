@@ -1,0 +1,143 @@
+// Cuándo y cómo se muestra el aviso de actualización (HU-FLZ-ACT-005).
+// Puro, para probarlo con `node --test`.
+//
+// - "card":      tarjeta con el mensaje y sus acciones.
+// - "indicator": solo el ícono discreto de "Actualización pendiente" en la cabecera.
+// - "hidden":    nada (no hay versión nueva, o se retiró).
+//
+// Reglas:
+// - "Más tarde" (o cerrar) pospone ESA publicación (deployment_id) 30 minutos.
+// - Cumplido el plazo, la tarjeta vuelve solo si no interrumpe una operación sensible (cobro).
+// - Una publicación nueva vuelve a mostrar la tarjeta: es otra versión.
+// - Lo que el usuario pidió (actualizar, bloqueo, sin red, fallo) siempre se muestra.
+
+import { DETECTOR_STATUS } from "./versionDetector.js";
+import { COORDINATOR_PHASE } from "./updateCoordinator.js";
+
+export const REMIND_AFTER_MS = 30 * 60 * 1000;
+export const POSTPONE_STORAGE_KEY = "flizzy-update-postponed";
+
+export const NOTICE_MESSAGE = Object.freeze({
+  AVAILABLE: "available",
+  CHECKING: "checking",
+  UNSAVED: "unsaved",
+  PAYMENT: "payment",
+  SAVING: "saving",
+  UNCERTAIN: "uncertain",
+  OFFLINE: "offline",
+  APPLYING: "applying",
+  FAILED: "failed",
+  COMPLETED: "completed",
+  LOAD_RETRY: "load_retry",
+  LOAD_OFFLINE: "load_offline",
+  LOAD_NEEDS_UPDATE: "load_needs_update",
+  MANDATORY: "mandatory",
+});
+
+// Pantalla que no pudo cargar (HU-FLZ-ACT-008).
+const LOAD_MESSAGE = {
+  retry: NOTICE_MESSAGE.LOAD_RETRY,
+  offline: NOTICE_MESSAGE.LOAD_OFFLINE,
+  needs_update: NOTICE_MESSAGE.LOAD_NEEDS_UPDATE,
+};
+
+/** Registro de posposición: solo ids y fechas, sin datos personales. */
+export const createPostponement = (deploymentId, now, remindAfterMs = REMIND_AFTER_MS) => ({
+  deployment_id: deploymentId,
+  remind_at: now + remindAfterMs,
+});
+
+/** Lee el registro guardado; cualquier cosa rara se descarta (null). */
+export const parsePostponement = (raw) => {
+  if (typeof raw !== "string" || raw === "") return null;
+  try {
+    const data = JSON.parse(raw);
+    if (!data || typeof data.deployment_id !== "string" || !Number.isFinite(data.remind_at)) return null;
+    return { deployment_id: data.deployment_id, remind_at: data.remind_at };
+  } catch {
+    return null;
+  }
+};
+
+// Motivos de la barrera (HU-FLZ-ACT-006). Uno desconocido se presenta como "sin guardar": nunca como seguro.
+const BLOCKED_MESSAGE = {
+  payment: NOTICE_MESSAGE.PAYMENT,
+  saving: NOTICE_MESSAGE.SAVING,
+  uncertain: NOTICE_MESSAGE.UNCERTAIN,
+  unsaved: NOTICE_MESSAGE.UNSAVED,
+};
+const blockedMessage = (reason) => BLOCKED_MESSAGE[reason] ?? NOTICE_MESSAGE.UNSAVED;
+
+const COORDINATOR_MESSAGE = {
+  [COORDINATOR_PHASE.CHECKING]: () => NOTICE_MESSAGE.CHECKING,
+  [COORDINATOR_PHASE.OFFLINE]: () => NOTICE_MESSAGE.OFFLINE,
+  [COORDINATOR_PHASE.BLOCKED]: blockedMessage,
+  [COORDINATOR_PHASE.APPLYING]: () => NOTICE_MESSAGE.APPLYING,
+  [COORDINATOR_PHASE.FAILED]: () => NOTICE_MESSAGE.FAILED,
+};
+
+const view = (mode, message = null, { remindAt = null, reason = null } = {}) => ({ mode, message, remindAt, reason });
+
+/**
+ * @param {object} input
+ * @param {object|null} input.detector        estado del detector (HU-FLZ-ACT-004)
+ * @param {object|null} input.coordinator     estado del coordinador
+ * @param {object|null} input.postponement    { deployment_id, remind_at }
+ * @param {number} input.now
+ * @param {boolean} input.interruptionUnsafe  hay un cobro u operación sensible en pantalla
+ * @param {object|null} [input.loadFailure]   pantalla que no pudo cargar (HU-FLZ-ACT-008): { kind }
+ * @param {boolean} [input.incompatible]      esta web ya no es compatible con la API (HU-FLZ-ACT-010)
+ * @param {string|null} [input.openedByUser]  deployment_id que el usuario abrió desde el ícono: se muestra
+ *                                            aunque haya un cobro en pantalla (lo pidió él)
+ * @param {object|null} [input.result]        resultado comprobado tras recargar (HU-FLZ-ACT-007):
+ *                                            { type: "completed" } o { type: "failed", reason }
+ * @returns {{ mode: "hidden"|"card"|"indicator", message: string|null, remindAt: number|null, reason: string|null }}
+ */
+export const decideNoticeView = ({
+  detector,
+  coordinator,
+  postponement,
+  now,
+  interruptionUnsafe,
+  result = null,
+  loadFailure = null,
+  incompatible = false,
+  openedByUser = null,
+}) => {
+  const phase = coordinator?.phase ?? COORDINATOR_PHASE.IDLE;
+
+  // Lo que el usuario pidió se informa aunque la candidata haya cambiado mientras tanto.
+  if (phase !== COORDINATOR_PHASE.IDLE && COORDINATOR_MESSAGE[phase]) {
+    return view("card", COORDINATOR_MESSAGE[phase](coordinator.reason), { reason: coordinator.reason ?? null });
+  }
+
+  // Una pantalla no pudo cargar: se explica y se ofrece qué hacer, sin recargar sola.
+  if (loadFailure && LOAD_MESSAGE[loadFailure.kind]) return view("card", LOAD_MESSAGE[loadFailure.kind]);
+
+  // Resultado de una actualización, comprobado al arrancar (nunca deducido del tiempo).
+  if (result?.type === "completed") return view("card", NOTICE_MESSAGE.COMPLETED);
+  if (result?.type === "failed") return view("card", NOTICE_MESSAGE.FAILED, { reason: result.reason ?? null });
+
+  const candidate = detector?.status === DETECTOR_STATUS.AVAILABLE ? detector.candidate : null;
+
+  // Incompatible con la API: obligatorio, sin "Más tarde" ni posposición. No recarga solo:
+  // el usuario puede seguir revisando lo que tiene en pantalla y actualizar por el coordinador.
+  if (incompatible) {
+    return view("card", NOTICE_MESSAGE.MANDATORY, { reason: candidate ? "update_available" : "no_update" });
+  }
+
+  if (!candidate) return view("hidden");
+
+  // Abierto desde el ícono: es una acción del usuario, no una interrupción.
+  if (openedByUser && openedByUser === candidate.deploymentId) return view("card", NOTICE_MESSAGE.AVAILABLE);
+
+  const postponedThis = postponement && postponement.deployment_id === candidate.deploymentId;
+  if (postponedThis && now < postponement.remind_at) {
+    return view("indicator", null, { remindAt: postponement.remind_at });
+  }
+  if (interruptionUnsafe) {
+    // No irrumpir sobre un cobro: queda el ícono y la tarjeta espera una oportunidad segura.
+    return view("indicator");
+  }
+  return view("card", NOTICE_MESSAGE.AVAILABLE);
+};
