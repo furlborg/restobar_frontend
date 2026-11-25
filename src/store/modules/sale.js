@@ -9,6 +9,7 @@ import {
   computePayloadTotals,
 } from "@/services/saleAssembler";
 import { useSettingsStore } from "./settings";
+import { isFreeAffectation, isTaxedFreeAffectation, calculateTaxedFreeAmounts } from "@/utils/freeOperations";
 
 const businessStore = useBusinessStore();
 const userStore = useUserStore();
@@ -233,8 +234,15 @@ export const useSaleStore = defineStore("sale", {
           detail.igv_tax = 0;
           break;
         default:
-          detail.price_base = detail.price_sale ? parseFloat(detail.price_sale) : 0;
-          detail.igv_tax = 0;
+          if (isTaxedFreeAffectation(detail.product_affectation)) {
+            // 11-16: base e IGV referenciales (no se cobra; el backend los recalcula).
+            const amounts = calculateTaxedFreeAmounts(detail.price_sale, rate);
+            detail.price_base = amounts.priceBase;
+            detail.igv_tax = amounts.igvTax;
+          } else {
+            detail.price_base = detail.price_sale ? parseFloat(detail.price_sale) : 0;
+            detail.igv_tax = 0;
+          }
           break;
       }
 
@@ -251,6 +259,19 @@ export const useSaleStore = defineStore("sale", {
           detail.customer,
           detail.is_delta,
           Number(detail.product_affectation)
+        );
+      }
+      // FLZ-GRA-04: el motivo de gratuidad también debe sobrevivir al reconstruir el payload.
+      // Si la afectación dejó de ser gratuita, se limpia para no enviar un motivo inválido.
+      if (detail.free_reason && !isFreeAffectation(detail.product_affectation)) {
+        detail.free_reason = null;
+      }
+      if (detail.free_reason !== undefined) {
+        orderStore.updateOrderFreeReason(
+          detail.product,
+          detail.customer,
+          detail.is_delta,
+          detail.free_reason
         );
       }
     },

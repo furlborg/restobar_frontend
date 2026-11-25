@@ -119,7 +119,7 @@
                     :class="{ 'menu-header': item.isMenuHeader, 'menu-product': item.isMenuProduct }">
                   <td>{{ item.cantidad }}</td>
                   <td align="left" :style="item.isMenuProduct ? 'font-size: 11px; color: #666;' : ''">
-                    {{ item.descripcion }}
+                    {{ item.descripcion }}<span v-if="freeAffectationLabel(item.codigo_tipo_afectacion_igv)" class="free-afc"> · {{ freeAffectationLabel(item.codigo_tipo_afectacion_igv) }}</span>
                   </td>
                   <td align="right">
                     {{ item.isMenuProduct ? '' : item.precio_unitario.toFixed(2) }}
@@ -144,7 +144,7 @@
                     :class="{ 'menu-header': item.isMenuHeader, 'menu-product': item.isMenuProduct }">
                   <td>{{ item.isMenuProduct ? '' : item.cantidad }}</td>
                   <td align="left" :style="item.isMenuProduct ? 'font-size: 11px; color: #666;' : ''">
-                    {{ item.descripcion }}
+                    {{ item.descripcion }}<span v-if="freeAffectationLabel(item.codigo_tipo_afectacion_igv)" class="free-afc"> · {{ freeAffectationLabel(item.codigo_tipo_afectacion_igv) }}</span>
                   </td>
                   <td align="right">
                     {{ item.isMenuProduct ? '' : item.precio_unitario.toFixed(2) }}
@@ -191,6 +191,14 @@
                 </td>
                 <td align="right">
                   {{ sale.totales.total_operaciones_gratuitas.toFixed(2) }}
+                </td>
+              </tr>
+              <tr v-if="Number(sale.totales.total_igv_operaciones_gratuitas)">
+                <td align="right" :colspan="!!hasDiscounts ? 4 : 3">
+                  IGV OP. GRATUITAS (ref.):
+                </td>
+                <td align="right">
+                  {{ Number(sale.totales.total_igv_operaciones_gratuitas).toFixed(2) }}
                 </td>
               </tr>
               <tr v-if="Number(sale.totales.total_descuentos)">
@@ -282,6 +290,9 @@
             </tfoot>
           </table>
           <div class="amount-text">SON {{ amountText }}</div>
+          <div v-if="Number(sale.totales?.total_operaciones_gratuitas)" class="free-legal">
+            TRANSFERENCIA GRATUITA DE UN BIEN Y/O SERVICIO PRESTADO GRATUITAMENTE
+          </div>
         </div>
 <!--<pre>-->
 <!--          {{ data }}-->
@@ -398,6 +409,7 @@ import { useSettingsStore } from "@/store/modules/settings";
 import { useTableStore } from "@/store/modules/table";
 import { useSaleStore } from "@/store/modules/sale";
 import { numeroALetras } from "@/hooks/numberText.js";
+import { freeAffectationLabel } from "@/utils/freeOperations";
 
 import qr from "qrcode";
 export default defineComponent({
@@ -693,6 +705,7 @@ export default defineComponent({
       isCustomerMode,
       groupedByCustomer,
       getItemDiscount,
+      freeAffectationLabel,
     };
   },
 });
@@ -704,6 +717,19 @@ export default defineComponent({
   background-color: White;
   text-align: center;
   line-height: normal;
+
+  .free-afc {
+    font-size: 10px;
+    color: #9a3412;
+    font-weight: 700;
+  }
+
+  .free-legal {
+    margin-top: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    text-align: center;
+  }
 
   &-header {
     font-weight: bold;

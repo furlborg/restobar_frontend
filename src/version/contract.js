@@ -11,5 +11,7 @@
 //   las webs con un contrato menor tendrán que actualizarse (HU-FLZ-ACT-010).
 //   Nunca puede ser mayor que CLIENT_CONTRACT_VERSION; el build falla si lo es.
 
-export const CLIENT_CONTRACT_VERSION = 1;
-export const MIN_SUPPORTED_CLIENT_CONTRACT = 1;
+// 2: anulaciones con motivo obligatorio (mermas). La API ya no acepta el formato
+//    anterior (clave general sin motivo); en el servidor: FLIZZY_MIN_CLIENT_CONTRACT=2.
+export const CLIENT_CONTRACT_VERSION = 2;
+export const MIN_SUPPORTED_CLIENT_CONTRACT = 2;

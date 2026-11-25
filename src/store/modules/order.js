@@ -329,6 +329,31 @@ export const useOrderStore = defineStore("order", {
         }
       }
     },
+    updateOrderFreeReason(product_id, customer, is_delta, freeReason) {
+      const customerId = typeof customer === 'object' && customer !== null ? customer.id : customer ?? null;
+      const matchesCustomer = (order) => {
+        if (customerId === null || customerId === undefined) {
+          return !order?.customer;
+        }
+        const orderCustomerId = typeof order?.customer === 'object' && order?.customer !== null ? order?.customer?.id : order?.customer;
+        return orderCustomerId == customerId;
+      };
+
+      const targetOrder = this.orders.find(
+        (order) =>
+          !!order.is_delta === !!is_delta &&
+          order?.product === product_id &&
+          matchesCustomer(order)
+      ) || this.savedOrders.find(
+        (order) =>
+          order?.product === product_id &&
+          matchesCustomer(order)
+      );
+
+      if (targetOrder) {
+        targetOrder.free_reason = freeReason || null;
+      }
+    },
     clearNewOrders() {
       this.orders = [];
     },

@@ -49,6 +49,24 @@ export const routes = [
         component: () => import("@/views/Anulate/ViewAnulate.vue"),
       },
       {
+        // FLZ-REP-03: pantalla "Mermas" (módulo modules.show_waste).
+        path: "/waste",
+        name: "Waste",
+        meta: {
+          requiredPerm: "view_waste_report",
+        },
+        component: () => import("@/views/Waste/WasteIndex.vue"),
+      },
+      {
+        // FLZ-REP-06: cortesías, consumo interno e IGV de retiros.
+        path: "/free-operations",
+        name: "FreeOperations",
+        meta: {
+          requiredPerm: "view_free_operations_report",
+        },
+        component: () => import("@/views/FreeOperations/FreeOperationsIndex.vue"),
+      },
+      {
         path: "/orders",
         name: "Orders",
         meta: {
