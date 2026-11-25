@@ -183,7 +183,10 @@ export async function createSale(sale, pass = null) {
             taxed_amount: parseFloat(sale.taxed_amount).toFixed(2),
             exempt_amount: parseFloat(sale.exempt_amount).toFixed(2),
             free_amount: parseFloat(sale.free_amount).toFixed(2),
-            igv_amount: parseFloat(sale.igv_amount).toFixed(2)
+            igv_amount: parseFloat(sale.igv_amount).toFixed(2),
+            // D1: autorización de cortesías/consumo interno; sin esto el backend
+            // rechaza la venta con INVALID_CREDENTIALS aunque la clave sea correcta.
+            free_authorization: sale.free_authorization || null
         });
     } else {
         return await http.post("sales/", {
@@ -220,7 +223,10 @@ export async function createSale(sale, pass = null) {
             taxed_amount: parseFloat(sale.taxed_amount).toFixed(2),
             exempt_amount: parseFloat(sale.exempt_amount).toFixed(2),
             free_amount: parseFloat(sale.free_amount).toFixed(2),
-            igv_amount: parseFloat(sale.igv_amount).toFixed(2)
+            igv_amount: parseFloat(sale.igv_amount).toFixed(2),
+            // D1: autorización de cortesías/consumo interno; sin esto el backend
+            // rechaza la venta con INVALID_CREDENTIALS aunque la clave sea correcta.
+            free_authorization: sale.free_authorization || null
         });
     }
 }

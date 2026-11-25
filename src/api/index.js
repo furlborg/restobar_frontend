@@ -61,6 +61,12 @@ export function setupInterceptors(instance) {
         return Promise.reject(error);
       }
 
+      // Las pantallas que muestran su propio mensaje (p. ej. anulaciones) evitan
+      // el toast genérico del interceptor y el duplicado de "code: ...".
+      if (error.config?.skipGlobalError) {
+        return Promise.reject(error);
+      }
+
       const userStore = useUserStore();
       const originalRequest = error.config;
 

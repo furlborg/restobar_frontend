@@ -1305,15 +1305,13 @@ export default defineComponent({
         detail.original_affectation = baseAfc;
       }
 
-      // Gravado (10): solo Gravado (10) o Gratuito (21)
-      if (baseAfc === 10) {
-        return allOptions.filter(opt => opt.value === 10 || opt.value === 21);
+      // Las operaciones gratuitas se definen antes de este modal, con motivo y
+      // autorización (FLZ-GRA-04/05). Aquí solo se permite mantener la afectación
+      // regular del ítem (10/20) para no crear gratuitas sin ese flujo.
+      if (baseAfc === 10 || baseAfc === 20) {
+        return allOptions.filter(opt => opt.value === baseAfc);
       }
-      // Exonerado (20): solo Exonerado (20) o Gratuito (21)
-      if (baseAfc === 20) {
-        return allOptions.filter(opt => opt.value === 20 || opt.value === 21);
-      }
-      return allOptions.filter(opt => opt.value === baseAfc || opt.value === 21);
+      return allOptions.filter(opt => opt.value === baseAfc);
     };
 
     const handleDetailAffectationChange = (detail, newAfc) => {
@@ -1330,9 +1328,6 @@ export default defineComponent({
       }
 
       detail.product_affectation = targetAfc;
-      if (targetAfc === 21) {
-        detail.discount = 0;
-      }
       saleStore.updateDetail(detail);
     };
 

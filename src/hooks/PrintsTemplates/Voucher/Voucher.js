@@ -2,6 +2,7 @@ import { CreatePdfFile } from "@/hooks/CreatePdfFile.js";
 import { numeroALetras } from "@/hooks/numberText.js";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useTableStore } from "@/store/modules/table";
+import { freeAffectationLabel } from "@/utils/freeOperations";
 
 import { useSaleStore } from "@/store/modules/sale";
 
@@ -14,6 +15,12 @@ const tableStore = useTableStore();
 const settingsStore = useSettingsStore();
 
 const dateNow = formatter(new Date(Date.now()), "dd/MM/yyyy HH:mm:ss");
+
+// FLZ-GRA-08: en el ticket, el ítem gratuito se distingue con su afectación SUNAT.
+const itemDescription = (name, code) => {
+  const label = freeAffectationLabel(code);
+  return label ? `${name} · ${label}` : name;
+};
 
 const VoucherPrint = (props) => {
   let dataForPrint = "";
@@ -84,6 +91,13 @@ const VoucherPrint = (props) => {
             dataForPrint.totales.total_operaciones_exoneradas.toFixed("2"),
           "OP.GRATUITAS":
             dataForPrint.totales.total_operaciones_gratuitas.toFixed("2"),
+          ...(Number(dataForPrint.totales.total_igv_operaciones_gratuitas)
+            ? {
+                "IGV OP. GRATUITAS (ref.)": Number(
+                  dataForPrint.totales.total_igv_operaciones_gratuitas
+                ).toFixed("2"),
+              }
+            : {}),
           [igvLabel]: dataForPrint.totales.total_igv.toFixed("2"),
           ICPER:
             dataForPrint.totales.total_impuestos_bolsa_plastica.toFixed("2"),
@@ -97,6 +111,20 @@ const VoucherPrint = (props) => {
           ...paymentTotals,
         })
       : (newTotal = {
+          ...(Number(dataForPrint.totales.total_operaciones_gratuitas)
+            ? {
+                "OP.GRATUITAS": Number(
+                  dataForPrint.totales.total_operaciones_gratuitas
+                ).toFixed("2"),
+              }
+            : {}),
+          ...(Number(dataForPrint.totales.total_igv_operaciones_gratuitas)
+            ? {
+                "IGV OP. GRATUITAS (ref.)": Number(
+                  dataForPrint.totales.total_igv_operaciones_gratuitas
+                ).toFixed("2"),
+              }
+            : {}),
           "IMPORTE TOTAL": dataForPrint.totales.total_venta.toFixed("2"),
           ICPER:
             dataForPrint.totales.total_impuestos_bolsa_plastica.toFixed("2"),
@@ -391,7 +419,7 @@ const VoucherPrint = (props) => {
 
           datProdsCons.push({
             amount: val.quantity,
-            description: val.product_name,
+            description: itemDescription(val.product_name, val.codigo_tipo_afectacion_igv ?? val.product_affectation),
             price: parseFloat(val.price).toFixed("2"),
             total: (val.quantity * parseFloat(val.price)).toFixed("2"),
           });
@@ -403,7 +431,7 @@ const VoucherPrint = (props) => {
 
         return {
           amount: val.quantity,
-          description: val.product_name,
+          description: itemDescription(val.product_name, val.codigo_tipo_afectacion_igv ?? val.product_affectation),
           price: parseFloat(val.price).toFixed("2"),
           total: (val.quantity * parseFloat(val.price)).toFixed("2"),
         };
@@ -414,7 +442,7 @@ const VoucherPrint = (props) => {
       ? dataForPrint.items.map((val) => {
           return {
             amount: val.cantidad,
-            description: val.descripcion,
+            description: itemDescription(val.descripcion, val.codigo_tipo_afectacion_igv),
             price: parseFloat(val.precio_unitario).toFixed("2"),
             total: parseFloat(val.total_item).toFixed("2"),
           };
@@ -461,6 +489,29 @@ const VoucherPrint = (props) => {
       dat: datTotals,
       line: true,
     });
+
+  // FLZ-GRA-08: leyenda SUNAT de operaciones gratuitas.
+  if (Number(dataForPrint.totales?.total_operaciones_gratuitas)) {
+    structure.push({
+      fontSize:
+        settingsStore.business_settings.printer.pre_account_ticket_font_size,
+      dat: [
+        [
+          {
+            content:
+              "TRANSFERENCIA GRATUITA DE UN BIEN Y/O SERVICIO PRESTADO GRATUITAMENTE",
+            styles: {
+              fontStyle: "bold",
+              halign: "center",
+              fontSize:
+                settingsStore.business_settings.printer
+                  .pre_account_ticket_font_size,
+            },
+          },
+        ],
+      ],
+    });
+  }
 
   lengthData += 10 * datTotals.length;
   lengthData += 10 * datProdsCons.length;

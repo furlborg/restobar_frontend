@@ -138,6 +138,8 @@
     <PreviewDrawer :ref="(el) => ui.voucherDrawer = el" v-model:show="ui.showVoucher" :data="voucherData"
       :previewOnly="!ui.isTicketPreview" @printed="() => $router.push({ name: 'TableHome' })"
       @canceled="() => $router.push({ name: 'TableHome' })" />
+    <FreeAuthModal v-model:show="showFreeAuthModal" :loading="ui.loading" @authorized="onFreeAuthorized"
+      @update:show="onFreeAuthVisibility" />
 
   </div>
 </template>
@@ -157,6 +159,8 @@ import { useGenericsStore } from "@/store/modules/generics";
 import { useUserStore } from "@/store/modules/user";
 import { useSaleTotals } from "@/composables/useSaleTotals";
 import { useOrderProcessing } from "@/composables/useOrderProcessing";
+import { useFreeSaleAuthorization } from "@/composables/useFreeSaleAuthorization";
+import FreeAuthModal from "@/components/FreeOperation/FreeAuthModal.vue";
 import OrderTaking from "./OrderTaking.vue";
 import PaymentSummary from "./PaymentSummary.vue";
 import CategoriesList from "./CategoriesList.vue";
@@ -177,6 +181,13 @@ const route = useRoute();
 const router = useRouter();
 const { grandTotal, taxBreakdown, summary } = useSaleTotals();
 const { processTakeAwayOrder, processCreateOrder } = useOrderProcessing();
+// FLZ-GRA-05 / D1: autorización previa si la venta lleva cortesías o consumo interno.
+const {
+  show: showFreeAuthModal,
+  ensure: ensureFreeAuthorization,
+  onAuthorized: onFreeAuthorized,
+  onVisibility: onFreeAuthVisibility,
+} = useFreeSaleAuthorization({ sale, details: () => saleStore.toSale });
 
 // Estado UI agrupado en objeto reactivo para mejor organización
 const ui = reactive({
@@ -401,6 +412,7 @@ const performTakeAway = async () => {
     ui.showConfirm = true;
     return;
   }
+  if (!(await ensureFreeAuthorization())) return;
   dialog.success({
     closable: false,
     title: "Confirmar pedido",
@@ -537,6 +549,7 @@ const handleDelivery = (v) => {
 };
 
 const performCreateOrder = async () => {
+  if (!(await ensureFreeAuthorization())) return;
   const result = await processCreateOrder(sale, ui, showAndGenerateTicket, cleanupOrderStore);
   if (result.success) {
     checkState.value = true;

@@ -104,7 +104,8 @@
                 :product="currentOrderList[itemIndex]" @success="showModal = false" />
             <PreviewDrawer ref="previewDrawer" v-model:show="showPreview" :data="previewData" :preVoucher="true"
                 :previewOnly="true" />
-            <ModalAnulateSale :dataModal="dataAnulateModal" />
+            <CancelItemModal v-model:show="cancelItem.show" :table-id="route.params.table" :detail="cancelItem.detail"
+                :forbid-full-quantity="orderStore.fullOrderList.length === 1" @cancelled="performRetrieveTableOrder()" />
         </n-tab-pane>
     </n-tabs>
 </template>
@@ -124,13 +125,13 @@ import {
     onBeforeRouteUpdate
 } from "vue-router";
 import ProductIndications from "./ProductIndications";
-import ModalAnulateSale from "@/views/Sale/modalAnulateSale.vue";
+import CancelItemModal from "@/components/Cancellation/CancelItemModal.vue";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useBusinessStore } from "@/store/modules/business";
 import { useOrderStore } from "@/store/modules/order";
 import { useUserStore } from "@/store/modules/user";
 import { useSaleStore } from "@/store/modules/sale";
-import { retrieveTableOrder, performDeleteOrderDetail } from "@/api/modules/tables";
+import { retrieveTableOrder } from "@/api/modules/tables";
 import { cloneDeep } from "@/utils";
 import { formatLockRemaining, lockOwnerName } from "@/utils/lockMessage";
 import VoucherPrint from "@/hooks/PrintsTemplates/Voucher/Voucher.js";
@@ -141,42 +142,14 @@ const settingsStore = useSettingsStore();
 const businessStore = useBusinessStore();
 const orderStore = useOrderStore();
 
-const dataAnulateModal = ref({
-    show: false,
-    saleId: null,
-    maxQuantity: 1,
-    permission: 'cancel_orderdetail',
-    performDeleteOrderDetail: async (detailId, dataAnulate) => {
-        try {
-            const orderDetail = orderStore.fullOrderList.find(o => o.id === detailId);
-            const quantity = dataAnulate.quantity || (orderDetail ? orderDetail.quantity : 1);
-
-            if (orderStore.fullOrderList.length === 1 && quantity >= (orderDetail?.quantity ?? 1)) {
-                message.warning("No es posible anular el último ítem de la comanda. Para cancelar la mesa completa, solicite anular el pedido a un administrador.");
-                return;
-            }
-
-            const payload = {
-                ...dataAnulate,
-                reason: dataAnulate.nullReason
-            };
-
-            const response = await performDeleteOrderDetail(route.params.table, detailId, payload, quantity);
-            if (response.status === 204 || response.status === 202) {
-                message.success("Producto anulado correctamente");
-                performRetrieveTableOrder();
-            }
-        } catch (error) {
-            console.error(error);
-            message.error(error.response?.data?.error || "Error al anular, verifique sus datos...");
-        }
-    }
-});
+// Anulación de un ítem ya enviado: motivo/destino + credencial (FLZ-MER-07, FLZ-SEC-03).
+const cancelItem = ref({ show: false, detail: null });
 
 const openDeleteModal = (order) => {
-    dataAnulateModal.value.saleId = order.id;
-    dataAnulateModal.value.maxQuantity = order.quantity;
-    dataAnulateModal.value.show = true;
+    cancelItem.value = {
+        show: true,
+        detail: { id: order.id, product_name: order.product_name || order.name, quantity: order.quantity },
+    };
 };
 
 const handleRemoveRequest = (order) => {
