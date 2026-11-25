@@ -54,6 +54,9 @@ export async function updateBusinessSettings(business_settings) {
     category: business_settings.category,
     modules: business_settings.modules,
     kds: business_settings.kds,
+    // Si la pantalla no trae el bloque queda `undefined`, no viaja en el JSON
+    // y el backend conserva lo guardado.
+    review_qr: business_settings.review_qr,
   });
 }
 

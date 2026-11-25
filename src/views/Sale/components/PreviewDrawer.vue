@@ -1,6 +1,6 @@
 <template>
     <n-drawer id="PreviewDrawer" :show="show" @update:show="(v) => $emit('update:show', v)" placement="right"
-        width="272px" :on-after-leave="() => (send = false)" :mask-closable="false"
+        width="272px" :mask-closable="false"
         :on-esc="() => ($emit('update:show', false), $emit('canceled'))" :z-index="!previewOnly ? undefined : -1000000">
         <n-drawer-content body-content-style="padding: 0;"
             footer-style="padding: 0; height: auto; display: flex; flex-direction: column;" :native-scrollbar="false">
@@ -15,57 +15,53 @@
                     Imprimir
                 </n-button>
                 <div style="width: 100%; display: flex">
-                    <n-button-group>
-                        <n-button style="width: 90px" type="success" tertiary @click="dataModalWhatsApp()"
-                            :disabled="data.status === 'A'">
+                    <n-button-group style="width: 100%">
+                        <n-button style="flex: 1" type="success" tertiary @click="dataModalWhatsApp()"
+                            :disabled="data.status === 'A'" title="Enviar por WhatsApp">
                             <v-icon name="bi-whatsapp" />
                         </n-button>
-                        <n-button style="width: 90px" type="info" tertiary disabled>
+                        <n-button v-if="canSendEmail" style="flex: 1" type="info" tertiary
+                            @click="dataModalEmail()" :disabled="data.status === 'A'" title="Enviar por correo">
                             <v-icon name="md-outgoingmail" />
                         </n-button>
-                        <n-button style="width: 90px" type="warning" tertiary :loading="downloadingA4" @click="downloadA4PDF">
+                        <n-button v-if="showReviewQrButton" style="flex: 1" type="primary" tertiary
+                            :loading="printingReviewQr" :disabled="data.status === 'A'" @click="printReviewQr"
+                            title="Imprimir QR de calificación">
+                            <v-icon name="md-qrcode" />
+                        </n-button>
+                        <n-button style="flex: 1" type="warning" tertiary :loading="downloadingA4"
+                            @click="downloadA4PDF" title="Descargar comprobante A4">
                             <v-icon name="fa-download" />
                         </n-button>
                     </n-button-group>
-                    <n-drawer v-model:show="send" placement="bottom" to="#PreviewDrawer" height="69">
-                        <n-drawer-content body-content-style="padding: 0;">
-                            <n-input v-model:value="phoneNumber" placeholder="" @keypress="isNumber" :show-count="true"
-                                :maxlength="9" />
-                            <n-button type="success" secondary block :loading="loading"
-                                :disabled="phoneNumber.length < 9 || loading" @click="sendToWhatsapp">
-                                <v-icon name="bi-whatsapp" />
-                                Enviar
-                            </n-button>
-                        </n-drawer-content>
-                    </n-drawer>
                 </div>
             </template>
-            <send-to-whats-app-mervin-gay :data-message="data" :data-modal="putaOscar" />
+            <send-to-whats-app-mervin-gay :data-message="data" :data-modal="whatsAppModal" />
+            <send-voucher-by-email-modal :data-message="data" :data-modal="emailModal" />
         </n-drawer-content>
     </n-drawer>
 </template>
 
 <script>
-import { defineComponent, ref, watchEffect, watch } from "vue";
+import { computed, defineComponent, ref, watchEffect, watch } from "vue";
 import { useMessage } from "naive-ui";
 import { useSettingsStore } from "@/store/modules/settings";
 import { useSaleStore } from "@/store/modules/sale";
-import { jsPDF } from "jspdf";
-import html2canvas from "html2canvas";
 import DefaultPreset from "./pdf-presets/DefaultPreset";
 import PreviewPreset from "./pdf-presets/PreviewPreset";
-import { isNumber } from "@/utils";
-import { sendWhatsapp } from "@/api/modules/sales";
 import { useBusinessStore } from "@/store/modules/business";
 import { useTableStore } from "@/store/modules/table";
+import { useUserStore } from "@/store/modules/user";
 import { http } from "@/api";
 import SendToWhatsAppMervinGay from "@/components/sendToWhatsAppMervinGay.vue";
+import SendVoucherByEmailModal from "@/components/sendVoucherByEmailModal.vue";
 import { generateVoucherA4PDF } from "@/hooks/createVoucherA4PDF";
 
 export default defineComponent({
     name: "PreviewDrawer",
     components: {
         SendToWhatsAppMervinGay,
+        SendVoucherByEmailModal,
         DefaultPreset,
         PreviewPreset
     },
@@ -90,32 +86,45 @@ export default defineComponent({
         const settingsStore = useSettingsStore();
         const saleStore = useSaleStore();
         const tableStore = useTableStore();
+        const userStore = useUserStore();
         const totalEnterPulse = ref(0);
         const businessStore = useBusinessStore();
         const isPrintMode = ref(false);
-        let socket = null;
 
         const showModalWhatsApp = ref(false);
-        const closeModal = () => (showModalWhatsApp.value = false);
-
-        const putaOscar = {
-            closeModal,
+        const closeModalWhatsApp = () => (showModalWhatsApp.value = false);
+        const whatsAppModal = {
+            closeModal: closeModalWhatsApp,
             show: showModalWhatsApp
         };
-
         const dataModalWhatsApp = () => {
             showModalWhatsApp.value = true;
+        };
+
+        const showModalEmail = ref(false);
+        const emailModal = {
+            closeModal: () => (showModalEmail.value = false),
+            show: showModalEmail
+        };
+        const dataModalEmail = () => {
+            showModalEmail.value = true;
         };
 
         const message = useMessage();
 
         const ticket = ref(null);
 
-        const loading = ref(false);
+        const printingReviewQr = ref(false);
 
-        const send = ref(false);
+        const canSendEmail = computed(
+            () => !props.preVoucher && !props.previewOnly && userStore.hasPermission("send_sale_email")
+        );
 
-        const phoneNumber = ref("");
+        const showReviewQrButton = computed(() => {
+            if (props.previewOnly || props.preVoucher) return false;
+            const reviewQr = settingsStore.business_settings?.review_qr || {};
+            return Boolean(reviewQr.enabled && String(reviewQr.url || "").trim());
+        });
 
         const onKeyUp = (event) => {
             if (event.keyCode === 13 || event.keyCode === 12) {
@@ -357,37 +366,35 @@ export default defineComponent({
             isPrintMode.value = false;
         };
 
-        const sendToWhatsapp = () => {
-            loading.value = true;
-            sendWhatsapp(
-                props.data.id,
-                [props.data.serie, props.data.number],
-                phoneNumber.value
-            ).then((response) => {
-                if (response.status === 200)
-                    window.open(response.data.data.url, "_blank");
-            }).catch((error) => {
-                console.error(error);
-
-            }).finally(() => {
-                phoneNumber.value = "";
-                loading.value = false;
-                send.value = false;
-            });
+        const printReviewQr = async () => {
+            if (printingReviewQr.value || !props.data?.id) return;
+            printingReviewQr.value = true;
+            try {
+                const response = await http.post(`sales/${props.data.id}/print-review-qr/`);
+                if (response.status === 200) {
+                    message.success(response.data?.success || "Enviado a imprimir");
+                }
+            } catch (error) {
+                const detail = error?.response?.data?.error;
+                message.error(detail || "No se pudo enviar el QR a imprimir");
+            } finally {
+                printingReviewQr.value = false;
+            }
         };
 
         return {
-            loading,
             downloadingA4,
             downloadA4PDF,
             ticket,
             generate,
-            send,
-            isNumber,
-            sendToWhatsapp,
             dataModalWhatsApp,
-            putaOscar,
-            phoneNumber,
+            dataModalEmail,
+            whatsAppModal,
+            emailModal,
+            canSendEmail,
+            showReviewQrButton,
+            printingReviewQr,
+            printReviewQr,
             isPrintMode
         };
     }

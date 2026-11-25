@@ -1349,6 +1349,62 @@
                                 </n-form>
                             </n-card>
                         </div>
+
+                        <div class="settings-card-group">
+                            <div class="card-group-header">
+                                <div class="card-header-icon api-bg"><v-icon name="md-qrcode" /></div>
+                                <div>
+                                    <h3 class="group-title">QR de calificación</h3>
+                                    <p class="group-desc">Imprime un ticket aparte con un QR para que el cliente califique su experiencia.</p>
+                                </div>
+                            </div>
+
+                            <n-card class="settings-inner-card" :bordered="true">
+                                <div class="clean-switch-grid">
+                                    <div class="switch-row-item">
+                                        <div class="switch-row-text">
+                                            <span class="switch-row-title">Activar QR de calificación</span>
+                                            <span class="switch-row-desc">Muestra el botón QR en la previsualización del comprobante.</span>
+                                        </div>
+                                        <n-switch
+                                            v-model:value="businessSettings.review_qr.enabled"
+                                            :disabled="!editMode || !canManageReviewQr || !isReviewQrUrlValid"
+                                        />
+                                    </div>
+                                </div>
+
+                                <n-form :disabled="!editMode || !canManageReviewQr" label-placement="top" class="mt-3">
+                                    <n-form-item label="Enlace del QR (solo https)">
+                                        <n-input
+                                            v-model:value="businessSettings.review_qr.url"
+                                            maxlength="150"
+                                            show-count
+                                            clearable
+                                            placeholder="https://tu-sitio.com/calificanos"
+                                        />
+                                        <template #feedback>
+                                            Máximo 150 caracteres. Se recomienda un enlace corto para que el QR se lea bien en papel térmico.
+                                        </template>
+                                    </n-form-item>
+                                </n-form>
+
+                                <n-alert v-if="reviewQrUrl.length > 100" type="warning" :show-icon="true" class="mb-3">
+                                    Se recomienda un enlace de hasta 100 caracteres para que el QR se lea bien.
+                                </n-alert>
+
+                                <div v-if="isReviewQrUrlValid" class="d-flex flex-wrap align-items-center gap-4 mt-2">
+                                    <img :src="reviewQrPreview" alt="Vista previa del QR" width="160" height="160" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 6px; background: #fff;" />
+                                    <div class="d-flex flex-column gap-1">
+                                        <strong>Vista previa del ticket</strong>
+                                        <span>¿Cómo fue tu experiencia?</span>
+                                        <span>Escanea y cuéntanos</span>
+                                        <n-button size="small" secondary type="info" class="mt-2" @click="openReviewQrLink">
+                                            Probar enlace
+                                        </n-button>
+                                    </div>
+                                </div>
+                            </n-card>
+                        </div>
                     </div>
                 </n-tab-pane>
 
@@ -1369,6 +1425,9 @@ import { useProductStore } from "@/store/modules/product";
 import { useSettingsStore } from "@/store/modules/settings";
 import { updateBusinessSettings, getWhatsAppStatus, logoutWhatsApp } from "@/api/modules/business";
 import { cloneDeep } from "@/utils";
+import { isValidReviewQrUrl } from "@/utils/reviewQr";
+import { useUserStore } from "@/store/modules/user";
+import qr from "qrcode";
 import WhatsAppQrModal from "./whatsapp/WhatsAppQrModal.vue";
 
 export default defineComponent({
@@ -1383,6 +1442,7 @@ export default defineComponent({
         const printerStore = usePrinterStore();
         const productStore = useProductStore();
         const settingsStore = useSettingsStore();
+        const userStore = useUserStore();
 
         const activeTab = ref(route.query?.tab || "impresiones");
         const editMode = ref(false);
@@ -1599,6 +1659,13 @@ export default defineComponent({
             if (settings.customers.api_token === undefined) settings.customers.api_token = '';
         };
 
+        const initReviewQrSettings = (settings) => {
+            if (!settings) return;
+            if (!settings.review_qr) settings.review_qr = {};
+            if (settings.review_qr.enabled === undefined) settings.review_qr.enabled = false;
+            if (settings.review_qr.url === undefined || settings.review_qr.url === null) settings.review_qr.url = '';
+        };
+
         const applyAllInits = (s) => {
             if (!s) return;
             initModules(s);
@@ -1610,9 +1677,40 @@ export default defineComponent({
             initOrderSettings(s);
             initReportsSettings(s);
             initCustomersSettings(s);
+            initReviewQrSettings(s);
         };
 
         applyAllInits(businessSettings.value);
+
+        const canManageReviewQr = computed(() => userStore.hasPermission("manage_review_qr"));
+        const reviewQrUrl = computed(() => (businessSettings.value?.review_qr?.url || "").trim());
+        const isReviewQrUrlValid = computed(() => isValidReviewQrUrl(reviewQrUrl.value));
+        const reviewQrPreview = ref("");
+
+        watch(
+            reviewQrUrl,
+            (value) => {
+                if (!isValidReviewQrUrl(value)) {
+                    reviewQrPreview.value = "";
+                    return;
+                }
+                qr.toDataURL(value, { margin: 1, width: 320, errorCorrectionLevel: "M" }, (error, dataUrl) => {
+                    reviewQrPreview.value = error ? "" : dataUrl;
+                });
+            },
+            { immediate: true }
+        );
+
+        watch(isReviewQrUrlValid, (valid) => {
+            if (!valid && businessSettings.value?.review_qr?.enabled) {
+                businessSettings.value.review_qr.enabled = false;
+            }
+        });
+
+        const openReviewQrLink = () => {
+            if (!isValidReviewQrUrl(reviewQrUrl.value)) return;
+            window.open(reviewQrUrl.value, "_blank", "noopener,noreferrer");
+        };
 
         watch(() => settingsStore.businessSettings, (newVal) => {
             if (newVal && Object.keys(newVal).length > 0 && !editMode.value) {
@@ -1729,6 +1827,7 @@ export default defineComponent({
             { key: "modulos_sidebar", title: "Encender / Apagar Módulos", tab: "modulos", tabName: "Módulos Activos", icon: "md-viewcarousel-twotone", keywords: "modulo sidebar menu kds combos kardex" },
             { key: "kds_cocina", title: "Pantalla KDS de Cocina", tab: "kds", tabName: "Cocina / KDS", icon: "md-kitchen-twotone", keywords: "kds cocina sonido timbre campana pantalla" },
             { key: "whatsapp", title: "Vinculación con WhatsApp", tab: "whatsapp", tabName: "WhatsApp", icon: "bi-whatsapp", keywords: "whatsapp qr zendy emiteca celular" },
+            { key: "review_qr", title: "QR de calificación", tab: "integraciones", tabName: "Integraciones", icon: "md-qrcode", keywords: "qr calificacion reseña enlace review opinion encuesta" },
             { key: "api_token", title: "Token API Clientes", tab: "integraciones", tabName: "Integraciones", icon: "gi-settings-knobs", keywords: "api token bearer reniec sunat consulta" }
         ];
 
@@ -1790,6 +1889,19 @@ export default defineComponent({
         };
 
         const performUpdateBusinessSettings = async () => {
+            const reviewQr = businessSettings.value?.review_qr;
+            if (reviewQr) {
+                const url = (reviewQr.url || "").trim();
+                if (url && !isValidReviewQrUrl(url)) {
+                    message.error("El enlace del QR debe ser una URL https válida, sin espacios y de máximo 150 caracteres.");
+                    return;
+                }
+                if (reviewQr.enabled && !url) {
+                    message.error("Indica un enlace válido antes de activar el QR de calificación.");
+                    return;
+                }
+            }
+
             saving.value = true;
             try {
                 if (businessSettings.value.kds && businessSettings.value.modules) {
@@ -1809,7 +1921,18 @@ export default defineComponent({
                 }
             } catch (error) {
                 console.error("Error saving business settings:", error);
-                message.error("Error al guardar la configuración.");
+                const status = error?.response?.status;
+                const data = error?.response?.data;
+                const reviewQrError = data?.review_qr?.url;
+                if (status === 403) {
+                    message.error(data?.error || "No tienes permiso para modificar el QR de calificación.");
+                } else if (status === 400 && reviewQrError) {
+                    message.error(Array.isArray(reviewQrError) ? reviewQrError[0] : reviewQrError);
+                } else if (status === 400) {
+                    message.error(data?.error || "Revisa los datos de la configuración.");
+                } else {
+                    message.error("Error al guardar la configuración.");
+                }
             } finally {
                 saving.value = false;
             }
@@ -1945,7 +2068,12 @@ export default defineComponent({
             whatsappStatus,
             handleLogoutWhatsApp,
             onWhatsAppLinked,
-            resetComandaFontSizes
+            resetComandaFontSizes,
+            canManageReviewQr,
+            reviewQrUrl,
+            isReviewQrUrlValid,
+            reviewQrPreview,
+            openReviewQrLink
         };
     }
 });
