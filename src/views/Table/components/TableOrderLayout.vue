@@ -61,7 +61,7 @@
         </n-modal>
 
         <CancelItemModal v-model:show="showConfirm" :table-id="table" :detail="removingDetail"
-            :forbid-full-quantity="!!orderStore.orderId && orderStore.orderList.length === 1"
+            :cancel-whole-order="!!orderStore.orderId && orderStore.orderList.length === 1"
             @cancelled="onItemCancelled" @update:show="(value) => !value && resetDeleteState()" />
 
         <TicketPreview ref="ticketPreview" v-model:show="showPdf" :data="pdfData" :hidden="true"
@@ -85,14 +85,13 @@ import { useGenericsStore } from "@/store/modules/generics";
 import { useTableStore } from "@/store/modules/table";
 import { useOrderStore } from "@/store/modules/order";
 import { useSaleStore } from "@/store/modules/sale";
-import { retrieveTableOrder, createTableOrder, updateTableOrder, cancelTableOrder } from "@/api/modules/tables";
+import { retrieveTableOrder, createTableOrder, updateTableOrder } from "@/api/modules/tables";
 import { verifyWaiterCode } from "@/api/modules/users";
 import { cloneDeep } from "@/utils";
 import { formatLockRemaining, lockOwnerName } from "@/utils/lockMessage";
 import { lockHasExpired, lockHeartbeatMs, normalizeLock } from "@/utils/tableLock";
 import { useBreakpoint } from 'vooks';
 import CancelItemModal from "@/components/Cancellation/CancelItemModal.vue";
-import { cancellationErrorMessage } from "@/utils/cancellation";
 
 const breakpointRef = useBreakpoint();
 const route = useRoute();
@@ -134,8 +133,6 @@ const handleBeforeUnload = () => {
 const table = route.params.table;
 
 // Anulación parcial con motivo/destino (FLZ-MER-07): el formulario vive en CancelItemModal.
-// Último payload de anulación: si se quitó el último ítem, se reutiliza para anular la mesa.
-const lastCancelPayload = ref(null);
 const loading = ref(false);
 const ask_for = ref(undefined);
 const orderUser = ref(null);
@@ -423,32 +420,6 @@ const performUpdateTableOrder = async () => {
     }
 };
 
-const performNullifyTableOrder = async () => {
-    // Al quitar el último ítem se anula la mesa con el mismo motivo y la misma autorización.
-    const payload = lastCancelPayload.value || {};
-    try {
-        const response = await cancelTableOrder(table, { ...payload, nullReason: payload.null_reason });
-        if (response.status === 202) {
-            message.success("Pedido anulado correctamente!");
-            cleanupOrderStore();
-            router.push({ name: homeRouteName.value });
-        }
-    } catch (error) {
-        console.error(error);
-        message.error(cancellationErrorMessage(error));
-    }
-};
-
-const nullifyTableOrder = async () => {
-    if (!orderStore.orderList.length && orderStore.orderId) {
-        if (!userStore.hasPermission('null_orders')) {
-            message.warning("No tiene permisos para anular la mesa.");
-            return;
-        }
-        await performNullifyTableOrder();
-    }
-};
-
 const resetDeleteState = () => {
     Object.assign(removingItem.value, { ind: "", id: "" });
     maxQuantity.value = 1;
@@ -456,13 +427,16 @@ const resetDeleteState = () => {
 };
 
 // La comanda en pantalla solo cambia cuando el backend aceptó la anulación.
-const onItemCancelled = async ({ response, payload }) => {
-    lastCancelPayload.value = payload;
+const onItemCancelled = async ({ response, wholeOrder }) => {
+    // FE-03: anular el último ítem ya anuló la mesa (cancelTableOrder); se vuelve a Mesas.
+    if (wholeOrder) {
+        goHome();
+        return;
+    }
     const { ind } = removingItem.value;
     if (response.status === 204) {
         orderStore.orderList.splice(ind, 1);
         saleStore.order_initial.splice(ind, 1);
-        await nullifyTableOrder();
     } else if (response.status === 202) {
         const { quantity } = response.data;
         orderStore.orderList[ind].quantity -= quantity;
@@ -541,10 +515,6 @@ const handleProductClick = (product) => {
 
 const deleteOrderDetail = (detailIndex, detailId) => {
     const quantity = saleStore.getOrderQuantity(detailId);
-    if (orderStore.orderId && orderStore.orderList.length === 1 && quantity <= 1) {
-        message.warning("No es posible anular el último ítem de la comanda. Para cancelar la mesa completa, utilice la opción Anular Pedido.");
-        return;
-    }
     Object.assign(removingItem.value, { ind: detailIndex, id: detailId });
     maxQuantity.value = quantity;
     showConfirm.value = true;

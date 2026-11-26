@@ -30,7 +30,7 @@ export const generateDynamicCajaReport = async(dataTill) => {
     let currentY = 3;
 
     doc.setFontSize(10);
-    let nameBusinessSplitText = doc.splitTextToSize(business.value.commercial_name || "boobs", 75);
+    let nameBusinessSplitText = doc.splitTextToSize(business.value.commercial_name || "", 75);
     for (let i = 0; i < nameBusinessSplitText.length; i++) {
         doc.text(nameBusinessSplitText[i], x + 15, currentY + 2);
         currentY += 5;
@@ -38,7 +38,7 @@ export const generateDynamicCajaReport = async(dataTill) => {
     currentY += 1;
 
     doc.setFontSize(10);
-    let addressSplitText = doc.splitTextToSize(business.value.fiscal_address || "boobs", 75);
+    let addressSplitText = doc.splitTextToSize(business.value.fiscal_address || "", 75);
     for (let i = 0; i < addressSplitText.length; i++) {
         doc.text(addressSplitText[i], x + 7, currentY + 2);
         currentY += 3;
@@ -340,6 +340,51 @@ export const generateDynamicCajaReport = async(dataTill) => {
         theme: "plain"
     });
 
+
+    currentY = doc?.["lastAutoTable"].finalY + 3;
+
+    // MERMAS DEL TURNO (FE-05): solo si hay mermas en la caja. No altera el efectivo.
+    const mermas = dataTill?.mermas;
+    if (mermas && (mermas.cantidad > 0 || (mermas.items || []).length)) {
+        sectionTitle("Mermas del Turno", currentY);
+        currentY += 3;
+
+        const mermasItems = (mermas.items || []).map((item) => ({
+            code: item.code ?? "",
+            detalle: `${item.cantidad ?? ""} ${item.unidad ?? ""} ${item.item ?? ""}`.trim(),
+            costo: safe(item.costo),
+        }));
+
+        mermasItems.push(
+            { code: "----------------------------", detalle: "----------------------------", costo: "-------------" },
+            { code: "TOTAL", detalle: `${mermas.cantidad ?? 0} eventos`, costo: safe(mermas.costo_total) }
+        );
+
+        autoTable(doc, {
+            startY: currentY,
+            columns: [
+                { header: "CÓDIGO", dataKey: "code" },
+                { header: "ÍTEM", dataKey: "detalle" },
+                { header: "COSTO", dataKey: "costo" },
+            ],
+            columnStyles: {
+                code: { cellWidth: 22 },
+                detalle: { cellWidth: 33 },
+                costo: { cellWidth: 24 },
+            },
+            body: mermasItems,
+            theme: "plain",
+            styles: { fontSize: 8 },
+            margin: { horizontal: 0.5, vertical: 0.1 },
+            bodyStyles: { cellPadding: { vertical: 0.1, horizontal: 1 } },
+        });
+
+        currentY = doc?.["lastAutoTable"].finalY + 2;
+        doc.setFontSize(8);
+        doc.setFont(undefined, "bold");
+        doc.text("No afecta el efectivo de caja", 40, currentY, { align: "center" });
+        currentY += 4;
+    }
 
     const iframe = document.createElement("iframe");
     iframe.style.position = "fixed";

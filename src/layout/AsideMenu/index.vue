@@ -89,20 +89,16 @@ const menuOptions = computed(() => {
     });
   }
 
-  if (settingsStore.business_settings?.modules?.show_anulates ?? true) {
+  // "Anulaciones y mermas": un solo módulo que absorbe a "Mermas". Se muestra si
+  // está activo el módulo de anulaciones o el de mermas (con permiso de ver el reporte).
+  const showAnulates = settingsStore.business_settings?.modules?.show_anulates ?? true;
+  const showWaste =
+    (settingsStore.business_settings?.modules?.show_waste ?? true) && userStore.hasPermission("view_waste_report");
+  if (showAnulates || showWaste) {
     options.push({
-      label: renderMenuLink("Anulate", "Anulaciones"),
+      label: renderMenuLink("Anulate", "Anulaciones y mermas"),
       key: "Anulate",
       icon: renderIcon("md-cancelpresentation-twotone"),
-    });
-  }
-
-  // FLZ-REP-03: "Mermas" (módulo modules.show_waste).
-  if ((settingsStore.business_settings?.modules?.show_waste ?? true) && userStore.hasPermission("view_waste_report")) {
-    options.push({
-      label: renderMenuLink("Waste", "Mermas"),
-      key: "Waste",
-      icon: renderIcon("md-deletesweep-round"),
     });
   }
 

@@ -1,13 +1,7 @@
 <template>
-    <!-- Pantalla "Mermas" (FLZ-REP-03/04). Diseño: Implementaciones/mockup-lista-mermas.html -->
+    <!-- Vista "Mermas" (FLZ-REP-03/04), embebida en el módulo "Anulaciones y mermas". -->
     <div class="waste-content">
         <div class="panel">
-            <h1>Mermas</h1>
-            <div class="tabs">
-                <button :class="{ on: tab === 'list' }" @click="tab = 'list'">Lista de mermas</button>
-                <button :class="{ on: tab === 'summary' }" @click="openSummary">Resumen por {{ groupLabel.toLowerCase() }}</button>
-            </div>
-
             <!-- Sin permiso (view_waste_report) -->
             <div v-if="state === 'forbidden'" class="state">
                 <b>Sin permiso</b>Tu rol no tiene acceso al reporte de mermas (<code>view_waste_report</code>).
@@ -15,14 +9,37 @@
             </div>
 
             <template v-else>
+                <!-- Conmutador Lista | Resumen -->
+                <div class="mode-toggle">
+                    <button :class="{ on: mode === 'list' }" @click="openList">Lista</button>
+                    <button :class="{ on: mode === 'summary' }" @click="openSummary">Resumen por {{ groupLabel.toLowerCase() }}</button>
+                </div>
+
                 <div class="toolbar">
                     <button class="link" @click="showFilters = !showFilters">
                         {{ showFilters ? '▾ Ocultar filtros' : '▸ Mostrar filtros' }}
                     </button>
                     <div class="toolbar-actions">
+                        <n-popover v-if="canRegister" v-model:show="showViaMenu" trigger="click"
+                            placement="bottom-end" :show-arrow="false" raw>
+                            <template #trigger>
+                                <button class="btn primary" type="button">Registrar merma ▾</button>
+                            </template>
+                            <div class="via-menu" role="menu">
+                                <button v-for="option in REGISTER_VIAS" :key="option.key" type="button"
+                                    class="via-menu__item" role="menuitem" @click="onSelectVia(option.key)">
+                                    <span class="via-menu__badge">{{ option.key }}</span>
+                                    <span class="via-menu__text">
+                                        <span class="via-menu__title">{{ option.title }}</span>
+                                        <span class="via-menu__sub">{{ option.sub }}</span>
+                                    </span>
+                                </button>
+                            </div>
+                        </n-popover>
+                        <button v-if="canManageReasons" class="btn ghost" @click="showReasons = true">Motivos</button>
                         <button class="btn ghost" :disabled="exporting" @click="exportReport('excel')">Exportar Excel</button>
                         <button class="btn ghost" :disabled="exporting" @click="exportReport('pdf')">Exportar PDF</button>
-                        <button class="btn primary" @click="reload">Recargar</button>
+                        <button class="btn ghost" @click="reload">Recargar</button>
                     </div>
                 </div>
 
@@ -40,6 +57,9 @@
                     </div>
                     <div><label>Tipo</label>
                         <n-select v-model:value="filters.item_type" :options="typeOptions" size="small" @update:value="applyFilters" />
+                    </div>
+                    <div><label>Vía</label>
+                        <n-select v-model:value="filters.via" :options="viaOptions" size="small" @update:value="applyFilters" />
                     </div>
                     <div><label>Motivo</label>
                         <n-select v-model:value="filters.reason" :options="reasonOptions" size="small" @update:value="applyFilters" />
@@ -65,7 +85,7 @@
                 </div>
 
                 <!-- LISTA -->
-                <section v-else-if="tab === 'list'">
+                <section v-if="mode === 'list'">
                     <div class="kpis">
                         <div class="kpi alert">
                             <div class="l">Merma valorizada (costo)</div>
@@ -112,7 +132,7 @@
                                     <tr>
                                         <th>#</th><th>Fecha</th><th>Producto / combo / menú</th><th>Cant.</th>
                                         <th class="r">Costo unit.</th><th class="r">Costo total</th>
-                                        <th>Motivo</th><th>Origen</th><th>Solicitó</th><th>Autorizó</th><th></th>
+                                        <th>Motivo</th><th>Origen</th><th>Vía</th><th>Solicitó</th><th>Autorizó</th><th></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -120,7 +140,7 @@
                                         <td>{{ row.id }}</td>
                                         <td>{{ formatDate(row.created) }}</td>
                                         <td class="l">{{ row.item_name }}<span class="tag">{{ ITEM_TYPE_LABELS[row.item_type] }}</span></td>
-                                        <td>{{ row.quantity }}</td>
+                                        <td>{{ quantityText(row) }}</td>
                                         <td class="r">
                                             <span v-if="row.no_cost" class="warn">Sin costo</span>
                                             <template v-else>{{ money(row.unit_cost) }}</template>
@@ -128,6 +148,7 @@
                                         <td class="r"><b>{{ money(row.total_cost) }}</b></td>
                                         <td><span class="pill" :class="reasonPill(row.reason_code)">{{ row.reason_description || '—' }}</span></td>
                                         <td>{{ originText(row.origin) }}</td>
+                                        <td>{{ viaText(row.via) }}<span v-if="row.replacement" class="tag amber">Regresó a cocina</span></td>
                                         <td>{{ row.requested_by?.username || '—' }}</td>
                                         <td>{{ row.authorized_by?.username || '—' }}</td>
                                         <td><button class="iconbtn" title="Ver detalle" @click="openDetail(row)">›</button></td>
@@ -201,6 +222,7 @@
                                 <div><div class="k">Costo total</div><div class="val">{{ money(detail.total_cost) }}</div></div>
                                 <div><div class="k">Motivo</div><div class="val"><span class="pill" :class="reasonPill(detail.reason_code)">{{ detail.reason_description || '—' }}</span></div></div>
                                 <div><div class="k">Origen</div><div class="val">{{ originText(detail.origin) }}</div></div>
+                                <div><div class="k">Vía</div><div class="val">{{ viaText(detail.via) }}</div></div>
                                 <div><div class="k">Solicitó</div><div class="val">{{ detail.requested_by?.username || '—' }}</div></div>
                                 <div><div class="k">Autorizó (supervisor)</div><div class="val">{{ detail.authorized_by?.username || '—' }}</div></div>
                             </div>
@@ -222,15 +244,28 @@
                             <p class="mini-note">El saldo de stock no cambia: la "VENTA" de la comanda se revierte y se registra como "MERMA" (FLZ-MER-04).</p>
                             <div class="sec">Acciones</div>
                             <div class="actions">
-                                <button class="btn ghost" @click="viewOrder">Ver pedido</button>
+                                <button v-if="detail?.origin?.order_id" class="btn ghost" @click="viewOrder">Ver pedido</button>
                                 <button class="btn ghost" :disabled="!kardexTarget" @click="viewKardex">Ver en kardex</button>
-                                <button class="btn ghost" :disabled="reprinting" @click="reprint">Reimprimir ticket de anulación</button>
                             </div>
                         </template>
                     </n-spin>
                 </div>
             </div>
         </n-drawer>
+
+        <!-- REGISTRAR MERMA (panel lateral, ancho según la vía) -->
+        <n-drawer v-model:show="showRegister" :width="registerDrawerWidth" placement="right"
+            @after-leave="registerVia = null">
+            <n-drawer-content :title="registerTitle" closable>
+                <div class="register-drawer">
+                    <RegisterWaste v-if="registerVia" :key="registerVia" :via="registerVia"
+                        @registered="onRegistered" />
+                </div>
+            </n-drawer-content>
+        </n-drawer>
+
+        <!-- MOTIVOS (modal mediano) -->
+        <WasteReasons v-model:show="showReasons" />
 
         <details-modal v-model:show="showOrder" :id-order="orderId" />
     </div>
@@ -242,10 +277,13 @@ import { useRouter } from "vue-router";
 import { useMessage } from "naive-ui";
 import { format, startOfMonth } from "date-fns";
 import DetailsModal from "@/views/Order/components/DetailsModal.vue";
-import { getWasteFilterOptions, getWasteSummary, listWaste, reprintWasteTicket, retrieveWaste } from "@/api/modules/wasteReport";
+import RegisterWaste from "./components/RegisterWaste.vue";
+import WasteReasons from "./components/WasteReasons.vue";
+import { getWasteFilterOptions, getWasteSummary, listWaste, retrieveWaste } from "@/api/modules/wasteReport";
 import { useBusinessStore } from "@/store/modules/business";
 import { useGenericsStore } from "@/store/modules/generics";
 import { useTillStore } from "@/store/modules/till";
+import { useUserStore } from "@/store/modules/user";
 import {
     GROUP_BY_OPTIONS,
     ITEM_TYPE_LABELS,
@@ -254,8 +292,10 @@ import {
     formatDate,
     money,
     originText,
+    quantityText,
     reasonPill,
     variationText,
+    viaText,
 } from "@/utils/wasteReport";
 import { exportWasteExcel, exportWastePdf } from "./exportWaste";
 
@@ -264,17 +304,21 @@ const message = useMessage();
 const businessStore = useBusinessStore();
 const genericsStore = useGenericsStore();
 const tillStore = useTillStore();
+const userStore = useUserStore();
 
 const today = new Date();
-const tab = ref("list");
+const mode = ref("list"); // list | summary
 const showFilters = ref(true);
 const state = ref("loading"); // loading | ready | error | forbidden
 const exporting = ref(false);
+const showRegister = ref(false);
+const showReasons = ref(false);
 const filters = ref({
     start_date: format(startOfMonth(today), "yyyy-MM-dd"),
     end_date: format(today, "yyyy-MM-dd"),
     till: null,
     item_type: null,
+    via: null,
     reason: null,
     search: "",
     requested_by: null,
@@ -293,10 +337,24 @@ const grouped = ref(null);
 const showDetail = ref(false);
 const loadingDetail = ref(false);
 const detail = ref(null);
-const reprinting = ref(false);
 const showOrder = ref(false);
 const orderId = ref(0);
 
+const registerVia = ref(null); // 'A' | 'B' | null
+const registerDrawerWidth = computed(() =>
+    registerVia.value === "A" ? "min(900px, 95vw)" : "min(640px, 95vw)"
+);
+const registerTitle = computed(() =>
+    registerVia.value === "A"
+        ? "Registrar merma · Vía A — Desde mesa / orden"
+        : "Registrar merma · Vía B — Merma directa"
+);
+// Menú "Registrar merma ▾": cada vía abre su propio formulario.
+const REGISTER_VIAS = [
+    { key: "A", title: "Desde mesa / orden", sub: "Un plato o toda la orden de una mesa abierta" },
+    { key: "B", title: "Merma directa", sub: "Sin mesa: cocina, barra o almacén" },
+];
+const showViaMenu = ref(false);
 const drawerWidth = computed(() => (genericsStore.device === "mobile" ? "100%" : 460));
 const groupLabel = computed(() => GROUP_BY_OPTIONS.find((option) => option.value === groupBy.value)?.label || "Motivo");
 const pageCount = computed(() => Math.max(Math.ceil(count.value / pageSize.value), 1));
@@ -306,7 +364,11 @@ const pageNumbers = computed(() => {
 });
 
 const ALL = { label: "Todos", value: null };
-const typeOptions = [ALL, { label: "Producto", value: "PRODUCT" }, { label: "Combo", value: "COMBO" }, { label: "Menú", value: "MENU" }];
+const typeOptions = [ALL, { label: "Producto", value: "PRODUCT" }, { label: "Combo", value: "COMBO" }, { label: "Menú", value: "MENU" }, { label: "Insumo", value: "SUPPLY" }];
+const viaOptions = [ALL, { label: "A · Mesa/Orden", value: "ORDER" }, { label: "B · Directa", value: "DIRECT" }];
+// FE-01: "Crear merma" solo para quien puede autorizar mermas.
+const canRegister = computed(() => userStore.hasPermission("authorize_waste"));
+const canManageReasons = computed(() => userStore.hasPermission("manage_waste_reasons"));
 const tillOptions = computed(() => [
     { label: "Todas", value: null },
     ...options.value.tills.map((till) => ({
@@ -358,7 +420,7 @@ const loadOptions = async () => {
     }
 };
 
-const reload = () => (tab.value === "list" ? loadList() : loadSummary());
+const reload = () => (mode.value === "list" ? loadList() : loadSummary());
 const applyFilters = () => {
     page.value = 1;
     reload();
@@ -367,8 +429,13 @@ const goTo = (target) => {
     page.value = Math.min(Math.max(target, 1), pageCount.value);
     loadList();
 };
+const openList = () => {
+    mode.value = "list";
+    loadList();
+};
+
 const openSummary = () => {
-    tab.value = "summary";
+    mode.value = "summary";
     loadSummary();
 };
 
@@ -407,18 +474,13 @@ const viewKardex = () => {
     });
 };
 
-const reprint = async () => {
-    reprinting.value = true;
-    try {
-        await reprintWasteTicket(detail.value.id);
-        message.success("Ticket de anulación enviado a impresión");
-    } catch (error) {
-        console.error(error);
-        message.error(error?.response?.data?.error || "No se pudo reimprimir el ticket.");
-    } finally {
-        reprinting.value = false;
-    }
+const onSelectVia = (key) => {
+    showViaMenu.value = false;
+    registerVia.value = key;
+    showRegister.value = true;
 };
+
+const onRegistered = () => reload();
 
 const exportReport = async (kind) => {
     exporting.value = true;
@@ -455,15 +517,17 @@ const formatRange = (value) => (value ? value.split("-").reverse().join("/") : "
 
 onMounted(async () => {
     await loadOptions();
-    if (state.value !== "forbidden") loadList();
+    if (state.value === "forbidden") return;
+    loadList();
 });
 </script>
 
 <style scoped>
 /* Tokens y medidas del mockup (mockup-lista-mermas.html). */
-/* El panel lateral se monta fuera (teleport): también necesita los tokens. */
+/* Los paneles laterales se montan fuera (teleport): también necesitan los tokens. */
 .waste-content,
-.drawer {
+.drawer,
+.register-drawer {
     --line: #e6e9ef;
     --text: #1f2937;
     --muted: #6b7280;
@@ -491,11 +555,33 @@ onMounted(async () => {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
-h1 { font-size: 20px; margin: 0 0 12px; font-weight: 700; }
+/* Conmutador Lista | Resumen */
+.mode-toggle {
+    display: inline-flex;
+    gap: 4px;
+    background: #f1f3f5;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 3px;
+    margin-bottom: 12px;
+}
 
-.tabs { display: flex; gap: 22px; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
-.tabs button { background: none; border: 0; padding: 8px 0; font: inherit; color: var(--text); cursor: pointer; border-bottom: 2px solid transparent; }
-.tabs button.on { color: var(--primary); border-color: var(--primary); font-weight: 700; }
+.mode-toggle button {
+    background: none;
+    border: 0;
+    padding: 6px 12px;
+    font: inherit;
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+.mode-toggle button.on {
+    background: var(--primary-soft);
+    color: var(--primary);
+    font-weight: 700;
+}
 
 .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .toolbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -533,6 +619,7 @@ tr:hover td { background: #fafcff; }
 .p-violet { background: var(--violet-soft); color: var(--violet); border-color: #dccbf1; }
 .p-gray { background: #f1f3f5; color: #4b5563; border-color: #e5e7eb; }
 .tag { font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 4px; background: #eef2f7; color: #475569; margin-left: 6px; }
+.tag.amber { background: var(--amber-soft); color: var(--amber); }
 .warn { color: var(--amber); font-weight: 700; }
 .iconbtn { background: var(--primary-soft); color: var(--primary); border: 0; border-radius: 6px; width: 30px; height: 28px; cursor: pointer; font-weight: 900; }
 
@@ -545,7 +632,7 @@ tr:hover td { background: #fafcff; }
 .state { border: 1px dashed #cbd5e1; border-radius: 8px; padding: 28px; text-align: center; color: var(--muted); }
 .state b { display: block; color: var(--text); font-size: 14px; margin-bottom: 4px; }
 
-/* Panel lateral */
+/* Panel lateral (detalle) */
 .drawer { display: flex; flex-direction: column; height: 100%; color: var(--text); font-size: 13px; }
 .dh { padding: 16px 18px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
 .dh h2 { margin: 0; font-size: 16px; }
@@ -560,7 +647,80 @@ tr:hover td { background: #fafcff; }
 .note { background: #f7f8fa; border-radius: 6px; padding: 10px; font-size: 12px; }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
+/* Panel lateral (registrar merma) */
+.register-drawer { padding: 4px; }
+
 @media (max-width: 760px) {
     .waste-content { padding: 12px; }
+}
+</style>
+
+<style>
+/* Menú "Registrar merma ▾" (el popover se teleporta fuera del scope). */
+.via-menu {
+    display: grid;
+    gap: 4px;
+    width: 300px;
+    max-width: calc(100vw - 32px);
+    padding: 6px;
+    background: #fff;
+    border: 1px solid #e6e9ef;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+
+.via-menu__item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 10px;
+    border: 0;
+    border-radius: 8px;
+    background: none;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.via-menu__item:hover,
+.via-menu__item:focus-visible {
+    background: #e8f0fe;
+    outline: none;
+}
+
+.via-menu__badge {
+    flex: 0 0 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    background: #e8f0fe;
+    color: #1f6feb;
+    font-weight: 800;
+    font-size: 14px;
+}
+
+.via-menu__item:hover .via-menu__badge {
+    background: #1f6feb;
+    color: #fff;
+}
+
+.via-menu__text {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.via-menu__title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.via-menu__sub {
+    font-size: 12px;
+    color: #6b7280;
+    line-height: 1.35;
 }
 </style>
