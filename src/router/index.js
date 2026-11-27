@@ -49,13 +49,10 @@ export const routes = [
         component: () => import("@/views/Anulate/ViewAnulate.vue"),
       },
       {
-        // FLZ-REP-03: pantalla "Mermas" (módulo modules.show_waste).
+        // FLZ-REP-03: "Mermas" ahora vive dentro de "Anulaciones y mermas" (/anulate?view=waste).
         path: "/waste",
         name: "Waste",
-        meta: {
-          requiredPerm: "view_waste_report",
-        },
-        component: () => import("@/views/Waste/WasteIndex.vue"),
+        redirect: (to) => ({ name: "Anulate", query: { ...to.query, view: "waste" } }),
       },
       {
         // FLZ-REP-06: cortesías, consumo interno e IGV de retiros.

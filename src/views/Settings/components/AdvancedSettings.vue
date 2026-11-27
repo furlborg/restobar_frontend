@@ -556,37 +556,8 @@
 
                                     <div class="switch-row-item">
                                         <div class="switch-row-text">
-                                            <span class="switch-row-title">Autorización de anulación en mesas y pedidos</span>
-                                            <span class="switch-row-desc">Credencial personal: cada anulación queda firmada por quien la autoriza (o por un supervisor con permiso). Clave general: se acepta la clave maestra del negocio, pero la anulación no queda asociada a una persona.</span>
-                                        </div>
-                                        <n-select
-                                            style="width: 260px"
-                                            :disabled="!editMode"
-                                            v-model:value="businessSettings.sale.cancellation_auth_mode"
-                                            :options="cancellationAuthModeOptions"
-                                        />
-                                    </div>
-
-                                    <div v-if="businessSettings.sale.cancellation_auth_mode === 'general_pass'" class="switch-row-item">
-                                        <div class="switch-row-text">
-                                            <span class="switch-row-title">Permitir clave general también en mermas</span>
-                                            <span class="switch-row-desc">Desactivado (recomendado): las mermas se firman siempre con credencial personal o de supervisor para que quede registrado quién las autorizó.</span>
-                                        </div>
-                                        <n-switch :disabled="!editMode" v-model:value="businessSettings.sale.allow_general_pass_for_waste" />
-                                    </div>
-
-                                    <div class="switch-row-item">
-                                        <div class="switch-row-text">
-                                            <span class="switch-row-title">Anular sin contraseña en mesas y pedidos</span>
-                                            <span class="switch-row-desc">Activado: quien tiene el permiso de anular (y el de autorizar mermas, si es merma) anula sin escribir su clave y queda registrado a su nombre. Quien no tiene el permiso sigue necesitando a un supervisor.</span>
-                                        </div>
-                                        <n-switch :disabled="!editMode" v-model:value="businessSettings.sale.cancellation_without_password" />
-                                    </div>
-
-                                    <div class="switch-row-item">
-                                        <div class="switch-row-text">
-                                            <span class="switch-row-title">Requerir contraseña del USUARIO para anular ventas</span>
-                                            <span class="switch-row-desc">El usuario debe ingresar su propia contraseña para anular una venta. No afecta a mesas y pedidos: allí manda la opción "Autorización de anulación" de arriba.</span>
+                                            <span class="switch-row-title">Requerir contraseña del USUARIO para anular</span>
+                                            <span class="switch-row-desc">El usuario autenticado debe ingresar su propia contraseña para anular.</span>
                                         </div>
                                         <n-switch 
                                             :disabled="!editMode" 
@@ -597,8 +568,8 @@
 
                                     <div class="switch-row-item">
                                         <div class="switch-row-text">
-                                            <span class="switch-row-title">Requerir contraseña GENERAL de Administrador para anular ventas</span>
-                                            <span class="switch-row-desc">Exige la clave maestra administrativa para anular comprobantes. No afecta a mesas ni pedidos: allí manda la opción "Autorización de anulación" de arriba.</span>
+                                            <span class="switch-row-title">Requerir contraseña GENERAL de Administrador para anular</span>
+                                            <span class="switch-row-desc">Exige la clave maestra administrativa para anular cualquier comprobante.</span>
                                         </div>
                                         <n-switch 
                                             :disabled="!editMode" 
@@ -1071,8 +1042,18 @@
                                                 <n-switch :disabled="!editMode" v-model:value="businessSettings.modules.show_sales" />
                                             </div>
                                             <div class="switch-row-item">
-                                                <div class="switch-row-text"><span class="switch-row-title">Anulaciones y Devoluciones</span></div>
+                                                <div class="switch-row-text">
+                                                    <span class="switch-row-title">Anulaciones y mermas</span>
+                                                    <span class="switch-row-desc">Ventas y órdenes anuladas.</span>
+                                                </div>
                                                 <n-switch :disabled="!editMode" v-model:value="businessSettings.modules.show_anulates" />
+                                            </div>
+                                            <div class="switch-row-item">
+                                                <div class="switch-row-text">
+                                                    <span class="switch-row-title">Mermas (dentro de Anulaciones y mermas)</span>
+                                                    <span class="switch-row-desc">Registro de pérdidas: lista, motivos y registro desde mesa o directo.</span>
+                                                </div>
+                                                <n-switch :disabled="!editMode" v-model:value="businessSettings.modules.show_waste" />
                                             </div>
                                             <div class="switch-row-item">
                                                 <div class="switch-row-text"><span class="switch-row-title">Productos y Carta</span></div>
@@ -1114,10 +1095,6 @@
                                             <div class="switch-row-item">
                                                 <div class="switch-row-text"><span class="switch-row-title">Control de Kardex / Almacén</span></div>
                                                 <n-switch :disabled="!editMode" v-model:value="businessSettings.modules.show_kardex" />
-                                            </div>
-                                            <div class="switch-row-item">
-                                                <div class="switch-row-text"><span class="switch-row-title">Mermas</span></div>
-                                                <n-switch :disabled="!editMode" v-model:value="businessSettings.modules.show_waste" />
                                             </div>
                                             <div class="switch-row-item">
                                                 <div class="switch-row-text"><span class="switch-row-title">Operaciones gratuitas</span></div>
@@ -1590,9 +1567,6 @@ export default defineComponent({
                 required_null_reason: false,
                 require_user_pass_to_null: false,
                 require_general_pass_to_null: true,
-                cancellation_auth_mode: 'personal',
-                allow_general_pass_for_waste: false,
-                cancellation_without_password: false,
                 require_pass_recovery: false,
                 manage_affectations: false,
                 show_preview: true,
@@ -1775,11 +1749,6 @@ export default defineComponent({
             { value: "M", label: "MESA" },
             { value: "P", label: "PARA LLEVAR" },
             { value: "D", label: "DELIVERY" }
-        ];
-
-        const cancellationAuthModeOptions = [
-            { value: "personal", label: "Credencial personal (recomendado)" },
-            { value: "general_pass", label: "Clave general del negocio" }
         ];
 
         const waiterAuthModeOptions = [
@@ -2057,7 +2026,6 @@ export default defineComponent({
             infoLocationOptions,
             orderTypeOptions,
             waiterAuthModeOptions,
-            cancellationAuthModeOptions,
             kdsThemeOptions,
             categorySizeOptions,
             handleCategorySizeChange,

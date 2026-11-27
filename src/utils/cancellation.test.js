@@ -1,20 +1,22 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  AUTH_MODE_GENERAL,
-  AUTH_MODE_NO_PASSWORD,
+  AUTH_MODE_GENERAL_PASS,
+  AUTH_MODE_NONE,
+  AUTH_MODE_USER_PASS,
+  MODE_STOCK,
+  MODE_WASTE,
   authError,
-  authMode,
   buildCancelOrderPayload,
+  buildStockCancelPayload,
+  stockReasonError,
   buildRemoveDetailPayload,
-  canSeeWasteCost,
+  cancelAuthMode,
   cancellationErrorMessage,
   credentialPayload,
-  itemError,
-  resolveAuthMode,
+  reasonsForMode,
   resolveDestination,
-  summarize,
-  wasteModuleEnabled,
+  resolveDestinationForMode,
 } from "./cancellation.js";
 
 const reasons = [
@@ -24,8 +26,6 @@ const reasons = [
 ];
 const [errorComanda, malogrado, otro] = reasons;
 
-const perms = (...granted) => (permission) => granted.includes(permission);
-
 test("resolveDestination: el motivo fija el destino; solo OTRO acepta el elegido", () => {
   assert.equal(resolveDestination(errorComanda, "WASTE"), "STOCK");
   assert.equal(resolveDestination(malogrado, "STOCK"), "WASTE");
@@ -34,161 +34,249 @@ test("resolveDestination: el motivo fija el destino; solo OTRO acepta el elegido
   assert.equal(resolveDestination(null, "STOCK"), null);
 });
 
-test("authMode: con permiso firma con su clave; sin permiso, supervisor", () => {
-  assert.equal(authMode(perms("cancel_orderdetail"), "cancel_orderdetail", "STOCK"), "own");
-  assert.equal(authMode(perms(), "cancel_orderdetail", "STOCK"), "supervisor");
+test("cancelAuthMode: usuario+clave, clave general o sin credencial", () => {
+  assert.equal(cancelAuthMode({ require_user_pass_to_null: true }), AUTH_MODE_USER_PASS);
+  assert.equal(
+    cancelAuthMode({ require_user_pass_to_null: false, require_general_pass_to_null: true }),
+    AUTH_MODE_GENERAL_PASS
+  );
+  assert.equal(
+    cancelAuthMode({ require_user_pass_to_null: false, require_general_pass_to_null: false }),
+    AUTH_MODE_NONE
+  );
+  assert.equal(cancelAuthMode({}), AUTH_MODE_NONE);
+  assert.equal(cancelAuthMode(undefined), AUTH_MODE_NONE);
 });
 
-test("authMode: merma sin authorize_waste exige supervisor aunque pueda anular", () => {
-  assert.equal(authMode(perms("cancel_orderdetail"), "cancel_orderdetail", "WASTE"), "supervisor");
-  assert.equal(authMode(perms("cancel_orderdetail", "authorize_waste"), "cancel_orderdetail", "WASTE"), "own");
+test("buildCancelOrderPayload: replacement solo en merma", () => {
+  const base = { reasonCode: "PRODUCTO_MALOGRADO", reasons, note: "se cayó al servir", cancelMode: MODE_WASTE };
+  assert.equal(buildCancelOrderPayload({ ...base, replacement: true }).replacement, true);
+  assert.equal("replacement" in buildCancelOrderPayload(base), false);
+  assert.equal(
+    "replacement" in buildCancelOrderPayload({ ...base, reasonCode: "ERROR_COMANDA", cancelMode: MODE_STOCK, replacement: true }),
+    false
+  );
 });
 
-test("itemError: motivo, destino de OTRO y observación obligatoria", () => {
-  assert.match(itemError(null), /motivo/);
-  assert.equal(itemError(errorComanda), null);
-  assert.match(itemError(otro, undefined, "x"), /stock o es merma/);
-  assert.match(itemError(otro, "WASTE", "  "), /observación/);
-  assert.equal(itemError(otro, "WASTE", "se cayó"), null);
+test("authError: user_pass exige usuario y contraseña; general_pass solo la clave; none nada", () => {
+  assert.match(authError(AUTH_MODE_USER_PASS, {}), /usuario y contraseña/);
+  assert.match(authError(AUTH_MODE_USER_PASS, { username: "sup", password: "" }), /usuario y contraseña/);
+  assert.equal(authError(AUTH_MODE_USER_PASS, { username: "sup", password: "x" }), null);
+  assert.match(authError(AUTH_MODE_GENERAL_PASS, {}), /clave general/);
+  assert.equal(authError(AUTH_MODE_GENERAL_PASS, { password: "999999" }), null);
+  assert.equal(authError(AUTH_MODE_NONE, {}), null);
 });
 
-test("authError: modo supervisor pide usuario y clave; modo propio solo clave", () => {
-  assert.match(authError("supervisor", { username: "", password: "x" }), /usuario/);
-  assert.match(authError("supervisor", { username: "sup", password: "" }), /clave del supervisor/);
-  assert.equal(authError("own", { password: "x" }), null);
-  assert.match(authError("own", {}), /su clave/);
+test("credentialPayload: payloads de cada modo", () => {
+  assert.deepEqual(credentialPayload(AUTH_MODE_USER_PASS, { username: " sup ", password: "x" }), {
+    username: "sup",
+    pass: "x",
+  });
+  assert.deepEqual(credentialPayload(AUTH_MODE_GENERAL_PASS, { username: "ignorado", password: "999999" }), {
+    pass: "999999",
+  });
+  assert.deepEqual(credentialPayload(AUTH_MODE_NONE, { username: "x", password: "y" }), {});
 });
 
-test("buildRemoveDetailPayload: contrato nuevo, sin usuario en modo propio", () => {
+test("buildRemoveDetailPayload: user_pass envía username y pass", () => {
   const payload = buildRemoveDetailPayload({
     detailId: 7,
     quantity: 2,
-    reason: malogrado,
+    reason: errorComanda,
     note: "",
-    mode: "own",
-    credentials: { username: "otro", password: "123" },
+    mode: AUTH_MODE_USER_PASS,
+    credentials: { username: " sup ", password: "123" },
+    cancelMode: MODE_STOCK,
   });
   assert.deepEqual(payload, {
     id: 7,
     quantity: 2,
-    reason_code: "PRODUCTO_MALOGRADO",
-    destination: "WASTE",
-    null_reason: "Producto malogrado",
-    supervisor_username: "",
-    supervisor_password: "123",
+    reason_code: "ERROR_COMANDA",
+    destination: "STOCK",
+    null_reason: "Error al tomar el pedido",
+    username: "sup",
+    pass: "123",
   });
 });
 
-test("buildCancelOrderPayload: destino por ítem", () => {
+test("buildCancelOrderPayload: general_pass envía solo pass", () => {
   const payload = buildCancelOrderPayload({
-    items: [
-      { id: 1, reasonCode: "ERROR_COMANDA" },
-      { id: 2, reasonCode: "OTRO", chosenDestination: "WASTE", note: " se derramó " },
-    ],
+    reasonCode: "ERROR_COMANDA",
     reasons,
-    generalNote: "cierre",
-    mode: "supervisor",
+    note: "",
+    mode: AUTH_MODE_GENERAL_PASS,
+    credentials: { username: "ignorado", password: "999999" },
+    cancelMode: MODE_STOCK,
+  });
+  assert.deepEqual(payload, {
+    reason_code: "ERROR_COMANDA",
+    destination: "STOCK",
+    null_reason: "Error al tomar el pedido",
+    pass: "999999",
+  });
+});
+
+test("buildCancelOrderPayload: none no envía credencial", () => {
+  const payload = buildCancelOrderPayload({
+    reasonCode: "ERROR_COMANDA",
+    reasons,
+    note: "",
+    mode: AUTH_MODE_NONE,
+    credentials: { username: "x", password: "y" },
+    cancelMode: MODE_STOCK,
+  });
+  assert.deepEqual(payload, {
+    reason_code: "ERROR_COMANDA",
+    destination: "STOCK",
+    null_reason: "Error al tomar el pedido",
+  });
+});
+
+test("buildCancelOrderPayload: OTRO en stock se fuerza a STOCK", () => {
+  const payload = buildCancelOrderPayload({
+    reasonCode: "OTRO",
+    reasons,
+    note: " se cayó ",
+    mode: AUTH_MODE_USER_PASS,
     credentials: { username: " sup ", password: "p" },
+    cancelMode: MODE_STOCK,
   });
-  assert.deepEqual(payload.items, [
-    { order_detail_id: 1, reason_code: "ERROR_COMANDA", destination: "STOCK", note: null },
-    { order_detail_id: 2, reason_code: "OTRO", destination: "WASTE", note: "se derramó" },
-  ]);
-  assert.equal(payload.supervisor_username, "sup");
-  assert.equal(payload.null_reason, "cierre");
+  assert.equal(payload.destination, "STOCK");
+  assert.equal(payload.null_reason, "se cayó");
+  assert.equal(payload.username, "sup");
 });
 
-test("summarize: cuenta stock/merma y valoriza la merma en céntimos", () => {
-  const result = summarize([
-    { quantity: 2, unitCost: 0.1, destination: "WASTE" },
-    { quantity: 1, unitCost: 0.2, destination: "WASTE" },
-    { quantity: 3, unitCost: 5, destination: "STOCK" },
-  ]);
-  assert.deepEqual(result, { stockItems: 1, stockUnits: 3, wasteItems: 2, wasteUnits: 3, wasteCostCents: 40 });
-});
-
-test("cancellationErrorMessage: traduce códigos del backend", () => {
-  assert.match(cancellationErrorMessage({ response: { data: { code: "MISSING_PERMISSION" } } }), /permiso/);
-  assert.match(cancellationErrorMessage({ response: { data: { code: "INVALID_CREDENTIALS" } } }), /incorrectos/);
-  assert.match(
-    cancellationErrorMessage({ response: { data: { code: "INVALID_CREDENTIALS" } } }, AUTH_MODE_GENERAL),
-    /clave general/i
-  );
-  assert.equal(cancellationErrorMessage({ response: { data: { error: "Otro error" } } }), "Otro error");
-});
-
-test("resolveAuthMode: la configuración manda y la merma queda blindada", () => {
-  const has = perms("cancel_orderdetail", "authorize_waste");
-  const base = { hasPermission: has, scopePermission: "cancel_orderdetail" };
-
-  // Sin configuración se comporta como credencial personal.
-  assert.equal(resolveAuthMode({ ...base, settings: {}, destination: "STOCK" }), "own");
-
-  // Modo clave general: aplica a stock...
+test("cancellationErrorMessage: muestra el mensaje del backend", () => {
   assert.equal(
-    resolveAuthMode({ ...base, settings: { cancellation_auth_mode: AUTH_MODE_GENERAL }, destination: "STOCK" }),
-    AUTH_MODE_GENERAL
-  );
-  // ...pero no a merma salvo que se habilite aparte.
-  assert.equal(
-    resolveAuthMode({ ...base, settings: { cancellation_auth_mode: AUTH_MODE_GENERAL }, destination: "WASTE" }),
-    "own"
+    cancellationErrorMessage({ response: { data: { error: "Clave general inválida" } } }),
+    "Clave general inválida"
   );
   assert.equal(
-    resolveAuthMode({
-      ...base,
-      settings: { cancellation_auth_mode: AUTH_MODE_GENERAL, allow_general_pass_for_waste: true },
-      destination: "WASTE",
-    }),
-    AUTH_MODE_GENERAL
+    cancellationErrorMessage({ response: { data: { error: "El usuario no tiene permiso para anular." } } }),
+    "El usuario no tiene permiso para anular."
   );
-
-  // Modo personal: nunca acepta clave general.
   assert.equal(
-    resolveAuthMode({ ...base, settings: { cancellation_auth_mode: "personal" }, destination: "STOCK" }),
-    "own"
+    cancellationErrorMessage({ response: { data: {} } }),
+    "No se pudo anular. Verifique los datos e intente de nuevo."
   );
 });
 
-test("authError y credentialPayload: modo clave general solo pide la clave", () => {
-  assert.match(authError(AUTH_MODE_GENERAL, {}), /clave general/);
-  assert.equal(authError(AUTH_MODE_GENERAL, { password: "999999" }), null);
-  assert.deepEqual(credentialPayload(AUTH_MODE_GENERAL, { username: "ignorado", password: "999999" }), {
-    supervisor_username: "",
-    supervisor_password: "999999",
+test("reasonsForMode: stock solo STOCK/CHOICE; waste solo WASTE/CHOICE; sin modo, todos", () => {
+  assert.deepEqual(
+    reasonsForMode(reasons, MODE_STOCK).map((r) => r.code),
+    ["ERROR_COMANDA", "OTRO"]
+  );
+  assert.deepEqual(
+    reasonsForMode(reasons, MODE_WASTE).map((r) => r.code),
+    ["PRODUCTO_MALOGRADO", "OTRO"]
+  );
+  assert.deepEqual(reasonsForMode(reasons, null).map((r) => r.code), ["ERROR_COMANDA", "PRODUCTO_MALOGRADO", "OTRO"]);
+});
+
+test("resolveDestinationForMode: OTRO se fuerza a STOCK/WASTE según el modo", () => {
+  assert.equal(resolveDestinationForMode(otro, null, MODE_STOCK), "STOCK");
+  assert.equal(resolveDestinationForMode(otro, "WASTE", MODE_STOCK), "STOCK");
+  assert.equal(resolveDestinationForMode(otro, null, MODE_WASTE), "WASTE");
+  assert.equal(resolveDestinationForMode(otro, "STOCK", MODE_WASTE), "WASTE");
+  // Motivos con destino fijo no cambian con el modo.
+  assert.equal(resolveDestinationForMode(malogrado, null, MODE_STOCK), "WASTE");
+  assert.equal(resolveDestinationForMode(errorComanda, null, MODE_WASTE), "STOCK");
+  // Sin modo: comportamiento anterior.
+  assert.equal(resolveDestinationForMode(otro, undefined, null), null);
+  assert.equal(resolveDestinationForMode(otro, "WASTE", null), "WASTE");
+});
+
+test("buildRemoveDetailPayload: replacement viaja solo cuando se pide", () => {
+  const base = {
+    detailId: 7,
+    quantity: 1,
+    reason: malogrado,
+    note: "",
+    mode: AUTH_MODE_USER_PASS,
+    credentials: { password: "123" },
+    cancelMode: MODE_WASTE,
+  };
+  const withReplacement = buildRemoveDetailPayload({ ...base, replacement: true });
+  assert.equal(withReplacement.replacement, true);
+  assert.equal(withReplacement.destination, "WASTE");
+  const without = buildRemoveDetailPayload(base);
+  assert.equal("replacement" in without, false);
+});
+
+test("buildCancelOrderPayload: modo waste fuerza destino WASTE y no envía credenciales", () => {
+  const payload = buildCancelOrderPayload({
+    reasonCode: "OTRO",
+    reasons,
+    note: "se derramó",
+    mode: AUTH_MODE_USER_PASS,
+    credentials: { username: "sup", password: "p" },
+    cancelMode: MODE_WASTE,
   });
+  assert.equal(payload.destination, "WASTE");
+  assert.equal(payload.null_reason, "se derramó");
+  assert.equal("username" in payload, false);
+  assert.equal("pass" in payload, false);
 });
 
-test("canSeeWasteCost: solo con authorize_waste o view_waste_report", () => {
-  assert.equal(canSeeWasteCost(perms("cancel_orderdetail", "null_orders")), false);
-  assert.equal(canSeeWasteCost(perms("authorize_waste")), true);
-  assert.equal(canSeeWasteCost(perms("view_waste_report")), true);
+test("buildCancelOrderPayload: motivo fijo WASTE conserva su destino", () => {
+  const payload = buildCancelOrderPayload({
+    reasonCode: "PRODUCTO_MALOGRADO",
+    reasons,
+    note: "",
+    mode: AUTH_MODE_USER_PASS,
+    credentials: { password: "p" },
+    cancelMode: MODE_WASTE,
+  });
+  assert.equal(payload.destination, "WASTE");
+  assert.equal(payload.null_reason, "Producto malogrado");
+  assert.equal("username" in payload, false);
+  assert.equal("pass" in payload, false);
 });
 
-test("wasteModuleEnabled: activado por defecto, solo false lo apaga", () => {
-  assert.equal(wasteModuleEnabled({}), true);
-  assert.equal(wasteModuleEnabled({ modules: {} }), true);
-  assert.equal(wasteModuleEnabled({ modules: { show_waste: true } }), true);
-  assert.equal(wasteModuleEnabled({ modules: { show_waste: false } }), false);
+test("buildRemoveDetailPayload: modo waste no envía credenciales", () => {
+  const payload = buildRemoveDetailPayload({
+    detailId: 7,
+    quantity: 1,
+    reason: malogrado,
+    note: "",
+    mode: AUTH_MODE_USER_PASS,
+    credentials: { username: "sup", password: "123" },
+    cancelMode: MODE_WASTE,
+  });
+  assert.equal(payload.destination, "WASTE");
+  assert.equal("username" in payload, false);
+  assert.equal("pass" in payload, false);
 });
 
-test("resolveAuthMode: anular sin contraseña solo para quien tiene todos los permisos", () => {
-  const settings = { cancellation_without_password: true, cancellation_auth_mode: AUTH_MODE_GENERAL };
-  const cajero = { hasPermission: perms("cancel_orderdetail"), scopePermission: "cancel_orderdetail" };
-  const supervisor = { hasPermission: perms("cancel_orderdetail", "authorize_waste"), scopePermission: "cancel_orderdetail" };
-  const mozo = { hasPermission: perms(), scopePermission: "cancel_orderdetail" };
-
-  assert.equal(resolveAuthMode({ ...cajero, settings, destination: "STOCK" }), AUTH_MODE_NO_PASSWORD);
-  assert.equal(resolveAuthMode({ ...supervisor, settings, destination: "WASTE" }), AUTH_MODE_NO_PASSWORD);
-  // Merma sin authorize_waste: se aplica el modo configurado (aquí la merma queda blindada).
-  assert.equal(resolveAuthMode({ ...cajero, settings, destination: "WASTE" }), "supervisor");
-  // Sin permiso de anular: sigue el modo configurado.
-  assert.equal(resolveAuthMode({ ...mozo, settings, destination: "STOCK" }), AUTH_MODE_GENERAL);
-  // Parámetro apagado: comportamiento de siempre.
-  assert.equal(resolveAuthMode({ ...cajero, settings: {}, destination: "STOCK" }), "own");
+test("buildRemoveDetailPayload: modo stock sí envía credenciales", () => {
+  const payload = buildRemoveDetailPayload({
+    detailId: 7,
+    quantity: 1,
+    reason: errorComanda,
+    note: "",
+    mode: AUTH_MODE_USER_PASS,
+    credentials: { username: "sup", password: "123" },
+    cancelMode: MODE_STOCK,
+  });
+  assert.equal(payload.destination, "STOCK");
+  assert.equal(payload.username, "sup");
+  assert.equal(payload.pass, "123");
 });
 
-test("modo sin contraseña: no exige ni envía credencial", () => {
-  assert.equal(authError(AUTH_MODE_NO_PASSWORD, {}), null);
-  assert.deepEqual(credentialPayload(AUTH_MODE_NO_PASSWORD, { username: "x", password: "y" }), {});
+test("buildStockCancelPayload: texto libre y credencial según Ajustes", () => {
+  assert.deepEqual(buildStockCancelPayload({ reasonText: "  Se equivocó  ", mode: "general_pass", credentials: { password: "123" } }), {
+    null_reason: "Se equivocó",
+    pass: "123",
+  });
+  assert.deepEqual(
+    buildStockCancelPayload({ reasonText: "", mode: "user_pass", credentials: { username: " admin ", password: "x" } }),
+    { null_reason: null, username: "admin", pass: "x" }
+  );
+  assert.deepEqual(buildStockCancelPayload({ reasonText: "ok", mode: "none" }), { null_reason: "ok" });
+});
+
+test("stockReasonError: el motivo solo es obligatorio si Ajustes lo pide", () => {
+  assert.equal(stockReasonError({ required_null_reason: false }, ""), null);
+  assert.match(stockReasonError({ required_null_reason: true }, "  "), /motivo/);
+  assert.equal(stockReasonError({ required_null_reason: true }, "cliente se fue"), null);
 });

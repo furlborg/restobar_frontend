@@ -8,7 +8,9 @@ import {
   money,
   originText,
   reasonPill,
+  resolveAnulate,
   variationText,
+  viaText,
 } from "./wasteReport.js";
 
 test("money: formato S/ con dos decimales", () => {
@@ -61,4 +63,32 @@ test("exportRows: mismas columnas que la tabla, 'Sin costo' cuando aplica", () =
   assert.equal(row.costo_unitario, "Sin costo");
   assert.equal(row.tipo, "PRODUCTO");
   assert.equal(row.origen, "Mesa 7 · Pedido 5");
+});
+
+test("viaText: vía A (mesa/orden) y vía B (directa)", () => {
+  assert.equal(viaText("ORDER"), "A · Mesa/Orden");
+  assert.equal(viaText("DIRECT"), "B · Directa");
+  assert.equal(viaText(null), "—");
+});
+
+test("resolveAnulate: elige la vista inicial según permisos y módulos", () => {
+  // Mermas primero si está permitida.
+  assert.deepEqual(resolveAnulate({ showWaste: true, viewWasteReport: true, showAnulates: true, requested: null }), {
+    views: ["waste", "sales", "orders"],
+    initial: "waste",
+  });
+  // Sin permiso de mermas: cae a ventas anuladas.
+  assert.deepEqual(resolveAnulate({ showWaste: true, viewWasteReport: false, showAnulates: true, requested: null }), {
+    views: ["sales", "orders"],
+    initial: "sales",
+  });
+  // Respeta ?view= válido.
+  assert.equal(resolveAnulate({ showWaste: true, viewWasteReport: true, showAnulates: true, requested: "orders" }).initial, "orders");
+  // ?view= no permitido se ignora.
+  assert.equal(resolveAnulate({ showWaste: true, viewWasteReport: false, showAnulates: true, requested: "waste" }).initial, "sales");
+  // show_waste desactivado y show_anulates desactivado: sin vistas válidas, queda "orders".
+  assert.deepEqual(resolveAnulate({ showWaste: false, viewWasteReport: true, showAnulates: false, requested: null }), {
+    views: [],
+    initial: "orders",
+  });
 });
