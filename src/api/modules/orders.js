@@ -236,10 +236,16 @@ export async function listCancellationReasons() {
   return await http.get("cancellation-reasons/");
 }
 
-// Costo unitario de ítems a anular (valor de la merma). El backend responde 403 si el
-// usuario no puede autorizar mermas ni ver su reporte.
-export async function getCancellationUnitCosts(detailIds) {
-  return await http.get("cancellation-reasons/unit_costs/", {
-    params: { details: detailIds.join(",") },
-  });
+// Gestión de motivos de merma (permiso manage_waste_reasons): todos los motivos
+// WASTE/CHOICE, activos e inactivos, con `uses` y `protected`.
+export async function listManageReasons() {
+  return await http.get("cancellation-reasons/", { params: { manage: 1 } });
+}
+
+export async function createReason(data) {
+  return await http.post("cancellation-reasons/", data, { skipGlobalError: true });
+}
+
+export async function updateReason(id, data) {
+  return await http.patch(`cancellation-reasons/${id}/`, data, { skipGlobalError: true });
 }

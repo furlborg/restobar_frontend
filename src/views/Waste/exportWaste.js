@@ -11,13 +11,16 @@ applyPlugin(jsPDF);
 const LIST_COLUMNS = [
   { header: "#", key: "id", width: 8 },
   { header: "Fecha", key: "fecha", width: 18 },
-  { header: "Producto / combo / menú", key: "producto", width: 32 },
+  { header: "Producto / combo / menú", key: "producto", width: 30 },
   { header: "Tipo", key: "tipo", width: 11 },
   { header: "Cant.", key: "cantidad", width: 8 },
+  { header: "Unidad", key: "unidad", width: 8 },
   { header: "Costo unit.", key: "costo_unitario", width: 12 },
   { header: "Costo total", key: "costo_total", width: 12 },
-  { header: "Motivo", key: "motivo", width: 30 },
-  { header: "Origen", key: "origen", width: 26 },
+  { header: "Motivo", key: "motivo", width: 26 },
+  { header: "Origen", key: "origen", width: 24 },
+  { header: "Vía", key: "via", width: 12 },
+  { header: "Regresó a cocina", key: "reposicion", width: 12 },
   { header: "Solicitó", key: "solicito", width: 14 },
   { header: "Autorizó", key: "autorizo", width: 14 },
   { header: "Observación", key: "observacion", width: 30 },
@@ -103,13 +106,13 @@ export function exportWastePdf({ records, summary, grouped, header }) {
     startY: y + 4,
     styles: { fontSize: 7 },
     headStyles: { fillColor: [247, 248, 250], textColor: 20 },
-    head: [["#", "Fecha", "Producto / combo / menú", "Cant.", "Costo unit.", "Costo total", "Motivo", "Origen", "Solicitó", "Autorizó"]],
+    head: [["#", "Fecha", "Producto / combo / menú", "Cant.", "Unidad", "Costo unit.", "Costo total", "Motivo", "Origen", "Vía", "Regresó a cocina", "Solicitó", "Autorizó"]],
     body: rows.map((row) => [
-      row.id, row.fecha, `${row.producto} (${row.tipo})`, row.cantidad,
+      row.id, row.fecha, `${row.producto} (${row.tipo})`, row.cantidad, row.unidad,
       typeof row.costo_unitario === "number" ? money(row.costo_unitario) : row.costo_unitario,
-      money(row.costo_total), row.motivo, row.origen, row.solicito, row.autorizo,
+      money(row.costo_total), row.motivo, row.origen, row.via, row.reposicion, row.solicito, row.autorizo,
     ]),
-    foot: [["", "", "Totales del filtro", summary?.units ?? 0, "", money(summary?.total_cost), "", "", "", ""]],
+    foot: [["", "", "Totales del filtro", summary?.units ?? 0, "", "", money(summary?.total_cost), "", "", "", "", "", ""]],
   });
 
   if (grouped) {

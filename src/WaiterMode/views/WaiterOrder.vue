@@ -105,7 +105,7 @@
             <PreviewDrawer ref="previewDrawer" v-model:show="showPreview" :data="previewData" :preVoucher="true"
                 :previewOnly="true" />
             <CancelItemModal v-model:show="cancelItem.show" :table-id="route.params.table" :detail="cancelItem.detail"
-                :forbid-full-quantity="orderStore.fullOrderList.length === 1" @cancelled="performRetrieveTableOrder()" />
+                :cancel-whole-order="orderStore.fullOrderList.length === 1" @cancelled="onItemCancelled" />
         </n-tab-pane>
     </n-tabs>
 </template>
@@ -163,6 +163,17 @@ const handleRemoveRequest = (order) => {
             orderStore.orders.splice(index, 1);
         }
     }
+};
+
+// FE-03: anular el último ítem anula la mesa (cancelTableOrder) → volver al listado.
+const onItemCancelled = ({ wholeOrder } = {}) => {
+    if (wholeOrder) {
+        unlockCurrentTable();
+        orderStore.clearNewOrders();
+        router.push({ name: 'WHome' });
+        return;
+    }
+    performRetrieveTableOrder();
 };
 const saleStore = useSaleStore();
 const userStore = useUserStore();

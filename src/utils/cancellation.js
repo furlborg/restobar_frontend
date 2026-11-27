@@ -1,40 +1,25 @@
 // Reglas de anulación con destino (FLZ-MER-07/08, FLZ-SEC-03).
 // Funciones puras: replican la política del backend
-// (sisrestaurantes/apps/users/services/authorization.py) para decidir qué pedir en pantalla.
+// (sisrestaurantes/apps/order/services/cancellation.py) para decidir qué pedir en pantalla.
 // El backend vuelve a validar todo; esto solo evita pedir datos de más o de menos.
 
 export const DESTINATION_STOCK = "STOCK";
 export const DESTINATION_WASTE = "WASTE";
 export const DESTINATION_CHOICE = "CHOICE";
 
+// Modo de los payloads: `stock` (anulación desde Mesas/Pedidos) o `waste` (registro de
+// mermas en el módulo "Anulaciones y mermas").
+export const MODE_STOCK = "stock";
+export const MODE_WASTE = "waste";
+// Observación mínima de toda merma (igual que el backend).
+export const WASTE_NOTE_MIN = 10;
+
 export const PERMISSION_CANCEL_ORDER = "null_orders";
-export const PERMISSION_CANCEL_DETAIL = "cancel_orderdetail";
-export const PERMISSION_AUTHORIZE_WASTE = "authorize_waste";
-export const PERMISSION_VIEW_WASTE_REPORT = "view_waste_report";
 
-// `business_settings.sale.cancellation_auth_mode`: credencial personal (por defecto)
-// o clave general del negocio. La merma solo admite clave general si además
-// `allow_general_pass_for_waste` está activo.
-export const AUTH_MODE_PERSONAL = "personal";
-export const AUTH_MODE_GENERAL = "general_pass";
-// `business_settings.sale.cancellation_without_password`: quien tiene los permisos
-// (y `authorize_waste` si es merma) anula sin escribir su clave.
-export const AUTH_MODE_NO_PASSWORD = "no_password";
-
-/** Solo quien autoriza mermas o ve su reporte puede ver el costo de compra. */
-export function canSeeWasteCost(hasPermission) {
-  return hasPermission(PERMISSION_AUTHORIZE_WASTE) || hasPermission(PERMISSION_VIEW_WASTE_REPORT);
-}
-
-export const destinationLabels = {
-  [DESTINATION_STOCK]: "Vuelve al stock",
-  [DESTINATION_WASTE]: "Merma",
-};
-
-/** Módulo de mermas activo (`business_settings.modules.show_waste`, activado por defecto). */
-export function wasteModuleEnabled(businessSettings) {
-  return businessSettings?.modules?.show_waste !== false;
-}
+// Modos de autorización de una anulación a stock (business_settings.sale).
+export const AUTH_MODE_USER_PASS = "user_pass";
+export const AUTH_MODE_GENERAL_PASS = "general_pass";
+export const AUTH_MODE_NONE = "none";
 
 /** Busca un motivo del catálogo por código. */
 export function findReason(reasons, code) {
@@ -52,153 +37,139 @@ export function resolveDestination(reason, chosen) {
   return chosen === DESTINATION_STOCK || chosen === DESTINATION_WASTE ? chosen : null;
 }
 
-/**
- * Modo de autorización:
- * - "own": el usuario tiene todos los permisos y confirma con su propia clave.
- * - "supervisor": se piden usuario y clave de un supervisor.
- * `hasPermission` es la función del userStore.
- */
-export function authMode(hasPermission, scopePermission, destination) {
-  if (!hasPermission(scopePermission)) return "supervisor";
-  if (destination === DESTINATION_WASTE && !hasPermission(PERMISSION_AUTHORIZE_WASTE)) {
-    return "supervisor";
-  }
-  return "own";
+/** Motivos visibles según el modo: en `stock` solo STOCK/CHOICE; en `waste` solo WASTE/CHOICE. */
+export function reasonsForMode(reasons, cancelMode) {
+  if (!cancelMode) return reasons || [];
+  return (reasons || []).filter((reason) => {
+    if (cancelMode === MODE_WASTE) {
+      return reason.destination === DESTINATION_WASTE || reason.destination === DESTINATION_CHOICE;
+    }
+    if (cancelMode === MODE_STOCK) {
+      return reason.destination === DESTINATION_STOCK || reason.destination === DESTINATION_CHOICE;
+    }
+    return true;
+  });
 }
 
 /**
- * Modo efectivo de la anulación: la configuración del negocio manda, salvo que la
- * merma esté blindada (`allow_general_pass_for_waste` inactivo), en cuyo caso se
- * aplica la credencial personal o de supervisor.
+ * Destino efectivo con el modo de FE-02: en `stock` el motivo "Otro" se fuerza a
+ * STOCK (sin selector); en `waste` se fuerza a WASTE. Sin modo, comportamiento anterior.
  */
-export function resolveAuthMode({ settings, hasPermission, scopePermission, destination }) {
-  const personal = authMode(hasPermission, scopePermission, destination);
-  // Igual que el backend: el parámetro solo aplica a quien tiene todos los permisos.
-  if (settings?.cancellation_without_password === true && personal === "own") {
-    return AUTH_MODE_NO_PASSWORD;
-  }
-  const configured =
-    settings?.cancellation_auth_mode === AUTH_MODE_GENERAL ? AUTH_MODE_GENERAL : AUTH_MODE_PERSONAL;
-  if (configured === AUTH_MODE_GENERAL) {
-    const wasteBlocked =
-      destination === DESTINATION_WASTE && settings?.allow_general_pass_for_waste !== true;
-    if (!wasteBlocked) return AUTH_MODE_GENERAL;
-  }
-  return personal;
+export function resolveDestinationForMode(reason, chosen, cancelMode) {
+  if (!reason) return null;
+  if (reason.destination !== DESTINATION_CHOICE) return reason.destination;
+  if (cancelMode === MODE_WASTE) return DESTINATION_WASTE;
+  if (cancelMode === MODE_STOCK) return DESTINATION_STOCK;
+  return resolveDestination(reason, chosen);
 }
 
-/** Error de validación de un ítem (motivo, destino, observación) o null si está completo. */
-export function itemError(reason, chosenDestination, note) {
-  if (!reason) return "Seleccione un motivo.";
-  if (reason.destination === DESTINATION_CHOICE && !resolveDestination(reason, chosenDestination)) {
-    return "Indique si el producto vuelve al stock o es merma.";
-  }
-  if (reason.requires_note && !(note || "").trim()) {
-    return "Escriba una observación para este motivo.";
-  }
-  return null;
+/**
+ * Modo de autorización de una anulación a stock según la configuración del negocio:
+ * - "user_pass": `require_user_pass_to_null` (usuario + contraseña de un usuario activo).
+ * - "general_pass": `require_general_pass_to_null` (clave general del negocio).
+ * - "none": sin ninguno, no se pide credencial (autoriza el propio usuario).
+ */
+export function cancelAuthMode(settings) {
+  if (settings?.require_user_pass_to_null) return AUTH_MODE_USER_PASS;
+  if (settings?.require_general_pass_to_null) return AUTH_MODE_GENERAL_PASS;
+  return AUTH_MODE_NONE;
 }
 
 /** Error de la credencial según el modo, o null si está completa. */
 export function authError(mode, credentials) {
   const { username = "", password = "" } = credentials || {};
-  if (mode === AUTH_MODE_NO_PASSWORD) return null;
-  if (mode === AUTH_MODE_GENERAL) {
-    return password ? null : "Ingrese la clave general del negocio.";
+  if (mode === AUTH_MODE_USER_PASS) {
+    return username.trim() && password ? null : "Ingrese usuario y contraseña.";
   }
-  if (mode === "supervisor" && !username.trim()) return "Ingrese el usuario del supervisor.";
-  if (!password) return mode === "supervisor" ? "Ingrese la clave del supervisor." : "Ingrese su clave.";
+  if (mode === AUTH_MODE_GENERAL_PASS) {
+    return password ? null : "Ingrese la clave general.";
+  }
   return null;
 }
 
-/** Campos de credencial del contrato nuevo. */
+/** Campos de credencial del contrato de anulación a stock. */
 export function credentialPayload(mode, credentials) {
   const { username = "", password = "" } = credentials || {};
-  // Sin contraseña: no viaja ninguna credencial; el backend valida los permisos del usuario.
-  if (mode === AUTH_MODE_NO_PASSWORD) return {};
-  if (mode === AUTH_MODE_GENERAL) {
-    // La clave general viaja sin usuario: el backend la contrasta con
-    // `business.general_pass` y deja `authorized_by` nulo.
-    return { supervisor_username: "", supervisor_password: password };
-  }
-  return {
-    supervisor_username: mode === "supervisor" ? username.trim() : "",
-    supervisor_password: password,
-  };
+  if (mode === AUTH_MODE_USER_PASS) return { username: username.trim(), pass: password };
+  if (mode === AUTH_MODE_GENERAL_PASS) return { pass: password };
+  return {};
 }
 
 /** Cuerpo de `tables/{id}/remove_detail/` (anulación parcial). */
-export function buildRemoveDetailPayload({ detailId, quantity, reason, chosenDestination, note, mode, credentials }) {
+/**
+ * Anulación a stock como antes de mermas (Mesas y Pedidos): motivo en texto libre
+ * (`null_reason`) y la credencial según Ajustes. Sin código de motivo: todo vuelve a stock.
+ */
+export function buildStockCancelPayload({ reasonText, mode, credentials }) {
+  const text = (reasonText || "").trim();
+  return { null_reason: text || null, ...credentialPayload(mode, credentials) };
+}
+
+/** Motivo obligatorio solo si Ajustes lo exige (`sale.required_null_reason`). */
+export function stockReasonError(settings, reasonText) {
+  return settings?.required_null_reason && !(reasonText || "").trim() ? "Ingrese el motivo de anulación." : null;
+}
+
+export function buildRemoveDetailPayload({
+  detailId,
+  quantity,
+  reason,
+  chosenDestination,
+  note,
+  mode,
+  credentials,
+  replacement = false,
+  cancelMode,
+}) {
   const cleanNote = (note || "").trim();
-  return {
+  const payload = {
     id: detailId,
     quantity,
     reason_code: reason.code,
-    destination: resolveDestination(reason, chosenDestination),
+    destination: resolveDestinationForMode(reason, chosenDestination, cancelMode),
     null_reason: cleanNote || reason.description,
-    ...credentialPayload(mode, credentials),
   };
+  // La merma no pide credenciales: el permiso `authorize_waste` basta (FLZ-MER-20).
+  if (cancelMode !== MODE_WASTE) {
+    Object.assign(payload, credentialPayload(mode, credentials));
+  }
+  if (replacement) payload.replacement = true;
+  return payload;
 }
 
 /**
- * Cuerpo de `tables/{id}/cancel_order/` (anulación total con destino por ítem).
- * `items`: [{ id, reasonCode, chosenDestination, note }]
+ * Cuerpo de `tables/{id}/cancel_order/` y `orders/{id}/secure_delete/` (anulación
+ * total con un solo motivo general). Todos los ítems se anulan con el mismo motivo
+ * y destino (STOCK o WASTE según el modo), sin `items[]`.
+ * En modo merma no se envían credenciales (el permiso `authorize_waste` basta).
  */
-export function buildCancelOrderPayload({ items, reasons, generalNote, mode, credentials }) {
-  return {
-    items: items.map((item) => {
-      const reason = findReason(reasons, item.reasonCode);
-      return {
-        order_detail_id: item.id,
-        reason_code: item.reasonCode,
-        destination: resolveDestination(reason, item.chosenDestination),
-        note: (item.note || "").trim() || null,
-      };
-    }),
-    null_reason: (generalNote || "").trim() || null,
-    ...credentialPayload(mode, credentials),
+export function buildCancelOrderPayload({
+  reasonCode,
+  reasons,
+  note,
+  mode,
+  credentials,
+  cancelMode,
+  replacement = false,
+}) {
+  const reason = findReason(reasons, reasonCode);
+  const cleanNote = (note || "").trim();
+  const payload = {
+    reason_code: reasonCode,
+    destination: resolveDestinationForMode(reason, null, cancelMode),
+    null_reason: cleanNote || reason?.description || null,
   };
-}
-
-/**
- * Resumen previo a confirmar: unidades a stock y a merma, y valor de la merma al costo.
- * `items`: [{ quantity, unitCost, destination }]
- */
-export function summarize(items) {
-  return (items || []).reduce(
-    (acc, item) => {
-      const quantity = Number(item.quantity) || 0;
-      if (item.destination === DESTINATION_WASTE) {
-        acc.wasteItems += 1;
-        acc.wasteUnits += quantity;
-        // Céntimos para no acumular errores de coma flotante.
-        acc.wasteCostCents += Math.round((Number(item.unitCost) || 0) * 100) * quantity;
-      } else if (item.destination === DESTINATION_STOCK) {
-        acc.stockItems += 1;
-        acc.stockUnits += quantity;
-      }
-      return acc;
-    },
-    { stockItems: 0, stockUnits: 0, wasteItems: 0, wasteUnits: 0, wasteCostCents: 0 }
-  );
+  // "Regresó a cocina" (etiqueta del registro): solo aplica a mermas.
+  if (replacement && cancelMode === MODE_WASTE) payload.replacement = true;
+  // La merma no pide credenciales: el permiso `authorize_waste` basta (FLZ-MER-20).
+  if (cancelMode !== MODE_WASTE) {
+    Object.assign(payload, credentialPayload(mode, credentials));
+  }
+  return payload;
 }
 
 /** Mensaje claro para errores de la API de anulación (400 credenciales / 403 permisos). */
-export function cancellationErrorMessage(error, mode) {
+export function cancellationErrorMessage(error) {
   const data = error?.response?.data || {};
-  switch (data.code) {
-    case "INVALID_CREDENTIALS":
-      if (mode === AUTH_MODE_GENERAL) {
-        return "La clave general no es correcta. Verifíquela en Ajustes o use la credencial personal de un supervisor.";
-      }
-      return "Usuario o clave incorrectos. Use la clave personal de su usuario o de un supervisor; la clave general del negocio no se acepta en anulaciones.";
-    case "MISSING_PERMISSION":
-      return "Esa credencial no tiene permiso para autorizar esta anulación.";
-    case "NOTE_REQUIRED":
-      return "Este motivo requiere una observación.";
-    case "REASON_NOT_ALLOWED":
-      return "Seleccione un motivo válido.";
-    default:
-      return data.error || "No se pudo anular. Verifique los datos e intente de nuevo.";
-  }
+  return data.error || "No se pudo anular. Verifique los datos e intente de nuevo.";
 }

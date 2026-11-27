@@ -18,6 +18,12 @@ export async function getWasteFilterOptions() {
   return await http.get("reports/waste/options/");
 }
 
-export async function reprintWasteTicket(id) {
-  return await http.post(`reports/waste/${id}/reprint/`);
+// Merma directa (Vía B, FLZ-MER-13): POST /order/waste/direct/ bajo /api/v1/.
+export async function registerDirectWaste(payload) {
+  return await http.post("order/waste/direct/", payload);
+}
+
+// Costo unitario que se congelará al registrar (receta o precio de compra).
+export async function getWasteUnitCost(params) {
+  return await http.get("order/waste/unit-cost/", { params });
 }
